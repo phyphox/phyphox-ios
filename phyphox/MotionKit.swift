@@ -42,19 +42,19 @@ public class MotionSession {
             manager.startAccelerometerUpdatesToQueue(NSOperationQueue()) {
                 (data: CMAccelerometerData?, error: NSError?) in
                 
-//                if let isError = error {
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error {
+                //                    NSLog("Error: %@", isError)
+                //                }
                 
                 if (data != nil) {
-                valX = data!.acceleration.x
-                valY = data!.acceleration.y
-                valZ = data!.acceleration.z
+                    valX = data!.acceleration.x
+                    valY = data!.acceleration.y
+                    valZ = data!.acceleration.z
                 }
                 
-                    values(x: valX,y: valY,z: valZ, error: error)
-//                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-//                self.delegate?.retrieveAccelerometerValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
+                values(x: valX,y: valY,z: valZ, error: error)
+                //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
+                //                self.delegate?.retrieveAccelerometerValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
             }
             
         } else {
@@ -81,9 +81,9 @@ public class MotionSession {
             manager.startGyroUpdatesToQueue(NSOperationQueue()) {
                 (data: CMGyroData?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 
                 if data != nil {
                     valX = data!.rotationRate.x
@@ -91,9 +91,9 @@ public class MotionSession {
                     valZ = data!.rotationRate.z
                 }
                 
-                    values(x: valX, y: valY, z: valZ, error: error)
-//                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-//                self.delegate?.retrieveGyroscopeValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
+                values(x: valX, y: valY, z: valZ, error: error)
+                //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
+                //                self.delegate?.retrieveGyroscopeValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
             }
             
         } else {
@@ -119,9 +119,9 @@ public class MotionSession {
             manager.startMagnetometerUpdatesToQueue(NSOperationQueue()){
                 (data: CMMagnetometerData?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 
                 if (data != nil) {
                     valX = data!.magneticField.x
@@ -129,9 +129,9 @@ public class MotionSession {
                     valZ = data!.magneticField.z
                 }
                 
-                    values(x: valX, y: valY, z: valZ, error: error)
-//                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-//                self.delegate?.retrieveMagnetometerValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
+                values(x: valX, y: valY, z: valZ, error: error)
+                //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
+                //                self.delegate?.retrieveMagnetometerValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
             }
             
         } else {
@@ -175,18 +175,18 @@ public class MotionSession {
             manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
                 (data: CMDeviceMotion?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 if (data != nil) {
                     valX = data!.userAcceleration.x
                     valY = data!.userAcceleration.y
                     valZ = data!.userAcceleration.z
                 }
                 
-                    values(x: valX, y: valY, z: valZ, error: error)
+                values(x: valX, y: valY, z: valZ, error: error)
                 
-//                self.delegate?.getAccelerationValFromDeviceMotion!(valX, y: valY, z: valZ)
+                //                self.delegate?.getAccelerationValFromDeviceMotion!(valX, y: valY, z: valZ)
             }
             
         } else {
@@ -209,19 +209,19 @@ public class MotionSession {
             manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
                 (data: CMDeviceMotion?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 if data != nil {
                     valX = data!.gravity.x
                     valY = data!.gravity.y
                     valZ = data!.gravity.z
                 }
                 
-                    values(x: valX, y: valY, z: valZ, error: error)
+                values(x: valX, y: valY, z: valZ, error: error)
                 
-//                var absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-//                self.delegate?.getGravityAccelerationValFromDeviceMotion!(valX, y: valY, z: valZ)
+                //                var absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
+                //                self.delegate?.getGravityAccelerationValFromDeviceMotion!(valX, y: valY, z: valZ)
             }
             
         } else {
@@ -242,12 +242,12 @@ public class MotionSession {
             manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
                 (data: CMDeviceMotion?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
-                    values(attitude: data?.attitude, error: error)
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
+                values(attitude: data?.attitude, error: error)
                 
-//                self.delegate?.getAttitudeFromDeviceMotion!(data?.attitude)
+                //                self.delegate?.getAttitudeFromDeviceMotion!(data?.attitude)
             }
             
         } else {
@@ -270,19 +270,19 @@ public class MotionSession {
             manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
                 (data: CMDeviceMotion?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 if data != nil {
                     valX = data!.rotationRate.x
                     valY = data!.rotationRate.y
                     valZ = data!.rotationRate.z
                 }
                 
-                    values(x: valX, y: valY, z: valZ, error: error)
+                values(x: valX, y: valY, z: valZ, error: error)
                 
-//                var absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-//                self.delegate?.getRotationRateFromDeviceMotion!(valX, y: valY, z: valZ)
+                //                var absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
+                //                self.delegate?.getRotationRateFromDeviceMotion!(valX, y: valY, z: valZ)
             }
             
         } else {
@@ -308,9 +308,9 @@ public class MotionSession {
             manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
                 (data: CMDeviceMotion?, error: NSError?) in
                 
-//                if let isError = error{
-//                    NSLog("Error: %@", isError)
-//                }
+                //                if let isError = error{
+                //                    NSLog("Error: %@", isError)
+                //                }
                 
                 if (data != nil) {
                     valX = data!.magneticField.field.x
@@ -319,9 +319,9 @@ public class MotionSession {
                     valAccuracy = data!.magneticField.accuracy.rawValue
                 }
                 
-                    values(x: valX, y: valY, z: valZ, accuracy: valAccuracy, error: error)
+                values(x: valX, y: valY, z: valZ, accuracy: valAccuracy, error: error)
                 
-//                self.delegate?.getMagneticFieldFromDeviceMotion!(valX, y: valY, z: valZ)
+                //                self.delegate?.getMagneticFieldFromDeviceMotion!(valX, y: valY, z: valZ)
             }
             
         } else {
@@ -339,41 +339,41 @@ public class MotionSession {
     
     /*  MARK :- INSTANTANIOUS METHODS START HERE  */
     
-//    public func getAccelerationAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
-//        self.getAccelerationFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
-//            values(x: x,y: y,z: z)
-//            self.stopDeviceMotionUpdates()
-//        }
-//    }
-//    
-//    public func getGravitationalAccelerationAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
-//        self.getGravityAccelerationFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
-//            values(x: x,y: y,z: z)
-//            self.stopDeviceMotionUpdates()
-//        }
-//    }
-//    
-//    public func getAttitudeAtCurrentInstant (values: (attitude: CMAttitude) -> Void){
-//        self.getAttitudeFromDeviceMotion(interval: 0.5) { (attitude) -> Void in
-//            values(attitude: attitude)
-//            self.stopDeviceMotionUpdates()
-//        }
-//    
-//    }
-//    
-//    public func getMageticFieldAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
-//        self.getMagneticFieldFromDeviceMotion(interval: 0.5) { (x, y, z, accuracy) -> Void in
-//            values(x: x,y: y,z: z)
-//            self.stopDeviceMotionUpdates()
-//        }
-//    }
-//    
-//    public func getGyroValuesAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
-//        self.getRotationRateFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
-//            values(x: x,y: y,z: z)
-//            self.stopDeviceMotionUpdates()
-//        }
-//    }
+    //    public func getAccelerationAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
+    //        self.getAccelerationFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
+    //            values(x: x,y: y,z: z)
+    //            self.stopDeviceMotionUpdates()
+    //        }
+    //    }
+    //
+    //    public func getGravitationalAccelerationAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
+    //        self.getGravityAccelerationFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
+    //            values(x: x,y: y,z: z)
+    //            self.stopDeviceMotionUpdates()
+    //        }
+    //    }
+    //
+    //    public func getAttitudeAtCurrentInstant (values: (attitude: CMAttitude) -> Void){
+    //        self.getAttitudeFromDeviceMotion(interval: 0.5) { (attitude) -> Void in
+    //            values(attitude: attitude)
+    //            self.stopDeviceMotionUpdates()
+    //        }
+    //
+    //    }
+    //
+    //    public func getMageticFieldAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
+    //        self.getMagneticFieldFromDeviceMotion(interval: 0.5) { (x, y, z, accuracy) -> Void in
+    //            values(x: x,y: y,z: z)
+    //            self.stopDeviceMotionUpdates()
+    //        }
+    //    }
+    //
+    //    public func getGyroValuesAtCurrentInstant (values: (x:Double, y:Double, z:Double) -> Void){
+    //        self.getRotationRateFromDeviceMotion(interval: 0.5) { (x, y, z) -> Void in
+    //            values(x: x,y: y,z: z)
+    //            self.stopDeviceMotionUpdates()
+    //        }
+    //    }
     
     /*  MARK :- INSTANTANIOUS METHODS END HERE  */
     
@@ -387,7 +387,6 @@ public class MotionSession {
     */
     public func stopAccelerometerUpdates(){
         self.manager.stopAccelerometerUpdates()
-        NSLog("Accelaration Updates Status - Stopped")
     }
     
     /*
@@ -398,7 +397,6 @@ public class MotionSession {
     */
     public func stopGyroUpdates(){
         self.manager.stopGyroUpdates()
-        NSLog("Gyroscope Updates Status - Stopped")
     }
     
     /*
@@ -409,7 +407,12 @@ public class MotionSession {
     */
     public func stopDeviceMotionUpdates() {
         self.manager.stopDeviceMotionUpdates()
-        NSLog("Device Motion Updates Status - Stopped")
+    }
+    
+    public func stopAltimeterUpdates() {
+        if (self.altimeter != nil) {
+            self.altimeter!.stopRelativeAltitudeUpdates()
+        }
     }
     
     /*
@@ -419,9 +422,8 @@ public class MotionSession {
     *   Stops magnetometer updates.
     */
     @available(iOS, introduced=5.0)
-    public func stopmagnetometerUpdates() {
+    public func stopMagnetometerUpdates() {
         self.manager.stopMagnetometerUpdates()
-        NSLog("Magnetometer Updates Status - Stopped")
     }
     
 }

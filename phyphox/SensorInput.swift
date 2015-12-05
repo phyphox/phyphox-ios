@@ -111,7 +111,7 @@ final public class SensorInput {
         if let motionSession = self.motionSession {
             switch sensorType {
             case .Accelerometer:
-                motionSession.getAccelerationFromDeviceMotion(frequency, values: self.dataIn)
+                motionSession.getAccelerometerValues(frequency, values: self.dataIn)
                 break;
             case .Gyroscope:
                 motionSession.getGyroValues(frequency, values: self.dataIn)
@@ -133,6 +133,27 @@ final public class SensorInput {
         }
         else {
             throw SensorError.MotionSessionAbsent
+        }
+    }
+    
+    func stop() {
+        if let motionSession = self.motionSession {
+            switch sensorType {
+            case .Accelerometer, .LinearAcceleration:
+                motionSession.stopAccelerometerUpdates()
+                break;
+            case .Gyroscope:
+                motionSession.stopGyroUpdates()
+                break;
+            case .MagneticField:
+                motionSession.stopMagnetometerUpdates()
+                break;
+            case .Pressure:
+                motionSession.stopAltimeterUpdates()
+                break;
+            case .Light:
+                break;
+            }
         }
     }
     
@@ -182,9 +203,4 @@ final public class SensorInput {
             }
         }
     }
-    
-    func stop() {
-        
-    }
-    
 }

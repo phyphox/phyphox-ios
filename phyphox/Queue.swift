@@ -83,6 +83,22 @@ public class Queue<Element>: SequenceType {
 			return nil
 		}
 	}
+    
+    func itemAtIndex(index: UInt64) -> Element? {
+        var i = UInt64(0)
+        var item = head as QueueItem?
+        
+        while item !== nil {
+            if i == index {
+                return item!.value
+            }
+            
+            item = item!.next
+            i++
+        }
+        
+        return nil
+    }
 	
 	public func isEmpty() -> Bool {
 		return head === tail
