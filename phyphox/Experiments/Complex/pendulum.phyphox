@@ -1,0 +1,104 @@
+<phyphox version="1.0">
+    <title>Pendulum</title>
+    <category>Mechanics</category>
+    <description>
+Determine the gravity constant (g=9.81m/s²) by using your phone as a pendulum.
+
+This experiment uses the gyroscope to measure the pendulum movement and calculates the oscillation period T. The user has to enter the length L of the string used for the pendulum, so phyphox can calculate g = 4π²/T² L.
+
+Further details:
+The oscillation period is obtained through the autocorrelation of each gyroscope component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
+    </description>
+    <translations>
+        <translation locale="de">
+            <title>Pendel</title>
+            <category>Mechanik</category>
+            <description>
+Misst die Erdbeschleunigung (g=9.81m/s²) indem das Smartphone als Pendel benutzt wird.
+
+Dieses Experiment nutzt das Gyroskop um die Pendelbewegung zu erfassen und berechnet hieraus die Schwingungsperiode T. Der Nutzer muss die Länge des Pendels eingeben, so dass phyphox g = 4π²/T² L berechnen kann.
+
+Weitere Details:
+Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Gyroskop-Vektors ermittelt. In der Summe aller drei Autokorrelationen wird dann nach dem ersten Maximum nach dem für Autokorrelationen üblichen Maximum bei dt = 0 gesucht. Hierzu wird der erste Zeitpunkt t0 ermittelt, bei welchem das Signal unter Null fällt. Unter der Annahme, dass die Autokorrelation periodisch um Null schwingt, wird das Maximum dann im Intervall 3x t0 bis 5x t0 gesucht.
+            </description>
+            <string original="Results">Ergebnisse</string>
+            <string original="Period">Periode</string>
+            <string original="Frequency">Frequenz</string>
+            <string original="Length">Länge</string>
+            <string original="History">Verlauf</string>
+            <string original="result index">Ergebnis Nummer</string>
+            <string original="Period (s)">Periode (s)</string>
+            <string original="Frequency (Hz)">Frequenz (Hz)</string>
+            <string original="Autocorrelation">Autokorrelation</string>
+            <string original="correlation (a.u.)">Korrelation (a.u.)</string>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Gyroscope X">Gyroskop X</string>
+            <string original="Gyroscope Y">Gyroskop Y</string>
+            <string original="Gyroscope Z">Gyroskop Z</string>
+        </translation>
+    </translations>
+    <icon>
+        P
+    </icon>
+    <input>
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="50" />
+    </input>
+    <views>
+        <view name="Results">
+            <value label="Period" input="period" unit="s" />
+            <value label="Frequency" input="frequency" unit="Hz" />
+            <input label="Length" output="length" unit="cm" factor="100" default="50" signed="false" />
+            <value label="g" input="g" unit="m/s²" />
+        </view>
+        <view name="History">
+            <graph label="Period" inputY="period" labelX="result index" labelY="Period (s)" />
+            <graph label="Frequency" inputY="frequency" labelX="result index" labelY="Frequency (Hz)" />
+            <graph label="g" inputY="g" labelX="result index" labelY="g (m/s²)" />
+        </view>
+        <view name="Autocorrelation">
+            <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (s)" labelY="correlation (a.u.)" />
+            <value label="Period" input="period" unit="s" />
+            <value label="Frequency" input="frequency" unit="Hz" />
+        </view>
+        <view name="Raw Data">
+            <graph label="Gyroscope X" inputX="gyr_time" inputY="gyrX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Gyroscope Y" inputX="gyr_time" inputY="gyrY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Gyroscope Z" inputX="gyr_time" inputY="gyrZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+        </view>
+    </views>
+    <analysis>
+        <autocorrelation input1="gyrX" input2="gyr_time" output1="autocorrelation_x" output2="autoco_t" mint="0" maxt="2.5" />
+        <autocorrelation input1="gyrY" input2="gyr_time" output1="autocorrelation_y" output2="autoco_t2" mint="0" maxt="2.5" />
+        <autocorrelation input1="gyrZ" input2="gyr_time" output1="autocorrelation_z" output2="autoco_t3" mint="0" maxt="2.5" />
+        <add input1="autocorrelation_x" input2="autocorrelation_y" input3="autocorrelation_z" output1="autocorrelation" />
+        <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
+        <multiply input1="t0" input2="2" output1="dt" />
+        <add input1="t0" input2="dt" output1="t1" />
+        <add input1="t1" input2="dt" output1="t2" />
+        <rangefilter input1="autoco_t" input2="autocorrelation" min1="t1" max1="t2" output1="search_t" output2="search_y" />
+        <max input1="search_y" input2="search_t" output1="max" output2="period" buffer="200" />
+        <divide input1="1" input2="period" output1="frequency" />
+        <multiply input1="6.283185307" input2="frequency" output1="pi2f" />
+        <multiply input1="pi2f" input2="pi2f" input3="length" output1="g" />
+    </analysis>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="gyr_time" />
+            <data name="Rotation x (rad/s)" source="gyrX" />
+            <data name="Rotation y (rad/s)" source="gyrY" />
+            <data name="Rotation z (rad/s)" source="gyrZ" />
+        </set>
+        <set name="Autocorrelation">
+            <data name="Time shift (s)" source="autoco_t" />
+            <data name="Autocorrelation x" source="autocorrelation_x" />
+            <data name="Autocorrelation y" source="autocorrelation_y" />
+            <data name="Autocorrelation z" source="autocorrelation_z" />
+            <data name="Autocorrelation Sum" source="autocorrelation" />
+        </set>
+        <set name="Result History">
+            <data name="Period (s)" source="period" />
+            <data name="Frequency (Hz)" source="frequency" />
+            <data name="g (m/s²)" source="g" />
+        </set>
+    </export>
+</phyphox>

@@ -1,0 +1,83 @@
+<phyphox version="1.0">
+    <title>Tone generator</title>
+    <category>Acoustics</category>
+    <description>
+Generate a tone of one or two frequencies.
+
+The total signal will be normalized, so the amplitudes describe ratios.
+
+Note: This experiments tries to figure out the periodicity of the resulting signal and only calculates a single period. However, if both frequencies are too close or have particularly unharmonic ratios, this period becomes very long. In these cases, the experiment calculates a maximum of 1 second of audio signal (to consider older phones), which may lead to a period clicking sound as the sound loops at a period that does not match the actual signal.
+    </description>
+    <translations>
+        <translation locale="de">
+            <title>Tongenerator</title>
+            <category>Akustik</category>
+            <description>
+Generiert einen Ton aus einer oder zwei Frequenzen.
+
+Das gesamte Signal wird normalisiert. Die Amplituden beschreiben somit nur ein Verhältnis.
+
+Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu ermitteln und berechnet nur eine Periode. Sind beide Frequenzen jedoch in einem ungünstigen Verhältnis, so dass die Periode sehr lang wird, berechnet dieses Experiment als maximale Periode eine Sekunde, um den Ablauf auch auf langsameren Smartphones zu ermöglichen. Dies kann zu periodischen Knackgeräuschen führen, wenn die Periode des berechneten Signals nicht mit der Periode des eigentlich gewünschten Signals übereinstimmt.
+            </description>
+            <string original="Frequency 1">Frequenz 1</string>
+            <string original="Frequency 2">Frequenz 2</string>
+            <string original="Base Frequency">Grundfrequenz</string>
+            <string original="Envelope Frequency">Einhüllende Freq.</string>
+            <string original="Time (s)">Zeit (s)</string>
+        </translation>
+    </translations>
+    <input>
+    </input>
+    <views>
+        <view name="Settings">
+            <input label="Amplitude 1" output="a1" default="1" signed="false" />
+            <input label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
+            <input label="Amplitude 2" output="a2" default="1" signed="false" />
+            <input label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
+            <value label="Base Frequency" input="basef" unit="Hz" />
+            <value label="Envelope Frequency" input="envf" unit="Hz" />
+        </view>
+        <view name="Signal">
+            <graph label="Signal" inputX="t" inputY="signal" labelX="Time (s)" labelY="A (a.u.)" />
+        </view>
+    </views>
+    <analysis onUserInput="true">
+        <ramp start="0" stop="0.999979167" buffer="48000" output1="tbuffer" static="true" />
+        <ramp start="0" stop="47999" buffer="48000" output1="i" static="true" />
+
+        <add input1="f1" input2="f2" output1="sumf" />
+        <divide input1="sumf" input2="2" output1="basef" />
+        <divide input1="1" input2="basef" output1="basePeriod" />
+        <multiply input1="basePeriod" input2="48000" output1="basePeriodSamples" />
+
+        <subtract input1="f1" input2="f2" output1="diff" />
+        <divide input1="diff" input2="2" output1="envfsigned" />
+        <abs input1="envfsigned" output1="envf" />
+        <divide input1="1" input2="envf" output1="envPeriod" />
+        <multiply input1="envPeriod" input2="48000" output1="envPeriodSamples" />
+
+        <lcm input1="basePeriodSamples" input2="envPeriodSamples" output1="minBuffer" />
+        <rangefilter input1="i" input2="tbuffer" max1="minBuffer" output1="icut" output2="t" />
+
+        <multiply input1="f1" input2="t" input3="6.283185307" output1="arg1" />
+        <multiply input1="f2" input2="t" input3="6.283185307" output1="arg2" />
+        <sin input1="arg1" output1="sin1" />
+        <sin input1="arg2" output1="sin2" />
+        <multiply input1="sin1" input2="a1" output1="sig1" />
+        <multiply input1="sin2" input2="a2" output1="sig2" />
+        <add input1="sig1" input2="sig2" output1="signal" />
+        <max input1="signal" output1="max" />
+        <divide input1="signal" input2="max" output1="signal_normalized" />
+    </analysis>
+    <export>
+        <set name="Signal">
+            <data name="Time (s)" source="t" />
+            <data name="Signal 1" source="sig1" />
+            <data name="Signal 2" source="sig2" />
+            <data name="Signal sum" source="signal" />
+        </set>
+    </export>
+    <output>
+        <audio loop="true" input="signal_normalized" rate="48000" buffer="48000" />
+    </output>
+</phyphox>

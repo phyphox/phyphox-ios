@@ -1,0 +1,28 @@
+<phyphox version="1.0">
+    <title>Pressure</title>
+    <category>Raw Sensors</category>
+    <description>Get raw data from the barometer.</description>
+    <translations>
+        <translation locale="de">
+            <title>Druck</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Barometers auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Pressure">Druck</string>
+        </translation>
+    </translations>
+    <input>
+        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="10000" />
+    </input>
+    <views>
+        <view name="Raw Data">
+            <graph label="Pressure" inputX="p_time" inputY="pressure" labelX="t (s)" labelY="p (hPa)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="p_time" />
+            <data name="Pressure (hPa)" source="pressure" />
+        </set>
+    </export>
+</phyphox>

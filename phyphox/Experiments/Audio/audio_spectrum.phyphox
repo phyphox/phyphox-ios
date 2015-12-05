@@ -1,0 +1,59 @@
+<phyphox version="1.0">
+    <title>Audio Spectrum</title>
+    <category>Acoustics</category>
+    <icon>ASp</icon>
+    <description>
+Display the frequency spectrum of an audio signal.
+
+This experiment records audio from the microphone and calculates its frequency spectrum through a Fourier transformation (FFT). If you only have a single tone with a single frequency, you might get more precise results from the &quot;autocorrelation&quot; audio experiment.
+    </description>
+    <translations>
+        <translation locale="de">
+            <title>Audio Spektrum</title>
+            <category>Akustik</category>
+            <description>
+Zeigt das Frequenz-Spektrum von Audiosignalen.
+
+Dieses Experiment nimmt Audiodaten über das Mikrofon auf und berechnet das Frequenzspektrum mittels einer Fourier-Transformation (FFT). Wenn Sie nur eine einzige Frequenz analysieren möchten, erhalten Sie möglicherweise präzisere Resultate mit dem Experiment &quot;Autokorrelation&quot;.
+            </description>
+            <string original="Spectrum">Spektrum</string>
+            <string original="Peak-Frequency">Frequenzspitze</string>
+            <string original="Fourier Transform">Fourier-Transformierte</string>
+            <string original="Raw data">Rohdaten</string>
+            <string original="Recording">Aufnahme</string>
+        </translation>
+    </translations>
+    <input>
+        <audio output="recording" rate="48000" buffer="8192" />
+    </input>
+    <views>
+        <view name="Spectrum">
+            <value label="Peak-Frequency" input="f0" unit="Hz" />
+            <graph label="Fourier Transform" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
+        </view>
+        <view name="Raw data">
+            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Amplitude (a.u.)" />
+        </view>
+    </views>
+    <analysis period="0.3">
+        <ramp start="0" stop="170.645833" buffer="8192" output1="time" static="true" />
+        <ramp start="0" stop="47994" buffer="8192" output1="frequency" static="true" />
+        <fft input1="recording" output1="fftx" output2="ffty" />
+        <rangefilter input1="frequency" input2="fftx" input3="ffty" min1="1" max1="23994" output1="display_frequency" output2="display_fftx" output3="display_ffty" />
+        <multiply input1="display_fftx" input2="display_fftx" output1="fftx2" />
+        <multiply input1="display_ffty" input2="display_ffty" output1="ffty2" />
+        <add input1="fftx2" input2="ffty2" output1="fft2" />
+        <power input1="fft2" input2="0.5" output1="fft" />
+        <max input1="fft" input2="display_frequency" output1="max" output2="f0" />
+    </analysis>
+    <export>
+        <set name="FFT Spectrum">
+            <data name="Delay (ms)" source="autoco_t" />
+            <data name="Autocorrelation (a.u.)" source="autocorrelation" />
+        </set>
+        <set name="Raw data">
+            <data name="Time (ms)" source="time" />
+            <data name="Recording (a.u.)" source="recording" />
+        </set>
+    </export>
+</phyphox>

@@ -1,0 +1,645 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6B7BF7851C130425007408FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7841C130425007408FB /* Assets.xcassets */; };
+		6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7861C130425007408FB /* LaunchScreen.storyboard */; };
+		6B7BF7931C130425007408FB /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7921C130425007408FB /* phyphoxTests.swift */; };
+		6B7BF79E1C130425007408FB /* phyphoxUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF79D1C130425007408FB /* phyphoxUITests.swift */; };
+		6B7BF7B71C130471007408FB /* Experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AD1C130471007408FB /* Experiment.swift */; };
+		6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AE1C130471007408FB /* ExperimentCell.swift */; };
+		6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */; };
+		6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */; };
+		6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B11C130471007408FB /* ExperimentManager.swift */; };
+		6B7BF7BC1C130471007408FB /* Experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B21C130471007408FB /* Experiments */; };
+		6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */; };
+		6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */; };
+		6B7BF7BF1C130471007408FB /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B51C130471007408FB /* MainView.swift */; };
+		6B7BF7C01C130471007408FB /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B61C130471007408FB /* MainViewController.swift */; };
+		6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7C11C13048B007408FB /* AppDelegate.swift */; };
+		6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D21C13069A007408FB /* DataBuffer.swift */; };
+		6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
+		6B7BF7F41C132563007408FB /* MotionKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F31C132563007408FB /* MotionKit.swift */; };
+		6B7BF7F61C132722007408FB /* SensorInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F51C132722007408FB /* SensorInput.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6B7BF78F1C130425007408FB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
+		6B7BF79A1C130425007408FB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6B7BF7E51C131FE1007408FB /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		6B7BF77A1C130425007408FB /* phyphox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = phyphox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B7BF7841C130425007408FB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6B7BF7871C130425007408FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		6B7BF7891C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6B7BF78E1C130425007408FB /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B7BF7921C130425007408FB /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
+		6B7BF7941C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6B7BF7991C130425007408FB /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B7BF79D1C130425007408FB /* phyphoxUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxUITests.swift; sourceTree = "<group>"; };
+		6B7BF79F1C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6B7BF7AD1C130471007408FB /* Experiment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
+		6B7BF7AE1C130471007408FB /* ExperimentCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCell.swift; sourceTree = "<group>"; };
+		6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCollection.swift; sourceTree = "<group>"; };
+		6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentDeserializer.swift; sourceTree = "<group>"; };
+		6B7BF7B11C130471007408FB /* ExperimentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentManager.swift; sourceTree = "<group>"; };
+		6B7BF7B21C130471007408FB /* Experiments */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Experiments; sourceTree = "<group>"; };
+		6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerialization.swift; sourceTree = "<group>"; };
+		6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerializer.swift; sourceTree = "<group>"; };
+		6B7BF7B51C130471007408FB /* MainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		6B7BF7B61C130471007408FB /* MainViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		6B7BF7C11C13048B007408FB /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		6B7BF7C71C130507007408FB /* Analysis.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = Analysis.java; sourceTree = "<group>"; };
+		6B7BF7C81C130507007408FB /* dataBuffer.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = dataBuffer.java; sourceTree = "<group>"; };
+		6B7BF7C91C130507007408FB /* dataExport.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = dataExport.java; sourceTree = "<group>"; };
+		6B7BF7CA1C130507007408FB /* Experiment.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = Experiment.java; sourceTree = "<group>"; };
+		6B7BF7CB1C130507007408FB /* ExperimentList.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = ExperimentList.java; sourceTree = "<group>"; };
+		6B7BF7CC1C130507007408FB /* expView.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = expView.java; sourceTree = "<group>"; };
+		6B7BF7CD1C130507007408FB /* graphView.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = graphView.java; sourceTree = "<group>"; };
+		6B7BF7CE1C130507007408FB /* phyphoxExperiment.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = phyphoxExperiment.java; sourceTree = "<group>"; };
+		6B7BF7CF1C130507007408FB /* phyphoxFile.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = phyphoxFile.java; sourceTree = "<group>"; };
+		6B7BF7D01C130507007408FB /* remoteServer.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = remoteServer.java; sourceTree = "<group>"; };
+		6B7BF7D11C130507007408FB /* sensorInput.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = sensorInput.java; sourceTree = "<group>"; };
+		6B7BF7D21C13069A007408FB /* DataBuffer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataBuffer.swift; sourceTree = "<group>"; };
+		6B7BF7D61C130D0F007408FB /* Queue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Queue.swift; sourceTree = "<group>"; };
+		6B7BF7F31C132563007408FB /* MotionKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MotionKit.swift; sourceTree = "<group>"; };
+		6B7BF7F51C132722007408FB /* SensorInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SensorInput.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6B7BF7771C130425007408FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF78B1C130425007408FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF7961C130425007408FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6B7BF7711C130425007408FB = {
+			isa = PBXGroup;
+			children = (
+				6B7BF77C1C130425007408FB /* phyphox */,
+				6B7BF7911C130425007408FB /* phyphoxTests */,
+				6B7BF79C1C130425007408FB /* phyphoxUITests */,
+				6B7BF77B1C130425007408FB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6B7BF77B1C130425007408FB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF77A1C130425007408FB /* phyphox.app */,
+				6B7BF78E1C130425007408FB /* phyphoxTests.xctest */,
+				6B7BF7991C130425007408FB /* phyphoxUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6B7BF77C1C130425007408FB /* phyphox */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
+				6B7BF7F31C132563007408FB /* MotionKit.swift */,
+				6B7BF7C61C130507007408FB /* Java */,
+				6B7BF7C51C1304C6007408FB /* UI */,
+				6B7BF7C31C1304B3007408FB /* Experiment */,
+				6B7BF7AC1C130457007408FB /* Assets */,
+			);
+			path = phyphox;
+			sourceTree = "<group>";
+		};
+		6B7BF7911C130425007408FB /* phyphoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7921C130425007408FB /* phyphoxTests.swift */,
+				6B7BF7941C130425007408FB /* Info.plist */,
+			);
+			path = phyphoxTests;
+			sourceTree = "<group>";
+		};
+		6B7BF79C1C130425007408FB /* phyphoxUITests */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF79D1C130425007408FB /* phyphoxUITests.swift */,
+				6B7BF79F1C130425007408FB /* Info.plist */,
+			);
+			path = phyphoxUITests;
+			sourceTree = "<group>";
+		};
+		6B7BF7AC1C130457007408FB /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7B21C130471007408FB /* Experiments */,
+				6B7BF7841C130425007408FB /* Assets.xcassets */,
+				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
+				6B7BF7891C130425007408FB /* Info.plist */,
+			);
+			name = Assets;
+			sourceTree = "<group>";
+		};
+		6B7BF7C31C1304B3007408FB /* Experiment */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7AD1C130471007408FB /* Experiment.swift */,
+				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
+				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
+				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
+				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
+				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
+				6B7BF7D21C13069A007408FB /* DataBuffer.swift */,
+				6B7BF7F51C132722007408FB /* SensorInput.swift */,
+				6B7BF7D61C130D0F007408FB /* Queue.swift */,
+			);
+			name = Experiment;
+			sourceTree = "<group>";
+		};
+		6B7BF7C41C1304BA007408FB /* Main View */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7AE1C130471007408FB /* ExperimentCell.swift */,
+				6B7BF7B51C130471007408FB /* MainView.swift */,
+				6B7BF7B61C130471007408FB /* MainViewController.swift */,
+			);
+			name = "Main View";
+			sourceTree = "<group>";
+		};
+		6B7BF7C51C1304C6007408FB /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7C41C1304BA007408FB /* Main View */,
+			);
+			name = UI;
+			sourceTree = "<group>";
+		};
+		6B7BF7C61C130507007408FB /* Java */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7C71C130507007408FB /* Analysis.java */,
+				6B7BF7C81C130507007408FB /* dataBuffer.java */,
+				6B7BF7C91C130507007408FB /* dataExport.java */,
+				6B7BF7CA1C130507007408FB /* Experiment.java */,
+				6B7BF7CB1C130507007408FB /* ExperimentList.java */,
+				6B7BF7CC1C130507007408FB /* expView.java */,
+				6B7BF7CD1C130507007408FB /* graphView.java */,
+				6B7BF7CE1C130507007408FB /* phyphoxExperiment.java */,
+				6B7BF7CF1C130507007408FB /* phyphoxFile.java */,
+				6B7BF7D01C130507007408FB /* remoteServer.java */,
+				6B7BF7D11C130507007408FB /* sensorInput.java */,
+			);
+			name = Java;
+			path = ../../../../Downloads/phyphox/app/src/main/java/de/rwth_aachen/phyphox;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6B7BF7791C130425007408FB /* phyphox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B7BF7A21C130425007408FB /* Build configuration list for PBXNativeTarget "phyphox" */;
+			buildPhases = (
+				6B7BF7761C130425007408FB /* Sources */,
+				6B7BF7771C130425007408FB /* Frameworks */,
+				6B7BF7781C130425007408FB /* Resources */,
+				6B7BF7AB1C130436007408FB /* ShellScript */,
+				6B7BF7E51C131FE1007408FB /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = phyphox;
+			productName = phyphox;
+			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
+			productType = "com.apple.product-type.application";
+		};
+		6B7BF78D1C130425007408FB /* phyphoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B7BF7A51C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxTests" */;
+			buildPhases = (
+				6B7BF78A1C130425007408FB /* Sources */,
+				6B7BF78B1C130425007408FB /* Frameworks */,
+				6B7BF78C1C130425007408FB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6B7BF7901C130425007408FB /* PBXTargetDependency */,
+			);
+			name = phyphoxTests;
+			productName = phyphoxTests;
+			productReference = 6B7BF78E1C130425007408FB /* phyphoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		6B7BF7981C130425007408FB /* phyphoxUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B7BF7A81C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxUITests" */;
+			buildPhases = (
+				6B7BF7951C130425007408FB /* Sources */,
+				6B7BF7961C130425007408FB /* Frameworks */,
+				6B7BF7971C130425007408FB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6B7BF79B1C130425007408FB /* PBXTargetDependency */,
+			);
+			name = phyphoxUITests;
+			productName = phyphoxUITests;
+			productReference = 6B7BF7991C130425007408FB /* phyphoxUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6B7BF7721C130425007408FB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0710;
+				LastUpgradeCheck = 0710;
+				ORGANIZATIONNAME = "RWTH Aachen";
+				TargetAttributes = {
+					6B7BF7791C130425007408FB = {
+						CreatedOnToolsVersion = 7.1.1;
+					};
+					6B7BF78D1C130425007408FB = {
+						CreatedOnToolsVersion = 7.1.1;
+						TestTargetID = 6B7BF7791C130425007408FB;
+					};
+					6B7BF7981C130425007408FB = {
+						CreatedOnToolsVersion = 7.1.1;
+						TestTargetID = 6B7BF7791C130425007408FB;
+					};
+				};
+			};
+			buildConfigurationList = 6B7BF7751C130425007408FB /* Build configuration list for PBXProject "phyphox" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 6B7BF7711C130425007408FB;
+			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6B7BF7791C130425007408FB /* phyphox */,
+				6B7BF78D1C130425007408FB /* phyphoxTests */,
+				6B7BF7981C130425007408FB /* phyphoxUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6B7BF7781C130425007408FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
+				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
+				6B7BF7BC1C130471007408FB /* Experiments in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF78C1C130425007408FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF7971C130425007408FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6B7BF7AB1C130436007408FB /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "buildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"$INFOPLIST_FILE\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"$INFOPLIST_FILE\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6B7BF7761C130425007408FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
+				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				6B7BF7B71C130471007408FB /* Experiment.swift in Sources */,
+				6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */,
+				6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */,
+				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
+				6B7BF7F41C132563007408FB /* MotionKit.swift in Sources */,
+				6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */,
+				6B7BF7F61C132722007408FB /* SensorInput.swift in Sources */,
+				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
+				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
+				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
+				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
+				6B7BF7C01C130471007408FB /* MainViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF78A1C130425007408FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B7BF7931C130425007408FB /* phyphoxTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7BF7951C130425007408FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B7BF79E1C130425007408FB /* phyphoxUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6B7BF7901C130425007408FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = 6B7BF78F1C130425007408FB /* PBXContainerItemProxy */;
+		};
+		6B7BF79B1C130425007408FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = 6B7BF79A1C130425007408FB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		6B7BF7861C130425007408FB /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				6B7BF7871C130425007408FB /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		6B7BF7A01C130425007408FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6B7BF7A11C130425007408FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		6B7BF7A31C130425007408FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				INFOPLIST_FILE = phyphox/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphox";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6B7BF7A41C130425007408FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				INFOPLIST_FILE = phyphox/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphox";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		6B7BF7A61C130425007408FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = phyphoxTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/phyphox";
+			};
+			name = Debug;
+		};
+		6B7BF7A71C130425007408FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = phyphoxTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/phyphox";
+			};
+			name = Release;
+		};
+		6B7BF7A91C130425007408FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = phyphoxUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = phyphox;
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		6B7BF7AA1C130425007408FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = phyphoxUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = phyphox;
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6B7BF7751C130425007408FB /* Build configuration list for PBXProject "phyphox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B7BF7A01C130425007408FB /* Debug */,
+				6B7BF7A11C130425007408FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6B7BF7A21C130425007408FB /* Build configuration list for PBXNativeTarget "phyphox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B7BF7A31C130425007408FB /* Debug */,
+				6B7BF7A41C130425007408FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		6B7BF7A51C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B7BF7A61C130425007408FB /* Debug */,
+				6B7BF7A71C130425007408FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		6B7BF7A81C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B7BF7A91C130425007408FB /* Debug */,
+				6B7BF7AA1C130425007408FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6B7BF7721C130425007408FB /* Project object */;
+}

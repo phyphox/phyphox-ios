@@ -1,0 +1,62 @@
+//
+//  ExperimentSerialization.swift
+//  phyphox
+//
+//  Created by Jonas Gessner on 04.12.15.
+//  Copyright © 2015 RWTH Aachen. All rights reserved.
+//
+
+import Foundation
+
+enum SerializationError: ErrorType {
+    case GenericError
+    case InvalidFilePath
+    case WriteFailed
+    case EmptyData
+}
+
+var serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)
+
+final class ExperimentSerialization: NSObject {
+    /**
+     
+     */
+    class func readExperimentFromFile(path: String) throws -> Experiment {
+        let data = NSData(contentsOfFile: path)
+        
+        if (data != nil && data!.length > 0) {
+            return try deserializeExperiment(data!);
+        }
+        else {
+            throw SerializationError.InvalidFilePath
+        }
+    }
+    
+    class func serializeExperiment(experiment: Experiment) throws -> NSData {
+        return try ExperimentSerializer(experiment: experiment).serialize()
+    }
+    
+    class func deserializeExperiment(data: NSData) throws -> Experiment {
+        return try ExperimentDeserializer(data: data).deserialize()
+    }
+    
+    class func serializeExperimentAsynchronous(experiment: Experiment, completion: ((data: NSData?, error: SerializationError?) -> Void)) {
+        ExperimentSerializer(experiment: experiment).serializeAsynchronous(completion)
+    }
+    
+    class func deserializeExperiment(data: NSData, completion: ((Experiment: Experiment?, error: SerializationError?) -> Void)) {
+        ExperimentDeserializer(data: data).deserializeAsynchronous(completion)
+    }
+    
+    class func writeExperimentToFile(experiment: Experiment, path: String) throws -> Bool {
+        let data = try serializeExperiment(experiment)
+        
+        if (data.length > 0) {
+            guard data.writeToFile(path, atomically: true) else {
+                throw SerializationError.WriteFailed
+            }
+        }
+        
+        throw SerializationError.EmptyData
+    }
+}
