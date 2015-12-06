@@ -6,10 +6,12 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
+//FIXME: This class needs to be tested.
+
 /**
 Queue Item.
 */
-class QueueItem<T> {
+final class QueueItem<T> {
 	let value: T?
 	private(set) var next: QueueItem?
 	
@@ -25,17 +27,17 @@ class QueueItem<T> {
 /**
  Queue (FIFO). Not thread safe! Can only be modified by calling `enqueue()`, `dequeue()` and `clear()`.
  */
-public class Queue<Element>: SequenceType {
+final class Queue<Element>: SequenceType {
 	private(set) var head: QueueItem<Element>
 	private(set) var tail: QueueItem<Element>
     private(set) var count: UInt64 = 0
     
-    public init() {
+    init() {
         tail = QueueItem(nil)
         head = tail
     }
     
-    public func generate() -> AnyGenerator<Element> {
+    func generate() -> AnyGenerator<Element> {
         var element = head as QueueItem<Element>?
         
         return anyGenerator {
@@ -51,7 +53,7 @@ public class Queue<Element>: SequenceType {
         }
     }
     
-    public func toArray() -> [Element]? {
+    func toArray() -> [Element]? {
         var array: [Element] = []
         
         for value in self {
@@ -61,19 +63,19 @@ public class Queue<Element>: SequenceType {
         return array.count > 0 ? array : nil
     }
     
-    public func clear() {
+    func clear() {
         tail = QueueItem(nil)
         head = tail
         count = 0
     }
 	
-	public func enqueue(value: Element) {
+	func enqueue(value: Element) {
 		tail.next = QueueItem(value)
 		tail = tail.next!
         count++
 	}
 	
-	public func dequeue() -> Element? {
+	func dequeue() -> Element? {
 		if let newhead = head.next {
 			head = newhead
             count--
@@ -100,7 +102,7 @@ public class Queue<Element>: SequenceType {
         return nil
     }
 	
-	public func isEmpty() -> Bool {
+	func isEmpty() -> Bool {
 		return head === tail
 	}
 }

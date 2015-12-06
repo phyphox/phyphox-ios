@@ -44,11 +44,15 @@ public class ExperimentAnalysis {
         self.outputs = outputs
         
         for (i, value) in inputs.enumerate() {
-            if (true/**check if value is valid identifier*/) {
+            if (Experiment.isValidIdentifier(value)) {
                 let d = Double(value)
                 
                 if (d != nil) {
                     fixedValues[i] = d
+                }
+                else {
+                    //FIXME: fatalError call only available on iOS 8.1+
+                    fatalError(String(format: "Invalid Input: %@", value))
                 }
             }
         }
@@ -79,6 +83,7 @@ public class ExperimentAnalysis {
     }
     
     func update() {
+        //FIXME: fatalError call only available on iOS 8.1+
         fatalError("Subclasses of ExperimentAnalysis must override the update() method!")
     }
 }
