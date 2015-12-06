@@ -1,14 +1,14 @@
 //
-//  DivisionAnalysis.swift
+//  GCDAnalysis.swift
 //  phyphox
 //
-//  Created by Jonas Gessner on 05.12.15.
+//  Created by Jonas Gessner on 06.12.15.
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
 import Foundation
 
-final class DivisionAnalysis: ExperimentAnalysis {
+final class GCDAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
@@ -22,12 +22,15 @@ final class DivisionAnalysis: ExperimentAnalysis {
                 bufferIterators.append(getBufferForKey(input)!.generate())
                 lastValues.append(0.0)
             }
+            
+            if (i == 1) {
+                break;
+            }
         }
         
         outputs.first!.clear()
         
         for _ in 0...outputs.first!.size-1 {
-            var neutral = 1.0
             var didGetInput = false
             
             for (j, iterator) in bufferIterators.enumerate() {
@@ -35,17 +38,20 @@ final class DivisionAnalysis: ExperimentAnalysis {
                     lastValues[j] = next
                     didGetInput = true
                 }
-                
-                if (j == 0) {
-                    neutral = lastValues[j]; //First value: Get value even if there is no value left in the buffer
-                }
-                else {
-                    neutral /= lastValues[j]; //Subtracted values: Get value even if there is no value left in the buffer
-                }
+            }
+            
+            var a = round(lastValues.first!)
+            var b = round(lastValues[1])
+            
+            //Euclid's algorithm (modern iterative version)
+            while (b > 0) {
+                let tmp = b;
+                b = a % b;
+                a = tmp;
             }
             
             if didGetInput {
-                outputs.first!.append(neutral)
+                outputs.first!.append(a)
             }
             else {
                 break;

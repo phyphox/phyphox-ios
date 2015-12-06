@@ -1,14 +1,14 @@
 //
-//  DivisionAnalysis.swift
+//  PowerAnalysis.swift
 //  phyphox
 //
-//  Created by Jonas Gessner on 05.12.15.
+//  Created by Jonas Gessner on 06.12.15.
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
 import Foundation
 
-final class DivisionAnalysis: ExperimentAnalysis {
+final class PowerAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
@@ -40,7 +40,7 @@ final class DivisionAnalysis: ExperimentAnalysis {
                     neutral = lastValues[j]; //First value: Get value even if there is no value left in the buffer
                 }
                 else {
-                    neutral /= lastValues[j]; //Subtracted values: Get value even if there is no value left in the buffer
+                    neutral = pow(neutral, lastValues[j]); //Subtracted values: Get value even if there is no value left in the buffer
                 }
             }
             

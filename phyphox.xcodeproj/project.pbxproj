@@ -31,6 +31,23 @@
 		6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7FB1C13954E007408FB /* SubtractionAnalysis.swift */; };
 		6B7BF7FE1C13963E007408FB /* MultiplicationAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7FD1C13963E007408FB /* MultiplicationAnalysis.swift */; };
 		6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7FF1C139649007408FB /* DivisionAnalysis.swift */; };
+		6B7BF8031C1466DF007408FB /* PowerAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */; };
+		6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8041C146B23007408FB /* GCDAnalysis.swift */; };
+		6B7BF8071C146DC2007408FB /* LCDAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8061C146DC2007408FB /* LCDAnalysis.swift */; };
+		6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8081C146FC9007408FB /* ABSAnalysis.swift */; };
+		6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF80A1C147236007408FB /* SinAnalysis.swift */; };
+		6B7BF80D1C14723D007408FB /* CosAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF80C1C14723D007408FB /* CosAnalysis.swift */; };
+		6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF80E1C147244007408FB /* TanAnalysis.swift */; };
+		6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8101C14761F007408FB /* MaxAnalysis.swift */; };
+		6B7BF8131C14788C007408FB /* AppendAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8121C14788C007408FB /* AppendAnalysis.swift */; };
+		6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8141C1479E8007408FB /* ConstGeneratorAnalysis.swift */; };
+		6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8161C147B8F007408FB /* RampGeneratorAnalysis.swift */; };
+		6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */; };
+		6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */; };
+		6B7BF81D1C147CC2007408FB /* CrosscorrelationAnaylsis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF81C1C147CC2007408FB /* CrosscorrelationAnaylsis.swift */; };
+		6B7BF81F1C147CE0007408FB /* DifferentiationAnylsis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF81E1C147CE0007408FB /* DifferentiationAnylsis.swift */; };
+		6B7BF8211C147CF3007408FB /* AutocorrelationAnylsis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8201C147CF3007408FB /* AutocorrelationAnylsis.swift */; };
+		6B7BF8231C147D09007408FB /* FFTAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8221C147D09007408FB /* FFTAnalysis.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +122,23 @@
 		6B7BF7FB1C13954E007408FB /* SubtractionAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubtractionAnalysis.swift; sourceTree = "<group>"; };
 		6B7BF7FD1C13963E007408FB /* MultiplicationAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MultiplicationAnalysis.swift; sourceTree = "<group>"; };
 		6B7BF7FF1C139649007408FB /* DivisionAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DivisionAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PowerAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8041C146B23007408FB /* GCDAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GCDAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8061C146DC2007408FB /* LCDAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LCDAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8081C146FC9007408FB /* ABSAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ABSAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF80A1C147236007408FB /* SinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF80C1C14723D007408FB /* CosAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CosAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF80E1C147244007408FB /* TanAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TanAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8101C14761F007408FB /* MaxAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MaxAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8121C14788C007408FB /* AppendAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppendAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8141C1479E8007408FB /* ConstGeneratorAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstGeneratorAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8161C147B8F007408FB /* RampGeneratorAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RampGeneratorAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RangefilterAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GaussSmoothAnalysis.swift; sourceTree = "<group>"; };
+		6B7BF81C1C147CC2007408FB /* CrosscorrelationAnaylsis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrosscorrelationAnaylsis.swift; sourceTree = "<group>"; };
+		6B7BF81E1C147CE0007408FB /* DifferentiationAnylsis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DifferentiationAnylsis.swift; sourceTree = "<group>"; };
+		6B7BF8201C147CF3007408FB /* AutocorrelationAnylsis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AutocorrelationAnylsis.swift; sourceTree = "<group>"; };
+		6B7BF8221C147D09007408FB /* FFTAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FFTAnalysis.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -256,6 +290,23 @@
 				6B7BF7FB1C13954E007408FB /* SubtractionAnalysis.swift */,
 				6B7BF7FD1C13963E007408FB /* MultiplicationAnalysis.swift */,
 				6B7BF7FF1C139649007408FB /* DivisionAnalysis.swift */,
+				6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */,
+				6B7BF8041C146B23007408FB /* GCDAnalysis.swift */,
+				6B7BF8061C146DC2007408FB /* LCDAnalysis.swift */,
+				6B7BF8081C146FC9007408FB /* ABSAnalysis.swift */,
+				6B7BF80A1C147236007408FB /* SinAnalysis.swift */,
+				6B7BF80C1C14723D007408FB /* CosAnalysis.swift */,
+				6B7BF80E1C147244007408FB /* TanAnalysis.swift */,
+				6B7BF8101C14761F007408FB /* MaxAnalysis.swift */,
+				6B7BF8121C14788C007408FB /* AppendAnalysis.swift */,
+				6B7BF8141C1479E8007408FB /* ConstGeneratorAnalysis.swift */,
+				6B7BF8161C147B8F007408FB /* RampGeneratorAnalysis.swift */,
+				6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */,
+				6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */,
+				6B7BF81C1C147CC2007408FB /* CrosscorrelationAnaylsis.swift */,
+				6B7BF8221C147D09007408FB /* FFTAnalysis.swift */,
+				6B7BF8201C147CF3007408FB /* AutocorrelationAnylsis.swift */,
+				6B7BF81E1C147CE0007408FB /* DifferentiationAnylsis.swift */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
@@ -410,21 +461,38 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
+				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
+				6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
+				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
+				6B7BF80D1C14723D007408FB /* CosAnalysis.swift in Sources */,
+				6B7BF8231C147D09007408FB /* FFTAnalysis.swift in Sources */,
+				6B7BF8131C14788C007408FB /* AppendAnalysis.swift in Sources */,
+				6B7BF8031C1466DF007408FB /* PowerAnalysis.swift in Sources */,
 				6B7BF7B71C130471007408FB /* Experiment.swift in Sources */,
 				6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */,
 				6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */,
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
+				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
 				6B7BF7F41C132563007408FB /* MotionKit.swift in Sources */,
+				6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */,
 				6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */,
+				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,
+				6B7BF8211C147CF3007408FB /* AutocorrelationAnylsis.swift in Sources */,
 				6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */,
+				6B7BF8071C146DC2007408FB /* LCDAnalysis.swift in Sources */,
+				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B7BF7F61C132722007408FB /* SensorInput.swift in Sources */,
+				6B7BF81F1C147CE0007408FB /* DifferentiationAnylsis.swift in Sources */,
+				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysis.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
 				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
+				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnaylsis.swift in Sources */,
 				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
 				6B7BF7C01C130471007408FB /* MainViewController.swift in Sources */,
 				6B7BF7FE1C13963E007408FB /* MultiplicationAnalysis.swift in Sources */,

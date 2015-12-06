@@ -8,7 +8,7 @@
 
 import Foundation
 
-class MultiplicationAnalysis: ExperimentAnalysis {
+final class MultiplicationAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
