@@ -43,7 +43,7 @@ final public class SensorInput {
     
     private struct Averaging {
         /**
-         The duration of averaging intervals. Set to `nil` to disable averaging.
+         The duration of averaging intervals.
          */
         private(set) var averagingInterval: NSTimeInterval
         
@@ -67,6 +67,9 @@ final public class SensorInput {
         }
     }
     
+    /**
+     Information on averaging. Set to `nil` to disable averaging.
+     */
     private var averaging: Averaging?
     
     var recordingAverages: Bool {

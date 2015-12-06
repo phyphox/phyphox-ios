@@ -8,45 +8,42 @@
 
 import Foundation
 
-/*
-int calcWidth; //range to which the gauss is calculated
-double[] gauss; //Gauss-weight look-up-table
-
-protected gaussSmoothAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
-super(experiment, inputs, outputs);
-setSigma(3); //default
-}
-
-//Change sigma
-protected void setSigma(double sigma) {
-this.calcWidth = (int)Math.round(sigma*3); //Adapt calculation range: 3x sigma should be plenty
-
-gauss = new double[calcWidth*2+1];
-for (int i = -calcWidth; i <= calcWidth; i++) {
-gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.)/(sigma*Math.sqrt(2.*Math.PI)); //Gauß!
-}
-}
-
-@Override
-protected void update() {
-//Get array for random access
-Double y[] = experiment.getBuffer(inputs.get(0)).getArray();
-
-//Clear output
-outputs.get(0).clear();
-
-for (int i = 0; i < y.length; i++) { //For each data-point
-double sum = 0;
-for (int j = -calcWidth; j <= calcWidth; j++) { //For each step in the look-up-table
-int k = i+j; //index in input that corresponds to the step in the look-up-table
-if (k >= 0 && k < y.length)
-sum += gauss[j+calcWidth]*y[k]; //Add weighted contribution
-}
-outputs.get(0).append(sum); //Append the result to the output buffer
-}
-}
-*/
-
 final class GaussSmoothAnalysis: ExperimentAnalysis {
+    var calcWidth: Int = 0
+    var gauss: [Double] = []
     
+    var sigma: Double {
+        didSet {
+            calcWidth = Int(round(sigma*3.0))
+            
+            for i in -calcWidth...calcWidth {
+                let d = Double(i)
+                gauss[i+calcWidth] = exp(-(d/sigma*d/sigma)/2.0)/(sigma*sqrt(2.0*M_PI)) //Gauß!
+            }
+        }
+    }
+    
+    override init(experiment: Experiment, inputs: [String], outputs: [DataBuffer]) {
+        sigma = 3.0
+        super.init(experiment: experiment, inputs: inputs, outputs: outputs)
+    }
+    
+    override func update() {
+        var y: [Double] = getBufferForKey(inputs.first!)!.toArray()! //Get array for random access
+
+        //Clear output
+        outputs.first!.clear()
+        
+        for i in 0...y.count-1 {
+            var sum = 0.0
+            for j in -calcWidth...calcWidth {
+                let k = i+j
+                if (k >= 0 && k < y.count) {
+                    sum += gauss[j+calcWidth]*y[k];
+                }
+            }
+            
+            outputs.first!.append(sum)
+        }
+    }
 }

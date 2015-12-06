@@ -14,8 +14,19 @@ import Foundation
 public class ExperimentAnalysis {
     internal let experiment: Experiment
     
+    /**
+     Array of input keys. Either key for buffer, or a fixed value (double)
+     */
     internal var inputs: [String]
+    
+    /**
+     Output buffers.
+     */
     internal var outputs: [DataBuffer]
+    
+    /**
+     Fixed values are stored in this dictionary, with their corresponding indices in the `inputs` array.
+     */
     internal var fixedValues: [Int : Double] = [:]
 
     internal var staticAnalysis = false {
