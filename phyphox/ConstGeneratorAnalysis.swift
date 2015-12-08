@@ -23,7 +23,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysis {
     
     override func update() {
         let vValue = getSingleValueFromUserString(value)
-        var vLength = UInt64(getSingleValueFromUserString(length)!)
+        var vLength = Int(getSingleValueFromUserString(length)!)
         
         outputs.first!.clear()
         

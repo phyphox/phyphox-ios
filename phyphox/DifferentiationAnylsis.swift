@@ -16,7 +16,7 @@ final class DifferentiationAnylsis: ExperimentAnalysis {
         
         outputs.first!.clear()
         
-        let iterator = getBufferForKey(inputs.first!)?.generate()
+        var iterator = getBufferForKey(inputs.first!)?.generate()
         
         if iterator == nil {
             return

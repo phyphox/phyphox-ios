@@ -12,7 +12,7 @@ final class LCDAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
-        var bufferIterators: [AnyGenerator<Double>] = []
+        var bufferIterators: [IndexingGenerator<Array<Double>>] = []
         
         for (i, input) in inputs.enumerate() {
             if let fixed = fixedValues[i] {
@@ -33,7 +33,7 @@ final class LCDAnalysis: ExperimentAnalysis {
         for _ in 0...outputs.first!.size-1 {
             var didGetInput = false
             
-            for (j, iterator) in bufferIterators.enumerate() {
+            for (j, var iterator) in bufferIterators.enumerate() {
                 if let next = iterator.next() {
                     lastValues[j] = next
                     didGetInput = true

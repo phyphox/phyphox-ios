@@ -39,7 +39,7 @@ final class RangefilterAnalysis: ExperimentAnalysis {
             }
         }
         
-        var iterators = [AnyGenerator<Double>?](count: inputs.count, repeatedValue: nil)
+        var iterators = [IndexingGenerator<Array<Double>>?](count: inputs.count, repeatedValue: nil)
         
         //Get iterators of all inputs (numeric string not allowed here as it makes no sense to filter static input)
         for (i, input) in inputs.enumerate() {
@@ -58,7 +58,7 @@ final class RangefilterAnalysis: ExperimentAnalysis {
             var filter = false
             var hasNext = false
             for i in 0...inputs.count-1 {
-                if let iterator = iterators[i] {
+                if var iterator = iterators[i] {
                     if let next = iterator.next() {
                         data[i] = next
                         hasNext = true

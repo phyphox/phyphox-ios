@@ -11,7 +11,7 @@ import Foundation
 final class MaxAnalysis: ExperimentAnalysis {
     
     override func update() {
-        var iterators: [AnyGenerator<Double>] = []
+        var iterators: [IndexingGenerator<Array<Double>>] = []
         
         for (i, input) in inputs.enumerate() {
             if fixedValues[i] == nil {
@@ -23,7 +23,7 @@ final class MaxAnalysis: ExperimentAnalysis {
        var x = max //The x location of the maximum
        var currentX = -1.0; //Current x during iteration
         
-        while let v = iterators.first?.next() { //For each value of input1
+        while let v = iterators[0].next() { //For each value of input1
             //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
             if iterators.count > 1 {
                 if let val = iterators[1].next() {

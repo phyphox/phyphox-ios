@@ -1,108 +1,95 @@
 //
-//  DataBuffer.swift
+//  Queue.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 05.12.15.
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
-//FIXME: This class needs to be tested.
+import Foundation
 
 /**
-Queue Item.
-*/
-final class QueueItem<T> {
-	let value: T?
-	private(set) var next: QueueItem?
-	
-	init(_ value: T?) {
-		self.value = value
-	}
-    
-    deinit {
-        
-    }
-}
-
-/**
- Queue (FIFO). Not thread safe! Can only be modified by calling `enqueue()`, `dequeue()` and `clear()`.
+ Thread safe Queue (FIFO). Can only be modified by calling `enqueue()`, `dequeue()` and `clear()`.
  */
-final class Queue<Element>: SequenceType {
-	private(set) var head: QueueItem<Element>
-	private(set) var tail: QueueItem<Element>
-    private(set) var count: UInt64 = 0
+final class Queue<Element> {
+    private var array: [Element] = []
+    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", nil)
     
-    init() {
-        tail = QueueItem(nil)
-        head = tail
-    }
-    
-    func generate() -> AnyGenerator<Element> {
-        var element = head as QueueItem<Element>?
-        
-        return anyGenerator {
-            if (element == nil || element!.value == nil) {
-                return nil
-            }
-            
-            let val = element!.value!
-            
-            element = element!.next
-            
-            return val
+    var count: Int {
+        get {
+            return array.count
         }
     }
     
     func toArray() -> [Element]? {
-        var array: [Element] = []
-        
-        for value in self {
-            array.append(value)
-        }
-        
-        return array.count > 0 ? array : nil
+        return array
     }
     
     func clear() {
-        tail = QueueItem(nil)
-        head = tail
-        count = 0
+        dispatch_sync(lockQueue) { () -> Void in
+            self.array.removeAll()
+        }
+    }
+    
+    func enqueue(value: Element) {
+        dispatch_sync(lockQueue) { () -> Void in
+            self.array.append(value)
+        }
+    }
+    
+    func peek() -> Element? {
+        return array.first
     }
 	
-	func enqueue(value: Element) {
-		tail.next = QueueItem(value)
-		tail = tail.next!
-        count++
-	}
-	
-	func dequeue() -> Element? {
-		if let newhead = head.next {
-			head = newhead
-            count--
-			return newhead.value
-		}
-        else {
-			return nil
-		}
-	}
-    
-    func itemAtIndex(index: UInt64) -> Element? {
-        var i = UInt64(0)
-        var item = head as QueueItem?
+    func dequeue() -> Element? {
+        var element: Element? = nil
         
-        while item !== nil {
-            if i == index {
-                return item!.value
+        dispatch_sync(lockQueue) { () -> Void in
+            if self.array.count > 0 {
+                element = self.array.removeFirst()
             }
-            
-            item = item!.next
-            i++
         }
         
-        return nil
+        return element
+    }
+    
+    func itemAtIndex(index: Int) -> Element? {
+        var element: Element? = nil
+        
+        dispatch_sync(lockQueue) { () -> Void in
+            if index < self.array.count {
+                element = self.array[index]
+            }
+        }
+        
+        return element
     }
 	
 	func isEmpty() -> Bool {
-		return head === tail
+		return array.isEmpty
 	}
+}
+
+extension Queue: SequenceType {
+    typealias Generator = IndexingGenerator<[Element]>
+    
+    func generate() -> Generator {
+        return array.generate()
+    }
+}
+
+extension Queue: CollectionType {
+    typealias Index = Int
+    
+    var startIndex: Int {
+        return 0
+    }
+    
+    var endIndex: Int {
+        return count
+    }
+    
+    subscript(i: Int) -> Element {
+        return itemAtIndex(i)!
+    }
 }

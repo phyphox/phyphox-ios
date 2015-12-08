@@ -12,7 +12,7 @@ final class AdditionAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
-        var bufferIterators: [AnyGenerator<Double>] = []
+        var bufferIterators: [IndexingGenerator<[Double]>] = []
         
         for (i, input) in inputs.enumerate() {
             if let fixed = fixedValues[i] {
@@ -30,7 +30,7 @@ final class AdditionAnalysis: ExperimentAnalysis {
             var neutral = 0.0
             var didGetInput = false
             
-            for (j, iterator) in bufferIterators.enumerate() {
+            for (j, var iterator) in bufferIterators.enumerate() {
                 if let next = iterator.next() {
                     lastValues[j] = next
                     didGetInput = true

@@ -11,7 +11,7 @@ import Foundation
 final class CosAnalysis: ExperimentAnalysis {
     
     override func update() {
-        var iterator: AnyGenerator<Double>? = nil
+        var iterator: IndexingGenerator<Array<Double>>? = nil
         var lastValue: Double = 0.0
         
         //Get value or iterator

@@ -28,7 +28,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysis {
     override func update() {
         let vStart = getSingleValueFromUserString(start)!
         let vStop = getSingleValueFromUserString(stop)!
-        var vLength = UInt64(getSingleValueFromUserString(length)!)
+        var vLength = Int(getSingleValueFromUserString(length)!)
         
         outputs.first!.clear()
         

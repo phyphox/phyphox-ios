@@ -13,9 +13,9 @@ import Foundation
  */
 class DataBuffer: NSObject, SequenceType {
     let name: String
-    let size: UInt64
+    let size: Int
     var staticBuffer: Bool = false
-    var count: UInt64 {
+    var count: Int {
         get {
             return queue.count
         }
@@ -23,20 +23,21 @@ class DataBuffer: NSObject, SequenceType {
     
     private let queue: Queue<Double>
     
-    init(name: String, size: UInt64) {
+    init(name: String, size: Int) {
         self.name = name
         self.size = size
         queue = Queue<Double>()
         super.init()
     }
     
-    func generate() -> AnyGenerator<Double> {
+    func generate() -> IndexingGenerator<[Double]> {
         return queue.generate()
     }
     
     var lastValue: Double? {
         get {
-            return queue.tail.value
+            return queue.peek()
+            //queue.tail.value
         }
     }
     
