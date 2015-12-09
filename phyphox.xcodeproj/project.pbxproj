@@ -24,7 +24,7 @@
 		6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7C11C13048B007408FB /* AppDelegate.swift */; };
 		6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D21C13069A007408FB /* DataBuffer.swift */; };
 		6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
-		6B7BF7F41C132563007408FB /* MotionKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F31C132563007408FB /* MotionKit.swift */; };
+		6B7BF7F41C132563007408FB /* MotionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F31C132563007408FB /* MotionSession.swift */; };
 		6B7BF7F61C132722007408FB /* SensorInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F51C132722007408FB /* SensorInput.swift */; };
 		6B7BF7F81C1374A6007408FB /* ExperimentAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F71C1374A6007408FB /* ExperimentAnalysis.swift */; };
 		6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7F91C1387A1007408FB /* AdditionAnalysis.swift */; };
@@ -117,7 +117,7 @@
 		6B7BF7D11C130507007408FB /* sensorInput.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = sensorInput.java; sourceTree = "<group>"; };
 		6B7BF7D21C13069A007408FB /* DataBuffer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataBuffer.swift; sourceTree = "<group>"; };
 		6B7BF7D61C130D0F007408FB /* Queue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Queue.swift; sourceTree = "<group>"; };
-		6B7BF7F31C132563007408FB /* MotionKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MotionKit.swift; sourceTree = "<group>"; };
+		6B7BF7F31C132563007408FB /* MotionSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MotionSession.swift; sourceTree = "<group>"; };
 		6B7BF7F51C132722007408FB /* SensorInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SensorInput.swift; sourceTree = "<group>"; };
 		6B7BF7F71C1374A6007408FB /* ExperimentAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysis.swift; sourceTree = "<group>"; };
 		6B7BF7F91C1387A1007408FB /* AdditionAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdditionAnalysis.swift; sourceTree = "<group>"; };
@@ -193,7 +193,7 @@
 			isa = PBXGroup;
 			children = (
 				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
-				6B7BF7F31C132563007408FB /* MotionKit.swift */,
+				6B7BF7F31C132563007408FB /* MotionSession.swift */,
 				6B7BF7C61C130507007408FB /* Java */,
 				6B7BF7C51C1304C6007408FB /* UI */,
 				6B7BF7C31C1304B3007408FB /* Experiment */,
@@ -480,7 +480,7 @@
 				6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */,
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
 				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
-				6B7BF7F41C132563007408FB /* MotionKit.swift in Sources */,
+				6B7BF7F41C132563007408FB /* MotionSession.swift in Sources */,
 				6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */,
 				6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */,
 				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,

@@ -29,7 +29,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysis {
     }
     
     override func update() {
-        var y: [Double] = getBufferForKey(inputs.first!)!.toArray()! //Get array for random access
+        var y: [Double] = getBufferForKey(inputs.first!)!.toArray() //Get array for random access
 
         //Clear output
         outputs.first!.clear()

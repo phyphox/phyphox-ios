@@ -8,12 +8,13 @@
 
 import Foundation
 
+private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", DISPATCH_QUEUE_SERIAL)
+
 /**
- Thread safe Queue (FIFO). Can only be modified by calling `enqueue()`, `dequeue()` and `clear()`.
+ Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
-    private var array: [Element] = []
-    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", nil)
+    private var array: [Element]
     
     var count: Int {
         get {
@@ -21,14 +22,27 @@ final class Queue<Element> {
         }
     }
     
-    func toArray() -> [Element]? {
-        return array
+    var isEmpty: Bool {
+        get {
+            return array.isEmpty
+        }
     }
     
-    func clear() {
-        dispatch_sync(lockQueue) { () -> Void in
-            self.array.removeAll()
-        }
+    init() {
+        array = []
+    }
+    
+    init(capacity: Int) {
+        array = []
+        array.reserveCapacity(capacity)
+    }
+    
+    init<S : SequenceType where S.Generator.Element == Element>(_ sequence: S) {
+        array = Array<Element>(sequence)
+    }
+    
+    func toArray() -> [Element] {
+        return array
     }
     
     func enqueue(value: Element) {
@@ -37,10 +51,6 @@ final class Queue<Element> {
         }
     }
     
-    func peek() -> Element? {
-        return array.first
-    }
-	
     func dequeue() -> Element? {
         var element: Element? = nil
         
@@ -53,7 +63,17 @@ final class Queue<Element> {
         return element
     }
     
-    func itemAtIndex(index: Int) -> Element? {
+    func clear() {
+        dispatch_sync(lockQueue) { () -> Void in
+            self.array.removeAll()
+        }
+    }
+    
+    func peek() -> Element? {
+        return array.first
+    }
+    
+    func objectAtIndex(index: Int) -> Element? {
         var element: Element? = nil
         
         dispatch_sync(lockQueue) { () -> Void in
@@ -64,10 +84,6 @@ final class Queue<Element> {
         
         return element
     }
-	
-	func isEmpty() -> Bool {
-		return array.isEmpty
-	}
 }
 
 extension Queue: SequenceType {
@@ -90,6 +106,6 @@ extension Queue: CollectionType {
     }
     
     subscript(i: Int) -> Element {
-        return itemAtIndex(i)!
+        return self.array[i]
     }
 }

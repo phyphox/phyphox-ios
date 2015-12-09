@@ -65,7 +65,7 @@ class DataBuffer: NSObject, SequenceType {
         }
     }
     
-    func toArray() -> [Double]? {
+    func toArray() -> [Double] {
         return queue.toArray()
     }
 }

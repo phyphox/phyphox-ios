@@ -19,12 +19,12 @@ final class CrosscorrelationAnaylsis: ExperimentAnalysis {
         
         //Put the larger input in a and the smaller one in b
         if (firstBuffer.count > secondBuffer.count) {
-            a = firstBuffer.toArray()!
-            b = secondBuffer.toArray()!
+            a = firstBuffer.toArray()
+            b = secondBuffer.toArray()
         }
         else {
-            b = firstBuffer.toArray()!
-            a = secondBuffer.toArray()!
+            b = firstBuffer.toArray()
+            a = secondBuffer.toArray()
         }
         
         outputs.first!.clear()

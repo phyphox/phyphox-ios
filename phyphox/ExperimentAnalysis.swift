@@ -51,7 +51,6 @@ public class ExperimentAnalysis {
                     fixedValues[i] = d
                 }
                 else {
-                    //FIXME: fatalError call only available on iOS 8.1+
                     fatalError(String(format: "Invalid Input: %@", value))
                 }
             }
@@ -83,7 +82,6 @@ public class ExperimentAnalysis {
     }
     
     func update() {
-        //FIXME: fatalError call only available on iOS 8.1+
         fatalError("Subclasses of ExperimentAnalysis must override the update() method!")
     }
 }

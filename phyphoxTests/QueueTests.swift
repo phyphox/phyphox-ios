@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import phyphox
+@testable import phyphox
 
 class QueueTests: XCTestCase {
     
@@ -17,10 +17,10 @@ class QueueTests: XCTestCase {
 
 	func testAddSeveralToQueue() {
 		let sut = Queue<String>()
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 		sut.enqueue("1")
 		sut.enqueue("1")
-		XCTAssertFalse(sut.isEmpty())
+		XCTAssertFalse(sut.isEmpty)
 		sut.enqueue("1")
 		sut.enqueue("1")
 		sut.enqueue("1")
@@ -49,10 +49,10 @@ class QueueTests: XCTestCase {
 		XCTAssertEqual(sut.dequeue()!, "2")
 		XCTAssertEqual(sut.dequeue()!, "3")
 		XCTAssertEqual(sut.dequeue()!, "4")
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 		XCTAssertNil(sut.dequeue())
 		XCTAssertNil(sut.dequeue())
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 	}
 	
 	func testGenerics() {
@@ -67,6 +67,30 @@ class QueueTests: XCTestCase {
 		XCTAssertEqual(sut.dequeue()!, 3)
 		XCTAssertEqual(sut.dequeue()!, 4)
 	}
+    
+    func testEnumeration() {
+        let q = Queue<Int>()
+        
+        for i in 0...100 {
+            q.enqueue(i)
+        }
+        
+        var c = 0
+        
+        for i in q {
+            XCTAssertEqual(c, i)
+            c++
+        }
+        
+        var iterator = q.generate()
+        
+        c = 0
+        
+        while let i = iterator.next() {
+            XCTAssertEqual(c, i)
+            c++
+        }
+    }
     
     func testRepeatedUse() {
         let q = Queue<Int>()
@@ -115,7 +139,7 @@ class QueueTests: XCTestCase {
 		sut.enqueue("2")
 		XCTAssertEqual(sut.dequeue()!, "1")
 		XCTAssertEqual(sut.dequeue()!, "2")
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 		XCTAssertNil(sut.dequeue())
 	}
 	
@@ -123,16 +147,16 @@ class QueueTests: XCTestCase {
 		let sut = Queue<String>()
 		
 		sut.enqueue("1")
-		XCTAssertFalse(sut.isEmpty())
+		XCTAssertFalse(sut.isEmpty)
 		XCTAssertEqual(sut.dequeue()!, "1")
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 		XCTAssertNil(sut.dequeue())
 
 		sut.enqueue("1")
 		sut.enqueue("2")
 		XCTAssertEqual(sut.dequeue()!, "1")
 		XCTAssertEqual(sut.dequeue()!, "2")
-		XCTAssert(sut.isEmpty())
+		XCTAssert(sut.isEmpty)
 		XCTAssertNil(sut.dequeue())
 
 		sut.enqueue("1")
@@ -142,7 +166,7 @@ class QueueTests: XCTestCase {
 		sut.enqueue("4")
 		XCTAssertEqual(sut.dequeue()!, "2")
 		XCTAssertEqual(sut.dequeue()!, "3")
-		XCTAssertFalse(sut.isEmpty())
+		XCTAssertFalse(sut.isEmpty)
 		XCTAssertEqual(sut.dequeue()!, "4")
 		XCTAssertNil(sut.dequeue())
 		XCTAssertNil(sut.dequeue())
