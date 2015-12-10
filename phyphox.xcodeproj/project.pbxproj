@@ -258,13 +258,7 @@
 				6B7BF7AD1C130471007408FB /* Experiment.swift */,
 				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
 				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
-				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
-				6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */,
-				6BB52BBA1C19882F00217CF1 /* ExperimentOutputsParser.swift */,
-				6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */,
-				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
-				6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */,
-				6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */,
+				6BB52BC41C199CB400217CF1 /* Parser */,
 				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
@@ -351,6 +345,20 @@
 			name = XMLDictionary;
 			path = "External/XMLDictionary-master/XMLDictionary";
 			sourceTree = SOURCE_ROOT;
+		};
+		6BB52BC41C199CB400217CF1 /* Parser */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
+				6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */,
+				6BB52BBA1C19882F00217CF1 /* ExperimentOutputsParser.swift */,
+				6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */,
+				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
+				6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */,
+				6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */,
+			);
+			name = Parser;
+			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 

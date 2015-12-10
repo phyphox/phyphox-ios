@@ -16,36 +16,36 @@
     </translations>
     
     <data-containers>
-        <container type="0">accX</container>
-        <container type="0">accY</container>
-        <container type="0">accZ</container>
-        <container type="0">acc_time</container>
+        <container>accX</container> <!-- Optional type="buffer" (default), so dass man in der Zukunft einfach noch andere Datenstrukturen hinzufügen kann-->
+        <container>accY</container>
+        <container>accZ</container>
+        <container>acc_time</container>
     </data-containers>
     
     <input>
         <sensor type="accelerometer" buffer="10000">
-            <output type="0" parameter="x">accX</output>
-            <output type="0" parameter="y">accY</output>
-            <output type="0" parameter="z">accZ</output>
-            <output type="0" parameter="t">acc_time</output>
+            <output type="buffer" parameter="x">accX</output>
+            <output type="buffer" parameter="y">accY</output>
+            <output type="buffer" parameter="z">accZ</output>
+            <output type="buffer" parameter="t">acc_time</output>
         </sensor>
     </input>
     
     <views>
         <view name="Raw Data">
             <graph label="Accelerometer X" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
-                <input type="0" axis="x">acc_time</input>
-                <input type="0" axis="y">accX</input>
+                <input type="buffer" axis="x">acc_time</input>
+                <input type="buffer" axis="y">accX</input>
             </graph>
             
             <graph label="Accelerometer Y" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
-                <input type="0" axis="x">acc_time</input>
-                <input type="0" axis="y">accY</input>
+                <input type="buffer" axis="x">acc_time</input>
+                <input type="buffer" axis="y">accY</input>
             </graph>
             
             <graph label="Accelerometer Z" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
-                <input type="0" axis="x">acc_time</input>
-                <input type="0" axis="y">accZ</input>
+                <input type="buffer" axis="x">acc_time</input>
+                <input type="buffer" axis="y">accZ</input>
             </graph>
         </view>
     </views>
@@ -53,19 +53,19 @@
     <export>
         <set name="Raw Data">
             <data name="Time (s)" source="acc_time">
-                <input type="0">acc_time</input>
+                <input type="buffer">acc_time</input>
             </data>
             
             <data name="Acceleration x (m/s^2)">
-                <input type="0">accX</input>
+                <input type="buffer">accX</input>
             </data>
             
             <data name="Acceleration y (m/s^2)">
-                <input type="0">accY</input>
+                <input type="buffer">accY</input>
             </data>
             
             <data name="Acceleration z (m/s^2)">
-                <input type="0">accZ</input>
+                <input type="buffer">accZ</input>
             </data>
         </set>
     </export>

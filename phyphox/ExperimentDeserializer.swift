@@ -83,14 +83,13 @@ final class ExperimentDeserializer: NSObject {
     
     func parseInputs(_inputs: NSDictionary?) {
         if let inputs = _inputs {
-            var sensors = getElementsWithKey(inputs, key: "sensors")
-            var audio = getElementsWithKey(inputs, key: "audio")
-            
+            ExperimentInputsParser(inputs)
         }
     }
     
     func parseAnalysis(_analysis: NSDictionary?) {
         if let analysis_ = _analysis {
+            ExperimentAnalysisParser(analysis_)
             for (key, value) in analysis_ {
                 var analysis = getElemetArrayFromValue(value)
                 

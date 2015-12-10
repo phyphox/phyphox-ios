@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ExperimentExportParser: ExperimentMetadataParser {
+final class ExperimentExportParser: ExperimentMetadataParser {
     typealias Output = NSArray?
     
     required init(_ data: [NSDictionary]) {

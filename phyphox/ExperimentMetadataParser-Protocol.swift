@@ -9,9 +9,10 @@
 import Foundation
 
 protocol ExperimentMetadataParser {
+    typealias Input
     typealias Output
     
-    init(_ data: [NSDictionary])
+    init(_ data: Input)
     
     func parse() -> Output
 }

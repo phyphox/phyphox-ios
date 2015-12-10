@@ -8,10 +8,12 @@
 
 import UIKit
 
-class ExperimentInputsParser: ExperimentMetadataParser {
+final class ExperimentInputsParser: ExperimentMetadataParser {
     typealias Output = NSArray?
     
-    required init(_ data: [NSDictionary]) {
+    required init(_ inputs: NSDictionary) {
+        var sensors = getElementsWithKey(inputs, key: "sensor")
+        var audio = getElementsWithKey(inputs, key: "audio")
         
     }
     
