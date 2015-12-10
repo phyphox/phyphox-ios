@@ -16,7 +16,7 @@
     </translations>
     
     <data-containers>
-        <container>accX</container> <!-- Optional type="buffer" (default), so dass man in der Zukunft einfach noch andere Datenstrukturen hinzufügen kann-->
+        <container type="buffer">accX</container> <!-- Optional type="buffer" (default), so dass man in der Zukunft einfach noch andere Datenstrukturen hinzufügen kann-->
         <container>accY</container>
         <container>accZ</container>
         <container>acc_time</container>

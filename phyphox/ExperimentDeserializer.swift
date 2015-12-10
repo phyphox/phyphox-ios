@@ -8,20 +8,25 @@
 
 import Foundation
 
-func getElemetArrayFromValue(value: AnyObject) -> [NSDictionary] {
-    var values: [NSDictionary] = []
+func getElemetArrayFromValue(value: AnyObject) -> [AnyObject] {
+    var values: [AnyObject] = []
     
-    if value.isKindOfClass(NSArray) {
-        values.appendContentsOf((value as! NSArray) as! Array)
+    if value.isKindOfClass(NSMutableArray) {
+        for item in (value as! NSMutableArray) {
+            values.append(item)
+        }
+    }
+    else if value.isKindOfClass(NSArray) {
+        values.appendContentsOf(value as! Array)
     }
     else {
-        values.append(value as! NSDictionary)
+        values.append(value)
     }
     
     return values
 }
 
-func getElementsWithKey(xml: NSDictionary, key: String) -> [NSDictionary]? {
+func getElementsWithKey(xml: NSDictionary, key: String) -> [AnyObject]? {
     let read = xml[key]
     
     if let v = read {
@@ -48,10 +53,25 @@ final class ExperimentDeserializer: NSObject {
     func deserialize() throws -> Experiment {
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.Dictionary
         
-        let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
+        dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
+        
+        let description = dictionary["description"] as! String
+        let category = dictionary["category"] as! String
+        let title = dictionary["title"] as! String
+        
+        if title != "Accelerometer" {
+            throw SerializationError.GenericError
+        }
+        
+        let dataContainers = dictionary["data-containers"] as! NSDictionary?
+        let buffers = parseDataContainers(dataContainers)
+        
+        if buffers == nil || buffers.count == 0 {
+            throw SerializationError.InvalidExperimentFile
+        }
         
         let inputs = dictionary["input"] as! NSDictionary?
-        parseInputs(inputs)
+        let sensorInputs = parseInputs(inputs, buffers: buffers)
         
         let analysis = dictionary["analysis"] as! NSDictionary?
         parseAnalysis(analysis)
@@ -67,47 +87,61 @@ final class ExperimentDeserializer: NSObject {
         
         let icon = dictionary["icon"] as! String?
         
-        let description = dictionary["description"] as! String
-        let category = dictionary["category"] as! String
-        let title = dictionary["title"] as! String
         
-        
-        let experiment = Experiment(title: title, description: description, category: category)
+        let experiment = Experiment(title: title, description: description, category: category, local: true)
         
         throw SerializationError.GenericError
     }
     
-    func parseExports(_exports: NSDictionary?) {
+    func parseDataContainers(dataContainers: NSDictionary?) -> [String: DataBuffer]! {
+        if dataContainers != nil {
+            let parser = ExperimentDataContainersParser(dataContainers!)
+            
+            return parser.parse()
+        }
         
+        return nil
     }
     
-    func parseInputs(_inputs: NSDictionary?) {
-        if let inputs = _inputs {
-            ExperimentInputsParser(inputs)
-        }
-    }
-    
-    func parseAnalysis(_analysis: NSDictionary?) {
-        if let analysis_ = _analysis {
-            ExperimentAnalysisParser(analysis_)
-            for (key, value) in analysis_ {
-                var analysis = getElemetArrayFromValue(value)
-                
-            }
-        }
-    }
-    
-    func parseTranslations(_translations: NSDictionary?) {
-        if let translations_ = _translations {
-            var translations = getElementsWithKey(translations_, key: "translation")
+    func parseExports(exports: NSDictionary?) {
+        if (exports != nil) {
+            let parser = ExperimentExportParser(exports!)
             
+            parser.parse()
         }
     }
     
-    func parseViews(_views: NSDictionary?) {
-        if let views_ = _views {
-            var views = getElementsWithKey(views_, key: "view")!
+    func parseInputs(inputs: NSDictionary?, buffers: [String : DataBuffer]) -> [SensorInput]? {
+        if (inputs != nil) {
+            let parser = ExperimentInputsParser(inputs!)
             
+            return parser.parse(buffers)
+        }
+        
+        return nil
+    }
+    
+    func parseAnalysis(analysis: NSDictionary?) {
+        if (analysis != nil) {
+            let parser = ExperimentAnalysisParser(analysis!)
+            
+            parser.parse()
+        }
+    }
+    
+    func parseTranslations(translations: NSDictionary?) {
+        if (translations != nil) {
+            let parser = ExperimentTranslationsParser(translations!)
+            
+            parser.parse()
+        }
+    }
+    
+    func parseViews(views: NSDictionary?) {
+        if (views != nil) {
+            let parser = ExperimentViewsParser(views!)
+            
+            parser.parse()
         }
     }
     

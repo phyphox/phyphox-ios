@@ -11,8 +11,10 @@ import UIKit
 final class ExperimentTranslationsParser: ExperimentMetadataParser {
     typealias Output = NSArray?
     
-    required init(_ data: [NSDictionary]) {
-        
+    let translations: [NSDictionary]?
+    
+    required init(_ data: NSDictionary) {
+        translations = getElementsWithKey(data, key: "translation") as! [NSDictionary]?
     }
     
     func parse() -> Output {

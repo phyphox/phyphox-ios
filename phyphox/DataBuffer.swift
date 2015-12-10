@@ -13,7 +13,13 @@ import Foundation
  */
 class DataBuffer: NSObject, SequenceType {
     let name: String
-    let size: Int
+    var size: Int {
+        didSet {
+            while count > size {
+                queue.dequeue()
+            }
+        }
+    }
     var staticBuffer: Bool = false
     var count: Int {
         get {

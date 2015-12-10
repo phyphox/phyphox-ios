@@ -11,7 +11,7 @@ import UIKit
 final class ExperimentViewsParser: ExperimentMetadataParser {
     typealias Output = NSArray?
     
-    required init(_ data: [NSDictionary]) {
+    required init(_ data: NSDictionary) {
         
     }
     

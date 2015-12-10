@@ -39,7 +39,7 @@ final public class SensorInput {
     private(set) weak var zBuffer: DataBuffer?
     private(set) weak var tBuffer: DataBuffer?
     
-    private(set) weak var motionSession: MotionSession?
+    private(set) var motionSession: MotionSession?
     
     private struct Averaging {
         /**

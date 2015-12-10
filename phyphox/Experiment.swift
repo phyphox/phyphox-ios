@@ -13,11 +13,13 @@ final class Experiment {
     var description: String
     var category: String
     
-    init(title: String, description: String, category: String) {
+    var local: Bool
+    
+    init(title: String, description: String, category: String, local: Bool) {
         self.title = title
         self.description = description
         self.category = category
-        
+        self.local = local
     }
     
     class func isValidIdentifier(id: String) -> Bool {

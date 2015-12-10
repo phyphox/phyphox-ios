@@ -11,8 +11,21 @@ import UIKit
 final class ExperimentAnalysisParser: ExperimentMetadataParser {
     typealias Output = NSArray?
     
-    required init(_ data: [NSDictionary]) {
+    let analyses: [NSDictionary]?
+    
+    required init(_ data: NSDictionary) {
+        var a: [NSDictionary] = []
         
+        for (_, value) in data {
+            a.appendContentsOf(getElemetArrayFromValue(value) as! [NSDictionary])
+        }
+        
+        if a.count > 0 {
+            analyses = a
+        }
+        else {
+            analyses = nil
+        }
     }
     
     func parse() -> Output {

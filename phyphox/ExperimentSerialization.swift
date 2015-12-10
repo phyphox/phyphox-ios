@@ -10,6 +10,7 @@ import Foundation
 
 enum SerializationError: ErrorType {
     case GenericError
+    case InvalidExperimentFile
     case InvalidFilePath
     case WriteFailed
     case EmptyData
