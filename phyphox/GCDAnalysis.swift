@@ -31,7 +31,7 @@ final class GCDAnalysis: ExperimentAnalysis {
         
         outputs.first!.clear()
         
-        for _ in 0...outputs.first!.size-1 {
+        for _ in 0..<outputs.first!.size {
             var didGetInput = false
             
             for (j, var iterator) in bufferIterators.enumerate() {

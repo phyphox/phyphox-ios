@@ -31,7 +31,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysis {
             vLength = outputs.first!.size
         }
         
-        for _ in 0...vLength-1 {
+        for _ in 0..<vLength {
             outputs.first!.append(vValue)
         }
     }

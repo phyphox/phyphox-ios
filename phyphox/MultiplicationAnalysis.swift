@@ -26,7 +26,7 @@ final class MultiplicationAnalysis: ExperimentAnalysis {
         
         outputs.first!.clear()
         
-        for _ in 0...outputs.first!.size-1 {
+        for _ in 0..<outputs.first!.size {
             var neutral = 1.0
             var didGetInput = false
             

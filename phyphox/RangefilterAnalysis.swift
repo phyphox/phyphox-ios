@@ -23,7 +23,7 @@ final class RangefilterAnalysis: ExperimentAnalysis {
         var minD = [Double](count: inputs.count, repeatedValue: 0.0)
         var maxD = [Double](count: inputs.count, repeatedValue: 0.0)
         
-        for i in 0...inputs.count-1 {
+        for i in 0..<inputs.count {
             if let val = min[i] {
                 minD[i] = getSingleValueFromUserString(val)!
             }
@@ -57,7 +57,7 @@ final class RangefilterAnalysis: ExperimentAnalysis {
         while true {
             var filter = false
             var hasNext = false
-            for i in 0...inputs.count-1 {
+            for i in 0..<inputs.count {
                 if var iterator = iterators[i] {
                     if let next = iterator.next() {
                         data[i] = next

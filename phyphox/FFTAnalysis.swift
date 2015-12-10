@@ -56,7 +56,7 @@ final class FFTAnylsis: ExperimentAnalysis {
                 var iy = getBufferForKey(inputs[1])!.generate()
                 i = 0
                 
-                //TODO: wirklich i vom große loop benutzen?
+                //TODO: wirklich i vom großen loop benutzen?
                 while let yNext = iy.next() {
                     y[i++] = yNext
                 }

@@ -32,9 +32,9 @@ final class CrosscorrelationAnaylsis: ExperimentAnalysis {
         let compRange = a.count-b.count
         
         //The actual calculation
-        for i in 0...compRange-1 {
+        for i in 0..<compRange {
             var sum = 0.0
-            for j in 0...b.count-1 {
+            for j in 0..<b.count {
                 sum += a[j+i]*b[j];
             }
             

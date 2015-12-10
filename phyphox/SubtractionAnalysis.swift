@@ -26,7 +26,7 @@ final class SubtractionAnalysis: ExperimentAnalysis {
         
         outputs.first!.clear()
         
-        for _ in 0...outputs.first!.size-1 {
+        for _ in 0..<outputs.first!.size {
             var neutral = 0.0
             var didGetInput = false
             

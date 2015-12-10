@@ -34,7 +34,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysis {
         //Clear output
         outputs.first!.clear()
         
-        for i in 0...y.count-1 {
+        for i in 0..<y.count {
             var sum = 0.0
             for j in -calcWidth...calcWidth {
                 let k = i+j

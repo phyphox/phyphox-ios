@@ -36,7 +36,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysis {
             vLength = outputs.first!.size
         }
         
-        for i in 0...vLength-1 {
+        for i in 0..<vLength {
             outputs.first!.append(vStart+(vStop-vStart)/Double((vLength-1)*i))
         }
     }
