@@ -50,6 +50,14 @@
 		6B7BF8231C147D09007408FB /* FFTAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8221C147D09007408FB /* FFTAnalysis.swift */; };
 		6B7BF8251C1645A6007408FB /* QueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8241C1645A6007408FB /* QueueTests.swift */; };
 		6B7BF8261C164CEC007408FB /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
+		6B7BF8311C18D23D007408FB /* XMLDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8301C18D23D007408FB /* XMLDictionary.m */; };
+		6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */; };
+		6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */; };
+		6BB52BBB1C19882F00217CF1 /* ExperimentOutputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBA1C19882F00217CF1 /* ExperimentOutputsParser.swift */; };
+		6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */; };
+		6BB52BBF1C19884800217CF1 /* ExperimentViewsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */; };
+		6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */; };
+		6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -142,6 +150,16 @@
 		6B7BF8201C147CF3007408FB /* AutocorrelationAnylsis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AutocorrelationAnylsis.swift; sourceTree = "<group>"; };
 		6B7BF8221C147D09007408FB /* FFTAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FFTAnalysis.swift; sourceTree = "<group>"; };
 		6B7BF8241C1645A6007408FB /* QueueTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueueTests.swift; sourceTree = "<group>"; };
+		6B7BF82E1C18D23C007408FB /* phyphox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "phyphox-Bridging-Header.h"; path = "../External/XMLDictionary-master/XMLDictionary/phyphox-Bridging-Header.h"; sourceTree = "<group>"; };
+		6B7BF82F1C18D23D007408FB /* XMLDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XMLDictionary.h; sourceTree = "<group>"; };
+		6B7BF8301C18D23D007408FB /* XMLDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XMLDictionary.m; sourceTree = "<group>"; };
+		6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ExperimentMetadataParser-Protocol.swift"; sourceTree = "<group>"; };
+		6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentInputsParser.swift; sourceTree = "<group>"; };
+		6BB52BBA1C19882F00217CF1 /* ExperimentOutputsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentOutputsParser.swift; sourceTree = "<group>"; };
+		6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslationsParser.swift; sourceTree = "<group>"; };
+		6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewsParser.swift; sourceTree = "<group>"; };
+		6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysisParser.swift; sourceTree = "<group>"; };
+		6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentDataContainersParser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,6 +212,8 @@
 			children = (
 				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
 				6B7BF7F31C132563007408FB /* MotionSession.swift */,
+				6B7BF82E1C18D23C007408FB /* phyphox-Bridging-Header.h */,
+				6B7BF8291C18D176007408FB /* XMLDictionary */,
 				6B7BF7C61C130507007408FB /* Java */,
 				6B7BF7C51C1304C6007408FB /* UI */,
 				6B7BF7C31C1304B3007408FB /* Experiment */,
@@ -238,6 +258,13 @@
 				6B7BF7AD1C130471007408FB /* Experiment.swift */,
 				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
 				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
+				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
+				6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */,
+				6BB52BBA1C19882F00217CF1 /* ExperimentOutputsParser.swift */,
+				6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */,
+				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
+				6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */,
+				6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */,
 				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
@@ -314,6 +341,16 @@
 			);
 			name = Analysis;
 			sourceTree = "<group>";
+		};
+		6B7BF8291C18D176007408FB /* XMLDictionary */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF82F1C18D23D007408FB /* XMLDictionary.h */,
+				6B7BF8301C18D23D007408FB /* XMLDictionary.m */,
+			);
+			name = XMLDictionary;
+			path = "External/XMLDictionary-master/XMLDictionary";
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -466,12 +503,17 @@
 			files = (
 				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
 				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
+				6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */,
 				6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */,
+				6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */,
+				6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
+				6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6B7BF80D1C14723D007408FB /* CosAnalysis.swift in Sources */,
+				6BB52BBF1C19884800217CF1 /* ExperimentViewsParser.swift in Sources */,
 				6B7BF8231C147D09007408FB /* FFTAnalysis.swift in Sources */,
 				6B7BF8131C14788C007408FB /* AppendAnalysis.swift in Sources */,
 				6B7BF8031C1466DF007408FB /* PowerAnalysis.swift in Sources */,
@@ -483,6 +525,7 @@
 				6B7BF7F41C132563007408FB /* MotionSession.swift in Sources */,
 				6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */,
 				6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */,
+				6B7BF8311C18D23D007408FB /* XMLDictionary.m in Sources */,
 				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,
 				6B7BF8211C147CF3007408FB /* AutocorrelationAnylsis.swift in Sources */,
 				6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */,
@@ -493,8 +536,10 @@
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysis.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
+				6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */,
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
+				6BB52BBB1C19882F00217CF1 /* ExperimentOutputsParser.swift in Sources */,
 				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
 				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnaylsis.swift in Sources */,
 				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
@@ -635,12 +680,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "External/XMLDictionary-master/XMLDictionary/phyphox-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -648,12 +696,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "External/XMLDictionary-master/XMLDictionary/phyphox-Bridging-Header.h";
 			};
 			name = Release;
 		};
@@ -724,6 +774,7 @@
 				6B7BF7A41C130425007408FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		6B7BF7A51C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxTests" */ = {
 			isa = XCConfigurationList;
@@ -732,6 +783,7 @@
 				6B7BF7A71C130425007408FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		6B7BF7A81C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxUITests" */ = {
 			isa = XCConfigurationList;
@@ -740,6 +792,7 @@
 				6B7BF7AA1C130425007408FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

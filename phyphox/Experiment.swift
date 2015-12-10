@@ -9,6 +9,17 @@
 import Foundation
 
 final class Experiment {
+    var title: String
+    var description: String
+    var category: String
+    
+    init(title: String, description: String, category: String) {
+        self.title = title
+        self.description = description
+        self.category = category
+        
+    }
+    
     class func isValidIdentifier(id: String) -> Bool {
         func charset(cset:NSCharacterSet, containsCharacter c:Character) -> Bool {
             let s = String(c)
