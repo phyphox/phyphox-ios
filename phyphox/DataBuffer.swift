@@ -43,7 +43,6 @@ class DataBuffer: NSObject, SequenceType {
     var lastValue: Double? {
         get {
             return queue.peek()
-            //queue.tail.value
         }
     }
     

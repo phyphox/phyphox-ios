@@ -59,6 +59,7 @@ final class ExperimentDeserializer: NSObject {
         let category = dictionary["category"] as! String
         let title = dictionary["title"] as! String
         
+        //Accelerometer is the only phyphox file with the new xml spec, the other files still need to be updated
         if title != "Accelerometer" {
             throw SerializationError.GenericError
         }
@@ -73,14 +74,14 @@ final class ExperimentDeserializer: NSObject {
         let inputs = dictionary["input"] as! NSDictionary?
         let sensorInputs = parseInputs(inputs, buffers: buffers)
         
+        let translationsRaw = dictionary["translations"] as! NSDictionary?
+        let translations = parseTranslations(translationsRaw)
+
+        let views = dictionary["views"] as! NSDictionary?
+        let viewDescriptors = parseViews(views, buffers: buffers)
+        
         let analysis = dictionary["analysis"] as! NSDictionary?
         parseAnalysis(analysis)
-        
-        let translations = dictionary["translations"] as! NSDictionary?
-        parseTranslations(translations)
-        
-        let views = dictionary["views"] as! NSDictionary?
-        parseViews(views)
         
         let export = dictionary["export"] as! NSDictionary?
         parseExports(export)
@@ -121,28 +122,31 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseAnalysis(analysis: NSDictionary?) {
-        if (analysis != nil) {
-            let parser = ExperimentAnalysisParser(analysis!)
-            
-            parser.parse()
-        }
-    }
-    
-    func parseTranslations(translations: NSDictionary?) {
-        if (translations != nil) {
-            let parser = ExperimentTranslationsParser(translations!)
-            
-            parser.parse()
-        }
-    }
-    
-    func parseViews(views: NSDictionary?) {
+    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer]) -> [ExperimentViewDescriptor]? {
         if (views != nil) {
             let parser = ExperimentViewsParser(views!)
             
+            return parser.parse(buffers)
+        }
+        
+        return nil
+    }
+    
+    func parseAnalysis(analysis: NSDictionary?) {
+        if (analysis != nil) {
+            let parser = ExperimentAnalysisParser(analysis!)
             parser.parse()
         }
+    }
+    
+    func parseTranslations(translations: NSDictionary?) -> [String: ExperimentTranslation]? {
+        if (translations != nil) {
+            let parser = ExperimentTranslationsParser(translations!)
+            
+            return parser.parse()
+        }
+        
+        return nil
     }
     
     func deserializeAsynchronous(completion: (experiment: Experiment?, error: SerializationError?) -> Void) {

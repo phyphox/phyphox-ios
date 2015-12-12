@@ -61,7 +61,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             return nil
         }
         
-        var motionSession = MotionSession()
+        let motionSession = MotionSession()
         
         var sensorsOut: [SensorInput] = []
         
