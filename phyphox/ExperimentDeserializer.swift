@@ -89,9 +89,9 @@ final class ExperimentDeserializer: NSObject {
         let icon = dictionary["icon"] as! String?
         
         
-        let experiment = Experiment(title: title, description: description, category: category, local: true)
+        let experiment = Experiment(title: title, description: description, category: category, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors)
         
-        throw SerializationError.GenericError
+        return experiment
     }
     
     func parseDataContainers(dataContainers: NSDictionary?) -> [String: DataBuffer]! {

@@ -8,70 +8,6 @@
 
 import UIKit
 
-func stringToBool(string: String) -> Bool {
-    if string == "1" || string.lowercaseString == "true" || string.lowercaseString == "yes" {
-        return true
-    }
-    
-    return false
-}
-
-enum GraphAxis {
-    case x
-    case y
-//    case z
-}
-
-func stringToGraphAxis(string: String) -> GraphAxis? {
-    if string.lowercaseString == "x" {
-        return .x
-    }
-    else if string.lowercaseString == "y" {
-        return .y
-    }
-//    else if string.lowercaseString == "z" {
-//        return .z
-//    }
-    
-    return nil
-}
-
-final class ExperimentViewDescriptor {
-    let name: String
-    
-    let graphs: [GraphViewDescriptor]?
-
-    init(name: String, graphs: [GraphViewDescriptor]?) {
-        self.name = name
-        self.graphs = graphs
-    }
-}
-
-final class GraphViewDescriptor {
-    let label: String
-    
-    let xLabel: String
-    let yLabel: String
-    
-    let partialUpdate: Bool
-    
-    weak var xInputBuffer: DataBuffer?
-    weak var yInputBuffer: DataBuffer?
-    
-    
-    init(label: String, xLabel: String, yLabel: String, partialUpdate: Bool, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?) {
-        self.label = label
-        
-        self.xLabel = xLabel
-        self.yLabel = yLabel
-        
-        self.partialUpdate = partialUpdate
-        
-        self.xInputBuffer = xInputBuffer
-        self.yInputBuffer = yInputBuffer
-    }
-}
-
 final class ExperimentViewsParser: ExperimentMetadataParser {
     var views: [NSDictionary]?
     
@@ -81,6 +17,22 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
     
     func parse() -> AnyObject {
         fatalError("Unavailable");
+    }
+    
+    enum GraphAxis {
+        case x
+        case y
+    }
+    
+    func stringToGraphAxis(string: String) -> GraphAxis? {
+        if string.lowercaseString == "x" {
+            return .x
+        }
+        else if string.lowercaseString == "y" {
+            return .y
+        }
+        
+        return nil
     }
     
     func parse(buffers: [String: DataBuffer]) -> [ExperimentViewDescriptor]? {

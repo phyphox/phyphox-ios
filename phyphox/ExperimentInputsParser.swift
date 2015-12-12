@@ -8,41 +8,6 @@
 
 import UIKit
 
-enum OutputType {
-    case Buffer
-}
-
-func mapTypeStringToOutputType(type: String) -> OutputType? {
-    if type == "buffer" {
-        return OutputType.Buffer
-    }
-    
-    return nil
-}
-
-func mapTypeStringToSensorType(type: String) -> SensorType? {
-    if type == "pressure" {
-        return .Pressure
-    }
-    else if type == "accelerometer" {
-        return .Accelerometer
-    }
-    else if type == "linear_acceleration" {
-        return .LinearAcceleration
-    }
-    else if type == "gyroscope" {
-        return .Gyroscope
-    }
-    else if type == "light" {
-        return .Light
-    }
-    else if type == "magnetic_field" {
-        return .Light
-    }
-    
-    return nil
-}
-
 final class ExperimentInputsParser: ExperimentMetadataParser {
     let sensors: [NSDictionary]?
     let audio: [NSDictionary]?
@@ -54,6 +19,41 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
     
     func parse() -> AnyObject {
         fatalError("Unavailable")
+    }
+    
+    enum OutputType {
+        case Buffer
+    }
+    
+    func mapTypeStringToOutputType(type: String) -> OutputType? {
+        if type == "buffer" {
+            return OutputType.Buffer
+        }
+        
+        return nil
+    }
+    
+    func mapTypeStringToSensorType(type: String) -> SensorType? {
+        if type == "pressure" {
+            return .Pressure
+        }
+        else if type == "accelerometer" {
+            return .Accelerometer
+        }
+        else if type == "linear_acceleration" {
+            return .LinearAcceleration
+        }
+        else if type == "gyroscope" {
+            return .Gyroscope
+        }
+        else if type == "light" {
+            return .Light
+        }
+        else if type == "magnetic_field" {
+            return .Light
+        }
+        
+        return nil
     }
     
     func parse(buffers: [String : DataBuffer]) -> [SensorInput]? {

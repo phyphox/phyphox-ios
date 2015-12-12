@@ -15,11 +15,20 @@ final class Experiment {
     
     var local: Bool
     
-    init(title: String, description: String, category: String, local: Bool) {
+    let translations: [String: ExperimentTranslation]?
+    let sensorInputs: [SensorInput]?
+    let viewDescriptors: [ExperimentViewDescriptor]?
+    
+    init(title: String, description: String, category: String, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?) {
         self.title = title
         self.description = description
         self.category = category
+        
         self.local = local
+        
+        self.translations = translations
+        self.sensorInputs = sensorInputs
+        self.viewDescriptors = viewDescriptors
     }
     
     class func isValidIdentifier(id: String) -> Bool {

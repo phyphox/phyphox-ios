@@ -8,15 +8,15 @@
 
 import UIKit
 
-enum ExperimentDataContainerType {
-    case Buffer
-}
-
 final class ExperimentDataContainersParser: ExperimentMetadataParser {
     var containers: [AnyObject]?
     
     required init(_ data: NSDictionary) {
         containers = getElementsWithKey(data, key: "container")
+    }
+    
+    enum ExperimentDataContainerType {
+        case Buffer
     }
     
     func parse() -> [String: DataBuffer]? {
