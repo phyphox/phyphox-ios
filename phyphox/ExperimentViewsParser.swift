@@ -49,6 +49,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
             var graphDescriptors: [GraphViewDescriptor] = []
+            var editDescriptors: [EditViewDescriptor] = []
+            var valueDescriptors: [ValueViewDescriptor] = []
             
             if let graphs = getElementsWithKey(view, key: "graph") as! [NSDictionary]? {
                 for graph in graphs {
@@ -138,6 +140,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         continue
                     }
                     
+                    let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize)
+                    
+                    valueDescriptors.append(valueDescriptor)
                     //TODO: Value view descriptor
                 }
             }
@@ -172,11 +177,14 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         continue
                     }
                     
+                    let editDescriptor = EditViewDescriptor(label: label, labelSize: labelSize)
+                    
+                    editDescriptors.append(editDescriptor)
                     //TODO: Edit view descriptor
                 }
             }
             
-            let viewDescriptor = ExperimentViewDescriptor(label: label, graphs: (graphDescriptors.count > 0 ? graphDescriptors : nil), labelSize: labelSize)
+            let viewDescriptor = ExperimentViewDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
             
             viewDescriptors.append(viewDescriptor)
         }

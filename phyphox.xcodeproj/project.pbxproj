@@ -57,6 +57,8 @@
 		6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */; };
 		6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
+		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
+		6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */; };
 		6BB52BBB1C19882F00217CF1 /* ExperimentExportParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBA1C19882F00217CF1 /* ExperimentExportParser.swift */; };
 		6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */; };
 		6BB52BBF1C19884800217CF1 /* ExperimentViewsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */; };
@@ -164,6 +166,8 @@
 		6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ExperimentMetadataParser-Protocol.swift"; sourceTree = "<group>"; };
 		6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentInputsParser.swift; sourceTree = "<group>"; };
 		6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewDescriptor.swift; sourceTree = "<group>"; };
+		6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValueViewDescriptor.swift; sourceTree = "<group>"; };
+		6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditViewDescriptor.swift; sourceTree = "<group>"; };
 		6BB52BBA1C19882F00217CF1 /* ExperimentExportParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportParser.swift; sourceTree = "<group>"; };
 		6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslationsParser.swift; sourceTree = "<group>"; };
 		6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewsParser.swift; sourceTree = "<group>"; };
@@ -203,6 +207,8 @@
 				6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */,
 				6B0C714D1C1C6FF600500FEE /* ExperimentViewDescriptor.swift */,
 				6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */,
+				6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */,
+				6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */,
 			);
 			name = Descriptors;
 			sourceTree = "<group>";
@@ -564,6 +570,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */,
 				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
 				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
 				6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */,
@@ -571,6 +578,7 @@
 				6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */,
 				6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */,
 				6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */,
+				6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
