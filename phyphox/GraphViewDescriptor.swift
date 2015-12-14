@@ -11,27 +11,38 @@ import Foundation
 /**
  Represents a graph view.
  */
-final class GraphViewDescriptor {
-    let label: String
-    
+final class GraphViewDescriptor: ViewDescriptor {
     let xLabel: String
     let yLabel: String
     
-    let partialUpdate: Bool
+    let logX: Bool
+    let logY: Bool
     
     weak var xInputBuffer: DataBuffer?
     weak var yInputBuffer: DataBuffer?
     
+    let aspectRatio: Double
+    let partialUpdate: Bool
+    let drawDots: Bool
+    let forceFullDataset: Bool
+    let history: UInt
     
-    init(label: String, xLabel: String, yLabel: String, partialUpdate: Bool, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?) {
-        self.label = label
-        
+    init(label: String, labelSize: Double, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?, logX: Bool, logY: Bool, aspectRatio: Double, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
-        self.partialUpdate = partialUpdate
+        self.logX = logX
+        self.logY = logY
         
         self.xInputBuffer = xInputBuffer
         self.yInputBuffer = yInputBuffer
+        
+        self.aspectRatio = aspectRatio
+        self.partialUpdate = partialUpdate
+        self.drawDots = drawDots
+        self.forceFullDataset = forceFullDataset
+        self.history = history
+        
+        super.init(label: label, labelSize: labelSize)
     }
 }

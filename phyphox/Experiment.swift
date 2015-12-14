@@ -18,6 +18,7 @@ final class Experiment {
     let translations: [String: ExperimentTranslation]?
     let sensorInputs: [SensorInput]?
     let viewDescriptors: [ExperimentViewDescriptor]?
+//    let analyses: [ExperimentAnalysis]?
     
     init(title: String, description: String, category: String, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?) {
         self.title = title

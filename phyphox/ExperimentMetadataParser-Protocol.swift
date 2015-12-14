@@ -8,6 +8,82 @@
 
 import Foundation
 
+/**
+Parsing helpers.
+*/
+func boolFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> Bool {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    func stringToBool(string: String) -> Bool {
+        if string == "1" || string.lowercaseString == "true" || string.lowercaseString == "yes" {
+            return true
+        }
+        
+        return false
+    }
+    
+    if let str = xml![key] as? String {
+        return stringToBool(str)
+    }
+    else {
+        return defaultValue
+    }
+}
+
+func stringFromXML(xml: [String: AnyObject]?, key: String, defaultValue: String) -> String {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        return str
+    }
+    else {
+        return defaultValue
+    }
+}
+
+func doubleFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Double) -> Double {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let d = Double(str) {
+            return d
+        }
+    }
+    return defaultValue
+}
+
+func intFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Int) -> Int {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let i = Int(str) {
+            return i
+        }
+    }
+    return defaultValue
+}
+
+func uintFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UInt) -> UInt {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let i = UInt(str) {
+            return i
+        }
+    }
+    return defaultValue
+}
+
 protocol ExperimentMetadataParser {
     typealias Input
     typealias Output

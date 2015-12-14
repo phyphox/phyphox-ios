@@ -7,11 +7,3 @@
 //
 
 import Foundation
-
-func stringToBool(string: String) -> Bool {
-    if string == "1" || string.lowercaseString == "true" || string.lowercaseString == "yes" {
-        return true
-    }
-    
-    return false
-}

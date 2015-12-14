@@ -11,13 +11,12 @@ import Foundation
 /**
  Represents an experiment view, which contais zero or more graph views, represented by graph descriptors.
  */
-final class ExperimentViewDescriptor {
-    let name: String
-    
+final class ExperimentViewDescriptor: ViewDescriptor {
     let graphs: [GraphViewDescriptor]?
     
-    init(name: String, graphs: [GraphViewDescriptor]?) {
-        self.name = name
+    init(label: String, graphs: [GraphViewDescriptor]?, labelSize: Double) {
         self.graphs = graphs
+        
+        super.init(label: label, labelSize: labelSize)
     }
 }

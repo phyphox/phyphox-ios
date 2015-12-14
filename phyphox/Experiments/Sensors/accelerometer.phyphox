@@ -24,10 +24,10 @@
     
     <input>
         <sensor type="accelerometer" buffer="10000">
-            <output type="buffer" parameter="x">accX</output>
-            <output type="buffer" parameter="y">accY</output>
-            <output type="buffer" parameter="z">accZ</output>
-            <output type="buffer" parameter="t">acc_time</output>
+            <output component="x">accX</output>
+            <output component="y">accY</output>
+            <output component="z">accZ</output>
+            <output component="t">acc_time</output>
         </sensor>
     </input>
     

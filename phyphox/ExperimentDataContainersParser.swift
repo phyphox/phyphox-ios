@@ -17,6 +17,19 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
     
     enum ExperimentDataContainerType {
         case Buffer
+        case Unknown
+    }
+    
+    func dataContainerTypeFromXML(xml: [String: AnyObject]?, key: String) -> ExperimentDataContainerType {
+        let str = stringFromXML(xml, key: key, defaultValue: "buffer")
+        
+        if str == "buffer" {
+            return .Buffer
+        }
+        else {
+            print("Error! Invalid data container type: \(str)")
+            return .Unknown
+        }
     }
     
     func parse() -> [String: DataBuffer]? {
@@ -24,32 +37,30 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
             var buffers: [String: DataBuffer] = [:]
             
             for container in cont {
-                //let type = ExperimentDataContainerType.Buffer
-                
                 var name: String!
-                var bufferSize = 0
+                
+                var containerType = ExperimentDataContainerType.Buffer //Default
+                var bufferSize = 1 //Default
+                var stat = false //Default
                 
                 if let str = container as? String {
                     name = str
                 }
                 else if let dict = container as? NSDictionary {
-                    if let attributes = dict[XMLDictionaryAttributesKey] {
-                        if let size = attributes["size"] as! String? {
-                            bufferSize = Int(size)!
-                        }
+                    if let attributes = dict[XMLDictionaryAttributesKey] as? [String: String] {
+                        bufferSize = intFromXML(attributes, key: "size", defaultValue: 1)
+                        stat = boolFromXML(attributes, key: "static", defaultValue: false)
                         
-                        if let t = attributes["type"] as! String? {
-                            if (t != "buffer") { //Unknown container type
-                                continue;
-                            }
-                        }
+                        containerType = dataContainerTypeFromXML(attributes, key: "type")
                     }
                     
                     name = dict[XMLDictionaryTextKey] as! String
                 }
                 
-                if name.characters.count > 0 {
+                if containerType == .Buffer && name.characters.count > 0 {
                     let buffer = DataBuffer(name: name, size: bufferSize)
+                    buffer.staticBuffer = stat
+                    
                     buffers[name] = buffer
                 }
             }

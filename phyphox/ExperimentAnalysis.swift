@@ -11,7 +11,7 @@ import Foundation
 /**
  Abstract class providing an Analysis module for Experiments
  */
-public class ExperimentAnalysis {
+class ExperimentAnalysis {
     internal let experiment: Experiment
     
     /**

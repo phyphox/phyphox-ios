@@ -45,7 +45,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         for view in views! {
             let attributes = view[XMLDictionaryAttributesKey] as! [String: String]
             
-            let name = attributes["name"]!
+            let label = attributes["label"]!
+            let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
             var graphDescriptors: [GraphViewDescriptor] = []
             
@@ -53,15 +54,19 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 for graph in graphs {
                     let attributes = graph[XMLDictionaryAttributesKey] as! [String: String]
                     
-                    let graphLabel = attributes["label"]!
+                    let label = attributes["label"]!
+                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    let aspectRatio = doubleFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
+                    let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
+                    let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
+                    let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
+                    let history = uintFromXML(attributes, key: "history", defaultValue: 1)
+                    
+                    let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
+                    let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
+                    
                     let xLabel = attributes["labelX"]!
                     let yLabel = attributes["labelY"]!
-                    
-                    var partialUpdate = false
-                    
-                    if let partialUpdateStr = attributes["partialUpdate"] {
-                        partialUpdate = stringToBool(partialUpdateStr)
-                    }
                     
                     var xInputBuffer: DataBuffer?
                     var yInputBuffer: DataBuffer?
@@ -69,15 +74,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     if let inputs = getElementsWithKey(graph, key: "input") as! [NSDictionary]? {
                         for input in inputs {
                             let attributes = input[XMLDictionaryAttributesKey] as! [String: String]
-                            
-                            //let type = "buffer" //Default
-                            
-                            if let customType = attributes["type"] {
-                                if customType != "buffer" {
-                                    print("Error! Invalid input type: \(customType)")
-                                    continue
-                                }
-                            }
                             
                             let axisString = attributes["axis"]!
                             
@@ -109,13 +105,78 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         }
                     }
                     
-                    let graphDescriptor = GraphViewDescriptor(label: graphLabel, xLabel: xLabel, yLabel: yLabel, partialUpdate: partialUpdate, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer)
+                    let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
                     
                     graphDescriptors.append(graphDescriptor)
                 }
             }
             
-            let viewDescriptor = ExperimentViewDescriptor(name: name, graphs: (graphDescriptors.count > 0 ? graphDescriptors : nil))
+            if let values = getElementsWithKey(view, key: "value") as! [NSDictionary]? {
+                for value in values {
+                    let attributes = value[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let label = attributes["label"]!
+                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    
+                    let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
+                    let precision = intFromXML(attributes, key: "precision", defaultValue: 2)
+                    
+                    let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
+                    
+                    let factor = doubleFromXML(attributes, key: "factor", defaultValue: 1.0)
+                    
+                    var inputBuffer: DataBuffer? = nil
+                    
+                    if let input = (getElementsWithKey(value, key: "input") as! [NSDictionary]?)?.first {
+                        let bufferName = input[XMLDictionaryTextKey] as! String
+                        
+                        inputBuffer = buffers[bufferName]
+                    }
+                    
+                    if inputBuffer == nil {
+                        print("Error! No input buffer for value view.")
+                        continue
+                    }
+                    
+                    //TODO: Value view descriptor
+                }
+            }
+            
+            if let edits = getElementsWithKey(view, key: "edit") as! [NSDictionary]? {
+                for edit in edits {
+                    let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let label = attributes["label"]!
+                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    
+                    let signed = boolFromXML(attributes, key: "signed", defaultValue: true)
+                    
+                    let decimal = boolFromXML(attributes, key: "decimal", defaultValue: true)
+                    
+                    let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
+                    
+                    let factor = doubleFromXML(attributes, key: "factor", defaultValue: 1.0)
+                    
+                    let defaultValue = doubleFromXML(attributes, key: "default", defaultValue: 0.0)
+                    
+                    var outputBuffer: DataBuffer? = nil
+                    
+                    if let input = (getElementsWithKey(edit, key: "output") as! [NSDictionary]?)?.first {
+                        let bufferName = input[XMLDictionaryTextKey] as! String
+                        
+                        outputBuffer = buffers[bufferName]
+                    }
+                    
+                    if outputBuffer == nil {
+                        print("Error! No output buffer for edit view.")
+                        continue
+                    }
+                    
+                    //TODO: Edit view descriptor
+                }
+            }
+            
+            let viewDescriptor = ExperimentViewDescriptor(label: label, graphs: (graphDescriptors.count > 0 ? graphDescriptors : nil), labelSize: labelSize)
             
             viewDescriptors.append(viewDescriptor)
         }
