@@ -9,7 +9,17 @@
 import Foundation
 
 final class ValueViewDescriptor: ViewDescriptor {
-//    init(label: String, labelSize: Double) {
-//        super.init(label: label, labelSize: labelSize)
-//    }
+    let scientific: Bool
+    let precision: Int
+    let unit: String
+    let factor: Double
+    
+    init(label: String, labelSize: Double, scientific: Bool, precision: Int, unit: String, factor: Double) {
+        self.scientific = scientific
+        self.precision = precision
+        self.unit = unit
+        self.factor = factor
+        
+        super.init(label: label, labelSize: labelSize)
+    }
 }

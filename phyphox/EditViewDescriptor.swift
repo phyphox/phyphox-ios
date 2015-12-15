@@ -9,8 +9,20 @@
 import Foundation
 
 final class EditViewDescriptor: ViewDescriptor {
-    //    init(label: String, labelSize: Double) {
-    //        super.init(label: label, labelSize: labelSize)
-    //    }
+    let signed: Bool
+    let decimal: Bool
+    let unit: String
+    let factor: Double
+    let defaultValue: Double
+    
+    init(label: String, labelSize: Double, signed: Bool, decimal: Bool, unit: String, factor: Double, defaultValue: Double) {
+        self.signed = signed
+        self.decimal = decimal
+        self.unit = unit
+        self.factor = factor
+        self.defaultValue = defaultValue
+        
+        super.init(label: label, labelSize: labelSize)
+    }
 }
 

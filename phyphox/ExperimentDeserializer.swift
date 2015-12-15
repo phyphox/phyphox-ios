@@ -59,37 +59,32 @@ final class ExperimentDeserializer: NSObject {
         let category = dictionary["category"] as! String
         let title = dictionary["title"] as! String
         
-        //Accelerometer is the only phyphox file with the new xml spec, the other files still need to be updated
-        if title != "Accelerometer" {
-            throw SerializationError.GenericError
-        }
-        
-        let dataContainers = dictionary["data-containers"] as! NSDictionary?
-        let buffers = parseDataContainers(dataContainers)
+        let buffers = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
         
         if buffers == nil || buffers.count == 0 {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let inputs = dictionary["input"] as! NSDictionary?
-        let sensorInputs = parseInputs(inputs, buffers: buffers)
+        let sensorInputs = parseInputs(dictionary["input"] as! NSDictionary?, buffers: buffers)
         
-        let translationsRaw = dictionary["translations"] as! NSDictionary?
-        let translations = parseTranslations(translationsRaw)
+        let translations = parseTranslations(dictionary["translations"] as! NSDictionary?)
 
-        let views = dictionary["views"] as! NSDictionary?
-        let viewDescriptors = parseViews(views, buffers: buffers)
+        let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers)
         
-        let analysis = dictionary["analysis"] as! NSDictionary?
-        parseAnalysis(analysis)
+        parseAnalysis(dictionary["analysis"] as! NSDictionary?)
         
-        let export = dictionary["export"] as! NSDictionary?
-        parseExports(export)
+        parseExports(dictionary["export"] as! NSDictionary?)
         
-        let icon = dictionary["icon"] as! String?
+        parseOutputs(dictionary["output"] as! NSDictionary?)
         
+        let iconRaw = dictionary["icon"]
+        let icon = parseIcon(iconRaw != nil ? iconRaw! : title)
         
-        let experiment = Experiment(title: title, description: description, category: category, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors)
+        if icon == nil {
+            throw SerializationError.InvalidExperimentFile
+        }
+        
+        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors)
         
         return experiment
     }
@@ -102,6 +97,20 @@ final class ExperimentDeserializer: NSObject {
         }
         
         return nil
+    }
+    
+    func parseIcon(icon: AnyObject) -> ExperimentIcon? {
+        let parser = ExperimentIconParser(icon)
+        
+        return parser.parse()
+    }
+    
+    func parseOutputs(outputs: NSDictionary?) {
+        if (outputs != nil) {
+            let parser = ExperimentOutputParser(outputs!)
+            
+            parser.parse()
+        }
     }
     
     func parseExports(exports: NSDictionary?) {
@@ -154,10 +163,14 @@ final class ExperimentDeserializer: NSObject {
             do {
                 let experiment = try self.deserialize()
                 
-                completion(experiment: experiment, error: nil)
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    completion(experiment: experiment, error: nil)
+                })
             }
             catch {
-                completion(experiment: nil, error: error as? SerializationError)
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    completion(experiment: nil, error: error as? SerializationError)
+                })
             }
         }
     }

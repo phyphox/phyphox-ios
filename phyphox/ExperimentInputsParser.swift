@@ -6,7 +6,7 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
-import UIKit
+import Foundation
 //TODO: Audio
 final class ExperimentInputsParser: ExperimentMetadataParser {
     let sensors: [NSDictionary]?

@@ -6,7 +6,7 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 final class ExperimentViewsParser: ExperimentMetadataParser {
     var views: [NSDictionary]?
@@ -49,6 +49,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
             var graphDescriptors: [GraphViewDescriptor] = []
+            var infoDescriptors: [InfoViewDescriptor] = []
             var editDescriptors: [EditViewDescriptor] = []
             var valueDescriptors: [ValueViewDescriptor] = []
             
@@ -73,36 +74,41 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     var xInputBuffer: DataBuffer?
                     var yInputBuffer: DataBuffer?
                     
-                    if let inputs = getElementsWithKey(graph, key: "input") as! [NSDictionary]? {
+                    if let inputs = getElementsWithKey(graph, key: "input") {
                         for input in inputs {
-                            let attributes = input[XMLDictionaryAttributesKey] as! [String: String]
-                            
-                            let axisString = attributes["axis"]!
-                            
-                            let axis = stringToGraphAxis(axisString)
-                            
-                            if axis == nil {
-                                print("Error! Invalid graph axis: \(axisString)")
-                                continue
-                            }
-                            
-                            let bufferName = input[XMLDictionaryTextKey] as! String
-                            
-                            let buffer = buffers[bufferName]
-                            
-                            if buffer == nil {
-                                print("Error! Unknown buffer name: \(bufferName)")
-                                continue
-                            }
-                            else {
-                                switch axis! {
-                                case .y:
-                                    yInputBuffer = buffer
-                                    break
-                                case .x:
-                                    xInputBuffer = buffer
-                                    break
+                            if input.isKindOfClass(NSDictionary) {
+                                let attributes = input[XMLDictionaryAttributesKey] as! [String: String]
+                                
+                                let axisString = attributes["axis"]!
+                                
+                                let axis = stringToGraphAxis(axisString)
+                                
+                                if axis == nil {
+                                    print("Error! Invalid graph axis: \(axisString)")
+                                    continue
                                 }
+                                
+                                let bufferName = input[XMLDictionaryTextKey] as! String
+                                
+                                let buffer = buffers[bufferName]
+                                
+                                if buffer == nil {
+                                    print("Error! Unknown buffer name: \(bufferName)")
+                                    continue
+                                }
+                                else {
+                                    switch axis! {
+                                    case .y:
+                                        yInputBuffer = buffer
+                                        break
+                                    case .x:
+                                        xInputBuffer = buffer
+                                        break
+                                    }
+                                }
+                            }
+                            else if input.isKindOfClass(NSString) {
+                                yInputBuffer = buffers[input as! String]
                             }
                         }
                     }
@@ -110,6 +116,19 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
                     
                     graphDescriptors.append(graphDescriptor)
+                }
+            }
+            
+            if let infos = getElementsWithKey(view, key: "info") as! [NSDictionary]? {
+                for info in infos {
+                    let attributes = info[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let label = attributes["label"]!
+                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    
+                    let infoDescriptor = InfoViewDescriptor(label: label, labelSize: labelSize)
+                    
+                    infoDescriptors.append(infoDescriptor)
                 }
             }
             
@@ -129,10 +148,17 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     var inputBuffer: DataBuffer? = nil
                     
-                    if let input = (getElementsWithKey(value, key: "input") as! [NSDictionary]?)?.first {
-                        let bufferName = input[XMLDictionaryTextKey] as! String
+                    if let input = getElementsWithKey(value, key: "input") {
+                        let first = input.first!
                         
-                        inputBuffer = buffers[bufferName]
+                        if first.isKindOfClass(NSDictionary) {
+                            let bufferName = (first as! NSDictionary)[XMLDictionaryTextKey] as! String
+                            
+                            inputBuffer = buffers[bufferName]
+                        }
+                        else if first.isKindOfClass(NSString) {
+                            inputBuffer = buffers[first as! String]
+                        }
                     }
                     
                     if inputBuffer == nil {
@@ -140,10 +166,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         continue
                     }
                     
-                    let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize)
+                    let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize, scientific: scientific, precision: precision, unit: unit, factor: factor)
                     
                     valueDescriptors.append(valueDescriptor)
-                    //TODO: Value view descriptor
                 }
             }
             
@@ -166,10 +191,17 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     var outputBuffer: DataBuffer? = nil
                     
-                    if let input = (getElementsWithKey(edit, key: "output") as! [NSDictionary]?)?.first {
-                        let bufferName = input[XMLDictionaryTextKey] as! String
+                    if let input = getElementsWithKey(edit, key: "output") {
+                        let first = input.first!
                         
-                        outputBuffer = buffers[bufferName]
+                        if first.isKindOfClass(NSDictionary) {
+                            let bufferName = (first as! NSDictionary)[XMLDictionaryTextKey] as! String
+                            
+                            outputBuffer = buffers[bufferName]
+                        }
+                        else if first.isKindOfClass(NSString) {
+                            outputBuffer = buffers[first as! String]
+                        }
                     }
                     
                     if outputBuffer == nil {
@@ -177,14 +209,13 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         continue
                     }
                     
-                    let editDescriptor = EditViewDescriptor(label: label, labelSize: labelSize)
+                    let editDescriptor = EditViewDescriptor(label: label, labelSize: labelSize, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue)
                     
                     editDescriptors.append(editDescriptor)
-                    //TODO: Edit view descriptor
                 }
             }
             
-            let viewDescriptor = ExperimentViewDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
+            let viewDescriptor = ExperimentViewDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), infoViews: (infoDescriptors.count > 0 ? infoDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
             
             viewDescriptors.append(viewDescriptor)
         }

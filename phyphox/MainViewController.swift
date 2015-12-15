@@ -31,7 +31,7 @@ class MainViewController: UIViewController, UICollectionViewDataSource, UICollec
     }
     
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return ExperimentManager.sharedInstance().experimentCollections[section].experiments.count
+        return ExperimentManager.sharedInstance().experimentCollections[section].experiments!.count
     }
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {

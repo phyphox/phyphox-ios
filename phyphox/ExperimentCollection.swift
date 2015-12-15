@@ -10,9 +10,9 @@ import Foundation
 
 final class ExperimentCollection: NSObject {
     private(set) var title: String
-    private(set) var experiments: [Experiment]
+    var experiments: [Experiment]?
     
-    init(title: String, experiments: [Experiment]) {
+    init(title: String, experiments: [Experiment]?) {
         self.title = title
         self.experiments = experiments
         

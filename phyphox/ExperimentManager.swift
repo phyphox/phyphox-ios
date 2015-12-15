@@ -12,7 +12,7 @@ var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("Experiment
 var fileExtension = "phyphox"
 
 final class ExperimentManager: NSObject {
-    private (set) var experimentCollections: [ExperimentCollection] = []
+    private(set) var experimentCollections: [ExperimentCollection] = []
     
     class func sharedInstance() -> ExperimentManager {
         struct Singleton {
@@ -30,31 +30,30 @@ final class ExperimentManager: NSObject {
     override init() {
         let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
         
+        var experimentCollections: [String: ExperimentCollection] = [:]
+        
         for title in folders {
-            let folder = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
+            let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
             
-            let files = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(folder)
-            
-            var experiments: [Experiment] = []
-            
-            for file in files {
-                if (file as NSString).pathExtension == fileExtension {
-                    let path = (folder as NSString).stringByAppendingPathComponent(file)
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromFile(path)
+                
+                let category = experiment.category
+                
+                if let collection = experimentCollections[category] {
+                    collection.experiments!.append(experiment)
+                }
+                else {
+                    let collection = ExperimentCollection(title: category, experiments: [experiment])
                     
-                    do {
-                        let experiment = try ExperimentSerialization.readExperimentFromFile(path)
-                        
-                        experiments.append(experiment)
-                    }
-                    catch _ {
-                        
-                    }
+                    experimentCollections[category] = collection
                 }
             }
-            
-            if experiments.count > 0 {
-                experimentCollections.append(ExperimentCollection(title: title, experiments: experiments))
+            catch _ {
+                
             }
+            
+            self.experimentCollections = Array(experimentCollections.values)
         }
         
         super.init()

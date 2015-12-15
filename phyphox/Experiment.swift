@@ -13,6 +13,8 @@ final class Experiment {
     var description: String
     var category: String
     
+    let icon: ExperimentIcon
+    
     var local: Bool
     
     let translations: [String: ExperimentTranslation]?
@@ -20,10 +22,12 @@ final class Experiment {
     let viewDescriptors: [ExperimentViewDescriptor]?
 //    let analyses: [ExperimentAnalysis]?
     
-    init(title: String, description: String, category: String, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?) {
+    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?) {
         self.title = title
         self.description = description
         self.category = category
+        
+        self.icon = icon
         
         self.local = local
         

@@ -13,11 +13,13 @@ import Foundation
  */
 final class ExperimentViewDescriptor: ViewDescriptor {
     let graphViews: [GraphViewDescriptor]?
+    let infoViews: [InfoViewDescriptor]?
     let editViews: [EditViewDescriptor]?
     let valueViews: [ValueViewDescriptor]?
     
-    init(label: String, labelSize: Double, graphViews: [GraphViewDescriptor]?, editViews: [EditViewDescriptor]?, valueViews: [ValueViewDescriptor]?) {
+    init(label: String, labelSize: Double, graphViews: [GraphViewDescriptor]?, infoViews: [InfoViewDescriptor]?, editViews: [EditViewDescriptor]?, valueViews: [ValueViewDescriptor]?) {
         self.graphViews = graphViews
+        self.infoViews = infoViews
         self.editViews = editViews
         self.valueViews = valueViews
         
