@@ -17,7 +17,9 @@ class MainView: UIView {
         
         super.init(frame: frame)
         
-        self.addSubview(collectionView)
+        addSubview(collectionView)
+        self.backgroundColor = UIColor.whiteColor()
+        collectionView.backgroundColor = UIColor.whiteColor()
     }
     
     override func layoutSubviews() {

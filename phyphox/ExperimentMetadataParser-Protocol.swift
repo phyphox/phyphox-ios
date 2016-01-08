@@ -7,10 +7,10 @@
 //
 
 import Foundation
+import CoreGraphics
 
-/**
-Parsing helpers.
-*/
+//MARK: Parsing helpers
+
 func boolFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> Bool {
     if xml == nil {
         return defaultValue
@@ -58,6 +58,32 @@ func doubleFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Double)
     return defaultValue
 }
 
+func floatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Float) -> Float {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let d = Float(str) {
+            return d
+        }
+    }
+    return defaultValue
+}
+
+func CGFloatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: CGFloat) -> CGFloat {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let d = CGFloat.NativeType(str) {
+            return CGFloat(d)
+        }
+    }
+    return defaultValue
+}
+
 func intFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Int) -> Int {
     if xml == nil {
         return defaultValue
@@ -83,6 +109,8 @@ func uintFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UInt) -> 
     }
     return defaultValue
 }
+
+//MARK: - Protocol
 
 protocol ExperimentMetadataParser {
     typealias Input

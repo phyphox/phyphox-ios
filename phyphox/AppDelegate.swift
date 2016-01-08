@@ -13,13 +13,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    var mainViewController: MainViewController?
+    var mainNavViewController: MainNavigationViewController!
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
-        mainViewController = MainViewController()
+        mainNavViewController = MainNavigationViewController(rootViewController: ExperimentsCollectionViewController())
         
-        window!.rootViewController = mainViewController!
+        window!.rootViewController = mainNavViewController
         
         window!.makeKeyAndVisible()
         // Override point for customization after application launch.

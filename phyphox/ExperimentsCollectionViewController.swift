@@ -1,5 +1,5 @@
 //
-//  MainViewController.swift
+//  ExperimentsCollectionViewController.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 04.12.15.
@@ -8,7 +8,7 @@
 
 import UIKit
 
-class MainViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class ExperimentsCollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     var selfView: MainView {
         get {
@@ -24,6 +24,12 @@ class MainViewController: UIViewController, UICollectionViewDataSource, UICollec
         selfView.collectionView.delegate = self;
     }
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        self.title = "phyphox"
+    }
+    
     //MARK: - UICollectionViewDataSource
     
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
@@ -34,8 +40,17 @@ class MainViewController: UIViewController, UICollectionViewDataSource, UICollec
         return ExperimentManager.sharedInstance().experimentCollections[section].experiments!.count
     }
     
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        return CGSizeMake(collectionView.frame.size.width, 44.0)
+    }
+    
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ExperimentCell", forIndexPath: indexPath)
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ExperimentCell", forIndexPath: indexPath) as! ExperimentCell
+        
+        let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
+        let experiment = collection.experiments![indexPath.row]
+        
+        cell.setUpWithExperiment(experiment)
         
         return cell
     }

@@ -37,7 +37,6 @@ func getElementsWithKey(xml: NSDictionary, key: String) -> [AnyObject]? {
 }
 
 final class ExperimentDeserializer: NSObject {
-    private var dictionary: NSDictionary!
     private let parser: NSXMLParser
     
     init(data: NSData) {
@@ -53,7 +52,7 @@ final class ExperimentDeserializer: NSObject {
     func deserialize() throws -> Experiment {
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.Dictionary
         
-        dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
+        let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
         
         let description = dictionary["description"] as! String
         let category = dictionary["category"] as! String
@@ -88,6 +87,25 @@ final class ExperimentDeserializer: NSObject {
         
         return experiment
     }
+    
+    func deserializeAsynchronous(completion: (experiment: Experiment?, error: SerializationError?) -> Void) {
+        dispatch_async(serializationQueue) { () -> Void in
+            do {
+                let experiment = try self.deserialize()
+                
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    completion(experiment: experiment, error: nil)
+                })
+            }
+            catch {
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    completion(experiment: nil, error: error as? SerializationError)
+                })
+            }
+        }
+    }
+    
+    //MARK: - Parsing
     
     func parseDataContainers(dataContainers: NSDictionary?) -> [String: DataBuffer]! {
         if dataContainers != nil {
@@ -156,22 +174,5 @@ final class ExperimentDeserializer: NSObject {
         }
         
         return nil
-    }
-    
-    func deserializeAsynchronous(completion: (experiment: Experiment?, error: SerializationError?) -> Void) {
-        dispatch_async(serializationQueue) { () -> Void in
-            do {
-                let experiment = try self.deserialize()
-                
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    completion(experiment: experiment, error: nil)
-                })
-            }
-            catch {
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    completion(experiment: nil, error: error as? SerializationError)
-                })
-            }
-        }
     }
 }
