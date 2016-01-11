@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class FFTAnylsis: ExperimentAnalysis {
+final class FFTAnalysis: ExperimentAnalysis {
     //input size, power-of-two filled size, log2 of input size (integer)
     private var n: Int
     private var np2: Int
@@ -18,9 +18,9 @@ final class FFTAnylsis: ExperimentAnalysis {
     private var cosArray: [Double]
     private var sinArray: [Double]
     
-    override init(experiment: Experiment, inputs: [String], outputs: [DataBuffer]) {
-        //FIXME:
-        n = 0//experiment.getBuffer().. This: getBufferForKey(inputs.first!)!.size doesn't work because self isn't initialized yet.
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        n = inputs.first!.buffer!.size
+        
         logn = Int(log(Double(n))/log(2.0))
         
         if (n != (1 << logn)) {
@@ -39,27 +39,20 @@ final class FFTAnylsis: ExperimentAnalysis {
             sinArray[i] = sin(-2.0 * M_PI * Double(i)/Double(np2));
         }
         
-        super.init(experiment: experiment, inputs: inputs, outputs: outputs)
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
         var x = [Double](count: np2, repeatedValue: 0.0);
         var y = [Double](count: np2, repeatedValue: 0.0);
         
-        var ix = getBufferForKey(inputs.first!)!.generate()
-        var i = 0
+        for (i, value) in inputs.first!.buffer!.enumerate() {
+            x[i] = value
+        }
         
-        while let next = ix.next() {
-            x[i++] = next
-            
-            if inputs.count > 1 {
-                var iy = getBufferForKey(inputs[1])!.generate()
-                i = 0
-                
-                //TODO: wirklich i vom großen loop benutzen?
-                while let yNext = iy.next() {
-                    y[i++] = yNext
-                }
+        if inputs.count > 1 {
+            for (i, value) in inputs[1].buffer!.enumerate() {
+                y[i] = value
             }
         }
         
@@ -97,7 +90,7 @@ final class FFTAnylsis: ExperimentAnalysis {
         j = 0; /* bit-reverse */
         n2 = np2/2;
         
-        for (i = 1; i < np2 - 1; i++) {
+        for (var i = 1; i < np2 - 1; i++) {
             n1 = n2;
             
             while j >= n1 {
@@ -119,7 +112,7 @@ final class FFTAnylsis: ExperimentAnalysis {
         
         n2 = 1;
         
-        for (i = 0; i < logn; i++) {
+        for (var i = 0; i < logn; i++) {
             n1 = n2;
             n2 = n2 + n2;
             a = 0;

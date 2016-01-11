@@ -1,5 +1,5 @@
 //
-//  AutocorrelationAnylsis.swift
+//  AutocorrelationAnalysis.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 06.12.15.
@@ -8,40 +8,55 @@
 
 import Foundation
 
-final class AutocorrelationAnylsis: ExperimentAnalysis {
-    private var smint = "";
-    private var smaxt = "";
-    
-    func setMinMax(mint: String, maxt: String) {
-        smint = mint;
-        smaxt = maxt;
-    }
+final class AutocorrelationAnalysis: ExperimentAnalysis {
     
     override func update() {
-        var mint: Double
-        var maxt: Double
+        var mint: Double = -Double.infinity
+        var maxt: Double = Double.infinity
         
-        if (smint.characters.count == 0) {
-            mint = -Double.infinity; //not set by user, set to -inf so it has no effect
-        }
-        else {
-            mint = getSingleValueFromUserString(smint)!;
+        //TODO: Nur ein x oder mehrere (in wiki steht mehrere)?
+        var xIn: DataBuffer?
+        var yIn: DataBuffer!
+        
+        for input in inputs {
+            if input.asString == "x" {
+                xIn = input.buffer!
+            }
+            else if input.asString == "y" {
+                yIn = input.buffer!
+            }
+            else if input.asString == "maxX" {
+                mint = input.getSingleValue()
+            }
+            else if input.asString == "maxY" {
+                maxt = input.getSingleValue()
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
         }
         
-        if (smaxt.characters.count == 0) {
-            maxt = Double.infinity; //not set by user, set to -inf so it has no effect
-        }
-        else {
-            maxt = getSingleValueFromUserString(smaxt)!;
+        var xOut: DataBuffer?
+        var yOut: DataBuffer!
+        
+        for output in outputs {
+            if output.asString == "x" {
+                xOut = output.buffer!
+            }
+            else if output.asString == "y" {
+                yOut = output.buffer!
+            }
+            else {
+                print("Error: Invalid analysis output: \(output.asString)")
+            }
         }
         
         //Get arrays for random access
-        var y = getBufferForKey(inputs.first!)!.toArray()
+        var y = yIn.toArray()
         var x = [Double](count: y.count, repeatedValue: 0.0) //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
         
-        if inputs.count > 1 {
-            var xraw = getBufferForKey(inputs[1])!.toArray()
-            
+        if xIn != nil {
+            var xraw = xIn!.toArray()
             
             for (var i = 0; i < x.count; i++) {
                 if (i < xraw.count) {
@@ -60,9 +75,9 @@ final class AutocorrelationAnylsis: ExperimentAnalysis {
         }
         
         //Clear outputs
-        outputs.first!.clear();
-        if (outputs.count > 1) {
-            outputs[1].clear();
+        yOut.clear();
+        if (xOut != nil) {
+            xOut!.clear();
         }
         
         //The actual calculation
@@ -79,9 +94,9 @@ final class AutocorrelationAnylsis: ExperimentAnalysis {
             sum /= Double(y.count-i); //Normalize to the number of values at this displacement
             
             //Append y output to output1 and x to output2 (if used)
-            outputs.first!.append(sum);
-            if (outputs.count > 1) {
-                outputs[1].append(x[i]);
+            yOut.append(sum);
+            if (xOut != nil) {
+                xOut!.append(x[i]);
             }
         }
     }

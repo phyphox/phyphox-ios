@@ -1,5 +1,5 @@
 //
-//  LCDAnalysis.swift
+//  LCMAnalysis.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 06.12.15.
@@ -8,29 +8,31 @@
 
 import Foundation
 
-final class LCDAnalysis: ExperimentAnalysis {
+final class LCMAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
         var bufferIterators: [IndexingGenerator<Array<Double>>] = []
         
         for (i, input) in inputs.enumerate() {
-            if let fixed = fixedValues[i] {
+            if let fixed = input.value {
                 lastValues.append(fixed)
             }
             else {
-                bufferIterators.append(getBufferForKey(input)!.generate())
+                bufferIterators.append(input.buffer!.generate())
                 lastValues.append(0.0)
             }
             
             if (i == 1) {
-                break;
+                break
             }
         }
         
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
         
-        for _ in 0..<outputs.first!.size {
+        outBuffer.clear()
+        
+        for _ in 0..<outBuffer.size {
             var didGetInput = false
             
             for (j, var iterator) in bufferIterators.enumerate() {
@@ -54,7 +56,7 @@ final class LCDAnalysis: ExperimentAnalysis {
             }
             
             if didGetInput {
-                outputs.first!.append(a0*(b0/a))
+                outBuffer.append(a0*(b0/a))
             }
             else {
                 break;

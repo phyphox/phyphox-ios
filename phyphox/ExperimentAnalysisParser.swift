@@ -9,7 +9,6 @@
 import Foundation
 
 final class ExperimentAnalysisParser: ExperimentMetadataParser {
-    typealias Output = NSArray?
     
     let analyses: [String: [NSDictionary]]?
     var attributes: [String: String]?
@@ -35,45 +34,11 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
     }
     
-    private final class ExperimentAnalysisDataFlow {
-        var asString: String?
-        
-        var bufferName: String?
-        var value: Double?
-        
-        init(bufferName: String) {
-            self.bufferName = bufferName
-        }
-        
-        init(dictionary: NSDictionary) {
-            var typeIsValue = false
-            
-            if let attributes = dictionary[XMLDictionaryAttributesKey] as? [String: AnyObject] {
-                let str = stringFromXML(attributes, key: "as", defaultValue: "")
-                
-                if str != "" {
-                    asString = str
-                }
-                
-                let type = stringFromXML(attributes, key: "type", defaultValue: "")
-                
-                if type == "value" {
-                    typeIsValue = true
-                }
-            }
-            
-            let text = dictionary[XMLDictionaryTextKey] as! String
-            
-            if typeIsValue {
-                value = Double(text)
-            }
-            else {
-                bufferName = text
-            }
-        }
+    func parse() -> AnyObject {
+        fatalError("Unavailable")
     }
     
-    func parse() -> Output {
+    func parse(buffers: [String : DataBuffer]) -> ExperimentAnalysisGroup? {
         if analyses == nil {
             return nil
         }
@@ -81,103 +46,117 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         let sleep = doubleFromXML(attributes, key: "sleep", defaultValue: 0.0)
         let onUserInput = boolFromXML(attributes, key: "onUserInout", defaultValue: false)
         
-        func getDataFlows(dictionaries: [AnyObject]) -> [ExperimentAnalysisDataFlow] {
+        func getDataFlows(dictionaries: [AnyObject]) -> [ExperimentAnalysisDataIO] {
             let c = dictionaries.count
-            var a = [ExperimentAnalysisDataFlow!](count: c, repeatedValue: nil)
+            var a = [ExperimentAnalysisDataIO!](count: c, repeatedValue: nil)
             
             for (i, object) in dictionaries.enumerate() {
                 if object.isKindOfClass(NSDictionary) {
-                    a[i] = ExperimentAnalysisDataFlow(dictionary: object as! NSDictionary)
+                    a[i] = ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers)
                 }
                 else {
-                    a[i] = ExperimentAnalysisDataFlow(bufferName: object as! String)
+                    a[i] = ExperimentAnalysisDataIO(buffer: buffers[object as! String]!)
                 }
             }
             
-            return a as! [ExperimentAnalysisDataFlow]
+            return a as! [ExperimentAnalysisDataIO]
         }
+        
+        var processed: [ExperimentAnalysis] = []
         
         for (key, values) in analyses! {
             for value in values {
                 let inputs = getDataFlows(getElementsWithKey(value, key: "input")!)
                 let outputs = getDataFlows(getElementsWithKey(value, key: "output")!)
                 
+                let attributes = value[XMLDictionaryAttributesKey] as! [String: AnyObject]?
+                
+                var analysis: ExperimentAnalysis! = nil
+                
                 if key == "add" {
-                    
+                    analysis = AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "subtract" {
-                    
+                    analysis = SubtractionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "multiply" {
-                    
+                     analysis = MultiplicationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "divide" {
-                    
+                    analysis = DivisionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "power" {
-                    
+                    analysis = PowerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "gcd" {
-                    
+                    analysis = GCDAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "lcm" {
-                    
+                    analysis = LCMAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "abs" {
-                    
+                    analysis = ABSAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "sin" {
-                    
+                    analysis = SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "cos" {
-                    
+                    analysis = CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "tan" {
-                    
+                    analysis = TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "first" {
                     
                 }
                 else if key == "max" {
-                    
+                    analysis = MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "threshold" {
                     
                 }
                 else if key == "append" {
-                    
+                    analysis = AppendAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "fft" {
-                    
+                    analysis = FFTAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "autocorrelation" {
-                    
+                    analysis = AutocorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "differentiate" {
-                    
+                    analysis = DifferentiationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "integrate" {
                     
                 }
                 else if key == "crosscorrelation" {
-                    
+                    analysis = CrosscorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "gausssmooth" {
-                    
+                    analysis = GaussSmoothAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "rangefilter" {
-                    
+                    analysis = RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "ramp" {
-                    
+                    analysis = RampGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "const" {
-                    
+                    analysis = ConstGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else {
                     print("Error! Invalid analysis type: \(key)")
                 }
+                
+                if analysis != nil {
+                    processed.append(analysis)
+                }
             }
+        }
+        
+        if processed.count > 0 {
+            return ExperimentAnalysisGroup(analyses: processed, sleep: sleep, onUserInput: onUserInput)
         }
         
         return nil

@@ -14,19 +14,32 @@ final class SubtractionAnalysis: ExperimentAnalysis {
         var lastValues: [Double] = []
         var bufferIterators: [IndexingGenerator<Array<Double>>] = []
         
-        for (i, input) in inputs.enumerate() {
-            if let fixed = fixedValues[i] {
-                lastValues.append(fixed)
+        for input in inputs {
+            if let fixed = input.value {
+                if input.asString == "minuend" {
+                    lastValues.insert(fixed, atIndex: 0)
+                }
+                else {
+                    lastValues.append(fixed)
+                }
             }
             else {
-                bufferIterators.append(getBufferForKey(input)!.generate())
-                lastValues.append(0.0)
+                if input.asString == "minuend" {
+                    bufferIterators.insert(input.buffer!.generate(), atIndex: 0)
+                    lastValues.insert(0.0, atIndex: 0)
+                }
+                else {
+                    bufferIterators.append(input.buffer!.generate())
+                    lastValues.append(0.0)
+                }
             }
         }
         
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
+            
+        outBuffer.clear()
         
-        for _ in 0..<outputs.first!.size {
+        for _ in 0..<outBuffer.size {
             var neutral = 0.0
             var didGetInput = false
             
@@ -45,7 +58,7 @@ final class SubtractionAnalysis: ExperimentAnalysis {
             }
             
             if didGetInput {
-                outputs.first!.append(neutral)
+                outBuffer.append(neutral)
             }
             else {
                 break;

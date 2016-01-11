@@ -12,66 +12,29 @@ import Foundation
  Abstract class providing an Analysis module for Experiments
  */
 class ExperimentAnalysis {
-    internal let experiment: Experiment
-    
     /**
-     Array of input keys. Either key for buffer, or a fixed value (double)
+     Inouts. Either containing a buffer, or a fixed value.
      */
-    internal var inputs: [String]
+    internal var inputs: [ExperimentAnalysisDataIO]
     
     /**
      Output buffers.
      */
-    internal var outputs: [DataBuffer]
+    internal var outputs: [ExperimentAnalysisDataIO]
     
-    /**
-     Fixed values are stored in this dictionary, with their corresponding indices in the `inputs` array.
-     */
-    internal var fixedValues: [Int : Double] = [:]
-
     internal var staticAnalysis = false {
         didSet {
-            for buffer in outputs {
-                buffer.staticBuffer = staticAnalysis
+            for out in outputs {
+                out.buffer!.staticBuffer = staticAnalysis
             }
         }
     }
+    
     internal var executed = false
     
-    init(experiment: Experiment, inputs: [String], outputs: [DataBuffer]) {
-        self.experiment = experiment
+    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
         self.outputs = outputs
-        
-        for (i, value) in inputs.enumerate() {
-            if (Experiment.isValidIdentifier(value)) {
-                let d = Double(value)
-                
-                if (d != nil) {
-                    fixedValues[i] = d
-                }
-                else {
-                    fatalError(String(format: "Invalid Input: %@", value))
-                }
-            }
-        }
-    }
-    
-    func getBufferForKey(key: String) -> DataBuffer? {
-        let buffer = DataBuffer(name: "", size: 0) as DataBuffer?//get buffer from experiment for key: experiment.getBuffer(key);
-        
-        return buffer;
-    }
-    
-    func getSingleValueFromUserString(key: String) -> Double? {
-        let buffer = getBufferForKey(key)
-        
-        if (buffer != nil) {
-            return buffer!.lastValue
-        }
-        else {
-            return Double(key)
-        }
     }
     
     func attemptUpdate() {

@@ -9,35 +9,37 @@
 import Foundation
 
 final class RampGeneratorAnalysis: ExperimentAnalysis {
-    private var start = "0"
-    private var stop = "100"
-    private var length = "-1"
-    
-    func setParameters(start: String?, stop: String?, length: String?) {
-        if start != nil {
-            self.start = start!
-        }
-        if stop != nil {
-            self.stop = stop!
-        }
-        if length != nil {
-            self.length = length!
-        }
-    }
-    
+
     override func update() {
-        let vStart = getSingleValueFromUserString(start)!
-        let vStop = getSingleValueFromUserString(stop)!
-        var vLength = Int(getSingleValueFromUserString(length)!)
+        var start: Double = 0
+        var stop: Double = 0
+        var length: Int = 0
         
-        outputs.first!.clear()
-        
-        if vLength < 0 {
-            vLength = outputs.first!.size
+        for input in inputs {
+            if input.asString == "start" {
+                start = input.getSingleValue()
+            }
+            else if input.asString == "stop" {
+                stop = input.getSingleValue()
+            }
+            else if input.asString == "length" {
+                length = Int(input.getSingleValue())
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
         }
         
-        for i in 0..<vLength {
-            outputs.first!.append(vStart+(vStop-vStart)/Double((vLength-1)*i))
+        let outBuffer = outputs.first!.buffer!
+        
+        outBuffer.clear()
+        
+        if length == 0 {
+            length = outBuffer.size
+        }
+        
+        for i in 0..<length {
+            outBuffer.append(start+(stop-start)/Double((length-1)*i))
         }
     }
 }

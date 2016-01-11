@@ -9,79 +9,65 @@
 import Foundation
 
 final class RangefilterAnalysis: ExperimentAnalysis {
-    //Hold min and max as string as it might be a dataBuffer
-    var min: [String?]
-    var max: [String?]
-    
-    init(experiment: Experiment, inputs: [String], outputs: [DataBuffer], min: [String?], max: [String?]) {
-        self.min = min
-        self.max = max
-        super.init(experiment: experiment, inputs: inputs, outputs: outputs)
+    private final class Range: NSObject {
+        var min: Double
+        var max: Double
+        
+        func inBounds(value: Double) -> Bool {
+            return min <= value && value <= max
+        }
+        
+        init(min: Double, max: Double) {
+            self.min = min
+            self.max = max
+        }
     }
     
     override func update() {
-        var minD = [Double](count: inputs.count, repeatedValue: 0.0)
-        var maxD = [Double](count: inputs.count, repeatedValue: 0.0)
+        var iterators: [Range: DataBuffer] = [:]
         
-        for i in 0..<inputs.count {
-            if let val = min[i] {
-                minD[i] = getSingleValueFromUserString(val)!
+        var currentIn: DataBuffer? = nil
+        var currentMax: Double = Double.infinity
+        var currentMin: Double = -Double.infinity
+        
+        for input in inputs {
+            if input.asString == "min" {
+                currentMin = input.getSingleValue()
             }
-            else {
-                minD[i] = -Double.infinity
+            else if input.asString == "max" {
+                currentMax = input.getSingleValue()
             }
-            
-            if let val = max[i] {
-                maxD[i] = getSingleValueFromUserString(val)!
-            }
-            else {
-                maxD[i] = Double.infinity
+            else if let b = input.buffer { //in
+                if currentIn != nil {
+                    iterators[Range(min: currentMin, max: currentMax)] = currentIn!
+                }
+                
+                currentIn = b
             }
         }
         
-        var iterators = [IndexingGenerator<Array<Double>>?](count: inputs.count, repeatedValue: nil)
-        
-        //Get iterators of all inputs (numeric string not allowed here as it makes no sense to filter static input)
-        for (i, input) in inputs.enumerate() {
-            if fixedValues[i] == nil {
-                iterators.append(getBufferForKey(input)!.generate())
-            }
+        if currentIn != nil {
+            iterators[Range(min: currentMin, max: currentMax)] = currentIn!
         }
         
         for output in outputs {
-            output.clear()
+            output.buffer!.clear()
         }
         
-        var data = [Double?](count: inputs.count, repeatedValue: nil)
-        
-        while true {
-            var filter = false
-            var hasNext = false
-            for i in 0..<inputs.count {
-                if var iterator = iterators[i] {
-                    if let next = iterator.next() {
-                        data[i] = next
-                        hasNext = true
-                        
-                        if (next < minD[i] || next > maxD[i]) {
-                            filter = true
-                            break
-                        }
-                    }
+        for (range, buffer) in iterators {
+            var data: [Double?] = []
+            
+            for value in buffer {
+                if !range.inBounds(value) {
+                    break //Out of bounds, skip these values
                 }
                 
-                if hasNext && filter { //No more need for the loop, we know that the big loop won't break and that the value has to be filtered.
-                    break
-                }
+                data.append(value)
             }
             
-            if !hasNext {
-                break
-            }
-            
-            if !filter {
-                for (i, output) in outputs.enumerate() {
-                    output.append(data[i])
+            for v in data {
+                for output in outputs {
+                    output.buffer!.append(v)
                 }
             }
         }

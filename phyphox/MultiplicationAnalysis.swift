@@ -14,19 +14,21 @@ final class MultiplicationAnalysis: ExperimentAnalysis {
         var lastValues: [Double] = []
         var bufferIterators: [IndexingGenerator<Array<Double>>] = []
         
-        for (i, input) in inputs.enumerate() {
-            if let fixed = fixedValues[i] {
+        for input in inputs {
+            if let fixed = input.value {
                 lastValues.append(fixed)
             }
             else {
-                bufferIterators.append(getBufferForKey(input)!.generate())
+                bufferIterators.append(input.buffer!.generate())
                 lastValues.append(0.0)
             }
         }
         
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
         
-        for _ in 0..<outputs.first!.size {
+        outBuffer.clear()
+        
+        for _ in 0..<outBuffer.size {
             var neutral = 1.0
             var didGetInput = false
             
@@ -40,7 +42,7 @@ final class MultiplicationAnalysis: ExperimentAnalysis {
             }
             
             if didGetInput {
-                outputs.first!.append(neutral)
+                outBuffer.append(neutral)
             }
             else {
                 break;

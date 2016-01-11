@@ -11,11 +11,12 @@ import Foundation
 final class MaxAnalysis: ExperimentAnalysis {
     
     override func update() {
+        //TODO: Update
         var iterators: [IndexingGenerator<Array<Double>>] = []
         
-        for (i, input) in inputs.enumerate() {
-            if fixedValues[i] == nil {
-                iterators.append(getBufferForKey(input)!.generate())
+        for  input in inputs {
+            if let b = input.buffer {
+                iterators.append(b.generate())
             }
         }
         
@@ -46,9 +47,9 @@ final class MaxAnalysis: ExperimentAnalysis {
         }
         
         //Done. Append result to output1 and output2 if used.
-        outputs.first!.append(max);
-        if (outputs.count > 1) {
-            outputs[1].append(x);
+        
+        for out in outputs {
+            out.buffer!.append(x)
         }
     }
 }

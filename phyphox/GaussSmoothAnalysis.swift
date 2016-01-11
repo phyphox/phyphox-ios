@@ -23,16 +23,18 @@ final class GaussSmoothAnalysis: ExperimentAnalysis {
         }
     }
     
-    override init(experiment: Experiment, inputs: [String], outputs: [DataBuffer]) {
-        sigma = 3.0
-        super.init(experiment: experiment, inputs: inputs, outputs: outputs)
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        sigma = doubleFromXML(additionalAttributes, key: "sigma", defaultValue: 3.0)
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
-        var y: [Double] = getBufferForKey(inputs.first!)!.toArray() //Get array for random access
+        var y: [Double] = inputs.first!.buffer!.toArray() //Get array for random access
 
+        let out = outputs.first!.buffer!
+        
         //Clear output
-        outputs.first!.clear()
+        out.clear()
         
         for i in 0..<y.count {
             var sum = 0.0
@@ -43,7 +45,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysis {
                 }
             }
             
-            outputs.first!.append(sum)
+            out.append(sum)
         }
     }
 }

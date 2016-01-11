@@ -1,5 +1,5 @@
 //
-//  CrosscorrelationAnaylsis.swift
+//  CrosscorrelationAnalysis.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 06.12.15.
@@ -8,14 +8,14 @@
 
 import Foundation
 
-final class CrosscorrelationAnaylsis: ExperimentAnalysis {
+final class CrosscorrelationAnalysis: ExperimentAnalysis {
     
     override func update() {
         var a: [Double]
         var b: [Double]
 
-        let firstBuffer = getBufferForKey(inputs.first!)!
-        let secondBuffer = getBufferForKey(inputs[1])!
+        let firstBuffer = inputs.first!.buffer!
+        let secondBuffer = inputs[1].buffer!
         
         //Put the larger input in a and the smaller one in b
         if (firstBuffer.count > secondBuffer.count) {
@@ -27,7 +27,9 @@ final class CrosscorrelationAnaylsis: ExperimentAnalysis {
             a = secondBuffer.toArray()
         }
         
-        outputs.first!.clear()
+        let out = outputs.first!.buffer!
+        
+        out.clear()
         
         let compRange = a.count-b.count
         
@@ -38,7 +40,7 @@ final class CrosscorrelationAnaylsis: ExperimentAnalysis {
                 sum += a[j+i]*b[j];
             }
             
-            outputs.first!.append(sum/Double(compRange))
+            out.append(sum/Double(compRange))
         }
     }
 }

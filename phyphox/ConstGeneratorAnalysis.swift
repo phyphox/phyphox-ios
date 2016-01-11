@@ -9,30 +9,33 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysis {
-    private var value = "0"
-    private var length = "-1"
-    
-    func setParameters(value: String?, length: String?) {
-        if value != nil {
-            self.value = value!
-        }
-        if length != nil {
-            self.length = length!
-        }
-    }
-    
+
     override func update() {
-        let vValue = getSingleValueFromUserString(value)
-        var vLength = Int(getSingleValueFromUserString(length)!)
+        var value: Double = 0
+        var length: Int = 0
         
-        outputs.first!.clear()
-        
-        if vLength < 0 {
-            vLength = outputs.first!.size
+        for input in inputs {
+            if input.asString == "value" {
+                value = input.getSingleValue()
+            }
+            else if input.asString == "length" {
+                length = Int(input.getSingleValue())
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
         }
         
-        for _ in 0..<vLength {
-            outputs.first!.append(vValue)
+        let outBuffer = outputs.first!.buffer!
+        
+        outBuffer.clear()
+        
+        if length == 0 {
+            length = outBuffer.size
+        }
+        
+        for _ in 0..<length {
+            outBuffer.append(value)
         }
     }
 }

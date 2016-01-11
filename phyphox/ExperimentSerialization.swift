@@ -6,6 +6,8 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
+//http://phyphox.com/wiki/index.php?title=Phyphox_file_format
+
 import Foundation
 
 enum SerializationError: ErrorType {

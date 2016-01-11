@@ -9,16 +9,16 @@
 import Foundation
 
 final class AppendAnalysis: ExperimentAnalysis {
+    
     override func update() {
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
         
-        for (i, input) in inputs.enumerate() {
-            if fixedValues[i] != nil {
-                continue
-            }
-            else {
-                for val in getBufferForKey(input)! {
-                    outputs.first!.append(val)
+        outBuffer.clear()
+        
+        for input in inputs {
+            if let b = input.buffer {
+                for val in b {
+                    outBuffer.append(val)
                 }
             }
         }

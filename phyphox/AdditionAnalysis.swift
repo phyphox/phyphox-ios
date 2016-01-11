@@ -12,21 +12,23 @@ final class AdditionAnalysis: ExperimentAnalysis {
     
     override func update() {
         var lastValues: [Double] = []
-        var bufferIterators: [IndexingGenerator<[Double]>] = []
+        var bufferIterators: [IndexingGenerator<Array<Double>>] = []
         
-        for (i, input) in inputs.enumerate() {
-            if let fixed = fixedValues[i] {
+        for input in inputs {
+            if let fixed = input.value {
                 lastValues.append(fixed)
             }
             else {
-                bufferIterators.append(getBufferForKey(input)!.generate())
+                bufferIterators.append(input.buffer!.generate())
                 lastValues.append(0.0)
             }
         }
         
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
         
-        for _ in 0..<outputs.first!.size {
+        outBuffer.clear()
+        
+        for _ in 0..<outBuffer.size {
             var neutral = 0.0
             var didGetInput = false
             
@@ -40,7 +42,7 @@ final class AdditionAnalysis: ExperimentAnalysis {
             }
             
             if didGetInput {
-                outputs.first!.append(neutral)
+                outBuffer.append(neutral)
             }
             else {
                 break;

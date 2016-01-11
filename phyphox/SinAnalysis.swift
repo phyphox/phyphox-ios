@@ -15,22 +15,24 @@ final class SinAnalysis: ExperimentAnalysis {
         var lastValue: Double = 0.0
         
         //Get value or iterator
-        if let val = fixedValues[0] {
+        if let val = inputs.first!.value  {
             lastValue = val
         }
         else {
             //iterator
-            iterator = getBufferForKey(inputs.first!)!.generate()
+            iterator = inputs.first!.buffer!.generate()
         }
         
-        outputs.first!.clear()
+        let outBuffer = outputs.first!.buffer!
+        
+        outBuffer.clear()
         
         if (iterator == nil) {
-            outputs.first!.append(sin(lastValue))
+            outBuffer.append(sin(lastValue))
         }
         else {
             while let next = iterator!.next() { //For each output value or at least once for values
-                outputs.first!.append(sin(next))
+                outBuffer.append(sin(next))
             }
         }
     }
