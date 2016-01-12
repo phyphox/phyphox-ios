@@ -20,9 +20,9 @@ final class Experiment {
     let translations: [String: ExperimentTranslation]?
     let sensorInputs: [SensorInput]?
     let viewDescriptors: [ExperimentViewDescriptor]?
-//    let analyses: [ExperimentAnalysis]?
+    let analysis: ExperimentAnalysisGroup?
     
-    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?) {
+    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?, analysis: ExperimentAnalysisGroup?) {
         self.title = title
         self.description = description
         self.category = category
@@ -34,6 +34,7 @@ final class Experiment {
         self.translations = translations
         self.sensorInputs = sensorInputs
         self.viewDescriptors = viewDescriptors
+        self.analysis = analysis
     }
     
     class func isValidIdentifier(id: String) -> Bool {

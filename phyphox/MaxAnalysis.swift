@@ -11,45 +11,56 @@ import Foundation
 final class MaxAnalysis: ExperimentAnalysis {
     
     override func update() {
-        //TODO: Update
-        var iterators: [IndexingGenerator<Array<Double>>] = []
+        var xIn: DataBuffer?
+        var yIn: DataBuffer!
         
-        for  input in inputs {
-            if let b = input.buffer {
-                iterators.append(b.generate())
+        var maxOut: DataBuffer!
+        var positionOut: DataBuffer?
+        
+        for input in inputs {
+            if input.asString == "x" {
+                xIn = input.buffer
             }
-        }
-        
-       var max = -Double.infinity
-       var x = max //The x location of the maximum
-       var currentX = -1.0; //Current x during iteration
-        
-        while let v = iterators[0].next() { //For each value of input1
-            //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
-            if iterators.count > 1 {
-                if let val = iterators[1].next() {
-                    currentX = val
-                }
-                else {
-                    currentX += 1.0
-                }
+            else if input.asString == "x" {
+                yIn = input.buffer
             }
             else {
-                currentX += 1.0
-            }
-            
-            //Is the current value bigger then the previous maximum?
-            if (v > max) {
-                //Set maximum and location of maximum
-                max = v;
-                x = currentX;
+                print("Error: Invalid analysis input: \(input.asString)")
             }
         }
         
-        //Done. Append result to output1 and output2 if used.
+        for output in outputs {
+            if output.asString == "max" {
+                maxOut = output.buffer
+            }
+            else if output.asString == "position" {
+                positionOut = output.buffer
+            }
+            else {
+                print("Error: Invalid analysis output: \(output.asString)")
+            }
+        }
         
-        for out in outputs {
-            out.buffer!.append(x)
+        var max = -Double.infinity
+        var x: Double? = nil
+        
+        for (i, value) in yIn.enumerate() {
+            if value > max {
+                max = value
+                
+                if xIn != nil && i < xIn!.size {
+                    x = xIn![i]
+                }
+                else {
+                    x = Double(i)
+                }
+            }
+        }
+        
+        maxOut.append(max)
+        
+        if positionOut != nil {
+            positionOut!.append(x)
         }
     }
 }

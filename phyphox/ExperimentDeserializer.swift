@@ -70,7 +70,7 @@ final class ExperimentDeserializer: NSObject {
 
         let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers)
         
-        parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
+        let analysis = parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
         
         parseExports(dictionary["export"] as! NSDictionary?)
         
@@ -83,7 +83,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors)
+        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors, analysis: analysis)
         
         return experiment
     }
@@ -159,11 +159,13 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseAnalysis(analysis: NSDictionary?, buffers: [String : DataBuffer]) {
+    func parseAnalysis(analysis: NSDictionary?, buffers: [String : DataBuffer]) -> ExperimentAnalysisGroup? {
         if (analysis != nil) {
             let parser = ExperimentAnalysisParser(analysis!)
-            parser.parse(buffers)
+            return parser.parse(buffers)
         }
+        
+        return nil
     }
     
     func parseTranslations(translations: NSDictionary?) -> [String: ExperimentTranslation]? {

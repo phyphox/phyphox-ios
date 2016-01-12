@@ -58,6 +58,12 @@ class DataBuffer: NSObject, SequenceType {
         queue.enqueue(value)
     }
     
+    subscript(index: Int) -> Double {
+        get {
+            return queue[index]
+        }
+    }
+    
     func clear() {
         if (!staticBuffer) {
             queue.clear()
