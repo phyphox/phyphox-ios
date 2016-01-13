@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class FFTAnalysis: ExperimentAnalysis {
+final class FFTAnalysis: ExperimentAnalysisModule {
     //input size, power-of-two filled size, log2 of input size (integer)
     private var n: Int
     private var np2: Int

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class FirstAnalysis: ExperimentAnalysis {
+final class FirstAnalysis: ExperimentAnalysisModule {
 
     override func update() {
         for input in inputs {

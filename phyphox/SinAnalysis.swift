@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class SinAnalysis: ExperimentAnalysis {
+final class SinAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var iterator: IndexingGenerator<Array<Double>>? = nil

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class IntegrationAnalysis: ExperimentAnalysis {
+final class IntegrationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var sum = 0.0

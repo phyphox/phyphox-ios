@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class RangefilterAnalysis: ExperimentAnalysis {
+final class RangefilterAnalysis: ExperimentAnalysisModule {
     private final class Range: NSObject {
         var min: Double
         var max: Double

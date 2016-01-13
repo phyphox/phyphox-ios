@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ABSAnalysis: ExperimentAnalysis {
+final class ABSAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var iterator: IndexingGenerator<Array<Double>>? = nil

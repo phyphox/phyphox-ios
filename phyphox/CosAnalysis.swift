@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class CosAnalysis: ExperimentAnalysis {
+final class CosAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var iterator: IndexingGenerator<Array<Double>>? = nil

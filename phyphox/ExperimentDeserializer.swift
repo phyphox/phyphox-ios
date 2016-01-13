@@ -166,7 +166,7 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseAnalysis(analysis: NSDictionary?, buffers: [String : DataBuffer]) -> ExperimentAnalysisGroup? {
+    func parseAnalysis(analysis: NSDictionary?, buffers: [String : DataBuffer]) -> ExperimentAnalysis? {
         if (analysis != nil) {
             let parser = ExperimentAnalysisParser(analysis!)
             return parser.parse(buffers)

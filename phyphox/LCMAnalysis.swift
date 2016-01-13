@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class LCMAnalysis: ExperimentAnalysis {
+final class LCMAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var lastValues: [Double] = []

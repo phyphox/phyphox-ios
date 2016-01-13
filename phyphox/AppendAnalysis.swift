@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class AppendAnalysis: ExperimentAnalysis {
+final class AppendAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         let outBuffer = outputs.first!.buffer!

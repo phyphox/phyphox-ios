@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ConstGeneratorAnalysis: ExperimentAnalysis {
+final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
 
     override func update() {
         var value: Double = 0

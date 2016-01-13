@@ -1,5 +1,5 @@
 //
-//  ExperimentAnalysis.swift
+//  ExperimentAnalysisModule.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 05.12.15.
@@ -11,7 +11,7 @@ import Foundation
 /**
  Abstract class providing an Analysis module for Experiments
  */
-class ExperimentAnalysis {
+class ExperimentAnalysisModule {
     /**
      Inouts. Either containing a buffer, or a fixed value.
      */
@@ -45,6 +45,6 @@ class ExperimentAnalysis {
     }
     
     func update() {
-        fatalError("Subclasses of ExperimentAnalysis must override the update() method!")
+        fatalError("Subclasses of ExperimentAnalysisModule must override the update() method!")
     }
 }

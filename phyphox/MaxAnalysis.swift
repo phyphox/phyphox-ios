@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MaxAnalysis: ExperimentAnalysis {
+final class MaxAnalysis: ExperimentAnalysisModule {
     var xIn: DataBuffer?
     var yIn: DataBuffer!
     

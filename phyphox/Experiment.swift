@@ -22,10 +22,10 @@ final class Experiment {
     let sensorInputs: [ExperimentSensorInput]?
     let audioInputs: [ExperimentAudioInput]?
     let output: ExperimentOutput?
-    let analysis: ExperimentAnalysisGroup?
+    let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
-    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewDescriptor], analysis: ExperimentAnalysisGroup?, export: ExperimentExport?) {
+    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.category = category

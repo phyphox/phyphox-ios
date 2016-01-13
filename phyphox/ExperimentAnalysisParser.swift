@@ -33,7 +33,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
     }
     
-    func parse(buffers: [String : DataBuffer]) -> ExperimentAnalysisGroup? {
+    func parse(buffers: [String : DataBuffer]) -> ExperimentAnalysis? {
         if analyses == nil {
             return nil
         }
@@ -57,7 +57,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             return a as! [ExperimentAnalysisDataIO]
         }
         
-        var processed: [ExperimentAnalysis] = []
+        var processed: [ExperimentAnalysisModule] = []
         
         for (key, values) in analyses! {
             for value in values {
@@ -66,7 +66,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: AnyObject]?
                 
-                var analysis: ExperimentAnalysis! = nil
+                var analysis: ExperimentAnalysisModule! = nil
                 
                 if key == "add" {
                     analysis = AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
@@ -151,7 +151,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
         
         if processed.count > 0 {
-            return ExperimentAnalysisGroup(analyses: processed, sleep: sleep, onUserInput: onUserInput)
+            return ExperimentAnalysis(analyses: processed, sleep: sleep, onUserInput: onUserInput)
         }
         
         return nil

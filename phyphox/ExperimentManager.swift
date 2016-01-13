@@ -12,7 +12,7 @@ var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("Experiment
 var fileExtension = "phyphox"
 
 final class ExperimentManager: NSObject {
-    private(set) var experimentCollections: [ExperimentCollection] = []
+    private(set) var experimentCollections: [ExperimentCollection]
     
     class func sharedInstance() -> ExperimentManager {
         struct Singleton {
@@ -54,9 +54,9 @@ final class ExperimentManager: NSObject {
             catch _ {
                 
             }
-            
-            self.experimentCollections = Array(experimentCollections.values)
         }
+        
+        self.experimentCollections = Array(experimentCollections.values)
         
         print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         

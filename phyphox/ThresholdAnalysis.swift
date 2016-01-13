@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ThresholdAnalysis: ExperimentAnalysis {
+final class ThresholdAnalysis: ExperimentAnalysisModule {
     let falling: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {

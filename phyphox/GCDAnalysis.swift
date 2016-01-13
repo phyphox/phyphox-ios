@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class GCDAnalysis: ExperimentAnalysis {
+final class GCDAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var lastValues: [Double] = []

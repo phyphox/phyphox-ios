@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class GaussSmoothAnalysis: ExperimentAnalysis {
+final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     var calcWidth: Int = 0
     var gauss: [Double] = []
     

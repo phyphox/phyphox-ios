@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class AutocorrelationAnalysis: ExperimentAnalysis {
+final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var mint: Double = -Double.infinity

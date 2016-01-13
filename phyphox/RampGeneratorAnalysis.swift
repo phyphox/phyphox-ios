@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class RampGeneratorAnalysis: ExperimentAnalysis {
+final class RampGeneratorAnalysis: ExperimentAnalysisModule {
 
     override func update() {
         var start: Double = 0

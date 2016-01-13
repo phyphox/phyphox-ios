@@ -1,5 +1,5 @@
 //
-//  ExperimentAnalysisGroup.swift
+//  ExperimentAnalysis.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.01.16.
@@ -8,13 +8,13 @@
 
 import Foundation
 
-class ExperimentAnalysisGroup {
-    let analyses: [ExperimentAnalysis]
+class ExperimentAnalysis {
+    let analyses: [ExperimentAnalysisModule]
     
     let sleep: Double
     let onUserInput: Bool
     
-    init(analyses: [ExperimentAnalysis], sleep: Double, onUserInput: Bool) {
+    init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
         self.sleep = sleep

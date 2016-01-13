@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class DifferentiationAnalysis: ExperimentAnalysis {
+final class DifferentiationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         let out = outputs.first!.buffer!

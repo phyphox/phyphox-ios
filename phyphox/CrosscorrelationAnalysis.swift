@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class CrosscorrelationAnalysis: ExperimentAnalysis {
+final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var a: [Double]

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class TanAnalysis: ExperimentAnalysis {
+final class TanAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         var iterator: IndexingGenerator<Array<Double>>? = nil
