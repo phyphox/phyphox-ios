@@ -23,6 +23,8 @@ final class RangefilterAnalysis: ExperimentAnalysis {
         }
     }
     
+    //TODO: Ich weiß nicht ob es richtig implementiert ist, peile die Dokumentation vom rangefilter nicht
+    
     override func update() {
         var iterators: [Range: DataBuffer] = [:]
         

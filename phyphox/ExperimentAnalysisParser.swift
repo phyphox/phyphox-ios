@@ -51,7 +51,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             var a = [ExperimentAnalysisDataIO!](count: c, repeatedValue: nil)
             
             for (i, object) in dictionaries.enumerate() {
-                if object.isKindOfClass(NSDictionary) {
+                if object is NSDictionary {
                     a[i] = ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers)
                 }
                 else {
@@ -107,13 +107,13 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                     analysis = TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "first" {
-                    
+                    analysis = FirstAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "max" {
                     analysis = MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "threshold" {
-                    
+                    analysis = ThresholdAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "append" {
                     analysis = AppendAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
@@ -128,7 +128,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                     analysis = DifferentiationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "integrate" {
-                    
+                    analysis = IntegrationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "crosscorrelation" {
                     analysis = CrosscorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)

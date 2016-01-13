@@ -19,10 +19,10 @@ final class Experiment {
     
     let translations: [String: ExperimentTranslation]?
     let sensorInputs: [SensorInput]?
-    let viewDescriptors: [ExperimentViewDescriptor]?
+    let viewDescriptors: [ExperimentViewDescriptor]
     let analysis: ExperimentAnalysisGroup?
     
-    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor]?, analysis: ExperimentAnalysisGroup?) {
+    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [SensorInput]?, viewDescriptors: [ExperimentViewDescriptor], analysis: ExperimentAnalysisGroup?) {
         self.title = title
         self.description = description
         self.category = category

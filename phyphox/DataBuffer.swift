@@ -40,9 +40,15 @@ class DataBuffer: NSObject, SequenceType {
         return queue.generate()
     }
     
-    var lastValue: Double? {
+    var last: Double? {
         get {
-            return queue.peek()
+            return queue.last
+        }
+    }
+    
+    var first: Double? {
+        get {
+            return queue.first
         }
     }
     

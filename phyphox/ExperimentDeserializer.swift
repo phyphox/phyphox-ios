@@ -11,12 +11,12 @@ import Foundation
 func getElemetArrayFromValue(value: AnyObject) -> [AnyObject] {
     var values: [AnyObject] = []
     
-    if value.isKindOfClass(NSMutableArray) {
+    if value is NSMutableArray {
         for item in (value as! NSMutableArray) {
             values.append(item)
         }
     }
-    else if value.isKindOfClass(NSArray) {
+    else if value is NSArray {
         values.appendContentsOf(value as! Array)
     }
     else {
@@ -79,11 +79,11 @@ final class ExperimentDeserializer: NSObject {
         let iconRaw = dictionary["icon"]
         let icon = parseIcon(iconRaw != nil ? iconRaw! : title)
         
-        if icon == nil {
+        if icon == nil || viewDescriptors == nil {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors, analysis: analysis)
+        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, viewDescriptors: viewDescriptors!, analysis: analysis)
         
         return experiment
     }

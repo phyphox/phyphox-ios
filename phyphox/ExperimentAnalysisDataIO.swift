@@ -19,7 +19,7 @@ class ExperimentAnalysisDataIO {
             return value
         }
         
-        return buffer!.lastValue!
+        return buffer!.last!
     }
     
     init(buffer: DataBuffer) {

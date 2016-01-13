@@ -92,21 +92,46 @@ class QueueTests: XCTestCase {
         }
     }
     
+    func testFirstLast() {
+        let q = Queue<Int64>()
+        
+        q.enqueue(Int64.max)
+        q.enqueue(0)
+        q.enqueue(Int64.min)
+        
+        XCTAssertEqual(q.first, Int64.max)
+        XCTAssertEqual(q.last, Int64.min)
+        
+        q.dequeue()
+        
+        XCTAssertEqual(q.first, 0)
+        XCTAssertEqual(q.last, Int64.min)
+        
+        q.dequeue()
+        
+        XCTAssertEqual(q.first, q.last)
+        
+        q.dequeue()
+        
+        XCTAssertNil(q.first)
+        XCTAssertNil(q.last)
+    }
+    
     func testRepeatedUse() {
         let q = Queue<Int>()
         
         for i in 0...100 {
             q.enqueue(i)
-            XCTAssertEqual(q.toArray()!.count-1, i)
-            XCTAssertEqual(q.toArray()![i], i)
+            XCTAssertEqual(q.toArray().count-1, i)
+            XCTAssertEqual(q.toArray()[i], i)
         }
         
         for i in 0...100 {
-            XCTAssertEqual(q.toArray()!.count-1, 100-i)
-            if i < q.toArray()!.count {
-                XCTAssertEqual(q.toArray()![i], 2*i)
+            XCTAssertEqual(q.toArray().count-1, 100-i)
+            if i < q.toArray().count {
+                XCTAssertEqual(q.toArray()[i], 2*i)
             }
-            XCTAssertEqual(q.toArray()![0], i)
+            XCTAssertEqual(q.toArray()[0], i)
             XCTAssertEqual(q.dequeue(), i)
         }
     }

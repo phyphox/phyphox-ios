@@ -28,6 +28,8 @@ final class ExperimentManager: NSObject {
     }
     
     override init() {
+        let timestamp = CFAbsoluteTimeGetCurrent()
+        
         let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
         
         var experimentCollections: [String: ExperimentCollection] = [:]
@@ -55,6 +57,8 @@ final class ExperimentManager: NSObject {
             
             self.experimentCollections = Array(experimentCollections.values)
         }
+        
+        print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         
         super.init()
     }

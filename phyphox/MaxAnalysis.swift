@@ -9,19 +9,18 @@
 import Foundation
 
 final class MaxAnalysis: ExperimentAnalysis {
+    var xIn: DataBuffer?
+    var yIn: DataBuffer!
     
-    override func update() {
-        var xIn: DataBuffer?
-        var yIn: DataBuffer!
-        
-        var maxOut: DataBuffer!
-        var positionOut: DataBuffer?
-        
+    var maxOut: DataBuffer!
+    var positionOut: DataBuffer?
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
             if input.asString == "x" {
                 xIn = input.buffer
             }
-            else if input.asString == "x" {
+            else if input.asString == "y" {
                 yIn = input.buffer
             }
             else {
@@ -41,6 +40,11 @@ final class MaxAnalysis: ExperimentAnalysis {
             }
         }
         
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
+    
+    
+    override func update() {
         var max = -Double.infinity
         var x: Double? = nil
         

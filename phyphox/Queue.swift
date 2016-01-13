@@ -69,8 +69,16 @@ final class Queue<Element> {
         }
     }
     
-    func peek() -> Element? {
-        return array.first
+    var first: Element? {
+        get {
+            return array.first
+        }
+    }
+    
+    var last: Element? {
+        get {
+            return array.last
+        }
     }
     
     func objectAtIndex(index: Int) -> Element? {

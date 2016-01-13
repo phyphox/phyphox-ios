@@ -76,7 +76,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     if let inputs = getElementsWithKey(graph, key: "input") {
                         for input in inputs {
-                            if input.isKindOfClass(NSDictionary) {
+                            if input is NSDictionary {
                                 let attributes = input[XMLDictionaryAttributesKey] as! [String: String]
                                 
                                 let axisString = attributes["axis"]!
@@ -107,7 +107,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                                     }
                                 }
                             }
-                            else if input.isKindOfClass(NSString) {
+                            else if input is NSString {
                                 yInputBuffer = buffers[input as! String]
                             }
                         }
@@ -151,12 +151,12 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     if let input = getElementsWithKey(value, key: "input") {
                         let first = input.first!
                         
-                        if first.isKindOfClass(NSDictionary) {
+                        if first is NSDictionary {
                             let bufferName = (first as! NSDictionary)[XMLDictionaryTextKey] as! String
                             
                             inputBuffer = buffers[bufferName]
                         }
-                        else if first.isKindOfClass(NSString) {
+                        else if first is NSString {
                             inputBuffer = buffers[first as! String]
                         }
                     }
@@ -194,12 +194,12 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     if let input = getElementsWithKey(edit, key: "output") {
                         let first = input.first!
                         
-                        if first.isKindOfClass(NSDictionary) {
+                        if first is NSDictionary {
                             let bufferName = (first as! NSDictionary)[XMLDictionaryTextKey] as! String
                             
                             outputBuffer = buffers[bufferName]
                         }
-                        else if first.isKindOfClass(NSString) {
+                        else if first is NSString {
                             outputBuffer = buffers[first as! String]
                         }
                     }

@@ -56,4 +56,12 @@ class ExperimentsCollectionViewController: UIViewController, UICollectionViewDat
     }
     
     //MARK: - UICollectionViewDelegate
+    
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
+        
+        let vc = ExperimentViewController(experiment: experiment)
+        
+        navigationController!.pushViewController(vc, animated: true)
+    }
 }
