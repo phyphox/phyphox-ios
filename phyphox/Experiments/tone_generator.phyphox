@@ -203,6 +203,7 @@
             <output>signal_normalized</output>
         </divide>
     </analysis>
+ <!-- Broken, these bufffers do not exist (are not defined in the data-containers section)
     <export>
         <set name="Signal">
             <data name="Time (s)">t</data>
@@ -211,4 +212,5 @@
             <data name="Signal sum">signal</data>
         </set>
     </export>
+!>
 </phyphox>

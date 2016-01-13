@@ -46,7 +46,7 @@
     <export>
         <set name="Raw Data">
             <data name="Time (s)">acc_time</data>
-            <data name="Acceleration x (m/s^2)">accX"</data>
+            <data name="Acceleration x (m/s^2)">accX</data>
             <data name="Acceleration y (m/s^2)">accY</data>
             <data name="Acceleration z (m/s^2)">accZ</data>
         </set>

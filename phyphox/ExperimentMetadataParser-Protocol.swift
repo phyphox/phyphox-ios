@@ -11,6 +11,24 @@ import CoreGraphics
 
 //MARK: Parsing helpers
 
+protocol floatNumberType {
+    init?(_: String)
+}
+
+protocol intNumberType {
+    init?(_ text: String, radix: Int)
+}
+
+extension Double: floatNumberType {}
+extension Float: floatNumberType {}
+
+extension Int: intNumberType {}
+extension Int32: intNumberType {}
+extension Int64: intNumberType {}
+extension UInt: intNumberType {}
+extension UInt32: intNumberType {}
+extension UInt64: intNumberType {}
+
 func boolFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> Bool {
     if xml == nil {
         return defaultValue
@@ -58,13 +76,26 @@ func doubleFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Double)
     return defaultValue
 }
 
-func floatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Float) -> Float {
+func intTypeFromXML<T:intNumberType>(xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
     if xml == nil {
         return defaultValue
     }
     
     if let str = xml![key] as? String {
-        if let d = Float(str) {
+        if let d = T(str, radix: 10) {
+            return d
+        }
+    }
+    return defaultValue
+}
+
+func floatTypeFromXML<T:floatNumberType>(xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if let d = T(str) {
             return d
         }
     }
@@ -84,39 +115,10 @@ func CGFloatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: CGFloa
     return defaultValue
 }
 
-func intFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Int) -> Int {
-    if xml == nil {
-        return defaultValue
-    }
-    
-    if let str = xml![key] as? String {
-        if let i = Int(str) {
-            return i
-        }
-    }
-    return defaultValue
-}
-
-func uintFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UInt) -> UInt {
-    if xml == nil {
-        return defaultValue
-    }
-    
-    if let str = xml![key] as? String {
-        if let i = UInt(str) {
-            return i
-        }
-    }
-    return defaultValue
-}
-
 //MARK: - Protocol
 
 protocol ExperimentMetadataParser {
     typealias Input
-    typealias Output
     
     init(_ data: Input)
-    
-    func parse() -> Output
 }

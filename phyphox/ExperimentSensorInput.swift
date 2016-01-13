@@ -1,5 +1,5 @@
 //
-//  SensorInput.swift
+//  ExperimentSensorInput.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 05.12.15.
@@ -24,7 +24,7 @@ enum SensorType {
     case Light
 }
 
-final public class SensorInput {
+final class ExperimentSensorInput {
     let sensorType: SensorType
     
     /**

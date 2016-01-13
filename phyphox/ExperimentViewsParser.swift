@@ -15,10 +15,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         views = getElementsWithKey(data, key: "view") as! [NSDictionary]?
     }
     
-    func parse() -> AnyObject {
-        fatalError("Unavailable");
-    }
-    
     enum GraphAxis {
         case x
         case y
@@ -63,7 +59,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
                     let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
                     let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
-                    let history = uintFromXML(attributes, key: "history", defaultValue: 1)
+                    let history = intTypeFromXML(attributes, key: "history", defaultValue: UInt(1))
                     
                     let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
                     let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
@@ -140,7 +136,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                     
                     let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
-                    let precision = intFromXML(attributes, key: "precision", defaultValue: 2)
+                    let precision = intTypeFromXML(attributes, key: "precision", defaultValue: 2)
                     
                     let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
                     

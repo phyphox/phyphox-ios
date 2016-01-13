@@ -112,6 +112,7 @@
             <output as="position">f0</output>
          </max>
     </analysis>
+  <!-- Broken, these bufffers do not exist (are not defined in the data-containers section)
     <export>
         <set name="FFT Spectrum">
             <data name="Delay (ms)">autoco_t</data>
@@ -121,5 +122,5 @@
             <data name="Time (ms)">time</data>
             <data name="Recording (a.u.)">recording</data>
         </set>
-    </export>
+    </export> !>
 </phyphox>

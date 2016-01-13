@@ -3,3 +3,4 @@
 //
 
 #import "XMLDictionary.h"
+#import "OrderedDictionary.h"

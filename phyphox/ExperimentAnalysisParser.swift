@@ -9,7 +9,6 @@
 import Foundation
 
 final class ExperimentAnalysisParser: ExperimentMetadataParser {
-    
     let analyses: [String: [NSDictionary]]?
     var attributes: [String: String]?
     
@@ -32,10 +31,6 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         else {
             analyses = nil
         }
-    }
-    
-    func parse() -> AnyObject {
-        fatalError("Unavailable")
     }
     
     func parse(buffers: [String : DataBuffer]) -> ExperimentAnalysisGroup? {

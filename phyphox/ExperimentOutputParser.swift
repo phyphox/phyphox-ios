@@ -9,14 +9,36 @@
 import Foundation
 
 final class ExperimentOutputParser: ExperimentMetadataParser {
-    typealias Output = NSArray?
+    let audio: [NSDictionary]?
     
     required init(_ data: NSDictionary) {
-        
+        audio = getElementsWithKey(data, key: "audio") as! [NSDictionary]?
     }
     
-    func parse() -> Output {
-        return nil
+    func parse(buffers: [String: DataBuffer]) -> ExperimentOutput? {
+        if audio == nil {
+            return nil
+        }
+        
+        var audios: [ExperimentAudioOutput] = []
+        
+        for audioOut in audio! {
+            let attributes = audioOut[XMLDictionaryAttributesKey] as! [String: AnyObject]?
+            
+            let loop = boolFromXML(attributes, key: "loop", defaultValue: false)
+            let sampleRate = intTypeFromXML(attributes, key: "rate", defaultValue: UInt(48000))
+            
+            let input = getElementsWithKey(audioOut, key: "input")!.first
+            
+            let bufferName = (input is String ? input as! String : input![XMLDictionaryTextKey] as! String)
+            let buffer = buffers[bufferName]!
+            
+            let out = ExperimentAudioOutput(sampleRate: sampleRate, loop: loop, dataSource: buffer)
+            
+            audios.append(out)
+        }
+        
+        return ExperimentOutput(audioOutput: audios)
     }
 }
 

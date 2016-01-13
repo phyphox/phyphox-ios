@@ -48,7 +48,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 }
                 else if let dict = container as? NSDictionary {
                     if let attributes = dict[XMLDictionaryAttributesKey] as? [String: String] {
-                        bufferSize = intFromXML(attributes, key: "size", defaultValue: 1)
+                        bufferSize = intTypeFromXML(attributes, key: "size", defaultValue: 1)
                         stat = boolFromXML(attributes, key: "static", defaultValue: false)
                         
                         containerType = dataContainerTypeFromXML(attributes, key: "type")
