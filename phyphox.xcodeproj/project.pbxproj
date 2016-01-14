@@ -137,7 +137,6 @@
 		6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentValueView.swift; sourceTree = "<group>"; };
 		6B00F0A31C457B7200971941 /* ExperimentEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentEditView.swift; sourceTree = "<group>"; };
 		6B00F0A71C46705100971941 /* ExperimentViewModule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModule.swift; sourceTree = "<group>"; };
-		6B00F0A91C46726B00971941 /* ExperimentViewCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewCollection.swift; sourceTree = "<group>"; };
 		6B00F0AB1C4680CC00971941 /* IntegrationAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationAnalysis.swift; sourceTree = "<group>"; };
 		6B00F0AD1C46818500971941 /* FirstAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirstAnalysis.swift; sourceTree = "<group>"; };
 		6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThresholdAnalysis.swift; sourceTree = "<group>"; };
@@ -265,10 +264,9 @@
 			isa = PBXGroup;
 			children = (
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
-				6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */,
 				6B00F09B1C457A6600971941 /* ExperimentView.swift */,
+				6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */,
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
-				6B6319661C4823830038BE22 /* Not used */,
 				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
 				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
 				6B00F0D61C47D3DC00971941 /* Graph */,
@@ -407,14 +405,6 @@
 				6BB52BC41C199CB400217CF1 /* Deserializer - Parser */,
 			);
 			name = Serialization;
-			sourceTree = "<group>";
-		};
-		6B6319661C4823830038BE22 /* Not used */ = {
-			isa = PBXGroup;
-			children = (
-				6B00F0A91C46726B00971941 /* ExperimentViewCollection.swift */,
-			);
-			name = "Not used";
 			sourceTree = "<group>";
 		};
 		6B7BF7711C130425007408FB = {

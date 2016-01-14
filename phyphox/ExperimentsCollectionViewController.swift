@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ExperimentsCollectionViewController: CollectionViewController {
+final class ExperimentsCollectionViewController: CollectionViewController {
     
     override class var viewClass: CollectionView.Type {
         get {
@@ -16,7 +16,7 @@ class ExperimentsCollectionViewController: CollectionViewController {
         }
     }
     
-    override var customCells: [String: UICollectionViewCell.Type]? {
+    override var customCells: [String : UICollectionViewCell.Type]? {
         get {
             return ["ExperimentCell" : ExperimentCell.self]
         }

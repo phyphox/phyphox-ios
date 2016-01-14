@@ -8,5 +8,5 @@
 
 import UIKit
 
-class MainView: CollectionView {
+final class MainView: CollectionView {
 }

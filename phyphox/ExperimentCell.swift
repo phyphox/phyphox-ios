@@ -37,6 +37,4 @@ class ExperimentCell: UICollectionViewCell {
         titleLabel.frame = CGRectMake(5.0, (self.contentView.bounds.size.height-s.height)/2.0, s.width, s.height)
         
     }
-    
-
 }
