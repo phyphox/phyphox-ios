@@ -8,6 +8,6 @@
 
 import Foundation
 
-final class InfoViewDescriptor: ViewDescriptor {
+public final class InfoViewDescriptor: ViewDescriptor {
     
 }

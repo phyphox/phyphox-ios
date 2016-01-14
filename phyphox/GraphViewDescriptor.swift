@@ -7,11 +7,12 @@
 //
 
 import Foundation
+import CoreGraphics
 
 /**
  Represents a graph view.
  */
-final class GraphViewDescriptor: ViewDescriptor {
+public final class GraphViewDescriptor: ViewDescriptor {
     let xLabel: String
     let yLabel: String
     
@@ -27,7 +28,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, labelSize: Double, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?, logX: Bool, logY: Bool, aspectRatio: Double, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?, logX: Bool, logY: Bool, aspectRatio: Double, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         

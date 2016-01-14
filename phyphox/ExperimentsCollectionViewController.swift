@@ -8,20 +8,18 @@
 
 import UIKit
 
-class ExperimentsCollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class ExperimentsCollectionViewController: CollectionViewController {
     
-    var selfView: MainView {
+    override class var viewClass: CollectionView.Type {
         get {
-            return view as! MainView
+            return MainView.self
         }
     }
     
-    override func loadView() {
-        view = MainView()
-        
-        selfView.collectionView.registerClass(ExperimentCell.self, forCellWithReuseIdentifier: "ExperimentCell")
-        selfView.collectionView.dataSource = self;
-        selfView.collectionView.delegate = self;
+    override var customCells: [String: UICollectionViewCell.Type]? {
+        get {
+            return ["ExperimentCell" : ExperimentCell.self]
+        }
     }
     
     override func viewDidLoad() {
@@ -32,19 +30,19 @@ class ExperimentsCollectionViewController: UIViewController, UICollectionViewDat
     
     //MARK: - UICollectionViewDataSource
     
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         return ExperimentManager.sharedInstance().experimentCollections.count
     }
     
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return ExperimentManager.sharedInstance().experimentCollections[section].experiments!.count
     }
     
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return CGSizeMake(collectionView.frame.size.width, 44.0)
+    override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        return CGSizeMake(self.viewSize.width, 44.0)
     }
     
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+    override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ExperimentCell", forIndexPath: indexPath) as! ExperimentCell
         
         let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]

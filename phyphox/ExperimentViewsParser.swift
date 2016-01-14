@@ -31,18 +31,18 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         return nil
     }
     
-    func parse(buffers: [String: DataBuffer]) -> [ExperimentViewDescriptor]? {
+    func parse(buffers: [String: DataBuffer]) -> [ExperimentViewCollectionDescriptor]? {
         if views == nil {
             return nil
         }
         
-        var viewDescriptors: [ExperimentViewDescriptor] = []
+        var viewDescriptors: [ExperimentViewCollectionDescriptor] = []
         
         for view in views! {
             let attributes = view[XMLDictionaryAttributesKey] as! [String: String]
             
             let label = attributes["label"]!
-            let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+            let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
             var graphDescriptors: [GraphViewDescriptor] = []
             var infoDescriptors: [InfoViewDescriptor] = []
@@ -54,8 +54,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let attributes = graph[XMLDictionaryAttributesKey] as! [String: String]
                     
                     let label = attributes["label"]!
-                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
-                    let aspectRatio = doubleFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
+                    let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    let aspectRatio = floatTypeFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
                     let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
                     let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
                     let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
@@ -120,7 +120,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let attributes = info[XMLDictionaryAttributesKey] as! [String: String]
                     
                     let label = attributes["label"]!
-                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                     
                     let infoDescriptor = InfoViewDescriptor(label: label, labelSize: labelSize)
                     
@@ -133,14 +133,14 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let attributes = value[XMLDictionaryAttributesKey] as! [String: String]
                     
                     let label = attributes["label"]!
-                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                     
                     let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
                     let precision = intTypeFromXML(attributes, key: "precision", defaultValue: 2)
                     
                     let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
                     
-                    let factor = doubleFromXML(attributes, key: "factor", defaultValue: 1.0)
+                    let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                     
                     var inputBuffer: DataBuffer? = nil
                     
@@ -173,7 +173,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]
                     
                     let label = attributes["label"]!
-                    let labelSize = doubleFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                    let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                     
                     let signed = boolFromXML(attributes, key: "signed", defaultValue: true)
                     
@@ -181,9 +181,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
                     
-                    let factor = doubleFromXML(attributes, key: "factor", defaultValue: 1.0)
+                    let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                     
-                    let defaultValue = doubleFromXML(attributes, key: "default", defaultValue: 0.0)
+                    let defaultValue = floatTypeFromXML(attributes, key: "default", defaultValue: 0.0)
                     
                     var outputBuffer: DataBuffer? = nil
                     
@@ -211,7 +211,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 }
             }
             
-            let viewDescriptor = ExperimentViewDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), infoViews: (infoDescriptors.count > 0 ? infoDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
+            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), infoViews: (infoDescriptors.count > 0 ? infoDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
             
             viewDescriptors.append(viewDescriptor)
         }

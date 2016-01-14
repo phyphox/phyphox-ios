@@ -8,27 +8,5 @@
 
 import UIKit
 
-class MainView: UIView {
-    
-    private(set) var collectionView: UICollectionView
-    
-    override init(frame: CGRect) {
-        collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout())
-        
-        super.init(frame: frame)
-        
-        addSubview(collectionView)
-        self.backgroundColor = UIColor.whiteColor()
-        collectionView.backgroundColor = UIColor.whiteColor()
-    }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        
-        collectionView.frame = self.bounds
-    }
-
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("NSCoding not supported")
-    }
+class MainView: CollectionView {
 }

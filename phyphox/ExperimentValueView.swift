@@ -8,6 +8,8 @@
 
 import UIKit
 
-class ExperimentValueView: ExperimentViewBaseModule {
-    typealias In = ValueViewDescriptor
+public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
+    override init(descriptor: ValueViewDescriptor) {
+        super.init(descriptor: descriptor)
+    }
 }

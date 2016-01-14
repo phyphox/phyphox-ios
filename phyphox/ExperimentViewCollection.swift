@@ -9,10 +9,10 @@
 import UIKit
 
 class ExperimentViewCollection: UIView {
-    let modules: [ExperimentViewBaseModule]
+    let modules: [UIView]
     
-    init(viewDescriptor: ExperimentViewDescriptor) {
-        var m: [ExperimentViewBaseModule] = []
+    init(viewDescriptor: ExperimentViewCollectionDescriptor) {
+        var m: [UIView] = []
         
         if viewDescriptor.editViews != nil {
             for descriptor in viewDescriptor.editViews! {
@@ -51,5 +51,54 @@ class ExperimentViewCollection: UIView {
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func sizeThatFits(size: CGSize) -> CGSize {
+        var currentY: CGFloat = 0.0
+        var previousXMax: CGFloat = 0.0
+        var highestYInRow: CGFloat = 0.0
+        
+        var xMax: CGFloat = 0.0
+        var yMax: CGFloat = 0.0
+        
+        for m in modules {
+            let s = m.sizeThatFits(size)
+            
+            let sameY = previousXMax+s.width <= size.width
+            
+            if !sameY {
+                previousXMax = 0.0
+                currentY += highestYInRow
+            }
+            
+            highestYInRow = max(highestYInRow, s.height)
+            
+            xMax = max(previousXMax+s.width, xMax)
+            yMax = currentY+highestYInRow
+        }
+        
+        return CGSizeMake(xMax, yMax)
+    }
+    
+    override func layoutSubviews() {
+        var currentY: CGFloat = 0.0
+        var previousXMax: CGFloat = 0.0
+        
+        var highestYInRow: CGFloat = 0.0
+        
+        for m in modules {
+            let s = m.sizeThatFits(self.bounds.size)
+            
+            let sameY = previousXMax+s.width <= self.bounds.size.width
+            
+            if !sameY {
+                previousXMax = 0.0
+                currentY += highestYInRow
+            }
+            
+            m.frame = CGRectMake(previousXMax, currentY, s.width, s.height)
+            
+            highestYInRow = max(highestYInRow, s.height)
+        }
     }
 }

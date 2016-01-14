@@ -51,8 +51,8 @@ final class ExperimentManager: NSObject {
                     experimentCollections[category] = collection
                 }
             }
-            catch _ {
-                
+            catch let error {
+                print("Error Caught: \(error)")
             }
         }
         

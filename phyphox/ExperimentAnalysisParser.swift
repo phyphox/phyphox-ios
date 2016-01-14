@@ -38,7 +38,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             return nil
         }
         
-        let sleep = doubleFromXML(attributes, key: "sleep", defaultValue: 0.0)
+        let sleep = floatTypeFromXML(attributes, key: "sleep", defaultValue: 0.0)
         let onUserInput = boolFromXML(attributes, key: "onUserInout", defaultValue: false)
         
         func getDataFlows(dictionaries: [AnyObject]) -> [ExperimentAnalysisDataIO] {

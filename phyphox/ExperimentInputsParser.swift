@@ -76,7 +76,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             
             let average = boolFromXML(attributes, key: "average", defaultValue: false)
             
-            let frequency = doubleFromXML(attributes, key: "rate", defaultValue: 0.0) //in Hz
+            let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //in Hz
             
             let sensorType = sensorTypeFromXML(attributes, key: "type")
             

@@ -60,7 +60,7 @@ final class ExperimentDeserializer: NSObject {
         
         let buffers = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
         
-        if buffers == nil || buffers.count == 0 {
+        guard buffers != nil && buffers.count > 0 else {
             throw SerializationError.InvalidExperimentFile
         }
         
@@ -82,7 +82,7 @@ final class ExperimentDeserializer: NSObject {
         let iconRaw = dictionary["icon"]
         let icon = parseIcon(iconRaw != nil ? iconRaw! : title)
         
-        if icon == nil || viewDescriptors == nil {
+        guard icon != nil && viewDescriptors != nil else {
             throw SerializationError.InvalidExperimentFile
         }
         
@@ -156,7 +156,7 @@ final class ExperimentDeserializer: NSObject {
         return (nil, nil)
     }
     
-    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer]) -> [ExperimentViewDescriptor]? {
+    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer]) -> [ExperimentViewCollectionDescriptor]? {
         if (views != nil) {
             let parser = ExperimentViewsParser(views!)
             

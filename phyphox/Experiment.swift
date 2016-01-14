@@ -17,7 +17,8 @@ final class Experiment {
     
     var local: Bool
     
-    let viewDescriptors: [ExperimentViewDescriptor]
+    let viewDescriptors: [ExperimentViewCollectionDescriptor]
+    
     let translations: [String: ExperimentTranslation]?
     let sensorInputs: [ExperimentSensorInput]?
     let audioInputs: [ExperimentAudioInput]?
@@ -25,7 +26,7 @@ final class Experiment {
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
-    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.category = category

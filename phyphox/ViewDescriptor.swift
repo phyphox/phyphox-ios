@@ -7,12 +7,13 @@
 //
 
 import Foundation
+import CoreGraphics
 
-class ViewDescriptor {
+public class ViewDescriptor {
     let label: String
-    let labelSize: Double
+    let labelSize: CGFloat
     
-    init(label: String, labelSize: Double) {
+    init(label: String, labelSize: CGFloat) {
         self.label = label
         self.labelSize = labelSize
     }

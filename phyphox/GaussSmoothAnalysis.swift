@@ -24,7 +24,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     }
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
-        sigma = doubleFromXML(additionalAttributes, key: "sigma", defaultValue: 3.0)
+        sigma = floatTypeFromXML(additionalAttributes, key: "sigma", defaultValue: 3.0)
         super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

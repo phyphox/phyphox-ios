@@ -8,6 +8,29 @@
 
 import UIKit
 
-class ExperimentInfoView: ExperimentViewBaseModule {
-    typealias In = InfoViewDescriptor
+public class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
+    let label: UILabel
+    
+    override init(descriptor: InfoViewDescriptor) {
+        label = UILabel()
+        label.numberOfLines = 0
+        
+        label.text = descriptor.label
+        
+        let baseFont = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+        
+        label.font = baseFont.fontWithSize(baseFont.pointSize*descriptor.labelSize)
+        
+        super.init(descriptor: descriptor)
+        
+        addSubview(label)
+    }
+    
+    public override func sizeThatFits(size: CGSize) -> CGSize {
+        return label.sizeThatFits(size)
+    }
+    
+    override public func layoutSubviews() {
+        label.frame = self.bounds
+    }
 }

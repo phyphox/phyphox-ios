@@ -8,6 +8,8 @@
 
 import UIKit
 
-class ExperimentEditView: ExperimentViewBaseModule {
-    typealias In = EditViewDescriptor
+public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor> {
+    override init(descriptor: EditViewDescriptor) {
+        super.init(descriptor: descriptor)
+    }
 }
