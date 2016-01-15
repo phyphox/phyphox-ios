@@ -11,10 +11,23 @@ import UIKit
 public class ExperimentViewModule<T:ViewDescriptor>: UIView {
     weak var descriptor: T!
     
-    init(descriptor: T) {
+    let label: UILabel
+    
+    required public init(descriptor: T) {
+        label = UILabel()
+        label.numberOfLines = 0
+        
+        label.text = descriptor.label
+        
+        let baseFont = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+        
+        label.font = baseFont.fontWithSize(baseFont.pointSize*descriptor.labelSize)
+        
         self.descriptor = descriptor
         
         super.init(frame: CGRect.zero)
+        
+        addSubview(label)
     }
     
     func setUp() {

@@ -44,10 +44,12 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let label = attributes["label"]!
             let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
-            var graphDescriptors: [GraphViewDescriptor] = []
-            var infoDescriptors: [InfoViewDescriptor] = []
-            var editDescriptors: [EditViewDescriptor] = []
-            var valueDescriptors: [ValueViewDescriptor] = []
+//            var graphDescriptors: [GraphViewDescriptor] = []
+//            var infoDescriptors: [InfoViewDescriptor] = []
+//            var editDescriptors: [EditViewDescriptor] = []
+//            var valueDescriptors: [ValueViewDescriptor] = []
+            
+            var views: [ViewDescriptor] = []
             
             if let graphs = getElementsWithKey(view, key: "graph") as! [NSDictionary]? {
                 for graph in graphs {
@@ -55,7 +57,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let label = attributes["label"]!
                     let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
-                    let aspectRatio = floatTypeFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
+                    let aspectRatio = CGFloatFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
                     let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
                     let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
                     let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
@@ -111,7 +113,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
                     
-                    graphDescriptors.append(graphDescriptor)
+                    views.append(graphDescriptor)
+//                    graphDescriptors.append(graphDescriptor)
                 }
             }
             
@@ -124,7 +127,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let infoDescriptor = InfoViewDescriptor(label: label, labelSize: labelSize)
                     
-                    infoDescriptors.append(infoDescriptor)
+                    views.append(infoDescriptor)
+//                    infoDescriptors.append(infoDescriptor)
                 }
             }
             
@@ -164,7 +168,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize, scientific: scientific, precision: precision, unit: unit, factor: factor)
                     
-                    valueDescriptors.append(valueDescriptor)
+                    views.append(valueDescriptor)
+//                    valueDescriptors.append(valueDescriptor)
                 }
             }
             
@@ -207,11 +212,14 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let editDescriptor = EditViewDescriptor(label: label, labelSize: labelSize, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue)
                     
-                    editDescriptors.append(editDescriptor)
+                    views.append(editDescriptor)
+//                    editDescriptors.append(editDescriptor)
                 }
             }
             
-            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), infoViews: (infoDescriptors.count > 0 ? infoDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
+//            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, labelSize: labelSize, graphViews: (graphDescriptors.count > 0 ? graphDescriptors : nil), infoViews: (infoDescriptors.count > 0 ? infoDescriptors : nil), editViews: (editDescriptors.count > 0 ? editDescriptors : nil), valueViews: (valueDescriptors.count > 0 ? valueDescriptors : nil))
+            
+            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, labelSize: labelSize, views: views)
             
             viewDescriptors.append(viewDescriptor)
         }

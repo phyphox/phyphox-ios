@@ -9,7 +9,7 @@
 import UIKit
 
 public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor> {
-    override init(descriptor: EditViewDescriptor) {
+    required public init(descriptor: EditViewDescriptor) {
         super.init(descriptor: descriptor)
     }
 }

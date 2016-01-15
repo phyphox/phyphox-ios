@@ -39,7 +39,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return CGSizeMake(self.viewSize.width, 44.0)
+        return CGSizeMake(self.view.frame.size.width, 44.0)
     }
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {

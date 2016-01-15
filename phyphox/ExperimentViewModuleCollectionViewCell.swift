@@ -26,6 +26,9 @@ class ExperimentViewModuleCollectionViewCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        module?.frame = self.contentView.bounds
+        if module != nil {
+            let s = module!.sizeThatFits(self.bounds.size)
+            module!.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
+        }
     }
 }

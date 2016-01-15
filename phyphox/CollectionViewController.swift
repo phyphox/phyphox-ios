@@ -16,21 +16,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         }
     }
     
-    private var targetViewSize: CGSize?
-    
-    /**
-     Returns the current view size, or the target view size if a rotation is taking place. To be used for calculating cell width.
-     */
-    internal var viewSize: CGSize {
-        get {
-            if targetViewSize != nil {
-                return targetViewSize!
-            }
-            else {
-                return view.frame.size
-            }
-        }
-    }
+    private var lastViewSize: CGRect?
     
     override func loadView() {
         view = self.dynamicType.viewClass.init()
@@ -45,16 +31,17 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         selfView.collectionView.delegate = self;
     }
     
-    override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
-        targetViewSize = size
-        
-        super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
-        
-        self.selfView.collectionView.collectionViewLayout.invalidateLayout()
-        
-        coordinator.animateAlongsideTransition(nil) { (_) -> Void in
-            self.targetViewSize = nil
+    func attemptInvalidateLayout() {
+        if lastViewSize == nil || !CGRectEqualToRect(lastViewSize!, view.frame) {
+            selfView.collectionView.collectionViewLayout.invalidateLayout()
+            print("a")
         }
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        attemptInvalidateLayout()
+        lastViewSize = view.frame
     }
     
     deinit {

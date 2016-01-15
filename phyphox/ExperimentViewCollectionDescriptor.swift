@@ -13,16 +13,24 @@ import CoreGraphics
  Represents an experiment view, which contais zero or more graph views, represented by graph descriptors.
  */
 public final class ExperimentViewCollectionDescriptor: ViewDescriptor {
-    let graphViews: [GraphViewDescriptor]?
-    let infoViews: [InfoViewDescriptor]?
-    let editViews: [EditViewDescriptor]?
-    let valueViews: [ValueViewDescriptor]?
+//    let graphViews: [GraphViewDescriptor]?
+//    let infoViews: [InfoViewDescriptor]?
+//    let editViews: [EditViewDescriptor]?
+//    let valueViews: [ValueViewDescriptor]?
     
-    init(label: String, labelSize: CGFloat, graphViews: [GraphViewDescriptor]?, infoViews: [InfoViewDescriptor]?, editViews: [EditViewDescriptor]?, valueViews: [ValueViewDescriptor]?) {
-        self.graphViews = graphViews
-        self.infoViews = infoViews
-        self.editViews = editViews
-        self.valueViews = valueViews
+    let views: [ViewDescriptor]
+    
+//    init(label: String, labelSize: CGFloat, graphViews: [GraphViewDescriptor]?, infoViews: [InfoViewDescriptor]?, editViews: [EditViewDescriptor]?, valueViews: [ValueViewDescriptor]?) {
+//        self.graphViews = graphViews
+//        self.infoViews = infoViews
+//        self.editViews = editViews
+//        self.valueViews = valueViews
+//        
+//        super.init(label: label, labelSize: labelSize)
+//    }
+    
+    init(label: String, labelSize: CGFloat, views: [ViewDescriptor]) {
+        self.views = views
         
         super.init(label: label, labelSize: labelSize)
     }

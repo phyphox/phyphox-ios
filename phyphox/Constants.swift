@@ -7,3 +7,8 @@
 //
 
 import Foundation
+import CoreGraphics
+
+func CGrectGetMid(r: CGRect) -> CGPoint {
+    return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
+}

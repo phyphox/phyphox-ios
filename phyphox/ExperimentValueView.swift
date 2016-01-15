@@ -9,7 +9,7 @@
 import UIKit
 
 public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
-    override init(descriptor: ValueViewDescriptor) {
+    required public init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
     }
 }

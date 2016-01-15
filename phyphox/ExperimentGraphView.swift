@@ -8,12 +8,12 @@
 
 import UIKit
 
-let kGraphHeight: CGFloat = 100.0
-
 public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     let graph: JGGraphView
     
-    override init(descriptor: GraphViewDescriptor) {
+    typealias T = GraphViewDescriptor
+    
+    required public init(descriptor: GraphViewDescriptor) {
         graph = JGGraphView()
         graph.path = JGGraphDrawer.drawPath([[0.0, 100.0]], ys: [[0.0, 100.0]], maxX: 100.0, maxY: 100.0, size: CGSizeMake(100.0, 100.0))
         
@@ -24,10 +24,12 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {
-        return CGSizeMake(size.width, min(kGraphHeight, size.height))
+        return CGSizeMake(size.width, min(size.width/descriptor.aspectRatio, size.height))
     }
     
     public override func layoutSubviews() {
+        super.layoutSubviews()
+        
         graph.frame = self.bounds
         let b = graph.path!.bounds
         
@@ -36,7 +38,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         
         graph.path!.applyTransform(CGAffineTransformMakeScale(scaleX, scaleY))
         
-        graph.path = graph.path
+        graph.refreshPath()
     }
 }
 

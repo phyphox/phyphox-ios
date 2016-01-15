@@ -60,7 +60,9 @@ final class ExperimentViewController: CollectionViewController {
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return viewModules[indexPath.section][indexPath.row].sizeThatFits(viewSize)
+        let s = viewModules[indexPath.section][indexPath.row].sizeThatFits(self.view.frame.size)
+        
+        return CGSizeMake(collectionView.frame.size.width, s.height)
     }
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {

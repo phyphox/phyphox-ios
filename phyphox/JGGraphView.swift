@@ -25,6 +25,12 @@ final class JGGraphView: UIView {
         }
     }
     
+    func refreshPath() {
+        if path != nil {
+            (self.layer as! CAShapeLayer).path = path!.CGPath
+        }
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
