@@ -13,6 +13,47 @@ final class ExperimentViewController: CollectionViewController {
     
     let viewModules: [[UIView]]
     
+    var selectedViewCollection: Int {
+        didSet {
+            if selectedViewCollection != oldValue {
+                updateSelectedViewCollection()
+            }
+        }
+    }
+    
+    func updateSelectedViewCollection() {
+        titleView.prompt = experiment.viewDescriptors[selectedViewCollection].label
+        
+        //Clear old modules, otherwise cell reuse will mess everything up...
+        for cell in selfView.collectionView.visibleCells() as! [ExperimentViewModuleCollectionViewCell] {
+            cell.module = nil
+        }
+        
+        selfView.collectionView.reloadData()
+    }
+    
+    func presentViewCollectionSelector() {
+        if !titleView.promptButtonExtended {
+            var titles: [String] = []
+            
+            for collection in experiment.viewDescriptors {
+                titles.append(collection.label)
+            }
+            
+            let menu = PTDropDownMenu(items: titles)
+            
+            menu.buttonTappedBlock = {[unowned self](index: UInt) -> (Void) in
+                self.selectedViewCollection = Int(index)
+                self.dismissDropDownMenuIfVisible()
+            }
+            
+            presentDropDownMenu(menu: menu)
+        }
+        else {
+            dismissDropDownMenuIfVisible()
+        }
+    }
+    
     init(experiment: Experiment) {
         self.experiment = experiment
         
@@ -22,15 +63,21 @@ final class ExperimentViewController: CollectionViewController {
             modules.append(ExperimentViewModuleFactory.createViews(collection))
         }
         
-        self.viewModules = modules
+        viewModules = modules
+
+        selectedViewCollection = 0
         
-        super.init(nibName: nil, bundle: nil)
+        super.init()
         
         self.title = experiment.title
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        
+        updateSelectedViewCollection()
+        
+        if experiment.viewDescriptors.count > 1 {
+            titleView.promptAction = {[unowned self](Void) -> (Void) in
+                self.presentViewCollectionSelector()
+            }
+        }
     }
     
     override class var viewClass: CollectionView.Type {
@@ -39,7 +86,7 @@ final class ExperimentViewController: CollectionViewController {
         }
     }
     
-    override var customCells: [String: UICollectionViewCell.Type]? {
+    override class var customCells: [String: UICollectionViewCell.Type]? {
         get {
             return ["ModuleCell" : ExperimentViewModuleCollectionViewCell.self]
         }
@@ -52,15 +99,15 @@ final class ExperimentViewController: CollectionViewController {
     }
     
     override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        return viewModules.count
+        return 1
     }
     
     override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModules[section].count
+        return viewModules[selectedViewCollection].count
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        let s = viewModules[indexPath.section][indexPath.row].sizeThatFits(self.view.frame.size)
+        let s = viewModules[selectedViewCollection][indexPath.row].sizeThatFits(self.view.frame.size)
         
         return CGSizeMake(collectionView.frame.size.width, s.height)
     }
@@ -68,10 +115,17 @@ final class ExperimentViewController: CollectionViewController {
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ModuleCell", forIndexPath: indexPath) as! ExperimentViewModuleCollectionViewCell
         
-        cell.module = viewModules[indexPath.section][indexPath.row]
+        let module = viewModules[selectedViewCollection][indexPath.row]
+        
+        cell.module = module
         
         return cell
     }
+    
+//    func collectionView(collectionView: UICollectionView, willEndDisplayingCell cell: UICollectionViewCell, forItemAtIndexPath indexPath: NSIndexPath) {
+//        let c = cell as! ExperimentViewModuleCollectionViewCell
+//        c.module = nil
+//    }
     
     func export() {
         

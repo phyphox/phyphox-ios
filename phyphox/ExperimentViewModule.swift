@@ -34,6 +34,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView {
         fatalError("Subclasses of ExperimentViewModule must override method")
     }
     
+    @available(*, unavailable)
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

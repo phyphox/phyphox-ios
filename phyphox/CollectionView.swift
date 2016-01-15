@@ -29,6 +29,7 @@ class CollectionView: UIView {
         collectionView.frame = self.bounds
     }
     
+    @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("NSCoding not supported")
     }

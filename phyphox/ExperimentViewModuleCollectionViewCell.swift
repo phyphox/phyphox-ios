@@ -19,6 +19,7 @@ class ExperimentViewModuleCollectionViewCell: UICollectionViewCell {
         didSet {
             if module != nil {
                 contentView.addSubview(module!)
+                setNeedsLayout() //Adding subview to contentview, so layoutSubviews isn't automatically triggered on self
             }
         }
     }
@@ -27,8 +28,8 @@ class ExperimentViewModuleCollectionViewCell: UICollectionViewCell {
         super.layoutSubviews()
         
         if module != nil {
-            let s = module!.sizeThatFits(self.bounds.size)
-            module!.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
+            let s = module!.sizeThatFits(self.contentView.bounds.size)
+            module!.frame = CGRectMake((self.contentView.bounds.size.width-s.width)/2.0, (self.contentView.bounds.size.height-s.height)/2.0, s.width, s.height)
         }
     }
 }

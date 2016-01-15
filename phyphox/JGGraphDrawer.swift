@@ -6,6 +6,10 @@
 //  Copyright (c) 2015 Jonas Gessner. All rights reserved.
 //
 
+/**
+This code is taken from the Crono iOS app (https://itunes.apple.com/app/id980940387). © 2015-2016 Jonas Gessner
+*/
+
 import UIKit
 
 final class JGGraphDrawer {

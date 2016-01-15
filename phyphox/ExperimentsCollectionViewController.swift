@@ -16,7 +16,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         }
     }
     
-    override var customCells: [String : UICollectionViewCell.Type]? {
+    override class var customCells: [String : UICollectionViewCell.Type]? {
         get {
             return ["ExperimentCell" : ExperimentCell.self]
         }

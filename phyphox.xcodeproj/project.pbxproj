@@ -36,6 +36,9 @@
 		6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */; };
 		6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319671C48457B0038BE22 /* CollectionViewController.swift */; };
 		6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319691C4849900038BE22 /* CollectionView.swift */; };
+		6B6319941C49516A0038BE22 /* PTDropDownMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319931C49516A0038BE22 /* PTDropDownMenu.m */; };
+		6B6319991C4952050038BE22 /* UIColor+Expanded.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319981C4952050038BE22 /* UIColor+Expanded.m */; };
+		6B63199B1C4969DA0038BE22 /* MainNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */; };
 		6B7BF7851C130425007408FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7841C130425007408FB /* Assets.xcassets */; };
 		6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7861C130425007408FB /* LaunchScreen.storyboard */; };
 		6B7BF7931C130425007408FB /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7921C130425007408FB /* phyphoxTests.swift */; };
@@ -94,6 +97,12 @@
 		6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */; };
 		6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */; };
 		6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */; };
+		6BD769C81C496B51006B4A0F /* PTNavigationBarTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */; };
+		6BD769D81C496C0C006B4A0F /* VBFDoubleSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D51C496C0C006B4A0F /* VBFDoubleSegment.m */; };
+		6BD769D91C496C0C006B4A0F /* VBFPopFlatButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D71C496C0C006B4A0F /* VBFPopFlatButton.m */; };
+		6BD769F21C496C3B006B4A0F /* pop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD769E71C496C16006B4A0F /* pop.framework */; };
+		6BD769F31C496C3B006B4A0F /* pop.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD769E71C496C16006B4A0F /* pop.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6BD769F71C496D34006B4A0F /* Constants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769F61C496D34006B4A0F /* Constants.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +120,41 @@
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
 		};
+		6BD769E41C496C16006B4A0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = EC191218162FB53A00E0CC76;
+			remoteInfo = "pop-ios-static";
+		};
+		6BD769E61C496C16006B4A0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0B6BE74819FFD3B900762101;
+			remoteInfo = "pop-ios-framework";
+		};
+		6BD769E81C496C16006B4A0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = EC68857F18C7B60000C6194C;
+			remoteInfo = "pop-osx-framework";
+		};
+		6BD769EA1C496C16006B4A0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0755AE4F1BEA15950094AB41;
+			remoteInfo = "pop-tvos-framework";
+		};
+		6BD769F41C496C3B006B4A0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0B6BE74719FFD3B900762101;
+			remoteInfo = "pop-ios-framework";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -120,6 +164,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				6BD769F31C496C3B006B4A0F /* pop.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -159,6 +204,12 @@
 		6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleFactory.swift; sourceTree = "<group>"; };
 		6B6319671C48457B0038BE22 /* CollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
 		6B6319691C4849900038BE22 /* CollectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
+		6B6319921C49516A0038BE22 /* PTDropDownMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTDropDownMenu.h; sourceTree = "<group>"; };
+		6B6319931C49516A0038BE22 /* PTDropDownMenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTDropDownMenu.m; sourceTree = "<group>"; };
+		6B6319961C4951C30038BE22 /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
+		6B6319971C4952050038BE22 /* UIColor+Expanded.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Expanded.h"; sourceTree = "<group>"; };
+		6B6319981C4952050038BE22 /* UIColor+Expanded.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Expanded.m"; sourceTree = "<group>"; };
+		6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationBar.swift; sourceTree = "<group>"; };
 		6B7BF77A1C130425007408FB /* phyphox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = phyphox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B7BF7841C130425007408FB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6B7BF7871C130425007408FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -233,6 +284,14 @@
 		6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentOutputParser.swift; sourceTree = "<group>"; };
 		6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentIconParser.swift; sourceTree = "<group>"; };
 		6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentIcon.swift; sourceTree = "<group>"; };
+		6BD769C61C496B51006B4A0F /* PTNavigationBarTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTNavigationBarTitleView.h; sourceTree = "<group>"; };
+		6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTNavigationBarTitleView.m; sourceTree = "<group>"; };
+		6BD769D41C496C0C006B4A0F /* VBFDoubleSegment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBFDoubleSegment.h; sourceTree = "<group>"; };
+		6BD769D51C496C0C006B4A0F /* VBFDoubleSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VBFDoubleSegment.m; sourceTree = "<group>"; };
+		6BD769D61C496C0C006B4A0F /* VBFPopFlatButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBFPopFlatButton.h; sourceTree = "<group>"; };
+		6BD769D71C496C0C006B4A0F /* VBFPopFlatButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VBFPopFlatButton.m; sourceTree = "<group>"; };
+		6BD769DA1C496C16006B4A0F /* pop.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = pop.xcodeproj; path = External/pop/pop.xcodeproj; sourceTree = SOURCE_ROOT; };
+		6BD769F61C496D34006B4A0F /* Constants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Constants.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -240,6 +299,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BD769F21C496C3B006B4A0F /* pop.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -390,6 +450,8 @@
 		6B0C71561C1C708F00500FEE /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6BD769DA1C496C16006B4A0F /* pop.xcodeproj */,
+				6BD769D31C496C0C006B4A0F /* VBFPopFlatButton */,
 				6B00F0C11C46F64700971941 /* OrderedDictionary */,
 				6B00F0C51C46F66500971941 /* XMLDictionary */,
 			);
@@ -405,6 +467,17 @@
 				6BB52BC41C199CB400217CF1 /* Deserializer - Parser */,
 			);
 			name = Serialization;
+			sourceTree = "<group>";
+		};
+		6B6319951C4951700038BE22 /* Drop Down Menu */ = {
+			isa = PBXGroup;
+			children = (
+				6B6319971C4952050038BE22 /* UIColor+Expanded.h */,
+				6B6319981C4952050038BE22 /* UIColor+Expanded.m */,
+				6B6319921C49516A0038BE22 /* PTDropDownMenu.h */,
+				6B6319931C49516A0038BE22 /* PTDropDownMenu.m */,
+			);
+			name = "Drop Down Menu";
 			sourceTree = "<group>";
 		};
 		6B7BF7711C130425007408FB = {
@@ -432,6 +505,8 @@
 			children = (
 				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
 				6B0C71541C1C706A00500FEE /* Constants.swift */,
+				6B6319961C4951C30038BE22 /* Constants.h */,
+				6BD769F61C496D34006B4A0F /* Constants.m */,
 				6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */,
 				6B7BF7C61C130507007408FB /* Java */,
 				6B7BF7C51C1304C6007408FB /* UI */,
@@ -494,7 +569,7 @@
 		6B7BF7C41C1304BA007408FB /* Main View */ = {
 			isa = PBXGroup;
 			children = (
-				6B00F0261C40713300971941 /* MainNavigationViewController.swift */,
+				6BD769C31C496AAA006B4A0F /* Navigation Controller */,
 				6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */,
 				6B7BF7B51C130471007408FB /* MainView.swift */,
 				6B7BF7AE1C130471007408FB /* ExperimentCell.swift */,
@@ -505,8 +580,7 @@
 		6B7BF7C51C1304C6007408FB /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				6B6319671C48457B0038BE22 /* CollectionViewController.swift */,
-				6B6319691C4849900038BE22 /* CollectionView.swift */,
+				6BD769F81C496E51006B4A0F /* Collection View */,
 				6B7BF7C41C1304BA007408FB /* Main View */,
 				6B00F0281C4072A100971941 /* Experiment View */,
 			);
@@ -559,6 +633,58 @@
 			name = "Deserializer - Parser";
 			sourceTree = "<group>";
 		};
+		6BD769C31C496AAA006B4A0F /* Navigation Controller */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0261C40713300971941 /* MainNavigationViewController.swift */,
+				6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */,
+			);
+			name = "Navigation Controller";
+			sourceTree = "<group>";
+		};
+		6BD769C91C496B57006B4A0F /* Title View */ = {
+			isa = PBXGroup;
+			children = (
+				6BD769C61C496B51006B4A0F /* PTNavigationBarTitleView.h */,
+				6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */,
+			);
+			name = "Title View";
+			sourceTree = "<group>";
+		};
+		6BD769D31C496C0C006B4A0F /* VBFPopFlatButton */ = {
+			isa = PBXGroup;
+			children = (
+				6BD769D41C496C0C006B4A0F /* VBFDoubleSegment.h */,
+				6BD769D51C496C0C006B4A0F /* VBFDoubleSegment.m */,
+				6BD769D61C496C0C006B4A0F /* VBFPopFlatButton.h */,
+				6BD769D71C496C0C006B4A0F /* VBFPopFlatButton.m */,
+			);
+			name = VBFPopFlatButton;
+			path = External/VBFPopFlatButton/VBFPopFlatButton/VBFPopFlatButtonClasses;
+			sourceTree = SOURCE_ROOT;
+		};
+		6BD769DB1C496C16006B4A0F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6BD769E51C496C16006B4A0F /* libpop.a */,
+				6BD769E71C496C16006B4A0F /* pop.framework */,
+				6BD769E91C496C16006B4A0F /* pop.framework */,
+				6BD769EB1C496C16006B4A0F /* pop.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6BD769F81C496E51006B4A0F /* Collection View */ = {
+			isa = PBXGroup;
+			children = (
+				6B6319671C48457B0038BE22 /* CollectionViewController.swift */,
+				6B6319691C4849900038BE22 /* CollectionView.swift */,
+				6BD769C91C496B57006B4A0F /* Title View */,
+				6B6319951C4951700038BE22 /* Drop Down Menu */,
+			);
+			name = "Collection View";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -575,6 +701,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				6BD769F51C496C3B006B4A0F /* PBXTargetDependency */,
 			);
 			name = phyphox;
 			productName = phyphox;
@@ -651,6 +778,12 @@
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 6BD769DB1C496C16006B4A0F /* Products */;
+					ProjectRef = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				6B7BF7791C130425007408FB /* phyphox */,
@@ -659,6 +792,37 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		6BD769E51C496C16006B4A0F /* libpop.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libpop.a;
+			remoteRef = 6BD769E41C496C16006B4A0F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD769E71C496C16006B4A0F /* pop.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = pop.framework;
+			remoteRef = 6BD769E61C496C16006B4A0F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD769E91C496C16006B4A0F /* pop.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = pop.framework;
+			remoteRef = 6BD769E81C496C16006B4A0F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD769EB1C496C16006B4A0F /* pop.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = pop.framework;
+			remoteRef = 6BD769EA1C496C16006B4A0F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		6B7BF7781C130425007408FB /* Resources */ = {
@@ -714,10 +878,12 @@
 				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
 				6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */,
 				6B00F0C81C46F66500971941 /* XMLDictionary.m in Sources */,
+				6B63199B1C4969DA0038BE22 /* MainNavigationBar.swift in Sources */,
 				6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */,
 				6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */,
 				6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */,
 				6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */,
+				6BD769F71C496D34006B4A0F /* Constants.m in Sources */,
 				6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */,
 				6B6319631C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift in Sources */,
 				6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */,
@@ -749,6 +915,7 @@
 				6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */,
 				6B00F0AE1C46818500971941 /* FirstAnalysis.swift in Sources */,
 				6B00F0A01C457B5100971941 /* ExperimentInfoView.swift in Sources */,
+				6BD769C81C496B51006B4A0F /* PTNavigationBarTitleView.m in Sources */,
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
 				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
 				6B0C71551C1C706A00500FEE /* Constants.swift in Sources */,
@@ -763,6 +930,7 @@
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,
 				6B00F09C1C457A6600971941 /* ExperimentView.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
+				6B6319941C49516A0038BE22 /* PTDropDownMenu.m in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
 				6B00F0D01C46FE9800971941 /* ExperimentAudioInput.swift in Sources */,
 				6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */,
@@ -771,6 +939,7 @@
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */,
 				6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */,
+				6B6319991C4952050038BE22 /* UIColor+Expanded.m in Sources */,
 				6B00F0D51C47D3D800971941 /* JGGraphView.swift in Sources */,
 				6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysis.swift in Sources */,
@@ -783,10 +952,12 @@
 				6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
 				6BB52BBB1C19882F00217CF1 /* ExperimentExportParser.swift in Sources */,
+				6BD769D91C496C0C006B4A0F /* VBFPopFlatButton.m in Sources */,
 				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
 				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnalysis.swift in Sources */,
 				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
 				6B7BF7C01C130471007408FB /* ExperimentsCollectionViewController.swift in Sources */,
+				6BD769D81C496C0C006B4A0F /* VBFDoubleSegment.m in Sources */,
 				6B7BF7FE1C13963E007408FB /* MultiplicationAnalysis.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -821,6 +992,11 @@
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = 6B7BF79A1C130425007408FB /* PBXContainerItemProxy */;
+		};
+		6BD769F51C496C3B006B4A0F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "pop-ios-framework";
+			targetProxy = 6BD769F41C496C3B006B4A0F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
