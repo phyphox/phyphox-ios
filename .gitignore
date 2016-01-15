@@ -19,3 +19,5 @@ DerivedData
 .nogit
 *.xcappdata
 Android
+External/*
+!External/checkout.sh
