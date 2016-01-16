@@ -94,7 +94,9 @@ public class MotionSession {
                 }
                 
                 dispatch_async(queue, { () -> Void in
-                    values(x: valX, y: valY, z: valZ, error: error)
+                    autoreleasepool({ () -> () in
+                        values(x: valX, y: valY, z: valZ, error: error)
+                    })
                 })
                 //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
                 //                self.delegate?.retrieveGyroscopeValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)

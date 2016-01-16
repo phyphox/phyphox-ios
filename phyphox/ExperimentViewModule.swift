@@ -9,7 +9,7 @@
 import UIKit
 
 protocol ExperimentViewModuleProtocol {
-    func update()
+    func setNeedsUpdate()
 }
 
 public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
@@ -34,7 +34,21 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         addSubview(label)
     }
     
-    func update() {
+    private var updateScheduled: Bool = false
+    
+    func setNeedsUpdate() {
+        if !updateScheduled {
+            updateScheduled = true
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(Double(NSEC_PER_SEC)*0.1)), q, { () -> Void in
+                autoreleasepool({ () -> () in
+                    self.update()
+                    self.updateScheduled = false
+                })
+            })
+        }
+    }
+    
+    internal func update() {
         
     }
     

@@ -47,7 +47,9 @@ final class Queue<Element> {
     
     func enqueue(value: Element) {
         dispatch_sync(lockQueue) { () -> Void in
-            self.array.append(value)
+            autoreleasepool({ () -> () in
+                self.array.append(value)
+            })
         }
     }
     
@@ -55,9 +57,11 @@ final class Queue<Element> {
         var element: Element? = nil
         
         dispatch_sync(lockQueue) { () -> Void in
-            if self.array.count > 0 {
-                element = self.array.removeFirst()
-            }
+            autoreleasepool({ () -> () in
+                if self.array.count > 0 {
+                    element = self.array.removeFirst()
+                }
+            })
         }
         
         return element
@@ -65,7 +69,9 @@ final class Queue<Element> {
     
     func clear() {
         dispatch_sync(lockQueue) { () -> Void in
-            self.array.removeAll()
+            autoreleasepool({ () -> () in
+                self.array.removeAll()
+            })
         }
     }
     
@@ -85,9 +91,11 @@ final class Queue<Element> {
         var element: Element? = nil
         
         dispatch_sync(lockQueue) { () -> Void in
-            if index < self.array.count {
-                element = self.array[index]
-            }
+            autoreleasepool({ () -> () in
+                if index < self.array.count {
+                    element = self.array[index]
+                }
+            })
         }
         
         return element

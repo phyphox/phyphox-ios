@@ -28,7 +28,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         addSubview(graph)
         addSubview(imgView)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "update", name: DataBufferReceivedNewValueNotification, object: descriptor.yInputBuffer)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "setNeedsUpdate", name: DataBufferReceivedNewValueNotification, object: descriptor.yInputBuffer)
     }
     
     deinit {
@@ -40,9 +40,10 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     private var lastXRange: Double?
     private var lastYRange: Double?
     private lazy var path: UIBezierPath = UIBezierPath()
-    private var lastImage: UIImage?
+//    private var lastImage: UIImage?
     
     override func update() {
+        autoreleasepool({ () -> () in
         var xValues: [Double]
         let yValues: [Double] = descriptor.yInputBuffer.toArray()
         
@@ -77,37 +78,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         }
         
 
-        
-//        if let xBuf = descriptor.xInputBuffer {
-//            for (i, value) in xBuf.enumerate() {
-//                if i < descriptor.yInputBuffer.count {
-//                    if let v = descriptor.yInputBuffer.queue.objectAtIndex(i) { // Thread safe get
-//                        minY = min(minY, v)
-//                        maxY = max(maxY, v)
-//                        
-//                        xValues.append(value)
-//                        yValues.append(v)
-//                    }
-//                    else {
-//                        break
-//                    }
-//                }
-//                else {
-//                    break
-//                }
-//            }
-//        }
-//        else {
-//            for (i, value) in descriptor.yInputBuffer.enumerate() {
-//                minY = min(minY, value)
-//                maxY = max(maxY, value)
-//                
-//                xValues.append(Double(i))
-//                yValues.append(value)
-//            }
-//        }
-        
-        dispatch_async(q, { () -> Void in
             if count > 1 {
                 if self.lastCount == nil || count > self.lastCount! {
                     let maxX = xValues.last!
@@ -116,57 +86,17 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                     let xRange = maxX-minX
                     let yRange = maxY!-minY!
                     
-//                    let abschnitt: UIImage
-                    
-                    if self.lastImage != nil {
+                    if self.lastCount != nil {
                         let scaleX = CGFloat(self.lastXRange!/xRange)
                         let scaleY = CGFloat(self.lastYRange!/yRange)
                         
-//                        if isnormal(scaleX) && isnormal(scaleY) {
-//                            self.path.applyTransform(CGAffineTransformMakeScale(scaleX, scaleY))
-//                        }
-                        
-                        let rangeDeltaX = xRange-self.lastXRange!
-//                        let rangeDeltaY = yRange-self.lastYRange!
-                        
-                        let width = self.bounds.size.width*CGFloat(rangeDeltaX/xRange)
-                            
-                        let newPath = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, minY: minY!, maxY: maxY!, count: count, size: CGSizeMake(width, self.bounds.size.height), lastIndex: self.lastCount!-1)
-                        
-                        let oldImgSize = self.lastImage!.size
-                        
-                        let newImgSize = CGSizeMake(oldImgSize.width*scaleX, oldImgSize.height*scaleY)
-                        
-                        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, 0.0)
-                        
-                        self.lastImage!.drawInRect(CGRectMake(0.0, (oldImgSize.height-newImgSize.height)/2.0, newImgSize.width, newImgSize.height))
-                        
-                        newPath.applyTransform(CGAffineTransformMakeTranslation(newImgSize.width, 0.0))
-                        
-                        newPath.lineWidth = 2.0
-                        UIColor.blackColor().setStroke()
-                        newPath.stroke()
-                        
-                        self.lastImage = UIGraphicsGetImageFromCurrentImageContext()
-                        
-                        UIGraphicsEndImageContext()
-                    }
-                    else {
-                        let newPath = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, minY: minY!, maxY: maxY!, count: count, size: self.bounds.size)
-                        
-                        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, 0.0)
-                        
-                        newPath.lineWidth = 2.0
-                        UIColor.blackColor().setStroke()
-                        newPath.stroke()
-                        
-                        self.lastImage = UIGraphicsGetImageFromCurrentImageContext()
-                        
-                        UIGraphicsEndImageContext()
+                        if isnormal(scaleX) && isnormal(scaleY) {
+                            self.path.applyTransform(CGAffineTransformMakeScale(scaleX, scaleY))
+                        }
                     }
                     
-//                    self.path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, minY: minY!, maxY: maxY!, count: count, size: self.graph.bounds.size, reusePath: self.path, lastIndex: self.lastCount)
-//                    
+                    self.path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, minY: minY!, maxY: maxY!, count: count, size: self.graph.bounds.size, reusePath: self.path, lastIndex: self.lastCount)
+//
                     self.lastXRange = xRange
                     self.lastYRange = yRange
                     
@@ -179,8 +109,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
 //                    
                     
                     dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-//                        self.graph.path = self.path
-                        self.imgView.image = self.lastImage!
+                        self.graph.path = self.path
                     })
                 }
             }
