@@ -19,8 +19,8 @@ public final class GraphViewDescriptor: ViewDescriptor {
     let logX: Bool
     let logY: Bool
     
-    weak var xInputBuffer: DataBuffer?
-    weak var yInputBuffer: DataBuffer?
+    var xInputBuffer: DataBuffer?
+    var yInputBuffer: DataBuffer
     
     let aspectRatio: CGFloat
     let partialUpdate: Bool
@@ -28,7 +28,7 @@ public final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer?, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         

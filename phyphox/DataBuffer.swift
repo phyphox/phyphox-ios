@@ -8,6 +8,8 @@
 
 import Foundation
 
+let DataBufferReceivedNewValueNotification = "DataBufferReceivedNewValueNotification"
+
 /**
  Data buffer used for raw or processed data from sensors.
  */
@@ -20,6 +22,10 @@ class DataBuffer: NSObject, SequenceType {
             }
         }
     }
+    
+    private(set) var max: Double? = nil
+    private(set) var min: Double? = nil
+    
     var staticBuffer: Bool = false
     var count: Int {
         get {
@@ -61,7 +67,23 @@ class DataBuffer: NSObject, SequenceType {
             queue.dequeue()
         }
         
+        if max == nil {
+            max = value
+        }
+        else {
+            max = Swift.max(max!, value)
+        }
+        
+        if min == nil {
+            min = value
+        }
+        else {
+            min = Swift.min(min!, value)
+        }
+        
         queue.enqueue(value)
+        
+        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
     }
     
     subscript(index: Int) -> Double {
@@ -73,6 +95,8 @@ class DataBuffer: NSObject, SequenceType {
     func clear() {
         if (!staticBuffer) {
             queue.clear()
+            max = nil
+            min = nil
         }
     }
     

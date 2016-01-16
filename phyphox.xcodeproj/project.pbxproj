@@ -231,17 +231,6 @@
 		6B7BF7B51C130471007408FB /* MainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentsCollectionViewController.swift; sourceTree = "<group>"; };
 		6B7BF7C11C13048B007408FB /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		6B7BF7C71C130507007408FB /* Analysis.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = Analysis.java; sourceTree = "<group>"; };
-		6B7BF7C81C130507007408FB /* dataBuffer.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = dataBuffer.java; sourceTree = "<group>"; };
-		6B7BF7C91C130507007408FB /* dataExport.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = dataExport.java; sourceTree = "<group>"; };
-		6B7BF7CA1C130507007408FB /* Experiment.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = Experiment.java; sourceTree = "<group>"; };
-		6B7BF7CB1C130507007408FB /* ExperimentList.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = ExperimentList.java; sourceTree = "<group>"; };
-		6B7BF7CC1C130507007408FB /* expView.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = expView.java; sourceTree = "<group>"; };
-		6B7BF7CD1C130507007408FB /* graphView.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = graphView.java; sourceTree = "<group>"; };
-		6B7BF7CE1C130507007408FB /* phyphoxExperiment.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = phyphoxExperiment.java; sourceTree = "<group>"; };
-		6B7BF7CF1C130507007408FB /* phyphoxFile.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = phyphoxFile.java; sourceTree = "<group>"; };
-		6B7BF7D01C130507007408FB /* remoteServer.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = remoteServer.java; sourceTree = "<group>"; };
-		6B7BF7D11C130507007408FB /* sensorInput.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = sensorInput.java; sourceTree = "<group>"; };
 		6B7BF7D21C13069A007408FB /* DataBuffer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataBuffer.swift; sourceTree = "<group>"; };
 		6B7BF7D61C130D0F007408FB /* Queue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Queue.swift; sourceTree = "<group>"; };
 		6B7BF7F31C132563007408FB /* MotionSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MotionSession.swift; sourceTree = "<group>"; };
@@ -508,7 +497,6 @@
 				6B6319961C4951C30038BE22 /* Constants.h */,
 				6BD769F61C496D34006B4A0F /* Constants.m */,
 				6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */,
-				6B7BF7C61C130507007408FB /* Java */,
 				6B7BF7C51C1304C6007408FB /* UI */,
 				6B7BF7C31C1304B3007408FB /* Experiment */,
 				6B7BF7AC1C130457007408FB /* Assets */,
@@ -585,25 +573,6 @@
 				6B00F0281C4072A100971941 /* Experiment View */,
 			);
 			name = UI;
-			sourceTree = "<group>";
-		};
-		6B7BF7C61C130507007408FB /* Java */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF7C71C130507007408FB /* Analysis.java */,
-				6B7BF7C81C130507007408FB /* dataBuffer.java */,
-				6B7BF7C91C130507007408FB /* dataExport.java */,
-				6B7BF7CA1C130507007408FB /* Experiment.java */,
-				6B7BF7CB1C130507007408FB /* ExperimentList.java */,
-				6B7BF7CC1C130507007408FB /* expView.java */,
-				6B7BF7CD1C130507007408FB /* graphView.java */,
-				6B7BF7CE1C130507007408FB /* phyphoxExperiment.java */,
-				6B7BF7CF1C130507007408FB /* phyphoxFile.java */,
-				6B7BF7D01C130507007408FB /* remoteServer.java */,
-				6B7BF7D11C130507007408FB /* sensorInput.java */,
-			);
-			name = Java;
-			path = ../../../../Downloads/phyphox/app/src/main/java/de/rwth_aachen/phyphox;
 			sourceTree = "<group>";
 		};
 		6B7BF8011C1396C9007408FB /* Analysis */ = {
@@ -1100,7 +1069,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1116,7 +1084,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

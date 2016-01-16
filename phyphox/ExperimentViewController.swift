@@ -119,19 +119,20 @@ final class ExperimentViewController: CollectionViewController {
         
         cell.module = module
         
+        (module as! ExperimentViewModuleProtocol).update()
+        
         return cell
     }
     
-//    func collectionView(collectionView: UICollectionView, willEndDisplayingCell cell: UICollectionViewCell, forItemAtIndexPath indexPath: NSIndexPath) {
-//        let c = cell as! ExperimentViewModuleCollectionViewCell
-//        c.module = nil
-//    }
+    override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAtIndex section: Int) -> CGFloat {
+        return 5.0
+    }
     
     func export() {
         
     }
     
     func startExperiment() {
-        
+        experiment.start()
     }
 }

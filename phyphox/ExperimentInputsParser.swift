@@ -63,7 +63,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
     }
     
     func parse(buffers: [String : DataBuffer]) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
-        if sensors == nil || audio == nil {
+        if sensors == nil && audio == nil {
             return (nil, nil)
         }
         
@@ -71,76 +71,80 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         
         var sensorsOut: [ExperimentSensorInput] = []
         
-        for sensor in sensors! {
-            let attributes = sensor[XMLDictionaryAttributesKey] as! [String: String]
-            
-            let average = boolFromXML(attributes, key: "average", defaultValue: false)
-            
-            let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //in Hz
-            
-            let sensorType = sensorTypeFromXML(attributes, key: "type")
-            
-            if sensorType == nil {
-                continue
-            }
-            
-            let outputs = getElementsWithKey(sensor, key: "output")!
-            
-            var xBuffer, yBuffer, zBuffer, tBuffer: DataBuffer?
-            
-            for output in outputs {
-                let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
+        if sensors != nil {
+            for sensor in sensors! {
+                let attributes = sensor[XMLDictionaryAttributesKey] as! [String: String]
                 
-                let name = output[XMLDictionaryTextKey] as! String
+                let average = boolFromXML(attributes, key: "average", defaultValue: false)
                 
-                let component = attributes["component"]
+                let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //in Hz
                 
-                if component == "x" {
-                    xBuffer = buffers[name]
-                }
-                else if component == "y" {
-                    yBuffer = buffers[name]
-                }
-                else if component == "z" {
-                    zBuffer = buffers[name]
-                }
-                else if component == "t" {
-                    tBuffer = buffers[name]
-                }
-                else {
-                    print("Error! Invalid sensor parameter: \(component)")
+                let sensorType = sensorTypeFromXML(attributes, key: "type")
+                
+                if sensorType == nil {
+                    print("Error! Sensor type not set")
                     continue
                 }
+                
+                let outputs = getElementsWithKey(sensor, key: "output")!
+                
+                var xBuffer, yBuffer, zBuffer, tBuffer: DataBuffer?
+                
+                for output in outputs {
+                    let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let name = output[XMLDictionaryTextKey] as! String
+                    
+                    let component = attributes["component"]
+                    
+                    if component == "x" {
+                        xBuffer = buffers[name]
+                    }
+                    else if component == "y" {
+                        yBuffer = buffers[name]
+                    }
+                    else if component == "z" {
+                        zBuffer = buffers[name]
+                    }
+                    else if component == "t" {
+                        tBuffer = buffers[name]
+                    }
+                    else {
+                        print("Error! Invalid sensor parameter: \(component)")
+                        continue
+                    }
+                }
+                
+                if average && frequency == 0.0 {
+                    print("Error! Averaging is enabled but frequency is 0")
+                }
+                
+                let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: motionSession, frequency: frequency, averagingInterval: (average && frequency > 0.0 ? 1.0/frequency : nil), xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
+                
+                sensorsOut.append(sensor)
             }
-            
-            if average && frequency == 0.0 {
-                print("Error! Averaging is enabled but frequency is 0")
-            }
-            
-            let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: motionSession, frequency: frequency, averagingInterval: (average && frequency > 0.0 ? 1.0/frequency : nil), xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
-            
-            sensorsOut.append(sensor)
         }
         
         var audioOut: [ExperimentAudioInput] = []
         
-        for audioIn in audio! {
-            let attributes = audioIn[XMLDictionaryAttributesKey] as! [String: String]
-            
-            let sampleRate = intTypeFromXML(attributes, key: "rate", defaultValue: UInt(48000))
-            
-            let output = getElementsWithKey(audioIn, key: "output")!
-            
-            for out in output {
-                let bufferName = (out is String ? out as! String : out[XMLDictionaryTextKey] as! String)
+        if audio != nil {
+            for audioIn in audio! {
+                let attributes = audioIn[XMLDictionaryAttributesKey] as! [String: String]?
                 
-                let buffer = buffers[bufferName]!
+                let sampleRate = intTypeFromXML(attributes, key: "rate", defaultValue: UInt(48000))
                 
-                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: buffer)
+                let output = getElementsWithKey(audioIn, key: "output")!
                 
-                audioOut.append(input)
+                for out in output {
+                    let bufferName = (out is String ? out as! String : out[XMLDictionaryTextKey] as! String)
+                    
+                    let buffer = buffers[bufferName]!
+                    
+                    let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: buffer)
+                    
+                    audioOut.append(input)
+                }
             }
-            
         }
         
         return ((sensorsOut.count == 0 ? nil : sensorsOut), (audioOut.count == 0 ? nil : audioOut))

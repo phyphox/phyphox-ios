@@ -8,7 +8,11 @@
 
 import UIKit
 
-public class ExperimentViewModule<T:ViewDescriptor>: UIView {
+protocol ExperimentViewModuleProtocol {
+    func update()
+}
+
+public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
     weak var descriptor: T!
     
     let label: UILabel
@@ -30,8 +34,8 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView {
         addSubview(label)
     }
     
-    func setUp() {
-        fatalError("Subclasses of ExperimentViewModule must override method")
+    func update() {
+        
     }
     
     @available(*, unavailable)

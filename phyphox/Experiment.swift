@@ -26,6 +26,8 @@ final class Experiment {
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
+    let queue: dispatch_queue_t
+    
     init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
@@ -42,6 +44,8 @@ final class Experiment {
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
         self.export = export
+        
+        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_SERIAL)
     }
     
     class func isValidIdentifier(id: String) -> Bool {
@@ -65,5 +69,13 @@ final class Experiment {
         }
         
         return true
+    }
+    
+    func start() {
+        if self.sensorInputs != nil {
+                for sensor in self.sensorInputs! {
+                    try! sensor.start(queue)
+                }
+            }
     }
 }

@@ -38,8 +38,10 @@ public class MotionSession {
         var valZ: Double?
         
         if manager.accelerometerAvailable {
-            manager.accelerometerUpdateInterval = interval
-            manager.startAccelerometerUpdatesToQueue(NSOperationQueue()) {
+            manager.accelerometerUpdateInterval = interval//max(0.01, interval)
+            let q = NSOperationQueue()
+            q.qualityOfService = .Utility
+            manager.startAccelerometerUpdatesToQueue(q) {
                 (data: CMAccelerometerData?, error: NSError?) in
                 
                 //                if let isError = error {
@@ -71,7 +73,7 @@ public class MotionSession {
     *   given NSOperationQueue will be cancelled. You can access the retrieved values either by a
     *   Trailing Closure or through a Delegate.
     */
-    public func getGyroValues (interval: NSTimeInterval = 0.1, values: ((x: Double?, y: Double?, z:Double?, error: NSError?) -> Void)) {
+    public func getGyroValues (interval: NSTimeInterval = 0.1, queue: dispatch_queue_t, values: ((x: Double?, y: Double?, z:Double?, error: NSError?) -> Void)) {
         var valX: Double?
         var valY: Double?
         var valZ: Double?
@@ -91,7 +93,9 @@ public class MotionSession {
                     valZ = data!.rotationRate.z
                 }
                 
-                values(x: valX, y: valY, z: valZ, error: error)
+                dispatch_async(queue, { () -> Void in
+                    values(x: valX, y: valY, z: valZ, error: error)
+                })
                 //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
                 //                self.delegate?.retrieveGyroscopeValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
             }

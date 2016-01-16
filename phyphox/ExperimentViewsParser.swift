@@ -111,7 +111,11 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         }
                     }
                     
-                    let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                    if yInputBuffer == nil {
+                        print("Error! No Y axis input buffer!")
+                    }
+                    
+                    let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
                     
                     views.append(graphDescriptor)
 //                    graphDescriptors.append(graphDescriptor)
@@ -142,7 +146,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
                     let precision = intTypeFromXML(attributes, key: "precision", defaultValue: 2)
                     
-                    let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
+                    let unit = attributes["unit"]
                     
                     let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                     
@@ -166,7 +170,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         continue
                     }
                     
-                    let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize, scientific: scientific, precision: precision, unit: unit, factor: factor)
+                    let valueDescriptor = ValueViewDescriptor(label: label, labelSize: labelSize, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
                     
                     views.append(valueDescriptor)
 //                    valueDescriptors.append(valueDescriptor)
@@ -184,7 +188,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     
                     let decimal = boolFromXML(attributes, key: "decimal", defaultValue: true)
                     
-                    let unit = stringFromXML(attributes, key: "unit", defaultValue: "")
+                    let unit = attributes["unit"]
                     
                     let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                     

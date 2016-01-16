@@ -12,14 +12,16 @@ import CoreGraphics
 public final class ValueViewDescriptor: ViewDescriptor {
     let scientific: Bool
     let precision: Int
-    let unit: String
+    let unit: String?
     let factor: Double
+    let buffer: DataBuffer
     
-    init(label: String, labelSize: CGFloat, scientific: Bool, precision: Int, unit: String, factor: Double) {
+    init(label: String, labelSize: CGFloat, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
         self.factor = factor
+        self.buffer = buffer
         
         super.init(label: label, labelSize: labelSize)
     }

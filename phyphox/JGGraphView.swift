@@ -26,6 +26,8 @@ final class JGGraphView: UIView {
             else {
                 (self.layer as! CAShapeLayer).path = path!.CGPath
             }
+            
+//            setNeedsDisplay()
         }
     }
     
@@ -47,6 +49,8 @@ final class JGGraphView: UIView {
         layer.lineCap = kCALineCapRound
         
         layer.fillColor = UIColor.clearColor().CGColor
+        
+        layer.drawsAsynchronously = true
 //        layer.fillRule = kCAFillRuleEvenOdd
 //        layer.fillMode = kCAFillModeRemoved
     }
