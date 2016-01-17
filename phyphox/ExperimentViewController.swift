@@ -119,6 +119,10 @@ final class ExperimentViewController: CollectionViewController {
         
         cell.module = module
         
+        if let graph = module as? ExperimentGraphView {
+            graph.queue = experiment.queue
+        }
+        
         (module as! ExperimentViewModuleProtocol).setNeedsUpdate()
         
         return cell

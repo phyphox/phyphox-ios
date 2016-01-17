@@ -122,6 +122,14 @@ extension Queue: CollectionType {
     }
     
     subscript(i: Int) -> Element {
-        return self.array[i]
+        var value: Element!
+        
+        dispatch_sync(lockQueue) { () -> Void in
+            autoreleasepool({ () -> () in
+                value = self.array[i]
+            })
+        }
+        
+        return value
     }
 }

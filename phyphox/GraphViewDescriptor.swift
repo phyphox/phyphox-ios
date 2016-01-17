@@ -28,7 +28,9 @@ public final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    let numberOfValuesToPlot: Int //0 == all
+    
+    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, numberOfValuesToPlot: Int) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -43,6 +45,7 @@ public final class GraphViewDescriptor: ViewDescriptor {
         self.drawDots = drawDots
         self.forceFullDataset = forceFullDataset
         self.history = history
+        self.numberOfValuesToPlot = numberOfValuesToPlot
         
         super.init(label: label, labelSize: labelSize)
     }

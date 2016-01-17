@@ -41,7 +41,7 @@ final class JGGraphView: UIView {
     private let drawer: Drawer
     
     private class Drawer: NSObject {
-        weak var path: UIBezierPath?
+        var path: UIBezierPath?
         
         override func drawLayer(layer: CALayer, inContext ctx: CGContext) {
             if path != nil {
@@ -56,6 +56,7 @@ final class JGGraphView: UIView {
         drawer = Drawer()
         
         let graphLayer = CALayer()
+        graphLayer.contentsScale = UIScreen.mainScreen().scale
         graphLayer.backgroundColor = UIColor.clearColor().CGColor
         graphLayer.delegate = drawer
         graphLayer.drawsAsynchronously = true

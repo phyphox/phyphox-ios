@@ -39,11 +39,9 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
     func setNeedsUpdate() {
         if !updateScheduled {
             updateScheduled = true
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(Double(NSEC_PER_SEC)*0.1)), q, { () -> Void in
-                autoreleasepool({ () -> () in
-                    self.update()
-                    self.updateScheduled = false
-                })
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(Double(NSEC_PER_SEC)*1.0/30.0)), dispatch_get_main_queue(), { () -> Void in
+                self.update()
+                self.updateScheduled = false
             })
         }
     }

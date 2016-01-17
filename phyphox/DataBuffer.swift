@@ -13,7 +13,7 @@ let DataBufferReceivedNewValueNotification = "DataBufferReceivedNewValueNotifica
 /**
  Data buffer used for raw or processed data from sensors.
  */
-class DataBuffer: NSObject, SequenceType {
+final class DataBuffer: NSObject, SequenceType {
     let name: String
     var size: Int {
         didSet {
@@ -23,8 +23,36 @@ class DataBuffer: NSObject, SequenceType {
         }
     }
     
+    private class DataBufferGraphValueSource: JGGraphValueSource {
+        weak var buffer: DataBuffer!
+        
+        init(buffer: DataBuffer) {
+            self.buffer = buffer
+        }
+        
+        subscript(index: Int) -> Double {
+            return buffer[index]
+        }
+        
+        var last: Double? {
+            get {
+                return buffer.last
+            }
+        }
+        
+        var count: Int {
+            get {
+                return buffer.count
+            }
+        }
+    }
+    
+    var graphValueSource: JGGraphValueSource!
+    
     private(set) var max: Double? = nil
     private(set) var min: Double? = nil
+    
+    var trashedCount: Int = 0
     
     var staticBuffer: Bool = false
     var count: Int {
@@ -40,6 +68,7 @@ class DataBuffer: NSObject, SequenceType {
         self.size = size
         queue = Queue<Double>()
         super.init()
+        graphValueSource = DataBufferGraphValueSource(buffer: self)
     }
     
     func generate() -> IndexingGenerator<[Double]> {
