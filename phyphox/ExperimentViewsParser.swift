@@ -62,7 +62,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
                     let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
                     let history = intTypeFromXML(attributes, key: "history", defaultValue: UInt(1))
-                    let numberOfValues = intTypeFromXML(attributes, key: "valueCount", defaultValue: 250)
                     
                     let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
                     let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
@@ -116,7 +115,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         print("Error! No Y axis input buffer!")
                     }
                     
-                    let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, numberOfValuesToPlot: numberOfValues)
+                    let graphDescriptor = GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
                     
                     views.append(graphDescriptor)
 //                    graphDescriptors.append(graphDescriptor)

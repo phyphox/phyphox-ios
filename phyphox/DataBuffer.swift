@@ -66,7 +66,7 @@ final class DataBuffer: NSObject, SequenceType {
     init(name: String, size: Int) {
         self.name = name
         self.size = size
-        queue = Queue<Double>()
+        queue = Queue<Double>(capacity: size)
         super.init()
         graphValueSource = DataBufferGraphValueSource(buffer: self)
     }
@@ -89,7 +89,7 @@ final class DataBuffer: NSObject, SequenceType {
     
     func append(value: Double!) {
         if (value == nil) {
-            return;
+            return
         }
         
         if (count >= size) {

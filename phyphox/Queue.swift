@@ -22,6 +22,12 @@ final class Queue<Element> {
         }
     }
     
+    var capacity: Int {
+        get {
+            return array.capacity
+        }
+    }
+    
     var isEmpty: Bool {
         get {
             return array.isEmpty
@@ -32,9 +38,11 @@ final class Queue<Element> {
         array = []
     }
     
-    init(capacity: Int) {
+    init(capacity: Int = 0) {
         array = []
-        array.reserveCapacity(capacity)
+        if capacity > 0 {
+            array.reserveCapacity(capacity)
+        }
     }
     
     init<S : SequenceType where S.Generator.Element == Element>(_ sequence: S) {
@@ -47,9 +55,7 @@ final class Queue<Element> {
     
     func enqueue(value: Element) {
         dispatch_sync(lockQueue) { () -> Void in
-            autoreleasepool({ () -> () in
-                self.array.append(value)
-            })
+            self.array.append(value)
         }
     }
     
@@ -69,9 +75,7 @@ final class Queue<Element> {
     
     func clear() {
         dispatch_sync(lockQueue) { () -> Void in
-            autoreleasepool({ () -> () in
-                self.array.removeAll()
-            })
+            self.array.removeAll()
         }
     }
     

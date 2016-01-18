@@ -45,7 +45,7 @@ final class Experiment {
         self.analysis = analysis
         self.export = export
         
-        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_SERIAL)
+        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue." + NSUUID().UUIDString, DISPATCH_QUEUE_CONCURRENT)
     }
     
     class func isValidIdentifier(id: String) -> Bool {
@@ -74,7 +74,7 @@ final class Experiment {
     func start() {
         if self.sensorInputs != nil {
                 for sensor in self.sensorInputs! {
-                    try! sensor.start(queue)
+                    try! sensor.start()
                 }
             }
     }

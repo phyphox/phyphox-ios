@@ -73,36 +73,26 @@ public class MotionSession {
     *   given NSOperationQueue will be cancelled. You can access the retrieved values either by a
     *   Trailing Closure or through a Delegate.
     */
-    public func getGyroValues (interval: NSTimeInterval = 0.1, queue: dispatch_queue_t, values: ((x: Double?, y: Double?, z:Double?, error: NSError?) -> Void)) {
-        var valX: Double?
-        var valY: Double?
-        var valZ: Double?
-        
+    public func getGyroValues (interval: NSTimeInterval = 0.1, values: ((x: Double?, y: Double?, z:Double?, error: NSError?) -> Void)) {
         if manager.gyroAvailable{
             manager.gyroUpdateInterval = interval
+            
+            var valX: Double?
+            var valY: Double?
+            var valZ: Double?
+            
             manager.startGyroUpdatesToQueue(NSOperationQueue()) {
                 (data: CMGyroData?, error: NSError?) in
-                
-                //                if let isError = error{
-                //                    NSLog("Error: %@", isError)
-                //                }
-                
                 if data != nil {
                     valX = data!.rotationRate.x
                     valY = data!.rotationRate.y
                     valZ = data!.rotationRate.z
                 }
                 
-                dispatch_async(queue, { () -> Void in
-                    autoreleasepool({ () -> () in
-                        values(x: valX, y: valY, z: valZ, error: error)
-                    })
-                })
-                //                let absoluteVal = sqrt(valX * valX + valY * valY + valZ * valZ)
-                //                self.delegate?.retrieveGyroscopeValues!(valX, y: valY, z: valZ, absoluteValue: absoluteVal)
+                values(x: valX, y: valY, z: valZ, error: error)
             }
-            
-        } else {
+        }
+        else {
             NSLog("The Gyroscope is not available")
         }
     }

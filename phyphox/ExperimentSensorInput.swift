@@ -106,7 +106,7 @@ final class ExperimentSensorInput {
         }
     }
     
-    func start(queue: dispatch_queue_t) throws {
+    func start() throws {
         startTimestamp = 0.0
         
         resetValuesForAveraging()
@@ -117,7 +117,7 @@ final class ExperimentSensorInput {
                 motionSession.getAccelerometerValues(frequency, values: self.dataIn)
                 break;
             case .Gyroscope:
-                motionSession.getGyroValues(frequency, queue: queue, values: self.dataIn)
+                motionSession.getGyroValues(frequency, values: self.dataIn)
                 break;
             case .MagneticField:
                 motionSession.getMagnetometerValues(frequency, values: self.dataIn)
@@ -170,6 +170,7 @@ final class ExperimentSensorInput {
         if let zBuffer = self.zBuffer {
             zBuffer.append(z)
         }
+        
         if let tBuffer = self.tBuffer {
             tBuffer.append(CFAbsoluteTimeGetCurrent()-startTimestamp)
         }

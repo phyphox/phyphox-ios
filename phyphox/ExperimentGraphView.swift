@@ -41,7 +41,15 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     
     private var lastCut: Int = 0
     
+    private var hasUpdateBlockEnqueued = false
+    
     override func update() {
+        if hasUpdateBlockEnqueued {
+            return
+        }
+        
+        hasUpdateBlockEnqueued = true
+        
         dispatch_async(queue) { () -> Void in
             autoreleasepool({ () -> () in
                 var xValues: JGGraphValueSource
@@ -77,39 +85,14 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                     xValues = JGGraphFixedValueSource(array: self.lastIndexXArray!)
                 }
                 
-                let cut = (self.descriptor.numberOfValuesToPlot > 0 ? max(0, count-self.descriptor.numberOfValuesToPlot) : 0)
-                
                 if count > 1 {
-                    if self.lastCount == nil || count > self.lastCount! || cut > 0 {
+                    if self.lastCount == nil || count > self.lastCount!  {
                         let maxX = xValues.last!
-                        let minX = xValues[cut]
+                        let minX = xValues[0]
                         
-                        //                    let xRange = maxX-minX
-                        //                    let yRange = maxY!-minY!
+                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, averaging: !self.descriptor.forceFullDataset)
                         
-                        //                    if self.lastCount != nil {
-                        //                        let scaleX = CGFloat(self.lastXRange!/xRange)
-                        //                        let scaleY = CGFloat(self.lastYRange!/yRange)
-                        //
-                        //                        if isnormal(scaleX) && isnormal(scaleY) {
-                        //                            self.path.applyTransform(CGAffineTransformMakeScale(scaleX, scaleY))
-                        //                        }
-                        //                    }
-                        //
-                        //                    if cut > 0 {
-                        //                        let cutXrange = xValues[cut]-xValues[lastCut]
-                        //
-                        //                        lastCut = cut
-                        //
-                        //                        self.path.applyTransform(CGAffineTransformMakeTranslation(-CGFloat(cutXrange/self.lastXRange!)*self.path.bounds.size.widt, 0.0))
-                        //                    }
-                        
-                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, start: cut)
-                        
-                        //                    self.lastXRange = xRange
-                        //                    self.lastYRange = yRange
-                        //
-                        //                    self.lastCount = count
+                        self.lastCount = count
                         
                         dispatch_sync(dispatch_get_main_queue(), { () -> Void in
                             self.graph.path = path
@@ -121,6 +104,11 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                         self.graph.path = nil
                     })
                 }
+            })
+            
+            //Sync back to main thread so the value is set on the same thread where it is checked.
+            dispatch_sync(dispatch_get_main_queue(), { () -> Void in
+                self.hasUpdateBlockEnqueued = false
             })
         }
     }
