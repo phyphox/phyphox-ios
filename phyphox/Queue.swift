@@ -34,10 +34,6 @@ final class Queue<Element> {
         }
     }
     
-    init() {
-        array = []
-    }
-    
     init(capacity: Int = 0) {
         array = []
         if capacity > 0 {
@@ -53,8 +49,12 @@ final class Queue<Element> {
         return array
     }
     
+    func sync(closure: (() -> Void)) {
+        dispatch_sync(lockQueue, closure)
+    }
+    
     func enqueue(value: Element) {
-        dispatch_sync(lockQueue) { () -> Void in
+        sync { () -> Void in
             self.array.append(value)
         }
     }
@@ -62,7 +62,7 @@ final class Queue<Element> {
     func dequeue() -> Element? {
         var element: Element? = nil
         
-        dispatch_sync(lockQueue) { () -> Void in
+        sync { () -> Void in
             autoreleasepool({ () -> () in
                 if self.array.count > 0 {
                     element = self.array.removeFirst()
@@ -73,8 +73,22 @@ final class Queue<Element> {
         return element
     }
     
+    func enqueue_async(value: Element) {
+        self.array.append(value)
+    }
+    
+    func dequeue_async() -> Element? {
+        var element: Element? = nil
+        
+        if self.array.count > 0 {
+            element = self.array.removeFirst()
+        }
+        
+        return element
+    }
+    
     func clear() {
-        dispatch_sync(lockQueue) { () -> Void in
+        sync { () -> Void in
             self.array.removeAll()
         }
     }
@@ -94,7 +108,7 @@ final class Queue<Element> {
     func objectAtIndex(index: Int) -> Element? {
         var element: Element? = nil
         
-        dispatch_sync(lockQueue) { () -> Void in
+        sync { () -> Void in
             autoreleasepool({ () -> () in
                 if index < self.array.count {
                     element = self.array[index]
@@ -128,7 +142,7 @@ extension Queue: CollectionType {
     subscript(i: Int) -> Element {
         var value: Element!
         
-        dispatch_sync(lockQueue) { () -> Void in
+        sync { () -> Void in
             autoreleasepool({ () -> () in
                 value = self.array[i]
             })

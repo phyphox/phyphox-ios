@@ -159,9 +159,9 @@ final class JGGraphDrawer {
             translationRateY = 1.0
         }
         
-        var currentAveragingX: UInt = 0
+        var currentAveragingX: Int = 0
         var currentAveragingYSum: CGFloat = 0.0
-        var currentXAveragingCount: UInt = 0
+        var currentXAveragingCount: Int = 0
         var scale = UIScreen.mainScreen().scale
         
         func addPoint(point: CGPoint) {
@@ -205,7 +205,7 @@ final class JGGraphDrawer {
             }
             
             if averaging {
-                let tXInt = UInt(floor(tX*scale))
+                let tXInt = Int(round(tX*scale))
                 
                 if tXInt > currentAveragingX {
                     tryAddingAveragedPoint()

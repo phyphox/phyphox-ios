@@ -57,13 +57,14 @@ final class DataBuffer: NSObject, SequenceType {
     var staticBuffer: Bool = false
     var count: Int {
         get {
-            return queue.count
+            return Swift.min(queue.count, size)
         }
     }
     
     private let queue: Queue<Double>
     
-    init(name: String, size: Int) {
+    init(name: String, var size: Int) {
+        size = Swift.min(1500, size) //TODO: Temporary
         self.name = name
         self.size = size
         queue = Queue<Double>(capacity: size)
@@ -92,25 +93,30 @@ final class DataBuffer: NSObject, SequenceType {
             return
         }
         
-        if (count >= size) {
-            queue.dequeue()
+        queue.sync {[unowned self] () -> Void in
+            autoreleasepool({ () -> () in
+                if (self.count >= self.size) {
+                    self.queue.dequeue_async()
+                    self.trashedCount++
+                }
+                
+                if self.max == nil {
+                    self.max = value
+                }
+                else {
+                    self.max = Swift.max(self.max!, value)
+                }
+                
+                if self.min == nil {
+                    self.min = value
+                }
+                else {
+                    self.min = Swift.min(self.min!, value)
+                }
+                
+                self.queue.enqueue_async(value)
+            })
         }
-        
-        if max == nil {
-            max = value
-        }
-        else {
-            max = Swift.max(max!, value)
-        }
-        
-        if min == nil {
-            min = value
-        }
-        else {
-            min = Swift.min(min!, value)
-        }
-        
-        queue.enqueue(value)
         
         NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
     }
@@ -126,6 +132,7 @@ final class DataBuffer: NSObject, SequenceType {
             queue.clear()
             max = nil
             min = nil
+            trashedCount = 0
         }
     }
     

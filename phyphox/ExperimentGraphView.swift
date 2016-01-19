@@ -37,7 +37,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     private var lastCount: Int?
     private var lastXRange: Double?
     private var lastYRange: Double?
-    //    private lazy var path: UIBezierPath = UIBezierPath()
+//    private lazy var path: UIBezierPath = UIBezierPath()
     
     private var lastCut: Int = 0
     
@@ -58,12 +58,15 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 let minY = self.descriptor.yInputBuffer.min
                 let maxY = self.descriptor.yInputBuffer.max
                 
+                var trashedCount = self.descriptor.yInputBuffer.trashedCount
+                
                 var count = yValues.count
                 
                 if let xBuf = self.descriptor.xInputBuffer {
                     xValues = xBuf.graphValueSource
                     
                     count = min(xValues.count, count)
+                    trashedCount = min(xBuf.trashedCount, trashedCount)
                 }
                 else {
                     var xC = 0
@@ -86,13 +89,30 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 }
                 
                 if count > 1 {
-                    if self.lastCount == nil || count > self.lastCount!  {
+                    if self.lastCount == nil || count > self.lastCount!-trashedCount {
                         let maxX = xValues.last!
                         let minX = xValues[0]
                         
-                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, averaging: !self.descriptor.forceFullDataset)
+//                        let start = (self.lastCount == nil ? 0 : self.lastCount!-trashedCount)
+//                        
+//                        let xRange = maxX-minX
+//                        let yRange = maxY!-minY!
+//                        
+//                        if self.lastCount != nil {
+//                            let scaleX = CGFloat(self.lastXRange!/xRange)
+//                            let scaleY = CGFloat(self.lastYRange!/yRange)
+//                            
+//                            if isnormal(scaleX) && isnormal(scaleY) {
+//                                self.path.applyTransform(CGAffineTransformMakeScale(scaleX, scaleY))
+//                            }
+//                        }
+                        
+                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset)
                         
                         self.lastCount = count
+                        
+//                        self.lastXRange = xRange
+//                        self.lastYRange = yRange
                         
                         dispatch_sync(dispatch_get_main_queue(), { () -> Void in
                             self.graph.path = path
@@ -106,10 +126,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 }
             })
             
-            //Sync back to main thread so the value is set on the same thread where it is checked.
-            dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-                self.hasUpdateBlockEnqueued = false
-            })
+            self.hasUpdateBlockEnqueued = false
         }
     }
     
