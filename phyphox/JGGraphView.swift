@@ -27,15 +27,27 @@ final class JGGraphLayer: CALayer {
         }
     }
     
+    var graphSize: CGSize {
+        get {
+            return (CGRectIsEmpty(self.bounds) ? CGSize.zero : CGSizeMake(self.bounds.size.width-60, self.bounds.size.height-60))
+        }
+    }
     override func layoutSublayers() {
         super.layoutSublayers()
-        childLayer?.frame = self.bounds
+        let s = graphSize
+        childLayer?.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
     }
 }
 
 final class JGGraphView: UIView {
     override class func layerClass() -> AnyClass {
         return JGGraphLayer.self
+    }
+    
+    var graphSize: CGSize {
+        get {
+            return (layer as! JGGraphLayer).graphSize
+        }
     }
     
     private let drawer: Drawer
@@ -45,9 +57,13 @@ final class JGGraphView: UIView {
         
         override func drawLayer(layer: CALayer, inContext ctx: CGContext) {
             if path != nil {
+                let s = CFAbsoluteTimeGetCurrent()
                 CGContextSetStrokeColorWithColor(ctx, UIColor.blackColor().CGColor);
                 CGContextAddPath(ctx, self.path!.CGPath)
+                CGContextSetLineJoin(ctx, .Round)
+                CGContextSetLineCap(ctx, .Round)
                 CGContextStrokePath(ctx)
+                print("Draw took \(CFAbsoluteTimeGetCurrent()-s)")
             }
         }
     }
@@ -75,6 +91,32 @@ final class JGGraphView: UIView {
         get {
             return drawer.path
         }
+    }
+    
+    private var imageView: UIImageView?
+    
+    var image: UIImage? {
+        didSet {
+            if image == nil {
+                imageView?.removeFromSuperview()
+                imageView = nil
+            }
+            else {
+                if imageView == nil {
+                    imageView = UIImageView(image: image)
+                    addSubview(imageView!)
+                }
+                else {
+                    imageView!.image = image
+                }
+            }
+        }
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        imageView?.frame = self.bounds
     }
     
     func refreshPath() {

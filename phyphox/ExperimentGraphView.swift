@@ -107,7 +107,12 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
 //                            }
 //                        }
                         
-                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset)
+                        let s = CFAbsoluteTimeGetCurrent()
+//                        let img = JGGraphDrawer.drawBitmap(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, averaging: self.descriptor.forceFullDataset)!
+                        
+                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.graphSize, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset)
+                        
+                        print("Path took \(CFAbsoluteTimeGetCurrent()-s)")
                         
                         self.lastCount = count
                         
@@ -115,6 +120,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
 //                        self.lastYRange = yRange
                         
                         dispatch_sync(dispatch_get_main_queue(), { () -> Void in
+//                            self.graph.image = img
                             self.graph.path = path
                         })
                     }

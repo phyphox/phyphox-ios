@@ -28,6 +28,8 @@ final class Experiment {
     
     let queue: dispatch_queue_t
     
+    private(set) var running = false
+    
     init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
@@ -71,11 +73,29 @@ final class Experiment {
         return true
     }
     
-    func start() {
-        if self.sensorInputs != nil {
+    func stop() {
+        if running {
+            if self.sensorInputs != nil {
                 for sensor in self.sensorInputs! {
-                    try! sensor.start()
+                    sensor.stop()
                 }
             }
+            
+            running = false
+        }
+    }
+    
+    func start() {
+        if running {
+            return
+        }
+        
+        running = true
+        
+        if self.sensorInputs != nil {
+            for sensor in self.sensorInputs! {
+                try! sensor.start()
+            }
+        }
     }
 }

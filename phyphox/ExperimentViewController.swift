@@ -95,7 +95,13 @@ final class ExperimentViewController: CollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: "startExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+    }
+    
+    override func viewDidDisappear(animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        experiment.stop()
     }
     
     override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
@@ -136,7 +142,14 @@ final class ExperimentViewController: CollectionViewController {
         
     }
     
-    func startExperiment() {
-        experiment.start()
+    func toggleExperiment() {
+        if experiment.running {
+            experiment.stop()
+            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+        }
+        else {
+            experiment.start()
+            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+        }
     }
 }

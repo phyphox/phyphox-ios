@@ -93,7 +93,7 @@ final class DataBuffer: NSObject, SequenceType {
             return
         }
         
-        queue.sync {[unowned self] () -> Void in
+        queue.sync {() -> Void in
             autoreleasepool({ () -> () in
                 if (self.count >= self.size) {
                     self.queue.dequeue_async()

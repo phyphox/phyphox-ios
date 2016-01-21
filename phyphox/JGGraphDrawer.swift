@@ -11,6 +11,7 @@ This code is taken from the Crono iOS app (https://itunes.apple.com/app/id980940
 */
 
 import UIKit
+import CoreGraphics
 
 protocol JGGraphValueSource {
     subscript(index: Int) -> Double { get }
@@ -138,6 +139,158 @@ final class JGGraphDrawer {
     return points
     }
     */
+    
+    private struct RGBA {
+        var r: UInt8 = 0
+        var g: UInt8 = 0
+        var b: UInt8 = 0
+        var a: UInt8 = 0
+        
+        func toInt() -> Int {
+            return Int(a) << 24 | Int(b) << 16 | Int(g) << 8 | Int(r)
+        }
+    }
+    
+    class func drawBitmap(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, start: Int = 0, averaging: Bool = true) -> UIImage? {
+        if count == 0 {
+            return nil
+        }
+        
+        assert(start < count, "Invalid start")
+        
+        
+        let w = Int(round(size.width))
+        let h = Int(round(size.height))
+        
+//        var linePixelInt = RGBA(r: 255, g: 255, b: 255, a: 255).toInt()
+//        
+//        var data = NSMutableData(length: w*h)
+        
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        
+//        let context = CGBitmapContextCreate(nil, w, h, 8, 0, colorSpace, CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Little.rawValue)
+
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        let context = UIGraphicsGetCurrentContext()
+        
+        CGContextSetLineWidth(context, 1)
+        CGContextSetStrokeColorWithColor(context, UIColor.blackColor().CGColor)
+        
+        
+        var translationRateX = (maxX-minX)/Double(size.width)
+        var translationRateY = (maxY-minY)/Double(size.height)
+        
+        if (!isnormal(translationRateX)) {
+            translationRateX = 1.0
+        }
+        
+        if (!isnormal(translationRateY)) {
+            translationRateY = 1.0
+        }
+        
+        var currentAveragingX: Int = 0
+        var currentAveragingYSum: CGFloat = 0.0
+        var currentXAveragingCount: Int = 0
+        var scale = UIScreen.mainScreen().scale
+        
+        var lastPoint: CGPoint?
+        
+        func addPoint(point: CGPoint) {
+            if lastPoint == nil {
+                CGContextMoveToPoint(context, point.x, point.y)
+            }
+            else {
+                CGContextAddLineToPoint(context, point.x, point.y)
+            }
+            
+//            if let last = lastPoint {
+//                
+//                let dx = point.x-last.x
+//                let dy = point.y-last.y
+//                
+//                let m = dx/dy
+//                
+//                //y=m*x+n => n=y-m*x
+//                
+//                let n = point.y-m*point.x
+//                
+//                func f(x: Int) -> Int {
+//                    return Int(m*CGFloat(x)+n)
+//                }
+//                
+//                for x in Int(floor(last.x))..<Int(floor(point.x)) {
+//                    let y = f(x)
+//                    
+//                    data!.replaceBytesInRange(NSMakeRange(x*w+y, 1), withBytes: &linePixelInt)
+//                }
+//            }
+            
+            lastPoint = point
+        }
+        
+        func tryAddingAveragedPoint() {
+            if currentXAveragingCount > 0 {
+                let averagedPoint = CGPointMake(CGFloat(currentAveragingX)/scale, currentAveragingYSum/CGFloat(currentXAveragingCount))
+                
+                addPoint(averagedPoint)
+            }
+        }
+        
+        for idx in start..<count {
+            var x = xs[idx]
+            var y = ys[idx]
+            
+            if logX {
+                x = log(x)
+            }
+            
+            if logY {
+                y = log(y)
+            }
+            
+            let xVal = x-minX
+            let yVal = y-minY
+            
+            let tX = CGFloat(xVal/translationRateX)
+            let tY = CGFloat(yVal/translationRateY)
+            
+            if !isfinite(tX) || !isfinite(tY) {
+                print("Value \(tX) or \(tY) is not finite")
+                continue
+            }
+            
+            if averaging {
+                let tXInt = Int(round(tX*scale))
+                
+                if tXInt > currentAveragingX {
+                    tryAddingAveragedPoint()
+                    
+                    currentXAveragingCount = 1
+                    currentAveragingX = tXInt
+                    currentAveragingYSum = tY
+                }
+                else {
+                    currentXAveragingCount++
+                    currentAveragingYSum += tY
+                }
+            }
+            else {
+                let translatedPoint = CGPointMake(tX, size.height-tY)
+                
+                addPoint(translatedPoint)
+            }
+        }
+        
+        if averaging {
+            tryAddingAveragedPoint()
+        }
+        
+        CGContextStrokePath(context)
+        
+        let img = UIGraphicsGetImageFromCurrentImageContext()
+        
+        return img
+    }
     
     class func drawPath(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, reusePath: UIBezierPath? = nil, start: Int = 0, averaging: Bool = true) -> UIBezierPath {
         let path = (reusePath != nil ? reusePath! : UIBezierPath())
