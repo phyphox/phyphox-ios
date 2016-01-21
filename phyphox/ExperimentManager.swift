@@ -8,7 +8,7 @@
 
 import UIKit
 
-var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("Experiments", ofType: nil)!
+var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
 var fileExtension = "phyphox"
 
 final class ExperimentManager: NSObject {

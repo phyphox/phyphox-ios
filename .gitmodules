@@ -1,0 +1,3 @@
+[submodule "phyphox-experiments"]
+	path = phyphox-experiments
+	url = https://github.com/kuhlen/phyphox-experiments

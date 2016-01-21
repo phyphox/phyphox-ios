@@ -63,8 +63,7 @@ final class DataBuffer: NSObject, SequenceType {
     
     private let queue: Queue<Double>
     
-    init(name: String, var size: Int) {
-        size = Swift.min(1500, size) //TODO: Temporary
+    init(name: String, size: Int) {
         self.name = name
         self.size = size
         queue = Queue<Double>(capacity: size)

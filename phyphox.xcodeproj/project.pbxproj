@@ -48,7 +48,6 @@
 		6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */; };
 		6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */; };
 		6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B11C130471007408FB /* ExperimentManager.swift */; };
-		6B7BF7BC1C130471007408FB /* Experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B21C130471007408FB /* Experiments */; };
 		6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */; };
 		6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */; };
 		6B7BF7BF1C130471007408FB /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B51C130471007408FB /* MainView.swift */; };
@@ -93,6 +92,7 @@
 		6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */; };
 		6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */; };
 		6BB52BC61C1B11CA00217CF1 /* ExperimentTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC51C1B11CA00217CF1 /* ExperimentTranslation.swift */; };
+		6BBA06351C5187ED00E4B1B0 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */; };
 		6BBD28AC1C20BF29009E3757 /* InfoViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */; };
 		6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */; };
 		6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */; };
@@ -225,7 +225,6 @@
 		6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCollection.swift; sourceTree = "<group>"; };
 		6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentDeserializer.swift; sourceTree = "<group>"; };
 		6B7BF7B11C130471007408FB /* ExperimentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentManager.swift; sourceTree = "<group>"; };
-		6B7BF7B21C130471007408FB /* Experiments */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Experiments; sourceTree = "<group>"; };
 		6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerialization.swift; sourceTree = "<group>"; };
 		6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerializer.swift; sourceTree = "<group>"; };
 		6B7BF7B51C130471007408FB /* MainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -269,6 +268,7 @@
 		6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysisParser.swift; sourceTree = "<group>"; };
 		6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentDataContainersParser.swift; sourceTree = "<group>"; };
 		6BB52BC51C1B11CA00217CF1 /* ExperimentTranslation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslation.swift; sourceTree = "<group>"; };
+		6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "phyphox-experiments"; sourceTree = SOURCE_ROOT; };
 		6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfoViewDescriptor.swift; sourceTree = "<group>"; };
 		6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentOutputParser.swift; sourceTree = "<group>"; };
 		6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentIconParser.swift; sourceTree = "<group>"; };
@@ -527,7 +527,7 @@
 		6B7BF7AC1C130457007408FB /* Assets */ = {
 			isa = PBXGroup;
 			children = (
-				6B7BF7B21C130471007408FB /* Experiments */,
+				6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */,
 				6B7BF7841C130425007408FB /* Assets.xcassets */,
 				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
 				6B7BF7891C130425007408FB /* Info.plist */,
@@ -798,9 +798,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BBA06351C5187ED00E4B1B0 /* phyphox-experiments in Resources */,
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
-				6B7BF7BC1C130471007408FB /* Experiments in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
