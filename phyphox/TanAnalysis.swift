@@ -8,32 +8,9 @@
 
 import Foundation
 
-final class TanAnalysis: ExperimentAnalysisModule {
+final class TanAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        var iterator: IndexingGenerator<Array<Double>>? = nil
-        var lastValue: Double = 0.0
-        
-        //Get value or iterator
-        if let val = inputs.first!.value  {
-            lastValue = val
-        }
-        else {
-            //iterator
-            iterator = inputs.first!.buffer!.generate()
-        }
-        
-        let outBuffer = outputs.first!.buffer!
-        
-        outBuffer.clear()
-        
-        if (iterator == nil) {
-            outBuffer.append(tan(lastValue))
-        }
-        else {
-            while let next = iterator!.next() { //For each output value or at least once for values
-                outBuffer.append(tan(next))
-            }
-        }
+        updateWithMethod(tan)
     }
 }
