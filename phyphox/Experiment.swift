@@ -47,7 +47,7 @@ final class Experiment {
         self.analysis = analysis
         self.export = export
         
-        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue." + NSUUID().UUIDString, DISPATCH_QUEUE_CONCURRENT)
+        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
     }
     
     class func isValidIdentifier(id: String) -> Bool {

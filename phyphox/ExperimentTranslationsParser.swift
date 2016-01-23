@@ -63,6 +63,9 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                 else if key as! String == XMLDictionaryAttributesKey {
                     locale = (value as! [String: String])["locale"]!
                 }
+                else if key as! String == "__count" || key as! String == "__index" {
+                    continue
+                }
                 else {
                     print("Invalid translation: \(value)")
                     continue

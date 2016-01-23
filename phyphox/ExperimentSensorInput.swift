@@ -41,22 +41,22 @@ final class ExperimentSensorInput {
     
     private(set) var motionSession: MotionSession?
     
-    private struct Averaging {
+    private class Averaging {
         /**
          The duration of averaging intervals.
          */
-        private(set) var averagingInterval: NSTimeInterval
+        var averagingInterval: NSTimeInterval
         
         /**
          Start of current average mesurement.
          */
-        private(set) var iterationStartTimestamp: NSTimeInterval = 0.0
+        var iterationStartTimestamp: NSTimeInterval = 0.0
         
-        private var x: Double = 0.0
-        private var y: Double = 0.0
-        private var z: Double = 0.0
+        var x: Double = 0.0
+        var y: Double = 0.0
+        var z: Double = 0.0
         
-        private var numberOfUpdates: Int = 0
+        var numberOfUpdates: Int = 0
         
         init(averagingInterval: NSTimeInterval) {
             self.averagingInterval = averagingInterval
@@ -181,27 +181,29 @@ final class ExperimentSensorInput {
         if (startTimestamp == 0.0) {
             startTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
             
-            if var averaging = self.averaging {
+            if let averaging = self.averaging {
                 averaging.iterationStartTimestamp = self.startTimestamp
             }
         }
         
         if x != nil { //if x, y or z is not nil then all of them are not nil
-            if var averaging = self.averaging { //Recoring average?
-                averaging.x += x!
-                averaging.y += y!
-                averaging.z += z!
+            if let av = self.averaging { //Recoring average?
+                av.x += x!
+                av.y += y!
+                av.z += z!
                 
-                averaging.numberOfUpdates++
+                av.numberOfUpdates++
             }
             else { //Or raw values?
                 writeToBuffers(x!, y: y!, z: z!)
             }
         }
         
-        if let averaging = self.averaging {
-            if averaging.requiresFlushing() {
-                writeToBuffers(averaging.x/Double(averaging.numberOfUpdates), y: averaging.y/Double(averaging.numberOfUpdates), z: averaging.z/Double(averaging.numberOfUpdates))
+        if let av = self.averaging {
+            if av.requiresFlushing() {
+                let u = Double(av.numberOfUpdates)
+                
+                writeToBuffers(av.x/u, y: av.y/u, z: av.z/u)
                 
                 self.resetValuesForAveraging()
             }

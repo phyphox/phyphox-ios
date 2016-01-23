@@ -54,9 +54,9 @@ final class ExperimentDeserializer: NSObject {
         
         let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
         
-        let description = dictionary["description"] as! String
-        let category = dictionary["category"] as! String
-        let title = dictionary["title"] as! String
+        let description = textFromXML(dictionary["description"]!)
+        let category = textFromXML(dictionary["category"]!)
+        let title = textFromXML(dictionary["title"]!)
         
         let buffers = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
         

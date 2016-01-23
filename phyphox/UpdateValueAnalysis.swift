@@ -10,7 +10,7 @@ import UIKit
 
 class UpdateValueAnalysis: ExperimentAnalysisModule {
     
-    func updateWithMethod(method: (Double) -> Double) {
+    internal func updateWithMethod(method: (Double) -> Double) {
         let input = inputs.first!
         
         let outBuffer = outputs.first!.buffer!

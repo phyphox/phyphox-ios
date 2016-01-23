@@ -158,7 +158,6 @@ final class JGGraphDrawer {
         
         assert(start < count, "Invalid start")
         
-        
         let w = Int(round(size.width))
         let h = Int(round(size.height))
         
@@ -292,7 +291,7 @@ final class JGGraphDrawer {
         return img
     }
     
-    class func drawPath(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, reusePath: UIBezierPath? = nil, start: Int = 0, averaging: Bool = true) -> UIBezierPath {
+    class func drawPath(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, reusePath: UIBezierPath? = nil, start: Int = 0, averaging: Bool = true, inout newMinY: Double?, inout newMaxY: Double?) -> UIBezierPath {
         let path = (reusePath != nil ? reusePath! : UIBezierPath())
         
         if count == 0 {
@@ -334,9 +333,20 @@ final class JGGraphDrawer {
             }
         }
         
+        var min: Double? = nil
+        var max: Double? = nil
+        
         for idx in start..<count {
             var x = xs[idx]
             var y = ys[idx]
+            
+            if min == nil || y < min {
+                min = y
+            }
+            
+            if max == nil || y > max {
+                max = y
+            }
             
             if logX {
                 x = log(x)
@@ -382,6 +392,9 @@ final class JGGraphDrawer {
         if averaging {
             tryAddingAveragedPoint()
         }
+        
+        newMinY = min
+        newMaxY = max
         
         return path
     }

@@ -52,6 +52,12 @@ final class DataBuffer: NSObject, SequenceType {
     private(set) var max: Double? = nil
     private(set) var min: Double? = nil
     
+    //Special purpose setter for max and min. The graph view iterates through all values anyway, so that can be used to calculate the max and min values (which will take effect on the next redraw of the graph).
+    func updateMaxAndMin(max: Double?, min: Double?) {
+        self.max = max
+        self.min = min
+    }
+    
     var trashedCount: Int = 0
     
     var staticBuffer: Bool = false
@@ -87,34 +93,41 @@ final class DataBuffer: NSObject, SequenceType {
         }
     }
     
-    func append(value: Double!) {
+    func append(value: Double!, async: Bool = false) {
         if (value == nil) {
             return
         }
         
-        queue.sync {() -> Void in
-            autoreleasepool({ () -> () in
-                if (self.count >= self.size) {
-                    self.queue.dequeue_async()
-                    self.trashedCount++
-                }
-                
-                if self.max == nil {
-                    self.max = value
-                }
-                else {
-                    self.max = Swift.max(self.max!, value)
-                }
-                
-                if self.min == nil {
-                    self.min = value
-                }
-                else {
-                    self.min = Swift.min(self.min!, value)
-                }
-                
-                self.queue.enqueue_async(value)
-            })
+        let operations = { () -> () in
+            if (self.count >= self.size) {
+                self.queue.dequeue(true)
+                self.trashedCount++
+            }
+            
+            if self.max == nil {
+                self.max = value
+            }
+            else {
+                self.max = Swift.max(self.max!, value)
+            }
+            
+            if self.min == nil {
+                self.min = value
+            }
+            else {
+                self.min = Swift.min(self.min!, value)
+            }
+            
+            self.queue.enqueue(value, async: true)
+        }
+        
+        if async {
+            operations()
+        }
+        else {
+            queue.sync {() -> Void in
+                autoreleasepool(operations)
+            }
         }
         
         NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
@@ -135,9 +148,24 @@ final class DataBuffer: NSObject, SequenceType {
         }
     }
     
+    /**
+     max and min are not changed when calling this method. Manually updating max and min is required.
+     */
+    func replaceValues(values: [Double]) {
+        if (!staticBuffer) {
+            trashedCount = 0
+            queue.replaceValues(values)
+            NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+        }
+    }
+    
     func appendFromArray(values: [Double]) {
-        for value in values {
-            append(value)
+        queue.sync {() -> Void in
+            autoreleasepool({ () -> () in
+                for value in values {
+                    self.append(value, async: true)
+                }
+            })
         }
     }
     

@@ -60,6 +60,10 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         var processed: [ExperimentAnalysisModule] = []
         
         for (key, values) in analyses! {
+            if key == "__count" || key == "__index" {
+                continue
+            }
+            
             for value in values {
                 let inputs = getDataFlows(getElementsWithKey(value, key: "input")!)
                 let outputs = getDataFlows(getElementsWithKey(value, key: "output")!)

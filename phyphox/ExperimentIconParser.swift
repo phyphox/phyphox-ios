@@ -20,7 +20,7 @@ final class ExperimentIconParser: ExperimentMetadataParser {
             return ExperimentIcon(string: icon, image: nil)
         }
         else if let icon = data as? NSDictionary {
-            let attributes = icon[XMLDictionaryAttributesKey] as! [String: String]
+            let attributes = icon[XMLDictionaryAttributesKey] as! [String: AnyObject]?
             
             let string = icon[XMLDictionaryTextKey] as! String
             

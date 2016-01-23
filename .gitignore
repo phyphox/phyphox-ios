@@ -21,3 +21,6 @@ DerivedData
 Android
 External/*
 !External/checkout.sh
+!External/XMLDictionary
+External/XMLDictionary/*
+!External/XMLDictionary/XMLDictionary

@@ -34,7 +34,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             return .Light
         }
         else if type == "magnetic_field" {
-            return .Light
+            return .MagneticField
         }
         
         return nil

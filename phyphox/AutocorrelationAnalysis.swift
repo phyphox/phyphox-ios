@@ -25,10 +25,10 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             else if input.asString == "y" {
                 yIn = input.buffer!
             }
-            else if input.asString == "maxX" {
+            else if input.asString == "minX" {
                 mint = input.getSingleValue()
             }
-            else if input.asString == "maxY" {
+            else if input.asString == "maxX" {
                 maxt = input.getSingleValue()
             }
             else {

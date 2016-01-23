@@ -35,6 +35,12 @@ class ExperimentAnalysisModule {
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
         self.outputs = outputs
+        
+        for input in self.inputs {
+            if input.buffer != nil {
+                NSNotificationCenter.defaultCenter().addObserver(self, selector: "update", name: DataBufferReceivedNewValueNotification, object: input.buffer!)
+            }
+        }
     }
     
     func attemptUpdate() {
@@ -44,7 +50,7 @@ class ExperimentAnalysisModule {
         }
     }
     
-    func update() {
+    dynamic func update() {
         fatalError("Subclasses of ExperimentAnalysisModule must override the update() method!")
     }
 }

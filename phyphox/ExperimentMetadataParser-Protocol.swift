@@ -102,6 +102,18 @@ func CGFloatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: CGFloa
     return defaultValue
 }
 
+func textFromXML(xml: AnyObject) -> String {
+    if let str = xml as? String {
+        return str
+    }
+    else if let d = xml as? NSDictionary {
+        return d[XMLDictionaryTextKey] as! String
+    }
+    else {
+        fatalError("Invalid input for text \(xml)")
+    }
+}
+
 //MARK: - Protocol
 
 protocol ExperimentMetadataParser {

@@ -12,7 +12,11 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     let graph: JGGraphView
     //    let imgView: UIImageView
     
-    var queue: dispatch_queue_t!
+    var queue: dispatch_queue_t! {
+        didSet {
+            NSLog("set queue (is nil: %@) on cell %p", (queue == nil ? "yes" : "no") , self)
+        }
+    }
     
     typealias T = GraphViewDescriptor
     
@@ -44,7 +48,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     private var hasUpdateBlockEnqueued = false
     
     override func update() {
-        if hasUpdateBlockEnqueued {
+        if hasUpdateBlockEnqueued || superview == nil {
             return
         }
         
@@ -89,7 +93,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 }
                 
                 if count > 1 {
-                    if self.lastCount == nil || count > self.lastCount!-trashedCount {
+//                    if self.lastCount == nil || count > self.lastCount!-trashedCount {
                         let maxX = xValues.last!
                         let minX = xValues[0]
                         
@@ -110,12 +114,17 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                         let s = CFAbsoluteTimeGetCurrent()
 //                        let img = JGGraphDrawer.drawBitmap(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, averaging: self.descriptor.forceFullDataset)!
                         
-                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.graphSize, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset)
+                        var newMaxY: Double? = nil
+                        var newMinY: Double? = nil
+                        
+                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.graphSize, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset, newMinY: &newMinY, newMaxY: &newMaxY)
                         
                         print("Path took \(CFAbsoluteTimeGetCurrent()-s)")
                         
-                        self.lastCount = count
+                        self.descriptor.yInputBuffer.updateMaxAndMin(newMaxY, min: newMinY)
                         
+//                        self.lastCount = count
+                    
 //                        self.lastXRange = xRange
 //                        self.lastYRange = yRange
                         
@@ -123,7 +132,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
 //                            self.graph.image = img
                             self.graph.path = path
                         })
-                    }
+//                    }
                 }
                 else {
                     dispatch_sync(dispatch_get_main_queue(), { () -> Void in

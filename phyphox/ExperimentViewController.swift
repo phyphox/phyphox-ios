@@ -60,7 +60,15 @@ final class ExperimentViewController: CollectionViewController {
         var modules: [[UIView]] = []
         
         for collection in experiment.viewDescriptors {
-            modules.append(ExperimentViewModuleFactory.createViews(collection))
+            let m = ExperimentViewModuleFactory.createViews(collection)
+            
+            for module in m {
+                if let graph = module as? ExperimentGraphView {
+                    graph.queue = experiment.queue
+                }
+            }
+            
+            modules.append(m)
         }
         
         viewModules = modules
@@ -92,6 +100,12 @@ final class ExperimentViewController: CollectionViewController {
         }
     }
     
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        self.navigationController!.navigationBarHidden = false
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -120,14 +134,11 @@ final class ExperimentViewController: CollectionViewController {
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ModuleCell", forIndexPath: indexPath) as! ExperimentViewModuleCollectionViewCell
+        NSLog("load cell %p", cell)
         
         let module = viewModules[selectedViewCollection][indexPath.row]
         
         cell.module = module
-        
-        if let graph = module as? ExperimentGraphView {
-            graph.queue = experiment.queue
-        }
         
         (module as! ExperimentViewModuleProtocol).setNeedsUpdate()
         

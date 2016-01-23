@@ -9,6 +9,12 @@
 import Foundation
 import CoreGraphics
 
-func CGrectGetMid(r: CGRect) -> CGPoint {
+func CGRectGetMid(r: CGRect) -> CGPoint {
     return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
+}
+
+extension RangeReplaceableCollectionType where Index : Comparable {
+    mutating func removeAtIndices<S : SequenceType where S.Generator.Element == Index>(indices: S) {
+        indices.sort().lazy.reverse().forEach{ removeAtIndex($0) }
+    }
 }

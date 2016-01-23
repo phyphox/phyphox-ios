@@ -8,12 +8,12 @@
 
 import Foundation
 
-private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", DISPATCH_QUEUE_SERIAL)
-
 /**
  Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
+    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", DISPATCH_QUEUE_SERIAL)
+    
     private var array: [Element]
     
     var count: Int {
@@ -53,16 +53,23 @@ final class Queue<Element> {
         dispatch_sync(lockQueue, closure)
     }
     
-    func enqueue(value: Element) {
-        sync { () -> Void in
+    func enqueue(value: Element, async: Bool = false) {
+        let op = { () -> Void in
             self.array.append(value)
+        }
+        
+        if async {
+            op()
+        }
+        else {
+            sync(op)
         }
     }
     
-    func dequeue() -> Element? {
+    func dequeue(async: Bool = false) -> Element? {
         var element: Element? = nil
         
-        sync { () -> Void in
+        let op = { () -> Void in
             autoreleasepool({ () -> () in
                 if self.array.count > 0 {
                     element = self.array.removeFirst()
@@ -70,18 +77,11 @@ final class Queue<Element> {
             })
         }
         
-        return element
-    }
-    
-    func enqueue_async(value: Element) {
-        self.array.append(value)
-    }
-    
-    func dequeue_async() -> Element? {
-        var element: Element? = nil
-        
-        if self.array.count > 0 {
-            element = self.array.removeFirst()
+        if async {
+            op()
+        }
+        else {
+            sync(op)
         }
         
         return element
@@ -90,6 +90,19 @@ final class Queue<Element> {
     func clear() {
         sync { () -> Void in
             self.array.removeAll()
+        }
+    }
+    
+    func replaceValues(values: [Element], async: Bool = false) {
+        let op = { () -> Void in
+            self.array = values
+        }
+        
+        if async {
+            op()
+        }
+        else {
+            sync(op)
         }
     }
     
