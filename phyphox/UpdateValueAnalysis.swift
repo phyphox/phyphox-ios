@@ -15,15 +15,35 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
+        
+        func appendValue(rawValue value: Double) {
+            let processed = method(value)
+            
+            if max == nil || processed > max {
+                max = processed
+            }
+            
+            if min == nil || processed < min {
+                min = processed
+            }
+            
+            append.append(processed)
+        }
         
         if let buffer = input.buffer {
             for val in buffer {
-                outBuffer.append(method(val))
+                appendValue(rawValue: val)
             }
         }
         else {
-            outBuffer.append(method(input.value!))
+            appendValue(rawValue: input.value!)
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

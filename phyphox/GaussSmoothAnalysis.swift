@@ -31,10 +31,12 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     override func update() {
         var y: [Double] = inputs.first!.buffer!.toArray() //Get array for random access
 
-        let out = outputs.first!.buffer!
+        let outBuffer = outputs.first!.buffer!
         
-        //Clear output
-        out.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         for i in 0..<y.count {
             var sum = 0.0
@@ -45,7 +47,18 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
                 }
             }
             
-            out.append(sum)
+            if max == nil || sum > max {
+                max = sum
+            }
+            
+            if min == nil || sum < min {
+                min = sum
+            }
+            
+            append.append(sum)
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

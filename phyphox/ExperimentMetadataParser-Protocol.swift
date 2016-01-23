@@ -55,12 +55,7 @@ func stringFromXML(xml: [String: AnyObject]?, key: String, defaultValue: String)
         return defaultValue
     }
     
-    if let str = xml![key] as? String {
-        return str
-    }
-    else {
-        return defaultValue
-    }
+    return xml![key] as? String ?? defaultValue // <=> (xml![key] != nil ? xml![key] as? String : defaultValue)
 }
 
 func intTypeFromXML<T:intNumberType>(xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {

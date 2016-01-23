@@ -52,10 +52,33 @@ final class DataBuffer: NSObject, SequenceType {
     private(set) var max: Double? = nil
     private(set) var min: Double? = nil
     
-    //Special purpose setter for max and min. The graph view iterates through all values anyway, so that can be used to calculate the max and min values (which will take effect on the next redraw of the graph).
-    func updateMaxAndMin(max: Double?, min: Double?) {
-        self.max = max
-        self.min = min
+    /**
+     Special purpose setter for max and min. The graph view iterates through all values anyway, so that can be used to calculate the max and min values (which will take effect on the next redraw of the graph).
+     */
+    func updateMaxAndMin(max: Double?, min: Double?, compare: Bool = false) {
+        if compare {
+            if self.max == nil {
+                self.max = max
+            }
+            else {
+                if max != nil {
+                    Swift.max(self.max!, max!)
+                }
+            }
+            
+            if self.min == nil {
+                self.min = min
+            }
+            else {
+                if min != nil {
+                    Swift.min(self.min!, min!)
+                }
+            }
+        }
+        else {
+            self.max = max
+            self.min = min
+        }
     }
     
     var trashedCount: Int = 0
@@ -93,7 +116,7 @@ final class DataBuffer: NSObject, SequenceType {
         }
     }
     
-    func append(value: Double!, async: Bool = false) {
+    func append(value: Double!, async: Bool = false, notify: Bool = true) {
         if (value == nil) {
             return
         }
@@ -130,7 +153,9 @@ final class DataBuffer: NSObject, SequenceType {
             }
         }
         
-        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+        if notify {
+            NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+        }
     }
     
     subscript(index: Int) -> Double {
@@ -151,22 +176,51 @@ final class DataBuffer: NSObject, SequenceType {
     /**
      max and min are not changed when calling this method. Manually updating max and min is required.
      */
-    func replaceValues(values: [Double]) {
+    func replaceValues(var values: [Double]) {
         if (!staticBuffer) {
             trashedCount = 0
+            
+            if values.count > size {
+                //TODO: Test
+                values = Array(values[values.count-size..<size])
+            }
+            
             queue.replaceValues(values)
             NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
         }
     }
     
-    func appendFromArray(values: [Double]) {
-        queue.sync {() -> Void in
-            autoreleasepool({ () -> () in
-                for value in values {
-                    self.append(value, async: true)
-                }
+    /**
+     Passing `false` for `iterative` will increase performance, but max and min values will not be updated. They will have to be updated manually.
+     */
+    func appendFromArray(values: [Double], iterative: Bool = true) {
+        if iterative {
+            queue.sync {() -> Void in
+                autoreleasepool({ () -> () in
+                    for value in values {
+                        self.append(value, async: true, notify: false)
+                    }
+                })
+            }
+        }
+        else {
+            queue.sync({ () -> Void in
+                autoreleasepool({ () -> () in
+                    var array = self.queue.toArray()
+                    
+                    array.appendContentsOf(values)
+                    
+                    if array.count > self.size {
+                        //TODO: Test
+                        array = Array(array[array.count-self.size..<self.size])
+                    }
+                    
+                    self.queue.replaceValues(values, async: true)
+                })
             })
         }
+        
+        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
     }
     
     func toArray() -> [Double] {

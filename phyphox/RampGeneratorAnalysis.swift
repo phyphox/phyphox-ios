@@ -32,14 +32,30 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
-        
         if length == 0 {
             length = outBuffer.size
         }
         
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
+        
         for i in 0..<length {
-            outBuffer.append(start+(stop-start)/Double((length-1)*i))
+            let val = start+(stop-start)/Double((length-1)*i)
+            
+            if max == nil || val > max {
+                max = val
+            }
+            
+            if min == nil || val < min {
+                min = val
+            }
+            
+            append.append(val)
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

@@ -30,7 +30,10 @@ final class LCMAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         for _ in 0..<outBuffer.size {
             var didGetInput = false
@@ -56,11 +59,24 @@ final class LCMAnalysis: ExperimentAnalysisModule {
             }
             
             if didGetInput {
-                outBuffer.append(a0*(b0/a))
+                let v = a0*(b0/a)
+                
+                if max == nil || v > max {
+                    max = v
+                }
+                
+                if min == nil || v < min {
+                    min = v
+                }
+                
+                append.append(v)
             }
             else {
                 break;
             }
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

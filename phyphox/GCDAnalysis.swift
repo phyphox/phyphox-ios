@@ -30,7 +30,10 @@ final class GCDAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         for _ in 0..<outBuffer.size {
             var didGetInput = false
@@ -53,11 +56,22 @@ final class GCDAnalysis: ExperimentAnalysisModule {
             }
             
             if didGetInput {
-                outBuffer.append(a)
+                if max == nil || a > max {
+                    max = a
+                }
+                
+                if min == nil || a < min {
+                    min = a
+                }
+                
+                append.append(a)
             }
             else {
                 break;
             }
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

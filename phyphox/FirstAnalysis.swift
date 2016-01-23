@@ -11,10 +11,16 @@ import Foundation
 final class FirstAnalysis: ExperimentAnalysisModule {
 
     override func update() {
+        var append: [Double] = []
+        
         for input in inputs {
-            for output in outputs {
-                output.buffer!.append(input.buffer!.first)
+            if let val = input.buffer!.first {
+                append.append(val)
             }
+        }
+        
+        for output in outputs {
+            output.buffer!.appendFromArray(append) //only appending few values, so append iteratively and let the buffer take care of max and min values.
         }
     }
 }

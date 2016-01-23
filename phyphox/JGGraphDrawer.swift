@@ -292,7 +292,7 @@ final class JGGraphDrawer {
     }
     
     class func drawPath(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, reusePath: UIBezierPath? = nil, start: Int = 0, averaging: Bool = true, inout newMinY: Double?, inout newMaxY: Double?) -> UIBezierPath {
-        let path = (reusePath != nil ? reusePath! : UIBezierPath())
+        let path = reusePath ?? UIBezierPath() // <=> (reusePath != nil ? reusePath! : UIBezierPath())
         
         if count == 0 {
             return path

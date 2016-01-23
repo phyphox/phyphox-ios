@@ -28,14 +28,16 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
-        
         if length == 0 {
             length = outBuffer.size
         }
         
-        for _ in 0..<length {
-            outBuffer.append(value)
-        }
+        let append = [Double](count: length, repeatedValue: value)
+        
+        let max = value
+        let min = value
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

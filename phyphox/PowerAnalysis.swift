@@ -37,7 +37,10 @@ final class PowerAnalysis: ExperimentAnalysisModule {
         
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         for _ in 0..<outBuffer.size {
             var neutral = 1.0
@@ -58,11 +61,22 @@ final class PowerAnalysis: ExperimentAnalysisModule {
             }
             
             if didGetInput {
-                outBuffer.append(neutral)
+                if max == nil || neutral > max {
+                    max = neutral
+                }
+                
+                if min == nil || neutral < min {
+                    min = neutral
+                }
+                
+                append.append(neutral)
             }
             else {
                 break;
             }
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

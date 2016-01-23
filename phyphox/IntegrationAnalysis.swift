@@ -13,9 +13,13 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
     override func update() {
         var sum = 0.0
         
-        let out = outputs.first!.buffer!
+        let outBuffer = outputs.first!.buffer!
         
-        out.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
+        
         
         let buffer = inputs.first!.buffer
         
@@ -26,7 +30,18 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
         for value in buffer! {
             sum += value
             
-            out.append(sum)
+            if max == nil || sum > max {
+                max = sum
+            }
+            
+            if min == nil || sum < min {
+                min = sum
+            }
+            
+            append.append(sum)
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

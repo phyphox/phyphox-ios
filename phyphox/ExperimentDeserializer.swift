@@ -80,7 +80,7 @@ final class ExperimentDeserializer: NSObject {
         let output = parseOutput(dictionary["output"] as! NSDictionary?, buffers: buffers)
         
         let iconRaw = dictionary["icon"]
-        let icon = parseIcon(iconRaw != nil ? iconRaw! : title)
+        let icon = parseIcon(iconRaw ?? title)
         
         guard icon != nil && viewDescriptors != nil else {
             throw SerializationError.InvalidExperimentFile

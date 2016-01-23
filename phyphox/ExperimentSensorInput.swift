@@ -95,7 +95,7 @@ final class ExperimentSensorInput {
     }
     
     func resetValuesForAveraging() {
-        if var averaging = self.averaging {
+        if let averaging = self.averaging {
             averaging.iterationStartTimestamp = 0.0
             
             averaging.x = 0.0

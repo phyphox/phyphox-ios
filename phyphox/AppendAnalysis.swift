@@ -13,14 +13,28 @@ final class AppendAnalysis: ExperimentAnalysisModule {
     override func update() {
         let outBuffer = outputs.first!.buffer!
         
-        outBuffer.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         for input in inputs {
             if let b = input.buffer {
                 for val in b {
-                    outBuffer.append(val)
+                    if max == nil || val > max {
+                        max = val
+                    }
+                    
+                    if min == nil || val < min {
+                        min = val
+                    }
+                    
+                    append.append(val)
                 }
             }
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

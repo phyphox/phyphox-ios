@@ -27,11 +27,16 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             a = secondBuffer.toArray()
         }
         
-        let out = outputs.first!.buffer!
+        let outBuffer = outputs.first!.buffer!
         
-        out.clear()
+        var append: [Double] = []
+        
+        var max: Double? = nil
+        var min: Double? = nil
         
         let compRange = a.count-b.count
+        
+        let compRangeD = Double(compRange)
         
         //The actual calculation
         for i in 0..<compRange {
@@ -40,7 +45,20 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
                 sum += a[j+i]*b[j];
             }
             
-            out.append(sum/Double(compRange))
+            let v = sum/compRangeD
+            
+            if max == nil || v > max {
+                max = v
+            }
+            
+            if min == nil || v < min {
+                min = v
+            }
+            
+            append.append(v)
         }
+        
+        outBuffer.updateMaxAndMin(max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

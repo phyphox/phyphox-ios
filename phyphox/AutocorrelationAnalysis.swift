@@ -74,15 +74,20 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        //Clear outputs
-        yOut.clear();
-        if (xOut != nil) {
-            xOut!.clear();
-        }
+        var xMax: Double? = nil
+        var xMin: Double? = nil
+        
+        var yMax: Double? = nil
+        var yMin: Double? = nil
+        
+        var xValues: [Double]? = (xOut != nil ? [] : nil)
+        var yValues: [Double] = []
         
         //The actual calculation
         for (var i = 0; i < y.count; i++) { //Displacement i for each value of input1
-            if (x[i] < mint || x[i] > maxt) { //Skip this, if it should be filtered
+            let xVal = x[i]
+            
+            if (xVal < mint || xVal > maxt) { //Skip this, if it should be filtered
                 continue;
             }
             
@@ -91,13 +96,41 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             for (var j = 0; j < y.count-i; j++) { //For each value of input1 minus the current displacement
                 sum += y[j]*y[j+i]; //Product of normal and displaced data
             }
+            
             sum /= Double(y.count-i); //Normalize to the number of values at this displacement
             
-            //Append y output to output1 and x to output2 (if used)
-            yOut.append(sum);
-            if (xOut != nil) {
-                xOut!.append(x[i]);
+            if xValues != nil {
+                if xMax == nil || xVal > xMax {
+                    xMax = xVal
+                }
+                
+                if xMin == nil || xVal < xMin {
+                    xMin = xVal
+                }
             }
+            
+            if yMax == nil || sum > yMax {
+                yMax = sum
+            }
+            
+            if yMin == nil || sum < yMin {
+                yMin = sum
+            }
+            
+            //Append y output to output1 and x to output2 (if used)
+            yValues.append(sum)
+            
+            if xValues != nil {
+                xValues!.append(xVal)
+            }
+        }
+        
+        yOut.updateMaxAndMin(yMax, min: yMin)
+        yOut.replaceValues(yValues)
+        
+        if xOut != nil {
+            xOut!.updateMaxAndMin(xMax, min: xMin)
+            xOut!.replaceValues(xValues!)
         }
     }
 }

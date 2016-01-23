@@ -87,6 +87,12 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         var t1: Double
         var t2: Double
         
+        var xMax: Double? = nil
+        var xMin: Double? = nil
+        
+        var yMax: Double? = nil
+        var yMin: Double? = nil
+        
         j = 0; /* bit-reverse */
         n2 = np2/2;
         
@@ -104,9 +110,32 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                 t1 = x[i];
                 x[i] = x[j];
                 x[j] = t1;
+                
+                let maxXAssigned = max(x[i], x[j])
+                let minXAssigned = min(x[i], x[j])
+                
+                if xMax == nil || maxXAssigned > xMax {
+                    xMax = maxXAssigned
+                }
+                
+                if xMin == nil || minXAssigned < xMin {
+                    xMin = minXAssigned
+                }
+                
                 t1 = y[i];
                 y[i] = y[j];
                 y[j] = t1;
+                
+                let maxYAssigned = max(y[i], y[j])
+                let minYAssigned = min(y[i], y[j])
+                
+                if yMax == nil || maxYAssigned > yMax {
+                    yMax = maxYAssigned
+                }
+                
+                if yMin == nil || minYAssigned < yMin {
+                    yMin = minYAssigned
+                }
             }
         }
         
@@ -125,12 +154,47 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                 for (k = j; k < np2; k = k+n2) {
                     t1 = c*x[k+n1] - s*y[k+n1];
                     t2 = s*x[k+n1] + c*y[k+n1];
+                    
                     x[k+n1] = x[k] - t1;
-                    y[k+n1] = y[k] - t2;
                     x[k] = x[k] + t1;
+                    
+                    let maxXAssigned = max(x[k+n1], x[k])
+                    let minXAssigned = min(x[k+n1], x[k])
+                    
+                    if xMax == nil || maxXAssigned > xMax {
+                        xMax = maxXAssigned
+                    }
+                    
+                    if xMin == nil || minXAssigned < xMin {
+                        xMin = minXAssigned
+                    }
+                    
+                    y[k+n1] = y[k] - t2;
                     y[k] = y[k] + t2;
+                    
+                    let maxYAssigned = max(y[k+n1], y[k])
+                    let minYAssigned = min(y[k+n1], y[k])
+                    
+                    if yMax == nil || maxYAssigned > yMax {
+                        yMax = maxYAssigned
+                    }
+                    
+                    if yMin == nil || minYAssigned < yMin {
+                        yMin = minYAssigned
+                    }
                 }
             }
+        }
+        
+        //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+        if let xOut = outputs.first?.buffer {
+            xOut.updateMaxAndMin(xMax, min: xMin, compare: true)
+            xOut.appendFromArray(x, iterative: false)
+        }
+        
+        if let yOut = outputs.first?.buffer {
+            yOut.updateMaxAndMin(yMax, min: yMin, compare: true)
+            yOut.appendFromArray(y, iterative: false)
         }
     }
 }
