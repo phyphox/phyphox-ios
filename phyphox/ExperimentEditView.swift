@@ -25,9 +25,7 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor> {
                 let l = UILabel()
                 l.text = descriptor.unit
                 
-                let baseFont = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
-                
-                l.font = baseFont.fontWithSize(baseFont.pointSize*descriptor.labelSize)
+                l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
                 
                 return l
             }()

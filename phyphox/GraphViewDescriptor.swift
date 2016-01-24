@@ -28,7 +28,7 @@ public final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, labelSize: CGFloat, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -44,6 +44,6 @@ public final class GraphViewDescriptor: ViewDescriptor {
         self.forceFullDataset = forceFullDataset
         self.history = history
         
-        super.init(label: label, labelSize: labelSize)
+        super.init(label: label)
     }
 }

@@ -43,6 +43,10 @@ class ExperimentAnalysisModule {
         }
     }
     
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
     func attemptUpdate() {
         if (!staticAnalysis || !executed) {
             executed = true

@@ -27,27 +27,15 @@ final class JGGraphLayer: CALayer {
         }
     }
     
-    var graphSize: CGSize {
-        get {
-            return (CGRectIsEmpty(self.bounds) ? CGSize.zero : CGSizeMake(self.bounds.size.width-60, self.bounds.size.height-60))
-        }
-    }
     override func layoutSublayers() {
         super.layoutSublayers()
-        let s = graphSize
-        childLayer?.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
+        childLayer?.frame = self.bounds
     }
 }
 
 final class JGGraphView: UIView {
     override class func layerClass() -> AnyClass {
         return JGGraphLayer.self
-    }
-    
-    var graphSize: CGSize {
-        get {
-            return (layer as! JGGraphLayer).graphSize
-        }
     }
     
     private let drawer: Drawer

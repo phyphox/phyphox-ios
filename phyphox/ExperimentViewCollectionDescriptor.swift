@@ -29,9 +29,9 @@ public final class ExperimentViewCollectionDescriptor: ViewDescriptor {
 //        super.init(label: label, labelSize: labelSize)
 //    }
     
-    init(label: String, labelSize: CGFloat, views: [ViewDescriptor]) {
+    init(label: String, views: [ViewDescriptor]) {
         self.views = views
         
-        super.init(label: label, labelSize: labelSize)
+        super.init(label: label)
     }
 }

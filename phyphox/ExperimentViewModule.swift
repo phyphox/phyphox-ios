@@ -23,9 +23,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         
         label.text = descriptor.label
         
-        let baseFont = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
-        
-        label.font = baseFont.fontWithSize(baseFont.pointSize*descriptor.labelSize)
+        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
         
         self.descriptor = descriptor
         

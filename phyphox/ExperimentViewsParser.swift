@@ -42,7 +42,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let attributes = view[XMLDictionaryAttributesKey] as! [String: String]
             
             let label = attributes["label"]!
-            let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
             
             var views = [ViewDescriptor!](count: (view["__count"] as! NSNumber).integerValue, repeatedValue: nil)
             
@@ -50,7 +49,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
-                let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                 
                 let signed = boolFromXML(attributes, key: "signed", defaultValue: true)
                 
@@ -82,14 +80,13 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     return nil
                 }
                 
-                return EditViewDescriptor(label: label, labelSize: labelSize, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue)
+                return EditViewDescriptor(label: label, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue)
             }
             
             func handleValue(value: NSDictionary) -> ValueViewDescriptor? {
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
-                let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                 
                 let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
                 let precision = intTypeFromXML(attributes, key: "precision", defaultValue: 2)
@@ -118,14 +115,14 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     return nil
                 }
                 
-                return ValueViewDescriptor(label: label, labelSize: labelSize, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
+                return ValueViewDescriptor(label: label, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
             func handleGraph(graph: NSDictionary) -> GraphViewDescriptor? {
                 let attributes = graph[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
-                let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
+                
                 let aspectRatio = CGFloatFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
                 let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
                 let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
@@ -184,16 +181,15 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     print("Error! No Y axis input buffer!")
                 }
                 
-                return GraphViewDescriptor(label: label, labelSize: labelSize, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                return GraphViewDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
             }
             
             func handleInfo(info: NSDictionary) -> InfoViewDescriptor? {
                 let attributes = info[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
-                let labelSize = CGFloatFromXML(attributes, key: "labelsize", defaultValue: 1.0)
                 
-                return InfoViewDescriptor(label: label, labelSize: labelSize)
+                return InfoViewDescriptor(label: label)
             }
             
             var deleteIndices: [Int] = []
@@ -253,7 +249,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 views.removeAtIndices(deleteIndices)
             }
             
-            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, labelSize: labelSize, views: views as! [ViewDescriptor])
+            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, views: views as! [ViewDescriptor])
             
             viewDescriptors.append(viewDescriptor)
         }

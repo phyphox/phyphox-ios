@@ -134,7 +134,6 @@ final class ExperimentViewController: CollectionViewController {
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ModuleCell", forIndexPath: indexPath) as! ExperimentViewModuleCollectionViewCell
-        NSLog("load cell %p", cell)
         
         let module = viewModules[selectedViewCollection][indexPath.row]
         

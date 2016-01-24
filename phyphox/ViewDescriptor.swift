@@ -11,10 +11,8 @@ import CoreGraphics
 
 public class ViewDescriptor {
     let label: String
-    let labelSize: CGFloat
     
-    init(label: String, labelSize: CGFloat) {
+    init(label: String) {
         self.label = label
-        self.labelSize = labelSize
     }
 }

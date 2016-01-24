@@ -9,26 +9,40 @@
 import UIKit
 
 public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
-    let graph: JGGraphView
-    //    let imgView: UIImageView
-    
-    var queue: dispatch_queue_t! {
-        didSet {
-            NSLog("set queue (is nil: %@) on cell %p", (queue == nil ? "yes" : "no") , self)
-        }
-    }
-    
     typealias T = GraphViewDescriptor
+    
+    let graph: JGGraphView
+    //let imgView: UIImageView
+    
+    let xLabel: UILabel
+    let yLabel: UILabel
+    
+    var queue: dispatch_queue_t!
     
     required public init(descriptor: GraphViewDescriptor) {
         graph = JGGraphView()
         
-        //        imgView = UIImageView()
+        func makeLabel(text: String?) -> UILabel {
+            let l = UILabel()
+            l.text = text
+            
+           l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+            
+            return l
+        }
+        
+        xLabel = makeLabel(descriptor.xLabel)
+        yLabel = makeLabel(descriptor.yLabel)
+        yLabel.transform = CGAffineTransformMakeRotation(-CGFloat(M_PI/2.0))
+        
+        //imgView = UIImageView()
         
         super.init(descriptor: descriptor)
         
         addSubview(graph)
-        //        addSubview(imgView)
+        addSubview(xLabel)
+        addSubview(yLabel)
+        //addSubview(imgView)
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "setNeedsUpdate", name: DataBufferReceivedNewValueNotification, object: descriptor.yInputBuffer)
     }
@@ -37,18 +51,25 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
+    //MARK - Graph
+    var graphFrame: CGRect {
+        get {
+            return CGRectInset(self.bounds, 25, 25)
+        }
+    }
+    
     private var lastIndexXArray: [Double]?
     private var lastCount: Int?
     private var lastXRange: Double?
     private var lastYRange: Double?
-//    private lazy var path: UIBezierPath = UIBezierPath()
+//private lazy var path: UIBezierPath = UIBezierPath()
     
     private var lastCut: Int = 0
     
     private var hasUpdateBlockEnqueued = false
     
     override func update() {
-        if hasUpdateBlockEnqueued || superview == nil {
+        if hasUpdateBlockEnqueued || superview == nil || window == nil {
             return
         }
         
@@ -117,7 +138,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                         var newMaxY: Double? = nil
                         var newMinY: Double? = nil
                         
-                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.graphSize, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset, newMinY: &newMinY, newMaxY: &newMaxY)
+                        let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graphFrame.size, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset, newMinY: &newMinY, newMaxY: &newMaxY)
                         
                         print("Path took \(CFAbsoluteTimeGetCurrent()-s)")
                         
@@ -145,14 +166,28 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         }
     }
     
+    //Mark - General UI
+    
     public override func sizeThatFits(size: CGSize) -> CGSize {
         return CGSizeMake(size.width, min(size.width/descriptor.aspectRatio, size.height))
     }
     
     public override func layoutSubviews() {
         super.layoutSubviews()
-        graph.frame = self.bounds
-        //        imgView.frame = self.bounds
+        
+        let spacing: CGFloat = 2.0
+        
+        let s1 = label.sizeThatFits(self.bounds.size)
+        label.frame = CGRectMake((self.bounds.size.width-s1.width)/2.0, spacing, s1.width, s1.height)
+        
+        let s2 = xLabel.sizeThatFits(self.bounds.size)
+        xLabel.frame = CGRectMake((self.bounds.size.width-s2.width)/2.0, self.bounds.size.height-s2.height-spacing, s2.width, s2.height)
+        
+        let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
+        yLabel.frame = CGRectMake(spacing, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
+        
+        graph.frame = graphFrame
+        //imgView.frame = self.bounds
     }
 }
 
