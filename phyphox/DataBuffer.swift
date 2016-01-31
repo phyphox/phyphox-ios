@@ -62,7 +62,7 @@ final class DataBuffer: NSObject, SequenceType {
             }
             else {
                 if max != nil {
-                    Swift.max(self.max!, max!)
+                    self.max = Swift.max(self.max!, max!)
                 }
             }
             
@@ -71,7 +71,7 @@ final class DataBuffer: NSObject, SequenceType {
             }
             else {
                 if min != nil {
-                    Swift.min(self.min!, min!)
+                    self.min = Swift.min(self.min!, min!)
                 }
             }
         }
@@ -122,11 +122,6 @@ final class DataBuffer: NSObject, SequenceType {
         }
         
         let operations = { () -> () in
-            if (self.count >= self.size) {
-                self.queue.dequeue(true)
-                self.trashedCount++
-            }
-            
             if self.max == nil {
                 self.max = value
             }
@@ -142,6 +137,11 @@ final class DataBuffer: NSObject, SequenceType {
             }
             
             self.queue.enqueue(value, async: true)
+            
+            if (self.count > self.size) {
+                self.queue.dequeue(true)
+                self.trashedCount++
+            }
         }
         
         if async {
@@ -154,14 +154,28 @@ final class DataBuffer: NSObject, SequenceType {
         }
         
         if notify {
-            NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+            sendUpdateNotification()
         }
     }
     
+    func sendUpdateNotification() {
+        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+    }
+    
+    /**
+     Async
+     */
     subscript(index: Int) -> Double {
         get {
             return queue[index]
         }
+    }
+    
+    /**
+     Synchronized
+     */
+    func objectAtIndex(index: Int, async: Bool = false) -> Double? {
+        return queue.objectAtIndex(index, async: async)
     }
     
     func clear() {
@@ -173,11 +187,10 @@ final class DataBuffer: NSObject, SequenceType {
         }
     }
     
-    /**
-     max and min are not changed when calling this method. Manually updating max and min is required.
-     */
-    func replaceValues(var values: [Double]) {
+    func replaceValues(var values: [Double], max: Double?, min: Double?, notify: Bool = true) {
         if (!staticBuffer) {
+            updateMaxAndMin(max, min: min)
+            
             trashedCount = 0
             
             if values.count > size {
@@ -186,14 +199,17 @@ final class DataBuffer: NSObject, SequenceType {
             }
             
             queue.replaceValues(values)
-            NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+            
+            if notify {
+                sendUpdateNotification()
+            }
         }
     }
     
     /**
      Passing `false` for `iterative` will increase performance, but max and min values will not be updated. They will have to be updated manually.
      */
-    func appendFromArray(values: [Double], iterative: Bool = true) {
+    func appendFromArray(values: [Double], iterative: Bool = true, notify: Bool = true) {
         if iterative {
             queue.sync {() -> Void in
                 autoreleasepool({ () -> () in
@@ -220,7 +236,9 @@ final class DataBuffer: NSObject, SequenceType {
             })
         }
         
-        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+        if notify {
+            sendUpdateNotification()
+        }
     }
     
     func toArray() -> [Double] {

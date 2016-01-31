@@ -35,7 +35,9 @@ class ExperimentAnalysisModule {
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
         self.outputs = outputs
-        
+    }
+    
+    func registerForUpdates() {
         for input in self.inputs {
             if input.buffer != nil {
                 NSNotificationCenter.defaultCenter().addObserver(self, selector: "update", name: DataBufferReceivedNewValueNotification, object: input.buffer!)

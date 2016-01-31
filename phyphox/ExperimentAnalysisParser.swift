@@ -57,7 +57,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             return a as! [ExperimentAnalysisDataIO]
         }
         
-        var processed: [ExperimentAnalysisModule] = []
+        var processed: [ExperimentAnalysisModule!] = []
         
         for (key, values) in analyses! {
             if key == "__count" || key == "__index" {
@@ -71,6 +71,8 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: AnyObject]?
                 
                 var analysis: ExperimentAnalysisModule! = nil
+                
+                let index = (value["__index"] as! NSNumber).integerValue
                 
                 if key == "add" {
                     analysis = AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
@@ -149,13 +151,33 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 }
                 
                 if analysis != nil {
-                    processed.append(analysis)
+                    if index >= processed.count {
+                        processed.appendContentsOf([ExperimentAnalysisModule!](count: index-processed.count+1, repeatedValue: nil))
+                    }
+                    
+                    processed[index] = analysis
                 }
             }
         }
         
+        var deleteIndices: [Int] = []
+        
+        for (i, v) in processed.enumerate() {
+            if v == nil {
+                deleteIndices.append(i)
+            }
+        }
+        
+        if deleteIndices.count > 0 {
+            processed.removeAtIndices(deleteIndices)
+        }
+        
+        for v in processed {
+            v.registerForUpdates()
+        }
+        
         if processed.count > 0 {
-            return ExperimentAnalysis(analyses: processed, sleep: sleep, onUserInput: onUserInput)
+            return ExperimentAnalysis(analyses: processed as! [ExperimentAnalysisModule], sleep: sleep, onUserInput: onUserInput)
         }
         
         return nil

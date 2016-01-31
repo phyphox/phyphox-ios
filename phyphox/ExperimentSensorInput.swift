@@ -180,14 +180,14 @@ final class ExperimentSensorInput {
     func dataIn(x: Double?, y: Double?, z: Double?, error: NSError?) {
         if (startTimestamp == 0.0) {
             startTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
-            
-            if let averaging = self.averaging {
-                averaging.iterationStartTimestamp = self.startTimestamp
-            }
         }
         
         if x != nil { //if x, y or z is not nil then all of them are not nil
             if let av = self.averaging { //Recoring average?
+                if av.iterationStartTimestamp == 0.0 {
+                    av.iterationStartTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
+                }
+                
                 av.x += x!
                 av.y += y!
                 av.z += z!

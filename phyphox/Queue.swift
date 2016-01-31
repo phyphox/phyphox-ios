@@ -53,6 +53,43 @@ final class Queue<Element> {
         dispatch_sync(lockQueue, closure)
     }
     
+    var first: Element? {
+        get {
+            return array.first
+        }
+    }
+    
+    var last: Element? {
+        get {
+            return array.last
+        }
+    }
+    
+    func objectAtIndex(index: Int, async: Bool = false) -> Element? {
+        var element: Element? = nil
+        
+        let op = { () -> Void in
+            autoreleasepool({ () -> () in
+                if index < self.array.count {
+                    element = self.array[index]
+                }
+            })
+        }
+        
+        if async {
+            op()
+        }
+        else {
+            sync(op)
+        }
+        
+        return element
+    }
+}
+
+//MARK - Mutating
+
+extension Queue {
     func enqueue(value: Element, async: Bool = false) {
         let op = { () -> Void in
             self.array.append(value)
@@ -105,33 +142,9 @@ final class Queue<Element> {
             sync(op)
         }
     }
-    
-    var first: Element? {
-        get {
-            return array.first
-        }
-    }
-    
-    var last: Element? {
-        get {
-            return array.last
-        }
-    }
-    
-    func objectAtIndex(index: Int) -> Element? {
-        var element: Element? = nil
-        
-        sync { () -> Void in
-            autoreleasepool({ () -> () in
-                if index < self.array.count {
-                    element = self.array[index]
-                }
-            })
-        }
-        
-        return element
-    }
 }
+
+//MARK - Protocols
 
 extension Queue: SequenceType {
     typealias Generator = IndexingGenerator<[Element]>

@@ -43,7 +43,6 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
             last = value
         }
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

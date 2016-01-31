@@ -87,6 +87,10 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 
                 var count = yValues.count
                 
+                if count == 0 {
+                    return
+                }
+                
                 if let xBuf = self.descriptor.xInputBuffer {
                     xValues = xBuf.graphValueSource
                     
@@ -108,6 +112,10 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                     
                     for i in xC..<count {
                         self.lastIndexXArray!.append(Double(i))
+                    }
+                    
+                    if self.lastIndexXArray == nil {
+                        return
                     }
                     
                     xValues = JGGraphFixedValueSource(array: self.lastIndexXArray!)

@@ -25,7 +25,12 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             if input.asString == "threshold" {
-               threshold = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    threshold = v
+                }
+                else {
+                    return
+                }
             }
             else if input.asString == "y" {
                 yIn = input.buffer
@@ -44,8 +49,8 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         
         for (i, value) in yIn.enumerate() {
             if (falling ? value < threshold : value > threshold) {
-                if xIn != nil && i < xIn!.size {
-                    x = xIn![i]
+                if let v = xIn?.objectAtIndex(i) {
+                    x = v
                 }
                 else {
                     x = Double(i)

@@ -11,13 +11,18 @@ import UIKit
 private let spacing: CGFloat = 5.0
 private let textFieldWidth: CGFloat = 60.0
 
-public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor> {
+public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
     let textField: UITextField
     let unitLabel: UILabel?
     
+    func formattedValue(raw: Double) -> String {
+        return (descriptor.decimal ? String(Int(raw)) : String(raw))
+    }
+    
     required public init(descriptor: EditViewDescriptor) {
         textField = UITextField()
-        textField.text = (descriptor.decimal ? String(Int(descriptor.defaultValue)) : String(descriptor.defaultValue))
+        textField.returnKeyType = .Done
+        
         textField.borderStyle = .RoundedRect
         
         if descriptor.unit != nil {
@@ -36,10 +41,56 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor> {
         
         super.init(descriptor: descriptor)
         
+        textField.addTarget(self, action: "hideKeyboard:", forControlEvents: .EditingDidEndOnExit)
+        
+        if let lastBufferValue = descriptor.buffer.last {
+            textField.text = formattedValue(lastBufferValue)
+        }
+        else {
+            textField.text = formattedValue(descriptor.defaultValue)
+        }
+        
+        textField.delegate = self
+        
         addSubview(textField)
         if unitLabel != nil {
             addSubview(unitLabel!)
         }
+    }
+    
+    func hideKeyboard(textField: UITextField) {
+        textField.endEditing(true)
+    }
+    
+    public func textFieldDidEndEditing(textField: UITextField) {
+        let val: Double
+        
+        if textField.text!.characters.count == 0 {
+            textField.text = formattedValue(descriptor.defaultValue)
+            val = descriptor.defaultValue
+        }
+        else {
+            if descriptor.decimal {
+                if descriptor.signed {
+                    val = floor(Double(textField.text!)!)
+                }
+                else {
+                    val = floor(abs(Double(textField.text!)!))
+                }
+            }
+            else {
+                if descriptor.signed {
+                    val = Double(textField.text!)!
+                }
+                else {
+                    val = abs(Double(textField.text!)!)
+                }
+            }
+            
+            textField.text = formattedValue(val)
+        }
+        
+        descriptor.buffer.replaceValues([val], max: val, min: val)
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {

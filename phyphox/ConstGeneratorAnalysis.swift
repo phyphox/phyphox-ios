@@ -16,10 +16,20 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             if input.asString == "value" {
-                value = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    value = v
+                }
+                else {
+                    return
+                }
             }
             else if input.asString == "length" {
-                length = Int(input.getSingleValue())
+                if let v = input.getSingleValue() {
+                    length = Int(v)
+                }
+                else {
+                    return
+                }
             }
             else {
                 print("Error: Invalid analysis input: \(input.asString)")
@@ -37,7 +47,6 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         let max = value
         let min = value
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

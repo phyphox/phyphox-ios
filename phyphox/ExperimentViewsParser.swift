@@ -62,8 +62,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 var outputBuffer: DataBuffer? = nil
                 
-                if let input = getElementsWithKey(edit, key: "output") {
-                    let first = input.first!
+                if let output = getElementsWithKey(edit, key: "output") {
+                    let first = output.first!
                     
                     if first is NSDictionary {
                         let bufferName = (first as! NSDictionary)[XMLDictionaryTextKey] as! String
@@ -80,7 +80,11 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     return nil
                 }
                 
-                return EditViewDescriptor(label: label, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue)
+                if outputBuffer!.last == nil {
+                    outputBuffer!.append(defaultValue) //Set the default value.
+                }
+                
+                return EditViewDescriptor(label: label, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
             }
             
             func handleValue(value: NSDictionary) -> ValueViewDescriptor? {

@@ -58,7 +58,6 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             append.append(sum)
         }
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

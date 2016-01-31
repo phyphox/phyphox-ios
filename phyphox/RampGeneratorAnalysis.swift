@@ -17,13 +17,28 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             if input.asString == "start" {
-                start = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    start = v
+                }
+                else {
+                    return
+                }
             }
             else if input.asString == "stop" {
-                stop = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    stop = v
+                }
+                else {
+                    return
+                }
             }
             else if input.asString == "length" {
-                length = Int(input.getSingleValue())
+                if let v = input.getSingleValue() {
+                    length = Int(v)
+                }
+                else {
+                    return
+                }
             }
             else {
                 print("Error: Invalid analysis input: \(input.asString)")
@@ -55,7 +70,6 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
             append.append(val)
         }
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

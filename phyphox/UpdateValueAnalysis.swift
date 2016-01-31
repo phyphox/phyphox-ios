@@ -43,7 +43,6 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
             appendValue(rawValue: input.value!)
         }
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

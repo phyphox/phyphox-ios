@@ -12,30 +12,42 @@ public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
     required public init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
         
-        let str = NSMutableAttributedString(string: descriptor.label.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+        newValueIn()
         
-        if let last = descriptor.buffer.last {
-            if descriptor.scientific {
-                str.appendAttributedString(NSAttributedString(string: String(format: "%.%ie%@", descriptor.precision, last, (descriptor.unit != nil ? String(format: " %@", descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "newValueIn", name: DataBufferReceivedNewValueNotification, object: descriptor.buffer)
+    }
+    
+    func newValueIn() {
+        dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            let str = NSMutableAttributedString(string: self.descriptor.label.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+            
+            if let last = self.descriptor.buffer.last {
+                let formatter = NSNumberFormatter()
+                formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
+                formatter.maximumFractionDigits = self.descriptor.precision
+                let formatted = formatter.stringFromNumber(NSNumber(double: last))!
+                
+                str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
             }
             else {
-                str.appendAttributedString(NSAttributedString(string: String(format: "%.%if%@", descriptor.precision, last, (descriptor.unit != nil ? String(format: " %@", descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
+                str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
             }
+            
+            self.label.attributedText = str
+            
+            self.setNeedsLayout()
         }
-        else {
-            str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
-        }
-        
-        label.attributedText = str
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {
-        return label.sizeThatFits(size)
+        return CGSizeMake(size.width, label.sizeThatFits(size).height)
     }
     
     override public func layoutSubviews() {
         super.layoutSubviews()
         
-        label.frame = self.bounds
+        let s = label.sizeThatFits(self.bounds.size)
+        
+        label.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
     }
 }

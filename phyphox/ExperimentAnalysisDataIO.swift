@@ -14,12 +14,12 @@ class ExperimentAnalysisDataIO {
     var buffer: DataBuffer?
     var value: Double?
     
-    func getSingleValue() -> Double! {
+    func getSingleValue() -> Double? {
         if value != nil {
             return value
         }
         
-        return buffer!.last!
+        return buffer!.last
     }
     
     init(buffer: DataBuffer) {

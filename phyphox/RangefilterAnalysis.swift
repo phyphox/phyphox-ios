@@ -34,10 +34,20 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             if input.asString == "min" {
-                currentMin = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    currentMin = v
+                }
+                else {
+                    return
+                }
             }
             else if input.asString == "max" {
-                currentMax = input.getSingleValue()
+                if let v = input.getSingleValue() {
+                    currentMax = v
+                }
+                else {
+                    return
+                }
             }
             else if let b = input.buffer { //in
                 if currentIn != nil {
@@ -56,22 +66,39 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             output.buffer!.clear()
         }
         
+        var max: Double? = nil
+        var min: Double? = nil
+        
+        var needNotification: [DataBuffer] = []
+        
         for (range, buffer) in iterators {
-            var data: [Double?] = []
+            var data: [Double] = []
             
             for value in buffer {
                 if !range.inBounds(value) {
                     break //Out of bounds, skip these values
                 }
                 
+                if max == nil || value > max {
+                    max = value
+                }
+                
+                if min == nil || value < min {
+                    min = value
+                }
+                
                 data.append(value)
             }
             
-            for v in data {
-                for output in outputs {
-                    output.buffer!.append(v)
-                }
+            for output in outputs {
+                output.buffer!.updateMaxAndMin(max, min: min, compare: true)
+                output.buffer!.appendFromArray(data, notify: false)
+                needNotification.append(output.buffer!)
             }
+        }
+        
+        for buf in needNotification {
+            buf.sendUpdateNotification()
         }
     }
 }

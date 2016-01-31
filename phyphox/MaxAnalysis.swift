@@ -12,7 +12,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     var xIn: DataBuffer?
     var yIn: DataBuffer!
     
-    var maxOut: DataBuffer!
+    var maxOut: DataBuffer?
     var positionOut: DataBuffer?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
@@ -52,8 +52,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             if value > max {
                 max = value
                 
-                if xIn != nil && i < xIn!.size {
-                    x = xIn![i]
+                if let v = xIn?.objectAtIndex(i) {
+                    x = v
                 }
                 else {
                     x = Double(i)
@@ -61,7 +61,9 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        maxOut.append(max)
+        if maxOut != nil {
+            maxOut!.append(max)
+        }
         
         if positionOut != nil {
             positionOut!.append(x)

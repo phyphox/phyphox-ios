@@ -34,7 +34,6 @@ final class AppendAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        outBuffer.updateMaxAndMin(max, min: min)
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(append, max: max, min: min)
     }
 }

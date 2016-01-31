@@ -15,13 +15,15 @@ public final class EditViewDescriptor: ViewDescriptor {
     let unit: String?
     let factor: Double
     let defaultValue: Double
+    let buffer: DataBuffer
     
-    init(label: String, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double) {
+    init(label: String, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed
         self.decimal = decimal
         self.unit = unit
         self.factor = factor
         self.defaultValue = defaultValue
+        self.buffer = buffer
         
         super.init(label: label)
     }
