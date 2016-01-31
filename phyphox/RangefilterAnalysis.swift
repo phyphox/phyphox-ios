@@ -29,14 +29,16 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         }
     }
     
-    //TODO: Ich weiß nicht ob es richtig implementiert ist, peile die Dokumentation vom rangefilter nicht
+    //TODO: TEST!!!
     
     override func update() {
-        var iterators: [Range: DataBuffer] = [:]
+        var iterators: [Range: (Int, DataBuffer)] = [:]
         
         var currentIn: DataBuffer? = nil
         var currentMax: Double = Double.infinity
         var currentMin: Double = -Double.infinity
+        
+        var i = 0
         
         for input in inputs {
             if input.asString == "min" {
@@ -57,26 +59,49 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }
             else if let b = input.buffer { //in
                 if currentIn != nil {
-                    iterators[Range(min: currentMin, max: currentMax)] = currentIn!
+                    iterators[Range(min: currentMin, max: currentMax)] = (i, currentIn!)
                 }
                 
                 currentIn = b
+                currentMax = Double.infinity
+                currentMin = -Double.infinity
+                i++
             }
         }
         
         if currentIn != nil {
-            iterators[Range(min: currentMin, max: currentMax)] = currentIn!
+            iterators[Range(min: currentMin, max: currentMax)] = (i, currentIn!)
         }
         
         var max: Double? = nil
         var min: Double? = nil
         
-        var data: [Double] = []
+        let delete = NSMutableIndexSet()
         
-        for (range, buffer) in iterators {
-            for value in buffer {
+        var out = [[Double]](count: self.inputs.count, repeatedValue: [])
+        
+        var deleteCount = 0
+        
+        for (range, (index, buffer)) in iterators {
+            for (i, value) in buffer.enumerate() {
+                if delete.containsIndex(i) {
+                    continue
+                }
+                
                 if !range.inBounds(value) {
-                    break //Out of bounds, skip these values
+                    delete.addIndex(i)
+                    
+                    let delIdx = i-deleteCount
+                    
+                    for j in 0..<index {
+                        if delIdx < out[j].count {
+                            out[j].removeAtIndex(delIdx) //Remove values from previous buffers that passed.
+                        }
+                    }
+                    
+                    deleteCount++
+                    
+                    continue
                 }
                 
                 if max == nil || value > max {
@@ -87,12 +112,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     min = value
                 }
                 
-                data.append(value)
+                out[index].append(value)
             }
         }
         
-        for output in outputs {
-            output.buffer!.replaceValues(data, max: max, min: min)
+        for (i, output) in outputs.enumerate() {
+            output.buffer!.replaceValues(out[i], max: max, min: min)
         }
     }
 }

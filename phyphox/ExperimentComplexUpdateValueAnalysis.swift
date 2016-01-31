@@ -6,7 +6,7 @@
 //  Copyright © 2016 RWTH Aachen. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 /**
  An abstract analysis module that takes multiple inputs (with an optional prioritized input) and multiple outputs. For each index in the output the module takes the corresponding values from the inputs and calculates a value to be written to the output buffer.
