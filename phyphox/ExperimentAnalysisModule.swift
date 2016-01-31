@@ -30,6 +30,8 @@ class ExperimentAnalysisModule {
         }
     }
     
+    internal var busy = false
+    
     internal var executed = false
     
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
@@ -40,7 +42,7 @@ class ExperimentAnalysisModule {
     func registerForUpdates() {
         for input in self.inputs {
             if input.buffer != nil {
-                NSNotificationCenter.defaultCenter().addObserver(self, selector: "update", name: DataBufferReceivedNewValueNotification, object: input.buffer!)
+                NSNotificationCenter.defaultCenter().addObserver(self, selector: "attemptUpdate", name: DataBufferReceivedNewValueNotification, object: input.buffer!)
             }
         }
     }
@@ -49,14 +51,19 @@ class ExperimentAnalysisModule {
         NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
-    func attemptUpdate() {
-        if (!staticAnalysis || !executed) {
+    dynamic func attemptUpdate() {
+        if (!staticAnalysis || !executed) && !busy {
             executed = true
+            busy = true
             update()
+            
+            after(0.1, closure: { () -> Void in
+                self.busy = false
+            })
         }
     }
     
-    dynamic func update() {
+    internal func update() {
         fatalError("Subclasses of ExperimentAnalysisModule must override the update() method!")
     }
 }

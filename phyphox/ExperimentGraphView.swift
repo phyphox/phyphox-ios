@@ -124,7 +124,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
                 if count > 1 {
 //                    if self.lastCount == nil || count > self.lastCount!-trashedCount {
                         let maxX = xValues.last!
-                        let minX = xValues[0]
+                        let minX = xValues[0]!
                         
 //                        let start = (self.lastCount == nil ? 0 : self.lastCount!-trashedCount)
 //                        

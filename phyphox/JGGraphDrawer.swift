@@ -14,7 +14,7 @@ import UIKit
 import CoreGraphics
 
 protocol JGGraphValueSource {
-    subscript(index: Int) -> Double { get }
+    subscript(index: Int) -> Double? { get }
     var count: Int { get }
     var last: Double? { get }
 }
@@ -26,7 +26,7 @@ class JGGraphFixedValueSource: JGGraphValueSource {
         self.array = array
     }
     
-    subscript(index: Int) -> Double {
+    subscript(index: Int) -> Double? {
         return array[index]
     }
     
@@ -139,7 +139,7 @@ final class JGGraphDrawer {
     return points
     }
     */
-    
+    /*
     private struct RGBA {
         var r: UInt8 = 0
         var g: UInt8 = 0
@@ -290,6 +290,7 @@ final class JGGraphDrawer {
         
         return img
     }
+    */
     
     class func drawPath(xs: JGGraphValueSource, ys: JGGraphValueSource, minX: Double = 0.0, maxX: Double, logX: Bool = false, minY: Double = 0.0, maxY: Double, logY: Bool = false, count: Int, size: CGSize, reusePath: UIBezierPath? = nil, start: Int = 0, averaging: Bool = true, inout newMinY: Double?, inout newMaxY: Double?) -> UIBezierPath {
         let path = reusePath ?? UIBezierPath() // <=> (reusePath != nil ? reusePath! : UIBezierPath())
@@ -337,8 +338,15 @@ final class JGGraphDrawer {
         var max: Double? = nil
         
         for idx in start..<count {
-            var x = xs[idx]
-            var y = ys[idx]
+            let rawX = xs[idx]
+            let rawY = ys[idx]
+            
+            if rawX == nil || rawY == nil {
+                break
+            }
+            
+            var x = rawX!
+            var y = rawY!
             
             if min == nil || y < min {
                 min = y

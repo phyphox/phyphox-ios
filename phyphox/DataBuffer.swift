@@ -30,8 +30,8 @@ final class DataBuffer: NSObject, SequenceType {
             self.buffer = buffer
         }
         
-        subscript(index: Int) -> Double {
-            return buffer[index]
+        subscript(index: Int) -> Double? {
+            return buffer.objectAtIndex(index, async: true)!
         }
         
         var last: Double? {
@@ -90,6 +90,12 @@ final class DataBuffer: NSObject, SequenceType {
         }
     }
     
+    var actualCount: Int {
+        get {
+            return queue.count
+        }
+    }
+    
     private let queue: Queue<Double>
     
     init(name: String, size: Int) {
@@ -138,7 +144,7 @@ final class DataBuffer: NSObject, SequenceType {
             
             self.queue.enqueue(value, async: true)
             
-            if (self.count > self.size) {
+            if (self.actualCount > self.size) {
                 self.queue.dequeue(true)
                 self.trashedCount++
             }
@@ -194,8 +200,7 @@ final class DataBuffer: NSObject, SequenceType {
             trashedCount = 0
             
             if values.count > size {
-                //TODO: Test
-                values = Array(values[values.count-size..<size])
+                values = Array(values[values.count-size..<values.count])
             }
             
             queue.replaceValues(values)
@@ -227,8 +232,7 @@ final class DataBuffer: NSObject, SequenceType {
                     array.appendContentsOf(values)
                     
                     if array.count > self.size {
-                        //TODO: Test
-                        array = Array(array[array.count-self.size..<self.size])
+                        array = Array(array[array.count-self.size..<array.count])
                     }
                     
                     self.queue.replaceValues(values, async: true)

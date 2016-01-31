@@ -21,6 +21,11 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             self.min = min
             self.max = max
         }
+        
+        override var description: String { get {
+            return String(format: "Range <%p> (\(min), \(max))", self)
+            }
+        }
     }
     
     //TODO: Ich weiß nicht ob es richtig implementiert ist, peile die Dokumentation vom rangefilter nicht
@@ -62,18 +67,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             iterators[Range(min: currentMin, max: currentMax)] = currentIn!
         }
         
-        for output in outputs {
-            output.buffer!.clear()
-        }
-        
         var max: Double? = nil
         var min: Double? = nil
         
-        var needNotification: [DataBuffer] = []
+        var data: [Double] = []
         
         for (range, buffer) in iterators {
-            var data: [Double] = []
-            
             for value in buffer {
                 if !range.inBounds(value) {
                     break //Out of bounds, skip these values
@@ -89,16 +88,10 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                 
                 data.append(value)
             }
-            
-            for output in outputs {
-                output.buffer!.updateMaxAndMin(max, min: min, compare: true)
-                output.buffer!.appendFromArray(data, notify: false)
-                needNotification.append(output.buffer!)
-            }
         }
         
-        for buf in needNotification {
-            buf.sendUpdateNotification()
+        for output in outputs {
+            output.buffer!.replaceValues(data, max: max, min: min)
         }
     }
 }
