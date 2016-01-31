@@ -8,6 +8,9 @@
 
 import UIKit
 
+/**
+ An abstract analysis module that takes one input and one output, writing each value of the input into the output (and clearing the output beforehand), after allowing a closure to update the value.
+*/
 class UpdateValueAnalysis: ExperimentAnalysisModule {
     
     internal func updateWithMethod(method: (Double) -> Double) {

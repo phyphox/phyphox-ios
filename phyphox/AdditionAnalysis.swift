@@ -8,11 +8,11 @@
 
 import Foundation
 
-final class AdditionAnalysis: ExperimentArithmeticModule {
+final class AdditionAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
         updateWithMethod({ (first, second, initial) -> Double in
             return first+second
-            }, neutralElement: 0.0, priorityInputKey: nil)
+            }, outerMethod: nil, neutralElement: 0.0, priorityInputKey: nil)
     }
 }

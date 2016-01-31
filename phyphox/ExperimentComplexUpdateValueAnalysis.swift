@@ -1,5 +1,5 @@
 //
-//  ExperimentArithmeticModule.swift
+//  ExperimentComplexUpdateValueAnalysis.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 31.01.16.
@@ -8,9 +8,12 @@
 
 import UIKit
 
-class ExperimentArithmeticModule: ExperimentAnalysisModule {
+/**
+ An abstract analysis module that takes multiple inputs (with an optional prioritized input) and multiple outputs. For each index in the output the module takes the corresponding values from the inputs and calculates a value to be written to the output buffer.
+ */
+class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     
-    func updateWithMethod(method: (first: Double, second: Double, initial: Bool) -> Double, neutralElement: Double, priorityInputKey: String?) {
+    func updateWithMethod(method: ((first: Double, second: Double, initial: Bool) -> Double)?, outerMethod: ((currentValue: Double, values: [Double]) -> Double)?, neutralElement: Double, priorityInputKey: String?) {
         var lastValues: [Double] = [] //Stores the last value of each input.
         var buffers: [DataBuffer] = []
         
@@ -52,7 +55,13 @@ class ExperimentArithmeticModule: ExperimentAnalysisModule {
                     didGetNewValue = true
                 }
                 
-                neutral = method(first: neutral, second: lastValues[j], initial: j == 0)
+                if method != nil {
+                    neutral = method!(first: neutral, second: lastValues[j], initial: j == 0)
+                }
+            }
+            
+            if outerMethod != nil {
+                neutral = outerMethod!(currentValue: neutral, values: lastValues)
             }
             
             if didGetNewValue {

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class DivisionAnalysis: ExperimentArithmeticModule {
+final class DivisionAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
         updateWithMethod({ (first, second, initial) -> Double in
@@ -18,6 +18,6 @@ final class DivisionAnalysis: ExperimentArithmeticModule {
             else {
                 return first/second
             }
-            }, neutralElement: 1.0, priorityInputKey: "dividend")
+            }, outerMethod: nil, neutralElement: 1.0, priorityInputKey: "dividend")
     }
 }

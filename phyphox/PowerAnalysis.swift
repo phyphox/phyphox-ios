@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class PowerAnalysis: ExperimentArithmeticModule {
+final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
         updateWithMethod({ (first, second, initial) -> Double in
@@ -18,6 +18,6 @@ final class PowerAnalysis: ExperimentArithmeticModule {
             else {
                 return pow(first, second)
             }
-            }, neutralElement: 1.0, priorityInputKey: "base")
+            }, outerMethod: nil, neutralElement: 1.0, priorityInputKey: "base")
     }
 }

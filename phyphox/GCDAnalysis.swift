@@ -8,45 +8,12 @@
 
 import Foundation
 
-final class GCDAnalysis: ExperimentAnalysisModule {
+final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
-        var lastValues: [Double] = []
-        var bufferIterators: [IndexingGenerator<Array<Double>>] = []
-        
-        for (i, input) in inputs.enumerate() {
-            if let fixed = input.value {
-                lastValues.append(fixed)
-            }
-            else {
-                bufferIterators.append(input.buffer!.generate())
-                lastValues.append(0.0)
-            }
-            
-            if (i == 1) {
-                break
-            }
-        }
-        
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
-        
-        var max: Double? = nil
-        var min: Double? = nil
-        
-        for _ in 0..<outBuffer.size {
-            var didGetInput = false
-            
-            for (j, var iterator) in bufferIterators.enumerate() {
-                if let next = iterator.next() {
-                    lastValues[j] = next
-                    didGetInput = true
-                }
-            }
-            
-            var a = round(lastValues.first!)
-            var b = round(lastValues[1])
+        updateWithMethod(nil, outerMethod: { (currentValue, values) -> Double in
+            var a = round(values.first!)
+            var b = round(values[1])
             
             //Euclid's algorithm (modern iterative version)
             while (b > 0) {
@@ -55,22 +22,7 @@ final class GCDAnalysis: ExperimentAnalysisModule {
                 a = tmp;
             }
             
-            if didGetInput {
-                if max == nil || a > max {
-                    max = a
-                }
-                
-                if min == nil || a < min {
-                    min = a
-                }
-                
-                append.append(a)
-            }
-            else {
-                break;
-            }
-        }
-        
-        outBuffer.replaceValues(append, max: max, min: min)
+            return a
+            }, neutralElement: 0.0, priorityInputKey: nil)
     }
 }

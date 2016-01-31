@@ -8,45 +8,12 @@
 
 import Foundation
 
-final class LCMAnalysis: ExperimentAnalysisModule {
+final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
-        var lastValues: [Double] = []
-        var bufferIterators: [IndexingGenerator<Array<Double>>] = []
-        
-        for (i, input) in inputs.enumerate() {
-            if let fixed = input.value {
-                lastValues.append(fixed)
-            }
-            else {
-                bufferIterators.append(input.buffer!.generate())
-                lastValues.append(0.0)
-            }
-            
-            if (i == 1) {
-                break
-            }
-        }
-        
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
-        
-        var max: Double? = nil
-        var min: Double? = nil
-        
-        for _ in 0..<outBuffer.size {
-            var didGetInput = false
-            
-            for (j, var iterator) in bufferIterators.enumerate() {
-                if let next = iterator.next() {
-                    lastValues[j] = next
-                    didGetInput = true
-                }
-            }
-            
-            var a = round(lastValues.first!)
-            var b = round(lastValues[1])
+        updateWithMethod(nil, outerMethod: { (currentValue, values) -> Double in
+            var a = round(values.first!)
+            var b = round(values[1])
             
             let a0 = a;
             let b0 = b;
@@ -58,24 +25,7 @@ final class LCMAnalysis: ExperimentAnalysisModule {
                 a = tmp;
             }
             
-            if didGetInput {
-                let v = a0*(b0/a)
-                
-                if max == nil || v > max {
-                    max = v
-                }
-                
-                if min == nil || v < min {
-                    min = v
-                }
-                
-                append.append(v)
-            }
-            else {
-                break;
-            }
-        }
-        
-        outBuffer.replaceValues(append, max: max, min: min)
+            return a0*(b0/a)
+            }, neutralElement: 0.0, priorityInputKey: nil)
     }
 }

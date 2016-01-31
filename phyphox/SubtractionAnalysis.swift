@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class SubtractionAnalysis: ExperimentArithmeticModule {
+final class SubtractionAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
         updateWithMethod({ (first, second, initial) -> Double in
@@ -16,8 +16,8 @@ final class SubtractionAnalysis: ExperimentArithmeticModule {
                 return second
             }
             else {
-                return first+second
+                return first-second
             }
-            }, neutralElement: 0.0, priorityInputKey: "minuend")
+            }, outerMethod: nil, neutralElement: 0.0, priorityInputKey: "minuend")
     }
 }

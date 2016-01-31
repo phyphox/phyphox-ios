@@ -31,7 +31,7 @@ final class DataBuffer: NSObject, SequenceType {
         }
         
         subscript(index: Int) -> Double? {
-            return buffer.objectAtIndex(index, async: true)!
+            return buffer.objectAtIndex(index)
         }
         
         var last: Double? {

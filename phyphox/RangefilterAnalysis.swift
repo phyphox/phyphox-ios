@@ -22,8 +22,9 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             self.max = max
         }
         
-        override var description: String { get {
-            return String(format: "Range <%p> (\(min), \(max))", self)
+        override var description: String {
+            get {
+                return String(format: "Range <%p> (\(min), \(max))", self)
             }
         }
     }
