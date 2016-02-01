@@ -77,7 +77,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let average = boolFromXML(attributes, key: "average", defaultValue: false)
                 
-                let frequency = 1.0/floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //Hz to s
+                let rate = 1.0/floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //Hz to s
                 
                 let sensorType = sensorTypeFromXML(attributes, key: "type")
                 
@@ -115,11 +115,11 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     }
                 }
                 
-                if average && frequency == 0.0 {
-                    print("Error! Averaging is enabled but frequency is 0")
+                if average && rate == 0.0 {
+                    print("Error! Averaging is enabled but rate is 0")
                 }
                 
-                let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: motionSession, frequency: frequency, averagingInterval: (average && frequency > 0.0 ? 1.0/frequency : nil), xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
+                let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: motionSession, rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
                 
                 sensorsOut.append(sensor)
             }

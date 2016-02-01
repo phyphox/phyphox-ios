@@ -1,13 +1,10 @@
 <phyphox version="1.0">
-<title></title>
-<category></category>
-<description>
-</description>
 
 <data-containers>
 <container size="5">buffer1</container>
 <container size="5">buffer2</container>
 <container size="5">buffer3</container>
+
 <container size="5">out1</container>
 <container size="5">out2</container>
 <container size="5">out3</container>

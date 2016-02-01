@@ -30,7 +30,17 @@ final class ExperimentSensorInput {
     /**
      The update frequency of the sensor.
      */
-    private(set) var frequency: NSTimeInterval //in Hz
+    private(set) var rate: NSTimeInterval //in s
+    var effectiveRate: NSTimeInterval {
+        get {
+            if self.averaging != nil {
+                return 0.0
+            }
+            else {
+                return rate
+            }
+        }
+    }
     
     private(set) var startTimestamp: NSTimeInterval = 0.0 //in s
 
@@ -78,9 +88,9 @@ final class ExperimentSensorInput {
         }
     }
     
-    init(sensorType: SensorType, motionSession: MotionSession, frequency: NSTimeInterval, averagingInterval: NSTimeInterval?, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?) {
+    init(sensorType: SensorType, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?) {
         self.sensorType = sensorType
-        self.frequency = frequency
+        self.rate = rate
         
         self.xBuffer = xBuffer
         self.yBuffer = yBuffer
@@ -89,8 +99,8 @@ final class ExperimentSensorInput {
         
         self.motionSession = motionSession
         
-        if averagingInterval != nil {
-            self.averaging = Averaging(averagingInterval: averagingInterval!)
+        if average {
+            self.averaging = Averaging(averagingInterval: rate)
         }
     }
     
@@ -114,21 +124,31 @@ final class ExperimentSensorInput {
         if let motionSession = self.motionSession {
             switch sensorType {
             case .Accelerometer:
-                motionSession.getAccelerometerValues(frequency, values: self.dataIn)
+                guard motionSession.getAccelerometerValues(effectiveRate, values: self.dataIn) else {
+                    throw SensorError.SensorUnavailable
+                }
                 break;
             case .Gyroscope:
-                motionSession.getGyroValues(frequency, values: self.dataIn)
+                guard motionSession.getGyroValues(effectiveRate, values: self.dataIn) else {
+                    throw SensorError.SensorUnavailable
+                }
                 break;
             case .MagneticField:
-                motionSession.getMagnetometerValues(frequency, values: self.dataIn)
+                guard motionSession.getMagnetometerValues(effectiveRate, values: self.dataIn) else {
+                    throw SensorError.SensorUnavailable
+                }
                 break;
             case .LinearAcceleration:
-                motionSession.getAccelerationFromDeviceMotion(frequency, values: self.dataIn)
+                guard motionSession.getAccelerationFromDeviceMotion(effectiveRate, values: self.dataIn) else {
+                    throw SensorError.SensorUnavailable
+                }
                 break;
             case .Pressure:
-                motionSession.getAltimeterValues(frequency, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
+                guard motionSession.getAltimeterValues(effectiveRate, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
                     self.dataIn(nil, y: nil, z: data?.relativeAltitude.doubleValue, error: error)
-                })
+                }) else {
+                    throw SensorError.SensorUnavailable
+                }
                 break;
             case .Light:
                 throw SensorError.SensorUnavailable
