@@ -9,15 +9,15 @@
 import Foundation
 
 final class Experiment {
-    var title: String
-    var description: String
-    var category: String
+    var title: String?
+    var description: String?
+    var category: String?
     
     let icon: ExperimentIcon
     
     var local: Bool
     
-    let viewDescriptors: [ExperimentViewCollectionDescriptor]
+    let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translations: [String: ExperimentTranslation]?
     let sensorInputs: [ExperimentSensorInput]?
@@ -26,11 +26,13 @@ final class Experiment {
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
+    let buffers: ([String: DataBuffer]?, [DataBuffer]?)
+    
     let queue: dispatch_queue_t
     
     private(set) var running = false
     
-    init(title: String, description: String, category: String, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor], analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String?, description: String?, category: String?, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.category = category
@@ -40,6 +42,8 @@ final class Experiment {
         self.local = local
         
         self.translations = translations
+        
+        self.buffers = buffers
         self.sensorInputs = sensorInputs
         self.audioInputs = audioInputs
         self.output = output

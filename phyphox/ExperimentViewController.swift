@@ -22,7 +22,7 @@ final class ExperimentViewController: CollectionViewController {
     }
     
     func updateSelectedViewCollection() {
-        titleView.prompt = experiment.viewDescriptors[selectedViewCollection].label
+        titleView.prompt = experiment.viewDescriptors?[selectedViewCollection].label
         
         //Clear old modules, otherwise cell reuse will mess everything up...
         for cell in selfView.collectionView.visibleCells() as! [ExperimentViewModuleCollectionViewCell] {
@@ -36,7 +36,7 @@ final class ExperimentViewController: CollectionViewController {
         if !titleView.promptButtonExtended {
             var titles: [String] = []
             
-            for collection in experiment.viewDescriptors {
+            for collection in experiment.viewDescriptors! {
                 titles.append(collection.label)
             }
             
@@ -59,16 +59,18 @@ final class ExperimentViewController: CollectionViewController {
         
         var modules: [[UIView]] = []
         
-        for collection in experiment.viewDescriptors {
-            let m = ExperimentViewModuleFactory.createViews(collection)
-            
-            for module in m {
-                if let graph = module as? ExperimentGraphView {
-                    graph.queue = experiment.queue
+        if experiment.viewDescriptors != nil {
+            for collection in experiment.viewDescriptors! {
+                let m = ExperimentViewModuleFactory.createViews(collection)
+                
+                for module in m {
+                    if let graph = module as? ExperimentGraphView {
+                        graph.queue = experiment.queue
+                    }
                 }
+                
+                modules.append(m)
             }
-            
-            modules.append(m)
         }
         
         viewModules = modules
@@ -81,8 +83,8 @@ final class ExperimentViewController: CollectionViewController {
         
         updateSelectedViewCollection()
         
-        if experiment.viewDescriptors.count > 1 {
-            titleView.promptAction = {[unowned self](Void) -> (Void) in
+        if experiment.viewDescriptors?.count > 1 {
+            titleView.promptAction = {[unowned self] () -> (Void) in
                 self.presentViewCollectionSelector()
             }
         }

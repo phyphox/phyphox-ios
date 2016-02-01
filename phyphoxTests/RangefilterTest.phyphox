@@ -1,0 +1,30 @@
+<phyphox version="1.0">
+<title></title>
+<category></category>
+<description>
+</description>
+
+<data-containers>
+<container size="5">buffer1</container>
+<container size="5">buffer2</container>
+<container size="5">buffer3</container>
+<container size="5">out1</container>
+<container size="5">out2</container>
+<container size="5">out3</container>
+</data-containers>
+
+<analysis>
+<rangefilter>
+<input>buffer1</input>
+<input as="min" type="value">2</input>
+<input>buffer2</input>
+<input>buffer3</input>
+<input as="min" type="value">-0.1</input>
+<input as="max" type="value">0.1</input>
+<output>out1</output>
+<output>out2</output>
+<output>out3</output>
+</rangefilter>
+</analysis>
+
+</phyphox>

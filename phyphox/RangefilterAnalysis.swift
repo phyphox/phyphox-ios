@@ -32,13 +32,11 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
     //TODO: TEST!!!
     
     override func update() {
-        var iterators: [Range: (Int, DataBuffer)] = [:]
+        var iterators: [(Range, DataBuffer)] = []
         
         var currentIn: DataBuffer? = nil
         var currentMax: Double = Double.infinity
         var currentMin: Double = -Double.infinity
-        
-        var i = 0
         
         for input in inputs {
             if input.asString == "min" {
@@ -59,18 +57,17 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }
             else if let b = input.buffer { //in
                 if currentIn != nil {
-                    iterators[Range(min: currentMin, max: currentMax)] = (i, currentIn!)
+                    iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
                 }
                 
                 currentIn = b
                 currentMax = Double.infinity
                 currentMin = -Double.infinity
-                i++
             }
         }
         
         if currentIn != nil {
-            iterators[Range(min: currentMin, max: currentMax)] = (i, currentIn!)
+            iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
         }
         
         var max: Double? = nil
@@ -78,11 +75,11 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         let delete = NSMutableIndexSet()
         
-        var out = [[Double]](count: self.inputs.count, repeatedValue: [])
+        var out = [[Double]](count: iterators.count, repeatedValue: [])
         
         var deleteCount = 0
         
-        for (range, (index, buffer)) in iterators {
+        for (index, (range, buffer)) in iterators.enumerate() {
             for (i, value) in buffer.enumerate() {
                 if delete.containsIndex(i) {
                     continue

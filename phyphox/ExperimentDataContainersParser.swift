@@ -32,9 +32,10 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
         }
     }
     
-    func parse() -> [String: DataBuffer]? {
+    func parse() -> ([String: DataBuffer]?, [DataBuffer]?) {
         if let cont = containers {
             var buffers: [String: DataBuffer] = [:]
+            var ordered: [DataBuffer] = []
             
             for container in cont {
                 var name: String!
@@ -62,14 +63,15 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     buffer.staticBuffer = stat
                     
                     buffers[name] = buffer
+                    ordered.append(buffer)
                 }
             }
             
             if buffers.count > 0 {
-                return buffers
+                return (buffers, ordered)
             }
         }
         
-        return nil
+        return (nil, nil)
     }
 }

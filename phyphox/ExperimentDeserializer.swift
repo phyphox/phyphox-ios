@@ -54,13 +54,16 @@ final class ExperimentDeserializer: NSObject {
         
         let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
         
-        let description = textFromXML(dictionary["description"]!)
-        let category = textFromXML(dictionary["category"]!)
-        let title = textFromXML(dictionary["title"]!)
+        var d = dictionary["description"]
+        let description: String? = (d != nil ? textFromXML(d!) : nil)
+        d = dictionary["category"]
+        let category: String? = (d != nil ? textFromXML(d!) : nil)
+        d = dictionary["title"]
+        let title: String? = (d != nil ? textFromXML(d!) : nil)
         
-        let buffers = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
+        let buffersRaw = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
         
-        guard buffers != nil && buffers.count > 0 else {
+        guard let buffers = buffersRaw.0 else {
             throw SerializationError.InvalidExperimentFile
         }
         
@@ -80,13 +83,13 @@ final class ExperimentDeserializer: NSObject {
         let output = parseOutput(dictionary["output"] as! NSDictionary?, buffers: buffers)
         
         let iconRaw = dictionary["icon"]
-        let icon = parseIcon(iconRaw ?? title)
+        let icon = parseIcon(iconRaw ?? title ?? "")
         
-        guard icon != nil && viewDescriptors != nil else {
+        guard icon != nil else {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors!, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }
@@ -110,14 +113,14 @@ final class ExperimentDeserializer: NSObject {
     
     //MARK: - Parsing
     
-    func parseDataContainers(dataContainers: NSDictionary?) -> [String: DataBuffer]! {
+    func parseDataContainers(dataContainers: NSDictionary?) -> ([String: DataBuffer]?, [DataBuffer]?) {
         if dataContainers != nil {
             let parser = ExperimentDataContainersParser(dataContainers!)
             
             return parser.parse()
         }
         
-        return nil
+        return (nil, nil)
     }
     
     func parseIcon(icon: AnyObject) -> ExperimentIcon? {

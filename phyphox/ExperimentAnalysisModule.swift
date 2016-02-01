@@ -22,7 +22,7 @@ class ExperimentAnalysisModule {
      */
     internal var outputs: [ExperimentAnalysisDataIO]
     
-    internal var staticAnalysis = false {
+    private var staticAnalysis = false {
         didSet {
             for out in outputs {
                 out.buffer!.staticBuffer = staticAnalysis
@@ -30,9 +30,9 @@ class ExperimentAnalysisModule {
         }
     }
     
-    internal var busy = false
-    
-    internal var executed = false
+    private var busy = false
+    private var executed = false
+    private var scheduleUpdate = false
     
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
@@ -52,14 +52,24 @@ class ExperimentAnalysisModule {
     }
     
     dynamic func attemptUpdate() {
-        if (!staticAnalysis || !executed) && !busy {
-            executed = true
-            busy = true
-            update()
-            
-            after(0.1, closure: { () -> Void in
-                self.busy = false
-            })
+        if !staticAnalysis || !executed {
+            if busy {
+                scheduleUpdate = true
+            }
+            else {
+                executed = true
+                busy = true
+                
+                update()
+                
+                after(0.1, closure: { () -> Void in
+                    self.busy = false
+                    if self.scheduleUpdate {
+                        self.scheduleUpdate = false
+                        self.attemptUpdate()
+                    }
+                })
+            }
         }
     }
     

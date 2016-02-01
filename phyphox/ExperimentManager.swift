@@ -40,7 +40,7 @@ final class ExperimentManager: NSObject {
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromFile(path)
                 
-                let category = experiment.category
+                let category = experiment.category!
                 
                 if let collection = experimentCollections[category] {
                     collection.experiments!.append(experiment)

@@ -21,6 +21,78 @@ class phyphoxTests: XCTestCase {
         super.tearDown()
     }
     
+    func testRangefilter1() {
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        
+        let write = ["buffer1" : [1.0, 2.0, 3.0, 4.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
+        
+        let read = ["out1" : [2.0, 3.0, 4.0], "out2" : [1000.0, -500.0, 500.0], "out3" : [-0.1, 0.1, 0.1]]
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = write[key] {
+                buffer.appendFromArray(array, iterative: true, notify: false)
+            }
+        }
+        
+        for (_, buffer) in experiment.buffers.0! {
+            buffer.sendUpdateNotification()
+        }
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = read[key] {
+               XCTAssertEqual(buffer.toArray(), array)
+            }
+        }
+    }
+    
+    func testRangefilter2() {
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        
+        let write = ["buffer1" : [1.0, 2.0, 3.0, 1.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
+        
+        let read = ["out1" : [2.0, 3.0], "out2" : [1000.0, -500.0], "out3" : [-0.1, 0.1]]
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = write[key] {
+                buffer.appendFromArray(array, iterative: true, notify: false)
+            }
+        }
+        
+        for (_, buffer) in experiment.buffers.0! {
+            buffer.sendUpdateNotification()
+        }
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = read[key] {
+                XCTAssertEqual(buffer.toArray(), array)
+            }
+        }
+    }
+    
+    func testRangefilter3() {
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        
+        let write = ["buffer1" : [1.0, 2.0, 3.0, 2.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.2, -0.2]]
+        
+        let read = ["out1" : [2.0, 3.0], "out2" : [1000.0, -500.0], "out3" : [-0.1, 0.1]]
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = write[key] {
+                buffer.appendFromArray(array, iterative: true, notify: false)
+            }
+        }
+        
+        for (_, buffer) in experiment.buffers.0! {
+            buffer.sendUpdateNotification()
+        }
+        
+        for (key, buffer) in experiment.buffers.0! {
+            if let array = read[key] {
+                XCTAssertEqual(buffer.toArray(), array)
+            }
+        }
+    }
+    
     func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.

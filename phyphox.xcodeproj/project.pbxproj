@@ -32,6 +32,7 @@
 		6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */; };
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
+		6B1D6ACE1C5F674100AE33A5 /* RangefilterTest.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */; };
 		6B6319631C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */; };
 		6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */; };
 		6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319671C48457B0038BE22 /* CollectionViewController.swift */; };
@@ -202,6 +203,7 @@
 		6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewCollectionDescriptor.swift; sourceTree = "<group>"; };
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = RangefilterTest.phyphox; sourceTree = "<group>"; };
 		6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleCollectionViewCell.swift; sourceTree = "<group>"; };
 		6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleFactory.swift; sourceTree = "<group>"; };
 		6B6319671C48457B0038BE22 /* CollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
@@ -506,6 +508,7 @@
 			children = (
 				6B7BF7921C130425007408FB /* phyphoxTests.swift */,
 				6B7BF8241C1645A6007408FB /* QueueTests.swift */,
+				6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */,
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
@@ -838,6 +841,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B1D6ACE1C5F674100AE33A5 /* RangefilterTest.phyphox in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
