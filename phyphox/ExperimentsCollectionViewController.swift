@@ -58,6 +58,24 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
         
+        if let sensors = experiment.sensorInputs {
+            for sensor in sensors {
+                do {
+                    try sensor.verifySensorAvailibility()
+                }
+                catch SensorError.SensorUnavailable(let type) {
+                    let controller = UIAlertController(title: "Sensor Unavailable", message: "The \(type) sensor is not available on this device.", preferredStyle: .Alert)
+                    
+                    controller.addAction(UIAlertAction(title: "OK", style: .Cancel, handler:nil))
+                    
+                    presentViewController(controller, animated: true, completion: nil)
+                    
+                    return
+                }
+                catch {}
+            }
+        }
+        
         let vc = ExperimentViewController(experiment: experiment)
         
         navigationController!.pushViewController(vc, animated: true)

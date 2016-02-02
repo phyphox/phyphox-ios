@@ -9,12 +9,6 @@
 import Foundation
 import CoreMotion
 
-enum SensorError : ErrorType {
-    case InvalidSensorType
-    case MotionSessionAbsent
-    case SensorUnavailable
-}
-
 enum SensorType {
     case Accelerometer
     case Gyroscope
@@ -22,6 +16,12 @@ enum SensorType {
     case MagneticField
     case Pressure
     case Light
+}
+
+enum SensorError : ErrorType {
+    case InvalidSensorType
+    case MotionSessionAbsent
+    case SensorUnavailable(SensorType)
 }
 
 final class ExperimentSensorInput {
@@ -43,13 +43,13 @@ final class ExperimentSensorInput {
     }
     
     private(set) var startTimestamp: NSTimeInterval = 0.0 //in s
-
+    
     private(set) weak var xBuffer: DataBuffer?
     private(set) weak var yBuffer: DataBuffer?
     private(set) weak var zBuffer: DataBuffer?
     private(set) weak var tBuffer: DataBuffer?
     
-    private(set) var motionSession: MotionSession?
+    private(set) var motionSession: MotionSession
     
     private class Averaging {
         /**
@@ -104,79 +104,91 @@ final class ExperimentSensorInput {
         }
     }
     
-    func resetValuesForAveraging() {
-        if let averaging = self.averaging {
-            averaging.iterationStartTimestamp = 0.0
-            
-            averaging.x = 0.0
-            averaging.y = 0.0
-            averaging.z = 0.0
-            
-            averaging.numberOfUpdates = 0
+    func verifySensorAvailibility() throws {
+        switch sensorType {
+        case .Accelerometer, .LinearAcceleration:
+            guard motionSession.accelerometerAvailable else {
+                throw SensorError.SensorUnavailable(sensorType)
+            }
+            break;
+        case .Gyroscope:
+            guard motionSession.gyroAvailable else {
+                throw SensorError.SensorUnavailable(sensorType)
+            }
+            break;
+        case .MagneticField:
+            guard motionSession.magnetometerAvailable else {
+                throw SensorError.SensorUnavailable(sensorType)
+            }
+            break;
+        case .Pressure:
+            guard motionSession.altimeterAvailable else {
+                throw SensorError.SensorUnavailable(sensorType)
+            }
+            break;
+        case .Light:
+            throw SensorError.SensorUnavailable(sensorType)
         }
     }
     
-    func start() throws {
+    func resetValuesForAveraging() {
+        guard let averaging = self.averaging else {
+            return
+        }
+        
+        averaging.iterationStartTimestamp = 0.0
+        
+        averaging.x = 0.0
+        averaging.y = 0.0
+        averaging.z = 0.0
+        
+        averaging.numberOfUpdates = 0
+    }
+    
+    func start() {
         startTimestamp = 0.0
         
         resetValuesForAveraging()
         
-        if let motionSession = self.motionSession {
-            switch sensorType {
-            case .Accelerometer:
-                guard motionSession.getAccelerometerValues(effectiveRate, values: self.dataIn) else {
-                    throw SensorError.SensorUnavailable
-                }
-                break;
-            case .Gyroscope:
-                guard motionSession.getGyroValues(effectiveRate, values: self.dataIn) else {
-                    throw SensorError.SensorUnavailable
-                }
-                break;
-            case .MagneticField:
-                guard motionSession.getMagnetometerValues(effectiveRate, values: self.dataIn) else {
-                    throw SensorError.SensorUnavailable
-                }
-                break;
-            case .LinearAcceleration:
-                guard motionSession.getAccelerationFromDeviceMotion(effectiveRate, values: self.dataIn) else {
-                    throw SensorError.SensorUnavailable
-                }
-                break;
-            case .Pressure:
-                guard motionSession.getAltimeterValues(effectiveRate, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
-                    self.dataIn(nil, y: nil, z: data?.relativeAltitude.doubleValue, error: error)
-                }) else {
-                    throw SensorError.SensorUnavailable
-                }
-                break;
-            case .Light:
-                throw SensorError.SensorUnavailable
-            }
-        }
-        else {
-            throw SensorError.MotionSessionAbsent
+        switch sensorType {
+        case .Accelerometer:
+            motionSession.getAccelerometerValues(effectiveRate, values: self.dataIn)
+            break;
+        case .Gyroscope:
+            motionSession.getGyroValues(effectiveRate, values: self.dataIn)
+            break;
+        case .MagneticField:
+            motionSession.getMagnetometerValues(effectiveRate, values: self.dataIn)
+            break;
+        case .LinearAcceleration:
+            motionSession.getAccelerationFromDeviceMotion(effectiveRate, values: self.dataIn)
+            break;
+        case .Pressure:
+            motionSession.getAltimeterValues(effectiveRate, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
+                self.dataIn(nil, y: nil, z: data?.relativeAltitude.doubleValue, error: error)
+            })
+            break;
+        default:
+            break;
         }
     }
     
     func stop() {
-        if let motionSession = self.motionSession {
-            switch sensorType {
-            case .Accelerometer, .LinearAcceleration:
-                motionSession.stopAccelerometerUpdates()
-                break;
-            case .Gyroscope:
-                motionSession.stopGyroUpdates()
-                break;
-            case .MagneticField:
-                motionSession.stopMagnetometerUpdates()
-                break;
-            case .Pressure:
-                motionSession.stopAltimeterUpdates()
-                break;
-            case .Light:
-                break;
-            }
+        switch sensorType {
+        case .Accelerometer, .LinearAcceleration:
+            motionSession.stopAccelerometerUpdates()
+            break;
+        case .Gyroscope:
+            motionSession.stopGyroUpdates()
+            break;
+        case .MagneticField:
+            motionSession.stopMagnetometerUpdates()
+            break;
+        case .Pressure:
+            motionSession.stopAltimeterUpdates()
+            break;
+        case .Light:
+            break;
         }
     }
     
