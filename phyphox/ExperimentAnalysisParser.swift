@@ -9,11 +9,11 @@
 import Foundation
 
 final class ExperimentAnalysisParser: ExperimentMetadataParser {
-    let analyses: [String: [NSDictionary]]?
+    let analyses: [String: AnyObject]?
     var attributes: [String: String]?
     
     required init(_ data: NSDictionary) {
-        var a: [String: [NSDictionary]] = [:]
+        var a: [String: AnyObject] = [:]
         
         for (key, value) in data as! [String: AnyObject] {
             if key == XMLDictionaryAttributesKey {
@@ -58,13 +58,16 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
         
         var processed: [ExperimentAnalysisModule!] = []
+        let count = (analyses!["__count"] as! NSNumber).integerValue
+        processed.reserveCapacity(count)
+        //TODO: Test
         
         for (key, values) in analyses! {
             if key == "__count" || key == "__index" {
                 continue
             }
             
-            for value in values {
+            for value in values as! [NSDictionary] {
                 let inputs = getDataFlows(getElementsWithKey(value, key: "input")!)
                 let outputs = getDataFlows(getElementsWithKey(value, key: "output")!)
                 

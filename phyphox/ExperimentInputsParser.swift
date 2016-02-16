@@ -69,9 +69,11 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         
         let motionSession = MotionSession()
         
-        var sensorsOut: [ExperimentSensorInput] = []
+        var sensorsOut: [ExperimentSensorInput]?
         
         if sensors != nil {
+            sensorsOut = []
+            
             for sensor in sensors! {
                 let attributes = sensor[XMLDictionaryAttributesKey] as! [String: String]
                 
@@ -121,13 +123,15 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: motionSession, rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
                 
-                sensorsOut.append(sensor)
+                sensorsOut!.append(sensor)
             }
         }
         
-        var audioOut: [ExperimentAudioInput] = []
+        var audioOut: [ExperimentAudioInput]?
         
         if audio != nil {
+            audioOut = []
+            
             for audioIn in audio! {
                 let attributes = audioIn[XMLDictionaryAttributesKey] as! [String: String]?
                 
@@ -135,18 +139,23 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let output = getElementsWithKey(audioIn, key: "output")!
                 
+                var outBuffers: [DataBuffer] = []
+                outBuffers.reserveCapacity(output.count)
+                
                 for out in output {
                     let bufferName = (out is String ? out as! String : out[XMLDictionaryTextKey] as! String)
                     
                     let buffer = buffers[bufferName]!
                     
-                    let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: buffer)
-                    
-                    audioOut.append(input)
+                    outBuffers.append(buffer)
                 }
+                
+                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffers: outBuffers)
+                
+                audioOut!.append(input)
             }
         }
         
-        return ((sensorsOut.count == 0 ? nil : sensorsOut), (audioOut.count == 0 ? nil : audioOut))
+        return ((sensorsOut?.count > 0 ? sensorsOut : nil), (audioOut?.count > 0 ? audioOut : nil))
     }
 }

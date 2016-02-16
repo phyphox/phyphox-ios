@@ -6,6 +6,12 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
+/*
+Relevant for asking for permission to access sensors.
+
+http://techcrunch.com/2014/04/04/the-right-way-to-ask-users-for-ios-permissions/?utm_campaign=This%2BWeek%2Bin%2BSwift&utm_medium=web&utm_source=This_Week_in_Swift_73
+*/
+
 import Foundation
 
 final class Experiment {
@@ -98,7 +104,7 @@ final class Experiment {
         
         if self.sensorInputs != nil {
             for sensor in self.sensorInputs! {
-                try! sensor.start()
+                sensor.start()
             }
         }
     }

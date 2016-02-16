@@ -21,6 +21,7 @@ final class ExperimentOutputParser: ExperimentMetadataParser {
         }
         
         var audios: [ExperimentAudioOutput] = []
+        audios.reserveCapacity(audio!.count)
         
         for audioOut in audio! {
             let attributes = audioOut[XMLDictionaryAttributesKey] as! [String: AnyObject]?

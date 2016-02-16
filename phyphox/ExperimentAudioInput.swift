@@ -10,10 +10,10 @@ import Foundation
 
 final class ExperimentAudioInput {
     let sampleRate: UInt
-    let outBuffer: DataBuffer
+    let outBuffers: [DataBuffer]
     
-    init(sampleRate: UInt, outBuffer: DataBuffer) {
+    init(sampleRate: UInt, outBuffers: [DataBuffer]) {
         self.sampleRate = sampleRate
-        self.outBuffer = outBuffer
+        self.outBuffers = outBuffers
     }
 }

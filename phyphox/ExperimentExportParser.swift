@@ -21,6 +21,7 @@ final class ExperimentExportParser: ExperimentMetadataParser {
         }
         
         var final: [ExperimentExportSet] = []
+        final.reserveCapacity(sets!.count)
         
         for set in sets! {
             let attributes = set[XMLDictionaryAttributesKey] as! [String: String]

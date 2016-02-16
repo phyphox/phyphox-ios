@@ -37,6 +37,8 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
             var buffers: [String: DataBuffer] = [:]
             var ordered: [DataBuffer] = []
             
+            ordered.reserveCapacity(cont.count)
+            
             for container in cont {
                 var name: String!
                 
