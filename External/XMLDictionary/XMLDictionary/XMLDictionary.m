@@ -323,7 +323,7 @@
     NSMutableDictionary *top = [_stack lastObject];
     
     if ((top.count == 1 && top[@"__index"] != nil) || (top.count == 2 && top[@"__index"] != nil && top[@"__count"] != nil)) {
-        [top removeAllObjects]; //Text only, clear the bullshit
+        [top removeAllObjects];
     }
     
 	[self endText];

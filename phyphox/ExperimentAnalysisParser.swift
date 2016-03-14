@@ -58,9 +58,6 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
         
         var processed: [ExperimentAnalysisModule!] = []
-        let count = (analyses!["__count"] as! NSNumber).integerValue
-        processed.reserveCapacity(count)
-        //TODO: Test
         
         for (key, values) in analyses! {
             if key == "__count" || key == "__index" {
