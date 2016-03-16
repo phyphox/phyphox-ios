@@ -8,13 +8,17 @@
 
 import UIKit
 
-public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
+public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
     required public init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
         
         newValueIn()
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "newValueIn", name: DataBufferReceivedNewValueNotification, object: descriptor.buffer)
+        descriptor.buffer.addObserver(self)
+    }
+    
+    func dataBufferUpdated(buffer: DataBuffer) {
+        newValueIn()
     }
     
     func newValueIn() {

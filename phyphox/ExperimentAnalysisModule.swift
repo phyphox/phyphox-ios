@@ -30,46 +30,20 @@ class ExperimentAnalysisModule {
         }
     }
     
-    private var busy = false
     private var executed = false
-    private var scheduleUpdate = false
     
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
         self.outputs = outputs
     }
     
-    func registerForUpdates() {
-        for input in self.inputs {
-            if input.buffer != nil {
-                NSNotificationCenter.defaultCenter().addObserver(self, selector: "attemptUpdate", name: DataBufferReceivedNewValueNotification, object: input.buffer!)
-            }
-        }
-    }
-    
-    deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-    }
-    
-    dynamic func attemptUpdate() {
+    /**
+     Updates immediately.
+     */
+    func setNeedsUpdate() {
         if !staticAnalysis || !executed {
-            if busy {
-                scheduleUpdate = true
-            }
-            else {
-                executed = true
-                busy = true
-                
-                update()
-                
-                after(0.1, closure: { () -> Void in
-                    self.busy = false
-                    if self.scheduleUpdate {
-                        self.scheduleUpdate = false
-                        self.attemptUpdate()
-                    }
-                })
-            }
+            update()
+            executed = true
         }
     }
     

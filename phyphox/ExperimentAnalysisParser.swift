@@ -172,10 +172,6 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             processed.removeAtIndices(deleteIndices)
         }
         
-        for v in processed {
-            v.registerForUpdates()
-        }
-        
         if processed.count > 0 {
             return ExperimentAnalysis(analyses: processed as! [ExperimentAnalysisModule], sleep: sleep, onUserInput: onUserInput)
         }

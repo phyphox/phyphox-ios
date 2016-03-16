@@ -28,7 +28,7 @@ final class ExperimentExportParser: ExperimentMetadataParser {
             
             let name = attributes["name"]!
             
-            let datas = getElementsWithKey(set, key: "data")!
+            let datas = getElementsWithKey(set, key: "data") as! [[String: AnyObject]]
             
             let dict = MutableOrderedDictionary()
             

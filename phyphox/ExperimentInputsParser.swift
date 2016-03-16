@@ -88,7 +88,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     continue
                 }
                 
-                let outputs = getElementsWithKey(sensor, key: "output")!
+                let outputs = getElementsWithKey(sensor, key: "output") as! [[String: AnyObject]]
                 
                 var xBuffer, yBuffer, zBuffer, tBuffer: DataBuffer?
                 
@@ -143,7 +143,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 outBuffers.reserveCapacity(output.count)
                 
                 for out in output {
-                    let bufferName = (out is String ? out as! String : out[XMLDictionaryTextKey] as! String)
+                    let bufferName = (out as? String ?? (out as! [String: AnyObject])[XMLDictionaryTextKey] as! String)
                     
                     let buffer = buffers[bufferName]!
                     

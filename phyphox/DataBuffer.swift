@@ -8,12 +8,14 @@
 
 import Foundation
 
-let DataBufferReceivedNewValueNotification = "DataBufferReceivedNewValueNotification"
+protocol DataBufferObserver {
+    func dataBufferUpdated(buffer: DataBuffer)
+}
 
 /**
  Data buffer used for raw or processed data from sensors.
  */
-final class DataBuffer: NSObject, SequenceType {
+@objc final class DataBuffer: NSObject, SequenceType {
     let name: String
     var size: Int {
         didSet {
@@ -21,6 +23,19 @@ final class DataBuffer: NSObject, SequenceType {
                 queue.dequeue()
             }
         }
+    }
+    
+    private var observers: NSMutableOrderedSet = NSMutableOrderedSet()
+    
+    /**
+     Notifications are sent in order, first registered, first notified.
+     */
+    func addObserver(observer: DataBufferObserver) {
+        observers.addObject(observer as! AnyObject)
+    }
+    
+    func removeObserver(observer: DataBufferObserver) {
+        observers.removeObject(observer as! AnyObject)
     }
     
     private class DataBufferGraphValueSource: JGGraphValueSource {
@@ -165,7 +180,9 @@ final class DataBuffer: NSObject, SequenceType {
     }
     
     func sendUpdateNotification() {
-        NSNotificationCenter.defaultCenter().postNotificationName(DataBufferReceivedNewValueNotification, object: self, userInfo: nil)
+        for observer in observers {
+            (observer as! DataBufferObserver).dataBufferUpdated(self)
+        }
     }
     
     /**

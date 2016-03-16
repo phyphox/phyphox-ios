@@ -8,7 +8,7 @@
 
 import UIKit
 
-public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
+public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
     typealias T = GraphViewDescriptor
     
     let graph: JGGraphView
@@ -44,7 +44,11 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         addSubview(yLabel)
         //addSubview(imgView)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "setNeedsUpdate", name: DataBufferReceivedNewValueNotification, object: descriptor.yInputBuffer)
+        descriptor.yInputBuffer.addObserver(self)
+    }
+    
+    func dataBufferUpdated(buffer: DataBuffer) {
+        setNeedsUpdate()
     }
     
     deinit {

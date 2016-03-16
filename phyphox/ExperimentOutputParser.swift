@@ -31,7 +31,7 @@ final class ExperimentOutputParser: ExperimentMetadataParser {
             
             let input = getElementsWithKey(audioOut, key: "input")!.first
             
-            let bufferName = (input is String ? input as! String : input![XMLDictionaryTextKey] as! String)
+            let bufferName = (input as? String ?? (input as! [String: AnyObject])[XMLDictionaryTextKey] as! String)
             let buffer = buffers[bufferName]!
             
             let out = ExperimentAudioOutput(sampleRate: sampleRate, loop: loop, dataSource: buffer)

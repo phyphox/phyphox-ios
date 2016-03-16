@@ -57,7 +57,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         var min: Double? = nil
         
         for i in 0..<length {
-            let val = start+(stop-start)/Double((length-1)*i)
+            let val = start+(stop-start)/Double(length-1)*Double(i)
             
             if max == nil || val > max {
                 max = val

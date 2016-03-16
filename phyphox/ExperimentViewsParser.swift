@@ -45,7 +45,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             
             var views = [ViewDescriptor!](count: (view["__count"] as! NSNumber).integerValue, repeatedValue: nil)
             
-            func handleEdit(edit: NSDictionary) -> EditViewDescriptor? {
+            func handleEdit(edit: [String: AnyObject]) -> EditViewDescriptor? {
                 let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
@@ -87,7 +87,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return EditViewDescriptor(label: label, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
             }
             
-            func handleValue(value: NSDictionary) -> ValueViewDescriptor? {
+            func handleValue(value: [String: AnyObject]) -> ValueViewDescriptor? {
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
@@ -122,7 +122,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return ValueViewDescriptor(label: label, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
-            func handleGraph(graph: NSDictionary) -> GraphViewDescriptor? {
+            func handleGraph(graph: [String: AnyObject]) -> GraphViewDescriptor? {
                 let attributes = graph[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
@@ -143,8 +143,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 var yInputBuffer: DataBuffer?
                 
                 if let inputs = getElementsWithKey(graph, key: "input") {
-                    for input in inputs {
-                        if input is NSDictionary {
+                    for input_ in inputs {
+                        if let input = input_ as? [String: AnyObject] {
                             let attributes = input[XMLDictionaryAttributesKey] as! [String: AnyObject]
                             
                             let axisString = attributes["axis"] as! String
@@ -175,8 +175,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                                 }
                             }
                         }
-                        else if input is NSString {
-                            yInputBuffer = buffers[input as! String]
+                        else if input_ is NSString {
+                            yInputBuffer = buffers[input_ as! String]
                         }
                     }
                 }
@@ -188,7 +188,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return GraphViewDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
             }
             
-            func handleInfo(info: NSDictionary) -> InfoViewDescriptor? {
+            func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {
                 let attributes = info[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
@@ -200,10 +200,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             
             for (key, child) in view {
                 if key as! String == "graph" {
-                    for g in getElemetArrayFromValue(child) {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
                         let index = (g["__index"] as! NSNumber).integerValue
                         
-                        if let graph = handleGraph(g as! NSDictionary) {
+                        if let graph = handleGraph(g) {
                             views[index] = graph
                         }
                         else {
@@ -212,10 +212,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "value" {
-                    for g in getElemetArrayFromValue(child) {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
                         let index = (g["__index"] as! NSNumber).integerValue
                         
-                        if let graph = handleValue(g as! NSDictionary) {
+                        if let graph = handleValue(g) {
                             views[index] = graph
                         }
                         else {
@@ -224,10 +224,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "edit" {
-                    for g in getElemetArrayFromValue(child) {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
                         let index = (g["__index"] as! NSNumber).integerValue
                         
-                        if let graph = handleEdit(g as! NSDictionary) {
+                        if let graph = handleEdit(g) {
                             views[index] = graph
                         }
                         else {
@@ -236,10 +236,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "info" {
-                    for g in getElemetArrayFromValue(child) {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
                         let index = (g["__index"] as! NSNumber).integerValue
                         
-                        if let graph = handleInfo(g as! NSDictionary) {
+                        if let graph = handleInfo(g) {
                             views[index] = graph
                         }
                         else {
