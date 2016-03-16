@@ -8,11 +8,18 @@
 
 import Foundation
 
+protocol ExperimentAnalysisDelegate : AnyObject {
+    func analysisWillUpdate(analysis: ExperimentAnalysis)
+    func analysisDidUpdate(analysis: ExperimentAnalysis)
+}
+
 final class ExperimentAnalysis : DataBufferObserver {
     let analyses: [ExperimentAnalysisModule]
     
     let sleep: Double
     let onUserInput: Bool
+    
+    weak var delegate: ExperimentAnalysisDelegate?
     
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
@@ -51,7 +58,9 @@ final class ExperimentAnalysis : DataBufferObserver {
             busy = true
             
             after(0.1, closure: { () -> Void in
+                self.delegate?.analysisWillUpdate(self)
                 self.update()
+                self.delegate?.analysisDidUpdate(self)
                 
                 self.busy = false
                 

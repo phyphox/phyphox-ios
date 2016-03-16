@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol DataBufferObserver {
+protocol DataBufferObserver : AnyObject {
     func dataBufferUpdated(buffer: DataBuffer)
 }
 
@@ -31,11 +31,11 @@ protocol DataBufferObserver {
      Notifications are sent in order, first registered, first notified.
      */
     func addObserver(observer: DataBufferObserver) {
-        observers.addObject(observer as! AnyObject)
+        observers.addObject(observer)
     }
     
     func removeObserver(observer: DataBufferObserver) {
-        observers.removeObject(observer as! AnyObject)
+        observers.removeObject(observer)
     }
     
     private class DataBufferGraphValueSource: JGGraphValueSource {

@@ -14,7 +14,7 @@ http://techcrunch.com/2014/04/04/the-right-way-to-ask-users-for-ios-permissions/
 
 import Foundation
 
-final class Experiment {
+final class Experiment : ExperimentAnalysisDelegate {
     var title: String?
     var description: String?
     var category: String?
@@ -58,6 +58,20 @@ final class Experiment {
         self.export = export
         
         queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
+        
+        analysis?.delegate = self
+    }
+    
+    func analysisWillUpdate(_: ExperimentAnalysis) {
+        if ((self.output?.audioOutput) != nil) {
+            for audio in (self.output?.audioOutput)! {
+                audio.play()
+            }
+        }
+    }
+    
+    func analysisDidUpdate(_: ExperimentAnalysis) {
+        
     }
     
     class func isValidIdentifier(id: String) -> Bool {
