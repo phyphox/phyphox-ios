@@ -79,5 +79,9 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let vc = ExperimentViewController(experiment: experiment)
         
         navigationController!.pushViewController(vc, animated: true)
+        
+        experiment.checkAndAskForPermissions {[unowned self] () -> Void in
+            self.navigationController!.popViewControllerAnimated(true)
+        }
     }
 }

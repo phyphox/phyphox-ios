@@ -45,13 +45,13 @@ final class JGGraphView: UIView {
         
         override func drawLayer(layer: CALayer, inContext ctx: CGContext) {
             if path != nil {
-                let s = CFAbsoluteTimeGetCurrent()
+//                let s = CFAbsoluteTimeGetCurrent()
                 CGContextSetStrokeColorWithColor(ctx, UIColor.blackColor().CGColor);
                 CGContextAddPath(ctx, self.path!.CGPath)
                 CGContextSetLineJoin(ctx, .Round)
                 CGContextSetLineCap(ctx, .Round)
                 CGContextStrokePath(ctx)
-                print("Draw took \(CFAbsoluteTimeGetCurrent()-s)")
+//                print("Draw took \(CFAbsoluteTimeGetCurrent()-s)")
             }
         }
     }

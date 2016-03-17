@@ -14,6 +14,13 @@ http://techcrunch.com/2014/04/04/the-right-way-to-ask-users-for-ios-permissions/
 
 import Foundation
 
+struct ExperimentRequiredPermission : OptionSetType {
+    let rawValue: Int
+    
+    static let None = ExperimentRequiredPermission(rawValue: 0)
+    static let Microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
+}
+
 final class Experiment : ExperimentAnalysisDelegate {
     var title: String?
     var description: String?
@@ -35,6 +42,8 @@ final class Experiment : ExperimentAnalysisDelegate {
     let buffers: ([String: DataBuffer]?, [DataBuffer]?)
     
     let queue: dispatch_queue_t
+    
+    let requiredPermissions: ExperimentRequiredPermission
     
     private(set) var running = false
     
@@ -58,6 +67,13 @@ final class Experiment : ExperimentAnalysisDelegate {
         self.export = export
         
         queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
+        
+        if audioInputs != nil {
+            self.requiredPermissions = .Microphone
+        }
+        else {
+            self.requiredPermissions = .None
+        }
         
         analysis?.delegate = self
     }
@@ -95,6 +111,18 @@ final class Experiment : ExperimentAnalysisDelegate {
         }
         
         return true
+    }
+    
+    func checkAndAskForPermissions(failed: (Void) -> Void) {
+        if requiredPermissions.contains(.Microphone) {
+            if ClusterPrePermissions.microphonePermissionAuthorizationStatus() != .Authorized {
+                ClusterPrePermissions.sharedPermissions().showMicrophonePermissionsWithTitle("Microphone Required", message: "This experiment required access to the Microphone", denyButtonTitle: "Deny", grantButtonTitle: "OK", completionHandler: { (ok: Bool, userDialogResult: ClusterDialogResult, systemDialogResult: ClusterDialogResult) -> Void in
+                    if !ok {
+                        failed()
+                    }
+                })
+            }
+        }
     }
     
     func stop() {

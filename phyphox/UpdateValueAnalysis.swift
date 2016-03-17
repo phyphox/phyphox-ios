@@ -7,13 +7,16 @@
 //
 
 import Foundation
+import Surge
+
+//TODO: Test performance iterative vs Surge
 
 /**
  An abstract analysis module that takes one input and one output, writing each value of the input into the output (and clearing the output beforehand), after allowing a closure to update the value.
 */
 class UpdateValueAnalysis: ExperimentAnalysisModule {
     
-    internal func updateWithMethod(method: (Double) -> Double) {
+    internal func updateIterativelyWithMethod(method: (Double) -> Double) {
         let input = inputs.first!
         
         let outBuffer = outputs.first!.buffer!
@@ -48,4 +51,27 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         
         outBuffer.replaceValues(append, max: max, min: min)
     }
+    
+    internal func updateAllWithMethod(method: ([Double]) -> [Double]) {
+        let input = inputs.first!
+        
+        let outBuffer = outputs.first!.buffer!
+        
+        var process: [Double] = []
+        
+        if let buffer = input.buffer {
+            process.appendContentsOf(buffer)
+        }
+        else {
+            process.append(input.value!)
+        }
+        
+        let append = method(process)
+        
+        let max: Double? = Surge.max(append)
+        let min: Double? = Surge.min(append)
+        
+        outBuffer.replaceValues(append, max: max, min: min)
+    }
+
 }

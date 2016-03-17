@@ -7,10 +7,11 @@
 //
 
 import Foundation
+import Surge
 
 final class ABSAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod(abs)
+        updateAllWithMethod(Surge.abs)
     }
 }

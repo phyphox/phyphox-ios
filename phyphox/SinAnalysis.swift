@@ -7,11 +7,12 @@
 //
 
 import Foundation
+import Surge
 
 final class SinAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod(sin)
+        updateAllWithMethod(Surge.sin)
     }
 }
 

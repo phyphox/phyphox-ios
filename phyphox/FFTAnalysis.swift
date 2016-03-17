@@ -7,6 +7,28 @@
 //
 
 import Foundation
+import Surge
+
+public func fft(real input: [Double], imag i: [Double]) -> [Double] {
+    var real = [Double](input)
+    var imaginary = [Double](i)
+    var splitComplex = DSPDoubleSplitComplex(realp: &real, imagp: &imaginary)
+    
+    let length = vDSP_Length(floor(log2(Float(input.count))))
+    let radix = FFTRadix(kFFTRadix2)
+    let weights = vDSP_create_fftsetupD(length, radix)
+    vDSP_fft_zipD(weights, &splitComplex, 1, length, FFTDirection(FFT_FORWARD))
+    
+    var magnitudes = [Double](count: input.count, repeatedValue: 0.0)
+    vDSP_zvmagsD(&splitComplex, 1, &magnitudes, 1, vDSP_Length(input.count))
+    
+    var normalizedMagnitudes = [Double](count: input.count, repeatedValue: 0.0)
+    vDSP_vsmulD(sqrt(magnitudes), 1, [2.0 / Double(input.count)], &normalizedMagnitudes, 1, vDSP_Length(input.count))
+    
+    vDSP_destroy_fftsetupD(weights)
+    
+    return normalizedMagnitudes
+}
 
 final class FFTAnalysis: ExperimentAnalysisModule {
     //input size, power-of-two filled size, log2 of input size (integer)

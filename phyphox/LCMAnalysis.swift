@@ -7,25 +7,32 @@
 //
 
 import Foundation
+import Surge
 
 final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
     
+    class func lcm(u: UInt, v: UInt) -> UInt {
+        return (u*v)/GCDAnalysis.gcd(u, v: v)
+    }
+    
     override func update() {
-        updateWithMethod(nil, outerMethod: { (currentValue, values) -> Double in
-            var a = round(values.first!)
-            var b = round(values[1])
+        updateAllWithMethod({ (inputs: [[Double]]) -> [Double] in
+            var main = inputs.first!
             
-            let a0 = a;
-            let b0 = b;
-            
-            //Euclid's algorithm (modern iterative version)
-            while (b > 0) {
-                let tmp = b;
-                b = a % b;
-                a = tmp;
+            for (i, input) in inputs.enumerate() {
+                if i > 0 {
+                    var temp: [Double] = []
+                    
+                    for (j, value) in main.enumerate() {
+                        temp.append(Double(self.dynamicType.lcm(UInt(value), v: UInt(input[j]))))
+                    }
+                    
+                    main = temp
+                }
             }
             
-            return a0*(b0/a)
-            }, neutralElement: 0.0, priorityInputKey: nil)
+            
+            return main
+            }, priorityInputKey: nil)
     }
 }

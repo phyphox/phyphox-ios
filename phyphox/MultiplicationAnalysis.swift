@@ -7,12 +7,21 @@
 //
 
 import Foundation
+import Surge
 
 final class MultiplicationAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod({ (first, second, initial) -> Double in
-            return first*second
-            }, outerMethod: nil, neutralElement: 1.0, priorityInputKey: nil)
+        updateAllWithMethod({ (inputs) -> [Double] in
+            var main = inputs.first!
+            
+            for (i, input) in inputs.enumerate() {
+                if i > 0 {
+                    main = Surge.mul(main, y: input)
+                }
+            }
+            
+            return main
+            },  priorityInputKey: nil)
     }
 }

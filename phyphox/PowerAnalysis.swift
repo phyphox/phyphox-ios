@@ -7,17 +7,21 @@
 //
 
 import Foundation
+import Surge
 
 final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod({ (first, second, initial) -> Double in
-            if initial {
-                return second
+        updateAllWithMethod({ (inputs) -> [Double] in
+            var main = inputs.first!
+            
+            for (i, input) in inputs.enumerate() {
+                if i > 0 {
+                    main = Surge.pow(main, y: input)
+                }
             }
-            else {
-                return pow(first, second)
-            }
-            }, outerMethod: nil, neutralElement: 1.0, priorityInputKey: "base")
+            
+            return main
+            },  priorityInputKey: "base")
     }
 }

@@ -144,7 +144,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
 //                            }
 //                        }
                         
-                        let s = CFAbsoluteTimeGetCurrent()
+//                        let s = CFAbsoluteTimeGetCurrent()
 //                        let img = JGGraphDrawer.drawBitmap(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graph.bounds.size, averaging: self.descriptor.forceFullDataset)!
                         
                         var newMaxY: Double? = nil
@@ -152,8 +152,8 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         
                         let path = JGGraphDrawer.drawPath(xValues, ys: yValues, minX: minX, maxX: maxX, logX: self.descriptor.logX, minY: minY!, maxY: maxY!, logY: self.descriptor.logY, count: count, size: self.graphFrame.size, /*reusePath: self.path, start: start,*/ averaging: self.descriptor.forceFullDataset, newMinY: &newMinY, newMaxY: &newMaxY)
                         
-                        print("Path took \(CFAbsoluteTimeGetCurrent()-s)")
-                        
+//                        print("Path took \(CFAbsoluteTimeGetCurrent()-s)")
+                    
                         self.descriptor.yInputBuffer.updateMaxAndMin(newMaxY, min: newMinY)
                         
 //                        self.lastCount = count

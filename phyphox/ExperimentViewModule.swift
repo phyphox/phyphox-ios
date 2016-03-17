@@ -38,7 +38,8 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         if !updateScheduled {
             updateScheduled = true
             
-            after(0.3, closure: { () -> Void in
+            //60fps max
+            after(1.0/60.0, closure: { () -> Void in
                 self.update()
                 self.updateScheduled = false
             })

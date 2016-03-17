@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Surge
 
 final class MaxAnalysis: ExperimentAnalysisModule {
     var xIn: DataBuffer?

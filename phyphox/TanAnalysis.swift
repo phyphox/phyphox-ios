@@ -7,10 +7,11 @@
 //
 
 import Foundation
+import Surge
 
 final class TanAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod(tan)
+        updateAllWithMethod(Surge.tan)
     }
 }

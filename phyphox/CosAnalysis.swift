@@ -7,11 +7,12 @@
 //
 
 import Foundation
+import Surge
 
 final class CosAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateWithMethod(cos)
+        updateAllWithMethod(Surge.cos)
     }
 }
 
