@@ -210,13 +210,11 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         
         //Append the real part of the result to output1 and the imaginary part to output2 (if used)
         if let xOut = outputs.first?.buffer {
-            xOut.updateMaxAndMin(xMax, min: xMin, compare: true)
-            xOut.appendFromArray(x, iterative: false)
+            xOut.appendFromArray(x)
         }
         
         if let yOut = outputs.first?.buffer {
-            yOut.updateMaxAndMin(yMax, min: yMin, compare: true)
-            yOut.appendFromArray(y, iterative: false)
+            yOut.appendFromArray(y)
         }
     }
 }

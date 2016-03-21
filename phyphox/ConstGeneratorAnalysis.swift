@@ -44,9 +44,6 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         
         let append = [Double](count: length, repeatedValue: value)
         
-        let max = value
-        let min = value
-        
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

@@ -31,9 +31,6 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
-        var max: Double? = nil
-        var min: Double? = nil
-        
         let compRange = a.count-b.count
         
         let compRangeD = Double(compRange)
@@ -47,17 +44,9 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             
             let v = sum/compRangeD
             
-            if max == nil || v > max {
-                max = v
-            }
-            
-            if min == nil || v < min {
-                min = v
-            }
-            
             append.append(v)
         }
         
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

@@ -10,6 +10,7 @@ sleep 3s
 #git clone https://github.com/nicklockwood/XMLDictionary
 #rm -rf XMLDictionary/.git
 
+
 rm -rf EZAudio
 git clone https://github.com/syedhali/EZAudio
 rm -rf EZAudio/.git
@@ -30,16 +31,19 @@ rm -rf Surge
 git clone https://github.com/mattt/Surge
 rm -rf Surge/.git
 
-echo Fixing pop import
-
+#Fix pop import
 sed -i -e 's/\"POP.h\"/<POP\/POP.h>/g' VBFPopFlatButton/VBFPopFlatButton/VBFPopFlatButtonClasses/VBFDoubleSegment.m
 
 rm VBFPopFlatButton/VBFPopFlatButton/VBFPopFlatButtonClasses/VBFDoubleSegment.m-e
 
-
 rm -rf ClusterPrePermissions
 git clone https://github.com/clusterinc/ClusterPrePermissions
 rm -rf ClusterPrePermissions/.git
+
+#Fix Bullshit ClusterPrePermissions file
+sed -i -e 's/typedef NS_ENUM/@import Foundation;@import UIKit;typedef NS_ENUM/g' ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m
+
+rm ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m-e
 
 echo Removing CocoaPods stuff
 

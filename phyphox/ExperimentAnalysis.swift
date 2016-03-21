@@ -72,11 +72,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         }
     }
     
-    /**
-     Updates immediately. Don't call this method directly, schedule updates via `setNeedsUpdate()`
-     */
-    func update() {
-        print("update")
+    private func update() {
         for analysis in analyses {
             analysis.setNeedsUpdate()
         }

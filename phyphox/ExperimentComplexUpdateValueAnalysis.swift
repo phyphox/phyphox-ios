@@ -43,21 +43,19 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        for var array in values {
+        for (i, var array) in values.enumerate() {
             let delta = maxCount-array.count
             
             if delta > 0 {
                 array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
+                values[i] = array //Arrays are structs, so the original array needs to be updated
             }
         }
         
         let out = method(values)
         
-        let max = Surge.max(out)
-        let min = Surge.min(out)
-        
         for output in outputs {
-            output.buffer!.replaceValues(out, max: max, min: min)
+            output.buffer!.replaceValues(out)
         }
     }
 

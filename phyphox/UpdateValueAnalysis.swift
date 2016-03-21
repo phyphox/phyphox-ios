@@ -23,19 +23,8 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
-        var max: Double? = nil
-        var min: Double? = nil
-        
         func appendValue(rawValue value: Double) {
             let processed = method(value)
-            
-            if max == nil || processed > max {
-                max = processed
-            }
-            
-            if min == nil || processed < min {
-                min = processed
-            }
             
             append.append(processed)
         }
@@ -49,7 +38,7 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
             appendValue(rawValue: input.value!)
         }
         
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append )
     }
     
     internal func updateAllWithMethod(method: ([Double]) -> [Double]) {
@@ -68,10 +57,7 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         
         let append = method(process)
         
-        let max: Double? = Surge.max(append)
-        let min: Double? = Surge.min(append)
-        
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append)
     }
 
 }

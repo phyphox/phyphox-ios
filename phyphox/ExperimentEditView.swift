@@ -90,7 +90,7 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
             textField.text = formattedValue(val)
         }
         
-        descriptor.buffer.replaceValues([val], max: val, min: val)
+        descriptor.buffer.replaceValues([val])
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {

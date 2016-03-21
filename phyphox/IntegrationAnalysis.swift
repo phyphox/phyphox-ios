@@ -17,10 +17,6 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
-        var max: Double? = nil
-        var min: Double? = nil
-        
-        
         let buffer = inputs.first!.buffer
         
         if buffer == nil {
@@ -30,17 +26,9 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
         for value in buffer! {
             sum += value
             
-            if max == nil || sum > max {
-                max = sum
-            }
-            
-            if min == nil || sum < min {
-                min = sum
-            }
-            
             append.append(sum)
         }
         
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

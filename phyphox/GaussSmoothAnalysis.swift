@@ -35,9 +35,6 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
-        var max: Double? = nil
-        var min: Double? = nil
-        
         for i in 0..<y.count {
             var sum = 0.0
             for j in -calcWidth...calcWidth {
@@ -47,17 +44,9 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
                 }
             }
             
-            if max == nil || sum > max {
-                max = sum
-            }
-            
-            if min == nil || sum < min {
-                min = sum
-            }
-            
             append.append(sum)
         }
         
-        outBuffer.replaceValues(append, max: max, min: min)
+        outBuffer.replaceValues(append)
     }
 }

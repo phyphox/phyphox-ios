@@ -26,8 +26,6 @@
 		6B00F0C81C46F66500971941 /* XMLDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0C71C46F66500971941 /* XMLDictionary.m */; };
 		6B00F0CD1C46F6D400971941 /* OrderedDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CC1C46F6D400971941 /* OrderedDictionary.m */; };
 		6B00F0D01C46FE9800971941 /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
-		6B00F0D41C47D3D800971941 /* JGGraphDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0D21C47D3D800971941 /* JGGraphDrawer.swift */; };
-		6B00F0D51C47D3D800971941 /* JGGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0D31C47D3D800971941 /* JGGraphView.swift */; };
 		6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */; };
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
@@ -89,6 +87,7 @@
 		6B94A5FA1C9ACB58008D9ACF /* ClusterPrePermissions.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A5F91C9ACB58008D9ACF /* ClusterPrePermissions.m */; };
 		6B94A6041C9AD286008D9ACF /* Surge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B94A6011C9AD278008D9ACF /* Surge.framework */; };
 		6B94A6051C9AD286008D9ACF /* Surge.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B94A6011C9AD278008D9ACF /* Surge.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A6201CA015A4008D9ACF /* GLGraphView.swift */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
 		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
 		6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */; };
@@ -267,8 +266,6 @@
 		6B00F0CC1C46F6D400971941 /* OrderedDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OrderedDictionary.m; sourceTree = "<group>"; };
 		6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "phyphox-Bridging-Header.h"; sourceTree = "<group>"; };
 		6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAudioInput.swift; sourceTree = "<group>"; };
-		6B00F0D21C47D3D800971941 /* JGGraphDrawer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JGGraphDrawer.swift; sourceTree = "<group>"; };
-		6B00F0D31C47D3D800971941 /* JGGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JGGraphView.swift; sourceTree = "<group>"; };
 		6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewCollectionDescriptor.swift; sourceTree = "<group>"; };
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -337,6 +334,7 @@
 		6B94A5F81C9ACB58008D9ACF /* ClusterPrePermissions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClusterPrePermissions.h; sourceTree = "<group>"; };
 		6B94A5F91C9ACB58008D9ACF /* ClusterPrePermissions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClusterPrePermissions.m; sourceTree = "<group>"; };
 		6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Surge.xcodeproj; path = External/Surge/Surge.xcodeproj; sourceTree = SOURCE_ROOT; };
+		6B94A6201CA015A4008D9ACF /* GLGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GLGraphView.swift; sourceTree = "<group>"; };
 		6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValueViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditViewDescriptor.swift; sourceTree = "<group>"; };
@@ -474,8 +472,7 @@
 		6B00F0D61C47D3DC00971941 /* Graph */ = {
 			isa = PBXGroup;
 			children = (
-				6B00F0D21C47D3D800971941 /* JGGraphDrawer.swift */,
-				6B00F0D31C47D3D800971941 /* JGGraphView.swift */,
+				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
 			);
 			name = Graph;
 			sourceTree = "<group>";
@@ -1070,7 +1067,7 @@
 				6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
-				6B00F0D41C47D3D800971941 /* JGGraphDrawer.swift in Sources */,
+				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6BB52BC61C1B11CA00217CF1 /* ExperimentTranslation.swift in Sources */,
@@ -1114,7 +1111,6 @@
 				6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */,
 				6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */,
 				6B6319991C4952050038BE22 /* UIColor+Expanded.m in Sources */,
-				6B00F0D51C47D3D800971941 /* JGGraphView.swift in Sources */,
 				6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,

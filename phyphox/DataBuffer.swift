@@ -38,7 +38,7 @@ protocol DataBufferObserver : AnyObject {
         observers.removeObject(observer)
     }
     
-    private class DataBufferGraphValueSource: JGGraphValueSource {
+    private class DataBufferGraphValueSource: GraphValueSource {
         weak var buffer: DataBuffer!
         
         init(buffer: DataBuffer) {
@@ -62,39 +62,7 @@ protocol DataBufferObserver : AnyObject {
         }
     }
     
-    var graphValueSource: JGGraphValueSource!
-    
-    private(set) var max: Double? = nil
-    private(set) var min: Double? = nil
-    
-    /**
-     Special purpose setter for max and min. The graph view iterates through all values anyway, so that can be used to calculate the max and min values (which will take effect on the next redraw of the graph).
-     */
-    func updateMaxAndMin(max: Double?, min: Double?, compare: Bool = false) {
-        if compare {
-            if self.max == nil {
-                self.max = max
-            }
-            else {
-                if max != nil {
-                    self.max = Swift.max(self.max!, max!)
-                }
-            }
-            
-            if self.min == nil {
-                self.min = min
-            }
-            else {
-                if min != nil {
-                    self.min = Swift.min(self.min!, min!)
-                }
-            }
-        }
-        else {
-            self.max = max
-            self.min = min
-        }
-    }
+    var graphValueSource: GraphValueSource!
     
     var trashedCount: Int = 0
     
@@ -143,20 +111,6 @@ protocol DataBufferObserver : AnyObject {
         }
         
         let operations = { () -> () in
-            if self.max == nil {
-                self.max = value
-            }
-            else {
-                self.max = Swift.max(self.max!, value)
-            }
-            
-            if self.min == nil {
-                self.min = value
-            }
-            else {
-                self.min = Swift.min(self.min!, value)
-            }
-            
             self.queue.enqueue(value, async: true)
             
             if (self.actualCount > self.size) {
@@ -204,16 +158,12 @@ protocol DataBufferObserver : AnyObject {
     func clear() {
         if (!staticBuffer) {
             queue.clear()
-            max = nil
-            min = nil
             trashedCount = 0
         }
     }
     
-    func replaceValues(var values: [Double], max: Double?, min: Double?, notify: Bool = true) {
+    func replaceValues(var values: [Double], notify: Bool = true) {
         if (!staticBuffer) {
-            updateMaxAndMin(max, min: min)
-            
             trashedCount = 0
             
             if values.count > size {
@@ -228,34 +178,20 @@ protocol DataBufferObserver : AnyObject {
         }
     }
     
-    /**
-     Passing `false` for `iterative` will increase performance, but max and min values will not be updated. They will have to be updated manually.
-     */
-    func appendFromArray(values: [Double], iterative: Bool = true, notify: Bool = true) {
-        if iterative {
-            queue.sync {() -> Void in
-                autoreleasepool({ () -> () in
-                    for value in values {
-                        self.append(value, async: true, notify: false)
-                    }
-                })
-            }
-        }
-        else {
-            queue.sync({ () -> Void in
-                autoreleasepool({ () -> () in
-                    var array = self.queue.toArray()
-                    
-                    array.appendContentsOf(values)
-                    
-                    if array.count > self.size {
-                        array = Array(array[array.count-self.size..<array.count])
-                    }
-                    
-                    self.queue.replaceValues(values, async: true)
-                })
+    func appendFromArray(values: [Double], notify: Bool = true) {
+        queue.sync({ () -> Void in
+            autoreleasepool({ () -> () in
+                var array = self.queue.toArray()
+                
+                array.appendContentsOf(values)
+                
+                if array.count > self.size {
+                    array = Array(array[array.count-self.size..<array.count])
+                }
+                
+                self.queue.replaceValues(values, async: true)
             })
-        }
+        })
         
         if notify {
             sendUpdateNotification()

@@ -90,12 +90,6 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        var xMax: Double? = nil
-        var xMin: Double? = nil
-        
-        var yMax: Double? = nil
-        var yMin: Double? = nil
-        
         var xValues: [Double]? = (xOut != nil ? [] : nil)
         var yValues: [Double] = []
         
@@ -115,24 +109,6 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             
             sum /= Double(count-i); //Normalize to the number of values at this displacement
             
-            if xValues != nil {
-                if xMax == nil || xVal > xMax {
-                    xMax = xVal
-                }
-                
-                if xMin == nil || xVal < xMin {
-                    xMin = xVal
-                }
-            }
-            
-            if yMax == nil || sum > yMax {
-                yMax = sum
-            }
-            
-            if yMin == nil || sum < yMin {
-                yMin = sum
-            }
-            
             //Append y output to output1 and x to output2 (if used)
             yValues.append(sum)
             
@@ -141,10 +117,10 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        yOut.replaceValues(yValues, max: yMax, min: yMin)
+        yOut.replaceValues(yValues)
         
         if xOut != nil {
-            xOut!.replaceValues(xValues!, max: xMax, min: xMin)
+            xOut!.replaceValues(xValues!)
         }
     }
 }

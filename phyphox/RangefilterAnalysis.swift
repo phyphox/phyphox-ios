@@ -70,9 +70,6 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
         }
         
-        var max: Double? = nil
-        var min: Double? = nil
-        
         let delete = NSMutableIndexSet()
         
         var out = [[Double]](count: iterators.count, repeatedValue: [])
@@ -101,20 +98,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     continue
                 }
                 
-                if max == nil || value > max {
-                    max = value
-                }
-                
-                if min == nil || value < min {
-                    min = value
-                }
-                
                 out[index].append(value)
             }
         }
         
         for (i, output) in outputs.enumerate() {
-            output.buffer!.replaceValues(out[i], max: max, min: min)
+            output.buffer!.replaceValues(out[i])
         }
     }
 }
