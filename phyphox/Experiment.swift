@@ -6,12 +6,6 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
-/*
-Relevant for asking for permission to access sensors.
-
-http://techcrunch.com/2014/04/04/the-right-way-to-ask-users-for-ios-permissions/?utm_campaign=This%2BWeek%2Bin%2BSwift&utm_medium=web&utm_source=This_Week_in_Swift_73
-*/
-
 import Foundation
 
 struct ExperimentRequiredPermission : OptionSetType {
@@ -87,14 +81,43 @@ final class Experiment : ExperimentAnalysisDelegate {
         }
     }
     
+    func willGetActive(dismiss: () -> ()) {
+        if self.audioInputs != nil {
+            checkAndAskForPermissions(dismiss)
+        }
+    }
+    
+    func didGetInactive() {
+        
+    }
+    
     func checkAndAskForPermissions(failed: (Void) -> Void) {
         if requiredPermissions.contains(.Microphone) {
-            if ClusterPrePermissions.microphonePermissionAuthorizationStatus() != .Authorized {
-//                ClusterPrePermissions.sharedPermissions().showMicrophonePermissionsWithTitle("Microphone Required", message: "This experiment required access to the Microphone", denyButtonTitle: "Deny", grantButtonTitle: "OK", completionHandler: { (ok: Bool, userDialogResult: ClusterDialogResult, systemDialogResult: ClusterDialogResult) -> Void in
-//                    if !ok {
-//                        failed()
-//                    }
-//                })
+            
+            let status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeAudio)
+            
+            switch status {
+            case .Denied:
+                failed()
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .Cancel, handler: nil))
+                UIApplication.sharedApplication().keyWindow!.rootViewController!.presentViewController(alert, animated: true, completion: nil)
+                
+            case .Restricted:
+                failed()
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->General->Restrctions->Microphone", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .Cancel, handler: nil))
+                UIApplication.sharedApplication().keyWindow!.rootViewController!.presentViewController(alert, animated: true, completion: nil)
+                
+            case .NotDetermined:
+                AVCaptureDevice.requestAccessForMediaType(AVMediaTypeAudio, completionHandler: { (allowed) in
+                    if !allowed {
+                        failed()
+                    }
+                })
+                
+            default:
+                break
             }
         }
     }

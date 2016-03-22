@@ -19,11 +19,13 @@ final class ExperimentAudioInput : NSObject, EZMicrophoneDelegate {
         self.outBuffers = outBuffers
         
         super.init()
-        
-        microphone = EZMicrophone(delegate: self, withAudioStreamBasicDescription: EZAudioUtilities.monoFloatFormatWithSampleRate(Float(sampleRate)))
     }
     
     func startRecording() {
+        if microphone == nil {
+            microphone = EZMicrophone(delegate: self, withAudioStreamBasicDescription: EZAudioUtilities.monoFloatFormatWithSampleRate(Float(sampleRate)))
+        }
+        
         microphone.startFetchingAudio()
     }
     

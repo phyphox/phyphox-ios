@@ -78,10 +78,19 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         let vc = ExperimentViewController(experiment: experiment)
         
-        navigationController!.pushViewController(vc, animated: true)
+        var denied = false
+        var showing = false
         
-        experiment.checkAndAskForPermissions {[unowned self] () -> Void in
-            self.navigationController!.popViewControllerAnimated(true)
+        experiment.willGetActive {
+            denied = true
+            if showing {
+                self.navigationController!.popViewControllerAnimated(true)
+            }
+        }
+        
+        if !denied {
+            navigationController!.pushViewController(vc, animated: true)
+            showing = true
         }
     }
 }

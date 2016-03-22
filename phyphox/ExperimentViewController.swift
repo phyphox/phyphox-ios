@@ -118,6 +118,7 @@ final class ExperimentViewController: CollectionViewController {
         super.viewDidDisappear(animated)
         
         experiment.stop()
+        experiment.didGetInactive()
     }
     
     override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {

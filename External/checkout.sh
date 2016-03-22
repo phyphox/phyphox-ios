@@ -35,16 +35,6 @@ sed -i -e 's/\"POP.h\"/<POP\/POP.h>/g' VBFPopFlatButton/VBFPopFlatButton/VBFPopF
 
 rm VBFPopFlatButton/VBFPopFlatButton/VBFPopFlatButtonClasses/VBFDoubleSegment.m-e
 
-rm -rf ClusterPrePermissions
-git clone https://github.com/clusterinc/ClusterPrePermissions
-rm -rf ClusterPrePermissions/.git
-
-#Fix Bullshit ClusterPrePermissions file
-sed -i -e 's/typedef NS_ENUM/@import Foundation;@import UIKit;typedef NS_ENUM/g' ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m
-
-rm ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m-e
-
-
 echo Removing CocoaPods stuff
 
 find . -iname "Pod*" -exec rm -rf "{}" \;
