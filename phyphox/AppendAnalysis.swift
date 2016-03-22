@@ -15,14 +15,20 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(inputs)
+        #endif
+        
         for input in inputs {
             if let b = input.buffer {
-                for val in b {
-                    append.append(val)
-                }
+                append.appendContentsOf(b)
             }
         }
         
-        outBuffer.replaceValues(append)
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(append)
+        #endif
+        
+        outBuffer.appendFromArray(append)
     }
 }

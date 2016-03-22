@@ -47,6 +47,14 @@ class ExperimentAnalysisModule {
         }
     }
     
+    internal func debug_noteInputs(inputs: AnyObject) {
+        print("\(self.dynamicType) inputs: \(inputs)")
+    }
+    
+    internal func debug_noteOutputs(outputs: AnyObject) {
+        print("\(self.dynamicType) outputs: \(outputs)")
+    }
+    
     internal func update() {
         fatalError("Subclasses of ExperimentAnalysisModule must override the update() method!")
     }

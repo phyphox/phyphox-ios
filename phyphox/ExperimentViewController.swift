@@ -111,7 +111,7 @@ final class ExperimentViewController: CollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(export))]
     }
     
     override func viewDidDisappear(animated: Bool) {
@@ -157,11 +157,11 @@ final class ExperimentViewController: CollectionViewController {
     func toggleExperiment() {
         if experiment.running {
             experiment.stop()
-            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(export))]
         }
         else {
             experiment.start()
-            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: "toggleExperiment"), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: "export")]
+            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(export))]
         }
     }
 }

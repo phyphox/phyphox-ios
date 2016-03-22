@@ -13,7 +13,7 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
     override func update() {
         var a: [Double]
         var b: [Double]
-
+        
         let firstBuffer = inputs.first!.buffer!
         let secondBuffer = inputs[1].buffer!
         
@@ -35,6 +35,10 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
         
         let compRangeD = Double(compRange)
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(["a" : a, "b" : b])
+        #endif
+        
         //The actual calculation
         for i in 0..<compRange {
             var sum = 0.0
@@ -46,6 +50,10 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             
             append.append(v)
         }
+        
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(append)
+        #endif
         
         outBuffer.replaceValues(append)
     }

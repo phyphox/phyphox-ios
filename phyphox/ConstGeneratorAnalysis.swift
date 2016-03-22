@@ -9,7 +9,7 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
-
+    
     override func update() {
         var value: Double = 0
         var length: Int = 0
@@ -42,7 +42,15 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
             length = outBuffer.size
         }
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(["value" : value, "length" : length])
+        #endif
+        
         let append = [Double](count: length, repeatedValue: value)
+        
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(append)
+        #endif
         
         outBuffer.replaceValues(append)
     }

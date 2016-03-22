@@ -29,8 +29,6 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         }
     }
     
-    //TODO: TEST!!!
-    
     override func update() {
         var iterators: [(Range, DataBuffer)] = []
         
@@ -76,6 +74,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         var deleteCount = 0
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(iterators.map({ (element) -> [Range: DataBuffer] in
+                return [element.0 : element.1]
+            }))
+        #endif
+        
         for (index, (range, buffer)) in iterators.enumerate() {
             for (i, value) in buffer.enumerate() {
                 if delete.containsIndex(i) {
@@ -93,7 +97,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                         }
                     }
                     
-                    deleteCount++
+                    deleteCount += 1
                     
                     continue
                 }
@@ -101,6 +105,10 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                 out[index].append(value)
             }
         }
+        
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(out)
+        #endif
         
         for (i, output) in outputs.enumerate() {
             output.buffer!.replaceValues(out[i])

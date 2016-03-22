@@ -10,7 +10,6 @@ sleep 3s
 #git clone https://github.com/nicklockwood/XMLDictionary
 #rm -rf XMLDictionary/.git
 
-
 rm -rf EZAudio
 git clone https://github.com/syedhali/EZAudio
 rm -rf EZAudio/.git
@@ -44,6 +43,7 @@ rm -rf ClusterPrePermissions/.git
 sed -i -e 's/typedef NS_ENUM/@import Foundation;@import UIKit;typedef NS_ENUM/g' ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m
 
 rm ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions/ClusterPrePermissions.m-e
+
 
 echo Removing CocoaPods stuff
 

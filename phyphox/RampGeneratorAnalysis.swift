@@ -9,7 +9,7 @@
 import Foundation
 
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
-
+    
     override func update() {
         var start: Double = 0
         var stop: Double = 0
@@ -53,11 +53,19 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         
         var append: [Double] = []
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(["start" : start, "stop" : stop, "length" : length])
+        #endif
+        
         for i in 0..<length {
             let val = start+(stop-start)/Double(length-1)*Double(i)
             
             append.append(val)
         }
+        
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(append)
+        #endif
         
         outBuffer.replaceValues(append)
     }

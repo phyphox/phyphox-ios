@@ -33,7 +33,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                 let array = input.buffer!.toArray()
                 
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
-                   values.insert(array, atIndex: 0)
+                    values.insert(array, atIndex: 0)
                 }
                 else {
                     values.append(array)
@@ -52,11 +52,19 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        #if DEBUG_ANALYSIS
+            debug_noteInputs(values)
+        #endif
+        
         let out = method(values)
+        
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(out)
+        #endif
         
         for output in outputs {
             output.buffer!.replaceValues(out)
         }
     }
-
+    
 }

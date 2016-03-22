@@ -62,9 +62,9 @@ final class ExperimentSensorInput {
          */
         var iterationStartTimestamp: NSTimeInterval = 0.0
         
-        var x: Double = 0.0
-        var y: Double = 0.0
-        var z: Double = 0.0
+        var x: Double?
+        var y: Double?
+        var z: Double?
         
         var numberOfUpdates: Int = 0
         
@@ -192,19 +192,19 @@ final class ExperimentSensorInput {
         }
     }
     
-    func writeToBuffers(x: Double, y: Double, z: Double) {
-        if let xBuffer = self.xBuffer {
-            xBuffer.append(x)
+    func writeToBuffers(x: Double?, y: Double?, z: Double?) {
+        if x != nil && xBuffer != nil {
+            xBuffer!.append(x)
         }
-        if let yBuffer = self.yBuffer {
-            yBuffer.append(y)
+        if y != nil && yBuffer != nil {
+            yBuffer!.append(y)
         }
-        if let zBuffer = self.zBuffer {
-            zBuffer.append(z)
+        if z != nil && zBuffer != nil {
+            zBuffer!.append(z)
         }
         
-        if let tBuffer = self.tBuffer {
-            tBuffer.append(CFAbsoluteTimeGetCurrent()-startTimestamp)
+        if tBuffer != nil {
+            tBuffer!.append(CFAbsoluteTimeGetCurrent()-startTimestamp)
         }
     }
     
@@ -214,28 +214,49 @@ final class ExperimentSensorInput {
             startTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
         }
         
-        if x != nil { //if x, y or z is not nil then all of them are not nil
-            if let av = self.averaging { //Recoring average?
-                if av.iterationStartTimestamp == 0.0 {
-                    av.iterationStartTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
+        if let av = self.averaging { //Recoring average?
+            if av.iterationStartTimestamp == 0.0 {
+                av.iterationStartTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
+            }
+            
+            if x != nil {
+                if av.x == nil {
+                    av.x = x!
                 }
-                
-                av.x += x!
-                av.y += y!
-                av.z += z!
-                
-                av.numberOfUpdates++
+                else {
+                    av.x! += x!
+                }
             }
-            else { //Or raw values?
-                writeToBuffers(x!, y: y!, z: z!)
+            
+            if y != nil {
+                if av.y == nil {
+                    av.y = y!
+                }
+                else {
+                    av.y! += y!
+                }
             }
+            
+            if z != nil {
+                if av.z == nil {
+                    av.z = z!
+                }
+                else {
+                    av.z! += z!
+                }
+            }
+            
+            av.numberOfUpdates += 1
+        }
+        else { //Or raw values?
+            writeToBuffers(x, y: y, z: z)
         }
         
         if let av = self.averaging {
             if av.requiresFlushing() {
                 let u = Double(av.numberOfUpdates)
                 
-                writeToBuffers(av.x/u, y: av.y/u, z: av.z/u)
+                writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil))
                 
                 self.resetValuesForAveraging()
             }

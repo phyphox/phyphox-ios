@@ -74,7 +74,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         if xIn != nil {
             var xraw = xIn!.toArray()
             
-            for (var i = 0; i < count; i++) {
+            for i in 0 ..< count {
                 if (i < count) {
                     x[i] = xraw[i]-xraw[0]; //There is still input left. Use it and calculate the relative x
                 }
@@ -85,7 +85,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         }
         else {
             //There is no input2. Let's fill it with 0,1,2,3,4....
-            for (var i = 0; i < count; i++) {
+            for i in 0 ..< count {
                 x[i] = Double(i);
             }
         }
@@ -94,7 +94,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         var yValues: [Double] = []
         
         //The actual calculation
-        for (var i = 0; i < count; i++) { //Displacement i for each value of input1
+        for i in 0 ..< count { //Displacement i for each value of input1
             let xVal = x[i]
             
             if (xVal < mint || xVal > maxt) { //Skip this, if it should be filtered
@@ -103,7 +103,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             
             var sum = 0.0
             
-            for (var j = 0; j < count-i; j++) { //For each value of input1 minus the current displacement
+            for j in 0 ..< count-i { //For each value of input1 minus the current displacement
                 sum += y[j]*y[j+i]; //Product of normal and displaced data
             }
             

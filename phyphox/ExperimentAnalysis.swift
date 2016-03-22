@@ -44,17 +44,13 @@ final class ExperimentAnalysis : DataBufferObserver {
         setNeedsUpdate()
     }
     
-    private var scheduleUpdate = false
     private var busy = false
     
     /**
      Schedules an update.
     */
     func setNeedsUpdate() {
-        if busy {
-            scheduleUpdate = true
-        }
-        else {
+        if !busy {
             busy = true
             
             after(0.1, closure: { () -> Void in
@@ -63,11 +59,6 @@ final class ExperimentAnalysis : DataBufferObserver {
                 self.delegate?.analysisDidUpdate(self)
                 
                 self.busy = false
-                
-                if self.scheduleUpdate {
-                    self.scheduleUpdate = false
-                    self.setNeedsUpdate()
-                }
             })
         }
     }

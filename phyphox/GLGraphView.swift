@@ -15,9 +15,23 @@ struct GLpoint {
     var y: GLfloat
 }
 
+struct GLcolor {
+    var r, g, b, a: Float
+}
 class GLGraphView: GLKView {
     private let baseEffect = GLKBaseEffect()
     private var vbo: GLuint = 0
+    
+    var lineWidth: GLfloat = 2.0
+    var lineColor: GLcolor = GLcolor(r: 0.0, g: 0.0, b: 0.0, a: 1.0) {
+        didSet {
+            baseEffect.constantColor = GLKVector4Make(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
+            
+            EAGLContext.setCurrentContext(context)
+            
+            glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
+        }
+    }
     
     override convenience init(frame: CGRect) {
         self.init(frame: frame, context: EAGLContext(API: .OpenGLES2))
@@ -47,7 +61,7 @@ class GLGraphView: GLKView {
         
         //Background color & line color
         glClearColor(0.0, 0.0, 0.0, 0.0)
-        baseEffect.constantColor = GLKVector4Make(0.0, 0.0, 0.0, 1.0)
+        baseEffect.constantColor = GLKVector4Make(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
         
         glGenBuffers(1, &vbo)
     }
@@ -55,8 +69,8 @@ class GLGraphView: GLKView {
     private var points: UnsafePointer<GLpoint>!
     private var length: UInt!
     
-    private var xscale: Float = 0.0
-    private var yscale: Float = 0.0
+    private var xScale: Float = 0.0
+    private var yScale: Float = 0.0
     
     private var min: GLpoint!
     private var max: GLpoint!
@@ -74,8 +88,12 @@ class GLGraphView: GLKView {
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
         glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), points, GLenum(GL_DYNAMIC_DRAW))
         
-        xscale = 2.0/(max.x-min.x)
-        yscale = 2.0/(max.y-min.y)
+        xScale = 2.0/(max.x-min.x)
+        
+        let dataPerPixelY = (max.y-min.y)/GLfloat(self.bounds.size.height)
+        let biasDataY = lineWidth*dataPerPixelY
+        
+        yScale = 2.0/((max.y-min.y)+biasDataY)
         
         self.max = max
         self.min = min
@@ -88,24 +106,29 @@ class GLGraphView: GLKView {
     }
     
     internal func draw() {
-        if length == nil {
+        if length == nil || length! == 0 {
             return
         }
         
         EAGLContext.setCurrentContext(context)
         
-        glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
+        glDisable(GLenum(GL_DEPTH_TEST))
         
-        var transform = GLKMatrix4MakeScale(xscale, yscale, 1.0)
+        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
+        glEnable(GLenum(GL_BLEND))
+        
+        glLineWidth(lineWidth)
+        
+        var transform = GLKMatrix4MakeScale(xScale, yScale, 1.0)
         transform = GLKMatrix4Translate(transform, -min.x-(max.x-min.x)/2.0, -min.y-(max.y-min.y)/2.0, 0.0)
         baseEffect.transform.projectionMatrix = transform
         
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
         baseEffect.prepareToDraw()
         
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue));
         glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_TRUE), GLsizei(sizeof(GLpoint)), nil)
-        glLineWidth(2.0)
+        
         glDrawArrays(GLenum(GL_LINE_STRIP), 0, GLsizei(length))
     }
 }

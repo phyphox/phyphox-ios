@@ -112,7 +112,7 @@ func textFromXML(xml: AnyObject) -> String {
 //MARK: - Protocol
 
 protocol ExperimentMetadataParser {
-    typealias Input
+    associatedtype Input
     
     init(_ data: Input)
 }

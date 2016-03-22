@@ -37,8 +37,8 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         titleView = PTNavigationBarTitleView()
         super.init(nibName: nil, bundle: nil)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardFrameChanged:", name: UIKeyboardWillChangeFrameNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardFrameChanged:", name:UIKeyboardDidChangeFrameNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:UIKeyboardDidChangeFrameNotification, object: nil)
     }
     
     //MARK: -
@@ -138,7 +138,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         menuColorHost = UIControl()
         menuColorHost!.backgroundColor = UIColor.blackColor()
         menuColorHost!.alpha = 0.0
-        menuColorHost!.addTarget(self, action: "dismissDropDownMenuIfVisible", forControlEvents: .TouchUpInside)
+        menuColorHost!.addTarget(self, action: #selector(dismissDropDownMenuIfVisible), forControlEvents: .TouchUpInside)
         
         let height = self.navigationController!.navigationBar.frame.size.height+(UIApplication.sharedApplication().statusBarHidden ? 0.0 : 20.0)
         
@@ -239,9 +239,9 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     override class func initialize() {
         super.initialize()
         
-        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: "keyboardFrameWillChange:", name: UIKeyboardWillChangeFrameNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
         
-        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: "keyboardFrameDidChange:", name:UIKeyboardDidChangeFrameNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name:UIKeyboardDidChangeFrameNotification, object: nil)
     }
     
     dynamic private class func keyboardFrameWillChange(notification: NSNotification) {

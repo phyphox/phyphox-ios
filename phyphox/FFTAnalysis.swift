@@ -46,7 +46,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         logn = Int(log(Double(n))/log(2.0))
         
         if (n != (1 << logn)) {
-            logn++;
+            logn += 1;
             np2 = (1 << logn); //power of two after zero filling
         }
         else {
@@ -56,7 +56,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         cosArray = [Double](count: np2/2, repeatedValue: 0.0)
         sinArray = [Double](count: np2/2, repeatedValue: 0.0)
         
-        for (var i = 0; i < np2 / 2; i++) {
+        for i in 0 ..< np2 / 2 {
             cosArray[i] = cos(-2.0 * M_PI * Double(i)/Double(np2));
             sinArray[i] = sin(-2.0 * M_PI * Double(i)/Double(np2));
         }
@@ -99,7 +99,6 @@ final class FFTAnalysis: ExperimentAnalysisModule {
          ****************************************************************/
         
         var j: Int
-        var k: Int
         var n1: Int
         var n2: Int
         var a: Int
@@ -109,16 +108,10 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         var t1: Double
         var t2: Double
         
-        var xMax: Double? = nil
-        var xMin: Double? = nil
-        
-        var yMax: Double? = nil
-        var yMin: Double? = nil
-        
         j = 0; /* bit-reverse */
         n2 = np2/2;
         
-        for (var i = 1; i < np2 - 1; i++) {
+        for i in 1 ..< np2 - 1 {
             n1 = n2;
             
             while j >= n1 {
@@ -133,77 +126,33 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                 x[i] = x[j];
                 x[j] = t1;
                 
-                let maxXAssigned = max(x[i], x[j])
-                let minXAssigned = min(x[i], x[j])
-                
-                if xMax == nil || maxXAssigned > xMax {
-                    xMax = maxXAssigned
-                }
-                
-                if xMin == nil || minXAssigned < xMin {
-                    xMin = minXAssigned
-                }
-                
                 t1 = y[i];
                 y[i] = y[j];
                 y[j] = t1;
-                
-                let maxYAssigned = max(y[i], y[j])
-                let minYAssigned = min(y[i], y[j])
-                
-                if yMax == nil || maxYAssigned > yMax {
-                    yMax = maxYAssigned
-                }
-                
-                if yMin == nil || minYAssigned < yMin {
-                    yMin = minYAssigned
-                }
             }
         }
         
         n2 = 1;
         
-        for (var i = 0; i < logn; i++) {
+        for i in 0..<logn {
             n1 = n2;
             n2 = n2 + n2;
             a = 0;
             
-            for (j = 0; j < n1; j++) {
+            for j in 0..<n1 {
                 c = cosArray[a];
                 s = sinArray[a];
                 a += 1 << (logn - i - 1);
                 
-                for (k = j; k < np2; k = k+n2) {
+                for k in j.stride(to: np2, by: n2) {
                     t1 = c*x[k+n1] - s*y[k+n1];
                     t2 = s*x[k+n1] + c*y[k+n1];
                     
                     x[k+n1] = x[k] - t1;
                     x[k] = x[k] + t1;
                     
-                    let maxXAssigned = max(x[k+n1], x[k])
-                    let minXAssigned = min(x[k+n1], x[k])
-                    
-                    if xMax == nil || maxXAssigned > xMax {
-                        xMax = maxXAssigned
-                    }
-                    
-                    if xMin == nil || minXAssigned < xMin {
-                        xMin = minXAssigned
-                    }
-                    
                     y[k+n1] = y[k] - t2;
                     y[k] = y[k] + t2;
-                    
-                    let maxYAssigned = max(y[k+n1], y[k])
-                    let minYAssigned = min(y[k+n1], y[k])
-                    
-                    if yMax == nil || maxYAssigned > yMax {
-                        yMax = maxYAssigned
-                    }
-                    
-                    if yMin == nil || minYAssigned < yMin {
-                        yMin = minYAssigned
-                    }
                 }
             }
         }

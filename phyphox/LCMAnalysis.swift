@@ -24,6 +24,9 @@ final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
                     var temp: [Double] = []
                     
                     for (j, value) in main.enumerate() {
+                        if isinf(input[j]) || isnan(input[j]) {
+                            continue
+                        }
                         temp.append(Double(self.dynamicType.lcm(UInt(value), v: UInt(input[j]))))
                     }
                     

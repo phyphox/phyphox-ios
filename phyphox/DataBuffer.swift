@@ -67,6 +67,8 @@ protocol DataBufferObserver : AnyObject {
     var trashedCount: Int = 0
     
     var staticBuffer: Bool = false
+    var written: Bool = false
+    
     var count: Int {
         get {
             return Swift.min(queue.count, size)
@@ -105,34 +107,6 @@ protocol DataBufferObserver : AnyObject {
         }
     }
     
-    func append(value: Double!, async: Bool = false, notify: Bool = true) {
-        if (value == nil) {
-            return
-        }
-        
-        let operations = { () -> () in
-            self.queue.enqueue(value, async: true)
-            
-            if (self.actualCount > self.size) {
-                self.queue.dequeue(true)
-                self.trashedCount++
-            }
-        }
-        
-        if async {
-            operations()
-        }
-        else {
-            queue.sync {() -> Void in
-                autoreleasepool(operations)
-            }
-        }
-        
-        if notify {
-            sendUpdateNotification()
-        }
-    }
-    
     func sendUpdateNotification() {
         for observer in observers {
             (observer as! DataBufferObserver).dataBufferUpdated(self)
@@ -162,15 +136,49 @@ protocol DataBufferObserver : AnyObject {
         }
     }
     
-    func replaceValues(var values: [Double], notify: Bool = true) {
-        if (!staticBuffer) {
+    func replaceValues(values: [Double], notify: Bool = true) {
+        if !staticBuffer || !written {
+            written = true
             trashedCount = 0
             
-            if values.count > size {
-                values = Array(values[values.count-size..<values.count])
+            var vals = values
+            
+            if vals.count > size {
+                vals = Array(vals[vals.count-size..<vals.count])
             }
             
-            queue.replaceValues(values)
+            queue.replaceValues(vals)
+            
+            if notify {
+                sendUpdateNotification()
+            }
+        }
+    }
+    
+    func append(value: Double?, async: Bool = false, notify: Bool = true) {
+        if !staticBuffer || !written {
+            written = true
+            if (value == nil) {
+                return
+            }
+            
+            let operations = { () -> () in
+                self.queue.enqueue(value!, async: true)
+                
+                if (self.actualCount > self.size) {
+                    self.queue.dequeue(true)
+                    self.trashedCount += 1
+                }
+            }
+            
+            if async {
+                operations()
+            }
+            else {
+                queue.sync {() -> Void in
+                    autoreleasepool(operations)
+                }
+            }
             
             if notify {
                 sendUpdateNotification()
@@ -179,26 +187,35 @@ protocol DataBufferObserver : AnyObject {
     }
     
     func appendFromArray(values: [Double], notify: Bool = true) {
-        queue.sync({ () -> Void in
-            autoreleasepool({ () -> () in
-                var array = self.queue.toArray()
-                
-                array.appendContentsOf(values)
-                
-                if array.count > self.size {
-                    array = Array(array[array.count-self.size..<array.count])
-                }
-                
-                self.queue.replaceValues(values, async: true)
+        if !staticBuffer || !written {
+            written = true
+            queue.sync({ () -> Void in
+                autoreleasepool({ () -> () in
+                    var array = self.queue.toArray()
+                    
+                    array.appendContentsOf(values)
+                    
+                    if array.count > self.size {
+                        array = Array(array[array.count-self.size..<array.count])
+                    }
+                    
+                    self.queue.replaceValues(values, async: true)
+                })
             })
-        })
-        
-        if notify {
-            sendUpdateNotification()
+            
+            if notify {
+                sendUpdateNotification()
+            }
         }
     }
     
     func toArray() -> [Double] {
         return queue.toArray()
+    }
+    
+    override var description: String {
+        get {
+            return "<\(self.dynamicType): \(unsafeAddressOf(self)): \(toArray())>"
+        }
     }
 }

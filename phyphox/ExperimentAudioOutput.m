@@ -14,6 +14,9 @@
     EZOutput *_output;
     NSUInteger _lastIndex;
     BOOL _stopPlayback;
+    AVAudioPlayer *_player;
+    
+    BOOL _playing;
 }
 
 @end
@@ -48,10 +51,12 @@
     
     Float32 *buffer = (Float32 *)audioBufferList->mBuffers[0].mData;
     
+    NSArray <NSNumber *> *array = _dataSource.toArray;
+    
     for (UInt32 frame = 0; frame < frames; frame++) {
         if (!_loop) {
-            if (frame < _dataSource.count) {
-                buffer[frame] = [_dataSource objectAtIndexedSubscript:frame];
+            if (frame < array.count) {
+                buffer[frame] = array[frame].floatValue;
             }
             else {
                 _stopPlayback = YES;
@@ -59,25 +64,31 @@
             }
         }
         else {
-            NSUInteger index = (_lastIndex+frame) % _dataSource.count;
+            NSUInteger index = (_lastIndex+frame) % array.count;
             
             buffer[frame] = [_dataSource objectAtIndexedSubscript:index];
         }
     }
     
-    _lastIndex = (_lastIndex+frames-1) % _dataSource.count;
+    _lastIndex = (_lastIndex+frames-1) % array.count;
     
     return noErr;
 }
 
 - (void)play {
-    _stopPlayback = NO;
-    [_output startPlayback];
+    if (!_playing) {
+        _playing = YES;
+        _stopPlayback = NO;
+        [_output startPlayback];
+    }
 }
 
 - (void)pause {
-    _lastIndex = 0;
-    [_output stopPlayback];
+    if (_playing) {
+        _lastIndex = 0;
+        [_output stopPlayback];
+        _playing = NO;
+    }
 }
 
 @end

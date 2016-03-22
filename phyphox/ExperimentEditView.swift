@@ -41,14 +41,9 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         
         super.init(descriptor: descriptor)
         
-        textField.addTarget(self, action: "hideKeyboard:", forControlEvents: .EditingDidEndOnExit)
+        textField.addTarget(self, action: #selector(hideKeyboard(_:)), forControlEvents: .EditingDidEndOnExit)
         
-        if let lastBufferValue = descriptor.buffer.last {
-            textField.text = formattedValue(lastBufferValue)
-        }
-        else {
-            textField.text = formattedValue(descriptor.defaultValue)
-        }
+        updateTextField(textField)
         
         textField.delegate = self
         
@@ -63,9 +58,13 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
     }
     
     public func textFieldDidEndEditing(textField: UITextField) {
+        updateTextField(textField)
+    }
+    
+    func updateTextField(textField: UITextField) {
         let val: Double
         
-        if textField.text!.characters.count == 0 {
+        if textField.text?.characters.count == 0 || Double(textField.text!) == nil {
             textField.text = formattedValue(descriptor.defaultValue)
             val = descriptor.defaultValue
         }
