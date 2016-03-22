@@ -26,10 +26,6 @@ class GLGraphView: GLKView {
     var lineColor: GLcolor = GLcolor(r: 0.0, g: 0.0, b: 0.0, a: 1.0) {
         didSet {
             baseEffect.constantColor = GLKVector4Make(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
-            
-            EAGLContext.setCurrentContext(context)
-            
-            glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         }
     }
     
@@ -76,12 +72,13 @@ class GLGraphView: GLKView {
     private var max: GLpoint!
     
     func setPoints(p: UnsafePointer<GLpoint>, length: UInt, min: GLpoint, max: GLpoint) {
-        if length == 0 {
-            return
-        }
-        
         points = p
         self.length = length
+        
+        if length == 0 {
+            setNeedsDisplay()
+            return
+        }
         
         EAGLContext.setCurrentContext(context)
         
@@ -111,6 +108,8 @@ class GLGraphView: GLKView {
         }
         
         EAGLContext.setCurrentContext(context)
+        
+        glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
         glDisable(GLenum(GL_DEPTH_TEST))
         

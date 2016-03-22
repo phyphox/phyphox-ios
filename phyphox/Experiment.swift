@@ -123,6 +123,12 @@ final class Experiment : ExperimentAnalysisDelegate {
                 }
             }
             
+            if audioInputs != nil {
+                for input in audioInputs! {
+                    input.stopRecording()
+                }
+            }
+            
             stopAudio()
             
             running = false
@@ -137,6 +143,12 @@ final class Experiment : ExperimentAnalysisDelegate {
         running = true
         
         playAudio()
+        
+        if audioInputs != nil {
+            for input in audioInputs! {
+                input.startRecording()
+            }
+        }
         
         if self.sensorInputs != nil {
             for sensor in self.sensorInputs! {

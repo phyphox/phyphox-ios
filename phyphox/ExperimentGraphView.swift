@@ -158,8 +158,15 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     var points: [GLpoint] = []
                     
                     for i in 0..<count {
-                        let x = GLfloat(xValues[i]!)
-                        let y = GLfloat(yValues[i]!)
+                        let rawX = xValues[i]
+                        let rawY = yValues[i]
+                        
+                        guard rawX != nil && rawY != nil else {
+                            break
+                        }
+                        
+                        let x = GLfloat(rawX!)
+                        let y = GLfloat(rawY!)
                         
                         if x < minX {
                             minX = x
