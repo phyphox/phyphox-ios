@@ -32,6 +32,7 @@
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
 		6B422E171CA2D69700E945BC /* libTheAmazingAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B422E121CA2D67900E945BC /* libTheAmazingAudioEngine.a */; };
 		6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */; };
+		6B422E241CA3377600E945BC /* kiss_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 6B422E221CA3377600E945BC /* kiss_fft.c */; };
 		6B6319631C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */; };
 		6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */; };
 		6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319671C48457B0038BE22 /* CollectionViewController.swift */; };
@@ -275,6 +276,8 @@
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = RangefilterTest.phyphox; sourceTree = "<group>"; };
 		6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TheAmazingAudioEngine.xcodeproj; path = External/TheAmazingAudioEngine/TheAmazingAudioEngine.xcodeproj; sourceTree = SOURCE_ROOT; };
+		6B422E221CA3377600E945BC /* kiss_fft.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kiss_fft.c; path = External/kissfft/kiss_fft.c; sourceTree = SOURCE_ROOT; };
+		6B422E231CA3377600E945BC /* kiss_fft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kiss_fft.h; path = External/kissfft/kiss_fft.h; sourceTree = SOURCE_ROOT; };
 		6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAudioOutput.swift; sourceTree = "<group>"; };
 		6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleCollectionViewCell.swift; sourceTree = "<group>"; };
 		6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleFactory.swift; sourceTree = "<group>"; };
@@ -512,6 +515,7 @@
 		6B0C71561C1C708F00500FEE /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6B422E1E1CA335AE00E945BC /* kiss_fft */,
 				6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */,
 				6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */,
 				6BD769DA1C496C16006B4A0F /* pop.xcodeproj */,
@@ -541,6 +545,15 @@
 				6B422E161CA2D67900E945BC /* libTheAmazingAudioEngine tvOS.a */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6B422E1E1CA335AE00E945BC /* kiss_fft */ = {
+			isa = PBXGroup;
+			children = (
+				6B422E221CA3377600E945BC /* kiss_fft.c */,
+				6B422E231CA3377600E945BC /* kiss_fft.h */,
+			);
+			name = kiss_fft;
 			sourceTree = "<group>";
 		};
 		6B6319951C4951700038BE22 /* Drop Down Menu */ = {
@@ -1045,6 +1058,7 @@
 				6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */,
 				6B00F0B21C46CE2300971941 /* ExperimentOutput.swift in Sources */,
 				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
+				6B422E241CA3377600E945BC /* kiss_fft.c in Sources */,
 				6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */,
 				6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */,
 				6B00F0C81C46F66500971941 /* XMLDictionary.m in Sources */,

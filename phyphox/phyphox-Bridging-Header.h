@@ -9,6 +9,7 @@
 #import "VBFPopFlatButton.h"
 #import "PTNavigationBarTitleView.h"
 #import <TheAmazingAudioEngine/TheAmazingAudioEngine.h>
+#import "kiss_fft.h"
 
 BOOL AEFloatConverterToFloat(AEFloatConverter* converter, AudioBufferList *sourceBuffer, float * const * targetBuffers, UInt32 frames);
 BOOL AEFloatConverterFromFloat(AEFloatConverter* converter, float * const * sourceBuffers, AudioBufferList *targetBuffer, UInt32 frames);

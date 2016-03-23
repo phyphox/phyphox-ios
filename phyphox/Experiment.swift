@@ -163,120 +163,15 @@ final class Experiment : ExperimentAnalysisDelegate {
         catch let error {
             print("Audio error: \(error)")
         }
-
-        /* {
- /*       let description = monoFloatFormatWithSampleRate(Double(rate))
-        
-        if floatConverter == nil {
-            floatConverter = AEFloatConverter(sourceFormat: description)
-        }
-        
-        var mask = AEAudioControllerOptionAllowMixingWithOtherApps.rawValue
-        
-        if hasOutput {
-            if hasInput {
-                mask |= AEAudioControllerOptionEnableOutput.rawValue | AEAudioControllerOptionEnableInput.rawValue
-                
-                
-                
-//                do {
-//                    try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: .MixWithOthers)
-//                }
-//                catch let error {
-//                    print("Audio session category error: \(error)")
-//                }
-            }
-            else {
-mask |= AEAudioControllerOptionEnableOutput.rawValue
-                
-//                do {
-//                    try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, withOptions: .MixWithOthers)
-//                }
-//                catch let error {
-//                    print("Audio session category error: \(error)")
-//                }
-            }
-        }
-        else if hasInput {
-                    mask |= AEAudioControllerOptionEnableInput.rawValue
-            
-//            do {
-//                try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord, withOptions: .MixWithOthers)
-//            }
-//            catch let error {
-//                print("Audio session category error: \(error)")
-//            }
-        }
-        
-//        if hasOutput || hasInput {
-//            do {
-//                try AVAudioSession.sharedInstance().setActive(true)
-//            }
-//            catch let error {
-//                print("Audio session activation error: \(error)")
-//            }
-//        }
-//        
-//        if hasOutput {
-//            do {
-//                try AVAudioSession.sharedInstance().overrideOutputAudioPort(.Speaker)
-//            }
-//            catch let error {
-//                print("Audio session output routing error: \(error)")
-//            }
-//        }
-        
-        let fuckingaudioController = AEAudioController(audioDescription: description, options:         AEAudioControllerOptionAllowMixingWithOtherApps)
-        
-        let r = AEBlockAudioReceiver { [unowned self] (from: UnsafeMutablePointer<Void>, timestamp: UnsafePointer<AudioTimeStamp>, frames: UInt32, data: UnsafeMutablePointer<AudioBufferList>) in
-            //            autoreleasepool({
-            //                var pointer = UnsafeMutablePointer<Float>.alloc(Int(frames))
-            //
-            //                defer {
-            //                    pointer.destroy()
-            //                    pointer.dealloc(Int(frames))
-            //                }
-            //
-            //                AEFloatConverterToFloat(experiment.floatConverter!, data, &pointer, frames)
-            //
-            //                let array: [Double] = Array(UnsafeMutableBufferPointer(start: pointer, count: Int(frames))).map { (fl) -> Double in
-            //                    return Double(fl)
-            //                }
-            //
-            //                dispatch_async(dispatch_get_main_queue()) {
-            //                    for out in self.outBuffers {
-            //                        out.appendFromArray(array)
-            //                    }
-            //                }
-            //            })
-        }
-        
-        fuckingaudioController.addInputReceiver(r)
-        
-        after(1.0) {
-            fuckingaudioController.removeInputReceiver(r)
-            fuckingaudioController.stop()
-        }*/
-        }();*/
     }
     
     private func tearDownAudio() {
-        ExperimentManager.sharedInstance().audioController.stop()
- /*       try? audioController?.setInputEnabled(false)
-        try? audioController?.setOutputEnabled(false)
-        audioController?.stop()
-        audioController = nil
-//        let hasOutput = self.output?.audioOutput.count > 0
-//        let hasInput = audioInputs?.count > 0
-//        
-//        if hasOutput || hasInput {
-//            do {
-//                try AVAudioSession.sharedInstance().setActive(false)
-//            }
-//            catch let error {
-//                print("Audio session deactivation error: \(error)")
-//            }
-//        }*/
+        let hasOutput = output?.audioOutput.count > 0
+        let hasInput = audioInputs?.count > 0
+        
+        if hasInput || hasOutput {
+            ExperimentManager.sharedInstance().audioController.stop()
+        }
     }
     
     func stop() {
