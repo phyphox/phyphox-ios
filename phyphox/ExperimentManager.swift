@@ -11,8 +11,53 @@ import UIKit
 var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
 var fileExtension = "phyphox"
 
-final class ExperimentManager: NSObject {
+final class ExperimentManager {
     private(set) var experimentCollections: [ExperimentCollection]
+    
+    private var adc: AEAudioController?
+    private var fltc: AEFloatConverter?
+    
+    var floatConverter: AEFloatConverter {
+        get {
+            return fltc!
+        }
+    }
+    
+    var audioController: AEAudioController {
+        get {
+            return adc!
+        }
+    }
+    
+    func setAudioControllerDescription(audioDescription: AudioStreamBasicDescription, inputEnabled: Bool, outputEnabled: Bool) -> AEAudioController {
+        if adc == nil {
+            var bitmask = AEAudioControllerOptionAllowMixingWithOtherApps.rawValue
+            
+            if inputEnabled {
+                bitmask |= AEAudioControllerOptionEnableInput.rawValue
+            }
+            
+            if outputEnabled {
+                bitmask |= AEAudioControllerOptionEnableOutput.rawValue
+            }
+            
+            adc = AEAudioController(audioDescription: audioDescription, options: AEAudioControllerOptions(bitmask))
+            
+            fltc = AEFloatConverter(sourceFormat: audioDescription)
+        }
+        else {
+            fltc = AEFloatConverter(sourceFormat: audioDescription)
+            
+            do {
+                try adc!.setAudioDescription(audioDescription, inputEnabled: inputEnabled, outputEnabled: outputEnabled)
+            }
+            catch let error {
+                print("Audio controller error: \(error)")
+            }
+        }
+        
+        return adc!
+    }
     
     class func sharedInstance() -> ExperimentManager {
         struct Singleton {
@@ -27,7 +72,7 @@ final class ExperimentManager: NSObject {
         return Singleton.instance!
     }
     
-    override init() {
+    init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
         
         let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
@@ -59,7 +104,5 @@ final class ExperimentManager: NSObject {
         self.experimentCollections = Array(experimentCollections.values)
         
         print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
-        
-        super.init()
     }
 }

@@ -37,3 +37,9 @@ extension RangeReplaceableCollectionType where Index : Comparable {
         indices.sort().lazy.reverse().forEach{ removeAtIndex($0) }
     }
 }
+
+func monoFloatFormatWithSampleRate(sampleRate: Double) -> AudioStreamBasicDescription {
+    let byteSize = UInt32(sizeof(Float))
+    
+    return AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsPacked|kAudioFormatFlagIsFloat, mBytesPerPacket: byteSize, mFramesPerPacket: 1, mBytesPerFrame: byteSize, mChannelsPerFrame: 1, mBitsPerChannel: UInt32(CHAR_BIT)*byteSize, mReserved: 0)
+}

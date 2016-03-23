@@ -8,13 +8,11 @@
 
 #import "ExperimentAudioOutput.h"
 #import "phyphox-swift.h"
-#import <EZAudioiOS/EZAudioiOS.h>
 
-@interface ExperimentAudioOutput () <EZOutputDataSource> {
-    EZOutput *_output;
+@interface ExperimentAudioOutput () {
+//    EZOutput *_output;
     NSUInteger _lastIndex;
     BOOL _stopPlayback;
-    AVAudioPlayer *_player;
     
     BOOL _playing;
 }
@@ -27,8 +25,8 @@
     self = [super init];
     
     if (self) {
-        AudioStreamBasicDescription inputFormat = [EZAudioUtilities monoFloatFormatWithSampleRate:sampleRate];
-        _output = [EZOutput outputWithDataSource:self inputFormat:inputFormat];
+//        AudioStreamBasicDescription inputFormat = [EZAudioUtilities monoFloatFormatWithSampleRate:sampleRate];
+//        _output = [EZOutput outputWithDataSource:self inputFormat:inputFormat];
         
         _dataSource = dataBuffer;
         _sampleRate = sampleRate;
@@ -38,7 +36,8 @@
     return self;
 }
 
-- (OSStatus)output:(EZOutput *)output shouldFillAudioBufferList:(AudioBufferList *)audioBufferList withNumberOfFrames:(UInt32)frames timestamp:(const AudioTimeStamp *)timestamp {
+//Setting pointers in swift is virtually impossible (especially with arrays), therefore this entire class is written in Objc
+//- (OSStatus)output:(EZOutput *)output shouldFillAudioBufferList:(AudioBufferList *)audioBufferList withNumberOfFrames:(UInt32)frames timestamp:(const AudioTimeStamp *)timestamp {
     if (_stopPlayback) {
         _stopPlayback = NO;
         [self pause];
@@ -59,34 +58,34 @@
                 buffer[frame] = array[frame].floatValue;
             }
             else {
+                buffer[frame] = 0.0f;
                 _stopPlayback = YES;
-                break;
             }
         }
         else {
             NSUInteger index = (_lastIndex+frame) % array.count;
             
-            buffer[frame] = [_dataSource objectAtIndexedSubscript:index];
+            buffer[frame] = array[index].floatValue;
         }
     }
     
     _lastIndex = (_lastIndex+frames-1) % array.count;
     
     return noErr;
-}
+//}
 
 - (void)play {
     if (!_playing) {
         _playing = YES;
         _stopPlayback = NO;
-        [_output startPlayback];
+//        [_output startPlayback];
     }
 }
 
 - (void)pause {
     if (_playing) {
         _lastIndex = 0;
-        [_output stopPlayback];
+//        [_output stopPlayback];
         _playing = NO;
     }
 }

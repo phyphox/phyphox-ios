@@ -30,7 +30,7 @@ class GLGraphView: GLKView {
     }
     
     override convenience init(frame: CGRect) {
-        self.init(frame: frame, context: EAGLContext(API: .OpenGLES2))
+        self.init(frame: frame, context: EAGLContext(API: .OpenGLES3))
     }
     
     convenience init() {
@@ -62,7 +62,7 @@ class GLGraphView: GLKView {
         glGenBuffers(1, &vbo)
     }
     
-    private var points: UnsafePointer<GLpoint>!
+    private var points: [GLpoint]!
     private var length: UInt!
     
     private var xScale: Float = 0.0
@@ -71,7 +71,7 @@ class GLGraphView: GLKView {
     private var min: GLpoint!
     private var max: GLpoint!
     
-    func setPoints(p: UnsafePointer<GLpoint>, length: UInt, min: GLpoint, max: GLpoint) {
+    func setPoints(p: [GLpoint], length: UInt, min: GLpoint, max: GLpoint) {
         points = p
         self.length = length
         
@@ -83,7 +83,7 @@ class GLGraphView: GLKView {
         EAGLContext.setCurrentContext(context)
         
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), points, GLenum(GL_DYNAMIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), UnsafePointer(points), GLenum(GL_DYNAMIC_DRAW))
         
         xScale = 2.0/(max.x-min.x)
         
@@ -112,9 +112,9 @@ class GLGraphView: GLKView {
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
         glDisable(GLenum(GL_DEPTH_TEST))
-        
-        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
-        glEnable(GLenum(GL_BLEND))
+
+//        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
+//        glEnable(GLenum(GL_BLEND))
         
         glLineWidth(lineWidth)
         
@@ -126,7 +126,7 @@ class GLGraphView: GLKView {
         baseEffect.prepareToDraw()
         
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue));
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_TRUE), GLsizei(sizeof(GLpoint)), nil)
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(sizeof(GLpoint)), nil)
         
         glDrawArrays(GLenum(GL_LINE_STRIP), 0, GLsizei(length))
     }

@@ -157,6 +157,8 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     
                     var points: [GLpoint] = []
                     
+                    var lastX = -Double.infinity
+                    
                     for i in 0..<count {
                         let rawX = xValues[i]
                         let rawY = yValues[i]
@@ -164,6 +166,12 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         guard rawX != nil && rawY != nil else {
                             break
                         }
+                        
+                        if rawX! < lastX {
+                            print("x value is smaller than previous value!")
+                        }
+                        
+                        lastX = rawX!
                         
                         let x = GLfloat(rawX!)
                         let y = GLfloat(rawY!)
@@ -188,7 +196,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     }
                     
                     dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-                        self.glGraph.setPoints(&points, length: UInt(count), min: GLpoint(x: minX, y: minY), max: GLpoint(x: maxX, y: maxY))
+                        self.glGraph.setPoints(points, length: UInt(count), min: GLpoint(x: minX, y: minY), max: GLpoint(x: maxX, y: maxY))
                     });
                 }
             })
