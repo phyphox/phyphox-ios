@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import Surge
 
 //TODO: Test performance iterative vs Surge
 

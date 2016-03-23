@@ -20,7 +20,7 @@ final class FirstAnalysis: ExperimentAnalysisModule {
         }
         
         for output in outputs {
-            output.buffer!.appendFromArray(append) //only appending few values, so append iteratively and let the buffer take care of max and min values.
+            output.buffer!.appendFromArray(append)
         }
     }
 }

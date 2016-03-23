@@ -92,8 +92,11 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     let delIdx = i-deleteCount
                     
                     for j in 0..<index {
-                        if delIdx < out[j].count {
-                            out[j].removeAtIndex(delIdx) //Remove values from previous buffers that passed.
+                        var ar = out[j]
+                        
+                        if delIdx > 0 && delIdx < ar.count {
+                           ar.removeAtIndex(delIdx) //Remove values from previous buffers that passed.
+                            out[j] = ar
                         }
                     }
                     

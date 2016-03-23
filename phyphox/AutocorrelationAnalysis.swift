@@ -14,7 +14,6 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         var mint: Double = -Double.infinity
         var maxt: Double = Double.infinity
         
-        //TODO: Nur ein x oder mehrere (in wiki steht mehrere)?
         var xIn: DataBuffer?
         var yIn: DataBuffer!
         

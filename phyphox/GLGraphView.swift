@@ -62,7 +62,7 @@ class GLGraphView: GLKView {
         glGenBuffers(1, &vbo)
     }
     
-    private var points: [GLpoint]!
+//    private var points: [GLpoint]!
     private var length: UInt!
     
     private var xScale: Float = 0.0
@@ -72,7 +72,7 @@ class GLGraphView: GLKView {
     private var max: GLpoint!
     
     func setPoints(p: [GLpoint], length: UInt, min: GLpoint, max: GLpoint) {
-        points = p
+//        points = p
         self.length = length
         
         if length == 0 {
@@ -83,7 +83,7 @@ class GLGraphView: GLKView {
         EAGLContext.setCurrentContext(context)
         
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), UnsafePointer(points), GLenum(GL_DYNAMIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), p, GLenum(GL_DYNAMIC_DRAW))
         
         xScale = 2.0/(max.x-min.x)
         

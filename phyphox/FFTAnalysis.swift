@@ -65,15 +65,19 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         }
         
         if realOutput != nil {
-            realOutput!.appendFromArray(out.map({ (cpx) -> Double in
+            let mapped = out.map({ (cpx) -> Double in
                 return Double(cpx.r)
-            }))
+            })
+            
+            realOutput!.appendFromArray(mapped)
         }
         
         if imagOutput != nil {
-            imagInput!.appendFromArray(out.map({ (cpx) -> Double in
+            let mapped = out.map({ (cpx) -> Double in
                 return Double(cpx.i)
-            }))
+            })
+            
+            imagOutput!.appendFromArray(mapped)
         }
     }
 }

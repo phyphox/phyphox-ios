@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Accelerate
 
 final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
     
@@ -27,34 +28,42 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             a = secondBuffer.toArray()
         }
         
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
-        
         let compRange = a.count-b.count
         
-        let compRangeD = Double(compRange)
+        
+        let result = UnsafeMutablePointer<Double>.alloc(compRange)
+        
+        vDSP_convD(a, 1, b, 1, result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
+        
+        let array = Array(UnsafeBufferPointer(start: result, count: compRange))
+        
+        result.destroy()
+        result.dealloc(compRange)
+        
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["a" : a, "b" : b])
         #endif
         
-        //The actual calculation
-        for i in 0..<compRange {
-            var sum = 0.0
-            for j in 0..<b.count {
-                sum += a[j+i]*b[j];
-            }
-            
-            let v = sum/compRangeD
-            
-            append.append(v)
-        }
-        
+//        var append: [Double] = []
+//        let compRangeD = Double(compRange)
+//        //The actual calculation
+//        for i in 0..<compRange {
+//            var sum = 0.0
+//            for j in 0..<b.count {
+//                sum += a[j+i]*b[j];
+//            }
+//            
+//            let v = sum/compRangeD
+//            
+//            append.append(v)
+//        }
+
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+            debug_noteOutputs(array)
         #endif
         
-        outBuffer.replaceValues(append)
+        let outBuffer = outputs.first!.buffer!
+        outBuffer.replaceValues(array)
     }
 }

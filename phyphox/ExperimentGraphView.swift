@@ -156,8 +156,11 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     let count = min(xValues.count, yValues.count)
                     
                     var points: [GLpoint] = []
+                    points.reserveCapacity(count)
                     
                     var lastX = -Double.infinity
+                    
+                    var irgnoredValuesCount = 0
                     
                     for i in 0..<count {
                         let rawX = xValues[i]
@@ -169,6 +172,14 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         
                         if rawX! < lastX {
                             print("x value is smaller than previous value!")
+                        }
+                        
+                        guard !isinf(rawX!) && !isinf(rawY!) else {
+                            irgnoredValuesCount += 1
+                            #if DEBUG
+                                print("Ignoring inf value in graph")
+                            #endif
+                            continue
                         }
                         
                         lastX = rawX!
@@ -196,7 +207,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     }
                     
                     dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-                        self.glGraph.setPoints(points, length: UInt(count), min: GLpoint(x: minX, y: minY), max: GLpoint(x: maxX, y: maxY))
+                        self.glGraph.setPoints(points, length: UInt(count-irgnoredValuesCount), min: GLpoint(x: minX, y: minY), max: GLpoint(x: maxX, y: maxY))
                     });
                 }
             })
