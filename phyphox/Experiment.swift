@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AVFoundation
 
 struct ExperimentRequiredPermission : OptionSetType {
     let rawValue: Int

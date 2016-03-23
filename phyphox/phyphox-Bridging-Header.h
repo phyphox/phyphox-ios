@@ -8,9 +8,6 @@
 #import "PTDropDownMenu.h"
 #import "VBFPopFlatButton.h"
 #import "PTNavigationBarTitleView.h"
-//#import "ExperimentAudioOutput.h"
-//#import "ExperimentAudioInput.h"
-#import "Novocaine.h"
 #import <TheAmazingAudioEngine/TheAmazingAudioEngine.h>
 
 BOOL AEFloatConverterToFloat(AEFloatConverter* converter, AudioBufferList *sourceBuffer, float * const * targetBuffers, UInt32 frames);

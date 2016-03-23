@@ -30,7 +30,7 @@ class GLGraphView: GLKView {
     }
     
     override convenience init(frame: CGRect) {
-        self.init(frame: frame, context: EAGLContext(API: .OpenGLES3))
+        self.init(frame: frame, context: EAGLContext(API: .OpenGLES2))
     }
     
     convenience init() {
