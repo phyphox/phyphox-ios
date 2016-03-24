@@ -157,23 +157,18 @@ final class ExperimentSensorInput {
         switch sensorType {
         case .Accelerometer:
             motionSession.getAccelerometerValues(effectiveRate, values: self.dataIn)
-            break;
         case .Gyroscope:
             motionSession.getGyroValues(effectiveRate, values: self.dataIn)
-            break;
         case .MagneticField:
             motionSession.getMagnetometerValues(effectiveRate, values: self.dataIn)
-            break;
         case .LinearAcceleration:
             motionSession.getAccelerationFromDeviceMotion(effectiveRate, values: self.dataIn)
-            break;
         case .Pressure:
             motionSession.getAltimeterValues(effectiveRate, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
                 self.dataIn(nil, y: nil, z: data?.relativeAltitude.doubleValue, error: error)
             })
-            break;
         default:
-            break;
+            break
         }
     }
     
@@ -181,20 +176,18 @@ final class ExperimentSensorInput {
         pauseBegin = CFAbsoluteTimeGetCurrent()
         
         switch sensorType {
-        case .Accelerometer, .LinearAcceleration:
+        case .Accelerometer:
             motionSession.stopAccelerometerUpdates()
-            break;
+        case .LinearAcceleration:
+            motionSession.stopDeviceMotionUpdates()
         case .Gyroscope:
             motionSession.stopGyroUpdates()
-            break;
         case .MagneticField:
             motionSession.stopMagnetometerUpdates()
-            break;
         case .Pressure:
             motionSession.stopAltimeterUpdates()
-            break;
         case .Light:
-            break;
+            break
         }
     }
     
