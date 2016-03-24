@@ -13,6 +13,12 @@ func CGRectGetMid(r: CGRect) -> CGPoint {
     return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
 }
 
+var iOS9: Bool {
+get {
+    return ptHelperFunctionIsIOS9()
+}
+}
+
 /**
 Runs a closure on the main thread, synchronically if the current thread is the main thread, otherwise asynchronically.
 */

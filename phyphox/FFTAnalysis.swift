@@ -32,10 +32,12 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         var cpxInputs: [kiss_fft_cpx] = []
         inputs.reserveCapacity(count)
         
+        let cpxZero = kiss_fft_cpx(r: 0.0, i: 0.0)
+        
         if hasImagInBuffer {
             for i in 0..<count {
                 if count > bufferCount {
-                    cpxInputs.append(kiss_fft_cpx(r: 0.0, i: 0.0))
+                    cpxInputs.append(cpxZero)
                 }
                 else {
                     cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: Float(imagInput![i])))
@@ -45,7 +47,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         else {
             for i in 0..<count {
                 if count > bufferCount {
-                    cpxInputs.append(kiss_fft_cpx(r: 0.0, i: 0.0))
+                    cpxInputs.append(cpxZero)
                 }
                 else {
                     cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: 0.0))
@@ -55,14 +57,13 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         
         let fft = kiss_fft_alloc(Int32(count), 0, nil, nil)
         
-        let cpxOutput = UnsafeMutablePointer<kiss_fft_cpx>.alloc(count)
+        var out = [kiss_fft_cpx](count: count, repeatedValue: cpxZero)
         
-        kiss_fft(fft, &cpxInputs, cpxOutput)
+        kiss_fft(fft, &cpxInputs, &out)
         
-        let out = Array(UnsafeBufferPointer(start: cpxOutput, count: hasImagInBuffer ? count : count/2))
-        
-        cpxOutput.destroy()
-        cpxOutput.dealloc(count)
+        if !hasImagInBuffer {
+            out = Array(out[0..<count/2])
+        }
         
         var realOutput: DataBuffer?
         var imagOutput: DataBuffer?

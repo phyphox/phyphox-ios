@@ -74,10 +74,10 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         if xIn != nil {
             var xraw = xIn!.toArray()
             
-            let first = xraw[0]
+            let first = xraw.first
             
             for i in 0 ..< count {
-                x.append(xraw[i]-first) //Calculate the relative x
+                x.append(xraw[i]-first!) //Calculate the relative x
             }
         }
         else {

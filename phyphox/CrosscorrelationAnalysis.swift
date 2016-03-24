@@ -31,15 +31,9 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
         let compRange = a.count-b.count
         
         
-        let result = UnsafeMutablePointer<Double>.alloc(compRange)
+        var result = [Double](count: compRange, repeatedValue: 0.0)
         
-        vDSP_convD(a, 1, b, 1, result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
-        
-        let array = Array(UnsafeBufferPointer(start: result, count: compRange))
-        
-        result.destroy()
-        result.dealloc(compRange)
-        
+        vDSP_convD(a, 1, b, 1, &result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["a" : a, "b" : b])
@@ -60,10 +54,10 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
 //        }
 
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(array)
+            debug_noteOutputs(result)
         #endif
         
         let outBuffer = outputs.first!.buffer!
-        outBuffer.replaceValues(array)
+        outBuffer.replaceValues(result)
     }
 }

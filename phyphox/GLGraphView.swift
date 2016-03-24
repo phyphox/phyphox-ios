@@ -10,22 +10,44 @@ import UIKit
 import GLKit
 import OpenGLES
 
-struct GLpoint {
+public struct GLpoint {
     var x: GLfloat
     var y: GLfloat
 }
 
-struct GLcolor {
+public struct GLcolor {
     var r, g, b, a: Float
 }
-class GLGraphView: GLKView {
+
+final class GLGraphView: GLKView {
     private let baseEffect = GLKBaseEffect()
     private var vbo: GLuint = 0
     
-    var lineWidth: GLfloat = 2.0
+    private var length = 0
+    
+    private var xScale: Float = 0.0
+    private var yScale: Float = 0.0
+    
+    private var min: GLpoint!
+    private var max: GLpoint!
+    
+    var lineWidth: GLfloat = 2.0 {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
+    var drawDots: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     var lineColor: GLcolor = GLcolor(r: 0.0, g: 0.0, b: 0.0, a: 1.0) {
         didSet {
             baseEffect.constantColor = GLKVector4Make(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
+            
+            setNeedsDisplay()
         }
     }
     
@@ -62,18 +84,15 @@ class GLGraphView: GLKView {
         glGenBuffers(1, &vbo)
     }
     
-//    private var points: [GLpoint]!
-    private var length: UInt!
+    #if DEBUG
+    var points: [GLpoint]?
+    #endif
     
-    private var xScale: Float = 0.0
-    private var yScale: Float = 0.0
-    
-    private var min: GLpoint!
-    private var max: GLpoint!
-    
-    func setPoints(p: [GLpoint], length: UInt, min: GLpoint, max: GLpoint) {
-//        points = p
-        self.length = length
+    func setPoints(p: [GLpoint], min: GLpoint, max: GLpoint) {
+        #if DEBUG
+            points = p
+        #endif
+        length = p.count
         
         if length == 0 {
             setNeedsDisplay()
@@ -83,7 +102,7 @@ class GLGraphView: GLKView {
         EAGLContext.setCurrentContext(context)
         
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * UInt(sizeof(GLpoint))), p, GLenum(GL_DYNAMIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GLpoint)), p, GLenum(GL_DYNAMIC_DRAW))
         
         xScale = 2.0/(max.x-min.x)
         
@@ -99,7 +118,7 @@ class GLGraphView: GLKView {
     }
     
     override func drawRect(rect: CGRect) {
-        draw()
+        render()
     }
     
     override func layoutSubviews() {
@@ -108,8 +127,8 @@ class GLGraphView: GLKView {
         setNeedsDisplay()
     }
     
-    internal func draw() {
-        if length == nil || length! == 0 {
+    internal func render() {
+        if length == 0 {
             return
         }
         
@@ -117,12 +136,17 @@ class GLGraphView: GLKView {
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
+//        glHint(GLenum(GL_POINT_SMOOTH_HINT), GLenum(GL_NICEST))
+//        glHint(GLenum(GL_LINE_SMOOTH_HINT), GLenum(GL_NICEST))
+        
         glDisable(GLenum(GL_DEPTH_TEST))
-
+        
+//        glEnable(GLenum(GL_MULTISAMPLE))
 //        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
 //        glEnable(GLenum(GL_BLEND))
         
         glLineWidth(lineWidth)
+//        glPointSize(lineWidth)
         
         var transform = GLKMatrix4MakeScale(xScale, yScale, 1.0)
         transform = GLKMatrix4Translate(transform, -min.x-(max.x-min.x)/2.0, -min.y-(max.y-min.y)/2.0, 0.0)
@@ -134,6 +158,6 @@ class GLGraphView: GLKView {
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue));
         glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(sizeof(GLpoint)), nil)
         
-        glDrawArrays(GLenum(GL_LINE_STRIP), 0, GLsizei(length))
+        glDrawArrays(GLenum((drawDots ? GL_POINTS : GL_LINE_STRIP)), 0, GLsizei(length))
     }
 }
