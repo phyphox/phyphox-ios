@@ -43,6 +43,7 @@ final class ExperimentSensorInput {
     }
     
     private(set) var startTimestamp: NSTimeInterval = 0.0 //in s
+    private var pauseBegin: NSTimeInterval = 0.0
     
     private(set) weak var xBuffer: DataBuffer?
     private(set) weak var yBuffer: DataBuffer?
@@ -146,7 +147,10 @@ final class ExperimentSensorInput {
     }
     
     func start() {
-        startTimestamp = 0.0
+        if pauseBegin > 0 {
+            startTimestamp += CFAbsoluteTimeGetCurrent()-pauseBegin
+            pauseBegin = 0.0
+        }
         
         resetValuesForAveraging()
         
@@ -174,6 +178,8 @@ final class ExperimentSensorInput {
     }
     
     func stop() {
+        pauseBegin = CFAbsoluteTimeGetCurrent()
+        
         switch sensorType {
         case .Accelerometer, .LinearAcceleration:
             motionSession.stopAccelerometerUpdates()

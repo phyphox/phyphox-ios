@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Surge
 
 final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     
@@ -68,26 +69,45 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             count = min(xIn!.count, count);
         }
         
-        var x = [Double](count: count, repeatedValue: 0.0) //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
+        var x = [Double]() //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
 
         if xIn != nil {
             var xraw = xIn!.toArray()
             
+            let first = xraw[0]
+            
             for i in 0 ..< count {
-                if (i < count) {
-                    x[i] = xraw[i]-xraw[0]; //There is still input left. Use it and calculate the relative x
-                }
-                else {
-                    x[i] = xraw[count - 1]-xraw[0]; //No input left. This probably leads to wrong results, but let's use the last value
-                }
+                x.append(xraw[i]-first) //Calculate the relative x
             }
         }
         else {
             //There is no input2. Let's fill it with 0,1,2,3,4....
             for i in 0 ..< count {
-                x[i] = Double(i);
+                x.append(Double(i))
             }
         }
+        
+//        var index = 0
+//        
+//        var minimizedY = y
+//        
+//        let finalX = x.filter { (d) -> Bool in
+//            if d < mint || d > maxt {
+//                minimizedY.removeAtIndex(index)
+//                return false
+//            }
+//            
+//            index += 1
+//            
+//            return true
+//        }
+//        
+//        let finalY = Surge.xcorr(minimizedY)
+//        yOut.replaceValues(finalY)
+//        
+//        if xOut != nil {
+//            xOut!.replaceValues(finalX)
+//        }
         
         var xValues: [Double]? = (xOut != nil ? [] : nil)
         var yValues: [Double] = []

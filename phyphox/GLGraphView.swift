@@ -102,6 +102,12 @@ class GLGraphView: GLKView {
         draw()
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        setNeedsDisplay()
+    }
+    
     internal func draw() {
         if length == nil || length! == 0 {
             return

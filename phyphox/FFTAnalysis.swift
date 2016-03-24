@@ -25,19 +25,31 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        let count = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
+        let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
+        
+        let count = Int(kiss_fft_next_fast_size((Int32(bufferCount)+1) >> 1) << 1)
         
         var cpxInputs: [kiss_fft_cpx] = []
         inputs.reserveCapacity(count)
         
         if hasImagInBuffer {
             for i in 0..<count {
-                cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: Float(imagInput![i])))
+                if count > bufferCount {
+                    cpxInputs.append(kiss_fft_cpx(r: 0.0, i: 0.0))
+                }
+                else {
+                    cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: Float(imagInput![i])))
+                }
             }
         }
         else {
             for i in 0..<count {
-                cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: 0.0))
+                if count > bufferCount {
+                    cpxInputs.append(kiss_fft_cpx(r: 0.0, i: 0.0))
+                }
+                else {
+                    cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: 0.0))
+                }
             }
         }
         
@@ -47,7 +59,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         
         kiss_fft(fft, &cpxInputs, cpxOutput)
         
-        let out = Array(UnsafeBufferPointer(start: cpxOutput, count: count))
+        let out = Array(UnsafeBufferPointer(start: cpxOutput, count: hasImagInBuffer ? count : count/2))
         
         cpxOutput.destroy()
         cpxOutput.dealloc(count)
@@ -65,17 +77,13 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         }
         
         if realOutput != nil {
-            let mapped = out.map({ (cpx) -> Double in
-                return Double(cpx.r)
-            })
+            let mapped = out.map{ Double($0.r) }
             
             realOutput!.appendFromArray(mapped)
         }
         
         if imagOutput != nil {
-            let mapped = out.map({ (cpx) -> Double in
-                return Double(cpx.i)
-            })
+            let mapped = out.map{ Double($0.i) }
             
             imagOutput!.appendFromArray(mapped)
         }
