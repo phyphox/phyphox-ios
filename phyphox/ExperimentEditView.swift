@@ -43,7 +43,7 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), forControlEvents: .EditingDidEndOnExit)
         
-        updateTextField(textField)
+        updateTextField(textField, write: false)
         
         textField.delegate = self
         
@@ -58,10 +58,10 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
     }
     
     public func textFieldDidEndEditing(textField: UITextField) {
-        updateTextField(textField)
+        updateTextField(textField, write: true)
     }
     
-    func updateTextField(textField: UITextField) {
+    func updateTextField(textField: UITextField, write: Bool) {
         let val: Double
         
         if textField.text?.characters.count == 0 || Double(textField.text!) == nil {
@@ -89,7 +89,9 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
             textField.text = formattedValue(val)
         }
         
-        descriptor.buffer.replaceValues([val])
+        if write {
+            descriptor.buffer.replaceValues([val])
+        }
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {

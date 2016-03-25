@@ -22,25 +22,23 @@ public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Dat
     }
     
     func newValueIn() {
-        dispatch_async(dispatch_get_main_queue()) { () -> Void in
-            let str = NSMutableAttributedString(string: self.descriptor.label.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+        let str = NSMutableAttributedString(string: self.descriptor.label.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+        
+        if let last = self.descriptor.buffer.last {
+            let formatter = NSNumberFormatter()
+            formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
+            formatter.maximumFractionDigits = self.descriptor.precision
+            let formatted = formatter.stringFromNumber(NSNumber(double: last))!
             
-            if let last = self.descriptor.buffer.last {
-                let formatter = NSNumberFormatter()
-                formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
-                formatter.maximumFractionDigits = self.descriptor.precision
-                let formatted = formatter.stringFromNumber(NSNumber(double: last))!
-                
-                str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
-            }
-            else {
-                str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
-            }
-            
-            self.label.attributedText = str
-            
-            self.setNeedsLayout()
+            str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
         }
+        else {
+            str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
+        }
+        
+        self.label.attributedText = str
+        
+        self.setNeedsLayout()
     }
     
     public override func sizeThatFits(size: CGSize) -> CGSize {

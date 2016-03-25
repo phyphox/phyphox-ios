@@ -13,6 +13,8 @@ protocol ExperimentAnalysisDelegate : AnyObject {
     func analysisDidUpdate(analysis: ExperimentAnalysis)
 }
 
+private let analysisQueue = dispatch_queue_create("de.rwth-aachen.phyphox.analysis", DISPATCH_QUEUE_SERIAL)
+
 final class ExperimentAnalysis : DataBufferObserver {
     let analyses: [ExperimentAnalysisModule]
     
@@ -21,27 +23,34 @@ final class ExperimentAnalysis : DataBufferObserver {
     
     weak var delegate: ExperimentAnalysisDelegate?
     
+    private let editBuffers = NSMutableSet()
+    
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
         self.sleep = sleep
         self.onUserInput = onUserInput
-        
-        registerForUpdates()
     }
     
-    private func registerForUpdates() {
-        for analysis in analyses {
-            for input in analysis.inputs {
-                if input.buffer != nil {
-                    input.buffer!.addObserver(self)
-                }
-            }
-        }
+    /**
+     Used to register a data buffer that receives data directly from a sensor or from the microphone
+     */
+    func registerSensorBuffer(dataBuffer: DataBuffer) {
+        dataBuffer.addObserver(self)
+    }
+    
+    /**
+     Used to register a data buffer that receives data from user input
+     */
+    func registerEditBuffer(dataBuffer: DataBuffer) {
+        dataBuffer.addObserver(self)
+        editBuffers.addObject(dataBuffer)
     }
     
     func dataBufferUpdated(buffer: DataBuffer) {
-        setNeedsUpdate()
+        if !onUserInput || editBuffers.containsObject(buffer) {
+            setNeedsUpdate()
+        }
     }
     
     private var busy = false
@@ -54,6 +63,10 @@ final class ExperimentAnalysis : DataBufferObserver {
             busy = true
             
             after(0.1, closure: { () -> Void in
+                #if DEBUG
+                    print("Analysis update")
+                #endif
+                
                 self.delegate?.analysisWillUpdate(self)
                 self.update()
                 self.delegate?.analysisDidUpdate(self)
@@ -65,7 +78,9 @@ final class ExperimentAnalysis : DataBufferObserver {
     
     private func update() {
         for analysis in analyses {
-            analysis.setNeedsUpdate()
+            dispatch_async(analysisQueue, { 
+                analysis.setNeedsUpdate()
+            })
         }
     }
 }

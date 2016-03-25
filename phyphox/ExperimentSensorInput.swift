@@ -52,6 +52,8 @@ final class ExperimentSensorInput {
     
     private(set) var motionSession: MotionSession
     
+    private let queue = dispatch_queue_create("de.rwth-aachen.phyphox.sensorQueue", DISPATCH_QUEUE_SERIAL)
+    
     private class Averaging {
         /**
          The duration of averaging intervals.
@@ -67,7 +69,7 @@ final class ExperimentSensorInput {
         var y: Double?
         var z: Double?
         
-        var numberOfUpdates: Int = 0
+        var numberOfUpdates: UInt = 0
         
         init(averagingInterval: NSTimeInterval) {
             self.averagingInterval = averagingInterval
@@ -132,7 +134,7 @@ final class ExperimentSensorInput {
         }
     }
     
-    func resetValuesForAveraging() {
+    private func resetValuesForAveraging() {
         guard let averaging = self.averaging else {
             return
         }
@@ -191,29 +193,38 @@ final class ExperimentSensorInput {
         }
     }
     
-    func writeToBuffers(x: Double?, y: Double?, z: Double?) {
-        if x != nil && xBuffer != nil {
-            xBuffer!.append(x)
+    private func writeToBuffers(x: Double?, y: Double?, z: Double?) {
+        if x != nil && self.xBuffer != nil {
+            self.xBuffer!.append(x)
         }
-        if y != nil && yBuffer != nil {
-            yBuffer!.append(y)
+        if y != nil && self.yBuffer != nil {
+            self.yBuffer!.append(y)
         }
-        if z != nil && zBuffer != nil {
-            zBuffer!.append(z)
+        if z != nil && self.zBuffer != nil {
+            self.zBuffer!.append(z)
         }
         
-        if tBuffer != nil {
-            tBuffer!.append(CFAbsoluteTimeGetCurrent()-startTimestamp)
+        if self.tBuffer != nil {
+            let t = CFAbsoluteTimeGetCurrent()-self.startTimestamp
+            
+            self.tBuffer!.append(t)
         }
     }
     
+    private func dataIn(x: Double?, y: Double?, z: Double?, error: NSError?) {
+        dispatch_async(queue) { [unowned self] in
+            autoreleasepool({
+                self.dataInSync(x, y: y, z: z, error: error)
+            })
+        }
+    }
     
-    func dataIn(x: Double?, y: Double?, z: Double?, error: NSError?) {
+    private func dataInSync(x: Double?, y: Double?, z: Double?, error: NSError?) {
         if (startTimestamp == 0.0) {
             startTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
         }
         
-        if let av = self.averaging { //Recoring average?
+        if let av = self.averaging {
             if av.iterationStartTimestamp == 0.0 {
                 av.iterationStartTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
             }
@@ -247,7 +258,7 @@ final class ExperimentSensorInput {
             
             av.numberOfUpdates += 1
         }
-        else { //Or raw values?
+        else {
             writeToBuffers(x, y: y, z: z)
         }
         

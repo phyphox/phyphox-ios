@@ -62,7 +62,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         return sensorType
     }
     
-    func parse(buffers: [String : DataBuffer]) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
+    func parse(buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
         if sensors == nil && audio == nil {
             return (nil, nil)
         }
@@ -103,21 +103,28 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                         component = "z" //Pressure is always only z (on Android it seems to be x)
                     }
                     
+                    let buf = buffers[name]
+                    
                     if component == "x" {
-                        xBuffer = buffers[name]
+                        xBuffer = buf
                     }
                     else if component == "y" {
-                        yBuffer = buffers[name]
+                        yBuffer = buf
                     }
                     else if component == "z" {
-                        zBuffer = buffers[name]
+                        zBuffer = buf
                     }
                     else if component == "t" {
-                        tBuffer = buffers[name]
+                        tBuffer = buf
                     }
                     else {
                         print("Error! Invalid sensor parameter: \(component)")
                         continue
+                    }
+                    
+                    //Register for updates
+                    if buf != nil && analysis != nil {
+                        analysis!.registerSensorBuffer(buf!)
                     }
                 }
                 
@@ -150,6 +157,10 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     let bufferName = (out as? String ?? (out as! [String: AnyObject])[XMLDictionaryTextKey] as! String)
                     
                     let buffer = buffers[bufferName]!
+                    
+                    if analysis != nil {
+                        analysis!.registerSensorBuffer(buffer)
+                    }
                     
                     outBuffers.append(buffer)
                 }

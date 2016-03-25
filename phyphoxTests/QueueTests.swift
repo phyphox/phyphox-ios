@@ -79,7 +79,7 @@ class QueueTests: XCTestCase {
         
         for i in q {
             XCTAssertEqual(c, i)
-            c++
+            c += 1
         }
         
         var iterator = q.generate()
@@ -88,7 +88,7 @@ class QueueTests: XCTestCase {
         
         while let i = iterator.next() {
             XCTAssertEqual(c, i)
-            c++
+            c += 1
         }
     }
     
@@ -213,15 +213,16 @@ class QueueTests: XCTestCase {
 		let deletingexpectation = expectationWithDescription("deleting completed")
 		let deletingqueue = dispatch_queue_create( "deleting", DISPATCH_QUEUE_SERIAL)
 		dispatch_async(deletingqueue)  {
-			for (var i=1; i <= numberofiterations; 0) {
-				if let result = sut.dequeue() {
-					XCTAssertEqual(result, i)
-					i++
-				} else {
-					print(" pausing deleting for one second")
-					sleep(CUnsignedInt(1))
-				}
-			}
+            var i = 1
+            while i <= numberofiterations {
+                if let result = sut.dequeue() {
+                    XCTAssertEqual(result, i)
+                    i += 1
+                } else {
+                    print(" pausing deleting for one second")
+                    sleep(CUnsignedInt(1))
+                }
+            }
 			deletingexpectation.fulfill()
 		}
 		

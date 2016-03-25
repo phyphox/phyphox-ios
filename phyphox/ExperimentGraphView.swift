@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import OpenGLES
 
 protocol GraphValueSource {
     subscript(index: Int) -> Double? { get }
@@ -215,23 +214,27 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         
         hasUpdateBlockEnqueued = true
         
-        dispatch_async(queue) { () -> Void in
-            autoreleasepool({ () -> () in
-                var xValues: GraphValueSource
-                let yValues = self.descriptor.yInputBuffer.graphValueSource
+        dispatch_async(queue) { [unowned self] in
+            autoreleasepool({
+                var xValues: [Double]
+                
+                let yValues = self.descriptor.yInputBuffer.toArray()
+                let yCount = Swift.min(yValues.count, self.descriptor.yInputBuffer.actualCount)
                 
                 var trashedCount = self.descriptor.yInputBuffer.trashedCount
                 
-                var count = yValues.count
+                var count = yCount
                 
                 if count == 0 {
                     return
                 }
                 
                 if let xBuf = self.descriptor.xInputBuffer {
-                    xValues = xBuf.graphValueSource
+                    xValues = xBuf.toArray()
+                    let xCount = Swift.min(xValues.count, xBuf.actualCount)
                     
-                    count = Swift.min(xValues.count, count)
+                    count = Swift.min(xCount, count)
+                    
                     trashedCount = Swift.min(xBuf.trashedCount, trashedCount)
                 }
                 else {
@@ -255,7 +258,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         return
                     }
                     
-                    xValues = GraphFixedValueSource(array: self.lastIndexXArray!)
+                    xValues = self.lastIndexXArray!
                 }
                 
                 if count > 1 {
@@ -285,18 +288,18 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         let rawX = xValues[i]
                         let rawY = yValues[i]
                         
-                        guard rawX != nil && rawY != nil else {
-                            break
-                        }
+//                        guard rawX != nil && rawY != nil else {
+//                            break
+//                        }
                         
-                        if rawX! < lastX {
+                        if rawX < lastX {
                             print("x value is smaller than previous value!")
                         }
                         
-                        lastX = rawX!
+                        lastX = rawX
                         
-                        let unwrappedX = rawX!
-                        let unwrappedY = rawY!
+                        let unwrappedX = rawX
+                        let unwrappedY = rawY
                         
                         if logX {
                             if unwrappedX < actualMinX {
@@ -365,7 +368,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     
                     
                     let xTicks = self.getTicks(actualMinX, max: actualMaxX, maxTicks: 6, log: self.descriptor.logX)
-                    let yTicks = self.getTicks(actualMinY, max: actualMaxY, maxTicks: 6, log: self.descriptor.logY)
+                    let yTicks = self.getTicks(actualMinY, max: actualMaxY, maxTicks: 4, log: self.descriptor.logY)
                     
                     var mappedXTicks: [GraphGridLine]? = nil
                     var mappedYTicks: [GraphGridLine]? = nil
@@ -392,7 +395,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         })
                     }
                     
-                    dispatch_sync(dispatch_get_main_queue(), { () -> Void in
+                    mainThread({
                         self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
                         
                         self.glGraph.setPoints(points, min: self.min!, max: self.max!)

@@ -69,14 +69,14 @@ final class ExperimentDeserializer: NSObject {
         
         let translations = parseTranslations(dictionary["translations"] as! NSDictionary?)
         
-        let inputs = parseInputs(dictionary["input"] as! NSDictionary?, buffers: buffers)
+        let analysis = parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
+        
+        let inputs = parseInputs(dictionary["input"] as! NSDictionary?, buffers: buffers, analysis: analysis)
         
         let sensorInputs = inputs.0
         let audioInputs = inputs.1
         
-        let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers)
-        
-        let analysis = parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
+        let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers, analysis: analysis)
         
         let export = parseExport(dictionary["export"] as! NSDictionary?, buffers: buffers)
         
@@ -99,12 +99,12 @@ final class ExperimentDeserializer: NSObject {
             do {
                 let experiment = try self.deserialize()
                 
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                mainThread({
                     completion(experiment: experiment, error: nil)
                 })
             }
             catch {
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                mainThread({
                     completion(experiment: nil, error: error as? SerializationError)
                 })
             }
@@ -149,21 +149,21 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseInputs(inputs: NSDictionary?, buffers: [String : DataBuffer]) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
+    func parseInputs(inputs: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
         if (inputs != nil) {
             let parser = ExperimentInputsParser(inputs!)
             
-            return parser.parse(buffers)
+            return parser.parse(buffers, analysis: analysis)
         }
         
         return (nil, nil)
     }
     
-    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer]) -> [ExperimentViewCollectionDescriptor]? {
+    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> [ExperimentViewCollectionDescriptor]? {
         if (views != nil) {
             let parser = ExperimentViewsParser(views!)
             
-            return parser.parse(buffers)
+            return parser.parse(buffers, analysis: analysis)
         }
         
         return nil

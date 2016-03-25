@@ -12,7 +12,7 @@ import Foundation
  Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
-    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyohox.queue.lock", DISPATCH_QUEUE_SERIAL)
+    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyphox.queue.lock", DISPATCH_QUEUE_SERIAL)
     
     private var array: [Element]
     
@@ -68,7 +68,7 @@ final class Queue<Element> {
     func objectAtIndex(index: Int, async: Bool = false) -> Element? {
         var element: Element? = nil
         
-        let op = { () -> Void in
+        let op = { [unowned self] in
             autoreleasepool({ () -> () in
                 if index < self.array.count {
                     element = self.array[index]
@@ -91,7 +91,7 @@ final class Queue<Element> {
 
 extension Queue {
     func enqueue(value: Element, async: Bool = false) {
-        let op = { () -> Void in
+        let op = {
             self.array.append(value)
         }
         
@@ -106,8 +106,8 @@ extension Queue {
     func dequeue(async: Bool = false) -> Element? {
         var element: Element? = nil
         
-        let op = { () -> Void in
-            autoreleasepool({ () -> () in
+        let op = { [unowned self] in
+            autoreleasepool({
                 if self.array.count > 0 {
                     element = self.array.removeFirst()
                 }
@@ -131,7 +131,7 @@ extension Queue {
     }
     
     func replaceValues(values: [Element], async: Bool = false) {
-        let op = { () -> Void in
+        let op = { [unowned self] in
             self.array = values
         }
         
@@ -168,7 +168,7 @@ extension Queue: CollectionType {
     subscript(i: Int) -> Element {
         var value: Element!
         
-        sync { () -> Void in
+        sync { [unowned self] in
             autoreleasepool({ () -> () in
                 value = self.array[i]
             })

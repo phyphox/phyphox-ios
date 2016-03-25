@@ -42,6 +42,10 @@ class ExperimentAnalysisModule {
      */
     func setNeedsUpdate() {
         if !staticAnalysis || !executed {
+            if NSThread.isMainThread() {
+                print("Analysis should run in the background!")
+            }
+            
             update()
             executed = true
         }

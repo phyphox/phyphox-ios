@@ -31,7 +31,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         return nil
     }
     
-    func parse(buffers: [String: DataBuffer]) -> [ExperimentViewCollectionDescriptor]? {
+    func parse(buffers: [String: DataBuffer], analysis: ExperimentAnalysis?) -> [ExperimentViewCollectionDescriptor]? {
         if views == nil {
             return nil
         }
@@ -78,6 +78,11 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 if outputBuffer == nil {
                     print("Error! No output buffer for edit view.")
                     return nil
+                }
+                
+                //Register for updates
+                if analysis != nil {
+                    analysis!.registerEditBuffer(outputBuffer!)
                 }
                 
                 if outputBuffer!.last == nil {

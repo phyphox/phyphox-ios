@@ -18,7 +18,7 @@ enum SerializationError: ErrorType {
     case EmptyData
 }
 
-var serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)
+let serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)
 
 final class ExperimentSerialization: NSObject {
     /**

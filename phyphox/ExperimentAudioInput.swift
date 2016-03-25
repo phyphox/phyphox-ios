@@ -33,10 +33,8 @@ final class ExperimentAudioInput {
                     
                     let final = array.map{ Double($0) }
                     
-                    dispatch_async(dispatch_get_main_queue()) {
-                        for out in self.outBuffers {
-                            out.appendFromArray(final)
-                        }
+                    for out in self.outBuffers {
+                        out.appendFromArray(final)
                     }
                 })
             }

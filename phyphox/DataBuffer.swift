@@ -110,7 +110,9 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
     
     func sendUpdateNotification() {
         for observer in observers {
-            (observer as! DataBufferObserver).dataBufferUpdated(self)
+            mainThread {
+                (observer as! DataBufferObserver).dataBufferUpdated(self)
+            }
         }
     }
     
@@ -158,12 +160,13 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
     
     func append(value: Double?, async: Bool = false, notify: Bool = true) {
         if !staticBuffer || !written {
-            written = true
             if (value == nil) {
                 return
             }
             
-            let operations = { () -> () in
+            written = true
+            
+            let operations = {
                 self.queue.enqueue(value!, async: true)
                 
                 if (self.actualCount > self.size) {
@@ -176,7 +179,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
                 operations()
             }
             else {
-                queue.sync {() -> Void in
+                queue.sync {
                     autoreleasepool(operations)
                 }
             }
@@ -190,8 +193,9 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
     func appendFromArray(values: [Double], notify: Bool = true) {
         if !staticBuffer || !written {
             written = true
-            queue.sync({ () -> Void in
-                autoreleasepool({ () -> () in
+            
+            queue.sync {
+                autoreleasepool {
                     var array = self.queue.toArray()
                     
                     array.appendContentsOf(values)
@@ -201,8 +205,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
                     }
                     
                     self.queue.replaceValues(values, async: true)
-                })
-            })
+                }
+            }
             
             if notify {
                 sendUpdateNotification()

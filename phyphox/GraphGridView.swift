@@ -86,7 +86,11 @@ final class GraphGridView: UIView {
                     
                     view.horizontal = false
                     
-                    view.frame = CGRectMake(self.bounds.size.width*line.relativeValue, 0.0, smallestUnit, self.bounds.size.height)
+                    let origin = bounds.size.width*line.relativeValue
+                    
+                    view.alpha = (origin > 2.0 && origin < bounds.size.width-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    
+                    view.frame = CGRectMake(origin, 0.0, smallestUnit, bounds.size.height)
                     
                     index += 1
                 }
@@ -98,7 +102,11 @@ final class GraphGridView: UIView {
                     
                     view.horizontal = true
                     
-                    view.frame = CGRectMake(0.0, self.bounds.size.height*line.relativeValue, self.bounds.size.width, smallestUnit)
+                    let origin = bounds.size.height*line.relativeValue
+                    
+                    view.alpha = (origin > 2.0 && origin < bounds.size.height-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    
+                    view.frame = CGRectMake(0.0, origin, bounds.size.width, smallestUnit)
                     
                     index += 1
                 }
