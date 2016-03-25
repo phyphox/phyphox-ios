@@ -16,19 +16,6 @@ final class ExperimentManager {
     
     private var adc: AEAudioController?
     private var fltc: AEFloatConverter?
-    private var _gridCalculator: XWilkinson?
-    
-    var gridCalculator: XWilkinson {
-        get {
-            if _gridCalculator == nil {
-                _gridCalculator = XWilkinson.base10()
-                _gridCalculator!.clipToBounds = true
-                _gridCalculator!.loose = true
-            }
-            
-            return _gridCalculator!
-        }
-    }
     
     var floatConverter: AEFloatConverter {
         get {
