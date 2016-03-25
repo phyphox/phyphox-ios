@@ -409,8 +409,6 @@
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
 				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
 				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
-				6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */,
-				6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */,
 				6B00F0D61C47D3DC00971941 /* Graph */,
 				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
 				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
@@ -483,6 +481,7 @@
 		6B00F0D61C47D3DC00971941 /* Graph */ = {
 			isa = PBXGroup;
 			children = (
+				6BD3C6301CA5E96E005F3D4B /* Grid */,
 				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
 				6B422E251CA4045300E945BC /* MetalGraphView.swift */,
 				6B422E271CA40EAC00E945BC /* Shaders.metal */,
@@ -718,6 +717,15 @@
 				6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */,
 			);
 			name = "Deserializer - Parser";
+			sourceTree = "<group>";
+		};
+		6BD3C6301CA5E96E005F3D4B /* Grid */ = {
+			isa = PBXGroup;
+			children = (
+				6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */,
+				6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */,
+			);
+			name = Grid;
 			sourceTree = "<group>";
 		};
 		6BD769C31C496AAA006B4A0F /* Navigation Controller */ = {
