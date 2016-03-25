@@ -15,7 +15,7 @@ protocol DataBufferObserver : AnyObject {
 /**
  Data buffer used for raw or processed data from sensors.
  */
-@objc final class DataBuffer: NSObject, SequenceType {
+final class DataBuffer: SequenceType, CustomStringConvertible {
     let name: String
     var size: Int {
         didSet {
@@ -87,8 +87,9 @@ protocol DataBufferObserver : AnyObject {
         self.name = name
         self.size = size
         queue = Queue<Double>(capacity: size)
-        super.init()
-        graphValueSource = DataBufferGraphValueSource(buffer: self)
+        defer {
+            graphValueSource = DataBufferGraphValueSource(buffer: self)
+        }
     }
     
     func generate() -> IndexingGenerator<[Double]> {
@@ -213,7 +214,7 @@ protocol DataBufferObserver : AnyObject {
         return queue.toArray()
     }
     
-    override var description: String {
+    var description: String {
         get {
             return "<\(self.dynamicType): \(unsafeAddressOf(self)): \(toArray())>"
         }

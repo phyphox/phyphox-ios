@@ -23,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         window!.makeKeyAndVisible()
         
+//        XWilkinson.test()
         // Override point for customization after application launch.
         return true
     }

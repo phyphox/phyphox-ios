@@ -59,13 +59,13 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
     private var max: GLpoint?
     
     private let glGraph: GLGraphView
-    private let gridView: ExperimentGraphGridView
+    private let gridView: GraphGridView
     
     var queue: dispatch_queue_t!
     
     required public init(descriptor: GraphViewDescriptor) {
         glGraph = GLGraphView(frame: .zero)
-        gridView = ExperimentGraphGridView()
+        gridView = GraphGridView()
         glGraph.drawDots = descriptor.drawDots
         
         func makeLabel(text: String?) -> UILabel {
@@ -91,83 +91,98 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         descriptor.yInputBuffer.addObserver(self)
     }
     
-    func getTics(min: Double, max: Double, maxTics: Int, log: Bool) -> [Double]? {
+    func getTicks(min: Double, max: Double, maxTicks: Int, log: Bool) -> [Double]? {
         if max <= min || !isfinite(min) || !isfinite(max) {
-            return nil //Invalid axis. No tics
+            return nil
         }
         
-        if (log) { //Logarithmic axis. This needs logic of its own...
-            if (min < 0) {//negative values do not work for logarithmic axes
+        if (log) {
+            if (min < 0) {
                 return nil
             }
+            
             let range = Int(floor(max)-ceil(min))
             
-            //we will just set up tics at powers of ten: 0.1, 1, 10, 100 etc.
-            if (range < 1) {//Range to short for this naive tic algorithm
+            if (range < 1) {
                 return nil
             }
             
-            var magStep = 1; //If we cover huge scales we might want to do larger steps...
-            while (range+1 > maxTics * magStep) {//Do we have more than max tics? Increase step size then.
+            var magStep = 1;
+            while (range+1 > maxTicks * magStep) {
                 magStep += 1
             }
             
-            var first = ceil(min) //The first tic above min
+            var first = ceil(min)
             
-            var tics = [Double]() //The array to hold the tics
-            tics.reserveCapacity((range+1)/magStep)
+            var ticks = [Double]()
+            ticks.reserveCapacity((range+1)/magStep)
             
-            for _ in 0..<(range+1)/magStep { //Fill the array with powers of ten
-                tics.append(first)
-                first *= 10
+            for _ in 0..<(range+1)/magStep {
+                ticks.append(Darwin.log(first))
+                first *= M_E
             }
             
-            return tics; //Done
+            return ticks;
         }
         
         let range = max-min
         
-        let stepFactor = pow(10.0, floor(log10(range))-1) //First estimate how large the steps between our tics should be as a power of ten
-        var step = 1.0 //The finer step size within the power of ten
-        let steps = Int(range/stepFactor) //How many steps would there be with step times stepfactor?
+        let stepFactor = pow(10.0, floor(log10(range))-1)
+        var step = 1.0
+        let steps = Int(range/stepFactor)
         
-        
-        //Depending on how many steps we would have, increase the step factor to stay within maxTics
-        if (steps <= maxTics) {
+        if (steps <= maxTicks) {
             step = 1*stepFactor
         }
-        else if (steps <= maxTics * 2) {
+        else if (steps <= maxTicks * 2) {
             step = 2*stepFactor
         }
-        else if (steps <= maxTics * 5) {
+        else if (steps <= maxTicks * 5) {
             step = 5*stepFactor
         }
-        else if (steps <= maxTics * 10) {
+        else if (steps <= maxTicks * 10) {
             step = 10*stepFactor
         }
-        else if (steps <= maxTics * 20) {
+        else if (steps <= maxTicks * 20) {
             step = 20*stepFactor
         }
-        else if (steps <= maxTics * 50) {
+        else if (steps <= maxTicks * 50) {
             step = 50*stepFactor
         }
-        else if (steps <= maxTics * 100) {
+        else if (steps <= maxTicks * 100) {
             step = 100*stepFactor
         }
-        
-        //ok how many (integer) steps exactly?
-        let iSteps = Int(range/step)
-        
-        let first = ceil(min/step)*step //Value of the first tic
-        var tics = [Double]() //Array to hold the tics
-        tics.reserveCapacity(iSteps)
-        
-        //Generate the tics by stepping up from the first tic
-        for i in 0..<iSteps {
-            tics.append(first+Double(i)*step);
+        else if (steps <= maxTicks * 250) {
+            step = 250*stepFactor
+        }
+        else if (steps <= maxTicks * 500) {
+            step = 500*stepFactor
+        }
+        else if (steps <= maxTicks * 1000) {
+            step = 1000*stepFactor
+        }
+        else if (steps <= maxTicks * 2000) {
+            step = 2000*stepFactor
         }
         
-        return tics; //Done
+        let stepCount = Int(ceil(range/step))
+        
+        let first = ceil(min/step)*step
+        
+        var tickLocations = [Double]()
+        tickLocations.reserveCapacity(stepCount)
+        
+        for i in 0..<stepCount {
+            let s = first+Double(i)*step
+            
+            if s >= max {
+                break
+            }
+            
+            tickLocations.append(s)
+        }
+        
+        return tickLocations
     }
 
     
@@ -250,12 +265,21 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     var maxY: GLfloat = -Float.infinity
                     var minY: GLfloat = Float.infinity
                     
+                    var actualMaxX = -Double.infinity
+                    var actualMinX = Double.infinity
+                    
+                    var actualMaxY = -Double.infinity
+                    var actualMinY = Double.infinity
+                    
                     let count = Swift.min(xValues.count, yValues.count)
                     
                     var points: [GLpoint] = []
                     points.reserveCapacity(count)
                     
                     var lastX = -Double.infinity
+                    
+                    let logX = self.descriptor.logX
+                    let logY = self.descriptor.logY
                     
                     for i in 0..<count {
                         let rawX = xValues[i]
@@ -271,8 +295,31 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         
                         lastX = rawX!
                         
-                        let x = GLfloat((self.descriptor.logX ? log(rawX!) : rawX!))
-                        let y = GLfloat((self.descriptor.logY ? log(rawY!) : rawY!))
+                        let unwrappedX = rawX!
+                        let unwrappedY = rawY!
+                        
+                        if logX {
+                            if unwrappedX < actualMinX {
+                                actualMinX = unwrappedX
+                            }
+                            
+                            if unwrappedX > actualMinX {
+                                actualMaxX = unwrappedX
+                            }
+                        }
+                        
+                        if logY {
+                            if unwrappedY < actualMinY {
+                                actualMinY = unwrappedY
+                            }
+                            
+                            if unwrappedY > actualMinY {
+                                actualMaxY = unwrappedY
+                            }
+                        }
+                        
+                        let x = GLfloat((self.descriptor.logX ? log(unwrappedX) : unwrappedX))
+                        let y = GLfloat((self.descriptor.logY ? log(unwrappedY) : unwrappedY))
                         
                         guard isfinite(x) && isfinite(y) else {
                             #if DEBUG
@@ -300,38 +347,52 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         points.append(GLpoint(x: x, y: y))
                     }
                     
+                    if !logX {
+                        actualMinX = Double(minX)
+                        actualMaxX = Double(maxX)
+                    }
+                    
+                    if !logY {
+                        actualMinY = Double(minY)
+                        actualMaxY = Double(maxY)
+                    }
+                    
+                    self.min = GLpoint(x: minX, y: minY)
+                    self.max = GLpoint(x: maxX, y: maxY)
+                    
+                    //                        let xTicks = ExperimentManager.sharedInstance().gridCalculator.search(Double(self.min!.x), dmax: Double(self.max!.x), m: 5).getList()
+                    //                        let yTicks = ExperimentManager.sharedInstance().gridCalculator.search(Double(self.min!.y), dmax: Double(self.max!.y), m: 5).getList()
+                    
+                    
+                    let xTicks = self.getTicks(actualMinX, max: actualMaxX, maxTicks: 6, log: self.descriptor.logX)
+                    let yTicks = self.getTicks(actualMinY, max: actualMaxY, maxTicks: 6, log: self.descriptor.logY)
+                    
+                    var mappedXTicks: [GraphGridLine]? = nil
+                    var mappedYTicks: [GraphGridLine]? = nil
+                    
+                    if xTicks != nil {
+                        mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
+//                            if self.descriptor.logX {
+//                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.x))/Double(self.max!.x-self.min!.x))))
+//                            }
+//                            else {
+                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(self.min!.x))/Double(self.max!.x-self.min!.x)))
+//                            }
+                        })
+                    }
+                    
+                    if yTicks != nil {
+                        mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
+//                            if self.descriptor.logY {
+//                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.y))/Double(self.max!.y-self.min!.y))))
+//                            }
+//                            else {
+                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(self.min!.y))/Double(self.max!.y-self.min!.y)))
+//                            }
+                        })
+                    }
+                    
                     dispatch_sync(dispatch_get_main_queue(), { () -> Void in
-                        self.min = GLpoint(x: minX, y: minY)
-                        self.max = GLpoint(x: maxX, y: maxY)
-                        
-                        let xTicks = self.getTics(Double(self.min!.x), max: Double(self.max!.x), maxTics: 6, log: self.descriptor.logX)
-                        let yTicks = self.getTics(Double(self.min!.y), max: Double(self.max!.y), maxTics: 6, log: self.descriptor.logY)
-        
-                        var mappedXTicks: [GraphGridLine]? = nil
-                        var mappedYTicks: [GraphGridLine]? = nil
-                        
-                        if xTicks != nil {
-                            mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-                                if self.descriptor.logX {
-                                    return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.x))/Double(self.max!.x-self.min!.x))))
-                                }
-                                else {
-                                    return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(self.min!.x))/Double(self.max!.x-self.min!.x)))
-                                }
-                            })
-                        }
-                        
-                        if yTicks != nil {
-                            mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-                                if self.descriptor.logY {
-                                    return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.y))/Double(self.max!.y-self.min!.y))))
-                                }
-                                else {
-                                    return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(self.min!.y))/Double(self.max!.y-self.min!.y)))
-                                }
-                            })
-                        }
-                        
                         self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
                         
                         self.glGraph.setPoints(points, min: self.min!, max: self.max!)

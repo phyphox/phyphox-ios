@@ -1,5 +1,5 @@
 //
-//  ExperimentGraphGridView.swift
+//  GraphGridView.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 24.03.16.
@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ExperimentGraphGridView: UIView {
+final class GraphGridView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -30,6 +30,8 @@ final class ExperimentGraphGridView: UIView {
             setNeedsLayout()
         }
     }
+    
+    private var lineViews: [GraphGridLineView] = []
     
     private func updateLineViews() {
         var neededViews = 0
@@ -61,10 +63,7 @@ final class ExperimentGraphGridView: UIView {
         }
         else if delta < 0 {
             for _ in delta..<0 {
-                let view = UIView()
-                view.backgroundColor = UIColor.blackColor()
-                view.alpha = 0.5
-                view.userInteractionEnabled = false
+                let view = GraphGridLineView()
                 
                 addSubview(view)
                 
@@ -73,19 +72,21 @@ final class ExperimentGraphGridView: UIView {
         }
     }
     
-    private var lineViews: [UIView] = []
-    
     override func layoutSubviews() {
         super.layoutSubviews()
         
         if grid != nil {
             var index = 0
             
+            let smallestUnit = 1.0/UIScreen.mainScreen().scale
+            
             if grid!.xGridLines != nil {
                 for line in grid!.xGridLines! {
                     let view = lineViews[index]
                     
-                    view.frame = CGRectMake(self.bounds.size.width*line.relativeValue-0.5, 0.0, 1.0, self.bounds.size.height)
+                    view.horizontal = false
+                    
+                    view.frame = CGRectMake(self.bounds.size.width*line.relativeValue, 0.0, smallestUnit, self.bounds.size.height)
                     
                     index += 1
                 }
@@ -95,7 +96,9 @@ final class ExperimentGraphGridView: UIView {
                 for line in grid!.yGridLines! {
                     let view = lineViews[index]
                     
-                    view.frame = CGRectMake(0.0, self.bounds.size.height*line.relativeValue-0.5, self.bounds.size.width, 1.0)
+                    view.horizontal = true
+                    
+                    view.frame = CGRectMake(0.0, self.bounds.size.height*line.relativeValue, self.bounds.size.width, smallestUnit)
                     
                     index += 1
                 }
