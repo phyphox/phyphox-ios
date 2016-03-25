@@ -71,7 +71,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
             let l = UILabel()
             l.text = text
             
-           l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+            l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
             
             return l
         }
@@ -189,7 +189,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         
         return tickLocations
     }
-
+    
     
     func dataBufferUpdated(buffer: DataBuffer) {
         setNeedsUpdate()
@@ -288,10 +288,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         let rawX = xValues[i]
                         let rawY = yValues[i]
                         
-//                        guard rawX != nil && rawY != nil else {
-//                            break
-//                        }
-                        
                         if rawX < lastX {
                             print("x value is smaller than previous value!")
                         }
@@ -349,23 +345,13 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                     
                     if xTicks != nil {
                         mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-//                            if self.descriptor.logX {
-//                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.x))/Double(self.max!.x-self.min!.x))))
-//                            }
-//                            else {
-                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.x))/Double(totalMax.x-totalMin.x)))
-//                            }
+                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.x))/Double(totalMax.x-totalMin.x)))
                         })
                     }
                     
                     if yTicks != nil {
                         mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-//                            if self.descriptor.logY {
-//                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(log((val-Double(self.min!.y))/Double(self.max!.y-self.min!.y))))
-//                            }
-//                            else {
-                                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.y))/Double(totalMax.y-totalMin.y)))
-//                            }
+                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.y))/Double(totalMax.y-totalMin.y)))
                         })
                     }
                     
