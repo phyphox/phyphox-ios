@@ -196,15 +196,21 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
             
             var first = ceil(min)
             
-            var ticks = [Double]()
-            ticks.reserveCapacity((range+1)/magStep)
+            var tickLocations = [Double]()
+            tickLocations.reserveCapacity((range+1)/magStep)
             
-            for _ in 0...(range+1)/magStep {
-                ticks.append(Darwin.log(first))
+            while true {
+                let tick = Darwin.log(first)
+                
+                if tick >= ma || tickLocations.count >= maxTicks {
+                    break
+                }
+                
+                tickLocations.append(tick)
                 first *= M_E
             }
             
-            return ticks;
+            return tickLocations
         }
         
         let max = ma
@@ -257,14 +263,17 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         var tickLocations = [Double]()
         tickLocations.reserveCapacity(stepCount)
         
-        for i in 0..<stepCount {
+        var i = 0
+        
+        while true {
             let s = first+Double(i)*step
             
-            if s >= max {
+            if s >= max || tickLocations.count >= maxTicks {
                 break
             }
             
             tickLocations.append(s)
+            i += 1
         }
         
         return tickLocations
