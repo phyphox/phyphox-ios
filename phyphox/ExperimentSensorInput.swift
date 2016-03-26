@@ -42,7 +42,7 @@ final class ExperimentSensorInput {
         }
     }
     
-    private(set) var startTimestamp: NSTimeInterval = 0.0 //in s
+    private(set) var startTimestamp: NSTimeInterval?
     private var pauseBegin: NSTimeInterval = 0.0
     
     private(set) weak var xBuffer: DataBuffer?
@@ -63,7 +63,7 @@ final class ExperimentSensorInput {
         /**
          Start of current average mesurement.
          */
-        var iterationStartTimestamp: NSTimeInterval = 0.0
+        var iterationStartTimestamp: NSTimeInterval?
         
         var x: Double?
         var y: Double?
@@ -75,8 +75,8 @@ final class ExperimentSensorInput {
             self.averagingInterval = averagingInterval
         }
         
-        func requiresFlushing() -> Bool {
-            return iterationStartTimestamp + averagingInterval <= CFAbsoluteTimeGetCurrent()
+        func requiresFlushing(currentT: NSTimeInterval) -> Bool {
+            return iterationStartTimestamp != nil && iterationStartTimestamp! + averagingInterval <= currentT
         }
     }
     
@@ -139,18 +139,18 @@ final class ExperimentSensorInput {
             return
         }
         
-        averaging.iterationStartTimestamp = 0.0
+        averaging.iterationStartTimestamp = nil
         
-        averaging.x = 0.0
-        averaging.y = 0.0
-        averaging.z = 0.0
+        averaging.x = nil
+        averaging.y = nil
+        averaging.z = nil
         
         averaging.numberOfUpdates = 0
     }
     
     func start() {
         if pauseBegin > 0 {
-            startTimestamp += CFAbsoluteTimeGetCurrent()-pauseBegin
+            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
             pauseBegin = 0.0
         }
         
@@ -158,17 +158,92 @@ final class ExperimentSensorInput {
         
         switch sensorType {
         case .Accelerometer:
-            motionSession.getAccelerometerValues(effectiveRate, values: self.dataIn)
-        case .Gyroscope:
-            motionSession.getGyroValues(effectiveRate, values: self.dataIn)
-        case .MagneticField:
-            motionSession.getMagnetometerValues(effectiveRate, values: self.dataIn)
-        case .LinearAcceleration:
-            motionSession.getAccelerationFromDeviceMotion(effectiveRate, values: self.dataIn)
-        case .Pressure:
-            motionSession.getAltimeterValues(effectiveRate, values: { (data: CMAltitudeData?, error: NSError?) -> Void in
-                self.dataIn(nil, y: nil, z: data?.relativeAltitude.doubleValue, error: error)
+            motionSession.getDeviceMotion(effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+                guard let motion = deviceMotion else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let acceleration = motion.userAcceleration
+                let gravity = motion.gravity
+                
+                let x = acceleration.x+gravity.x
+                let y = acceleration.y+gravity.y
+                let z = acceleration.z+gravity.z
+                
+                let t = motion.timestamp
+                
+                self.dataIn(x, y: y, z: z, t: t, error: error)
             })
+            
+        case .Gyroscope:
+            motionSession.getGyroData(effectiveRate, handler: { [unowned self] (data, error) in
+                guard let gyroData = data else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let rotation = gyroData.rotationRate
+                
+                let x = rotation.x
+                let y = rotation.y
+                let z = rotation.z
+                
+                let t = gyroData.timestamp
+                
+                self.dataIn(x, y: y, z: z, t: t, error: error)
+            })
+            
+        case .MagneticField:
+            motionSession.getMagnetometerData(effectiveRate, handler: { [unowned self] (data, error) in
+                guard let magnetometerData = data else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let field = magnetometerData.magneticField
+                
+                let x = field.x
+                let y = field.y
+                let z = field.z
+                
+                let t = magnetometerData.timestamp
+                
+                self.dataIn(x, y: y, z: z, t: t, error: error)
+            })
+            
+        case .LinearAcceleration:
+            motionSession.getAccelerometerData(effectiveRate, handler: { [unowned self] (data, error) in
+                guard let accelerometerData = data else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let acceleration = accelerometerData.acceleration
+                
+                let x = acceleration.x
+                let y = acceleration.y
+                let z = acceleration.z
+                
+                let t = accelerometerData.timestamp
+                
+                self.dataIn(x, y: y, z: z, t: t, error: error)
+            })
+            
+        case .Pressure:
+            motionSession.getAltimeterData(effectiveRate, handler: { [unowned self] (data, error) -> Void in
+                guard let altimeterData = data else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let pressure = altimeterData.pressure.doubleValue
+                
+                let t = altimeterData.timestamp
+                
+                self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
+            })
+            
         default:
             break
         }
@@ -193,7 +268,7 @@ final class ExperimentSensorInput {
         }
     }
     
-    private func writeToBuffers(x: Double?, y: Double?, z: Double?) {
+    private func writeToBuffers(x: Double?, y: Double?, z: Double?, t: NSTimeInterval) {
         if x != nil && self.xBuffer != nil {
             self.xBuffer!.append(x)
         }
@@ -205,71 +280,77 @@ final class ExperimentSensorInput {
         }
         
         if self.tBuffer != nil {
-            let t = CFAbsoluteTimeGetCurrent()-self.startTimestamp
+            if startTimestamp == nil {
+                startTimestamp = t
+            }
             
-            self.tBuffer!.append(t)
+            let relativeT = t-self.startTimestamp!
+            
+            self.tBuffer!.append(relativeT)
         }
     }
     
-    private func dataIn(x: Double?, y: Double?, z: Double?, error: NSError?) {
-        dispatch_async(queue) { [unowned self] in
+    private func dataIn(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+        
+        func dataInSync(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+            guard error == nil else {
+                print("Sensor error: \(error!.localizedDescription)")
+                return
+            }
+            
+            if let av = self.averaging {
+                if av.iterationStartTimestamp == nil {
+                    av.iterationStartTimestamp = t
+                }
+                
+                if x != nil {
+                    if av.x == nil {
+                        av.x = x!
+                    }
+                    else {
+                        av.x! += x!
+                    }
+                }
+                
+                if y != nil {
+                    if av.y == nil {
+                        av.y = y!
+                    }
+                    else {
+                        av.y! += y!
+                    }
+                }
+                
+                if z != nil {
+                    if av.z == nil {
+                        av.z = z!
+                    }
+                    else {
+                        av.z! += z!
+                    }
+                }
+                
+                av.numberOfUpdates += 1
+            }
+            else {
+                writeToBuffers(x, y: y, z: z, t: t!)
+            }
+            
+            if let av = self.averaging {
+                if av.requiresFlushing(t!) {
+                    let u = Double(av.numberOfUpdates)
+                    
+                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), t: t!)
+                    
+                    self.resetValuesForAveraging()
+                }
+            }
+        }
+        
+        dispatch_async(queue) {
             autoreleasepool({
-                self.dataInSync(x, y: y, z: z, error: error)
+                dataInSync(x, y: y, z: z, t: t, error: error)
             })
-        }
-    }
-    
-    private func dataInSync(x: Double?, y: Double?, z: Double?, error: NSError?) {
-        if (startTimestamp == 0.0) {
-            startTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
-        }
-        
-        if let av = self.averaging {
-            if av.iterationStartTimestamp == 0.0 {
-                av.iterationStartTimestamp = CFAbsoluteTimeGetCurrent() as NSTimeInterval
-            }
-            
-            if x != nil {
-                if av.x == nil {
-                    av.x = x!
-                }
-                else {
-                    av.x! += x!
-                }
-            }
-            
-            if y != nil {
-                if av.y == nil {
-                    av.y = y!
-                }
-                else {
-                    av.y! += y!
-                }
-            }
-            
-            if z != nil {
-                if av.z == nil {
-                    av.z = z!
-                }
-                else {
-                    av.z! += z!
-                }
-            }
-            
-            av.numberOfUpdates += 1
-        }
-        else {
-            writeToBuffers(x, y: y, z: z)
-        }
-        
-        if let av = self.averaging {
-            if av.requiresFlushing() {
-                let u = Double(av.numberOfUpdates)
-                
-                writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil))
-                
-                self.resetValuesForAveraging()
-            }
         }
     }
 }

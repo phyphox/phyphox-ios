@@ -97,11 +97,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     
                     let name = output[XMLDictionaryTextKey] as! String
                     
-                    var component = attributes["component"]
-                    
-                    if sensorType == .Pressure && component != "t" {
-                        component = "z" //Pressure is always only z (on Android it seems to be x)
-                    }
+                    let component = attributes["component"]
                     
                     let buf = buffers[name]
                     

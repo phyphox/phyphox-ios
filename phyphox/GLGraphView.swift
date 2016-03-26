@@ -10,9 +10,9 @@ import UIKit
 import GLKit
 import OpenGLES
 
-public struct GLpoint {
-    var x: GLfloat
-    var y: GLfloat
+public struct GraphPoint<T> {
+    var x: T
+    var y: T
 }
 
 public struct GLcolor {
@@ -28,8 +28,8 @@ final class GLGraphView: GLKView {
     private var xScale: Float = 0.0
     private var yScale: Float = 0.0
     
-    private var min: GLpoint!
-    private var max: GLpoint!
+    private var min: GraphPoint<Double>!
+    private var max: GraphPoint<Double>!
     
     var lineWidth: GLfloat = 2.0 {
         didSet {
@@ -85,10 +85,10 @@ final class GLGraphView: GLKView {
     }
     
     #if DEBUG
-    var points: [GLpoint]?
+    var points: [GraphPoint<GLfloat>]?
     #endif
     
-    func setPoints(p: [GLpoint], min: GLpoint, max: GLpoint) {
+    func setPoints(p: [GraphPoint<GLfloat>], min: GraphPoint<Double>, max: GraphPoint<Double>) {
         #if DEBUG
             points = p
         #endif
@@ -102,14 +102,14 @@ final class GLGraphView: GLKView {
         EAGLContext.setCurrentContext(context)
         
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GLpoint)), p, GLenum(GL_DYNAMIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p, GLenum(GL_DYNAMIC_DRAW))
         
-        xScale = 2.0/(max.x-min.x)
+        xScale = Float(2.0/(max.x-min.x))
         
-        let dataPerPixelY = (max.y-min.y)/GLfloat(self.bounds.size.height)
+        let dataPerPixelY = Float((max.y-min.y)/Double(self.bounds.size.height))
         let biasDataY = lineWidth*dataPerPixelY
         
-        yScale = 2.0/((max.y-min.y)+biasDataY)
+        yScale = Float(2.0/(Float(max.y-min.y)+biasDataY))
         
         self.max = max
         self.min = min
@@ -149,14 +149,18 @@ final class GLGraphView: GLKView {
 //        glPointSize(lineWidth)
         
         var transform = GLKMatrix4MakeScale(xScale, yScale, 1.0)
-        transform = GLKMatrix4Translate(transform, -min.x-(max.x-min.x)/2.0, -min.y-(max.y-min.y)/2.0, 0.0)
+        
+        let xTranslaiton = Float(-min.x-(max.x-min.x)/2.0)
+        let yTranslation = Float(-min.y-(max.y-min.y)/2.0)
+        
+        transform = GLKMatrix4Translate(transform, xTranslaiton, yTranslation, 0.0)
         baseEffect.transform.projectionMatrix = transform
         
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
         baseEffect.prepareToDraw()
         
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue));
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(sizeof(GLpoint)), nil)
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(sizeof(GraphPoint<GLfloat>)), nil)
         
         glDrawArrays(GLenum((drawDots ? GL_POINTS : GL_LINE_STRIP)), 0, GLsizei(length))
     }

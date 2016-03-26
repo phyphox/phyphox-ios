@@ -59,8 +59,102 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
     
     var queue: dispatch_queue_t!
     
-    //((min, max), data)
-    var dataSets: [((GLpoint, GLpoint), [GLpoint])] = []
+    private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+    
+    func addDataSet(set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
+        if self.dataSets.count >= Int(self.descriptor.history) {
+            self.dataSets.removeFirst()
+        }
+        
+        self.dataSets.append(set)
+    }
+    
+    private var max: GraphPoint<Double>? {
+        get {
+            if dataSets.count > 1 {
+                var maxX = -Double.infinity
+                var maxY = -Double.infinity
+                
+                for (i, set) in dataSets.enumerate() {
+                    let maxPoint = set.bounds.max
+                    let minPoint = set.bounds.min
+                    
+                    if i == 0 {
+                        if maxPoint.x > maxX {
+                            maxX = maxPoint.x
+                        }
+                    }
+                    else {
+                        maxX += maxPoint.x-minPoint.x //add delta
+                    }
+                    
+                    if maxPoint.y > maxY {
+                        maxY = maxPoint.y
+                    }
+                }
+                
+                return GraphPoint(x: maxX, y: maxY)
+            }
+            else {
+                return dataSets.first?.bounds.max
+            }
+        }
+    }
+    
+    private var min: GraphPoint<Double>? {
+        get {
+            if dataSets.count > 1 {
+                var minX = Double.infinity
+                var minY = Double.infinity
+                
+                for set in dataSets {
+                    let minPoint = set.bounds.min
+                    
+                    if minPoint.x < minX {
+                        minX = minPoint.x
+                    }
+                    
+                    if minPoint.y < minY {
+                        minY = minPoint.y
+                    }
+                }
+                
+                return GraphPoint(x: minX, y: minY)
+            }
+            else {
+                return dataSets.first?.bounds.min
+            }
+        }
+    }
+    
+    private var points: [GraphPoint<GLfloat>]? {
+        if dataSets.count > 1 {
+            var p: [GraphPoint<GLfloat>] = []
+            
+            var xAdd: GLfloat = 0.0
+            
+            for set in dataSets {
+                let max = set.bounds.max
+                let min = set.bounds.min
+                
+                if xAdd > 0 {
+                    p.appendContentsOf(set.data.map({ (p) -> GraphPoint<GLfloat> in
+                        return GraphPoint(x: p.x+xAdd, y: p.y)
+                    }))
+                }
+                else {
+                    p.appendContentsOf(set.data)
+                }
+                
+                xAdd += GLfloat(max.x-min.x)
+            }
+            
+            return p
+        }
+        else {
+            return dataSets.first?.data
+        }
+    }
     
     required public init(descriptor: GraphViewDescriptor) {
         glGraph = GLGraphView(frame: .zero)
@@ -88,6 +182,21 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         addSubview(yLabel)
         
         descriptor.yInputBuffer.addObserver(self)
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    func dataBufferUpdated(buffer: DataBuffer) {
+        setNeedsUpdate()
+    }
+    
+    //MARK - Graph
+    var graphFrame: CGRect {
+        get {
+            return CGRectInset(self.bounds, 25, 25)
+        }
     }
     
     func getTicks(min mi: Double, max ma: Double, maxTicks: Int, log: Bool) -> [Double]? {
@@ -190,22 +299,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         return tickLocations
     }
     
-    
-    func dataBufferUpdated(buffer: DataBuffer) {
-        setNeedsUpdate()
-    }
-    
-    deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-    }
-    
-    //MARK - Graph
-    var graphFrame: CGRect {
-        get {
-            return CGRectInset(self.bounds, 25, 25)
-        }
-    }
-    
     private var lastIndexXArray: [Double]?
     private var lastCount: Int?
     
@@ -268,15 +361,15 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                 }
                 
                 if count > 1 {
-                    var maxX: GLfloat = -Float.infinity
-                    var minX: GLfloat = Float.infinity
+                    var maxX = -Double.infinity
+                    var minX = Double.infinity
                     
-                    var maxY: GLfloat = -Float.infinity
-                    var minY: GLfloat = Float.infinity
+                    var maxY = -Double.infinity
+                    var minY = Double.infinity
                     
                     let count = Swift.min(xValues.count, yValues.count)
                     
-                    var points: [GLpoint] = []
+                    var points: [GraphPoint<GLfloat>] = []
                     points.reserveCapacity(count)
                     
                     var lastX = -Double.infinity
@@ -294,8 +387,8 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                         
                         lastX = rawX
                         
-                        let x = GLfloat((logX ? log(rawX) : rawX))
-                        let y = GLfloat((logY ? log(rawY) : rawY))
+                        let x = (logX ? log(rawX) : rawX)
+                        let y = (logY ? log(rawY) : rawY)
                         
                         guard isfinite(x) && isfinite(y) else {
                             #if DEBUG
@@ -320,45 +413,46 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                             maxY = y
                         }
                         
-                        points.append(GLpoint(x: x, y: y))
+                        points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
                     }
                     
-                    let min = GLpoint(x: minX, y: minY)
-                    let max = GLpoint(x: maxX, y: maxY)
+                    let dataSet = (bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points)
                     
-                    if self.dataSets.count >= Int(self.descriptor.history) {
-                        self.dataSets.removeFirst()
-                    }
+                    self.addDataSet(dataSet)
                     
-                    self.dataSets.append(((min, max), points))
+                    let min = self.min!
+                    let max = self.max!
                     
-                    let history = self.descriptor.history > 1
+                    minX = min.x
+                    maxX = max.x
                     
-                    let totalMin = (history ? self.min : min)
-                    let totalMax = (history ? self.max : max)
+                    minY = min.y
+                    maxY = max.y
                     
-                    let xTicks = self.getTicks(min: Double(totalMin.x), max: Double(totalMax.x), maxTicks: 6, log: self.descriptor.logX)
-                    let yTicks = self.getTicks(min: Double(totalMin.y), max: Double(totalMax.y), maxTicks: 4, log: self.descriptor.logY)
+                    let xTicks = self.getTicks(min: minX, max: maxX, maxTicks: 6, log: self.descriptor.logX)
+                    let yTicks = self.getTicks(min: minY, max: maxY, maxTicks: 4, log: self.descriptor.logY)
                     
                     var mappedXTicks: [GraphGridLine]? = nil
                     var mappedYTicks: [GraphGridLine]? = nil
                     
                     if xTicks != nil {
                         mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.x))/Double(totalMax.x-totalMin.x)))
+                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-minX)/(maxX-minX)))
                         })
                     }
                     
                     if yTicks != nil {
                         mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-Double(totalMin.y))/Double(totalMax.y-totalMin.y)))
+                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-minY)/(maxY-minY)))
                         })
                     }
+                    
+                    let finalPoints = self.points!
                     
                     mainThread({
                         self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
                         
-                        self.glGraph.setPoints((history ? self.points : points), min: totalMin, max: totalMax)
+                        self.glGraph.setPoints(finalPoints, min: min, max: max)
                         
                         self.setNeedsLayout()
                     });
@@ -367,78 +461,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
             
             self.hasUpdateBlockEnqueued = false
         }
-    }
-    
-    var max: GLpoint {
-        get {
-            var maxX: GLfloat = -Float.infinity
-            var maxY: GLfloat = -Float.infinity
-            
-            for (i, set) in dataSets.enumerate() {
-                let maxPoint = set.0.1
-                let minPoint = set.0.0
-                
-                if i == 0 {
-                    if maxPoint.x > maxX {
-                        maxX = maxPoint.x
-                    }
-                }
-                else {
-                    maxX += maxPoint.x-minPoint.x //add delta
-                }
-                
-                if maxPoint.y > maxY {
-                    maxY = maxPoint.y
-                }
-            }
-            
-            return GLpoint(x: maxX, y: maxY)
-        }
-    }
-    
-    var min: GLpoint {
-        get {
-            var minX: GLfloat = Float.infinity
-            var minY: GLfloat = Float.infinity
-            
-            for set in dataSets {
-                let minPoint = set.0.0
-                
-                if minPoint.x < minX {
-                    minX = minPoint.x
-                }
-                
-                if minPoint.y < minY {
-                    minY = minPoint.y
-                }
-            }
-            
-            return GLpoint(x: minX, y: minY)
-        }
-    }
-    
-    var points: [GLpoint] {
-        var p: [GLpoint] = []
-        
-        var xAdd: GLfloat = 0.0
-        
-        for set in dataSets {
-            let max = set.0.1
-            let min = set.0.0
-            
-            if xAdd > 0 {
-                p.appendContentsOf(set.1.map({ (p) -> GLpoint in
-                    return GLpoint(x: p.x+xAdd, y: p.y)
-                }))
-            }
-            else {
-                p.appendContentsOf(set.1)
-            }
-            
-            xAdd += max.x-min.x
-        }
-        
-        return p
     }
     
     //Mark - General UI
