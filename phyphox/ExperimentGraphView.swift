@@ -154,10 +154,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         descriptor.yInputBuffer.addObserver(self)
     }
     
-    deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-    }
-    
     func dataBufferUpdated(buffer: DataBuffer) {
         setNeedsUpdate()
     }

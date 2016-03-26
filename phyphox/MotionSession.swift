@@ -126,6 +126,7 @@ final class MotionSession {
     func getDeviceMotion(interval: NSTimeInterval = 0.1, handler: ((deviceMotion: CMDeviceMotion?, error: NSError?) -> Void)) -> Bool {
         if deviceMotionAvailable {
             manager.deviceMotionUpdateInterval = interval
+            manager.showsDeviceMovementDisplay = true
             manager.startDeviceMotionUpdatesToQueue(makeQueue(), withHandler: handler)
             
             return true
@@ -137,123 +138,5 @@ final class MotionSession {
     func stopDeviceMotionUpdates() {
         manager.stopDeviceMotionUpdates()
     }
-    
-   /*
-    func getAccelerationFromDeviceMotion (interval: NSTimeInterval = 0.1, values: ((x:Double?, y:Double?, z:Double?, error: NSError?) -> Void)) -> Bool {
-        var valX: Double?
-        var valY: Double?
-        var valZ: Double?
-        
-        if deviceMotionAvailable {
-            manager.deviceMotionUpdateInterval = interval
-            manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
-                (data: CMDeviceMotion?, error: NSError?) in
-                if (data != nil) {
-                    valX = data!.userAcceleration.x
-                    valY = data!.userAcceleration.y
-                    valZ = data!.userAcceleration.z
-                }
-                
-                values(x: valX, y: valY, z: valZ, error: error)
-            }
-            
-            return true
-        }
-        
-        return false
-    }
-    
-    func getGravityAccelerationFromDeviceMotion (interval: NSTimeInterval = 0.1, values: ((x:Double?, y:Double?, z:Double?, error: NSError?) -> Void)) -> Bool {
-        var valX: Double?
-        var valY: Double?
-        var valZ: Double?
-        
-        if deviceMotionAvailable{
-            manager.deviceMotionUpdateInterval = interval
-            manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
-                (data: CMDeviceMotion?, error: NSError?) in
-                if data != nil {
-                    valX = data!.gravity.x
-                    valY = data!.gravity.y
-                    valZ = data!.gravity.z
-                }
-                
-                values(x: valX, y: valY, z: valZ, error: error)
-            }
-            
-            return true
-        }
-        
-        return false
-    }
-    
-    func getAttitudeFromDeviceMotion (interval: NSTimeInterval = 0.1, values: ((attitude: CMAttitude?, error: NSError?) -> Void)) -> Bool {
-        
-        if deviceMotionAvailable{
-            manager.deviceMotionUpdateInterval = interval
-            manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
-                (data: CMDeviceMotion?, error: NSError?) in
-                values(attitude: data?.attitude, error: error)
-            }
-            
-            return true
-        }
-        
-        return false
-    }
-    
-    
-    func getRotationRateFromDeviceMotion(interval: NSTimeInterval = 0.1, values: ((x:Double?, y:Double?, z:Double?, error: NSError?) -> Void)) -> Bool {
-        var valX: Double?
-        var valY: Double?
-        var valZ: Double?
-        
-        if deviceMotionAvailable {
-            manager.deviceMotionUpdateInterval = interval
-            manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
-                (data: CMDeviceMotion?, error: NSError?) in
-                if data != nil {
-                    valX = data!.rotationRate.x
-                    valY = data!.rotationRate.y
-                    valZ = data!.rotationRate.z
-                }
-                
-                values(x: valX, y: valY, z: valZ, error: error)
-            }
-            
-            return true
-        }
-        
-        return false
-    }
-    
-    
-    func getMagneticFieldFromDeviceMotion(interval: NSTimeInterval = 0.1, values: ((x:Double?, y:Double?, z:Double?, accuracy: Int32?, error: NSError?) -> Void)) -> Bool {
-        var valX: Double?
-        var valY: Double?
-        var valZ: Double?
-        
-        var valAccuracy: Int32?
-        
-        if deviceMotionAvailable {
-            manager.deviceMotionUpdateInterval = interval
-            manager.startDeviceMotionUpdatesToQueue(NSOperationQueue()){
-                (data: CMDeviceMotion?, error: NSError?) in
-                
-                if (data != nil) {
-                    valX = data!.magneticField.field.x
-                    valY = data!.magneticField.field.y
-                    valZ = data!.magneticField.field.z
-                    valAccuracy = data!.magneticField.accuracy.rawValue
-                }
-                
-                values(x: valX, y: valY, z: valZ, accuracy: valAccuracy, error: error)
-            }
-            
-            return true
-        }
-        
-        return false
-    }*/
     
 }

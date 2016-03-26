@@ -63,6 +63,10 @@ final class Experiment : ExperimentAnalysisDelegate {
         
         queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
         
+        defer {
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: EndBackgroundMotionSession, object: nil)
+        }
+        
         if audioInputs != nil {
             self.requiredPermissions = .Microphone
         }
@@ -71,6 +75,14 @@ final class Experiment : ExperimentAnalysisDelegate {
         }
         
         analysis?.delegate = self
+    }
+    
+    dynamic func endBackgroundSession() {
+        stop()
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
     func analysisWillUpdate(_: ExperimentAnalysis) {

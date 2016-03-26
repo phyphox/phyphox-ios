@@ -24,6 +24,8 @@ enum SensorError : ErrorType {
     case SensorUnavailable(SensorType)
 }
 
+private let kG = 9.81
+
 final class ExperimentSensorInput {
     let sensorType: SensorType
     
@@ -158,41 +160,43 @@ final class ExperimentSensorInput {
         
         switch sensorType {
         case .Accelerometer:
+            motionSession.getAccelerometerData(effectiveRate, handler: { [unowned self] (data, error) in
+                guard let accelerometerData = data else {
+                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    return
+                }
+                
+                let acceleration = accelerometerData.acceleration
+                
+                // m/s^2
+                
+                let x = acceleration.x*kG
+                let y = acceleration.y*kG
+                let z = acceleration.z*kG
+                
+                let t = accelerometerData.timestamp
+                
+                self.dataIn(x, y: y, z: z, t: t, error: error)
+                })
+            
+        case .Gyroscope:
             motionSession.getDeviceMotion(effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
                 }
                 
-                let acceleration = motion.userAcceleration
-                let gravity = motion.gravity
+                let rotation = motion.rotationRate
                 
-                let x = acceleration.x+gravity.x
-                let y = acceleration.y+gravity.y
-                let z = acceleration.z+gravity.z
-                
-                let t = motion.timestamp
-                
-                self.dataIn(x, y: y, z: z, t: t, error: error)
-            })
-            
-        case .Gyroscope:
-            motionSession.getGyroData(effectiveRate, handler: { [unowned self] (data, error) in
-                guard let gyroData = data else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
-                    return
-                }
-                
-                let rotation = gyroData.rotationRate
-                
+                // rad/s
                 let x = rotation.x
                 let y = rotation.y
                 let z = rotation.z
                 
-                let t = gyroData.timestamp
+                let t = motion.timestamp
                 
                 self.dataIn(x, y: y, z: z, t: t, error: error)
-            })
+                })
             
         case .MagneticField:
             motionSession.getMagnetometerData(effectiveRate, handler: { [unowned self] (data, error) in
@@ -210,25 +214,26 @@ final class ExperimentSensorInput {
                 let t = magnetometerData.timestamp
                 
                 self.dataIn(x, y: y, z: z, t: t, error: error)
-            })
+                })
             
         case .LinearAcceleration:
-            motionSession.getAccelerometerData(effectiveRate, handler: { [unowned self] (data, error) in
-                guard let accelerometerData = data else {
+            motionSession.getDeviceMotion(effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+                guard let motion = deviceMotion else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
                 }
                 
-                let acceleration = accelerometerData.acceleration
+                let acceleration = motion.userAcceleration
                 
-                let x = acceleration.x
-                let y = acceleration.y
-                let z = acceleration.z
+                // m/s^2
+                let x = acceleration.x*kG
+                let y = acceleration.y*kG
+                let z = acceleration.z*kG
                 
-                let t = accelerometerData.timestamp
+                let t = motion.timestamp
                 
                 self.dataIn(x, y: y, z: z, t: t, error: error)
-            })
+                })
             
         case .Pressure:
             motionSession.getAltimeterData(effectiveRate, handler: { [unowned self] (data, error) -> Void in
@@ -237,12 +242,12 @@ final class ExperimentSensorInput {
                     return
                 }
                 
-                let pressure = altimeterData.pressure.doubleValue
+                let pressure = altimeterData.pressure.doubleValue/10.0 //hPa
                 
                 let t = altimeterData.timestamp
                 
                 self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
-            })
+                })
             
         default:
             break
@@ -258,7 +263,7 @@ final class ExperimentSensorInput {
         case .LinearAcceleration:
             motionSession.stopDeviceMotionUpdates()
         case .Gyroscope:
-            motionSession.stopGyroUpdates()
+            motionSession.stopDeviceMotionUpdates()
         case .MagneticField:
             motionSession.stopMagnetometerUpdates()
         case .Pressure:

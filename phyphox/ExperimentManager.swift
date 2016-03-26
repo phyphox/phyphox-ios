@@ -59,17 +59,10 @@ final class ExperimentManager {
         return adc!
     }
     
+    private static let instance = ExperimentManager() //static => lazy, let => synchronized
+    
     class func sharedInstance() -> ExperimentManager {
-        struct Singleton {
-            static var token: dispatch_once_t = 0
-            static var instance: ExperimentManager? = nil
-        }
-        
-        dispatch_once(&Singleton.token) { () -> Void in
-            Singleton.instance = ExperimentManager()
-        }
-        
-        return Singleton.instance!
+        return instance
     }
     
     init() {
