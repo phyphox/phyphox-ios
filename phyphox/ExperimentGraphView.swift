@@ -8,12 +8,6 @@
 
 import UIKit
 
-protocol GraphValueSource {
-    subscript(index: Int) -> Double? { get }
-    var count: Int { get }
-    var last: Double? { get }
-}
-
 struct GraphGrid {
     let xGridLines: [GraphGridLine]?
     let yGridLines: [GraphGridLine]?
@@ -22,30 +16,6 @@ struct GraphGrid {
 struct GraphGridLine {
     let absoluteValue: Double
     let relativeValue: CGFloat
-}
-
-final class GraphFixedValueSource: GraphValueSource {
-    let array: [Double]
-    
-    init(array: [Double]) {
-        self.array = array
-    }
-    
-    subscript(index: Int) -> Double? {
-        return array[index]
-    }
-    
-    var last: Double? {
-        get {
-            return array.last
-        }
-    }
-    
-    var count: Int {
-        get {
-            return array.count
-        }
-    }
 }
 
 public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
@@ -218,7 +188,8 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
                 return nil
             }
             
-            var magStep = 1;
+            var magStep = 1
+            
             while (range+1 > maxTicks * magStep) {
                 magStep += 1
             }
@@ -228,7 +199,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
             var ticks = [Double]()
             ticks.reserveCapacity((range+1)/magStep)
             
-            for _ in 0..<(range+1)/magStep {
+            for _ in 0...(range+1)/magStep {
                 ticks.append(Darwin.log(first))
                 first *= M_E
             }

@@ -12,7 +12,7 @@ var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-ex
 var fileExtension = "phyphox"
 
 final class ExperimentManager {
-    private(set) var experimentCollections: [ExperimentCollection]
+    private(set) var experimentCollections = [ExperimentCollection]()
     
     private var adc: AEAudioController?
     private var fltc: AEFloatConverter?
@@ -77,7 +77,7 @@ final class ExperimentManager {
         
         let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
         
-        var experimentCollections: [String: ExperimentCollection] = [:]
+        var lookupTable: [String: ExperimentCollection] = [:]
         
         for title in folders {
             let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
@@ -87,21 +87,20 @@ final class ExperimentManager {
                 
                 let category = experiment.category!
                 
-                if let collection = experimentCollections[category] {
+                if let collection = lookupTable[category] {
                     collection.experiments!.append(experiment)
                 }
                 else {
                     let collection = ExperimentCollection(title: category, experiments: [experiment])
                     
-                    experimentCollections[category] = collection
+                    lookupTable[category] = collection
+                    experimentCollections.append(collection)
                 }
             }
             catch let error {
                 print("Error Caught: \(error)")
             }
         }
-        
-        self.experimentCollections = Array(experimentCollections.values)
         
         print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
     }

@@ -37,9 +37,7 @@ final class ExperimentAudioOutput {
                 
                 let buffer = unsafeBitCast(UnsafeMutableAudioBufferListPointer(data).first!.mData, UnsafeMutablePointer<Float>.self)
                 
-                let valueArray = dataSource.toArray().map({ (dbl) -> Float in
-                    return Float(dbl)
-                })
+                let valueArray = dataSource.toArray().map { Float($0) }
                 
                 for i in 0..<Int(frames) {
                     if !self.loop {

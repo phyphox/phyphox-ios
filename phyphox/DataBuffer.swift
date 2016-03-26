@@ -38,32 +38,6 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         observers.removeObject(observer)
     }
     
-    private class DataBufferGraphValueSource: GraphValueSource {
-        weak var buffer: DataBuffer!
-        
-        init(buffer: DataBuffer) {
-            self.buffer = buffer
-        }
-        
-        subscript(index: Int) -> Double? {
-            return buffer.objectAtIndex(index)
-        }
-        
-        var last: Double? {
-            get {
-                return buffer.last
-            }
-        }
-        
-        var count: Int {
-            get {
-                return buffer.count
-            }
-        }
-    }
-    
-    var graphValueSource: GraphValueSource!
-    
     var trashedCount: Int = 0
     
     var staticBuffer: Bool = false
@@ -87,9 +61,6 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         self.name = name
         self.size = size
         queue = Queue<Double>(capacity: size)
-        defer {
-            graphValueSource = DataBufferGraphValueSource(buffer: self)
-        }
     }
     
     func generate() -> IndexingGenerator<[Double]> {
