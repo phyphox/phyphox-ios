@@ -28,7 +28,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
-        self.sleep = sleep
+        self.sleep = max(1/30.0, sleep) //Max analysis rate: 30Hz
         self.onUserInput = onUserInput
     }
     
@@ -62,7 +62,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         if !busy {
             busy = true
             
-            after(0.1, closure: { () -> Void in
+            after(sleep, closure: { () -> Void in
                 #if DEBUG
                     print("Analysis update")
                 #endif
