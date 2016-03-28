@@ -131,13 +131,14 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         glGraph.drawDots = descriptor.drawDots
         
         gridView = GraphGridView()
-        gridView.gridInsets = CGPoint(x: 25.0, y: 25.0)
+        gridView.gridInset = CGPoint(x: 25.0, y: 25.0)
+        gridView.gridOffset = CGPointMake(0.0, -4.0)
         
         func makeLabel(text: String?) -> UILabel {
             let l = UILabel()
             l.text = text
             
-            l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+            l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
             
             return l
         }
@@ -442,15 +443,13 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
     }
     
     var graphFrame: CGRect {
-        get {
-            return CGRectInset(self.bounds, 25, 25)
-        }
+        return gridView.insetRect
     }
     
     public override func layoutSubviews() {
         super.layoutSubviews()
         
-        let spacing: CGFloat = 2.0
+        let spacing: CGFloat = 1.0
         
         let s1 = label.sizeThatFits(self.bounds.size)
         label.frame = CGRectMake((self.bounds.size.width-s1.width)/2.0, spacing, s1.width, s1.height)
@@ -459,7 +458,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         xLabel.frame = CGRectMake((self.bounds.size.width-s2.width)/2.0, self.bounds.size.height-s2.height-spacing, s2.width, s2.height)
         
         let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
-        yLabel.frame = CGRectMake(spacing, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
+        yLabel.frame = CGRectMake(spacing+5.0, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
         
         gridView.frame = bounds
         glGraph.frame = graphFrame

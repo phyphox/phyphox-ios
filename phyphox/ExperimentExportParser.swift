@@ -30,7 +30,7 @@ final class ExperimentExportParser: ExperimentMetadataParser {
             
             let datas = getElementsWithKey(set, key: "data") as! [[String: AnyObject]]
             
-            let dict = MutableOrderedDictionary()
+            var buffs = [(name: String, buffer: DataBuffer)]()
             
             for data in datas {
                 let attributes = data[XMLDictionaryAttributesKey] as! [String: String]
@@ -40,12 +40,12 @@ final class ExperimentExportParser: ExperimentMetadataParser {
                 let bufferName = data[XMLDictionaryTextKey] as! String
                 let buffer = buffers[bufferName]!
                 
-                dict.setObject(buffer, forKey: name)
+                buffs.append((name, buffer))
             }
             
-            assert(dict.count > 0, "No export data sources")
+            assert(buffs.count > 0, "No export data sources")
             
-            let processed = ExperimentExportSet(name: name, data: dict)
+            let processed = ExperimentExportSet(name: name, data: buffs)
             
             final.append(processed)
         }

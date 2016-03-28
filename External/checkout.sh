@@ -10,17 +10,9 @@ sleep 3s
 #git clone https://github.com/nicklockwood/XMLDictionary
 #rm -rf XMLDictionary/.git
 
-rm -rf kissfft
-git clone https://github.com/itdaniher/kissfft
-rm -rf kissfft/.git
-
 rm -rf TheAmazingAudioEngine
 git clone https://github.com/TheAmazingAudioEngine/TheAmazingAudioEngine
 rm -rf TheAmazingAudioEngine/.git
-
-rm -rf OrderedDictionary
-git clone -b development https://github.com/JonasGessner/OrderedDictionary
-rm -rf OrderedDictionary/.git
 
 rm -rf pop
 git clone https://github.com/facebook/pop

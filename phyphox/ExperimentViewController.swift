@@ -23,6 +23,7 @@ final class ExperimentViewController: CollectionViewController {
     
     func updateSelectedViewCollection() {
         titleView.prompt = experiment.viewDescriptors?[selectedViewCollection].label
+        titleView.sizeToFit()
         
         //Clear old modules, otherwise cell reuse will mess everything up...
         for cell in selfView.collectionView.visibleCells() as! [ExperimentViewModuleCollectionViewCell] {

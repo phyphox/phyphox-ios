@@ -23,7 +23,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         
         label.text = descriptor.label
         
-        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote)
         
         self.descriptor = descriptor
         

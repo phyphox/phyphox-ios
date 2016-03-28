@@ -28,7 +28,7 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         }
         
         #if DEBUG_ANALYSIS
-            debug_noteInputs(process)
+            debug_noteInputs(process.description)
         #endif
         
         let append = method(process)

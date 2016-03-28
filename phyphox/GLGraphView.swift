@@ -148,6 +148,10 @@ final class GLGraphView: GLKView {
         glLineWidth(lineWidth)
 //        glPointSize(lineWidth)
         
+        if yScale == 0.0 {
+            yScale = 0.1
+        }
+        
         var transform = GLKMatrix4MakeScale(xScale, yScale, 1.0)
         
         let xTranslaiton = Float(-min.x-(max.x-min.x)/2.0)

@@ -23,7 +23,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     
     weak var delegate: ExperimentAnalysisDelegate?
     
-    private let editBuffers = NSMutableSet()
+    private var editBuffers = Set<DataBuffer>()
     
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
@@ -44,11 +44,11 @@ final class ExperimentAnalysis : DataBufferObserver {
      */
     func registerEditBuffer(dataBuffer: DataBuffer) {
         dataBuffer.addObserver(self)
-        editBuffers.addObject(dataBuffer)
+        editBuffers.insert(dataBuffer)
     }
     
     func dataBufferUpdated(buffer: DataBuffer) {
-        if !onUserInput || editBuffers.containsObject(buffer) {
+        if !onUserInput || editBuffers.contains(buffer) {
             setNeedsUpdate()
         }
     }

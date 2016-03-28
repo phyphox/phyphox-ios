@@ -12,10 +12,14 @@ protocol DataBufferObserver : AnyObject {
     func dataBufferUpdated(buffer: DataBuffer)
 }
 
+func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
+    return lhs.name == rhs.name && lhs.size == rhs.size && lhs.toArray() == rhs.toArray()
+}
+
 /**
  Data buffer used for raw or processed data from sensors.
  */
-final class DataBuffer: SequenceType, CustomStringConvertible {
+final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     let name: String
     var size: Int {
         didSet {
@@ -25,6 +29,10 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         }
     }
     
+    var hashValue: Int {
+        return name.hash
+    }
+
     private var stateToken: NSUUID?
     
     private var observers: NSMutableOrderedSet = NSMutableOrderedSet()

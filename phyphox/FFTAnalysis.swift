@@ -7,12 +7,19 @@
 //
 
 import Foundation
+import Accelerate
 
 final class FFTAnalysis: ExperimentAnalysisModule {
+    private var fftSetup: vDSP_DFT_SetupD!
+    
+    deinit {
+        if fftSetup != nil {
+            vDSP_DFT_DestroySetupD(fftSetup!)
+            fftSetup = nil
+        }
+    }
     
     override func update() {
-        let hasImagInBuffer = inputs.count > 1
-        
         var realInput: DataBuffer!
         var imagInput: DataBuffer?
         
@@ -25,14 +32,65 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        let hasImagInBuffer = imagInput != nil
+        
+        var realOutput: DataBuffer?
+        var imagOutput: DataBuffer?
+        
+        for output in outputs {
+            if output.asString == "im" {
+                imagOutput = output.buffer
+            }
+            else {
+                realOutput = output.buffer
+            }
+        }
+        
         let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
         
+        let count = vDSP_Length(pow(2.0, log2(Double(bufferCount))))
+        let countI = Int(count)
+        
+//        if hasImagInBuffer {
+//            if imagOutput != nil { //cpx -> cpx
+                fftSetup = vDSP_DFT_zop_CreateSetupD(fftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+//            }
+//            else { //cpx -> real
+//                fftSetup = vDSP_DFT_zrop_CreateSetupD(fftSetup ?? nil, count, vDSP_DFT_Direction.INVERSE)
+//            }
+//        }
+//        else { //real -> cpx
+//            fftSetup = vDSP_DFT_zrop_CreateSetupD(fftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+//        }
+        
+        let realInputArray = realInput.toArray()
+        let imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
+        
+        var realOutputArray = [Double](count: countI, repeatedValue: 0.0)
+        var imagOutputArray = realOutputArray
+        
+        vDSP_DFT_ExecuteD(fftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+        
+        if !hasImagInBuffer {
+            realOutputArray = Array(realOutputArray[0..<countI/2])
+            imagOutputArray = Array(imagOutputArray[0..<countI/2])
+        }
+        
+        if realOutput != nil {
+            realOutput!.appendFromArray(realOutputArray)
+        }
+        
+        if imagOutput != nil {
+            imagOutput!.appendFromArray(imagOutputArray)
+        }
+        
+        /*
         let count = Int(kiss_fft_next_fast_size((Int32(bufferCount)+1) >> 1) << 1)
         
-        var cpxInputs: [kiss_fft_cpx] = []
+        var cpxInputs: [DOUBLE_COMPLEX] = []
         inputs.reserveCapacity(count)
         
-        let cpxZero = kiss_fft_cpx(r: 0.0, i: 0.0)
+        let cpxZero = DOUBLE_COMPLEX(real: 0.0, imag: 0.0)
         
         if hasImagInBuffer {
             for i in 0..<count {
@@ -40,7 +98,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                     cpxInputs.append(cpxZero)
                 }
                 else {
-                    cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: Float(imagInput![i])))
+                    cpxInputs.append(DOUBLE_COMPLEX(real: realInput[i], imag: imagInput![i]))
                 }
             }
         }
@@ -50,7 +108,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                     cpxInputs.append(cpxZero)
                 }
                 else {
-                    cpxInputs.append(kiss_fft_cpx(r: Float(realInput[i]), i: 0.0))
+                    cpxInputs.append(DOUBLE_COMPLEX(real: realInput[i], imag: 0.0))
                 }
             }
         }
@@ -65,18 +123,8 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             out = Array(out[0..<count/2])
         }
         
-        var realOutput: DataBuffer?
-        var imagOutput: DataBuffer?
-        
-        for output in outputs {
-            if output.asString == "im" {
-                imagOutput = output.buffer
-            }
-            else {
-                realOutput = output.buffer
-            }
-        }
-        
+
+ 
         if realOutput != nil {
             let mapped = out.map{ Double($0.r) }
             
@@ -87,6 +135,6 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             let mapped = out.map{ Double($0.i) }
             
             imagOutput!.appendFromArray(mapped)
-        }
+        }*/
     }
 }
