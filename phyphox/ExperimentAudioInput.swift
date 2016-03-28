@@ -8,6 +8,8 @@
 
 import Foundation
 
+private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioInput", DISPATCH_QUEUE_CONCURRENT)
+
 final class ExperimentAudioInput {
     let sampleRate: UInt
     let outBuffers: [DataBuffer]
@@ -20,22 +22,24 @@ final class ExperimentAudioInput {
         
         defer {
             receiver = AEBlockAudioReceiver { [unowned self] (from: UnsafeMutablePointer<Void>, timestamp: UnsafePointer<AudioTimeStamp>, frames: UInt32, data: UnsafeMutablePointer<AudioBufferList>) in
-                autoreleasepool({
-                    var array = [Float](count: Int(frames), repeatedValue: 0.0)
-                    
-                    var arrayPointer = UnsafeMutablePointer<Float>(array)
-                    
-                    defer {
-                        arrayPointer.destroy()
-                    }
-                    
-                    AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, data, &arrayPointer, frames)
-                    
-                    let final = array.map{ Double($0) }
-                    
-                    for out in self.outBuffers {
-                        out.appendFromArray(final)
-                    }
+                dispatch_async(audioInputQueue, {
+                    autoreleasepool({
+                        var array = [Float](count: Int(frames), repeatedValue: 0.0)
+                        
+                        var arrayPointer = UnsafeMutablePointer<Float>(array)
+                        
+                        defer {
+                            arrayPointer.destroy()
+                        }
+                        
+                        AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, data, &arrayPointer, frames)
+                        
+                        let final = array.map{ Double($0) }
+                        
+                        for out in self.outBuffers {
+                            out.appendFromArray(final)
+                        }
+                    })
                 })
             }
         }

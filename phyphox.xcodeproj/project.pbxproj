@@ -29,6 +29,7 @@
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
 		6B1D6ACE1C5F674100AE33A5 /* RangefilterTest.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */; };
+		6B2F60341CA8401D007A0C98 /* Test.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B2F60331CA8401D007A0C98 /* Test.phyphox */; };
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
 		6B422E171CA2D69700E945BC /* libTheAmazingAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B422E121CA2D67900E945BC /* libTheAmazingAudioEngine.a */; };
 		6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */; };
@@ -277,6 +278,7 @@
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = RangefilterTest.phyphox; sourceTree = "<group>"; };
+		6B2F60331CA8401D007A0C98 /* Test.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Test.phyphox; sourceTree = "<group>"; };
 		6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TheAmazingAudioEngine.xcodeproj; path = External/TheAmazingAudioEngine/TheAmazingAudioEngine.xcodeproj; sourceTree = SOURCE_ROOT; };
 		6B422E221CA3377600E945BC /* kiss_fft.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kiss_fft.c; path = External/kissfft/kiss_fft.c; sourceTree = SOURCE_ROOT; };
 		6B422E231CA3377600E945BC /* kiss_fft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kiss_fft.h; path = External/kissfft/kiss_fft.h; sourceTree = SOURCE_ROOT; };
@@ -618,6 +620,7 @@
 				6B7BF7921C130425007408FB /* phyphoxTests.swift */,
 				6B7BF8241C1645A6007408FB /* QueueTests.swift */,
 				6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */,
+				6B2F60331CA8401D007A0C98 /* Test.phyphox */,
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
@@ -1042,6 +1045,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B2F60341CA8401D007A0C98 /* Test.phyphox in Resources */,
 				6B1D6ACE1C5F674100AE33A5 /* RangefilterTest.phyphox in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

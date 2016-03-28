@@ -7,76 +7,92 @@
 //
 
 import Foundation
+import AVFoundation
+
+private let audioOutputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioOutput", DISPATCH_QUEUE_CONCURRENT)
 
 final class ExperimentAudioOutput {
     let dataSource: DataBuffer
     let loop: Bool
     let sampleRate: UInt
     
-    var channel: AEBlockChannel!
+    private var pcmPlayer: AVAudioPlayerNode!
+    private var engine: AVAudioEngine!
+    private var pcmBuffer: AVAudioPCMBuffer!
     
-    private var stopPlayback = false
-    private var lastIndex = 0
     private var playing = false
+    
+    private let format: AVAudioFormat
+    
+    private var stateToken: NSUUID?
     
     init(sampleRate: UInt, loop: Bool, dataSource: DataBuffer) {
         self.dataSource = dataSource;
         self.sampleRate = sampleRate;
         self.loop = loop;
         
-        defer {
-            channel = AEBlockChannel { [unowned self] (timestamp: UnsafePointer<AudioTimeStamp>, frames: UInt32, data: UnsafeMutablePointer<AudioBufferList>) in
-                if dataSource.count == 0 {
-                    return
-                }
-                
-                if self.stopPlayback {
-                    self.pause()
-                    return
-                }
-                
-                let buffer = unsafeBitCast(UnsafeMutableAudioBufferListPointer(data).first!.mData, UnsafeMutablePointer<Float>.self)
-                
-                let valueArray = dataSource.toArray().map { Float($0) }
-                
-                for i in 0..<Int(frames) {
-                    if !self.loop {
-                        let index = self.lastIndex+i
-                        
-                        if index < valueArray.count {
-                            buffer[i] = valueArray[index]
-                        }
-                        else {
-                            buffer[i] = 0
-                            self.stopPlayback = true
-                        }
-                    }
-                    else {
-                        let index = (self.lastIndex+i) % valueArray.count
-                        
-                        buffer[i] = valueArray[index]
-                    }
-                }
-                
-                self.lastIndex = (self.lastIndex+Int(frames)-1) % valueArray.count
-            }
-        }
+        var audioDescription = monoFloatFormatWithSampleRate(Double(sampleRate))
+        
+        format = AVAudioFormat(streamDescription: &audioDescription)
     }
     
     func play() {
         if !playing {
             playing = true
-            stopPlayback = false
-            ExperimentManager.sharedInstance().audioController.addChannels([channel])
+            
+            dispatch_sync(audioOutputQueue, {
+                if self.engine == nil {
+                    self.pcmPlayer = AVAudioPlayerNode()
+                    self.engine = AVAudioEngine()
+                    
+                    self.engine.attachNode(self.pcmPlayer)
+                    self.engine.connect(self.pcmPlayer, to: self.engine.mainMixerNode, format: self.format)
+                }
+                
+                //If a buffer gets played and paused repeatedly (like the sonar) but the content that is played is always the same the buffer doesn't need to be created again.
+                
+                if self.pcmBuffer == nil || !self.dataSource.stateTokenIsValid(self.stateToken) {
+                    let source = self.dataSource.toArray().map { Float($0) }
+                    self.stateToken = self.dataSource.getStateToken()
+                    
+                    self.pcmBuffer = AVAudioPCMBuffer(PCMFormat: self.format, frameCapacity: UInt32(source.count))
+                    self.pcmBuffer.floatChannelData[0].assignFrom(UnsafeMutablePointer(source), count: source.count)
+                    self.pcmBuffer.frameLength = UInt32(source.count)
+                }
+                
+                do {
+                    try self.engine.start()
+                    
+                    self.pcmPlayer.play()
+                    
+                    self.pcmPlayer.scheduleBuffer(self.pcmBuffer, atTime: nil, options: (self.loop ? .Loops : []), completionHandler: { [unowned self] in
+                        self.pause()
+                    })
+                }
+                catch let error {
+                    print("Player error: \(error)")
+                }
+            })
         }
     }
     
     func pause() {
         if playing {
-            lastIndex = 0
-            ExperimentManager.sharedInstance().audioController.removeChannels([channel])
+            self.pcmPlayer.stop()
+            self.engine.stop()
+            
             playing = false
         }
     }
     
+    func destroyAudioEngine() {
+        pause()
+        
+        stateToken = nil
+        pcmBuffer = nil
+        
+        engine.detachNode(pcmPlayer)
+        pcmPlayer = nil
+        engine = nil
+    }
 }

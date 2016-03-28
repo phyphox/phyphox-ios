@@ -15,6 +15,8 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
     let textField: UITextField
     let unitLabel: UILabel?
     
+    var edited = false
+    
     func formattedValue(raw: Double) -> String {
         return (descriptor.decimal ? String(Int(raw)) : String(raw))
     }
@@ -53,15 +55,25 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         }
     }
     
-    func hideKeyboard(textField: UITextField) {
+    func hideKeyboard(_: UITextField) {
         textField.endEditing(true)
     }
     
-    public func textFieldDidEndEditing(textField: UITextField) {
-        updateTextField(textField, write: true)
+    public func textField(_: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
+        if range.length > 0 {
+            edited = true
+        }
+        return true
     }
     
-    func updateTextField(textField: UITextField, write: Bool) {
+    public func textFieldDidEndEditing(_: UITextField) {
+        if edited {
+            updateTextField(textField, write: true)
+            edited = false
+        }
+    }
+    
+    func updateTextField(_: UITextField, write: Bool) {
         let val: Double
         
         if textField.text?.characters.count == 0 || Double(textField.text!) == nil {

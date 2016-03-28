@@ -8,6 +8,8 @@
 
 import Foundation
 import CoreGraphics
+import Accelerate
+import AudioToolbox
 
 func CGRectGetMid(r: CGRect) -> CGPoint {
     return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
@@ -49,3 +51,14 @@ func monoFloatFormatWithSampleRate(sampleRate: Double) -> AudioStreamBasicDescri
     
     return AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsPacked|kAudioFormatFlagIsFloat, mBytesPerPacket: byteSize, mFramesPerPacket: 1, mBytesPerFrame: byteSize, mChannelsPerFrame: 1, mBitsPerChannel: UInt32(CHAR_BIT)*byteSize, mReserved: 0)
 }
+
+func measure(label: String? = nil, closure: () -> ()) {
+    let start = CFAbsoluteTimeGetCurrent()
+    
+    closure()
+    
+    let t = CFAbsoluteTimeGetCurrent()-start
+    
+    print("\(label ?? "measurement") took: \(t)")
+}
+

@@ -14,6 +14,7 @@ import Surge
  */
 class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     
+    //TODO: scalars support
     func updateAllWithMethod(method: [[Double]] -> [Double], priorityInputKey: String?) {
         var values: [[Double]] = []
         var maxCount = 0

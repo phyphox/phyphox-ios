@@ -7,21 +7,29 @@
 //
 
 import Foundation
+import Accelerate
 
 final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     var calcWidth: Int = 0
-    var gauss: [Double] = []
+    var kernel: [Float] = []
     
     var sigma: Double = 0.0 {
         didSet {
             calcWidth = Int(round(sigma*3.0))
             
-            gauss.removeAll()
-            gauss.reserveCapacity(2*calcWidth+1)
+            kernel.removeAll()
+            kernel.reserveCapacity(2*calcWidth+1)
+            
+            let a = Float(sigma * sqrt(2.0*M_PI))
+            let b = calcWidth
+            let c = Float(sigma*sigma)
             
             for i in 0...2*calcWidth {
-                let d = Double(i)
-                gauss.append(exp(-(d/sigma*d/sigma)/2.0)/(sigma*sqrt(2.0*M_PI))) //Gauß!
+                let d = powf(Float(i-b), 2.0)
+                
+                let value = expf(-d/(2.0*c))/a
+                
+                kernel.append(value)
             }
         }
     }
@@ -34,32 +42,72 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        var y: [Double] = inputs.first!.buffer!.toArray() //Get array for random access
-        
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
-        
         #if DEBUG_ANALYSIS
             debug_noteInputs(["sigma" : sigma, "calcWidth" : calcWidth, "gauss" : gauss])
         #endif
         
-        for i in 0..<y.count {
-            var sum = 0.0
-            for j in 0...2*calcWidth {
-                let k = i+j
-                if (k >= 0 && k < y.count) {
-                    sum += gauss[j]*y[k];
-                }
-            }
+        var final: [Double]!
+        
+        measure("a") { 
+            var input = self.inputs.first!.buffer!.toArray().map { Float($0) }
             
-            append.append(sum)
+            let count = input.count
+            
+            let outputData = UnsafeMutablePointer<Float>.alloc(count)
+            
+            var inImg = vImage_Buffer(data: &input, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
+            var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
+            
+            vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, self.kernel, 1, UInt32(self.kernel.count), Pixel_F(0.0), vImage_Flags(kvImageBackgroundColorFill))
+            
+            final = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, UnsafeMutablePointer<Float>.self), count: count)).map { Double($0) }
+            
+            outputData.destroy()
+            outputData.dealloc(count)
+        }
+
+        
+        var append: [Double] = []
+        
+        measure("b") { 
+            var y = self.inputs.first!.buffer!.toArray()
+            
+            for i in 0..<y.count {
+                var sum = 0.0
+                
+                for j in -self.calcWidth...self.calcWidth {
+                    let k = i+j
+                    if (k >= 0 && k < y.count) {
+                        sum += Double(self.kernel[j+self.calcWidth])*y[k]
+                    }
+                }
+                
+                append.append(sum)
+            }
         }
         
+        var d = Double.infinity
+        
+        for i in 0..<append.count {
+            let a = append[i]
+            let b = final[i]
+            
+            let delta = abs(a-b)
+            
+            if delta < d {
+                d = delta
+            }
+        }
+        
+        print("Gauss results max delta: \(d)")
+        
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+            debug_noteOutputs(final)
         #endif
         
-        outBuffer.replaceValues(append)
+        let outBuffer = outputs.first!.buffer!
+        
+        outBuffer.replaceValues(final)
+
     }
 }

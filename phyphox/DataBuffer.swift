@@ -25,6 +25,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         }
     }
     
+    private var stateToken: NSUUID?
+    
     private var observers: NSMutableOrderedSet = NSMutableOrderedSet()
     
     /**
@@ -36,6 +38,25 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
     
     func removeObserver(observer: DataBufferObserver) {
         observers.removeObject(observer)
+    }
+    
+    /**
+     A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
+     */
+    func getStateToken() -> NSUUID? {
+        if stateToken == nil {
+            stateToken = NSUUID()
+        }
+        
+        return stateToken
+    }
+    
+    func stateTokenIsValid(token: NSUUID?) -> Bool {
+        return token != nil && stateToken != nil && stateToken == token
+    }
+    
+    private func bufferMutated() {
+        stateToken = nil
     }
     
     var trashedCount: Int = 0
@@ -103,10 +124,16 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         return queue.objectAtIndex(index, async: async)
     }
     
-    func clear() {
+    func clear(notify: Bool = true) {
         if (!staticBuffer) {
             queue.clear()
             trashedCount = 0
+            
+            bufferMutated()
+            
+            if notify {
+                sendUpdateNotification()
+            }
         }
     }
     
@@ -122,6 +149,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
             }
             
             queue.replaceValues(vals)
+            
+            bufferMutated()
             
             if notify {
                 sendUpdateNotification()
@@ -155,6 +184,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
                 }
             }
             
+            bufferMutated()
+            
             if notify {
                 sendUpdateNotification()
             }
@@ -178,6 +209,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
                     self.queue.replaceValues(values, async: true)
                 }
             }
+            
+            bufferMutated()
             
             if notify {
                 sendUpdateNotification()

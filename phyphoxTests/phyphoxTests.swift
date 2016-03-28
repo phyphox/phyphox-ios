@@ -28,21 +28,28 @@ class phyphoxTests: XCTestCase {
         
         let read = ["out1" : [2.0, 3.0, 4.0], "out2" : [1000.0, -500.0, 500.0], "out3" : [-0.1, 0.1, 0.1]]
         
+        var expectations = [XCTestExpectation]()
+        
         for (key, buffer) in experiment.buffers.0! {
             if let array = write[key] {
-                buffer.appendFromArray(array, iterative: true, notify: false)
+                buffer.appendFromArray(array, notify: false)
+                
+                expectations.append(expectationWithDescription(key))
             }
         }
         
-        for (_, buffer) in experiment.buffers.0! {
-            buffer.sendUpdateNotification()
-        }
+        experiment.analysis!.setNeedsUpdate()
         
-        for (key, buffer) in experiment.buffers.0! {
-            if let array = read[key] {
-               XCTAssertEqual(buffer.toArray(), array)
+        after(1.0) {
+            for (key, buffer) in experiment.buffers.0! {
+                if let array = read[key] {
+                    XCTAssertEqual(buffer.toArray(), array)
+                    expectations.removeLast().fulfill()
+                }
             }
         }
+        
+        self.waitForExpectationsWithTimeout(2.0, handler: nil)
     }
     
     func testRangefilter2() {
@@ -52,21 +59,28 @@ class phyphoxTests: XCTestCase {
         
         let read = ["out1" : [2.0, 3.0], "out2" : [1000.0, -500.0], "out3" : [-0.1, 0.1]]
         
+        var expectations = [XCTestExpectation]()
+        
         for (key, buffer) in experiment.buffers.0! {
             if let array = write[key] {
-                buffer.appendFromArray(array, iterative: true, notify: false)
+                buffer.appendFromArray(array, notify: false)
+                
+                expectations.append(expectationWithDescription(key))
             }
         }
         
-        for (_, buffer) in experiment.buffers.0! {
-            buffer.sendUpdateNotification()
-        }
+        experiment.analysis!.setNeedsUpdate()
         
-        for (key, buffer) in experiment.buffers.0! {
-            if let array = read[key] {
-                XCTAssertEqual(buffer.toArray(), array)
+        after(1.0) {
+            for (key, buffer) in experiment.buffers.0! {
+                if let array = read[key] {
+                    XCTAssertEqual(buffer.toArray(), array)
+                    expectations.removeLast().fulfill()
+                }
             }
         }
+        
+        self.waitForExpectationsWithTimeout(2.0, handler: nil)
     }
     
     func testRangefilter3() {
@@ -76,21 +90,28 @@ class phyphoxTests: XCTestCase {
         
         let read = ["out1" : [2.0, 3.0], "out2" : [1000.0, -500.0], "out3" : [-0.1, 0.1]]
         
+        var expectations = [XCTestExpectation]()
+        
         for (key, buffer) in experiment.buffers.0! {
             if let array = write[key] {
-                buffer.appendFromArray(array, iterative: true, notify: false)
+                buffer.appendFromArray(array, notify: false)
+                
+                expectations.append(expectationWithDescription(key))
             }
         }
         
-        for (_, buffer) in experiment.buffers.0! {
-            buffer.sendUpdateNotification()
-        }
+        experiment.analysis!.setNeedsUpdate()
         
-        for (key, buffer) in experiment.buffers.0! {
-            if let array = read[key] {
-                XCTAssertEqual(buffer.toArray(), array)
+        after(1.0) { 
+            for (key, buffer) in experiment.buffers.0! {
+                if let array = read[key] {
+                    XCTAssertEqual(buffer.toArray(), array)
+                    expectations.removeLast().fulfill()
+                }
             }
         }
+        
+        self.waitForExpectationsWithTimeout(2.0, handler: nil)
     }
     
     func testExample() {

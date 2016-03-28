@@ -1,0 +1,28 @@
+<phyphox version="1.0">
+
+<data-containers>
+<container size="270">buffer1</container>
+<container size="270">out1</container>
+</data-containers>
+
+<analysis>
+
+<ramp>
+<input as="start" type="value">1</input>
+<input as="stop" type="value">270</input>
+<output>buffer1</output>
+</ramp>
+
+<integrate>
+<input>buffer1</input>
+<output>out1</output>
+</integrate>
+
+<differentiate>
+<input>out1</input>
+<output>out1</output>
+</differentiate>
+
+</analysis>
+
+</phyphox>

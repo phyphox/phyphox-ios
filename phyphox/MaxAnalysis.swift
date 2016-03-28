@@ -68,27 +68,26 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
         }
         else {
-            var max = -Double.infinity
-            var x: Double? = nil
+            let inArray = yIn.toArray()
             
-            for (i, value) in yIn.enumerate() {
-                if value > max {
-                    max = value
-                    
-                    if let v = xIn?.objectAtIndex(i) {
-                        x = v
-                    }
-                    else {
-                        x = Double(i)
-                    }
-                }
+            if inArray.count == 0 {
+                return
             }
+            
+            var max = -Double.infinity
+            var index: vDSP_Length = 0
+            
+            vDSP_maxviD(inArray, 1, &max, &index, vDSP_Length(inArray.count))
+            
+            let x = (xIn != nil ? xIn![Int(index)] : Double(index))
             
             if maxOut != nil {
                 maxOut!.append(max)
             }
             
-            positionOut!.append(x)
+            if positionOut != nil {
+                positionOut!.append(x)
+            }
             
             #if DEBUG_ANALYSIS
                 debug_noteOutputs(["max" : max, "pos" : x!])

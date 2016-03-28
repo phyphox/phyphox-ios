@@ -30,28 +30,13 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
         
         let compRange = a.count-b.count
         
-        
-        var result = [Double](count: compRange, repeatedValue: 0.0)
-        
-        vDSP_convD(a, 1, b, 1, &result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
-        
         #if DEBUG_ANALYSIS
             debug_noteInputs(["a" : a, "b" : b])
         #endif
         
-//        var append: [Double] = []
-//        let compRangeD = Double(compRange)
-//        //The actual calculation
-//        for i in 0..<compRange {
-//            var sum = 0.0
-//            for j in 0..<b.count {
-//                sum += a[j+i]*b[j];
-//            }
-//            
-//            let v = sum/compRangeD
-//            
-//            append.append(v)
-//        }
+        var result = [Double](count: compRange, repeatedValue: 0.0)
+        
+        vDSP_convD(a, 1, b, 1, &result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
 
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)

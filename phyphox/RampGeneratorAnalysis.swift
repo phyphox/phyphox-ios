@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Accelerate
 
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     
@@ -51,22 +52,20 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
             length = outBuffer.size
         }
         
-        var append: [Double] = []
+        var out = [Double](count: length, repeatedValue: 0.0)
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["start" : start, "stop" : stop, "length" : length])
         #endif
         
-        for i in 0..<length {
-            let val = start+(stop-start)/Double(length-1)*Double(i)
-            
-            append.append(val)
-        }
+        var step = (stop-start)/Double(length-1)
+        
+        vDSP_vrampD(&start, &step, &out, 1, vDSP_Length(length))
         
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+            debug_noteOutputs(out)
         #endif
         
-        outBuffer.replaceValues(append)
+        outBuffer.replaceValues(out)
     }
 }

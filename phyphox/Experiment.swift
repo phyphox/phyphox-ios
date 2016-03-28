@@ -155,15 +155,14 @@ final class Experiment : ExperimentAnalysisDelegate {
         let hasOutput = output?.audioOutput.count > 0
         let hasInput = audioInputs?.count > 0
         
-        let rate: Double
+        var rate = 48_000.0
         
-        if hasOutput {
-            rate = Double(self.output!.audioOutput.first!.sampleRate)
-        }
-        else if hasInput {
+        //TheAmazingAudioEngine is used for: Setting up the audio session, routing inout and output but only for reading the input. Output is done independently. Therefore the input rate is the important one.
+        
+        if hasInput {
             rate = Double(audioInputs!.first!.sampleRate)
         }
-        else {
+        else if !hasOutput {
             return
         }
         
@@ -180,6 +179,12 @@ final class Experiment : ExperimentAnalysisDelegate {
     private func tearDownAudio() {
         let hasOutput = output?.audioOutput.count > 0
         let hasInput = audioInputs?.count > 0
+        
+        if hasOutput {
+            for audio in (self.output?.audioOutput)! {
+                audio.destroyAudioEngine()
+            }
+        }
         
         if hasInput || hasOutput {
             ExperimentManager.sharedInstance().audioController.stop()

@@ -62,7 +62,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         if !busy {
             busy = true
             
-            after(sleep, closure: { () -> Void in
+            after(sleep, closure: {
                 #if DEBUG
                     print("Analysis update")
                 #endif

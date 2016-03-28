@@ -7,28 +7,33 @@
 //
 
 import Foundation
+import Accelerate
 
 final class IntegrationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        var sum = 0.0
-        
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
-        
         let buffer = inputs.first!.buffer
         
         if buffer == nil {
             return
         }
         
-        for value in buffer! {
-            sum += value
-            
-            append.append(sum)
+        var inArray = buffer!.toArray()
+        let count = inArray.count
+        
+        var out = [Double](count: count, repeatedValue: 0.0)
+        
+        var factor = 1.0
+        vDSP_vrsumD(inArray, 1, &factor, &out, 1, vDSP_Length(count+1))
+        
+        var repeatedVal = inArray[0]
+        
+        if repeatedVal != 0.0 {
+            vDSP_vsaddD(out, 1, &repeatedVal, &out, 1, vDSP_Length(count))
         }
         
-        outBuffer.replaceValues(append)
+        let outBuffer = outputs.first!.buffer!
+        
+        outBuffer.replaceValues(out)
     }
 }
