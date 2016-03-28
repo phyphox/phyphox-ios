@@ -8,7 +8,7 @@
 
 import UIKit
 
-public class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
+public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
     required public init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
         

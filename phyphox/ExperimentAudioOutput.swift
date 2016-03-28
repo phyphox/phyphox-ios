@@ -37,7 +37,7 @@ final class ExperimentAudioOutput {
     }
     
     func play() {
-        if !playing {
+        if !playing || !self.dataSource.stateTokenIsValid(self.stateToken) {
             playing = true
             
             dispatch_sync(audioOutputQueue, {
@@ -50,24 +50,34 @@ final class ExperimentAudioOutput {
                 }
                 
                 //If a buffer gets played and paused repeatedly (like the sonar) but the content that is played is always the same the buffer doesn't need to be created again.
-                
                 if self.pcmBuffer == nil || !self.dataSource.stateTokenIsValid(self.stateToken) {
-                    let source = self.dataSource.toArray().map { Float($0) }
+                    var source = self.dataSource.toArray().map { Float($0) }
                     self.stateToken = self.dataSource.getStateToken()
                     
+                    if self.pcmPlayer.playing {
+                        self.pcmBuffer = nil
+                        self.pcmPlayer.stop()
+                    }
+                    
                     self.pcmBuffer = AVAudioPCMBuffer(PCMFormat: self.format, frameCapacity: UInt32(source.count))
-                    self.pcmBuffer.floatChannelData[0].assignFrom(UnsafeMutablePointer(source), count: source.count)
+                    self.pcmBuffer.floatChannelData[0].assignFrom(&source, count: source.count)
                     self.pcmBuffer.frameLength = UInt32(source.count)
                 }
                 
                 do {
-                    try self.engine.start()
+                    if !self.engine.running {
+                        try self.engine.start()
+                    }
                     
-                    self.pcmPlayer.play()
+                    weak var bufferRef = self.pcmBuffer
                     
                     self.pcmPlayer.scheduleBuffer(self.pcmBuffer, atTime: nil, options: (self.loop ? .Loops : []), completionHandler: { [unowned self] in
-                        self.pause()
+                        if bufferRef == self.pcmBuffer { //bufferRef != self.pcmBuffer <=> pcmBuffer was cancelled and recreated because the data source changed, playback should not be cancelled.
+                            self.pause()
+                        }
                     })
+                    
+                    self.pcmPlayer.play()
                 }
                 catch let error {
                     print("Player error: \(error)")

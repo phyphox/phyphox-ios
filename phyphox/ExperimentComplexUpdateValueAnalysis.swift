@@ -7,25 +7,46 @@
 //
 
 import Foundation
-import Surge
 
-/**
- An abstract analysis module that takes multiple inputs (with an optional prioritized input), brings them all to the same size and runs a given closure with all the input arrays. The closure must return an array of Doubles.
- */
+internal final class ValueSource : CustomStringConvertible {
+    var vector: [Double]?
+    var scalar: Double?
+    
+    init(scalar: Double) {
+        self.scalar = scalar
+    }
+    
+    init(vector: [Double]) {
+        self.vector = vector
+    }
+    
+    var description: String {
+        get {
+            if vector != nil {
+                return "Vector: \(vector!)"
+            }
+            else {
+                return "Scalar: \(scalar!)"
+            }
+        }
+    }
+}
+
 class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     
-    //TODO: scalars support
-    func updateAllWithMethod(method: [[Double]] -> [Double], priorityInputKey: String?) {
-        var values: [[Double]] = []
+    func updateAllWithMethod(method: [ValueSource] -> ValueSource, priorityInputKey: String?) {
+        var values: [ValueSource] = []
         var maxCount = 0
         
         for input in inputs {
             if let fixed = input.value {
+                let src = ValueSource(scalar: fixed)
+                
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert([fixed], atIndex: 0)
+                    values.insert(src, atIndex: 0)
                 }
                 else {
-                    values.append([fixed])
+                    values.append(src)
                 }
                 
                 maxCount = Swift.max(maxCount, 1)
@@ -33,28 +54,36 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             else {
                 let array = input.buffer!.toArray()
                 
+                let src = array.count == 1 ? ValueSource(scalar: array[0]) : ValueSource(vector: array)
+                
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(array, atIndex: 0)
+                    values.insert(src, atIndex: 0)
                 }
                 else {
-                    values.append(array)
+                    values.append(src)
                 }
                 
                 maxCount = Swift.max(maxCount, array.count)
             }
         }
         
-        for (i, var array) in values.enumerate() {
-            let delta = maxCount-array.count
-            
-            if delta > 0 {
-                array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
-                values[i] = array //Arrays are structs, so the original array needs to be updated
+        if values.count == 0 || maxCount == 0 {
+            return
+        }
+        
+        for valueSource in values {
+            if var array = valueSource.vector {
+                let delta = maxCount-array.count
+                
+                if delta > 0 {
+                    array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
+                    valueSource.vector = array
+                }
             }
         }
         
         #if DEBUG_ANALYSIS
-            debug_noteInputs(values)
+            debug_noteInputs(values.description)
         #endif
         
         let out = method(values)
@@ -63,8 +92,10 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(out)
         #endif
         
+        let outValue = (out.scalar != nil ? [out.scalar!] : out.vector!)
+        
         for output in outputs {
-            output.buffer!.replaceValues(out)
+            output.buffer!.replaceValues(outValue)
         }
     }
     

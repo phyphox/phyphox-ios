@@ -23,7 +23,6 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
             
             var out = array
             
-            //array - subtract
             vDSP_vsubD(subtract, 1, array, 1, &out, 1, vDSP_Length(array.count))
             
             out.removeFirst()

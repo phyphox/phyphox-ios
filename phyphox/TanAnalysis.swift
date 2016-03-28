@@ -7,11 +7,16 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class TanAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateAllWithMethod(Surge.tan)
+        updateAllWithMethod { array -> [Double] in
+            var results = array
+            vvtan(&results, array, [Int32(array.count)])
+            
+            return results
+        }
     }
 }

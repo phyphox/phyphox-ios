@@ -7,11 +7,16 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class ABSAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateAllWithMethod(Surge.abs)
+        updateAllWithMethod { array -> [Double] in
+            var results = array
+            vvfabs(&results, array, [Int32(array.count)])
+            
+            return results
+        }
     }
 }

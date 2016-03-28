@@ -7,12 +7,17 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class CosAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateAllWithMethod(Surge.cos)
+        updateAllWithMethod { array -> [Double] in
+            var results = array
+            vvcos(&results, array, [Int32(array.count)])
+            
+            return results
+        }
     }
 }
 

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class MaxAnalysis: ExperimentAnalysisModule {
     var xIn: DataBuffer?
@@ -56,7 +56,11 @@ final class MaxAnalysis: ExperimentAnalysisModule {
         #endif
         
         if positionOut == nil {
-            let max = Surge.max(yIn.toArray())
+            var max = 0.0
+            
+            let array = yIn.toArray()
+            
+            vDSP_maxvD(array, 1, &max, vDSP_Length(array.count))
             
             if maxOut != nil {
                 maxOut!.append(max)
@@ -79,7 +83,19 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
             vDSP_maxviD(inArray, 1, &max, &index, vDSP_Length(inArray.count))
             
-            let x = (xIn != nil ? xIn![Int(index)] : Double(index))
+            let x: Double
+                
+            if xIn != nil {
+                guard let n = xIn!.objectAtIndex(Int(index)) else {
+                    print("[Max analysis]: Index \(Int(index)) is out of bounds of x value array \(xIn!)")
+                    return
+                }
+                
+                x = n
+            }
+            else {
+                x = Double(index)
+            }
             
             if maxOut != nil {
                 maxOut!.append(max)
@@ -90,7 +106,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
             
             #if DEBUG_ANALYSIS
-                debug_noteOutputs(["max" : max, "pos" : x!])
+                debug_noteOutputs(["max" : max, "pos" : x])
             #endif
             
         }

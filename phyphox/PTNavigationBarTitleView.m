@@ -131,8 +131,6 @@
             [_promptButton setTintColor:[UIColor blackColor] forState:UIControlStateNormal];
             [_promptButton setTintColor:[[UIColor blackColor] colorByInterpolatingToColor:[UIColor whiteColor] byFraction:0.5f] forState:UIControlStateHighlighted];
             _promptButton.userInteractionEnabled = UIAccessibilityIsVoiceOverRunning();
-//            _promptButton.accessibilityLabel = PTLocalizedString(@"Search Result Types");
-//            _promptButton.accessibilityHint = PTLocalizedString(@"Select search result types");
             
             [_promptButton addTarget:self action:@selector(promptActionPressed) forControlEvents:UIControlEventTouchUpInside];
             

@@ -57,7 +57,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     
     /**
      Schedules an update.
-    */
+     */
     func setNeedsUpdate() {
         if !busy {
             busy = true
@@ -68,18 +68,26 @@ final class ExperimentAnalysis : DataBufferObserver {
                 #endif
                 
                 self.delegate?.analysisWillUpdate(self)
-                self.update()
-                self.delegate?.analysisDidUpdate(self)
+                self.update {
+                    self.delegate?.analysisDidUpdate(self)
+                }
                 
                 self.busy = false
             })
         }
     }
     
-    private func update() {
-        for analysis in analyses {
-            dispatch_async(analysisQueue, { 
+    private func update(completion: Void -> Void) {
+        let c = analyses.count-1
+        
+        for (i, analysis) in analyses.enumerate() {
+            dispatch_async(analysisQueue, {
                 analysis.setNeedsUpdate()
+                if i == c {
+                    mainThread {
+                        completion()
+                    }
+                }
             })
         }
     }

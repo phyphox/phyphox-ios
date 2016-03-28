@@ -8,7 +8,7 @@
 
 import UIKit
 
-public class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
+public final class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
     required public init(descriptor: InfoViewDescriptor) {
         super.init(descriptor: descriptor)
     }

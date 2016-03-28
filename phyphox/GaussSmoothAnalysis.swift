@@ -43,7 +43,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         #if DEBUG_ANALYSIS
-            debug_noteInputs(["sigma" : sigma, "calcWidth" : calcWidth, "gauss" : gauss])
+            debug_noteInputs(["sigma" : sigma, "calcWidth" : calcWidth, "kernel" : kernel])
         #endif
         
         var input = self.inputs.first!.buffer!.toArray().map { Float($0) }

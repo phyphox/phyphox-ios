@@ -14,8 +14,13 @@ public final class EditViewDescriptor: ViewDescriptor {
     let decimal: Bool
     let unit: String?
     let factor: Double
+    
     let defaultValue: Double
     let buffer: DataBuffer
+    
+    var value: Double {
+        return buffer.last ?? defaultValue
+    }
     
     init(label: String, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed

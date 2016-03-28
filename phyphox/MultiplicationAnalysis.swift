@@ -7,21 +7,52 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class MultiplicationAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     override func update() {
-        updateAllWithMethod({ (inputs) -> [Double] in
+        updateAllWithMethod({ (inputs) -> ValueSource in
             var main = inputs.first!
             
             for (i, input) in inputs.enumerate() {
                 if i > 0 {
-                    main = Surge.mul(main, y: input)
+                    main = self.multiplyValueSources(main, b: input)
                 }
             }
             
             return main
             },  priorityInputKey: nil)
+    }
+    
+    func multiplyValueSources(a: ValueSource, b: ValueSource) -> ValueSource {
+        if let scalarA = a.scalar, let scalarB = b.scalar { // scalar*scalar
+            let result = scalarA*scalarB
+            
+            return ValueSource(scalar: result)
+        }
+        else if var scalar = a.scalar, let vector = b.vector { // scalar*vector
+            var out = vector
+            
+            vDSP_vsmulD(vector, 1, &scalar, &out, 1, vDSP_Length(out.count))
+            
+            return ValueSource(vector: out)
+        }
+        else if let vector = a.vector, var scalar = b.scalar { // vector*scalar
+            var out = vector
+            
+            vDSP_vsmulD(vector, 1, &scalar, &out, 1, vDSP_Length(out.count))
+            
+            return ValueSource(vector: out)
+        }
+        else if let vectorA = a.vector, let vectorB = b.vector { // vector*vector
+            var out = vectorA
+            
+            vDSP_vmulD(vectorA, 1, vectorB, 1, &out, 1, vDSP_Length(out.count))
+            
+            return ValueSource(vector: out)
+        }
+        
+        assert(false, "Invalid value sources")
     }
 }

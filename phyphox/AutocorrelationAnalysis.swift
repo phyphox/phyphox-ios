@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     
@@ -61,63 +61,101 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        //Get arrays for random access
         var y = yIn.toArray()
         var count = y.count
+        
+        if count == 0 {
+            return
+        }
         
         if xIn != nil {
             count = min(xIn!.count, count);
         }
         
-        var x = [Double]() //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
-
-        if xIn != nil {
-            var xraw = xIn!.toArray()
-            
-            let first = xraw.first
-            
-            for i in 0 ..< count {
-                x.append(xraw[i]-first!) //Calculate the relative x
-            }
-        }
-        else {
-            //There is no input2. Let's fill it with 0,1,2,3,4....
-            for i in 0 ..< count {
-                x.append(Double(i))
-            }
-        }
+        var x: [Double]?
         
-//        var index = 0
-//        
-//        var minimizedY = y
-//        
-//        let finalX = x.filter { (d) -> Bool in
-//            if d < mint || d > maxt {
-//                minimizedY.removeAtIndex(index)
-//                return false
-//            }
-//            
-//            index += 1
-//            
-//            return true
-//        }
-//        
-//        let finalY = Surge.xcorr(minimizedY)
-//        yOut.replaceValues(finalY)
-//        
-//        if xOut != nil {
-//            xOut!.replaceValues(finalX)
-//        }
+        if xOut != nil {
+            if xIn != nil {
+                x = [Double](count: count, repeatedValue: 0.0)
+                
+                let xRaw = xIn!.toArray()
+                
+                let first = xRaw.first
+                
+                if first == nil {
+                    return
+                }
+                
+                if first! == 0.0 {
+                    x = xRaw
+                }
+                else {
+                    vDSP_vsaddD(xRaw, 1, [-first!], &x!, 1, vDSP_Length(count))
+                }
+            }
+            else {
+                x = [Double](count: count, repeatedValue: 0.0)
+                
+                vDSP_vrampD([0.0], [1.0], &x!, 1, vDSP_Length(count))
+            }
+        }
+        /*
+         var index = 0
+         var minimizedY = y
+         
+         let minimizedX = x.filter { (d) -> Bool in
+         if d < mint || d > maxt {
+         minimizedY.removeAtIndex(index)
+         return false
+         }
+         
+         index += 1
+         
+         return true
+         }
+         
+         func xcorr(x: [Double]) -> [Double] {
+         let resultSize = 2*x.count - 1
+         var result = [Double](count: resultSize, repeatedValue: 0)
+         let xPad = Repeat(count: x.count-1, repeatedValue: Double(0.0))
+         let xPadded = xPad + x + xPad
+         vDSP_convD(xPadded, 1, x, 1, &result, 1, vDSP_Length(resultSize), vDSP_Length(x.count))
+         
+         return result
+         }
+         //
+         let corrY = xcorr(minimizedY)
+         
+         var normalizeVector = [Double](count: count, repeatedValue: 0.0)
+         
+         vDSP_vrampD([Double(count)], [-1.0], &normalizeVector, 1, vDSP_Length(count))
+         
+         var normalizedY = normalizeVector
+         
+         vDSP_vdivD(corrY, 1, normalizeVector, 1, &normalizedY, 1, vDSP_Length(count))
+         */
+        
+        //        yOut.replaceValues(finalY)
+        //
+        //        if xOut != nil {
+        //            xOut!.replaceValues(finalX)
+        //        }
         
         var xValues: [Double]? = (xOut != nil ? [] : nil)
         var yValues: [Double] = []
         
         //The actual calculation
         for i in 0 ..< count { //Displacement i for each value of input1
-            let xVal = x[i]
-            
-            if (xVal < mint || xVal > maxt) { //Skip this, if it should be filtered
-                continue;
+            if x != nil {
+                let xVal = x![i]
+                
+                if (xVal < mint || xVal > maxt) { //Skip this, if it should be filtered
+                    continue
+                }
+                
+                if xValues != nil {
+                    xValues!.append(xVal)
+                }
             }
             
             var sum = 0.0
@@ -128,12 +166,8 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             
             sum /= Double(count-i); //Normalize to the number of values at this displacement
             
-            //Append y output to output1 and x to output2 (if used)
-            yValues.append(sum)
             
-            if xValues != nil {
-                xValues!.append(xVal)
-            }
+            yValues.append(sum)
         }
         
         yOut.replaceValues(yValues)

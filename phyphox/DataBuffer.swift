@@ -108,18 +108,12 @@ final class DataBuffer: SequenceType, CustomStringConvertible {
         }
     }
     
-    /**
-     Async
-     */
     subscript(index: Int) -> Double {
         get {
             return queue[index]
         }
     }
     
-    /**
-     Synchronized
-     */
     func objectAtIndex(index: Int, async: Bool = false) -> Double? {
         return queue.objectAtIndex(index, async: async)
     }

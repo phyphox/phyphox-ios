@@ -34,10 +34,15 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(["a" : a, "b" : b])
         #endif
         
-        var result = [Double](count: compRange, repeatedValue: 0.0)
+        var convResult = [Double](count: compRange, repeatedValue: 0.0)
         
-        vDSP_convD(a, 1, b, 1, &result, 1, vDSP_Length(compRange), vDSP_Length(b.count))
+        vDSP_convD(a, 1, b, 1, &convResult, 1, vDSP_Length(compRange), vDSP_Length(b.count))
 
+        var result = convResult
+        
+        //Normalize
+        vDSP_vsdivD(convResult, 1, [Double(compRange)], &result, 1, vDSP_Length(convResult.count))
+        
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
         #endif

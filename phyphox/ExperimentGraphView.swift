@@ -18,7 +18,7 @@ struct GraphGridLine {
     let relativeValue: CGFloat
 }
 
-public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
+public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
     typealias T = GraphViewDescriptor
     
     private let xLabel: UILabel
@@ -127,9 +127,11 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
     }
     
     required public init(descriptor: GraphViewDescriptor) {
-        glGraph = GLGraphView(frame: .zero)
-        gridView = GraphGridView()
+        glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
+        
+        gridView = GraphGridView()
+        gridView.gridInsets = CGPoint(x: 25.0, y: 25.0)
         
         func makeLabel(text: String?) -> UILabel {
             let l = UILabel()
@@ -159,12 +161,6 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
     }
     
     //MARK - Graph
-    var graphFrame: CGRect {
-        get {
-            return CGRectInset(self.bounds, 25, 25)
-        }
-    }
-    
     func getTicks(min mi: Double, max ma: Double, maxTicks: Int, log: Bool) -> [Double]? {
         if ma <= mi || !isfinite(mi) || !isfinite(ma) {
             return nil
@@ -445,6 +441,12 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio, size.height))
     }
     
+    var graphFrame: CGRect {
+        get {
+            return CGRectInset(self.bounds, 25, 25)
+        }
+    }
+    
     public override func layoutSubviews() {
         super.layoutSubviews()
         
@@ -459,7 +461,7 @@ public class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Dat
         let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
         yLabel.frame = CGRectMake(spacing, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
         
-        gridView.frame = graphFrame
+        gridView.frame = bounds
         glGraph.frame = graphFrame
     }
 }

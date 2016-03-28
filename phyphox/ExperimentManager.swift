@@ -8,8 +8,8 @@
 
 import UIKit
 
-var experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
-var fileExtension = "phyphox"
+let experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
+let fileExtension = "phyphox"
 
 final class ExperimentManager {
     private(set) var experimentCollections = [ExperimentCollection]()
@@ -75,6 +75,10 @@ final class ExperimentManager {
         for title in folders {
             let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
             
+            if (path as NSString).pathExtension != fileExtension {
+                continue
+            }
+            
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromFile(path)
                 
@@ -95,6 +99,8 @@ final class ExperimentManager {
             }
         }
         
+        #if DEBUG
         print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
+        #endif
     }
 }

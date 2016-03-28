@@ -7,12 +7,17 @@
 //
 
 import Foundation
-import Surge
+import Accelerate
 
 final class SinAnalysis: UpdateValueAnalysis {
     
     override func update() {
-        updateAllWithMethod(Surge.sin)
+        updateAllWithMethod { array -> [Double] in
+            var results = array
+            vvsin(&results, array, [Int32(array.count)])
+            
+            return results
+        }
     }
 }
 

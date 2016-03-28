@@ -9,11 +9,21 @@
 import UIKit
 
 final class GraphGridView: UIView {
+    private let borderView = UIView()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        layer.borderColor = UIColor(white: 0.0, alpha: 0.5).CGColor
-        layer.borderWidth = 1.0
+        borderView.layer.borderColor = UIColor(white: 0.0, alpha: 0.5).CGColor
+        borderView.layer.borderWidth = 1.0/UIScreen.mainScreen().scale
+        
+        addSubview(borderView)
+    }
+    
+    var gridInsets: CGPoint = .zero {
+        didSet {
+            setNeedsLayout()
+        }
     }
     
     convenience init() {
@@ -75,6 +85,12 @@ final class GraphGridView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
+        let insetRect = CGRectInset(self.bounds, gridInsets.x, gridInsets.y)
+        
+        let add = 2.0/UIScreen.mainScreen().scale
+        
+        borderView.frame = CGRectInset(self.bounds, gridInsets.x-add, gridInsets.y-add)
+        
         if grid != nil {
             var index = 0
             
@@ -86,11 +102,11 @@ final class GraphGridView: UIView {
                     
                     view.horizontal = false
                     
-                    let origin = bounds.size.width*line.relativeValue
+                    let origin = insetRect.size.width*line.relativeValue
                     
-                    view.alpha = (origin > 2.0 && origin < bounds.size.width-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.alpha = (origin > 2.0 && origin < insetRect.size.width-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
-                    view.frame = CGRectMake(origin, 0.0, smallestUnit, bounds.size.height)
+                    view.frame = CGRectMake(origin+insetRect.origin.x, insetRect.origin.y, smallestUnit, insetRect.size.height)
                     
                     index += 1
                 }
@@ -102,11 +118,11 @@ final class GraphGridView: UIView {
                     
                     view.horizontal = true
                     
-                    let origin = bounds.size.height*line.relativeValue
+                    let origin = insetRect.size.height*line.relativeValue
                     
-                    view.alpha = (origin > 2.0 && origin < bounds.size.height-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.alpha = (origin > 2.0 && origin < insetRect.size.height-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
-                    view.frame = CGRectMake(0.0, origin, bounds.size.width, smallestUnit)
+                    view.frame = CGRectMake(insetRect.origin.x, origin+insetRect.origin.y, insetRect.size.width, smallestUnit)
                     
                     index += 1
                 }

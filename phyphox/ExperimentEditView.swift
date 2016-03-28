@@ -11,7 +11,7 @@ import UIKit
 private let spacing: CGFloat = 5.0
 private let textFieldWidth: CGFloat = 60.0
 
-public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
+public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
     let textField: UITextField
     let unitLabel: UILabel?
     
@@ -49,6 +49,8 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         
         textField.delegate = self
         
+        textField.addTarget(self, action: #selector(ExperimentEditView.textFieldChanged), forControlEvents: .EditingChanged)
+        
         addSubview(textField)
         if unitLabel != nil {
             addSubview(unitLabel!)
@@ -59,11 +61,8 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         textField.endEditing(true)
     }
     
-    public func textField(_: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
-        if range.length > 0 {
-            edited = true
-        }
-        return true
+    func textFieldChanged() {
+        edited = true
     }
     
     public func textFieldDidEndEditing(_: UITextField) {
@@ -77,8 +76,9 @@ public class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITex
         let val: Double
         
         if textField.text?.characters.count == 0 || Double(textField.text!) == nil {
-            textField.text = formattedValue(descriptor.defaultValue)
-            val = descriptor.defaultValue
+            val = descriptor.value
+            
+            textField.text = formattedValue(val)
         }
         else {
             if descriptor.decimal {

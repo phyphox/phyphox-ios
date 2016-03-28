@@ -88,8 +88,6 @@
 		6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */; };
 		6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */; };
 		6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */; };
-		6B94A6041C9AD286008D9ACF /* Surge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B94A6011C9AD278008D9ACF /* Surge.framework */; };
-		6B94A6051C9AD286008D9ACF /* Surge.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B94A6011C9AD278008D9ACF /* Surge.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A6201CA015A4008D9ACF /* GLGraphView.swift */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
 		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
@@ -100,12 +98,12 @@
 		6BB52BC11C19885600217CF1 /* ExperimentAnalysisParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */; };
 		6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */; };
 		6BB52BC61C1B11CA00217CF1 /* ExperimentTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB52BC51C1B11CA00217CF1 /* ExperimentTranslation.swift */; };
-		6BBA06351C5187ED00E4B1B0 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */; };
 		6BBA063A1C518BC900E4B1B0 /* UpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBA06391C518BC900E4B1B0 /* UpdateValueAnalysis.swift */; };
 		6BBD28AC1C20BF29009E3757 /* InfoViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */; };
 		6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */; };
 		6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */; };
 		6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */; };
+		6BC011AB1CA985870053D0DF /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */; };
 		6BD769C81C496B51006B4A0F /* PTNavigationBarTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */; };
 		6BD769D81C496C0C006B4A0F /* VBFDoubleSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D51C496C0C006B4A0F /* VBFDoubleSegment.m */; };
 		6BD769D91C496C0C006B4A0F /* VBFPopFlatButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D71C496C0C006B4A0F /* VBFPopFlatButton.m */; };
@@ -178,27 +176,6 @@
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
 		};
-		6B94A6001C9AD278008D9ACF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F8A1E1AA19917A79009735E2;
-			remoteInfo = Surge;
-		};
-		6B94A6021C9AD278008D9ACF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F84A6AAE19A9A72F007B53E1;
-			remoteInfo = SurgeTests;
-		};
-		6B94A6061C9AD286008D9ACF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F8A1E1A919917A79009735E2;
-			remoteInfo = Surge;
-		};
 		6BD769E41C496C16006B4A0F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
@@ -243,7 +220,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				6B94A6051C9AD286008D9ACF /* Surge.framework in Embed Frameworks */,
 				6BD769F31C496C3B006B4A0F /* pop.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -347,7 +323,6 @@
 		6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ExperimentMetadataParser-Protocol.swift"; sourceTree = "<group>"; };
 		6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentInputsParser.swift; sourceTree = "<group>"; };
 		6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentComplexUpdateValueAnalysis.swift; sourceTree = "<group>"; };
-		6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Surge.xcodeproj; path = External/Surge/Surge.xcodeproj; sourceTree = SOURCE_ROOT; };
 		6B94A6201CA015A4008D9ACF /* GLGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GLGraphView.swift; sourceTree = "<group>"; };
 		6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValueViewDescriptor.swift; sourceTree = "<group>"; };
@@ -380,7 +355,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B422E171CA2D69700E945BC /* libTheAmazingAudioEngine.a in Frameworks */,
-				6B94A6041C9AD286008D9ACF /* Surge.framework in Frameworks */,
 				6BD769F21C496C3B006B4A0F /* pop.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -528,7 +502,6 @@
 			children = (
 				6B422E1E1CA335AE00E945BC /* kiss_fft */,
 				6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */,
-				6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */,
 				6BD769DA1C496C16006B4A0F /* pop.xcodeproj */,
 				6BD769D31C496C0C006B4A0F /* VBFPopFlatButton */,
 				6B00F0C11C46F64700971941 /* OrderedDictionary */,
@@ -697,15 +670,6 @@
 			name = Analysis;
 			sourceTree = "<group>";
 		};
-		6B94A5FC1C9AD278008D9ACF /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				6B94A6011C9AD278008D9ACF /* Surge.framework */,
-				6B94A6031C9AD278008D9ACF /* SurgeTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		6BB52BC41C199CB400217CF1 /* Deserializer - Parser */ = {
 			isa = PBXGroup;
 			children = (
@@ -838,7 +802,6 @@
 			dependencies = (
 				6B422E191CA2D6A300E945BC /* PBXTargetDependency */,
 				6BD769F51C496C3B006B4A0F /* PBXTargetDependency */,
-				6B94A6071C9AD286008D9ACF /* PBXTargetDependency */,
 			);
 			name = phyphox;
 			productName = phyphox;
@@ -926,10 +889,6 @@
 					ProjectRef = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
 				},
 				{
-					ProductGroup = 6B94A5FC1C9AD278008D9ACF /* Products */;
-					ProjectRef = 6B94A5FB1C9AD278008D9ACF /* Surge.xcodeproj */;
-				},
-				{
 					ProductGroup = 6B422E0C1CA2D67800E945BC /* Products */;
 					ProjectRef = 6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */;
 				},
@@ -986,20 +945,6 @@
 			remoteRef = 6B422E151CA2D67900E945BC /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		6B94A6011C9AD278008D9ACF /* Surge.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Surge.framework;
-			remoteRef = 6B94A6001C9AD278008D9ACF /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		6B94A6031C9AD278008D9ACF /* SurgeTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = SurgeTests.xctest;
-			remoteRef = 6B94A6021C9AD278008D9ACF /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		6BD769E51C496C16006B4A0F /* libpop.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -1035,9 +980,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6BBA06351C5187ED00E4B1B0 /* phyphox-experiments in Resources */,
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
+				6BC011AB1CA985870053D0DF /* phyphox-experiments in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1210,11 +1155,6 @@
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = 6B7BF79A1C130425007408FB /* PBXContainerItemProxy */;
 		};
-		6B94A6071C9AD286008D9ACF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = Surge;
-			targetProxy = 6B94A6061C9AD286008D9ACF /* PBXContainerItemProxy */;
-		};
 		6BD769F51C496C3B006B4A0F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "pop-ios-framework";
@@ -1322,7 +1262,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -1343,7 +1282,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
