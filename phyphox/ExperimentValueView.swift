@@ -22,7 +22,7 @@ public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor
     }
     
     func newValueIn() {
-        let str = NSMutableAttributedString(string: self.descriptor.label.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+        let str = NSMutableAttributedString(string: self.descriptor.localizedLabel.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
         
         if let last = self.descriptor.buffer.last {
             let formatter = NSNumberFormatter()

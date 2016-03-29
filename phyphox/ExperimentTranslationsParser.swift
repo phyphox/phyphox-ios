@@ -16,9 +16,9 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
     }
     
     /**
-     - returns: `nil` if no translations where found, otherwise a dictionary with the format `[locale: translation]`
+     - returns: `nil` if no translations where found
      */
-    func parse() -> [String: ExperimentTranslation]? {
+    func parse() -> ExperimentTranslationCollection? {
         if translations == nil {
             return nil
         }
@@ -78,6 +78,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
             
         }
         
-        return (trs.count > 0 ? trs : nil)
+        //TODO: modify phyphox file format to allow specification of default language code
+        return (trs.count > 0 ? ExperimentTranslationCollection(translations: trs, defaultLanguageCode: "en") : nil)
     }
 }

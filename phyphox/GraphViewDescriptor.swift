@@ -7,14 +7,19 @@
 //
 
 import Foundation
-import CoreGraphics
 
-/**
- Represents a graph view.
- */
+
 public final class GraphViewDescriptor: ViewDescriptor {
-    let xLabel: String
-    let yLabel: String
+    private let xLabel: String
+    private let yLabel: String
+    
+    var localizedXLabel: String {
+        return translation?.localize(xLabel) ?? xLabel
+    }
+    
+    var localizedYLabel: String {
+        return translation?.localize(yLabel) ?? yLabel
+    }
     
     let logX: Bool
     let logY: Bool
@@ -28,7 +33,7 @@ public final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -44,6 +49,6 @@ public final class GraphViewDescriptor: ViewDescriptor {
         self.forceFullDataset = forceFullDataset
         self.history = history
         
-        super.init(label: label)
+        super.init(label: label, translation: translation)
     }
 }

@@ -7,12 +7,17 @@
 //
 
 import Foundation
-import CoreGraphics
 
 public class ViewDescriptor {
-    let label: String
+    private let label: String
+    weak var translation: ExperimentTranslationCollection?
     
-    init(label: String) {
+    var localizedLabel: String {
+        return translation?.localize(label) ?? label
+    }
+    
+    init(label: String, translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.translation = translation
     }
 }

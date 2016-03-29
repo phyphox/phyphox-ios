@@ -143,8 +143,8 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
             return l
         }
         
-        xLabel = makeLabel(descriptor.xLabel)
-        yLabel = makeLabel(descriptor.yLabel)
+        xLabel = makeLabel(descriptor.localizedXLabel)
+        yLabel = makeLabel(descriptor.localizedYLabel)
         yLabel.transform = CGAffineTransformMakeRotation(-CGFloat(M_PI/2.0))
         
         super.init(descriptor: descriptor)
@@ -458,7 +458,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         xLabel.frame = CGRectMake((self.bounds.size.width-s2.width)/2.0, self.bounds.size.height-s2.height-spacing, s2.width, s2.height)
         
         let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
-        yLabel.frame = CGRectMake(spacing+5.0, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
+        yLabel.frame = CGRectMake(spacing+5.0, (self.bounds.size.height-s3.height)/2.0-4.0, s3.width, s3.height)
         
         gridView.frame = bounds
         glGraph.frame = graphFrame

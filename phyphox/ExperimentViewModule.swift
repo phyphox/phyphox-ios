@@ -21,7 +21,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         label = UILabel()
         label.numberOfLines = 0
         
-        label.text = descriptor.label
+        label.text = descriptor.localizedLabel
         
         label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote)
         

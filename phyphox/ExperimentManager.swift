@@ -82,7 +82,7 @@ final class ExperimentManager {
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromFile(path)
                 
-                let category = experiment.category!
+                let category = experiment.localizedCategory
                 
                 if let collection = lookupTable[category] {
                     collection.experiments!.append(experiment)

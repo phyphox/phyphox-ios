@@ -67,7 +67,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let translations = parseTranslations(dictionary["translations"] as! NSDictionary?)
+        let translation = parseTranslations(dictionary["translations"] as! NSDictionary?)
         
         let analysis = parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
         
@@ -76,7 +76,7 @@ final class ExperimentDeserializer: NSObject {
         let sensorInputs = inputs.0
         let audioInputs = inputs.1
         
-        let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers, analysis: analysis)
+        let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers, analysis: analysis, translation: translation)
         
         let export = parseExport(dictionary["export"] as! NSDictionary?, buffers: buffers)
         
@@ -85,11 +85,11 @@ final class ExperimentDeserializer: NSObject {
         let iconRaw = dictionary["icon"]
         let icon = parseIcon(iconRaw ?? title ?? "")
         
-        guard icon != nil else {
+        guard icon != nil && title != nil && category != nil else {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: title, description: description, category: category, icon: icon!, local: true, translations: translations, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title!, description: description, category: category!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }
@@ -159,11 +159,11 @@ final class ExperimentDeserializer: NSObject {
         return (nil, nil)
     }
     
-    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> [ExperimentViewCollectionDescriptor]? {
+    func parseViews(views: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) -> [ExperimentViewCollectionDescriptor]? {
         if (views != nil) {
             let parser = ExperimentViewsParser(views!)
             
-            return parser.parse(buffers, analysis: analysis)
+            return parser.parse(buffers, analysis: analysis, translation: translation)
         }
         
         return nil
@@ -178,7 +178,7 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseTranslations(translations: NSDictionary?) -> [String: ExperimentTranslation]? {
+    func parseTranslations(translations: NSDictionary?) -> ExperimentTranslationCollection? {
         if (translations != nil) {
             let parser = ExperimentTranslationsParser(translations!)
             

@@ -22,7 +22,7 @@ final class ExperimentViewController: CollectionViewController {
     }
     
     func updateSelectedViewCollection() {
-        titleView.prompt = experiment.viewDescriptors?[selectedViewCollection].label
+        titleView.prompt = experiment.viewDescriptors?[selectedViewCollection].localizedLabel
         titleView.sizeToFit()
         
         //Clear old modules, otherwise cell reuse will mess everything up...
@@ -38,7 +38,7 @@ final class ExperimentViewController: CollectionViewController {
             var titles: [String] = []
             
             for collection in experiment.viewDescriptors! {
-                titles.append(collection.label)
+                titles.append(collection.localizedLabel)
             }
             
             let menu = PTDropDownMenu(items: titles)
@@ -80,7 +80,7 @@ final class ExperimentViewController: CollectionViewController {
         
         super.init()
         
-        self.title = experiment.title
+        self.title = experiment.localizedTitle
         
         updateSelectedViewCollection()
         
@@ -119,7 +119,7 @@ final class ExperimentViewController: CollectionViewController {
         super.viewDidDisappear(animated)
         
         experiment.stop()
-        experiment.didGetInactive()
+        experiment.didBecomeInactive()
     }
     
     override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {

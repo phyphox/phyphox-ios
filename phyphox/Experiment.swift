@@ -17,9 +17,21 @@ struct ExperimentRequiredPermission : OptionSetType {
 }
 
 final class Experiment : ExperimentAnalysisDelegate {
-    var title: String?
-    var description: String?
-    var category: String?
+    private var title: String
+    private var description: String?
+    private var category: String
+    
+    var localizedTitle: String {
+        return translation?.selectedTranslation?.titleString ?? title
+    }
+    
+    var localizedDescription: String? {
+        return translation?.selectedTranslation?.descriptionString ?? description
+    }
+    
+    var localizedCategory: String {
+        return translation?.selectedTranslation?.categoryString ?? category
+    }
     
     let icon: ExperimentIcon
     
@@ -27,7 +39,7 @@ final class Experiment : ExperimentAnalysisDelegate {
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
-    let translations: [String: ExperimentTranslation]?
+    let translation: ExperimentTranslationCollection?
     let sensorInputs: [ExperimentSensorInput]?
     let audioInputs: [ExperimentAudioInput]?
     let output: ExperimentOutput?
@@ -42,7 +54,7 @@ final class Experiment : ExperimentAnalysisDelegate {
     
     private(set) var running = false
     
-    init(title: String?, description: String?, category: String?, icon: ExperimentIcon, local: Bool, translations: [String: ExperimentTranslation]?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.category = category
@@ -51,8 +63,8 @@ final class Experiment : ExperimentAnalysisDelegate {
         
         self.local = local
         
-        self.translations = translations
-        
+        self.translation = translation
+
         self.buffers = buffers
         self.sensorInputs = sensorInputs
         self.audioInputs = audioInputs
@@ -94,13 +106,19 @@ final class Experiment : ExperimentAnalysisDelegate {
         }
     }
     
+    /**
+     Called when the experiment view controller will be presented.
+     */
     func willGetActive(dismiss: () -> ()) {
         if self.audioInputs != nil {
             checkAndAskForPermissions(dismiss)
         }
     }
     
-    func didGetInactive() {
+    /**
+     Called when the experiment view controller did dismiss.
+     */
+    func didBecomeInactive() {
         
     }
     

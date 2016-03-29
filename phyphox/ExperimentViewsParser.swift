@@ -31,7 +31,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         return nil
     }
     
-    func parse(buffers: [String: DataBuffer], analysis: ExperimentAnalysis?) -> [ExperimentViewCollectionDescriptor]? {
+    func parse(buffers: [String: DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) -> [ExperimentViewCollectionDescriptor]? {
         if views == nil {
             return nil
         }
@@ -89,7 +89,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     outputBuffer!.append(defaultValue) //Set the default value.
                 }
                 
-                return EditViewDescriptor(label: label, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
+                return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
             }
             
             func handleValue(value: [String: AnyObject]) -> ValueViewDescriptor? {
@@ -124,7 +124,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     return nil
                 }
                 
-                return ValueViewDescriptor(label: label, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
+                return ValueViewDescriptor(label: label, translation: translation, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
             func handleGraph(graph: [String: AnyObject]) -> GraphViewDescriptor? {
@@ -190,7 +190,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     print("Error! No Y axis input buffer!")
                 }
                 
-                return GraphViewDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
             }
             
             func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {
@@ -198,7 +198,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let label = attributes["label"]!
                 
-                return InfoViewDescriptor(label: label)
+                return InfoViewDescriptor(label: label, translation: translation)
             }
             
             var deleteIndices: [Int] = []
@@ -258,7 +258,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 views.removeAtIndices(deleteIndices)
             }
             
-            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, views: views as! [ViewDescriptor])
+            let viewDescriptor = ExperimentViewCollectionDescriptor(label: label, translation: translation, views: views as! [ViewDescriptor])
             
             viewDescriptors.append(viewDescriptor)
         }

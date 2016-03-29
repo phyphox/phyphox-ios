@@ -12,8 +12,17 @@ private final class GraphGridLineLayer: CAShapeLayer {
     override init() {
         super.init()
         
+        commonInit()
+    }
+    
+    override init(layer: AnyObject) {
+        super.init(layer: layer)
+        
+        commonInit()
+    }
+    
+    func commonInit() {
         lineDashPattern = [NSNumber(double: 6.0), NSNumber(double: 5.0)]
-//        lineDashPhase = 3.0
         lineCap = kCALineCapRound
         
         strokeColor = UIColor(white: 0.0, alpha: 0.3).CGColor

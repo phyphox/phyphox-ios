@@ -25,7 +25,7 @@ class ExperimentCell: UICollectionViewCell {
     }
     
     func setUpWithExperiment(experiment: Experiment) {
-        titleLabel.text = experiment.title
+        titleLabel.text = experiment.localizedTitle
         
         setNeedsLayout()
     }

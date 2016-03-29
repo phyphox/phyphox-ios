@@ -22,7 +22,7 @@ public final class EditViewDescriptor: ViewDescriptor {
         return buffer.last ?? defaultValue
     }
     
-    init(label: String, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double, buffer: DataBuffer) {
+    init(label: String, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed
         self.decimal = decimal
         self.unit = unit
@@ -30,7 +30,7 @@ public final class EditViewDescriptor: ViewDescriptor {
         self.defaultValue = defaultValue
         self.buffer = buffer
         
-        super.init(label: label)
+        super.init(label: label, translation: translation)
     }
 }
 
