@@ -8,5 +8,9 @@
 #import "VBFPopFlatButton.h"
 #import "PTNavigationBarTitleView.h"
 #import <TheAmazingAudioEngine/TheAmazingAudioEngine.h>
+#import "UIAlertController+PTExtensions.h"
+#import "BEMCheckbox.h"
+#import <ZipZap/ZipZap.h>
+@import JGProgressHUD;
 
 BOOL AEFloatConverterToFloat(AEFloatConverter* converter, AudioBufferList *sourceBuffer, float * const * targetBuffers, UInt32 frames);

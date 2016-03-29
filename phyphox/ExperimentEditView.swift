@@ -78,27 +78,31 @@ public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>,
         if textField.text?.characters.count == 0 || Double(textField.text!) == nil {
             val = descriptor.value
             
-            textField.text = formattedValue(val)
+            textField.text = formattedValue(val*self.descriptor.factor)
         }
         else {
+            let rawVal: Double
+            
             if descriptor.decimal {
                 if descriptor.signed {
-                    val = floor(Double(textField.text!)!)
+                    rawVal = floor(Double(textField.text!)!)
                 }
                 else {
-                    val = floor(abs(Double(textField.text!)!))
+                    rawVal = floor(abs(Double(textField.text!)!))
                 }
             }
             else {
                 if descriptor.signed {
-                    val = Double(textField.text!)!
+                    rawVal = Double(textField.text!)!
                 }
                 else {
-                    val = abs(Double(textField.text!)!)
+                    rawVal = abs(Double(textField.text!)!)
                 }
             }
             
-            textField.text = formattedValue(val)
+            val = rawVal/self.descriptor.factor
+            
+            textField.text = formattedValue(rawVal)
         }
         
         if write {

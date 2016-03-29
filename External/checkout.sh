@@ -14,6 +14,18 @@ rm -rf TheAmazingAudioEngine
 git clone https://github.com/TheAmazingAudioEngine/TheAmazingAudioEngine
 rm -rf TheAmazingAudioEngine/.git
 
+rm -rf JGProgressHUD
+git clone https://github.com/JonasGessner/JGProgressHUD
+rm -rf JGProgressHUD/.git
+
+rm -rf ZipZap
+git clone https://github.com/pixelglow/ZipZap
+rm -rf ZipZap/.git
+
+rm -rf BEMCheckBox
+git clone https://github.com/Boris-Em/BEMCheckBox
+rm -rf BEMCheckBox/.git
+
 rm -rf pop
 git clone https://github.com/facebook/pop
 rm -rf pop/.git

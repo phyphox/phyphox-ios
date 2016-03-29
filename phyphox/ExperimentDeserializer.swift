@@ -78,7 +78,7 @@ final class ExperimentDeserializer: NSObject {
         
         let viewDescriptors = parseViews(dictionary["views"] as! NSDictionary?, buffers: buffers, analysis: analysis, translation: translation)
         
-        let export = parseExport(dictionary["export"] as! NSDictionary?, buffers: buffers)
+        let export = parseExport(dictionary["export"] as! NSDictionary?, buffers: buffers, translation: translation)
         
         let output = parseOutput(dictionary["output"] as! NSDictionary?, buffers: buffers)
         
@@ -139,11 +139,11 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseExport(exports: NSDictionary?, buffers: [String : DataBuffer]) -> ExperimentExport? {
+    func parseExport(exports: NSDictionary?, buffers: [String : DataBuffer], translation: ExperimentTranslationCollection?) -> ExperimentExport? {
         if (exports != nil) {
             let parser = ExperimentExportParser(exports!)
             
-            return parser.parse(buffers)
+            return parser.parse(buffers, translation: translation)
         }
         
         return nil

@@ -28,6 +28,15 @@
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
 		6B1D6ACE1C5F674100AE33A5 /* RangefilterTest.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */; };
+		6B26F6FB1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */; };
+		6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */; };
+		6B26F7051CAB08FA00EA9367 /* BEMAnimationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F7001CAB08FA00EA9367 /* BEMAnimationManager.m */; };
+		6B26F7061CAB08FA00EA9367 /* BEMCheckBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F7021CAB08FA00EA9367 /* BEMCheckBox.m */; };
+		6B26F7071CAB08FA00EA9367 /* BEMPathManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F7041CAB08FA00EA9367 /* BEMPathManager.m */; };
+		6B26F7381CAB246000EA9367 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B26F72B1CAB245200EA9367 /* ZipZap.framework */; };
+		6B26F7391CAB246000EA9367 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B26F72B1CAB245200EA9367 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6B26F7481CAB2ABF00EA9367 /* JGProgressHUD.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B26F7471CAB2AB300EA9367 /* JGProgressHUD.framework */; };
+		6B26F7491CAB2ABF00EA9367 /* JGProgressHUD.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B26F7471CAB2AB300EA9367 /* JGProgressHUD.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6B2F60341CA8401D007A0C98 /* Test.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B2F60331CA8401D007A0C98 /* Test.phyphox */; };
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
 		6B422E171CA2D69700E945BC /* libTheAmazingAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B422E121CA2D67900E945BC /* libTheAmazingAudioEngine.a */; };
@@ -43,7 +52,6 @@
 		6B63199B1C4969DA0038BE22 /* MainNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */; };
 		6B7BF7851C130425007408FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7841C130425007408FB /* Assets.xcassets */; };
 		6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7861C130425007408FB /* LaunchScreen.storyboard */; };
-		6B7BF7931C130425007408FB /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7921C130425007408FB /* phyphoxTests.swift */; };
 		6B7BF79E1C130425007408FB /* phyphoxUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF79D1C130425007408FB /* phyphoxUITests.swift */; };
 		6B7BF7B71C130471007408FB /* Experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AD1C130471007408FB /* Experiment.swift */; };
 		6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AE1C130471007408FB /* ExperimentCell.swift */; };
@@ -81,8 +89,6 @@
 		6B7BF81F1C147CE0007408FB /* DifferentiationAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF81E1C147CE0007408FB /* DifferentiationAnalysis.swift */; };
 		6B7BF8211C147CF3007408FB /* AutocorrelationAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8201C147CF3007408FB /* AutocorrelationAnalysis.swift */; };
 		6B7BF8231C147D09007408FB /* FFTAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8221C147D09007408FB /* FFTAnalysis.swift */; };
-		6B7BF8251C1645A6007408FB /* QueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8241C1645A6007408FB /* QueueTests.swift */; };
-		6B7BF8261C164CEC007408FB /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
 		6B7BF8331C198407007408FB /* ExperimentMetadataParser-Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */; };
 		6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */; };
 		6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */; };
@@ -103,6 +109,9 @@
 		6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */; };
 		6BC011AB1CA985870053D0DF /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6BBA06341C5187ED00E4B1B0 /* phyphox-experiments */; };
 		6BC011AD1CAA86670053D0DF /* ExperimentTranslationCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC011AC1CAA86670053D0DF /* ExperimentTranslationCollection.swift */; };
+		6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8241C1645A6007408FB /* QueueTests.swift */; };
+		6BC012161CAAD1440053D0DF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7921C130425007408FB /* phyphoxTests.swift */; };
+		6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
 		6BD769C81C496B51006B4A0F /* PTNavigationBarTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */; };
 		6BD769D81C496C0C006B4A0F /* VBFDoubleSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D51C496C0C006B4A0F /* VBFDoubleSegment.m */; };
 		6BD769D91C496C0C006B4A0F /* VBFPopFlatButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769D71C496C0C006B4A0F /* VBFPopFlatButton.m */; };
@@ -132,6 +141,90 @@
 			proxyType = 2;
 			remoteGlobalIDString = 0755AE8C1BEA19580094AB41;
 			remoteInfo = "pop-tests-tvos";
+		};
+		6B26F72A1CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D87BA1F81B3D6DEA00ED7EB3;
+			remoteInfo = "ZipZap (iOS Framework)";
+		};
+		6B26F72C1CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D899CFB0162C5EEB00112F49;
+			remoteInfo = "ZipZap (iOS Static Library)";
+		};
+		6B26F72E1CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D8D140D31B423B1100C411B0;
+			remoteInfo = "ZipZap (OS X Framework)";
+		};
+		6B26F7301CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D899CF82162C5EC100112F49;
+			remoteInfo = "ZipZap (OS X Static Library)";
+		};
+		6B26F7321CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BF8624CB1BB7495200C12EEE;
+			remoteInfo = "ZipZap (tvOS Framework)";
+		};
+		6B26F7341CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BF8624EF1BB74B1F00C12EEE;
+			remoteInfo = "ZipZap (tvOS Static Library)";
+		};
+		6B26F7361CAB245200EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D899CF96162C5EC100112F49;
+			remoteInfo = ZipZapTests;
+		};
+		6B26F73A1CAB246000EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D87BA1F71B3D6DEA00ED7EB3;
+			remoteInfo = "ZipZap (iOS Framework)";
+		};
+		6B26F7421CAB2AB300EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6BC01873197B2AA500DA4C49;
+			remoteInfo = JGProgressHUD;
+		};
+		6B26F7441CAB2AB300EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6B60B24019A3B3C500ED1A4E;
+			remoteInfo = "JGProgressHUD Resources";
+		};
+		6B26F7461CAB2AB300EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6BF7DC5A1AEFCFD9000A0AE0;
+			remoteInfo = "JGProgressHUD Framework";
+		};
+		6B26F74A1CAB2ABF00EA9367 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 6BF7DC591AEFCFD9000A0AE0;
+			remoteInfo = "JGProgressHUD Framework";
 		};
 		6B422E111CA2D67900E945BC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -219,7 +312,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				6B26F7391CAB246000EA9367 /* ZipZap.framework in Embed Frameworks */,
 				6BD769F31C496C3B006B4A0F /* pop.framework in Embed Frameworks */,
+				6B26F7491CAB2ABF00EA9367 /* JGProgressHUD.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -251,6 +346,17 @@
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = RangefilterTest.phyphox; sourceTree = "<group>"; };
+		6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIAlertController+PTExtensions.h"; sourceTree = "<group>"; };
+		6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIAlertController+PTExtensions.m"; sourceTree = "<group>"; };
+		6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSetSelectionView.swift; sourceTree = "<group>"; };
+		6B26F6FF1CAB08FA00EA9367 /* BEMAnimationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMAnimationManager.h; sourceTree = "<group>"; };
+		6B26F7001CAB08FA00EA9367 /* BEMAnimationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMAnimationManager.m; sourceTree = "<group>"; };
+		6B26F7011CAB08FA00EA9367 /* BEMCheckBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMCheckBox.h; sourceTree = "<group>"; };
+		6B26F7021CAB08FA00EA9367 /* BEMCheckBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMCheckBox.m; sourceTree = "<group>"; };
+		6B26F7031CAB08FA00EA9367 /* BEMPathManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMPathManager.h; sourceTree = "<group>"; };
+		6B26F7041CAB08FA00EA9367 /* BEMPathManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMPathManager.m; sourceTree = "<group>"; };
+		6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = External/ZipZap/ZipZap.xcodeproj; sourceTree = SOURCE_ROOT; };
+		6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JGProgressHUD.xcodeproj; path = External/JGProgressHUD/JGProgressHUD.xcodeproj; sourceTree = SOURCE_ROOT; };
 		6B2F60331CA8401D007A0C98 /* Test.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Test.phyphox; sourceTree = "<group>"; };
 		6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TheAmazingAudioEngine.xcodeproj; path = External/TheAmazingAudioEngine/TheAmazingAudioEngine.xcodeproj; sourceTree = SOURCE_ROOT; };
 		6B422E251CA4045300E945BC /* MetalGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalGraphView.swift; sourceTree = "<group>"; };
@@ -350,7 +456,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B26F7381CAB246000EA9367 /* ZipZap.framework in Frameworks */,
 				6B422E171CA2D69700E945BC /* libTheAmazingAudioEngine.a in Frameworks */,
+				6B26F7481CAB2ABF00EA9367 /* JGProgressHUD.framework in Frameworks */,
 				6BD769F21C496C3B006B4A0F /* pop.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -377,6 +485,7 @@
 			children = (
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
 				6B00F09B1C457A6600971941 /* ExperimentView.swift */,
+				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
 				6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */,
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
 				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
@@ -486,6 +595,9 @@
 		6B0C71561C1C708F00500FEE /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6B26F6FE1CAB08FA00EA9367 /* BEMCheckbox */,
+				6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */,
+				6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */,
 				6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */,
 				6BD769DA1C496C16006B4A0F /* pop.xcodeproj */,
 				6BD769D31C496C0C006B4A0F /* VBFPopFlatButton */,
@@ -503,6 +615,44 @@
 				6BB52BC41C199CB400217CF1 /* Deserializer - Parser */,
 			);
 			name = Serialization;
+			sourceTree = "<group>";
+		};
+		6B26F6FE1CAB08FA00EA9367 /* BEMCheckbox */ = {
+			isa = PBXGroup;
+			children = (
+				6B26F6FF1CAB08FA00EA9367 /* BEMAnimationManager.h */,
+				6B26F7001CAB08FA00EA9367 /* BEMAnimationManager.m */,
+				6B26F7011CAB08FA00EA9367 /* BEMCheckBox.h */,
+				6B26F7021CAB08FA00EA9367 /* BEMCheckBox.m */,
+				6B26F7031CAB08FA00EA9367 /* BEMPathManager.h */,
+				6B26F7041CAB08FA00EA9367 /* BEMPathManager.m */,
+			);
+			name = BEMCheckbox;
+			path = External/BEMCheckBox/Classes;
+			sourceTree = SOURCE_ROOT;
+		};
+		6B26F7211CAB245200EA9367 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6B26F72B1CAB245200EA9367 /* ZipZap.framework */,
+				6B26F72D1CAB245200EA9367 /* libZipZap.a */,
+				6B26F72F1CAB245200EA9367 /* ZipZap.framework */,
+				6B26F7311CAB245200EA9367 /* libZipZap.a */,
+				6B26F7331CAB245200EA9367 /* ZipZap.framework */,
+				6B26F7351CAB245200EA9367 /* libZipZap.a */,
+				6B26F7371CAB245200EA9367 /* ZipZapTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6B26F73D1CAB2AB300EA9367 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6B26F7431CAB2AB300EA9367 /* libJGProgressHUD.a */,
+				6B26F7451CAB2AB300EA9367 /* JGProgressHUD Resources.bundle */,
+				6B26F7471CAB2AB300EA9367 /* JGProgressHUD.framework */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		6B422E0C1CA2D67800E945BC /* Products */ = {
@@ -628,6 +778,8 @@
 		6B7BF7C51C1304C6007408FB /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */,
+				6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */,
 				6BD769F81C496E51006B4A0F /* Collection View */,
 				6B7BF7C41C1304BA007408FB /* Main View */,
 				6B00F0281C4072A100971941 /* Experiment View */,
@@ -778,6 +930,8 @@
 			dependencies = (
 				6B422E191CA2D6A300E945BC /* PBXTargetDependency */,
 				6BD769F51C496C3B006B4A0F /* PBXTargetDependency */,
+				6B26F73B1CAB246000EA9367 /* PBXTargetDependency */,
+				6B26F74B1CAB2ABF00EA9367 /* PBXTargetDependency */,
 			);
 			name = phyphox;
 			productName = phyphox;
@@ -861,12 +1015,20 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 6B26F73D1CAB2AB300EA9367 /* Products */;
+					ProjectRef = 6B26F73C1CAB2AB300EA9367 /* JGProgressHUD.xcodeproj */;
+				},
+				{
 					ProductGroup = 6BD769DB1C496C16006B4A0F /* Products */;
 					ProjectRef = 6BD769DA1C496C16006B4A0F /* pop.xcodeproj */;
 				},
 				{
 					ProductGroup = 6B422E0C1CA2D67800E945BC /* Products */;
 					ProjectRef = 6B422E0B1CA2D67800E945BC /* TheAmazingAudioEngine.xcodeproj */;
+				},
+				{
+					ProductGroup = 6B26F7211CAB245200EA9367 /* Products */;
+					ProjectRef = 6B26F7201CAB245200EA9367 /* ZipZap.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -898,6 +1060,76 @@
 			fileType = wrapper.cfbundle;
 			path = "pop-tests.xctest";
 			remoteRef = 6B1DE14D1C9827ED00BAD330 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F72B1CAB245200EA9367 /* ZipZap.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ZipZap.framework;
+			remoteRef = 6B26F72A1CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F72D1CAB245200EA9367 /* libZipZap.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libZipZap.a;
+			remoteRef = 6B26F72C1CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F72F1CAB245200EA9367 /* ZipZap.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ZipZap.framework;
+			remoteRef = 6B26F72E1CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7311CAB245200EA9367 /* libZipZap.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libZipZap.a;
+			remoteRef = 6B26F7301CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7331CAB245200EA9367 /* ZipZap.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ZipZap.framework;
+			remoteRef = 6B26F7321CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7351CAB245200EA9367 /* libZipZap.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libZipZap.a;
+			remoteRef = 6B26F7341CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7371CAB245200EA9367 /* ZipZapTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = ZipZapTests.xctest;
+			remoteRef = 6B26F7361CAB245200EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7431CAB2AB300EA9367 /* libJGProgressHUD.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libJGProgressHUD.a;
+			remoteRef = 6B26F7421CAB2AB300EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7451CAB2AB300EA9367 /* JGProgressHUD Resources.bundle */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "JGProgressHUD Resources.bundle";
+			remoteRef = 6B26F7441CAB2AB300EA9367 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6B26F7471CAB2AB300EA9367 /* JGProgressHUD.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = JGProgressHUD.framework;
+			remoteRef = 6B26F7461CAB2AB300EA9367 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		6B422E121CA2D67900E945BC /* libTheAmazingAudioEngine.a */ = {
@@ -1024,12 +1256,14 @@
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				6B26F7061CAB08FA00EA9367 /* BEMCheckBox.m in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
 				6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */,
+				6B26F7071CAB08FA00EA9367 /* BEMPathManager.m in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6BB52BC61C1B11CA00217CF1 /* ExperimentTranslation.swift in Sources */,
 				6B7BF80D1C14723D007408FB /* CosAnalysis.swift in Sources */,
@@ -1049,6 +1283,7 @@
 				6B422E2E1CA535EB00E945BC /* GraphGridLineView.swift in Sources */,
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
 				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
+				6B26F6FB1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m in Sources */,
 				6B0C71551C1C706A00500FEE /* Constants.swift in Sources */,
 				6B7BF7F41C132563007408FB /* MotionSession.swift in Sources */,
 				6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */,
@@ -1074,6 +1309,7 @@
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
 				6BBA063A1C518BC900E4B1B0 /* UpdateValueAnalysis.swift in Sources */,
+				6B26F7051CAB08FA00EA9367 /* BEMAnimationManager.m in Sources */,
 				6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */,
 				6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
@@ -1081,6 +1317,7 @@
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
 				6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
+				6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */,
 				6BB52BBB1C19882F00217CF1 /* ExperimentExportParser.swift in Sources */,
 				6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */,
 				6B422E2C1CA4A4BF00E945BC /* GraphGridView.swift in Sources */,
@@ -1098,9 +1335,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6B7BF7931C130425007408FB /* phyphoxTests.swift in Sources */,
-				6B7BF8261C164CEC007408FB /* Queue.swift in Sources */,
-				6B7BF8251C1645A6007408FB /* QueueTests.swift in Sources */,
+				6BC012161CAAD1440053D0DF /* phyphoxTests.swift in Sources */,
+				6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */,
+				6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1115,6 +1352,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		6B26F73B1CAB246000EA9367 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "ZipZap (iOS Framework)";
+			targetProxy = 6B26F73A1CAB246000EA9367 /* PBXContainerItemProxy */;
+		};
+		6B26F74B1CAB2ABF00EA9367 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "JGProgressHUD Framework";
+			targetProxy = 6B26F74A1CAB2ABF00EA9367 /* PBXContainerItemProxy */;
+		};
 		6B422E191CA2D6A300E945BC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = TheAmazingAudioEngine;

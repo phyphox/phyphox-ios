@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+@import JGProgressHUD;
 
 NS_INLINE UIImage *UIImageCreateColorImage(UIColor *color, CGSize size, BOOL opaque) {
     UIGraphicsBeginImageContextWithOptions(size, opaque,  0.0f);
@@ -20,6 +21,21 @@ NS_INLINE UIImage *UIImageCreateColorImage(UIColor *color, CGSize size, BOOL opa
     UIGraphicsEndImageContext();
     
     return img;
+}
+
+NS_INLINE JGProgressHUD *showErrorHUDWithDescription(NSString *errorDescription) {
+    JGProgressHUD *HUD = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
+    HUD.interactionType = JGProgressHUDInteractionTypeBlockTouchesOnHUDView;
+    HUD.textLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+    HUD.textLabel.text = errorDescription;
+    
+    HUD.indicatorView = [[JGProgressHUDErrorIndicatorView alloc] init];
+    
+    [HUD showInView:[UIApplication sharedApplication].keyWindow.rootViewController.view animated:YES];
+    
+    [HUD dismissAfterDelay:3.0];
+    
+    return HUD;
 }
 
 OBJC_EXTERN BOOL ptHelperFunctionIsIOS9(void);

@@ -114,6 +114,12 @@ class phyphoxTests: XCTestCase {
         self.waitForExpectationsWithTimeout(2.0, handler: nil)
     }
     
+//    func testFFTSize() {
+//        for i in 0..<2000 {
+//            print("FFT size for \(i): \(nextFFTSize(i))")
+//        }
+//    }
+    
     func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.

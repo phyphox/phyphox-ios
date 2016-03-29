@@ -227,6 +227,8 @@ final class Experiment : ExperimentAnalysisDelegate {
             
             tearDownAudio()
             
+            UIApplication.sharedApplication().idleTimerDisabled = false
+            
             running = false
         }
     }
@@ -237,6 +239,8 @@ final class Experiment : ExperimentAnalysisDelegate {
         }
         
         running = true
+        
+        UIApplication.sharedApplication().idleTimerDisabled = true
         
         setUpAudio()
         

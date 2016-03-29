@@ -28,7 +28,9 @@ public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor
             let formatter = NSNumberFormatter()
             formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
             formatter.maximumFractionDigits = self.descriptor.precision
-            let formatted = formatter.stringFromNumber(NSNumber(double: last))!
+            formatter.minimumIntegerDigits = 1
+            
+            let formatted = formatter.stringFromNumber(NSNumber(double: last*self.descriptor.factor))!
             
             str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
         }
