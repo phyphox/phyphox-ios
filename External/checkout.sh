@@ -14,6 +14,11 @@ rm -rf TheAmazingAudioEngine
 git clone https://github.com/TheAmazingAudioEngine/TheAmazingAudioEngine
 rm -rf TheAmazingAudioEngine/.git
 
+rm -rf JXLS
+git clone --recursive https://github.com/JanX2/JXLS
+rm -rf JXLS/.git
+rm -rf JXLS/External/xlslib/.git
+
 rm -rf JGProgressHUD
 git clone https://github.com/JonasGessner/JGProgressHUD
 rm -rf JGProgressHUD/.git

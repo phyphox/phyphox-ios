@@ -165,81 +165,19 @@ final class ExperimentViewController: CollectionViewController {
         HUD.showInView(navigationController!.view)
         
         dispatch_async(experiment.queue) { [unowned self] in
-            if format.isCSV() {
-                if sets.count == 1 {
-                    let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.csv")
-                    
-                    do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
-                    
-                    let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
-                    
-                    
-                    let set = sets.first!
-                    
-                    let data = set.serialize(format)
-                    
-                    do {
-                        try data!.writeToFile(tmpFile, options: [])
-                        
-                        mainThread {
-                            let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
-                            self.navigationController!.presentViewController(vc, animated: true) {
-                                HUD.dismiss()
-                            }
-                        }
-                    }
-                    catch let error {
-                        print("File write error: \(error)")
-                        mainThread {
-                            HUD.indicatorView = JGProgressHUDErrorIndicatorView()
-                            HUD.textLabel.text = "Could not create csv file"
-                            HUD.dismissAfterDelay(3.0)
-                        }
+            self.experiment.export!.runExport(format, selectedSets: sets, callback: { (errorMessage, fileURL) in
+                if let error = errorMessage {
+                    HUD.indicatorView = JGProgressHUDErrorIndicatorView()
+                    HUD.textLabel.text = error
+                    HUD.dismissAfterDelay(3.0)
+                }
+                else if let URL = fileURL {
+                    let vc = UIActivityViewController(activityItems: [URL], applicationActivities: nil)
+                    self.navigationController!.presentViewController(vc, animated: true) {
+                        HUD.dismiss()
                     }
                 }
-                else {
-                    let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.zip")
-                    
-                    do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
-                    
-                    let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
-                    
-                    do {
-                        let archive = try ZZArchive(URL: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(bool: true)])
-                        
-                        var entries = [ZZArchiveEntry]()
-                        
-                        for set in sets {
-                            let data = set.serialize(format)
-                            
-                            entries.append(ZZArchiveEntry(fileName: set.localizedName + ".csv", compress: true, dataBlock: { error -> NSData? in
-                                return data
-                            }))
-                        }
-                        
-                        try archive.updateEntries(entries)
-                        
-                        mainThread {
-                            let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
-                            self.navigationController!.presentViewController(vc, animated: true) {
-                                HUD.dismiss()
-                            }
-                        }
-                        
-                    }
-                    catch let error {
-                        print("Zip error: \(error)")
-                        mainThread {
-                            HUD.indicatorView = JGProgressHUDErrorIndicatorView()
-                            HUD.textLabel.text = "Could not create csv file"
-                            HUD.dismissAfterDelay(3.0)
-                        }
-                    }
-                }
-            }
-            else {
-                
-            }
+            })
         }
     }
     

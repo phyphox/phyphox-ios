@@ -51,12 +51,12 @@ final class ExperimentExportSet {
         self.data = data
     }
     
-    func serialize(format: ExportFileFormat) -> NSData? {
+    func serialize(format: ExportFileFormat, additionalInfo: AnyObject?) -> AnyObject? {
         switch format {
         case .CSV(let separator):
             return serializeToCSVWithSeparator(separator)
         case .Excel:
-            return serializeToExcel()
+            return serializeToExcel(additionalInfo as! JXLSWorkBook)
         }
     }
     
@@ -124,7 +124,45 @@ final class ExperimentExportSet {
         return string.characters.count > 0 ? string.dataUsingEncoding(NSUTF8StringEncoding) : nil
     }
     
-    private func serializeToExcel() -> NSData? {
-        return nil
+    private func serializeToExcel(workbook: JXLSWorkBook) -> JXLSWorkSheet {
+        let sheet = workbook.workSheetWithName(localizedName)
+        
+        var i = 0
+        
+        let formatter = NSNumberFormatter()
+        formatter.maximumFractionDigits = 3
+        formatter.minimumIntegerDigits = 1
+        formatter.decimalSeparator = "."
+        
+        func format(n: Double) -> String {
+            return formatter.stringFromNumber(NSNumber(double: n))!
+        }
+        
+        while true {
+            var hadValue = false
+            
+            for (j, entry) in localizedData.enumerate() {
+                if i == 0 {
+                    hadValue = true
+                    sheet.setCellAtRow(0, column: UInt32(j), toString: entry.name)
+                }
+                else {
+                    let value = entry.buffer.objectAtIndex(i-1)
+                    
+                    if value != nil {
+                        hadValue = true
+                        sheet.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
+                    }
+                }
+            }
+            
+            if !hadValue {
+                break
+            }
+            
+            i += 1
+        }
+        
+        return sheet
     }
 }

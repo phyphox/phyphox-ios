@@ -11,6 +11,7 @@
 #import "UIAlertController+PTExtensions.h"
 #import "BEMCheckbox.h"
 #import <ZipZap/ZipZap.h>
+#import <JXLS/JXLS.h>
 @import JGProgressHUD;
 
 BOOL AEFloatConverterToFloat(AEFloatConverter* converter, AudioBufferList *sourceBuffer, float * const * targetBuffers, UInt32 frames);
