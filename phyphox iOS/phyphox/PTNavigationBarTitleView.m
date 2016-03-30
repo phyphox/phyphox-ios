@@ -42,7 +42,7 @@
         
         _promptLabel = [[UILabel alloc] init];
         _promptLabel.backgroundColor = [UIColor clearColor];
-        _promptLabel.textColor = [UIColor blackColor];
+        _promptLabel.textColor = kHighlightColor;
         _promptLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2];
         _promptLabel.userInteractionEnabled = NO;
         
@@ -81,10 +81,10 @@
     [super setHighlighted:highlighted];
     
     if (highlighted) {
-        _promptLabel.textColor = [[UIColor blackColor] colorByInterpolatingToColor:[UIColor whiteColor] byFraction:0.5f];
+        _promptLabel.textColor = [kHighlightColor colorByInterpolatingToColor:[UIColor whiteColor] byFraction:0.5f];
     }
     else {
-        _promptLabel.textColor = [UIColor blackColor];
+        _promptLabel.textColor = kHighlightColor;
     }
     
     _promptButton.highlighted = highlighted;
@@ -128,8 +128,8 @@
             _promptButton = [[VBFPopFlatButton alloc] initWithFrame:(CGRect){CGPointZero, {14.0f, 14.0f}} buttonType:buttonDownBasicType buttonStyle:buttonPlainStyle animateToInitialState:NO];
             _promptButton.lineRadius = 0.5f;
             _promptButton.lineThickness = 1.0f;
-            [_promptButton setTintColor:[UIColor blackColor] forState:UIControlStateNormal];
-            [_promptButton setTintColor:[[UIColor blackColor] colorByInterpolatingToColor:[UIColor whiteColor] byFraction:0.5f] forState:UIControlStateHighlighted];
+            [_promptButton setTintColor:kHighlightColor forState:UIControlStateNormal];
+            [_promptButton setTintColor:[kHighlightColor colorByInterpolatingToColor:[UIColor whiteColor] byFraction:0.5f] forState:UIControlStateHighlighted];
             _promptButton.userInteractionEnabled = UIAccessibilityIsVoiceOverRunning();
             
             [_promptButton addTarget:self action:@selector(promptActionPressed) forControlEvents:UIControlEventTouchUpInside];

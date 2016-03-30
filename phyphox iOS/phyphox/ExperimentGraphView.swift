@@ -129,6 +129,10 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
     required public init(descriptor: GraphViewDescriptor) {
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
+        var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+        
+        kHighlightColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        glGraph.lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
         
         gridView = GraphGridView()
         gridView.gridInset = CGPoint(x: 25.0, y: 25.0)
@@ -206,8 +210,6 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         else if (steps <= maxTicks * 2000) {
             step = 2000*stepFactor
         }
-        
-        let stepCount = Int(ceil(range/step))
         
         let first = ceil(min/step)*step
         

@@ -45,6 +45,8 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             sw.onAnimationType = .Bounce
             sw.on = true
             sw.lineWidth = 1.0
+            sw.onTintColor = kHighlightColor
+            sw.onCheckColor = kHighlightColor
             sw.tag = 0
             
             s.append(sw)
@@ -76,6 +78,8 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             sw.onAnimationType = .Bounce
             sw.on = on
             sw.lineWidth = 1.0
+            sw.onTintColor = kHighlightColor
+            sw.onCheckColor = kHighlightColor
             sw.tag = 1
             
             on = false

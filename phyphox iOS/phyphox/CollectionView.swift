@@ -13,7 +13,9 @@ class CollectionView: UIView {
     private(set) var collectionView: UICollectionView
     
     override init(frame: CGRect) {
-        collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout())
+        let layout = UICollectionViewFlowLayout()
+        
+        collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
         
         super.init(frame: frame)
         

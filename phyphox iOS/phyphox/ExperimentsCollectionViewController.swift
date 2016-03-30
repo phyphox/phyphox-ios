@@ -8,18 +8,20 @@
 
 import UIKit
 
+private let minCellWidth: CGFloat = 320.0
+
 final class ExperimentsCollectionViewController: CollectionViewController {
     
     override class var viewClass: CollectionView.Type {
-        get {
-            return MainView.self
-        }
+        return MainView.self
     }
     
     override class var customCells: [String : UICollectionViewCell.Type]? {
-        get {
-            return ["ExperimentCell" : ExperimentCell.self]
-        }
+        return ["ExperimentCell" : ExperimentCell.self]
+    }
+    
+    override class var customHeaders: [String : UICollectionReusableView.Type]? {
+        return ["Header" : ExperimentHeaderView.self]
     }
     
     override func viewDidLoad() {
@@ -39,7 +41,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return CGSizeMake(self.view.frame.size.width, 44.0)
+        let width = self.view.frame.size.width
+        
+//        while width/2.0 >= minCellWidth {
+//            width /= 2.0
+//        }
+        
+        return CGSizeMake(width, 44.0)
     }
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
@@ -50,7 +58,27 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cell.setUpWithExperiment(experiment)
         
+//        cell.showSeparator = indexPath.row < collection.experiments!.count-1
+        
         return cell
+    }
+    
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        return CGSizeMake(self.view.frame.size.width, 34.0)
+    }
+    
+    func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
+        if kind == UICollectionElementKindSectionHeader {
+            let view = collectionView.dequeueReusableSupplementaryViewOfKind(kind, withReuseIdentifier: "Header", forIndexPath: indexPath) as! ExperimentHeaderView
+            
+            let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
+            
+            view.title = collection.title
+            
+            return view
+        }
+        
+        assert(false, "Invalid supplementary view: \(kind)")
     }
     
     //MARK: - UICollectionViewDelegate

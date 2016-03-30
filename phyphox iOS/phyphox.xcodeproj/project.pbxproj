@@ -40,6 +40,7 @@
 		6B0815371CABEF9100EE2791 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 6B0815361CABEF9100EE2791 /* Shaders.metal */; };
 		6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08153D1CABEFAC00EE2791 /* libJXLS.a */; };
 		6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0815431CABF61B00EE2791 /* libc++.tbd */; };
+		6B0815461CAC29E300EE2791 /* ExperimentHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */; };
 		6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */; };
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
@@ -377,6 +378,7 @@
 		6B0815361CABEF9100EE2791 /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		6B0815381CABEFAC00EE2791 /* JXLSiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JXLSiOS.xcodeproj; path = ../../External/JXLS/JXLSiOS.xcodeproj; sourceTree = "<group>"; };
 		6B0815431CABF61B00EE2791 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentHeaderView.swift; sourceTree = "<group>"; };
 		6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewCollectionDescriptor.swift; sourceTree = "<group>"; };
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -828,6 +830,7 @@
 				6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */,
 				6B7BF7B51C130471007408FB /* MainView.swift */,
 				6B7BF7AE1C130471007408FB /* ExperimentCell.swift */,
+				6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */,
 			);
 			name = "Main View";
 			sourceTree = "<group>";
@@ -1369,6 +1372,7 @@
 				6B08150B1CABEE5600EE2791 /* VBFDoubleSegment.m in Sources */,
 				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
 				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnalysis.swift in Sources */,
+				6B0815461CAC29E300EE2791 /* ExperimentHeaderView.swift in Sources */,
 				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
 				6B7BF7C01C130471007408FB /* ExperimentsCollectionViewController.swift in Sources */,
 				6B7BF7FE1C13963E007408FB /* MultiplicationAnalysis.swift in Sources */,

@@ -9,14 +9,27 @@
 import UIKit
 
 class ExperimentCell: UICollectionViewCell {
-    private var titleLabel: UILabel
+    private let titleLabel = UILabel()
+    private let separator = UIView()
+    
+    var showSeparator = true {
+        didSet {
+            separator.hidden = !showSeparator
+        }
+    }
     
     override init(frame: CGRect) {
-        titleLabel = UILabel()
-        
         super.init(frame: frame)
         
+        titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
+        
+        separator.backgroundColor = UIColor.blackColor()
+        separator.alpha = 0.1
+        
+        contentView.backgroundColor = UIColor.whiteColor()
+        
         contentView.addSubview(titleLabel)
+        contentView.addSubview(separator)
     }
 
     @available(*, unavailable)
@@ -37,5 +50,8 @@ class ExperimentCell: UICollectionViewCell {
         
         titleLabel.frame = CGRectMake(5.0, (self.contentView.bounds.size.height-s.height)/2.0, s.width, s.height)
         
+        let separatorHeight = 1.0/UIScreen.mainScreen().scale
+        
+        separator.frame = CGRectMake(0.0, contentView.bounds.size.height-separatorHeight, contentView.bounds.size.width, separatorHeight)
     }
 }

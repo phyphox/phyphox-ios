@@ -15,10 +15,11 @@ func CGRectGetMid(r: CGRect) -> CGPoint {
     return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
 }
 
+let kBackgroundColor = UIColor(white: 0.95, alpha: 1.0)
+let kHighlightColor = UIColor(red: (226.0/255.0), green: (67.0/255.0), blue: (48.0/255.0), alpha: 1.0)
+
 var iOS9: Bool {
-get {
     return ptHelperFunctionIsIOS9()
-}
 }
 
 /**

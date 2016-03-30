@@ -14,9 +14,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     let titleView: PTNavigationBarTitleView
     
     var selfView: CollectionView {
-        get {
-            return view as! CollectionView
-        }
+        return view as! CollectionView
     }
     
     private var lastViewSize: CGRect?

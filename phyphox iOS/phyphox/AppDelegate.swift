@@ -19,6 +19,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
+        window!.tintColor = kHighlightColor
+        
         mainNavViewController = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         mainNavViewController.pushViewController(ExperimentsCollectionViewController(), animated: false)
         window!.rootViewController = mainNavViewController

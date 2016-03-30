@@ -9,4 +9,9 @@
 import UIKit
 
 final class MainView: CollectionView {
+    override init(frame: CGRect) {
+     super.init(frame: frame)
+        
+        collectionView.backgroundColor = kBackgroundColor
+    }
 }
