@@ -9,8 +9,11 @@
 import Foundation
 import Accelerate
 
-//For vDSP_DFT_zop_CreateSetup
-func nextFFTSize(c: Int) -> Int {
+/**
+ For vDSP_DFT_zop_CreateSetup and vDSP_DFT_zrop_CreateSetup
+    - Parameter minN: 3 for vDSP_DFT_zop_CreateSetup and 4 for vDSP_DFT_zrop_CreateSetup. Default 3.
+ */
+func nextFFTSize(c: Int, minN: Int = 3) -> Int {
     var options = [Int]()
     let d = Double(c)
     
@@ -33,7 +36,7 @@ func nextFFTSize(c: Int) -> Int {
         
         let b = pow(2.0, nn)
         
-        if 3 <= nn {
+        if minN <= Int(nn) {
             let re = Int(f*b)
             
             //print("[For: \(c)] \(f)*2^\(nn) = \(re)")
@@ -102,10 +105,6 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        measure { 
-            
-        
-        
         let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
         
         let count = vDSP_Length(nextFFTSize(bufferCount))
@@ -147,59 +146,5 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         if imagOutput != nil {
             imagOutput!.appendFromArray(imagOutputArray)
         }
-        }
-        
-        /*
-        let count = Int(kiss_fft_next_fast_size((Int32(bufferCount)+1) >> 1) << 1)
-        
-        var cpxInputs: [DOUBLE_COMPLEX] = []
-        inputs.reserveCapacity(count)
-        
-        let cpxZero = DOUBLE_COMPLEX(real: 0.0, imag: 0.0)
-        
-        if hasImagInBuffer {
-            for i in 0..<count {
-                if count > bufferCount {
-                    cpxInputs.append(cpxZero)
-                }
-                else {
-                    cpxInputs.append(DOUBLE_COMPLEX(real: realInput[i], imag: imagInput![i]))
-                }
-            }
-        }
-        else {
-            for i in 0..<count {
-                if count > bufferCount {
-                    cpxInputs.append(cpxZero)
-                }
-                else {
-                    cpxInputs.append(DOUBLE_COMPLEX(real: realInput[i], imag: 0.0))
-                }
-            }
-        }
-        
-        let fft = kiss_fft_alloc(Int32(count), 0, nil, nil)
-        
-        var out = [kiss_fft_cpx](count: count, repeatedValue: cpxZero)
-        
-        kiss_fft(fft, &cpxInputs, &out)
-        
-        if !hasImagInBuffer {
-            out = Array(out[0..<count/2])
-        }
-        
-
- 
-        if realOutput != nil {
-            let mapped = out.map{ Double($0.r) }
-            
-            realOutput!.appendFromArray(mapped)
-        }
-        
-        if imagOutput != nil {
-            let mapped = out.map{ Double($0.i) }
-            
-            imagOutput!.appendFromArray(mapped)
-        }*/
     }
 }

@@ -202,13 +202,17 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
                 autoreleasepool {
                     var array = self.queue.toArray()
                     
-                    array.appendContentsOf(values)
+                    let afterSize = array.count+values.count
                     
-                    if array.count > self.size {
-                        array = Array(array[array.count-self.size..<array.count])
+                    let cut = afterSize-self.size
+                    
+                    if cut > 0 {
+                        array.removeFirst(cut)
                     }
                     
-                    self.queue.replaceValues(values, async: true)
+                    array.appendContentsOf(values)
+                    
+                    self.queue.replaceValues(array, async: true)
                 }
             }
             

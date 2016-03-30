@@ -148,7 +148,12 @@ final class GraphGridView: UIView {
                     
                     let origin = insetRect.size.width*line.relativeValue
                     
-                    view.alpha = (origin > 2.0 && origin < insetRect.size.width-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    if !isfinite(origin) {
+                        view.hidden = true
+                        continue
+                    }
+                    
+                    view.hidden = (origin <= 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
                     view.frame = CGRectMake(origin+insetRect.origin.x, insetRect.origin.y, smallestUnit, insetRect.size.height)
                     
@@ -171,7 +176,12 @@ final class GraphGridView: UIView {
                     
                     let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
                     
-                    view.alpha = (origin > 2.0 && origin < insetRect.size.height-2.0 ? 1.0 : 0.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    if !isfinite(origin) {
+                       view.hidden = true
+                        continue
+                    }
+                    
+                    view.hidden = (origin <= 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
                     view.frame = CGRectMake(insetRect.origin.x, origin+insetRect.origin.y, insetRect.size.width, smallestUnit)
                     

@@ -162,52 +162,10 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
     }
     
     //MARK - Graph
-    func getTicks(min mi: Double, max ma: Double, maxTicks: Int, log: Bool) -> [Double]? {
-        if ma <= mi || !isfinite(mi) || !isfinite(ma) {
+    func getTicks(min: Double, max: Double, maxTicks: Int) -> [Double]? {
+        if max <= min || !isfinite(min) || !isfinite(max) {
             return nil
         }
-        
-        if (log) {
-            let min = exp(mi)
-            let max = exp(ma)
-            
-            if (min < 0) {
-                return nil
-            }
-            
-            let range = Int(floor(max)-ceil(min))
-            
-            if (range < 1) {
-                return nil
-            }
-            
-            var magStep = 1
-            
-            while (range+1 > maxTicks * magStep) {
-                magStep += 1
-            }
-            
-            var first = ceil(min)
-            
-            var tickLocations = [Double]()
-            tickLocations.reserveCapacity((range+1)/magStep)
-            
-            while true {
-                let tick = Darwin.log(first)
-                
-                if tick >= ma || tickLocations.count >= maxTicks {
-                    break
-                }
-                
-                tickLocations.append(tick)
-                first *= M_E
-            }
-            
-            return tickLocations
-        }
-        
-        let max = ma
-        let min = mi
         
         let range = max-min
         
@@ -254,14 +212,14 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         let first = ceil(min/step)*step
         
         var tickLocations = [Double]()
-        tickLocations.reserveCapacity(stepCount)
+        tickLocations.reserveCapacity(maxTicks)
         
         var i = 0
         
         while true {
             let s = first+Double(i)*step
             
-            if s >= max || tickLocations.count >= maxTicks {
+            if s > max || tickLocations.count >= maxTicks {
                 break
             }
             
@@ -402,21 +360,21 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
                     minY = min.y
                     maxY = max.y
                     
-                    let xTicks = self.getTicks(min: minX, max: maxX, maxTicks: 6, log: self.descriptor.logX)
-                    let yTicks = self.getTicks(min: minY, max: maxY, maxTicks: 4, log: self.descriptor.logY)
+                    let xTicks = self.getTicks(minX, max: maxX, maxTicks: 6)
+                    let yTicks = self.getTicks(minY, max: maxY, maxTicks: 4)
                     
                     var mappedXTicks: [GraphGridLine]? = nil
                     var mappedYTicks: [GraphGridLine]? = nil
                     
                     if xTicks != nil {
                         mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-minX)/(maxX-minX)))
+                            return GraphGridLine(absoluteValue: logX ? round(exp(val)) : val, relativeValue: CGFloat((val-minX)/(maxX-minX)))
                         })
                     }
                     
                     if yTicks != nil {
                         mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-                            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat((val-minY)/(maxY-minY)))
+                            return GraphGridLine(absoluteValue: logY ? round(exp(val)) : val, relativeValue: CGFloat((val-minY)/(maxY-minY)))
                         })
                     }
                     

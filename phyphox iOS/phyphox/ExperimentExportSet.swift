@@ -129,34 +129,27 @@ final class ExperimentExportSet {
         
         var i = 0
         
-        let formatter = NSNumberFormatter()
-        formatter.maximumFractionDigits = 3
-        formatter.minimumIntegerDigits = 1
-        formatter.decimalSeparator = "."
-        
-        func format(n: Double) -> String {
-            return formatter.stringFromNumber(NSNumber(double: n))!
-        }
-        
         while true {
-            var hadValue = false
+            var addedValue = false
             
-            for (j, entry) in localizedData.enumerate() {
-                if i == 0 {
-                    hadValue = true
+            if i == 0 {
+                addedValue = true
+                for (j, entry) in localizedData.enumerate() {
                     sheet.setCellAtRow(0, column: UInt32(j), toString: entry.name)
                 }
-                else {
+            }
+            else {
+                for (j, entry) in localizedData.enumerate() {
                     let value = entry.buffer.objectAtIndex(i-1)
                     
                     if value != nil {
-                        hadValue = true
+                        addedValue = true
                         sheet.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
                     }
                 }
             }
             
-            if !hadValue {
+            if !addedValue {
                 break
             }
             
