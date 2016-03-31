@@ -9,11 +9,27 @@
 import UIKit
 
 final class ExperimentIcon {
-    let string: String?
-    let image: UIImage?
+    private let string: String?
+    private let image: UIImage?
     
     init(string: String?, image: UIImage?) {
         self.string = string
         self.image = image
+    }
+    
+    func generateResizableRepresentativeView() -> UIView {
+        if image != nil {
+            return UIImageView(image: image!)
+        }
+        else {
+            let label = UILabel()
+            
+            label.text = string
+            label.textAlignment = .Center
+            label.adjustsFontSizeToFitWidth = true
+            label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+            
+            return label
+        }
     }
 }

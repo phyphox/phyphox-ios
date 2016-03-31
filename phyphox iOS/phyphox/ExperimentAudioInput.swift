@@ -28,10 +28,6 @@ final class ExperimentAudioInput {
                         
                         var arrayPointer = UnsafeMutablePointer<Float>(array)
                         
-                        defer {
-                            arrayPointer.destroy()
-                        }
-                        
                         AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, data, &arrayPointer, frames)
                         
                         let final = array.map{ Double($0) }

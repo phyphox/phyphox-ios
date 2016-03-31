@@ -11,6 +11,13 @@ import UIKit
 private let minCellWidth: CGFloat = 320.0
 
 final class ExperimentsCollectionViewController: CollectionViewController {
+    private var cellsPerRow: Int = 1 {
+        didSet {
+            if cellsPerRow != oldValue {
+                updateRowSeparators()
+            }
+        }
+    }
     
     override class var viewClass: CollectionView.Type {
         return MainView.self
@@ -28,6 +35,12 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         super.viewDidLoad()
         
         self.title = "phyphox"
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))
+    }
+    
+    func createNewExpriment() {
+        
     }
     
     //MARK: - UICollectionViewDataSource
@@ -41,11 +54,16 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        let width = self.view.frame.size.width
+        var cells = 1
         
-//        while width/2.0 >= minCellWidth {
-//            width /= 2.0
-//        }
+        var width = self.view.frame.size.width
+        
+        while width/2.0 >= minCellWidth {
+            width /= 2.0
+            cells *= 2
+        }
+        
+        cellsPerRow = cells
         
         return CGSizeMake(width, 44.0)
     }
@@ -56,15 +74,25 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
         let experiment = collection.experiments![indexPath.row]
         
-        cell.setUpWithExperiment(experiment)
+        cell.experiment = experiment
+        
+        cell.showSideSeparator = cellsPerRow > 1 && (indexPath.row % cellsPerRow) != cellsPerRow-1
         
 //        cell.showSeparator = indexPath.row < collection.experiments!.count-1
         
         return cell
     }
     
+    func updateRowSeparators() {
+        for indexPath in self.selfView.collectionView.indexPathsForVisibleItems() {
+            let cell = self.selfView.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
+            
+            cell.showSideSeparator = self.cellsPerRow > 1 && (indexPath.row % self.cellsPerRow) != self.cellsPerRow-1
+        }
+    }
+    
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        return CGSizeMake(self.view.frame.size.width, 34.0)
+        return CGSizeMake(self.view.frame.size.width, 28.0)
     }
     
     func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {

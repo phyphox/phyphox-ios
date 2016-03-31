@@ -10,6 +10,10 @@ import UIKit
 
 let EndBackgroundMotionSession = "EndBackgroundMotionSession"
 
+var iOS9: Bool {
+    return ptHelperFunctionIsIOS9()
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 

@@ -6,6 +6,7 @@
 //  Copyright © 2015 RWTH Aachen. All rights reserved.
 //
 
+import UIKit
 import Foundation
 import CoreGraphics
 import Accelerate
@@ -18,8 +19,25 @@ func CGRectGetMid(r: CGRect) -> CGPoint {
 let kBackgroundColor = UIColor(white: 0.95, alpha: 1.0)
 let kHighlightColor = UIColor(red: (226.0/255.0), green: (67.0/255.0), blue: (48.0/255.0), alpha: 1.0)
 
-var iOS9: Bool {
-    return ptHelperFunctionIsIOS9()
+infix operator =-= { associativity left }
+infix operator !=-= { associativity left }
+/**
+ Compare optionals.
+ - Note: Returns true for a == nil and b == nil.
+ */
+func =-= <T: Equatable>(a: T?, b: T?) -> Bool {
+    if a == nil && b != nil || b == nil && a != nil {
+        return false
+    }
+    else if a == nil && b == nil {
+        return true
+    }
+    
+    return a! == b!
+}
+
+func !=-= <T: Equatable>(a: T?, b: T?) -> Bool {
+    return !(a =-= b)
 }
 
 /**

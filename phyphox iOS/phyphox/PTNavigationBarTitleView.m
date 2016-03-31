@@ -35,7 +35,7 @@
         
         _titleLabel = [[UILabel alloc] init];
         _titleLabel.backgroundColor = [UIColor clearColor];
-        _titleLabel.textColor = [UIColor blackColor];
+        _titleLabel.textColor = kHighlightColor;
         _titleLabel.textAlignment = NSTextAlignmentCenter;
         _titleLabel.userInteractionEnabled = NO;
         _titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
@@ -96,6 +96,13 @@
 }
 
 - (void)setPrompt:(NSString *)prompt {
+    if (prompt.length > 0) {
+        _titleLabel.textColor = [UIColor blackColor];
+    }
+    else {
+        _titleLabel.textColor = kHighlightColor;
+    }
+    
     _promptLabel.text = prompt;
     [self setNeedsLayout];
 }

@@ -16,7 +16,11 @@ struct ExperimentRequiredPermission : OptionSetType {
     static let Microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
 }
 
-final class Experiment : ExperimentAnalysisDelegate {
+func ==(lhs: Experiment, rhs: Experiment) -> Bool {
+    return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+}
+
+final class Experiment : ExperimentAnalysisDelegate, Equatable {
     private var title: String
     private var description: String?
     private var category: String

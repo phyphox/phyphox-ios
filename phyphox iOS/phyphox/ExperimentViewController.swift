@@ -164,20 +164,19 @@ final class ExperimentViewController: CollectionViewController {
         
         HUD.showInView(navigationController!.view)
         
-        dispatch_async(experiment.queue) { [unowned self] in
-            self.experiment.export!.runExport(format, selectedSets: sets, callback: { (errorMessage, fileURL) in
-                if let error = errorMessage {
-                    HUD.indicatorView = JGProgressHUDErrorIndicatorView()
-                    HUD.textLabel.text = error
-                    HUD.dismissAfterDelay(3.0)
+        self.experiment.export!.runExport(format, selectedSets: sets) { (errorMessage, fileURL) in
+            if let error = errorMessage {
+                HUD.indicatorView = JGProgressHUDErrorIndicatorView()
+                HUD.textLabel.text = error
+                HUD.dismissAfterDelay(3.0)
+            }
+            else if let URL = fileURL {
+                let vc = UIActivityViewController(activityItems: [URL], applicationActivities: nil)
+                
+                self.navigationController!.presentViewController(vc, animated: true) {
+                    HUD.dismiss()
                 }
-                else if let URL = fileURL {
-                    let vc = UIActivityViewController(activityItems: [URL], applicationActivities: nil)
-                    self.navigationController!.presentViewController(vc, animated: true) {
-                        HUD.dismiss()
-                    }
-                }
-            })
+            }
         }
     }
     

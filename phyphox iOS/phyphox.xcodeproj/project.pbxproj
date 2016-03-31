@@ -37,10 +37,11 @@
 		6B0815311CABEE7F00EE2791 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08151C1CABEE6700EE2791 /* ZipZap.framework */; };
 		6B0815321CABEE7F00EE2791 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08151C1CABEE6700EE2791 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6B0815351CABEEB200EE2791 /* libTheAmazingAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0815011CABEE4800EE2791 /* libTheAmazingAudioEngine.a */; };
-		6B0815371CABEF9100EE2791 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 6B0815361CABEF9100EE2791 /* Shaders.metal */; };
 		6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08153D1CABEFAC00EE2791 /* libJXLS.a */; };
 		6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0815431CABF61B00EE2791 /* libc++.tbd */; };
 		6B0815461CAC29E300EE2791 /* ExperimentHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */; };
+		6B0815471CAD329900EE2791 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
+		6B0815481CAD329900EE2791 /* Constants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769F61C496D34006B4A0F /* Constants.m */; };
 		6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */; };
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
@@ -1303,7 +1304,6 @@
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
 				6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
-				6B0815371CABEF9100EE2791 /* Shaders.metal in Sources */,
 				6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
@@ -1383,9 +1383,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B0815481CAD329900EE2791 /* Constants.m in Sources */,
 				6BC012161CAAD1440053D0DF /* phyphoxTests.swift in Sources */,
 				6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */,
 				6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */,
+				6B0815471CAD329900EE2791 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

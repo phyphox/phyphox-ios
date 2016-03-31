@@ -16,8 +16,12 @@ final class ExperimentIconParser: ExperimentMetadataParser {
     }
     
     func parse() -> ExperimentIcon? {
-        if let icon = data as? String {
-            return ExperimentIcon(string: icon, image: nil)
+        if var title = data as? String {
+            if title.characters.count > 2 {
+                title = title.substringToIndex(title.startIndex.advancedBy(2))
+            }
+        
+            return ExperimentIcon(string: title, image: nil)
         }
         else if let icon = data as? NSDictionary {
             let attributes = icon[XMLDictionaryAttributesKey] as! [String: AnyObject]?
