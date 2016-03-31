@@ -29,6 +29,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
+    var attachedToTextField = false
+    
     var hashValue: Int {
         return name.hash
     }
@@ -127,15 +129,14 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     }
     
     func clear(notify: Bool = true) {
-        if (!staticBuffer) {
-            queue.clear()
-            trashedCount = 0
-            
-            bufferMutated()
-            
-            if notify {
-                sendUpdateNotification()
-            }
+        queue.clear()
+        trashedCount = 0
+        written = false
+        
+        bufferMutated()
+        
+        if notify {
+            sendUpdateNotification()
         }
     }
     

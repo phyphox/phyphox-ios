@@ -25,8 +25,8 @@ final class GLGraphView: GLKView {
     
     private var length = 0
     
-    private var xScale: Float = 0.0
-    private var yScale: Float = 0.0
+    private var xScale: Float = 1.0
+    private var yScale: Float = 1.0
     
     private var min: GraphPoint<Double>!
     private var max: GraphPoint<Double>!
@@ -88,11 +88,11 @@ final class GLGraphView: GLKView {
     var points: [GraphPoint<GLfloat>]?
     #endif
     
-    func setPoints(p: [GraphPoint<GLfloat>], min: GraphPoint<Double>, max: GraphPoint<Double>) {
+    func setPoints(p: [GraphPoint<GLfloat>]?, min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
         #if DEBUG
             points = p
         #endif
-        length = p.count
+        length = p?.count ?? 0
         
         if length == 0 {
             setNeedsDisplay()
@@ -101,15 +101,27 @@ final class GLGraphView: GLKView {
         
         EAGLContext.setCurrentContext(context)
         
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo);
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p, GLenum(GL_DYNAMIC_DRAW))
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
         
-        xScale = Float(2.0/(max.x-min.x))
+        if p != nil {
+            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p!, GLenum(GL_DYNAMIC_DRAW))
+        }
+        else {
+            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(0), nil, GLenum(GL_DYNAMIC_DRAW))
+        }
         
-        let dataPerPixelY = Float((max.y-min.y)/Double(self.bounds.size.height))
-        let biasDataY = lineWidth*dataPerPixelY
-        
-        yScale = Float(2.0/(Float(max.y-min.y)+biasDataY))
+        if max != nil && min != nil {
+            xScale = Float(2.0/(max!.x-min!.x))
+            
+            let dataPerPixelY = Float((max!.y-min!.y)/Double(bounds.size.height))
+            let biasDataY = lineWidth*dataPerPixelY
+            
+            yScale = Float(2.0/(Float(max!.y-min!.y)+biasDataY))
+        }
+        else {
+            xScale = 1.0
+            yScale = 1.0
+        }
         
         self.max = max
         self.min = min
@@ -128,14 +140,13 @@ final class GLGraphView: GLKView {
     }
     
     internal func render() {
-        if length == 0 {
-            return
-        }
-        
         EAGLContext.setCurrentContext(context)
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
+        if length == 0 {
+            return
+        }
 //        glHint(GLenum(GL_POINT_SMOOTH_HINT), GLenum(GL_NICEST))
 //        glHint(GLenum(GL_LINE_SMOOTH_HINT), GLenum(GL_NICEST))
         

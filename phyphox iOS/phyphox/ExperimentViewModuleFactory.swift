@@ -9,6 +9,7 @@
 import UIKit
 
 final class ExperimentViewModuleFactory {
+    
     class func createViews(viewDescriptor: ExperimentViewCollectionDescriptor) -> [UIView] {
         var m: [UIView] = []
         

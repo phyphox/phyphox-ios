@@ -36,22 +36,27 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        let outBuffer = outputs.first!.buffer!
-        
         if length == 0 {
-            length = outBuffer.size
+            length = outputs.first!.buffer!.size
         }
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["value" : value, "length" : length])
         #endif
         
-        let append = [Double](count: length, repeatedValue: value)
+        let result = [Double](count: length, repeatedValue: value)
         
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+            debug_noteOutputs(result)
         #endif
         
-        outBuffer.replaceValues(append)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
+        }
     }
 }

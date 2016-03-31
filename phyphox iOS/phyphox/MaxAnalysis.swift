@@ -13,8 +13,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     var xIn: DataBuffer?
     var yIn: DataBuffer!
     
-    var maxOut: DataBuffer?
-    var positionOut: DataBuffer?
+    var maxOut: ExperimentAnalysisDataIO?
+    var positionOut: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
@@ -31,10 +31,10 @@ final class MaxAnalysis: ExperimentAnalysisModule {
         
         for output in outputs {
             if output.asString == "max" {
-                maxOut = output.buffer
+                maxOut = output
             }
             else if output.asString == "position" {
-                positionOut = output.buffer
+                positionOut = output
             }
             else {
                 print("Error: Invalid analysis output: \(output.asString)")
@@ -63,7 +63,12 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             vDSP_maxvD(array, 1, &max, vDSP_Length(array.count))
             
             if maxOut != nil {
-                maxOut!.append(max)
+                if maxOut!.clear {
+                    maxOut!.buffer!.replaceValues([max])
+                }
+                else {
+                    maxOut!.buffer!.append(max)
+                }
             }
             
             #if DEBUG_ANALYSIS
@@ -98,11 +103,21 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
             
             if maxOut != nil {
-                maxOut!.append(max)
+                if maxOut!.clear {
+                    maxOut!.buffer!.replaceValues([max])
+                }
+                else {
+                    maxOut!.buffer!.append(max)
+                }
             }
             
             if positionOut != nil {
-                positionOut!.append(x)
+                if positionOut!.clear {
+                    positionOut!.buffer!.replaceValues([x])
+                }
+                else {
+                    positionOut!.buffer!.append(x)
+                }
             }
             
             #if DEBUG_ANALYSIS

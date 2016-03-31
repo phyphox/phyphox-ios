@@ -46,15 +46,15 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        var xOut: DataBuffer?
-        var yOut: DataBuffer!
+        var xOut: ExperimentAnalysisDataIO?
+        var yOut: ExperimentAnalysisDataIO?
         
         for output in outputs {
             if output.asString == "x" {
-                xOut = output.buffer!
+                xOut = output
             }
             else if output.asString == "y" {
-                yOut = output.buffer!
+                yOut = output
             }
             else {
                 print("Error: Invalid analysis output: \(output.asString)")
@@ -170,10 +170,22 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             yValues.append(sum)
         }
         
-        yOut.replaceValues(yValues)
+        if yOut != nil {
+            if yOut!.clear {
+                yOut!.buffer!.replaceValues(yValues)
+            }
+            else {
+                yOut!.buffer!.appendFromArray(yValues)
+            }
+        }
         
         if xOut != nil {
-            xOut!.replaceValues(xValues!)
+            if xOut!.clear {
+                xOut!.buffer!.replaceValues(xValues!)
+            }
+            else {
+                xOut!.buffer!.appendFromArray(xValues!)
+            }
         }
     }
 }

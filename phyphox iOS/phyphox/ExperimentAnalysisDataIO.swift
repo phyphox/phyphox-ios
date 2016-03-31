@@ -8,11 +8,13 @@
 
 import Foundation
 
-class ExperimentAnalysisDataIO {
-    var asString: String?
+final class ExperimentAnalysisDataIO {
+    private(set) var asString: String?
     
-    var buffer: DataBuffer?
-    var value: Double?
+    private(set) var buffer: DataBuffer?
+    private(set) var value: Double?
+    
+    private(set) var clear = true
     
     func getSingleValue() -> Double? {
         return value ?? buffer!.last
@@ -37,6 +39,8 @@ class ExperimentAnalysisDataIO {
             if type == "value" {
                 typeIsValue = true
             }
+            
+            clear = boolFromXML(attributes, key: "clear", defaultValue: true)
         }
         
         let text = dictionary[XMLDictionaryTextKey] as! String

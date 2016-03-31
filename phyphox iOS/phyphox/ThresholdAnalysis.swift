@@ -43,8 +43,6 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        let out = outputs.first!.buffer
-        
         var x: Double?
         
         for (i, value) in yIn.enumerate() {
@@ -60,10 +58,17 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        if x == nil {
+        guard x != nil else {
             return
         }
         
-        out!.append(x!)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues([x!])
+            }
+            else {
+                output.buffer!.append(x!)
+            }
+        }
     }
 }

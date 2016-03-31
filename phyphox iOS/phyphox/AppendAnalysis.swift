@@ -11,9 +11,7 @@ import Foundation
 final class AppendAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        let outBuffer = outputs.first!.buffer!
-        
-        var append: [Double] = []
+        var result: [Double] = []
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(inputs)
@@ -21,14 +19,21 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             if let b = input.buffer {
-                append.appendContentsOf(b)
+                result.appendContentsOf(b)
             }
         }
         
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+            debug_noteOutputs(result)
         #endif
         
-        outBuffer.appendFromArray(append)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
+        }
     }
 }

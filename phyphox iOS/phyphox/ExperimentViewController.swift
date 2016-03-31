@@ -211,6 +211,54 @@ final class ExperimentViewController: CollectionViewController {
             }))
         }
         
+        alert.addAction(UIAlertAction(title: "Timer", style: .Default, handler: { action in
+            
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Show Description", style: .Default, handler: { [unowned self] action in
+            let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .Alert)
+            
+            al.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+            
+            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Share Screenshot", style: .Default, handler: { action in
+            var s = self.selfView.collectionView.contentSize
+            let inset = self.selfView.collectionView.contentInset.top
+            
+            if self.selfView.collectionView.frame.height-inset < s.height {
+                s.height = self.selfView.collectionView.frame.height-inset
+            }
+            
+            UIGraphicsBeginImageContextWithOptions(s, true, 0.0)
+            
+            self.selfView.collectionView.drawViewHierarchyInRect(CGRect(origin: CGPointMake(0.0, -inset), size: self.selfView.collectionView.frame.size), afterScreenUpdates: false)
+            
+            let img = UIGraphicsGetImageFromCurrentImageContext()
+            
+            UIGraphicsEndImageContext()
+            
+            let vc = UIActivityViewController(activityItems: [img], applicationActivities: nil)
+            
+            self.navigationController!.presentViewController(vc, animated: true, completion: nil)
+        }))
+
+        if experiment.hasStarted {
+            alert.addAction(UIAlertAction(title: "Clear Data", style: .Destructive, handler: { [unowned self] action in
+                self.stopExperiment()
+                self.experiment.clear()
+                
+                for section in self.viewModules {
+                    for view in section {
+                        if let graphView = view as? ExperimentGraphView {
+                            graphView.clearAllDataSets()
+                        }
+                    }
+                }
+                }))
+        }
+        
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
@@ -220,14 +268,26 @@ final class ExperimentViewController: CollectionViewController {
         self.navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
-    func toggleExperiment() {
+    func startExperiment() {
+        if !experiment.running {
+            experiment.start()
+            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
+        }
+    }
+    
+    func stopExperiment() {
         if experiment.running {
             experiment.stop()
             self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
         }
+    }
+    
+    func toggleExperiment() {
+        if experiment.running {
+            stopExperiment()
+        }
         else {
-            experiment.start()
-            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
+            startExperiment()
         }
     }
 }

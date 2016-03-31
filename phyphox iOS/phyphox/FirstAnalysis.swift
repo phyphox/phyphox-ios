@@ -11,16 +11,21 @@ import Foundation
 final class FirstAnalysis: ExperimentAnalysisModule {
 
     override func update() {
-        var append: [Double] = []
+        var result: [Double] = []
         
         for input in inputs {
             if let val = input.buffer!.first {
-                append.append(val)
+                result.append(val)
             }
         }
         
         for output in outputs {
-            output.buffer!.appendFromArray(append)
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
         }
     }
 }

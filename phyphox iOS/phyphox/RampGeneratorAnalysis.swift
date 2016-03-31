@@ -12,9 +12,9 @@ import Accelerate
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        var start: Double = 0
-        var stop: Double = 0
-        var length: Int = 0
+        var start = 0.0
+        var stop = 0.0
+        var length = 0
         
         for input in inputs {
             if input.asString == "start" {
@@ -45,14 +45,12 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
                 print("Error: Invalid analysis input: \(input.asString)")
             }
         }
-        
-        let outBuffer = outputs.first!.buffer!
-        
+
         if length == 0 {
-            length = outBuffer.size
+            length = outputs.first!.buffer!.size
         }
         
-        var out = [Double](count: length, repeatedValue: 0.0)
+        var result = [Double](count: length, repeatedValue: 0.0)
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["start" : start, "stop" : stop, "length" : length])
@@ -60,12 +58,19 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         
         var step = (stop-start)/Double(length-1)
         
-        vDSP_vrampD(&start, &step, &out, 1, vDSP_Length(length))
+        vDSP_vrampD(&start, &step, &result, 1, vDSP_Length(length))
         
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(out)
+            debug_noteOutputs(result)
         #endif
         
-        outBuffer.replaceValues(out)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
+        }
     }
 }

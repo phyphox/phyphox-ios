@@ -92,10 +92,15 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(out)
         #endif
         
-        let outValue = (out.scalar != nil ? [out.scalar!] : out.vector!)
+        let result = (out.scalar != nil ? [out.scalar!] : out.vector!)
         
         for output in outputs {
-            output.buffer!.replaceValues(outValue)
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
         }
     }
     

@@ -57,6 +57,7 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
     let requiredPermissions: ExperimentRequiredPermission
     
     private(set) var running = false
+    private(set) var hasStarted = false
     
     init(title: String, description: String?, category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
@@ -237,12 +238,26 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
         }
     }
     
+    func clear() {
+        stop()
+        hasStarted = false
+        
+        if buffers.1 != nil {
+            for buffer in buffers.1! {
+                if !buffer.attachedToTextField {
+                    buffer.clear()
+                }
+            }
+        }
+    }
+    
     func start() {
         if running {
             return
         }
         
         running = true
+        hasStarted = true
         
         UIApplication.sharedApplication().idleTimerDisabled = true
         

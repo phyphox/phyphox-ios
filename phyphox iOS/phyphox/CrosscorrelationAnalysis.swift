@@ -47,7 +47,13 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(result)
         #endif
         
-        let outBuffer = outputs.first!.buffer!
-        outBuffer.replaceValues(result)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
+        }
     }
 }

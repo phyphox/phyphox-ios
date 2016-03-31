@@ -85,6 +85,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     analysis!.registerEditBuffer(outputBuffer!)
                 }
                 
+                outputBuffer!.attachedToTextField = true
+                
                 if outputBuffer!.last == nil {
                     outputBuffer!.append(defaultValue) //Set the default value.
                 }

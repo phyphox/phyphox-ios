@@ -16,8 +16,6 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
     internal func updateAllWithMethod(method: ([Double]) -> [Double]) {
         let input = inputs.first!
         
-        let outBuffer = outputs.first!.buffer!
-        
         var process: [Double] = []
         
         if let buffer = input.buffer {
@@ -31,13 +29,19 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(process.description)
         #endif
         
-        let append = method(process)
+        let result = method(process)
         
         #if DEBUG_ANALYSIS
             debug_noteOutputs(append)
         #endif
         
-        outBuffer.replaceValues(append)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
+        }
     }
-    
 }

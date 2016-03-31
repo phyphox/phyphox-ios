@@ -114,7 +114,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         #endif
         
         for (i, output) in outputs.enumerate() {
+            if output.clear {
             output.buffer!.replaceValues(out[i])
+            }
+            else {
+                output.buffer!.appendFromArray(out[i])
+            }
         }
     }
 }

@@ -11,7 +11,7 @@ import Accelerate
 
 /**
  For vDSP_DFT_zop_CreateSetup and vDSP_DFT_zrop_CreateSetup
-    - Parameter minN: 3 for vDSP_DFT_zop_CreateSetup and 4 for vDSP_DFT_zrop_CreateSetup. Default 3.
+ - Parameter minN: 3 for vDSP_DFT_zop_CreateSetup and 4 for vDSP_DFT_zrop_CreateSetup. Default 3.
  */
 func nextFFTSize(c: Int, minN: Int = 3) -> Int {
     var options = [Int]()
@@ -93,58 +93,76 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         
         let hasImagInBuffer = imagInput != nil
         
-        var realOutput: DataBuffer?
-        var imagOutput: DataBuffer?
+        var realOutput: ExperimentAnalysisDataIO?
+        var imagOutput: ExperimentAnalysisDataIO?
         
         for output in outputs {
             if output.asString == "im" {
-                imagOutput = output.buffer
+                imagOutput = output
             }
             else {
-                realOutput = output.buffer
+                realOutput = output
             }
         }
         
         let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
         
-        let count = vDSP_Length(nextFFTSize(bufferCount))
-        let countI = Int(count)
-
-        self.fftSetup = vDSP_DFT_zop_CreateSetupD(self.fftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+        var realOutputArray: [Double]
+        var imagOutputArray: [Double]
         
-        var realInputArray = realInput.toArray()
-        var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
-        
-        //Fill arrays if needed
-        let realOffset = countI-realInputArray.count
-        
-        if realOffset > 0 {
-            realInputArray.appendContentsOf(Repeat(count: realOffset, repeatedValue: 0.0))
+        if bufferCount == 0 {
+            realOutputArray = []
+            imagOutputArray = []
         }
-        
-        let imagOffset = countI-imagInputArray.count
-        
-        if imagOffset > 0 {
-            imagInputArray.appendContentsOf(Repeat(count: imagOffset, repeatedValue: 0.0))
+        else {
+            let count = vDSP_Length(nextFFTSize(bufferCount))
+            let countI = Int(count)
+            
+            self.fftSetup = vDSP_DFT_zop_CreateSetupD(self.fftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+            
+            var realInputArray = realInput.toArray()
+            var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
+            
+            //Fill arrays if needed
+            let realOffset = countI-realInputArray.count
+            
+            if realOffset > 0 {
+                realInputArray.appendContentsOf(Repeat(count: realOffset, repeatedValue: 0.0))
+            }
+            
+            let imagOffset = countI-imagInputArray.count
+            
+            if imagOffset > 0 {
+                imagInputArray.appendContentsOf(Repeat(count: imagOffset, repeatedValue: 0.0))
+            }
+            
+            //Run DFT
+            realOutputArray = [Double](count: countI, repeatedValue: 0.0)
+            imagOutputArray = realOutputArray
+            
+            vDSP_DFT_ExecuteD(self.fftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+            
+            if !hasImagInBuffer {
+                realOutputArray = Array(realOutputArray[0..<countI/2])
+                imagOutputArray = Array(imagOutputArray[0..<countI/2])
+            }
         }
-        
-        //Run DFT
-        var realOutputArray = [Double](count: countI, repeatedValue: 0.0)
-        var imagOutputArray = realOutputArray
-        
-        vDSP_DFT_ExecuteD(self.fftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
-        
-        if !hasImagInBuffer {
-            realOutputArray = Array(realOutputArray[0..<countI/2])
-            imagOutputArray = Array(imagOutputArray[0..<countI/2])
-        }
-        
         if realOutput != nil {
-            realOutput!.appendFromArray(realOutputArray)
+            if realOutput!.clear {
+                realOutput!.buffer!.replaceValues(realOutputArray)
+            }
+            else {
+                realOutput!.buffer!.appendFromArray(realOutputArray)
+            }
         }
         
         if imagOutput != nil {
-            imagOutput!.appendFromArray(imagOutputArray)
+            if imagOutput!.clear {
+                imagOutput!.buffer!.replaceValues(imagOutputArray)
+            }
+            else {
+                imagOutput!.buffer!.appendFromArray(imagOutputArray)
+            }
         }
     }
 }

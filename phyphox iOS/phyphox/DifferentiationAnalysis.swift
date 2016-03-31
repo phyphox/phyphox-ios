@@ -12,25 +12,23 @@ import Accelerate
 final class DifferentiationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        let outBuffer = outputs.first!.buffer!
-        
         let array = inputs.first!.buffer!.toArray()
+        
+        var result: [Double]
         
         //Only use accelerate for long arrays
         if array.count > 260 {
             var subtract = array
             subtract.insert(0.0, atIndex: 0)
             
-            var out = array
+            result = array
             
-            vDSP_vsubD(subtract, 1, array, 1, &out, 1, vDSP_Length(array.count))
+            vDSP_vsubD(subtract, 1, array, 1, &result, 1, vDSP_Length(array.count))
             
-            out.removeFirst()
-            
-            outBuffer.replaceValues(out)
+            result.removeFirst()
         }
         else {
-            var out: [Double] = []
+            result = []
             var first = true
             var last: Double!
             
@@ -43,12 +41,19 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
                 
                 let val = value-last
                 
-                out.append(val)
+                result.append(val)
                 
                 last = value
             }
-            
-            outBuffer.replaceValues(out)
+        }
+        
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues(result)
+            }
+            else {
+                output.buffer!.appendFromArray(result)
+            }
         }
     }
 }
