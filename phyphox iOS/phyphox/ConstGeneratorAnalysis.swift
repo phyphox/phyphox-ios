@@ -20,6 +20,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
                     value = v
                 }
                 else {
+                    print("Const generator error")
                     return
                 }
             }
@@ -28,6 +29,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
                     length = Int(v)
                 }
                 else {
+                    print("Const generator error")
                     return
                 }
             }

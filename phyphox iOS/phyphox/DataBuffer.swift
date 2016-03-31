@@ -196,6 +196,10 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     }
     
     func appendFromArray(values: [Double], notify: Bool = true) {
+        if values.count == 0 {
+            return
+        }
+        
         if !staticBuffer || !written {
             written = true
             

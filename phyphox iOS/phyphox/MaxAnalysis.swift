@@ -80,6 +80,18 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             let inArray = yIn.toArray()
             
             if inArray.count == 0 {
+                if maxOut != nil {
+                    if maxOut!.clear {
+                        maxOut!.buffer!.replaceValues([])
+                    }
+                }
+                
+                if positionOut != nil {
+                    if positionOut!.clear {
+                        positionOut!.buffer!.replaceValues([])
+                    }
+                }
+                
                 return
             }
             

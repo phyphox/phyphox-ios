@@ -22,6 +22,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
                     start = v
                 }
                 else {
+                    print("Ramp generator error")
                     return
                 }
             }
@@ -30,6 +31,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
                     stop = v
                 }
                 else {
+                    print("Ramp generator error")
                     return
                 }
             }
@@ -38,6 +40,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
                     length = Int(v)
                 }
                 else {
+                    print("Ramp generator error")
                     return
                 }
             }

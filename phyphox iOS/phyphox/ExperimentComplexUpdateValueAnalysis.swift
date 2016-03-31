@@ -37,6 +37,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     func updateAllWithMethod(method: [ValueSource] -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
+        var maxNonScalarCount = 0 //Scalar and an empty vector should give an empty result
         
         for input in inputs {
             if let fixed = input.value {
@@ -63,36 +64,40 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                     values.append(src)
                 }
                 
+                maxNonScalarCount = Swift.max(maxNonScalarCount, array.count)
                 maxCount = Swift.max(maxCount, array.count)
             }
         }
         
-        if values.count == 0 || maxCount == 0 {
-            return
-        }
+        let result: [Double]
         
-        for valueSource in values {
-            if var array = valueSource.vector {
-                let delta = maxCount-array.count
-                
-                if delta > 0 {
-                    array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
-                    valueSource.vector = array
+        if values.count == 0 || maxCount == 0 || maxNonScalarCount == 0 {
+            result = []
+        }
+        else {
+            for valueSource in values {
+                if var array = valueSource.vector {
+                    let delta = maxCount-array.count
+                    
+                    if delta > 0 {
+                        array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
+                        valueSource.vector = array
+                    }
                 }
             }
+            
+            #if DEBUG_ANALYSIS
+                debug_noteInputs(values.description)
+            #endif
+            
+            let out = method(values)
+            
+            #if DEBUG_ANALYSIS
+                debug_noteOutputs(out)
+            #endif
+            
+            result = (out.scalar != nil ? [out.scalar!] : out.vector!)
         }
-        
-        #if DEBUG_ANALYSIS
-            debug_noteInputs(values.description)
-        #endif
-        
-        let out = method(values)
-        
-        #if DEBUG_ANALYSIS
-            debug_noteOutputs(out)
-        #endif
-        
-        let result = (out.scalar != nil ? [out.scalar!] : out.vector!)
         
         for output in outputs {
             if output.clear {

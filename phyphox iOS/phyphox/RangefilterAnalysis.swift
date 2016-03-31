@@ -41,16 +41,10 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                 if let v = input.getSingleValue() {
                     currentMin = v
                 }
-                else {
-                    return
-                }
             }
             else if input.asString == "max" {
                 if let v = input.getSingleValue() {
                     currentMax = v
-                }
-                else {
-                    return
                 }
             }
             else if let b = input.buffer { //in

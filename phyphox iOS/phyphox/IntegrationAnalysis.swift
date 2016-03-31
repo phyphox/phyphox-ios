@@ -12,13 +12,9 @@ import Accelerate
 final class IntegrationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        let buffer = inputs.first!.buffer
+        let buffer = inputs.first!.buffer!
         
-        if buffer == nil {
-            return
-        }
-        
-        var inArray = buffer!.toArray()
+        var inArray = buffer.toArray()
         let count = inArray.count
         
         var result = [Double](count: count, repeatedValue: 0.0)

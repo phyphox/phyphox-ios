@@ -29,6 +29,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
                     threshold = v
                 }
                 else {
+                    print("Threshold error")
                     return
                 }
             }
@@ -59,6 +60,12 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         }
         
         guard x != nil else {
+            for output in outputs {
+                if output.clear {
+                    output.buffer!.replaceValues([])
+                }
+            }
+            
             return
         }
         
