@@ -10,11 +10,11 @@ import Foundation
 import Accelerate
 
 final class MaxAnalysis: ExperimentAnalysisModule {
-    var xIn: DataBuffer?
-    var yIn: DataBuffer!
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
     
-    var maxOut: ExperimentAnalysisDataIO?
-    var positionOut: ExperimentAnalysisDataIO?
+    private var maxOut: ExperimentAnalysisDataIO?
+    private var positionOut: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
@@ -43,7 +43,6 @@ final class MaxAnalysis: ExperimentAnalysisModule {
         
         super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
-    
     
     override func update() {
         #if DEBUG_ANALYSIS

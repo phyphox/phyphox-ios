@@ -15,16 +15,23 @@ protocol ExperimentAnalysisDelegate : AnyObject {
 
 private let analysisQueue = dispatch_queue_create("de.rwth-aachen.phyphox.analysis", DISPATCH_QUEUE_SERIAL)
 
+protocol ExperimentAnalysisTimeManager : AnyObject {
+    func getCurrentTimestamp() -> NSTimeInterval
+}
+
 final class ExperimentAnalysis : DataBufferObserver {
     let analyses: [ExperimentAnalysisModule]
     
     let sleep: Double
     let onUserInput: Bool
     
+    weak var timeManager: ExperimentAnalysisTimeManager?
     weak var delegate: ExperimentAnalysisDelegate?
     
     private var editBuffers = Set<DataBuffer>()
     
+    private(set) var timestamp: NSTimeInterval = 0.0
+
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
@@ -53,6 +60,10 @@ final class ExperimentAnalysis : DataBufferObserver {
         }
     }
     
+    func reset() {
+        timestamp = 0.0
+    }
+    
     private var busy = false
     
     /**
@@ -66,13 +77,13 @@ final class ExperimentAnalysis : DataBufferObserver {
                 #if DEBUG
                     print("Analysis update")
                 #endif
+                self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
                 self.delegate?.analysisWillUpdate(self)
                 self.update {
+                    self.busy = false
                     self.delegate?.analysisDidUpdate(self)
                 }
-                
-                self.busy = false
             })
         }
     }
@@ -82,7 +93,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         
         for (i, analysis) in analyses.enumerate() {
             dispatch_async(analysisQueue, {
-                analysis.setNeedsUpdate()
+                analysis.setNeedsUpdate(self.timestamp)
                 if i == c {
                     mainThread {
                         completion()

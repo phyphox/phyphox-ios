@@ -10,43 +10,44 @@ import Foundation
 import Accelerate
 
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
+    private var startInput: ExperimentAnalysisDataIO!
+    private var stopInput: ExperimentAnalysisDataIO!
+    private var lengthInput: ExperimentAnalysisDataIO?
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        for input in inputs {
+            if input.asString == "start" {
+                startInput = input
+            }
+            else if input.asString == "stop" {
+                stopInput = input
+            }
+            else if input.asString == "length" {
+                lengthInput = input
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
+        }
+        
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
     
     override func update() {
         var start = 0.0
         var stop = 0.0
         var length = 0
         
-        for input in inputs {
-            if input.asString == "start" {
-                if let v = input.getSingleValue() {
-                    start = v
-                }
-                else {
-                    print("Ramp generator error")
-                    return
-                }
-            }
-            else if input.asString == "stop" {
-                if let v = input.getSingleValue() {
-                    stop = v
-                }
-                else {
-                    print("Ramp generator error")
-                    return
-                }
-            }
-            else if input.asString == "length" {
-                if let v = input.getSingleValue() {
-                    length = Int(v)
-                }
-                else {
-                    print("Ramp generator error")
-                    return
-                }
-            }
-            else {
-                print("Error: Invalid analysis input: \(input.asString)")
-            }
+        if let s = startInput.getSingleValue() {
+            start = s
+        }
+        
+        if let s = stopInput.getSingleValue() {
+            stop = s
+        }
+        
+        if let l = lengthInput?.getSingleValue() {
+            length = Int(l)
         }
 
         if length == 0 {

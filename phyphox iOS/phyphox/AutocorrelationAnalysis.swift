@@ -10,14 +10,16 @@ import Foundation
 import Accelerate
 
 final class AutocorrelationAnalysis: ExperimentAnalysisModule {
+    private var minXIn: ExperimentAnalysisDataIO?
+    private var maxXIn: ExperimentAnalysisDataIO?
     
-    override func update() {
-        var mint: Double = -Double.infinity
-        var maxt: Double = Double.infinity
-        
-        var xIn: DataBuffer?
-        var yIn: DataBuffer!
-        
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
+    
+    private var xOut: ExperimentAnalysisDataIO?
+    private var yOut: ExperimentAnalysisDataIO?
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
             if input.asString == "x" {
                 xIn = input.buffer!
@@ -26,28 +28,15 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 yIn = input.buffer!
             }
             else if input.asString == "minX" {
-                if let v = input.getSingleValue() {
-                    mint = v
-                }
-                else {
-                    return
-                }
+                minXIn = input
             }
             else if input.asString == "maxX" {
-                if let v = input.getSingleValue() {
-                    maxt = v
-                }
-                else {
-                    return
-                }
+                maxXIn = input
             }
             else {
                 print("Error: Invalid analysis input: \(input.asString)")
             }
         }
-        
-        var xOut: ExperimentAnalysisDataIO?
-        var yOut: ExperimentAnalysisDataIO?
         
         for output in outputs {
             if output.asString == "x" {
@@ -61,10 +50,29 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        var y = yIn.toArray()
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
+    
+    override func update() {
+        var minX: Double = -Double.infinity
+        var maxX: Double = Double.infinity
+        
+        var needsFiltering = false
+        
+        if let m = minXIn?.getSingleValue() {
+            minX = m
+            needsFiltering = true
+        }
+        
+        if let m = maxXIn?.getSingleValue() {
+            maxX = m
+            needsFiltering = true
+        }
+        
+        let y = yIn.toArray()
         var count = y.count
         
-        var xValues: [Double]? = (xOut != nil ? [] : nil)
+        var xValues: [Double] = []
         var yValues: [Double] = []
         
         if count > 0 {
@@ -72,7 +80,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 count = min(xIn!.count, count);
             }
             
-            var x: [Double]?
+            var x: [Double]!
             
             if xOut != nil {
                 if xIn != nil {
@@ -99,75 +107,67 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                     vDSP_vrampD([0.0], [1.0], &x!, 1, vDSP_Length(count))
                 }
             }
+            
             /*
-             var index = 0
-             var minimizedY = y
+             A := [a0, ... , an]
+             F := [a0, ... , an]
              
-             let minimizedX = x.filter { (d) -> Bool in
-             if d < mint || d > maxt {
-             minimizedY.removeAtIndex(index)
-             return false
-             }
+             (wanted behaviour)
+             for (n = 0; n < N; ++n)
+                C[n] = sum(A[n+p] * F[p], 0 <= p < N-n);
              
-             index += 1
+             <=>
              
-             return true
-             }
+             P := N
+             A := [a0, ... , an, 0, ... , 0]
+             F := [a0, ... , an]
              
-             func xcorr(x: [Double]) -> [Double] {
-             let resultSize = 2*x.count - 1
-             var result = [Double](count: resultSize, repeatedValue: 0)
-             let xPad = Repeat(count: x.count-1, repeatedValue: Double(0.0))
-             let xPadded = xPad + x + xPad
-             vDSP_convD(xPadded, 1, x, 1, &result, 1, vDSP_Length(resultSize), vDSP_Length(x.count))
-             
-             return result
-             }
-             //
-             let corrY = xcorr(minimizedY)
-             
-             var normalizeVector = [Double](count: count, repeatedValue: 0.0)
-             
-             vDSP_vrampD([Double(count)], [-1.0], &normalizeVector, 1, vDSP_Length(count))
-             
-             var normalizedY = normalizeVector
-             
-             vDSP_vdivD(corrY, 1, normalizeVector, 1, &normalizedY, 1, vDSP_Length(count))
+             (vDSP_conv)
+             for (n = 0; n < N; ++n)
+                C[n] = sum(A[n+p] * F[p], 0 <= p < P);
              */
             
-            //        yOut.replaceValues(finalY)
-            //
-            //        if xOut != nil {
-            //            xOut!.replaceValues(finalX)
-            //        }
+            var normalizeVector = [Double](count: count, repeatedValue: 0.0)
+            
+            let paddedY = y + normalizeVector
+            
+            var corrY = y
+            
+            vDSP_convD(paddedY, 1, paddedY, 1, &corrY, 1, vDSP_Length(count), vDSP_Length(count))
             
             
+            //Normalize
+            vDSP_vrampD([Double(count)], [-1.0], &normalizeVector, 1, vDSP_Length(count))
             
-            //The actual calculation
-            for i in 0 ..< count { //Displacement i for each value of input1
-                if x != nil {
-                    let xVal = x![i]
-                    
-                    if (xVal < mint || xVal > maxt) { //Skip this, if it should be filtered
-                        continue
+            var normalizedY = normalizeVector
+            
+            vDSP_vdivD(normalizeVector, 1, corrY, 1, &normalizedY, 1, vDSP_Length(count))
+            
+            
+            var minimizedY = normalizedY
+            
+            let minimizedX: [Double]
+            
+            if needsFiltering {
+                var index = 0
+                
+                minimizedX = x.filter { d -> Bool in
+                    if d < minX || d > maxX {
+                        minimizedY.removeAtIndex(index)
+                        return false
                     }
                     
-                    if xValues != nil {
-                        xValues!.append(xVal)
-                    }
+                    index += 1
+                    
+                    return true
                 }
-                
-                var sum = 0.0
-                
-                for j in 0 ..< count-i { //For each value of input1 minus the current displacement
-                    sum += y[j]*y[j+i]; //Product of normal and displaced data
-                }
-                
-                sum /= Double(count-i); //Normalize to the number of values at this displacement
-                
-                
-                yValues.append(sum)
             }
+            else {
+                minimizedX = x
+            }
+            
+            xValues = minimizedX
+            yValues = minimizedY
         }
         
         if yOut != nil {
@@ -181,10 +181,10 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         
         if xOut != nil {
             if xOut!.clear {
-                xOut!.buffer!.replaceValues(xValues!)
+                xOut!.buffer!.replaceValues(xValues)
             }
             else {
-                xOut!.buffer!.appendFromArray(xValues!)
+                xOut!.buffer!.appendFromArray(xValues)
             }
         }
     }

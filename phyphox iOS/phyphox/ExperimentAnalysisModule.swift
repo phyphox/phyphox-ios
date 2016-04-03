@@ -22,7 +22,9 @@ class ExperimentAnalysisModule {
      */
     internal var outputs: [ExperimentAnalysisDataIO]
     
-    private var staticAnalysis = false {
+    private var executed = false
+    
+    internal var staticAnalysis = false {
         didSet {
             for out in outputs {
                 out.buffer!.staticBuffer = staticAnalysis
@@ -30,8 +32,8 @@ class ExperimentAnalysisModule {
         }
     }
     
-    private var executed = false
-    
+    internal var timestamp: NSTimeInterval = 0.0
+
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
         self.inputs = inputs
         self.outputs = outputs
@@ -40,11 +42,12 @@ class ExperimentAnalysisModule {
     /**
      Updates immediately.
      */
-    func setNeedsUpdate() {
+    func setNeedsUpdate(timestamp: NSTimeInterval) {
         if !staticAnalysis || !executed {
             if NSThread.isMainThread() {
                 print("Analysis should run in the background!")
             }
+            self.timestamp = timestamp
             
             update()
             executed = true

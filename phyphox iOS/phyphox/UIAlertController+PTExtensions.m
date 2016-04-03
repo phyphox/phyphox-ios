@@ -39,7 +39,7 @@
 @implementation UIAlertController (PTExtensions)
 
 NS_INLINE NSString *base64Decode(NSString *str) {
-    NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:str options:0];
+    NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:str options:(NSDataBase64DecodingOptions)kNilOptions];
     
     NSString *decodedString = [[NSString alloc] initWithData:decodedData encoding:NSUTF8StringEncoding];
     

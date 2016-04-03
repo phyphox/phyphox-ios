@@ -211,11 +211,17 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
                     
                     let cut = afterSize-self.size
                     
-                    if cut > 0 {
+                    let cutAfter = cut > array.count
+                    
+                    if !cutAfter && cut > 0  {
                         array.removeFirst(cut)
                     }
                     
                     array.appendContentsOf(values)
+                    
+                    if cutAfter && cut > 0 {
+                        array.removeFirst(cut)
+                    }
                     
                     self.queue.replaceValues(array, async: true)
                 }

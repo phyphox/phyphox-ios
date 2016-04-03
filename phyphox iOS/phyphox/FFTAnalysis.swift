@@ -67,21 +67,18 @@ func nextFFTSize(c: Int, minN: Int = 3) -> Int {
     return selectedOption
 }
 
-
 final class FFTAnalysis: ExperimentAnalysisModule {
     private var fftSetup: vDSP_DFT_SetupD!
     
-    deinit {
-        if fftSetup != nil {
-            vDSP_DFT_DestroySetupD(fftSetup!)
-            fftSetup = nil
-        }
-    }
+    private var realInput: DataBuffer!
+    private var imagInput: DataBuffer?
     
-    override func update() {
-        var realInput: DataBuffer!
-        var imagInput: DataBuffer?
-        
+    private let hasImagInBuffer: Bool
+    
+    private var realOutput: ExperimentAnalysisDataIO?
+    private var imagOutput: ExperimentAnalysisDataIO?
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
             if input.asString == "im" {
                 imagInput = input.buffer
@@ -91,11 +88,8 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        let hasImagInBuffer = imagInput != nil
-        
-        var realOutput: ExperimentAnalysisDataIO?
-        var imagOutput: ExperimentAnalysisDataIO?
-        
+        hasImagInBuffer = imagInput != nil
+
         for output in outputs {
             if output.asString == "im" {
                 imagOutput = output
@@ -105,6 +99,17 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
+    
+    deinit {
+        if fftSetup != nil {
+            vDSP_DFT_DestroySetupD(fftSetup!)
+            fftSetup = nil
+        }
+    }
+    
+    override func update() {
         let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
         
         var realOutputArray: [Double]
@@ -147,6 +152,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                 imagOutputArray = Array(imagOutputArray[0..<countI/2])
             }
         }
+        
         if realOutput != nil {
             if realOutput!.clear {
                 realOutput!.buffer!.replaceValues(realOutputArray)

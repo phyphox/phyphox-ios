@@ -41,20 +41,21 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         let sleep = floatTypeFromXML(attributes, key: "sleep", defaultValue: 0.0)
         let onUserInput = boolFromXML(attributes, key: "onUserInout", defaultValue: false)
         
-        func getDataFlows(dictionaries: [AnyObject]) -> [ExperimentAnalysisDataIO] {
-            let c = dictionaries.count
-            var a = [ExperimentAnalysisDataIO!](count: c, repeatedValue: nil)
+        func getDataFlows(dictionaries: [AnyObject]?) -> [ExperimentAnalysisDataIO] {
+            var a = [ExperimentAnalysisDataIO]()
             
-            for (i, object) in dictionaries.enumerate() {
-                if object is NSDictionary {
-                    a[i] = ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers)
-                }
-                else {
-                    a[i] = ExperimentAnalysisDataIO(buffer: buffers[object as! String]!)
+            if dictionaries != nil {
+                for object in dictionaries! {
+                    if object is NSDictionary {
+                        a.append(ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers))
+                    }
+                    else {
+                        a.append(ExperimentAnalysisDataIO(buffer: buffers[object as! String]!))
+                    }
                 }
             }
             
-            return a as! [ExperimentAnalysisDataIO]
+            return a
         }
         
         var processed: [ExperimentAnalysisModule!] = []
@@ -65,8 +66,8 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             }
             
             for value in values as! [NSDictionary] {
-                let inputs = getDataFlows(getElementsWithKey(value, key: "input")!)
-                let outputs = getDataFlows(getElementsWithKey(value, key: "output")!)
+                let inputs = getDataFlows(getElementsWithKey(value, key: "input"))
+                let outputs = getDataFlows(getElementsWithKey(value, key: "output"))
                 
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: AnyObject]?
                 
@@ -145,6 +146,12 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 }
                 else if key == "const" {
                     analysis = ConstGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "periodicity" {
+                    analysis = PeriodicityAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "timer" {
+                    analysis = TimerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else {
                     print("Error! Invalid analysis type: \(key)")

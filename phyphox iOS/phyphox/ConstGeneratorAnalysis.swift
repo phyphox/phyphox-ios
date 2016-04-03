@@ -9,33 +9,35 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
+    private var lengthInput: ExperimentAnalysisDataIO!
+    private var valueInput: ExperimentAnalysisDataIO!
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        for input in inputs {
+            if input.asString == "value" {
+                valueInput = input
+            }
+            else if input.asString == "length" {
+                lengthInput = input
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
+        }
+        
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
     
     override func update() {
         var value: Double = 0
         var length: Int = 0
         
-        for input in inputs {
-            if input.asString == "value" {
-                if let v = input.getSingleValue() {
-                    value = v
-                }
-                else {
-                    print("Const generator error")
-                    return
-                }
-            }
-            else if input.asString == "length" {
-                if let v = input.getSingleValue() {
-                    length = Int(v)
-                }
-                else {
-                    print("Const generator error")
-                    return
-                }
-            }
-            else {
-                print("Error: Invalid analysis input: \(input.asString)")
-            }
+        if let v = valueInput.getSingleValue() {
+            value = v
+        }
+        
+        if let l = lengthInput.getSingleValue() {
+            length = Int(l)
         }
         
         if length == 0 {

@@ -10,10 +10,10 @@ import Foundation
 import Accelerate
 
 final class GaussSmoothAnalysis: ExperimentAnalysisModule {
-    var calcWidth: Int = 0
-    var kernel: [Float] = []
+    private var calcWidth: Int = 0
+    private var kernel: [Float] = []
     
-    var sigma: Double = 0.0 {
+    private var sigma: Double = 0.0 {
         didSet {
             calcWidth = Int(round(sigma*3.0))
             

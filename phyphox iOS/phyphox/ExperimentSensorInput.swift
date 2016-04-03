@@ -33,6 +33,7 @@ final class ExperimentSensorInput {
      The update frequency of the sensor.
      */
     private(set) var rate: NSTimeInterval //in s
+    
     var effectiveRate: NSTimeInterval {
         get {
             if self.averaging != nil {
@@ -169,7 +170,6 @@ final class ExperimentSensorInput {
                 let acceleration = accelerometerData.acceleration
                 
                 // m/s^2
-                
                 let x = acceleration.x*kG
                 let y = acceleration.y*kG
                 let z = acceleration.z*kG

@@ -9,6 +9,21 @@
 import Foundation
 
 final class AppendAnalysis: ExperimentAnalysisModule {
+    private let buffers: [DataBuffer]
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        var buf = [DataBuffer]()
+        
+        for input in inputs {
+            if let b = input.buffer {
+                buf.append(b)
+            }
+        }
+        
+        buffers = buf
+        
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
     
     override func update() {
         var result: [Double] = []
@@ -17,10 +32,8 @@ final class AppendAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(inputs)
         #endif
         
-        for input in inputs {
-            if let b = input.buffer {
-                result.appendContentsOf(b)
-            }
+        for b in buffers {
+            result.appendContentsOf(b.toArray())
         }
         
         #if DEBUG_ANALYSIS

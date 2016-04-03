@@ -9,9 +9,9 @@
 import Foundation
 
 final class RangefilterAnalysis: ExperimentAnalysisModule {
-    private final class Range: NSObject {
-        var min: Double
-        var max: Double
+    private final class Range: CustomStringConvertible {
+        let min: Double
+        let max: Double
         
         func inBounds(value: Double) -> Bool {
             return min <= value && value <= max
@@ -22,9 +22,9 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             self.max = max
         }
         
-        override var description: String {
+        var description: String {
             get {
-                return String(format: "Range <%p> (\(min), \(max))", self)
+                return "Range <\(unsafeAddressOf(self))> (\(min), \(max))"
             }
         }
     }
@@ -62,7 +62,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
         }
         
-        let delete = NSMutableIndexSet()
+        var delete = Set<Int>()
         
         var out = [[Double]](count: iterators.count, repeatedValue: [])
         
@@ -76,12 +76,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         for (index, (range, buffer)) in iterators.enumerate() {
             for (i, value) in buffer.enumerate() {
-                if delete.containsIndex(i) {
+                if delete.contains(i) {
                     continue
                 }
                 
                 if !range.inBounds(value) {
-                    delete.addIndex(i)
+                    delete.insert(i)
                     
                     let delIdx = i-deleteCount
                     
@@ -89,7 +89,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                         var ar = out[j]
                         
                         if delIdx > 0 && delIdx < ar.count {
-                           ar.removeAtIndex(delIdx) //Remove values from previous buffers that passed.
+                            ar.removeAtIndex(delIdx) //Remove values from previous buffers that passed.
                             out[j] = ar
                         }
                     }
@@ -109,7 +109,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         for (i, output) in outputs.enumerate() {
             if output.clear {
-            output.buffer!.replaceValues(out[i])
+                output.buffer!.replaceValues(out[i])
             }
             else {
                 output.buffer!.appendFromArray(out[i])

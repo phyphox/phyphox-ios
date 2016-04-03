@@ -20,7 +20,7 @@ func ==(lhs: Experiment, rhs: Experiment) -> Bool {
     return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
 }
 
-final class Experiment : ExperimentAnalysisDelegate, Equatable {
+final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager, Equatable {
     private var title: String
     private var description: String?
     private var category: String
@@ -59,6 +59,9 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
     private(set) var running = false
     private(set) var hasStarted = false
     
+    private(set) var startTimestamp: NSTimeInterval?
+    private var pauseBegin: NSTimeInterval = 0.0
+    
     init(title: String, description: String?, category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
@@ -91,7 +94,8 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
             self.requiredPermissions = .None
         }
         
-        analysis?.delegate = self
+        self.analysis?.delegate = self
+        self.analysis?.timeManager = self
     }
     
     dynamic func endBackgroundSession() {
@@ -100,6 +104,10 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
     
     deinit {
         NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    func getCurrentTimestamp() -> NSTimeInterval {
+        return startTimestamp != nil ? CFAbsoluteTimeGetCurrent()-startTimestamp! : 0.0
     }
     
     func analysisWillUpdate(_: ExperimentAnalysis) {
@@ -214,46 +222,18 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
         }
     }
     
-    func stop() {
-        if running {
-            if self.sensorInputs != nil {
-                for sensor in self.sensorInputs! {
-                    sensor.stop()
-                }
-            }
-            
-            if audioInputs != nil {
-                for input in audioInputs! {
-                    input.stopRecording(self)
-                }
-            }
-            
-            stopAudio()
-            
-            tearDownAudio()
-            
-            UIApplication.sharedApplication().idleTimerDisabled = false
-            
-            running = false
-        }
-    }
-    
-    func clear() {
-        stop()
-        hasStarted = false
-        
-        if buffers.1 != nil {
-            for buffer in buffers.1! {
-                if !buffer.attachedToTextField {
-                    buffer.clear()
-                }
-            }
-        }
-    }
-    
     func start() {
-        if running {
+        guard !running else {
             return
+        }
+        
+        if pauseBegin > 0 {
+            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
+            pauseBegin = 0.0
+        }
+        
+        if startTimestamp == nil {
+            startTimestamp = CFAbsoluteTimeGetCurrent()
         }
         
         running = true
@@ -274,6 +254,47 @@ final class Experiment : ExperimentAnalysisDelegate, Equatable {
         if self.sensorInputs != nil {
             for sensor in self.sensorInputs! {
                 sensor.start()
+            }
+        }
+    }
+    
+    func stop() {
+        guard running else {
+            return
+        }
+        
+        pauseBegin = CFAbsoluteTimeGetCurrent()
+        
+        if self.sensorInputs != nil {
+            for sensor in self.sensorInputs! {
+                sensor.stop()
+            }
+        }
+        
+        if audioInputs != nil {
+            for input in audioInputs! {
+                input.stopRecording(self)
+            }
+        }
+        
+        stopAudio()
+        
+        tearDownAudio()
+        
+        UIApplication.sharedApplication().idleTimerDisabled = false
+        
+        running = false
+    }
+    
+    func clear() {
+        stop()
+        hasStarted = false
+        
+        if buffers.1 != nil {
+            for buffer in buffers.1! {
+                if !buffer.attachedToTextField {
+                    buffer.clear()
+                }
             }
         }
     }

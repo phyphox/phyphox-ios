@@ -59,7 +59,7 @@ func after(delay: NSTimeInterval, closure: () -> Void) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(Double(NSEC_PER_SEC)*delay)), dispatch_get_main_queue(), closure)
 }
 
-extension RangeReplaceableCollectionType where Index : Comparable {
+extension RangeReplaceableCollectionType where Index : Comparable{
     mutating func removeAtIndices<S : SequenceType where S.Generator.Element == Index>(indices: S) {
         indices.sort().lazy.reverse().forEach{ removeAtIndex($0) }
     }
