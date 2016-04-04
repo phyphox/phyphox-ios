@@ -11,6 +11,13 @@ import UIKit
 final class TimerAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        outputs.first!.buffer!.append(timestamp)
+        for output in outputs {
+            if output.clear {
+                output.buffer!.replaceValues([timestamp])
+            }
+            else {
+                output.buffer!.append(timestamp)
+            }
+        }
     }
 }

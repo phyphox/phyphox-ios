@@ -84,7 +84,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
         
         defer {
-            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: EndBackgroundMotionSession, object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: EndBackgroundMotionSessionNotification, object: nil)
         }
         
         if audioInputs != nil {

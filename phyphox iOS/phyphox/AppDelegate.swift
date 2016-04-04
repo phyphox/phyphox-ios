@@ -8,7 +8,7 @@
 
 import UIKit
 
-let EndBackgroundMotionSession = "EndBackgroundMotionSession"
+let EndBackgroundMotionSessionNotification = "EndBackgroundMotionSessionNotification"
 
 var iOS9: Bool {
     return ptHelperFunctionIsIOS9()
@@ -43,7 +43,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 UIApplication.sharedApplication().endBackgroundTask(id)
                 
                 if UIApplication.sharedApplication().applicationState == .Background {
-                    NSNotificationCenter.defaultCenter().postNotificationName(EndBackgroundMotionSession, object: nil)
+                    NSNotificationCenter.defaultCenter().postNotificationName(EndBackgroundMotionSessionNotification, object: nil)
                 }
             }
         }

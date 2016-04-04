@@ -9,7 +9,17 @@
 import Foundation
 
 internal final class ValueSource : CustomStringConvertible {
-    var vector: [Double]?
+    var vector: [Double]? {
+        didSet {
+            if let v = vector {
+                if v.count == 1 {
+                    scalar = v.first!
+                    vector = nil
+                }
+            }
+        }
+    }
+    
     var scalar: Double?
     
     init(scalar: Double) {
@@ -21,13 +31,11 @@ internal final class ValueSource : CustomStringConvertible {
     }
     
     var description: String {
-        get {
-            if vector != nil {
-                return "Vector: \(vector!)"
-            }
-            else {
-                return "Scalar: \(scalar!)"
-            }
+        if vector != nil {
+            return "Vector: \(vector!)"
+        }
+        else {
+            return "Scalar: \(scalar!)"
         }
     }
 }
@@ -55,7 +63,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             else {
                 let array = input.buffer!.toArray()
                 
-                let src = array.count == 1 ? ValueSource(scalar: array[0]) : ValueSource(vector: array)
+                let src = ValueSource(vector: array)
                 
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
                     values.insert(src, atIndex: 0)

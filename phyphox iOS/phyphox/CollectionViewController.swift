@@ -13,7 +13,7 @@ public var keyboardFrame = CGRect.zero
 class CollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout  {
     let titleView: PTNavigationBarTitleView
     
-    var selfView: CollectionView {
+    final var selfView: CollectionView {
         return view as! CollectionView
     }
     
@@ -256,27 +256,19 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     //MARK: - Override points
     
     internal class var viewClass: CollectionView.Type {
-        get {
-             return CollectionView.self
-        }
+        return CollectionView.self
     }
     
     internal class var customCells: [String: UICollectionViewCell.Type]? {
-        get {
-            return nil
-        }
+        return nil
     }
     
     internal class var customHeaders: [String: UICollectionReusableView.Type]? {
-        get {
-            return nil
-        }
+        return nil
     }
     
     internal class var customFooters: [String: UICollectionReusableView.Type]? {
-        get {
-            return nil
-        }
+        return nil
     }
     
     //MARK: UICollectionViewDataSource

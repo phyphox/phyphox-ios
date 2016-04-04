@@ -117,49 +117,53 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             var maxValueRight = -Double.infinity
             var lastSum = -Double.infinity
             
-            var step = userSelectedRange ? 2 : 1
+            var step = userSelectedRange ? 1 : 2
             
-            for var i in minPeriod.stride(to: maxPeriod, by: step) { //Displacement i for each value of input1
+            var i = minPeriod
+            
+            while i < maxPeriod {
                 var sum = 0.0
                 
                 for j in x1..<x2-i { //For each value of input1 minus the current displacement
-                    sum += y[j] * y[j + i]; //Product of normal and displaced data
+                    sum += y[j] * y[j + i] //Product of normal and displaced data
                 }
                 
-                sum /= Double(x2-x1-i); //Normalize to the number of values at this displacement
+                sum /= Double(x2-x1-i) //Normalize to the number of values at this displacement
                 
                 if (!userSelectedRange && firstNegative < 0) {
                     if (sum < 0) { //So, this is the first negative one... We can now skip ahead to 3 times this position and work more precisely from there.
-                        firstNegative = i;
-                        i = 3*firstNegative+1;
-                        step = 1;
+                        firstNegative = i
+                        i = 3*firstNegative+1
+                        step = 1
                     }
                 }
                 else if (!userSelectedRange && i > 5 * firstNegative) { //We have passed the first period. Further maxima can only be found on the next period and we are not interested in this...
-                    break;
+                    break
                 }
                 else if (userSelectedRange || i > 3 * firstNegative) {
                     if (sum > maxValue) {
-                        maxValue = sum;
-                        maxPosition = i;
-                        maxValueLeft = lastSum;
+                        maxValue = sum
+                        maxPosition = i
+                        maxValueLeft = lastSum
                         maxValueRight = -Double.infinity
                     }
                     else if (i == maxPosition + 1) {
-                        maxValueRight = sum;
+                        maxValueRight = sum
                     }
                 }
                 
-                lastSum = sum;
+                lastSum = sum
+                
+                i += step
             }
             
             var xMax = Double.NaN
             
             if (maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0) {
-                let dy = 0.5 * (maxValueRight - maxValueLeft);
-                let d2y = 2*maxValue - maxValueLeft - maxValueRight;
-                let m = dy / d2y;
-                xMax = x[x1+maxPosition] + 0.5*m*(x[x1+maxPosition+1] - x[x1+maxPosition-1]) - x[x1];
+                let dy = 0.5 * (maxValueRight - maxValueLeft)
+                let d2y = 2*maxValue - maxValueLeft - maxValueRight
+                let m = dy / d2y
+                xMax = x[x1+maxPosition] + 0.5*m*(x[x1+maxPosition+1] - x[x1+maxPosition-1]) - x[x1]
             }
             
             timeOut.append(x[x1])
@@ -167,11 +171,21 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
         }
         
         if timeOutput != nil {
-            timeOutput!.buffer!.appendFromArray(timeOut)
+            if timeOutput!.clear {
+                timeOutput!.buffer!.replaceValues(timeOut)
+            }
+            else {
+                timeOutput!.buffer!.appendFromArray(timeOut)
+            }
         }
         
         if periodOutput != nil {
-            periodOutput!.buffer!.appendFromArray(periodOut)
+            if periodOutput!.clear {
+                periodOutput!.buffer!.replaceValues(periodOut)
+            }
+            else {
+                periodOutput!.buffer!.appendFromArray(periodOut)
+            }
         }
     }
 }

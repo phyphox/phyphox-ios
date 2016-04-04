@@ -36,11 +36,29 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         self.title = "phyphox"
         
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
+        
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))
     }
+
+    func reload() {
+        selfView.collectionView.reloadData()
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
     func createNewExpriment() {
+        let vc = CreateExperimentViewController()
+        let nav = UINavigationController(rootViewController: vc)
         
+        nav.transitioningDelegate = overlayTransitioningDelegate
+        nav.modalPresentationStyle = .Custom
+        
+        presentViewController(nav, animated: true, completion: nil)
     }
     
     //MARK: - UICollectionViewDataSource

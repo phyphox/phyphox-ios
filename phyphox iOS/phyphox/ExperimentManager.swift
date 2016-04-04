@@ -9,7 +9,10 @@
 import UIKit
 
 let experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
+let customExperimentsDirectory = (NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first! as NSString).stringByAppendingPathComponent("Experiments")
 let fileExtension = "phyphox"
+
+let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
 
 final class ExperimentManager {
     private(set) var experimentCollections = [ExperimentCollection]()
@@ -65,12 +68,16 @@ final class ExperimentManager {
         return instance
     }
     
-    init() {
+    func loadExperiments() {
         let timestamp = CFAbsoluteTimeGetCurrent()
         
         let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
         
         var lookupTable: [String: ExperimentCollection] = [:]
+        
+        let customExperiments = try? NSFileManager.defaultManager().contentsOfDirectoryAtPath(customExperimentsDirectory)
+        
+        experimentCollections.removeAll()
         
         for title in folders {
             let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
@@ -95,12 +102,47 @@ final class ExperimentManager {
                 }
             }
             catch let error {
-                print("Error Caught: \(error)")
+                print("Error reading experiment: \(error)")
             }
         }
         
+        if customExperiments != nil {
+            for custom in customExperiments! {
+                let path = (customExperimentsDirectory as NSString).stringByAppendingPathComponent(custom)
+                
+                if (path as NSString).pathExtension != fileExtension {
+                    continue
+                }
+                
+                do {
+                    let experiment = try ExperimentSerialization.readExperimentFromFile(path)
+                    
+                    let category = experiment.localizedCategory
+                    
+                    if let collection = lookupTable[category] {
+                        collection.experiments!.append(experiment)
+                    }
+                    else {
+                        let collection = ExperimentCollection(title: category, experiments: [experiment])
+                        
+                        lookupTable[category] = collection
+                        experimentCollections.append(collection)
+                    }
+                }
+                catch let error {
+                    print("Error reading custom experiment: \(error)")
+                }
+            }
+        }
+        
+        NSNotificationCenter.defaultCenter().postNotificationName(ExperimentsReloadedNotification, object: nil)
+        
         #if DEBUG
-        print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
+            print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         #endif
+    }
+    
+    init() {
+        loadExperiments()
     }
 }
