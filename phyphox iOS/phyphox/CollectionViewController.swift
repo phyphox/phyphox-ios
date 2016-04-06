@@ -13,8 +13,8 @@ public var keyboardFrame = CGRect.zero
 class CollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout  {
     let titleView: PTNavigationBarTitleView
     
-    final var selfView: CollectionView {
-        return view as! CollectionView
+    final var selfView: CollectionContainerView {
+        return view as! CollectionContainerView
     }
     
     private var lastViewSize: CGRect?
@@ -255,8 +255,8 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     
     //MARK: - Override points
     
-    internal class var viewClass: CollectionView.Type {
-        return CollectionView.self
+    internal class var viewClass: CollectionContainerView.Type {
+        return CollectionContainerView.self
     }
     
     internal class var customCells: [String: UICollectionViewCell.Type]? {

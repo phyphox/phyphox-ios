@@ -16,14 +16,17 @@ final class CreateViewControllerTransition : NSObject, UIViewControllerAnimatedT
     }
     
     func transitionDuration(transitionContext: UIViewControllerContextTransitioning?) -> NSTimeInterval {
-        return 0.8
+        return 0.75
     }
     
     func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
-        let fromView = transitionContext.viewControllerForKey(UITransitionContextFromViewControllerKey)!.view
+        let fromViewC = transitionContext.viewControllerForKey(UITransitionContextFromViewControllerKey)!
+        let toViewC = transitionContext.viewControllerForKey(UITransitionContextToViewControllerKey)!
         
-        let toView = transitionContext.viewControllerForKey(UITransitionContextToViewControllerKey)!.view
         
+        let fromView = fromViewC.view
+        let toView = toViewC.view
+
         if presenting {
             var f = fromView.frame
             f.size.height -= 40.0
@@ -41,18 +44,23 @@ final class CreateViewControllerTransition : NSObject, UIViewControllerAnimatedT
             center = CGPointMake(toView.center.x, toView.bounds.size.height + fromView.bounds.size.height)
         }
         
-        UIView.animateWithDuration(self.transitionDuration(transitionContext), delay: 0.0, usingSpringWithDamping: 300.0, initialSpringVelocity: 7.0, options: [], animations: {
+        UIView.animateWithDuration(self.transitionDuration(transitionContext), delay: 0.0, usingSpringWithDamping: 250.0, initialSpringVelocity: 7.0, options: [], animations: {
             if self.presenting {
+                let v = fromViewC as! ScalableViewController
+                
+                v.viewControllerScale = 0.93
+                
                 var c = center
                 c.y += 40.0
                 
                 toView.center = c
-                fromView.transform = CGAffineTransformMakeScale(0.93, 0.93)
             }
             else {
+                let v = toViewC as! ScalableViewController
+                
+                v.viewControllerScale = 1.0
+                
                 fromView.center = center
-                toView.transform = CGAffineTransformIdentity
-                toView.frame = toView.window!.bounds
             }
             }, completion: { _ in
                 if !self.presenting {

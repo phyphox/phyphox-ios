@@ -8,15 +8,16 @@
 
 import Foundation
 
-final class ExperimentCollection: NSObject {
+final class ExperimentCollection {
     private(set) var title: String
     var experiments: [Experiment]?
     
-    init(title: String, experiments: [Experiment]?) {
+    let customExperiments: Bool
+    
+    init(title: String, experiments: [Experiment]?, customExperiments: Bool) {
         self.title = title
         self.experiments = experiments
-        
-        super.init()
+        self.customExperiments = customExperiments
     }
 
 }

@@ -33,16 +33,19 @@ final class SimpleExperimentSerializer {
         
         try str.writeToFile(path, atomically: true, encoding: NSUTF8StringEncoding)
         
-        ExperimentManager.sharedInstance().loadExperiments()
+        ExperimentManager.sharedInstance().loadCustomExperiments()
         
         return str
     }
+    
     
     class func serializeExperiment(title title: String, bufferSize: Int, rate: Double, sensors: MapSensorType) -> String {
         var containers = ""
         var views = ""
         var export = ""
         var input = ""
+        
+        //Horrible, but quickest implementation..
         
         if sensors.contains(.Accelerometer) {
             containers += "<container size=\"\(bufferSize)\">accX</container>\n<container size=\"\(bufferSize)\">accY</container>\n<container size=\"\(bufferSize)\">accZ</container>\n<container size=\"\(bufferSize)\">acc_time</container>\n"

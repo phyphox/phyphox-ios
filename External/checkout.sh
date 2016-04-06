@@ -1,6 +1,6 @@
 echo Refreshing GitHub Sources
 
-#No need for fancy CocoaPods or Carthage...
+#Manual 💪 CocoaPods 👎
 
 echo Not checking out XMLDictionary, because the local version contains changes.
 

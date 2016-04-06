@@ -8,5 +8,5 @@
 
 import UIKit
 
-final class ExperimentView: CollectionView {
+final class ExperimentView: CollectionContainerView {
 }

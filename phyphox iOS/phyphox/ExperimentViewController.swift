@@ -11,7 +11,14 @@ import UIKit
 final class ExperimentViewController: CollectionViewController {
     let experiment: Experiment
     
-    let viewModules: [[UIView]]
+    private let viewModules: [[UIView]]
+    
+    private var timerDelayString: String?
+    private var timerDurationString: String?
+    private var timerEnabled = false
+    
+    private var experimentStartTimer: NSTimer?
+    private var experimentRunTimer: NSTimer?
     
     private var exportSelectionView: ExperimentExportSetSelectionView?
     
@@ -93,7 +100,7 @@ final class ExperimentViewController: CollectionViewController {
         }
     }
     
-    override class var viewClass: CollectionView.Type {
+    override class var viewClass: CollectionContainerView.Type {
         get {
             return ExperimentView.self
         }
@@ -114,11 +121,20 @@ final class ExperimentViewController: CollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
+        let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .Plain, target: self, action: #selector(action(_:)))
+        actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
+        
+        self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))]
     }
     
     override func viewDidDisappear(animated: Bool) {
         super.viewDidDisappear(animated)
+        
+        experimentStartTimer?.invalidate()
+        experimentStartTimer = nil
+        
+        experimentRunTimer?.invalidate()
+        experimentRunTimer = nil
         
         experiment.stop()
         experiment.didBecomeInactive()
@@ -202,17 +218,51 @@ final class ExperimentViewController: CollectionViewController {
         self.navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
+    private func showTimerOptions() {
+        let alert = UIAlertController(title: "Automatic Control", message: nil, preferredStyle: .Alert)
+        
+        alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
+            textField.keyboardType = .DecimalPad
+            textField.placeholder = "Start delay"
+            
+            textField.text = self.timerDelayString
+        }
+        
+        alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
+            textField.keyboardType = .DecimalPad
+            textField.placeholder = "Experiment duration"
+            
+            textField.text = self.timerDurationString
+        }
+        
+        alert.addAction(UIAlertAction(title: "Enable Automatic Control", style: .Default, handler: { [unowned self, unowned alert] action in
+            self.timerEnabled = true
+            
+            self.timerDelayString = alert.textFields!.first!.text
+            self.timerDurationString = alert.textFields!.last!.text
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Disable Automatic Control", style: .Cancel, handler: { [unowned self, unowned alert] action in
+            self.timerEnabled = false
+            
+            self.timerDelayString = alert.textFields!.first!.text
+            self.timerDurationString = alert.textFields!.last!.text
+        }))
+        
+        self.navigationController!.presentViewController(alert, animated: true, completion: nil)
+    }
+    
     func action(item: UIBarButtonItem) {
         let alert = UIAlertController(title: "Actions", message: nil, preferredStyle: .ActionSheet)
         
         if experiment.export != nil {
-            alert.addAction(UIAlertAction(title: "Export", style: .Default, handler: { action in
+            alert.addAction(UIAlertAction(title: "Export", style: .Default, handler: { [unowned self] action in
                 self.showExport()
             }))
         }
         
-        alert.addAction(UIAlertAction(title: "Timer", style: .Default, handler: { action in
-            
+        alert.addAction(UIAlertAction(title: "Automatic Control", style: .Default, handler: { [unowned self] action in
+            self.showTimerOptions()
         }))
         
         alert.addAction(UIAlertAction(title: "Show Description", style: .Default, handler: { [unowned self] action in
@@ -222,29 +272,29 @@ final class ExperimentViewController: CollectionViewController {
             
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
         }))
-        
-        alert.addAction(UIAlertAction(title: "Share Screenshot", style: .Default, handler: { action in
-            var s = self.selfView.collectionView.contentSize
-            let inset = self.selfView.collectionView.contentInset.top
-            
-            if self.selfView.collectionView.frame.height-inset < s.height {
-                s.height = self.selfView.collectionView.frame.height-inset
-            }
-            
-            UIGraphicsBeginImageContextWithOptions(s, true, 0.0)
-            
-            self.selfView.collectionView.drawViewHierarchyInRect(CGRect(origin: CGPointMake(0.0, -inset), size: self.selfView.collectionView.frame.size), afterScreenUpdates: false)
-            
-            let img = UIGraphicsGetImageFromCurrentImageContext()
-            
-            UIGraphicsEndImageContext()
-            
-            let vc = UIActivityViewController(activityItems: [img], applicationActivities: nil)
-            
-            self.navigationController!.presentViewController(vc, animated: true, completion: nil)
-        }))
 
         if experiment.hasStarted {
+            alert.addAction(UIAlertAction(title: "Share Screenshot", style: .Default, handler: { [unowned self] action in
+                var s = self.selfView.collectionView.contentSize
+                let inset = self.selfView.collectionView.contentInset.top
+                
+                if self.selfView.collectionView.frame.height-inset < s.height {
+                    s.height = self.selfView.collectionView.frame.height-inset
+                }
+                
+                UIGraphicsBeginImageContextWithOptions(s, true, 0.0)
+                
+                self.selfView.collectionView.drawViewHierarchyInRect(CGRect(origin: CGPointMake(0.0, -inset), size: self.selfView.collectionView.frame.size), afterScreenUpdates: false)
+                
+                let img = UIGraphicsGetImageFromCurrentImageContext()
+                
+                UIGraphicsEndImageContext()
+                
+                let vc = UIActivityViewController(activityItems: [img], applicationActivities: nil)
+                
+                self.navigationController!.presentViewController(vc, animated: true, completion: nil)
+                }))
+            
             alert.addAction(UIAlertAction(title: "Clear Data", style: .Destructive, handler: { [unowned self] action in
                 self.stopExperiment()
                 self.experiment.clear()
@@ -268,17 +318,146 @@ final class ExperimentViewController: CollectionViewController {
         self.navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
+    func stopTimerFired() {
+        stopExperiment()
+    }
+    
+    func startTimerFired() {
+        actuallyStartExperiment()
+        
+        experimentStartTimer!.invalidate()
+        experimentStartTimer = nil
+        
+        let d = Double(timerDurationString ?? "0") ?? 0.0
+        let i = Int(d)
+        
+        var items = navigationItem.rightBarButtonItems!
+        
+        let label = items.last!.customView! as! UILabel
+        
+        label.text = "\(i)"
+        label.sizeToFit()
+        
+        items.removeLast()
+        items.append(UIBarButtonItem(customView: label))
+        
+        navigationItem.rightBarButtonItems = items
+        
+        func decrease(t: Int) {
+            if self.experimentRunTimer != nil {
+                let reduced = max(0, t-1)
+                
+                after(1.0, closure: {
+                    decrease(reduced)
+                })
+                
+                label.text = "\(reduced)"
+                label.sizeToFit()
+                
+                var items = navigationItem.rightBarButtonItems!
+                
+                items.removeLast()
+                items.append(UIBarButtonItem(customView: label))
+                
+                navigationItem.rightBarButtonItems = items
+            }
+        }
+        
+        after(1.0, closure: {
+            decrease(i)
+        })
+        
+        experimentRunTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
+    }
+    
     func startExperiment() {
         if !experiment.running {
-            experiment.start()
-            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
+            if experimentStartTimer != nil {
+                experimentStartTimer!.invalidate()
+                experimentStartTimer = nil
+                
+                var items = navigationItem.rightBarButtonItems!
+                
+                items.removeLast()
+                
+                navigationItem.rightBarButtonItems = items
+                
+                return
+            }
+            
+            if timerEnabled {
+                let d = Double(timerDelayString ?? "0") ?? 0.0
+                let i = Int(d)
+                
+                var items = navigationItem.rightBarButtonItems!
+                
+                let label = UILabel()
+                label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
+                label.textColor = kHighlightColor
+                label.text = "\(i)"
+                label.sizeToFit()
+                
+                items.append(UIBarButtonItem(customView: label))
+                
+                navigationItem.rightBarButtonItems = items
+                
+                func decrease(t: Int) {
+                    if self.experimentStartTimer != nil {
+                        let reduced = max(0, t-1)
+                        
+                        after(1.0, closure: {
+                            decrease(reduced)
+                        })
+                        
+                        label.text = "\(reduced)"
+                        label.sizeToFit()
+                        
+                        var items = navigationItem.rightBarButtonItems!
+                        
+                        items.removeLast()
+                        items.append(UIBarButtonItem(customView: label))
+                        
+                        navigationItem.rightBarButtonItems = items
+                    }
+                }
+                
+                after(1.0, closure: {
+                    decrease(i)
+                })
+                
+                experimentStartTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
+            }
+            else {
+                actuallyStartExperiment()
+            }
         }
+    }
+    
+    func actuallyStartExperiment() {
+        experiment.start()
+        var items = navigationItem.rightBarButtonItems!
+        
+        items[1] = UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment))
+        
+        navigationItem.rightBarButtonItems = items
     }
     
     func stopExperiment() {
         if experiment.running {
+            var items = navigationItem.rightBarButtonItems!
+            
+            if experimentRunTimer != nil {
+                experimentRunTimer!.invalidate()
+                experimentRunTimer = nil
+                
+                items.removeLast()
+            }
+            
             experiment.stop()
-            self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment)), UIBarButtonItem(barButtonSystemItem: .Action, target: self, action: #selector(action(_:)))]
+
+            items[1] = UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))
+            
+            navigationItem.rightBarButtonItems = items
         }
     }
     

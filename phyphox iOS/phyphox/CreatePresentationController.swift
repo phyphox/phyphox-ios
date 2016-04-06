@@ -11,10 +11,6 @@ import UIKit
 final class OverlayPresentationController: UIPresentationController {
     let dimmingView = UIView()
     
-    override func shouldPresentInFullscreen() -> Bool {
-        return false
-    }
-    
     override init(presentedViewController: UIViewController, presentingViewController: UIViewController) {
         super.init(presentedViewController: presentedViewController, presentingViewController: presentingViewController)
 
@@ -40,15 +36,13 @@ final class OverlayPresentationController: UIPresentationController {
         
         presentedViewController.transitionCoordinator()?.animateAlongsideTransition({ context in
             self.dimmingView.alpha = 0.0
-            }, completion: { context in
-                
-        })
+            }, completion:nil)
     }
     
     override func dismissalTransitionDidEnd(completed: Bool) {
         super.dismissalTransitionDidEnd(completed)
         
-        self.dimmingView.removeFromSuperview()
+        dimmingView.removeFromSuperview()
     }
     
     override func frameOfPresentedViewInContainerView() -> CGRect {

@@ -39,6 +39,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let icon: ExperimentIcon
     
+    var filePath: String?
+    
     var local: Bool
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?

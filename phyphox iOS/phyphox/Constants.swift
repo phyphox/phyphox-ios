@@ -16,6 +16,8 @@ func CGRectGetMid(r: CGRect) -> CGPoint {
     return CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r))
 }
 
+let iPad = UI_USER_INTERFACE_IDIOM() == .Pad
+
 let kBackgroundColor = UIColor(white: 0.95, alpha: 1.0)
 let kHighlightColor = UIColor(red: (226.0/255.0), green: (67.0/255.0), blue: (48.0/255.0), alpha: 1.0)
 
@@ -69,6 +71,27 @@ func monoFloatFormatWithSampleRate(sampleRate: Double) -> AudioStreamBasicDescri
     let byteSize = UInt32(sizeof(Float))
     
     return AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsPacked|kAudioFormatFlagIsFloat, mBytesPerPacket: byteSize, mFramesPerPacket: 1, mBytesPerFrame: byteSize, mChannelsPerFrame: 1, mBitsPerChannel: UInt32(CHAR_BIT)*byteSize, mReserved: 0)
+}
+
+func generateDots(height: CGFloat) -> UIImage {
+    let d = height/5.0
+    let r = d/2.0
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(d, height), false, 0.0)
+    
+    let path = UIBezierPath(arcCenter: CGPointMake(r, r), radius: r, startAngle: 0.0, endAngle: CGFloat(2.0*M_PI), clockwise: true)
+    
+    path.addArcWithCenter(CGPointMake(r, r+2.0*d), radius: r, startAngle: 0.0, endAngle: CGFloat(2.0*M_PI), clockwise: true)
+    
+    path.addArcWithCenter(CGPointMake(r, r+4.0*d), radius: r, startAngle: 0.0, endAngle: CGFloat(2.0*M_PI), clockwise: true)
+    
+    path.fill()
+    
+    let img = UIGraphicsGetImageFromCurrentImageContext().imageWithRenderingMode(.AlwaysTemplate)
+    
+    UIGraphicsEndImageContext()
+    
+    return img
 }
 
 func measure(label: String? = nil, closure: () -> ()) {

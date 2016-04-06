@@ -1,5 +1,5 @@
 //
-//  CollectionView.swift
+//  CollectionContainerView.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 14.01.16.
@@ -8,14 +8,17 @@
 
 import UIKit
 
-class CollectionView: UIView {
+class CollectionContainerView: UIView {
+    class var collectionViewClass: UICollectionView.Type {
+        return UICollectionView.self
+    }
     
     private(set) var collectionView: UICollectionView
     
     override init(frame: CGRect) {
         let layout = UICollectionViewFlowLayout()
         
-        collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
+        collectionView = self.dynamicType.collectionViewClass.init(frame: CGRect.zero, collectionViewLayout: layout)
         
         super.init(frame: frame)
         

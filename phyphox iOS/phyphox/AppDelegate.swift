@@ -19,14 +19,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    var mainNavViewController: MainNavigationViewController!
+    var mainNavViewController: ScalableViewController!
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
         window!.tintColor = kHighlightColor
         
-        mainNavViewController = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
-        mainNavViewController.pushViewController(ExperimentsCollectionViewController(), animated: false)
+        let main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
+        main.pushViewController(ExperimentsCollectionViewController(), animated: false)
+        
+        mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         
         window!.makeKeyAndVisible()

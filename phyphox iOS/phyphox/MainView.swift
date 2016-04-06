@@ -8,7 +8,35 @@
 
 import UIKit
 
-final class MainView: CollectionView {
+final class FixedBottomInsetCollectionView: UICollectionView {
+    override var contentInset: UIEdgeInsets {
+        get {
+            return super.contentInset
+        }
+        set {
+            var s = newValue
+            s.bottom = 0.0
+            super.contentInset = s
+        }
+    }
+    
+    override var scrollIndicatorInsets: UIEdgeInsets {
+        get {
+            return super.scrollIndicatorInsets
+        }
+        set {
+            var s = newValue
+            s.bottom = 0.0
+            super.scrollIndicatorInsets = s
+        }
+    }
+}
+
+final class MainView: CollectionContainerView {
+    override class var collectionViewClass: UICollectionView.Type {
+        return FixedBottomInsetCollectionView.self
+    }
+    
     override init(frame: CGRect) {
      super.init(frame: frame)
         

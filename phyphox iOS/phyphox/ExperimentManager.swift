@@ -14,8 +14,23 @@ let fileExtension = "phyphox"
 
 let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
 
+enum FileError: ErrorType {
+    case GenericError
+}
+
 final class ExperimentManager {
-    private(set) var experimentCollections = [ExperimentCollection]()
+    private var readOnlyExperimentCollections = [ExperimentCollection]()
+    private var customExperimentCollections = [ExperimentCollection]()
+    
+    private var allExperimentCollections: [ExperimentCollection]?
+    
+    var experimentCollections: [ExperimentCollection] {
+        if allExperimentCollections == nil {
+            allExperimentCollections = readOnlyExperimentCollections + customExperimentCollections
+        }
+        
+        return allExperimentCollections!
+    }
     
     private var adc: AEAudioController?
     private var fltc: AEFloatConverter?
@@ -68,16 +83,64 @@ final class ExperimentManager {
         return instance
     }
     
-    func loadExperiments() {
-        let timestamp = CFAbsoluteTimeGetCurrent()
-        
-        let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
-        
+    func deleteExperiment(experiment: Experiment) throws {
+        if let path = experiment.filePath {
+            try NSFileManager.defaultManager().removeItemAtPath(path)
+            loadCustomExperiments()
+        }
+        else {
+            throw FileError.GenericError
+        }
+    }
+    
+    func loadCustomExperiments() {
         var lookupTable: [String: ExperimentCollection] = [:]
         
         let customExperiments = try? NSFileManager.defaultManager().contentsOfDirectoryAtPath(customExperimentsDirectory)
         
-        experimentCollections.removeAll()
+        customExperimentCollections.removeAll()
+        allExperimentCollections = nil
+        
+        if customExperiments != nil {
+            for custom in customExperiments! {
+                let path = (customExperimentsDirectory as NSString).stringByAppendingPathComponent(custom)
+                
+                if (path as NSString).pathExtension != fileExtension {
+                    continue
+                }
+                
+                do {
+                    let experiment = try ExperimentSerialization.readExperimentFromFile(path)
+                    experiment.filePath = path
+                    
+                    let category = experiment.localizedCategory
+                    
+                    if let collection = lookupTable[category] {
+                        collection.experiments!.append(experiment)
+                    }
+                    else {
+                        let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: true)
+                        
+                        lookupTable[category] = collection
+                        customExperimentCollections.append(collection)
+                    }
+                }
+                catch let error {
+                    print("Error reading custom experiment: \(error)")
+                }
+            }
+        }
+        
+        NSNotificationCenter.defaultCenter().postNotificationName(ExperimentsReloadedNotification, object: nil)
+    }
+    
+    private func loadExperiments() {
+        let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
+        
+        var lookupTable: [String: ExperimentCollection] = [:]
+        
+        readOnlyExperimentCollections.removeAll()
+        allExperimentCollections = nil
         
         for title in folders {
             let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
@@ -95,54 +158,26 @@ final class ExperimentManager {
                     collection.experiments!.append(experiment)
                 }
                 else {
-                    let collection = ExperimentCollection(title: category, experiments: [experiment])
+                    let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: false)
                     
                     lookupTable[category] = collection
-                    experimentCollections.append(collection)
+                    readOnlyExperimentCollections.append(collection)
                 }
             }
             catch let error {
                 print("Error reading experiment: \(error)")
             }
         }
+    }
+    
+    init() {
+        let timestamp = CFAbsoluteTimeGetCurrent()
         
-        if customExperiments != nil {
-            for custom in customExperiments! {
-                let path = (customExperimentsDirectory as NSString).stringByAppendingPathComponent(custom)
-                
-                if (path as NSString).pathExtension != fileExtension {
-                    continue
-                }
-                
-                do {
-                    let experiment = try ExperimentSerialization.readExperimentFromFile(path)
-                    
-                    let category = experiment.localizedCategory
-                    
-                    if let collection = lookupTable[category] {
-                        collection.experiments!.append(experiment)
-                    }
-                    else {
-                        let collection = ExperimentCollection(title: category, experiments: [experiment])
-                        
-                        lookupTable[category] = collection
-                        experimentCollections.append(collection)
-                    }
-                }
-                catch let error {
-                    print("Error reading custom experiment: \(error)")
-                }
-            }
-        }
-        
-        NSNotificationCenter.defaultCenter().postNotificationName(ExperimentsReloadedNotification, object: nil)
+        loadExperiments()
+        loadCustomExperiments()
         
         #if DEBUG
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         #endif
-    }
-    
-    init() {
-        loadExperiments()
     }
 }

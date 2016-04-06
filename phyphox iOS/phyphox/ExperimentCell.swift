@@ -16,6 +16,32 @@ class ExperimentCell: UICollectionViewCell {
     private let separator = UIView()
     private let sideSeparator = UIView()
     
+    private var optionsButton: PTButton?
+    
+    var showsOptionsButton = false {
+        didSet {
+            if showsOptionsButton {
+                if optionsButton == nil {
+                    optionsButton = PTButton()
+                    optionsButton!.setImage(generateDots(15.0), forState: .Normal)
+                    optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), forControlEvents: .TouchUpInside)
+                    
+                    optionsButton!.setTintColor(kHighlightColor, forState: .Normal)
+                    optionsButton!.setTintColor(kHighlightColor.colorByInterpolatingToColor(UIColor.blackColor(), byFraction: 0.5), forState: .Highlighted)
+                    contentView.addSubview(optionsButton!)
+                }
+            }
+            else {
+                if optionsButton != nil {
+                    optionsButton!.removeFromSuperview()
+                    optionsButton = nil
+                }
+            }
+        }
+    }
+    
+    var optionsButtonCallback: ((button: UIButton) -> ())?
+    
     var showSeparator = true {
         didSet {
             separator.hidden = !showSeparator
@@ -32,6 +58,26 @@ class ExperimentCell: UICollectionViewCell {
         didSet {
             UIView.animateWithDuration(0.1) {
                 self.contentView.backgroundColor = UIColor(white: (self.highlighted ? 0.85 : 0.975), alpha: 1.0)
+            }
+        }
+    }
+    
+    weak var experiment: Experiment? {
+        didSet {
+            if experiment !=-= oldValue {
+                titleLabel.text = experiment?.localizedTitle
+                subtitleLabel.text = experiment?.localizedDescription
+                
+                if iconView != nil {
+                    iconView?.removeFromSuperview()
+                }
+                
+                if experiment != nil {
+                    iconView = experiment!.icon.generateResizableRepresentativeView()
+                    contentView.addSubview(iconView!)
+                }
+                
+                setNeedsLayout()
             }
         }
     }
@@ -65,23 +111,9 @@ class ExperimentCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    weak var experiment: Experiment? {
-        didSet {
-            if experiment !=-= oldValue {
-                titleLabel.text = experiment?.localizedTitle
-                subtitleLabel.text = experiment?.localizedDescription
-                
-                if iconView != nil {
-                    iconView?.removeFromSuperview()
-                }
-                
-                if experiment != nil {
-                    iconView = experiment!.icon.generateResizableRepresentativeView()
-                    contentView.addSubview(iconView!)
-                }
-                
-                setNeedsLayout()
-            }
+    func optionsButtonPressed(button: UIButton) {
+        if optionsButtonCallback != nil {
+            optionsButtonCallback!(button: button)
         }
     }
     
@@ -94,7 +126,15 @@ class ExperimentCell: UICollectionViewCell {
         
         let x = (iconView != nil ? CGRectGetMaxX(iconView!.frame) : 0.0)
         
-        let maxLabelSize = CGSizeMake(contentView.bounds.size.width-x-8.0, contentView.bounds.height)
+        var maxLabelSize = CGSizeMake(contentView.bounds.size.width-x-8.0, contentView.bounds.height)
+        
+        if let op = optionsButton {
+            let size = CGSizeMake(contentView.bounds.height, contentView.bounds.height)
+            
+            op.frame = CGRect(origin: CGPointMake(self.contentView.bounds.width-size.width, (contentView.bounds.height-size.height)/2.0), size: size)
+            
+            maxLabelSize.width -= size.width+5.0
+        }
         
         var s2 = titleLabel.sizeThatFits(maxLabelSize)
         s2.width = min(maxLabelSize.width, s2.width)
@@ -113,5 +153,7 @@ class ExperimentCell: UICollectionViewCell {
         separator.frame = CGRectMake(0.0, contentView.bounds.size.height-separatorHeight, contentView.bounds.size.width, separatorHeight)
         
         sideSeparator.frame = CGRectMake(contentView.bounds.size.width-separatorHeight, 0.0, separatorHeight, contentView.bounds.size.height)
+        
+
     }
 }

@@ -19,7 +19,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         }
     }
     
-    override class var viewClass: CollectionView.Type {
+    override class var viewClass: CollectionContainerView.Type {
         return MainView.self
     }
     
@@ -55,10 +55,15 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         
-        nav.transitioningDelegate = overlayTransitioningDelegate
-        nav.modalPresentationStyle = .Custom
+        if iPad {
+            nav.modalPresentationStyle = .FormSheet
+        }
+        else {
+            nav.transitioningDelegate = overlayTransitioningDelegate
+            nav.modalPresentationStyle = .Custom
+        }
         
-        presentViewController(nav, animated: true, completion: nil)
+        navigationController!.parentViewController!.presentViewController(nav, animated: true, completion: nil)
     }
     
     //MARK: - UICollectionViewDataSource
@@ -72,18 +77,63 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        var cells = 1
+        var cells: CGFloat = 1.0
         
         var width = self.view.frame.size.width
         
-        while width/2.0 >= minCellWidth {
-            width /= 2.0
-            cells *= 2
+        while self.view.frame.size.width/(cells+1.0) >= minCellWidth {
+            cells += 1.0
+            width = self.view.frame.size.width/cells
         }
         
-        cellsPerRow = cells
+        cellsPerRow = Int(cells)
         
         return CGSizeMake(width, 44.0)
+    }
+    
+    private func showDeleteConfirmationForExperiment(experiment: Experiment, button: UIButton) {
+        let alert = UIAlertController(title: "Confirm Delete?", message: "This cannot be undone", preferredStyle: .ActionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Delete \(experiment.localizedTitle)", style: .Destructive, handler: { [unowned self] action in
+            do {
+                try ExperimentManager.sharedInstance().deleteExperiment(experiment)
+            }
+            catch let error as NSError {
+                let hud = JGProgressHUD(style: .Dark)
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+                
+                hud.showInView(self.view)
+                
+                hud.dismissAfterDelay(3.0)
+            }
+            }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.navigationController!.view
+            popover.sourceRect = button.convertRect(button.bounds, toView: self.navigationController!.view)
+        }
+        
+        presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    private func showOptionsForExperiment(experiment: Experiment, button: UIButton) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .ActionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Delete", style: .Destructive, handler: { [unowned self] action in
+            self.showDeleteConfirmationForExperiment(experiment, button: button)
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.navigationController!.view
+            popover.sourceRect = button.convertRect(button.bounds, toView: self.navigationController!.view)
+        }
+        
+        presentViewController(alert, animated: true, completion: nil)
     }
     
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
@@ -96,7 +146,16 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cell.showSideSeparator = cellsPerRow > 1 && (indexPath.row % cellsPerRow) != cellsPerRow-1
         
-//        cell.showSeparator = indexPath.row < collection.experiments!.count-1
+        if collection.customExperiments {
+            cell.showsOptionsButton = true
+            cell.optionsButtonCallback = { [unowned experiment, unowned self] button in
+                self.showOptionsForExperiment(experiment, button: button)
+            }
+        }
+        else {
+            cell.showsOptionsButton = false
+            cell.optionsButtonCallback = nil
+        }
         
         return cell
     }

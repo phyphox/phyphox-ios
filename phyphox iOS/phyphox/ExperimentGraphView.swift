@@ -322,12 +322,15 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
                 let logX = self.descriptor.logX
                 let logY = self.descriptor.logY
                 
+                var xOrderOK = true
+                var valuesOK = true
+                
                 for i in 0..<count {
                     let rawX = xValues[i]
                     let rawY = yValues[i]
                     
                     if rawX < lastX {
-                        print("x value is smaller than previous value!")
+                        xOrderOK = false
                     }
                     
                     lastX = rawX
@@ -336,9 +339,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
                     let y = (logY ? log(rawY) : rawY)
                     
                     guard isfinite(x) && isfinite(y) else {
-                        #if DEBUG
-                            print("Ignoring non finite value in graph (\(x) or \(y))")
-                        #endif
+                        valuesOK = false
                         continue
                     }
                     
@@ -359,6 +360,14 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
                     }
                     
                     points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+                }
+                
+                if !xOrderOK {
+                    print("x values are not ordered!")
+                }
+                
+                if !valuesOK {
+                    print("Tried drawing NaN or inf")
                 }
                 
                 let dataSet = (bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points)

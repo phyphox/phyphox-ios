@@ -21,7 +21,10 @@ struct MapSensorType: OptionSetType {
 }
 
 class CreateExperimentViewController: UITableViewController {
-    var selectedSensors = MapSensorType.None
+    private var selectedSensors = MapSensorType.None
+    private var experimentTitle: String?
+    private var bufferSizeString: String?
+    private var rateString: String?
     
     init() {
         super.init(style: .Grouped)
@@ -48,32 +51,37 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     func save() {
-        let title = (tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 0)) as! TextFieldTableViewCell).textField.text!
-        let size = Int((tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 1)) as! TextFieldTableViewCell).textField.text!)!
-        let rate = Double((tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 2)) as! TextFieldTableViewCell).textField.text!.stringByReplacingOccurrencesOfString(",", withString: "."))!
+        guard let title = experimentTitle, let size = Int(bufferSizeString!), let rate = Double(rateString!.stringByReplacingOccurrencesOfString(",", withString: ".")) else {
+            let hud = JGProgressHUD(style: .Dark)
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+            
+            hud.textLabel.text = "Invalid input"
+            
+            hud.showInView(self.navigationController!.view)
+            hud.dismissAfterDelay(3.0)
+            
+            return
+        }
         
         let selected = selectedSensors
         
         let hud = JGProgressHUD(style: .Dark)
         hud.showInView(self.presentingViewController!.view)
         
-        self.navigationController!.dismissViewControllerAnimated(true, completion: nil)
-        
-        //The main collection view controller messes up if it is reloaded while the custom transition is running (??)
-        after(0.8) {
-            do {
-                try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: size, rate: rate, sensors: selected)
-                hud.dismiss()
-            }
-            catch let error as NSError {
-                
-                hud.indicatorView = JGProgressHUDErrorIndicatorView()
-                
-                hud.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
-
-                hud.dismissAfterDelay(3.0)
-            }
+        do {
+            try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: size, rate: rate, sensors: selected)
+            hud.dismiss()
         }
+        catch let error as NSError {
+            
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+            
+            hud.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
+            
+            hud.dismissAfterDelay(3.0)
+        }
+        
+        self.navigationController!.dismissViewControllerAnimated(true, completion: nil)
     }
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -136,21 +144,34 @@ class CreateExperimentViewController: UITableViewController {
             if indexPath.section == 0 {
                 cell.textField.placeholder = "Title"
                 cell.textField.keyboardType = .Default
+                cell.textField.text = experimentTitle
             }
             else if indexPath.section == 1 {
                 cell.textField.placeholder = "Buffer Size"
                 cell.textField.keyboardType = .DecimalPad
+                cell.textField.text = bufferSizeString
             }
             else if indexPath.section == 2 {
                 cell.textField.placeholder = "Sensor Refresh Rate (Hz)"
                 cell.textField.keyboardType = .DecimalPad
+                cell.textField.text = rateString
             }
             
             cell.editingEndedCallback = { [unowned self] in
                 self.updateSaveButton()
             }
             
-            cell.editingChangedCallback = { [unowned self] in
+            cell.editingChangedCallback = { [unowned self, unowned cell] in
+                if indexPath.section == 0 {
+                    self.experimentTitle = cell.textField.text
+                }
+                else if indexPath.section == 1 {
+                    self.bufferSizeString = cell.textField.text
+                }
+                else if indexPath.section == 2 {
+                    self.rateString = cell.textField.text
+                }
+                
                 self.updateSaveButton()
             }
             
@@ -159,9 +180,9 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     func updateSaveButton() {
-        let titleCellCheck = (tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 0)) as! TextFieldTableViewCell).textField.text?.characters.count > 0
-        let sizeCellCheck = (tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 1)) as! TextFieldTableViewCell).textField.text?.characters.count > 0
-        let rateCellCheck = (tableView.cellForRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 2)) as! TextFieldTableViewCell).textField.text?.characters.count > 0
+        let titleCellCheck = experimentTitle?.characters.count > 0
+        let sizeCellCheck = bufferSizeString?.characters.count > 0
+        let rateCellCheck = rateString?.characters.count > 0
         
         self.navigationItem.rightBarButtonItem!.enabled = titleCellCheck && sizeCellCheck && rateCellCheck && selectedSensors != .None
     }
