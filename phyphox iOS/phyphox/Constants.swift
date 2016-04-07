@@ -19,6 +19,7 @@ func CGRectGetMid(r: CGRect) -> CGPoint {
 let iPad = UI_USER_INTERFACE_IDIOM() == .Pad
 
 let kBackgroundColor = UIColor(white: 0.95, alpha: 1.0)
+let kLightBackgroundColor = UIColor(white: 0.975, alpha: 1.0)
 let kHighlightColor = UIColor(red: (226.0/255.0), green: (67.0/255.0), blue: (48.0/255.0), alpha: 1.0)
 
 infix operator =-= { associativity left }

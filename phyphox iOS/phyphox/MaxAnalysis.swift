@@ -54,12 +54,28 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
         #endif
         
+        let inArray = yIn.toArray()
+        
+        if inArray.count == 0 {
+            if maxOut != nil {
+                if maxOut!.clear {
+                    maxOut!.buffer!.replaceValues([])
+                }
+            }
+            
+            if positionOut != nil {
+                if positionOut!.clear {
+                    positionOut!.buffer!.replaceValues([])
+                }
+            }
+            
+            return
+        }
+        
         if positionOut == nil {
             var max = 0.0
             
-            let array = yIn.toArray()
-            
-            vDSP_maxvD(array, 1, &max, vDSP_Length(array.count))
+            vDSP_maxvD(inArray, 1, &max, vDSP_Length(inArray.count))
             
             if maxOut != nil {
                 if maxOut!.clear {
@@ -76,31 +92,13 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
         }
         else {
-            let inArray = yIn.toArray()
-            
-            if inArray.count == 0 {
-                if maxOut != nil {
-                    if maxOut!.clear {
-                        maxOut!.buffer!.replaceValues([])
-                    }
-                }
-                
-                if positionOut != nil {
-                    if positionOut!.clear {
-                        positionOut!.buffer!.replaceValues([])
-                    }
-                }
-                
-                return
-            }
-            
             var max = -Double.infinity
             var index: vDSP_Length = 0
             
             vDSP_maxviD(inArray, 1, &max, &index, vDSP_Length(inArray.count))
             
             let x: Double
-                
+            
             if xIn != nil {
                 guard let n = xIn!.objectAtIndex(Int(index)) else {
                     print("[Max analysis]: Index \(Int(index)) is out of bounds of x value array \(xIn!)")

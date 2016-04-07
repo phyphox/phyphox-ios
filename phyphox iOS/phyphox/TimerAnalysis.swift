@@ -6,7 +6,7 @@
 //  Copyright © 2016 RWTH Aachen. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 final class TimerAnalysis: ExperimentAnalysisModule {
     

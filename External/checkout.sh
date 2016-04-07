@@ -39,6 +39,11 @@ rm -rf VBFPopFlatButton
 git clone https://github.com/victorBaro/VBFPopFlatButton
 rm -rf VBFPopFlatButton/.git
 
+rm -rf GCDWebServer
+git clone https://github.com/swisspol/GCDWebServer
+rm -rf GCDWebServer/.git
+
+
 #Fix pop import
 sed -i -e 's/\"POP.h\"/<POP\/POP.h>/g' VBFPopFlatButton/VBFPopFlatButton/VBFPopFlatButtonClasses/VBFDoubleSegment.m
 

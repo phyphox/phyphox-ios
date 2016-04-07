@@ -97,7 +97,7 @@ class ExperimentCell: UICollectionViewCell {
         sideSeparator.alpha = 0.1
         
         
-        contentView.backgroundColor = UIColor(white: 0.975, alpha: 1.0)
+        contentView.backgroundColor = kLightBackgroundColor
         
         contentView.addSubview(titleLabel)
         contentView.addSubview(subtitleLabel)

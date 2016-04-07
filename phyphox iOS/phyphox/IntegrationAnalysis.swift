@@ -17,15 +17,22 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
         var inArray = buffer.toArray()
         let count = inArray.count
         
-        var result = [Double](count: count, repeatedValue: 0.0)
+        var result: [Double]
         
-        var factor = 1.0
-        vDSP_vrsumD(inArray, 1, &factor, &result, 1, vDSP_Length(count+1))
-        
-        var repeatedVal = inArray[0]
-        
-        if repeatedVal != 0.0 {
-            vDSP_vsaddD(result, 1, &repeatedVal, &result, 1, vDSP_Length(count))
+        if count == 0 {
+            result = []
+        }
+        else {
+            result = [Double](count: count, repeatedValue: 0.0)
+            
+            var factor = 1.0
+            vDSP_vrsumD(inArray, 1, &factor, &result, 1, vDSP_Length(count+1))
+            
+            var repeatedVal = inArray[0]
+            
+            if repeatedVal != 0.0 {
+                vDSP_vsaddD(result, 1, &repeatedVal, &result, 1, vDSP_Length(count))
+            }
         }
         
         for output in outputs {

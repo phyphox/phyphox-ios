@@ -53,6 +53,7 @@ class CreateExperimentViewController: UITableViewController {
     func save() {
         guard let title = experimentTitle, let size = Int(bufferSizeString!), let rate = Double(rateString!.stringByReplacingOccurrencesOfString(",", withString: ".")) else {
             let hud = JGProgressHUD(style: .Dark)
+            hud.interactionType = .BlockTouchesOnHUDView
             hud.indicatorView = JGProgressHUDErrorIndicatorView()
             
             hud.textLabel.text = "Invalid input"
@@ -66,6 +67,7 @@ class CreateExperimentViewController: UITableViewController {
         let selected = selectedSensors
         
         let hud = JGProgressHUD(style: .Dark)
+        hud.interactionType = .BlockTouchesOnHUDView
         hud.showInView(self.presentingViewController!.view)
         
         do {

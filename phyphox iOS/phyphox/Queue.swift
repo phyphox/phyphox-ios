@@ -3,7 +3,7 @@
 //  phyphox
 //
 //  Created by Jonas Gessner on 05.12.15.
-//  Copyright © 2015 RWTH Aachen. All rights reserved.
+//  Copyright © 2015 Jonas Gessner. All rights reserved.
 //
 
 import Foundation
@@ -12,7 +12,7 @@ import Foundation
  Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
-    private let lockQueue = dispatch_queue_create("de.rwth-aachen.phyphox.queue.lock", DISPATCH_QUEUE_SERIAL)
+    private let lockQueue = dispatch_queue_create("de.j-gessner.queue.lock", DISPATCH_QUEUE_SERIAL)
     
     private var array: [Element]
     
@@ -42,7 +42,7 @@ final class Queue<Element> {
     }
     
     init<S : SequenceType where S.Generator.Element == Element>(_ sequence: S) {
-        array = Array<Element>(sequence)
+        array = Array(sequence)
     }
     
     func toArray() -> [Element] {
@@ -69,11 +69,11 @@ final class Queue<Element> {
         var element: Element? = nil
         
         let op = { [unowned self] in
-            autoreleasepool({ () -> () in
+            autoreleasepool{
                 if index < self.array.count {
                     element = self.array[index]
                 }
-            })
+            }
         }
         
         if async {
@@ -107,11 +107,11 @@ extension Queue {
         var element: Element? = nil
         
         let op = { [unowned self] in
-            autoreleasepool({
+            autoreleasepool{
                 if self.array.count > 0 {
                     element = self.array.removeFirst()
                 }
-            })
+            }
         }
         
         if async {
@@ -169,9 +169,9 @@ extension Queue: CollectionType {
         var value: Element!
         
         sync { [unowned self] in
-            autoreleasepool({ () -> () in
+            autoreleasepool{
                 value = self.array[i]
-            })
+            }
         }
         
         return value

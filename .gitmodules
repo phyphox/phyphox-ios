@@ -1,3 +1,6 @@
 [submodule "phyphox-experiments"]
 	path = phyphox-experiments
 	url = https://github.com/kuhlen/phyphox-experiments
+[submodule "phyphox-webinterface"]
+	path = phyphox-webinterface
+	url = https://github.com/Kuhlen/phyphox-webinterface

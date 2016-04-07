@@ -38,7 +38,32 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
         
+        let infoButton = UIButton(type: .InfoLight)
+        infoButton.addTarget(self, action: #selector(infoPressed), forControlEvents: .TouchUpInside)
+        infoButton.sizeToFit()
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))
+    }
+    
+    private func showOpenSourceLicenses() {
+        let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(NSBundle.mainBundle().pathForResource("Licenses", ofType: "ptf")!), preferredStyle: .Alert)
+        
+        alert.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+        
+        navigationController!.presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    func infoPressed() {
+        let alert = UIAlertController(title: "Information", message: "Things\n\niOS app: Jonas Gessner\n\nAndroid app, creator:\nSebastian Kuhlen\n\nRWTH Aachen.", preferredStyle: .Alert)
+        
+        alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .Default, handler: { [unowned self] _ in
+            self.showOpenSourceLicenses()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+        
+        navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
 
     func reload() {
@@ -100,6 +125,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             }
             catch let error as NSError {
                 let hud = JGProgressHUD(style: .Dark)
+                hud.interactionType = .BlockTouchesOnHUDView
                 hud.indicatorView = JGProgressHUDErrorIndicatorView()
                 hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
                 

@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import GCDWebServers
 
 final class ExperimentViewController: CollectionViewController {
     let experiment: Experiment
@@ -21,6 +22,8 @@ final class ExperimentViewController: CollectionViewController {
     private var experimentRunTimer: NSTimer?
     
     private var exportSelectionView: ExperimentExportSetSelectionView?
+    
+    private var webServerActive = false
     
     var selectedViewCollection: Int {
         didSet {
@@ -94,7 +97,7 @@ final class ExperimentViewController: CollectionViewController {
         updateSelectedViewCollection()
         
         if experiment.viewDescriptors?.count > 1 {
-            titleView.promptAction = {[unowned self] () -> (Void) in
+            titleView.promptAction = { [unowned self] in
                 self.presentViewCollectionSelector()
             }
         }
@@ -120,6 +123,8 @@ final class ExperimentViewController: CollectionViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        selfView.collectionView.backgroundColor = kLightBackgroundColor
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .Plain, target: self, action: #selector(action(_:)))
         actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
@@ -154,6 +159,10 @@ final class ExperimentViewController: CollectionViewController {
         return CGSizeMake(collectionView.frame.size.width, s.height)
     }
     
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAtIndex section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 10.0, left: 0.0, bottom: 0.0, right: 0.0)
+    }
+    
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ModuleCell", forIndexPath: indexPath) as! ExperimentViewModuleCollectionViewCell
         
@@ -168,6 +177,33 @@ final class ExperimentViewController: CollectionViewController {
     
     override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAtIndex section: Int) -> CGFloat {
         return 5.0
+    }
+    
+    func toggleWebServer() {
+        //TODO: Web server
+        return
+        
+        if !webServerActive {
+            let server = GCDWebServer()
+            server.addGETHandlerForBasePath("/", directoryPath: NSBundle.mainBundle().pathForResource("phyphox-webinterface", ofType: nil)!, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+            if server.start() {
+                
+                print("Webserver running on \(server.serverURL)")
+            }
+            else {
+                let hud = JGProgressHUD(style: .Dark)
+                hud.interactionType = .BlockTouchesOnHUDView
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.textLabel.text = "Failed to initialize HTTP server"
+                
+                hud.showInView(self.view)
+                
+                hud.dismissAfterDelay(3.0)
+            }
+        }
+        else {
+            
+        }
     }
     
     private func runExport() {
@@ -265,6 +301,10 @@ final class ExperimentViewController: CollectionViewController {
             self.showTimerOptions()
         }))
         
+        alert.addAction(UIAlertAction(title: (webServerActive ? "Disable Remote Access" : "Enable Remote Access"), style: .Default, handler: { [unowned self] action in
+            self.toggleWebServer()
+            }))
+        
         alert.addAction(UIAlertAction(title: "Show Description", style: .Default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .Alert)
             
@@ -290,9 +330,17 @@ final class ExperimentViewController: CollectionViewController {
                 
                 UIGraphicsEndImageContext()
                 
+                let HUD = JGProgressHUD(style: .Dark)
+                HUD.interactionType = .BlockTouchesOnHUDView
+                HUD.textLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+                
+                HUD.showInView(self.navigationController!.view)
+                
                 let vc = UIActivityViewController(activityItems: [img], applicationActivities: nil)
                 
-                self.navigationController!.presentViewController(vc, animated: true, completion: nil)
+                self.navigationController!.presentViewController(vc, animated: true) {
+                    HUD.dismiss()
+                }
                 }))
             
             alert.addAction(UIAlertAction(title: "Clear Data", style: .Destructive, handler: { [unowned self] action in

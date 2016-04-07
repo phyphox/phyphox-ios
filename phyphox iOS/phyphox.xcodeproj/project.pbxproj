@@ -123,6 +123,11 @@
 		6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8241C1645A6007408FB /* QueueTests.swift */; };
 		6BC012161CAAD1440053D0DF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7921C130425007408FB /* phyphoxTests.swift */; };
 		6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
+		6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */ = {isa = PBXBuildFile; fileRef = 6BD026CA1CB5707F005085B1 /* phyphox-webinterface */; };
+		6BD026E51CB571A4005085B1 /* GCDWebServers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD026E01CB57199005085B1 /* GCDWebServers.framework */; };
+		6BD026E61CB571A4005085B1 /* GCDWebServers.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD026E01CB57199005085B1 /* GCDWebServers.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD026E91CB5C047005085B1 /* PTFile.swift */; };
+		6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */ = {isa = PBXBuildFile; fileRef = 6BD026EB1CB5C13E005085B1 /* Licenses.ptf */; };
 		6BD769C81C496B51006B4A0F /* PTNavigationBarTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */; };
 		6BD769F71C496D34006B4A0F /* Constants.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BD769F61C496D34006B4A0F /* Constants.m */; };
 		6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6BE320951CB06F7200DCC1ED /* VertexShader.glsl */; };
@@ -334,6 +339,62 @@
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
 		};
+		6BD026D71CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8DD76FB20486AB0100D96B5E;
+			remoteInfo = "GCDWebServer (Mac)";
+		};
+		6BD026D91CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2DDD1F61BE69EE4002CE867;
+			remoteInfo = "GCDWebServer (iOS)";
+		};
+		6BD026DB1CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2DDD1C71BE698A8002CE867;
+			remoteInfo = "GCDWebServer (tvOS)";
+		};
+		6BD026DD1CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CEE28CD11AE004D800F4023C;
+			remoteInfo = "GCDWebServers (Mac)";
+		};
+		6BD026DF1CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CEE28CEF1AE0051F00F4023C;
+			remoteInfo = "GCDWebServers (iOS)";
+		};
+		6BD026E11CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2DDD18B1BE69404002CE867;
+			remoteInfo = "GCDWebServers (tvOS)";
+		};
+		6BD026E31CB57199005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E24039251BA09207000B7089;
+			remoteInfo = "Tests (Mac)";
+		};
+		6BD026E71CB571A4005085B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CEE28CEE1AE0051F00F4023C;
+			remoteInfo = "GCDWebServers (iOS)";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -344,6 +405,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				6B0815321CABEE7F00EE2791 /* ZipZap.framework in Embed Frameworks */,
+				6BD026E61CB571A4005085B1 /* GCDWebServers.framework in Embed Frameworks */,
 				6B08152E1CABEE7B00EE2791 /* pop.framework in Embed Frameworks */,
 				6B08152A1CABEE7700EE2791 /* JGProgressHUD.framework in Embed Frameworks */,
 			);
@@ -483,6 +545,10 @@
 		6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentIcon.swift; sourceTree = "<group>"; };
 		6BC011AC1CAA86670053D0DF /* ExperimentTranslationCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslationCollection.swift; sourceTree = "<group>"; };
 		6BD026611CB5423C005085B1 /* checkout.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = checkout.sh; path = ../../External/checkout.sh; sourceTree = "<group>"; };
+		6BD026CA1CB5707F005085B1 /* phyphox-webinterface */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "phyphox-webinterface"; path = "../../phyphox-webinterface"; sourceTree = "<group>"; };
+		6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GCDWebServer.xcodeproj; path = ../../External/GCDWebServer/GCDWebServer.xcodeproj; sourceTree = "<group>"; };
+		6BD026E91CB5C047005085B1 /* PTFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PTFile.swift; sourceTree = "<group>"; };
+		6BD026EB1CB5C13E005085B1 /* Licenses.ptf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.ptf; sourceTree = "<group>"; };
 		6BD769C61C496B51006B4A0F /* PTNavigationBarTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTNavigationBarTitleView.h; sourceTree = "<group>"; };
 		6BD769C71C496B51006B4A0F /* PTNavigationBarTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTNavigationBarTitleView.m; sourceTree = "<group>"; };
 		6BD769F61C496D34006B4A0F /* Constants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Constants.m; sourceTree = "<group>"; };
@@ -505,6 +571,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
+				6BD026E51CB571A4005085B1 /* GCDWebServers.framework in Frameworks */,
 				6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */,
 				6B0815351CABEEB200EE2791 /* libTheAmazingAudioEngine.a in Frameworks */,
 				6B0815311CABEE7F00EE2791 /* ZipZap.framework in Frameworks */,
@@ -731,6 +798,7 @@
 		6B0C71561C1C708F00500FEE /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */,
 				6B0815381CABEFAC00EE2791 /* JXLSiOS.xcodeproj */,
 				6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */,
 				6B0814E21CABEE4100EE2791 /* pop.xcodeproj */,
@@ -793,6 +861,7 @@
 				6BD769F61C496D34006B4A0F /* Constants.m */,
 				6BD026611CB5423C005085B1 /* checkout.sh */,
 				6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */,
+				6BD026ED1CB5C25E005085B1 /* Licenses */,
 				6B7BF7C51C1304C6007408FB /* UI */,
 				6B7BF7C31C1304B3007408FB /* Experiment */,
 				6B7BF7AC1C130457007408FB /* Assets */,
@@ -825,6 +894,7 @@
 		6B7BF7AC1C130457007408FB /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				6BD026CA1CB5707F005085B1 /* phyphox-webinterface */,
 				6B0814C81CABEE0700EE2791 /* phyphox-experiments */,
 				6B7BF7841C130425007408FB /* Assets.xcassets */,
 				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
@@ -917,6 +987,29 @@
 				6B6319981C4952050038BE22 /* UIColor+Expanded.m */,
 			);
 			name = Extensions;
+			sourceTree = "<group>";
+		};
+		6BD026CD1CB57199005085B1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6BD026D81CB57199005085B1 /* GCDWebServer */,
+				6BD026DA1CB57199005085B1 /* GCDWebServer.app */,
+				6BD026DC1CB57199005085B1 /* GCDWebServer.app */,
+				6BD026DE1CB57199005085B1 /* GCDWebServers.framework */,
+				6BD026E01CB57199005085B1 /* GCDWebServers.framework */,
+				6BD026E21CB57199005085B1 /* GCDWebServers.framework */,
+				6BD026E41CB57199005085B1 /* Tests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6BD026ED1CB5C25E005085B1 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				6BD026E91CB5C047005085B1 /* PTFile.swift */,
+				6BD026EB1CB5C13E005085B1 /* Licenses.ptf */,
+			);
+			name = Licenses;
 			sourceTree = "<group>";
 		};
 		6BD3C6301CA5E96E005F3D4B /* Grid */ = {
@@ -1032,6 +1125,7 @@
 				6B08152C1CABEE7700EE2791 /* PBXTargetDependency */,
 				6B0815301CABEE7B00EE2791 /* PBXTargetDependency */,
 				6B0815341CABEE7F00EE2791 /* PBXTargetDependency */,
+				6BD026E81CB571A4005085B1 /* PBXTargetDependency */,
 			);
 			name = phyphox;
 			productName = phyphox;
@@ -1114,6 +1208,10 @@
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 6BD026CD1CB57199005085B1 /* Products */;
+					ProjectRef = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
+				},
 				{
 					ProductGroup = 6B0814CD1CABEE2600EE2791 /* Products */;
 					ProjectRef = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
@@ -1292,6 +1390,55 @@
 			remoteRef = 6B08153C1CABEFAC00EE2791 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		6BD026D81CB57199005085B1 /* GCDWebServer */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = GCDWebServer;
+			remoteRef = 6BD026D71CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026DA1CB57199005085B1 /* GCDWebServer.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = GCDWebServer.app;
+			remoteRef = 6BD026D91CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026DC1CB57199005085B1 /* GCDWebServer.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = GCDWebServer.app;
+			remoteRef = 6BD026DB1CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026DE1CB57199005085B1 /* GCDWebServers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = GCDWebServers.framework;
+			remoteRef = 6BD026DD1CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026E01CB57199005085B1 /* GCDWebServers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = GCDWebServers.framework;
+			remoteRef = 6BD026DF1CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026E21CB57199005085B1 /* GCDWebServers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = GCDWebServers.framework;
+			remoteRef = 6BD026E11CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6BD026E41CB57199005085B1 /* Tests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = Tests.xctest;
+			remoteRef = 6BD026E31CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -1301,9 +1448,11 @@
 			files = (
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
+				6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */,
 				6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */,
 				6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */,
 				6BE320981CB11A7200DCC1ED /* FragmentShader.glsl in Resources */,
+				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1416,6 +1565,7 @@
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,
 				6B08154D1CB005D900EE2791 /* PeriodicityAnalysis.swift in Sources */,
 				6B00F09C1C457A6600971941 /* ExperimentView.swift in Sources */,
+				6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B6319941C49516A0038BE22 /* PTDropDownMenu.m in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
@@ -1512,6 +1662,11 @@
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = 6B7BF79A1C130425007408FB /* PBXContainerItemProxy */;
+		};
+		6BD026E81CB571A4005085B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "GCDWebServers (iOS)";
+			targetProxy = 6BD026E71CB571A4005085B1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
