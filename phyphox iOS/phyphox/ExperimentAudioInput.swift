@@ -8,13 +8,13 @@
 
 import Foundation
 
-private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioInput", DISPATCH_QUEUE_CONCURRENT)
+private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioInput", DISPATCH_QUEUE_SERIAL)
 
 final class ExperimentAudioInput {
     let sampleRate: UInt
     let outBuffers: [DataBuffer]
     
-    var receiver: AEBlockAudioReceiver!
+    private var receiver: AEBlockAudioReceiver!
     
     init(sampleRate: UInt, outBuffers: [DataBuffer]) {
         self.sampleRate = sampleRate

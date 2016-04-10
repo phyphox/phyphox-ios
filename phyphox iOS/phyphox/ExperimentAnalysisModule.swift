@@ -49,11 +49,14 @@ class ExperimentAnalysisModule {
             }
             self.timestamp = timestamp
             
+            willUpdate()
             update()
+            didUpdate()
             executed = true
         }
     }
     
+    #if DEBUG
     internal func debug_noteInputs(inputs: AnyObject) {
         print("\(self.dynamicType) inputs: \(inputs)")
     }
@@ -61,8 +64,21 @@ class ExperimentAnalysisModule {
     internal func debug_noteOutputs(outputs: AnyObject) {
         print("\(self.dynamicType) outputs: \(outputs)")
     }
+    #endif
+    
+    internal func willUpdate() {
+        
+    }
+    
+    internal func didUpdate() {
+        for input in inputs {
+            if input.clear {
+                input.buffer?.clear()
+            }
+        }
+    }
     
     internal func update() {
-        fatalError("Subclasses of ExperimentAnalysisModule must override the update() method!")
+        
     }
 }
