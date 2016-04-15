@@ -15,6 +15,7 @@ import Accelerate
  */
 func nextFFTSize(c: Int, minN: Int = 3) -> Int {
     var options = [Int]()
+    
     let d = Double(c)
     
     //Length = 2^n.

@@ -25,6 +25,8 @@ final class ExperimentViewController: CollectionViewController {
     
     private var webServerActive = false
     
+    private var server: GCDWebServer?
+    
     var selectedViewCollection: Int {
         didSet {
             if selectedViewCollection != oldValue {
@@ -135,6 +137,8 @@ final class ExperimentViewController: CollectionViewController {
     override func viewDidDisappear(animated: Bool) {
         super.viewDidDisappear(animated)
         
+        tearDownWebServer()
+        
         experimentStartTimer?.invalidate()
         experimentStartTimer = nil
         
@@ -179,18 +183,22 @@ final class ExperimentViewController: CollectionViewController {
         return 5.0
     }
     
-    func toggleWebServer() {
-        //TODO: Web server
-        return
-        
+    private func launchWebServer() {
         if !webServerActive {
-            let server = GCDWebServer()
-            server.addGETHandlerForBasePath("/", directoryPath: NSBundle.mainBundle().pathForResource("phyphox-webinterface", ofType: nil)!, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
-            if server.start() {
-                
-                print("Webserver running on \(server.serverURL)")
+            server = GCDWebServer()
+            let path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
+            
+            server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+            
+            if server!.start() {
+                webServerActive = true
+                print("Webserver running on \(server!.serverURL)")
             }
             else {
+                webServerActive = false
+                server!.stop()
+                server = nil
+                
                 let hud = JGProgressHUD(style: .Dark)
                 hud.interactionType = .BlockTouchesOnHUDView
                 hud.indicatorView = JGProgressHUDErrorIndicatorView()
@@ -201,8 +209,22 @@ final class ExperimentViewController: CollectionViewController {
                 hud.dismissAfterDelay(3.0)
             }
         }
+    }
+    
+    private func tearDownWebServer() {
+        if webServerActive {
+            server!.stop()
+            server = nil
+            webServerActive = false
+        }
+    }
+    
+    private func toggleWebServer() {
+        if !webServerActive {
+            launchWebServer()
+        }
         else {
-            
+            tearDownWebServer()
         }
     }
     
