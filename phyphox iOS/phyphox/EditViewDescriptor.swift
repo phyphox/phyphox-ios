@@ -32,5 +32,23 @@ public final class EditViewDescriptor: ViewDescriptor {
         
         super.init(label: label, translation: translation)
     }
+    
+    override func generateViewHTMLWithID(id: Int) -> String {
+        //Construct value restrictions in HTML5
+        var restrictions = ""
+        
+        if (!signed) {
+            restrictions += "min=\\\"0\\\" "
+        }
+        if (!decimal) {
+            restrictions += "step=\\\"1\\\" "
+        }
+        
+        return "<div class=\\\"editElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><input onchange=\\\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\\\" type=\\\"number\\\" class=\\\"value\\\" \(restrictions) /><span class=\\\"unit\\\">\(unit ?? "")</span></div>"
+    }
+    
+    override func setValueHTMLWithID(id: Int) -> String {
+        return "function (x) { if (!$(\"#element\(id) .value\").is(':focus')) $(\"#element\(id) .value\").val((x*\(factor))) }"
+    }
 }
 

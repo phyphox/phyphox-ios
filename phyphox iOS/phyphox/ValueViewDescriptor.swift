@@ -25,4 +25,17 @@ public final class ValueViewDescriptor: ViewDescriptor {
         
         super.init(label: label, translation: translation)
     }
+    
+    override func generateViewHTMLWithID(id: Int) -> String {
+        return "<div style=\\\"font-size:12;\\\" class=\\\"valueElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><span class=\\\"value\\\"></span></div>"
+    }
+    
+    override func setValueHTMLWithID(id: Int) -> String {
+        if scientific {
+            return "function (x) { $(\"#element\(id) .value\").text((x*\(factor)).toExponential(\(precision))+\" \(unit ?? "")\") }"
+        }
+        else {
+            return "function (x) { $(\"#element\(id) .value\").text((x*\(factor)).toFixed(\(precision))+\" \(unit ?? "")\") }"
+        }
+    }
 }

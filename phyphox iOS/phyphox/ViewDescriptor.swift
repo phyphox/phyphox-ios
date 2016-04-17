@@ -20,4 +20,24 @@ public class ViewDescriptor {
         self.label = label
         self.translation = translation
     }
+    
+    func generateViewHTMLWithID(id: Int) -> String {
+        fatalError("Override this method")
+    }
+    
+    func generateDataCompleteHTMLWithID(id: Int) -> String {
+        return "function() {}"
+    }
+    
+    func setValueHTMLWithID(id: Int) -> String {
+        return "function(x) {}"
+    }
+    
+    func setDataXHTMLWithID(id: Int) -> String {
+        return "function(x) {}"
+    }
+    
+    func setDataYHTMLWithID(id: Int) -> String {
+        return "function(y) {}"
+    }
 }

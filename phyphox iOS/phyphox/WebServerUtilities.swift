@@ -76,23 +76,23 @@ final class WebServerUtilities {
                     }
                     ffirst = false
                     
-                    viewLayout += "{\"label\": \"\(element.localizedLabel)\", \"index\": \(idx)"
+                    viewLayout += "{\"label\": \"\(element.localizedLabel)\", \"index\": \(idx), \"html\": \"\(element.generateViewHTMLWithID(idx))\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
 
                     if let graph = element as? GraphViewDescriptor {
-                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"valueInput\": \"\(graph.yInputBuffer.name)\""
+                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffer.name)\", \"dataXInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
                         
                         if let x = graph.xInputBuffer {
-                            viewLayout += ", \"dataXInput\": \"\(x.name)\""
+                            viewLayout += ", \"dataXInput\": \"\(x.name)\", \"dataXInputFunction\":\n\(graph.setDataXHTMLWithID(idx))\n"
                         }
                     }
                     else if element is InfoViewDescriptor {
                         viewLayout += ", \"partialUpdate\": \"none\""
                     }
-                    else if element is ValueViewDescriptor {
-                        viewLayout += ", \"partialUpdate\": \"single\""
+                    else if let value = element as? ValueViewDescriptor {
+                        viewLayout += ", \"partialUpdate\": \"single\", \"valueInput\":\"\(value.buffer.name)\", \"valueInputFunction\":\n\(value.setValueHTMLWithID(idx))\n"
                     }
-                    else if element is EditViewDescriptor {
-                        viewLayout += ", \"partialUpdate\": \"input\""
+                    else if let edit = element as? EditViewDescriptor {
+                        viewLayout += ", \"partialUpdate\": \"input\", \"valueInput\":\"\(edit.buffer.name)\", \"valueInputFunction\":\n\(edit.setValueHTMLWithID(idx))\n"
                     }
                     
                     viewLayout += "}"
@@ -117,7 +117,7 @@ final class WebServerUtilities {
         
         try! NSFileManager.defaultManager().createDirectoryAtPath(path, withIntermediateDirectories: false, attributes: nil)
         
-        let css = prepareStyleFile(backgroundColor: kBackgroundColor, mainColor: kLightBackgroundColor, highlightColor: kHighlightColor)
+        let css = prepareStyleFile(backgroundColor: kBackgroundColor, mainColor: UIColor.blackColor(), highlightColor: kHighlightColor)
         
         let html = prepareIndexFile(experiment)
         

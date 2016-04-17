@@ -189,6 +189,57 @@ final class ExperimentViewController: CollectionViewController {
             let path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
             
             server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+            server!.addHandlerForMethod("GET", pathRegex: "/get", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+                if let query = request.URL.query {
+                    var str = "{\"buffer\":\n"
+                    var first = true
+                    
+                    for buffer in query.componentsSeparatedByString("&") {
+                        if !first {
+                            str += ",\n"
+                        }
+                        first = false
+                        
+                        let components = buffer.componentsSeparatedByString("=")
+                        
+                        let bufferName = components.first!
+                        
+                        guard let b = self.experiment.buffers.0?[bufferName] else {
+                            let response = GCDWebServerResponse(statusCode: 400)
+                            
+                            completionBlock(response)
+                            return
+                        }
+                        
+                        if let offset = components.last {
+                            let raw = b.toArray()
+                            
+                            if offset == "full" {
+                                str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"full\", \"buffer\": \(raw.description) }}"
+                            }
+                            else {
+                                let offsetInt = Int(offset) ?? 0
+                                
+                                str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(raw[offsetInt..<raw.count-offsetInt].description) }}"
+                            }
+                        }
+                        else {
+                            str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"single\", \"buffer\": [\(b.last ?? 0.0)]}}"
+                        }
+                    }
+                    
+                    str += "\n}"
+                    print(str)
+                    let response = GCDWebServerDataResponse(text: str)
+                    
+                    completionBlock(response)
+                }
+                else {
+                    let response = GCDWebServerResponse(statusCode: 400)
+                    
+                    completionBlock(response)
+                }
+            })
             
             if server!.start() {
                 webServerActive = true
