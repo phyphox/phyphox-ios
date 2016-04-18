@@ -84,7 +84,7 @@ public final class GraphViewDescriptor: ViewDescriptor {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(kHighlightColor.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(kHighlightColor.hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(kHighlightColor.hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(UIColor(white: 0.0, alpha: 0.5).hexStringValue)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(kHighlightColor.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(UIColor(white: 0.4, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(UIColor(white: 0.4, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(UIColor(white: 0.0, alpha: 0.5).hexStringValue)\"}});}"
     }
     
     override func setDataXHTMLWithID(id: Int) -> String {

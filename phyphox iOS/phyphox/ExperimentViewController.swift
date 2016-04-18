@@ -190,7 +190,7 @@ final class ExperimentViewController: CollectionViewController {
             
             server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
             server!.addHandlerForMethod("GET", pathRegex: "/get", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
-                if let query = request.URL.query {
+                if let query = request.URL.query?.stringByRemovingPercentEncoding {
                     var str = "{\"buffer\":\n{"
                     var first = true
                     
@@ -218,9 +218,45 @@ final class ExperimentViewController: CollectionViewController {
                                 str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"full\", \"buffer\": \(raw.description) }"
                             }
                             else {
-                                let offsetInt = Int(offset) ?? 0
+                                let extraComponents = offset.componentsSeparatedByString("|")
+                                let offsetInt = Int(extraComponents.first!) ?? Int.min
+                                let offsetD = Double(offsetInt)
                                 
-                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(raw[offsetInt..<raw.count-offsetInt].description) }"
+                                var final: [Double] = []
+                                
+                                if extraComponents.count > 1 {
+                                    let extra = extraComponents.last!
+                                    
+                                    guard let extraBuffer = self.experiment.buffers.0?[extra] else {
+                                        let response = GCDWebServerResponse(statusCode: 400)
+                                        
+                                        completionBlock(response)
+                                        return
+                                    }
+                                    
+                                    let extraArray = extraBuffer.toArray()
+                                    
+                                    for (i, v) in extraArray.enumerate() {
+                                        if i >= raw.count {
+                                            break
+                                        }
+                                        
+                                        if v > offsetD {
+                                            let val = raw[i]
+                                            
+                                            final.append(val)
+                                        }
+                                    }
+                                }
+                                else {
+                                    for v in raw {
+                                        if v > offsetD {
+                                            final.append(v)
+                                        }
+                                    }
+                                }
+                                
+                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(final.description) }"
                             }
                         }
                         else {
@@ -228,7 +264,12 @@ final class ExperimentViewController: CollectionViewController {
                         }
                     }
                     
-                    str += "}\n}"
+                    str += "},\n"
+                    
+                    str += "\"status\": {\"measuring\": \(self.experiment.running), \"timedRun\": \(self.experimentRunTimer != nil), \"countDown\": \(self.experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0)}\n"
+                    
+                    str += "}"
+                    
                     print(str)
                     let response = GCDWebServerDataResponse(text: str)
                     

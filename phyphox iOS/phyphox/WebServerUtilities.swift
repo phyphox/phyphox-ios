@@ -48,10 +48,6 @@ final class WebServerUtilities {
         
         raw.replaceOccurrencesOfString("<!-- [[title]] -->", withString: experiment.localizedTitle, options: [], range: NSMakeRange(0, raw.length))
         
-        
-        "<!-- [[viewOptions]] -->"
-        "<!-- [[exportFormatOptions]] -->"
-        
         var viewLayout = "var views = ["
         var viewOptions = ""
         
@@ -79,7 +75,7 @@ final class WebServerUtilities {
                     viewLayout += "{\"label\": \"\(element.localizedLabel)\", \"index\": \(idx), \"html\": \"\(element.generateViewHTMLWithID(idx))\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
 
                     if let graph = element as? GraphViewDescriptor {
-                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffer.name)\", \"dataXInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
+                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffer.name)\", \"dataYInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
                         
                         if let x = graph.xInputBuffer {
                             viewLayout += ", \"dataXInput\": \"\(x.name)\", \"dataXInputFunction\":\n\(graph.setDataXHTMLWithID(idx))\n"
