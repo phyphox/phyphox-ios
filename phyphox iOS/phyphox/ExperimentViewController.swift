@@ -191,7 +191,7 @@ final class ExperimentViewController: CollectionViewController {
             server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
             server!.addHandlerForMethod("GET", pathRegex: "/get", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
                 if let query = request.URL.query {
-                    var str = "{\"buffer\":\n"
+                    var str = "{\"buffer\":\n{"
                     var first = true
                     
                     for buffer in query.componentsSeparatedByString("&") {
@@ -215,20 +215,20 @@ final class ExperimentViewController: CollectionViewController {
                             let raw = b.toArray()
                             
                             if offset == "full" {
-                                str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"full\", \"buffer\": \(raw.description) }}"
+                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"full\", \"buffer\": \(raw.description) }"
                             }
                             else {
                                 let offsetInt = Int(offset) ?? 0
                                 
-                                str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(raw[offsetInt..<raw.count-offsetInt].description) }}"
+                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(raw[offsetInt..<raw.count-offsetInt].description) }"
                             }
                         }
                         else {
-                            str += "{\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"single\", \"buffer\": [\(b.last ?? 0.0)]}}"
+                            str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"single\", \"buffer\": [\(b.last ?? 0.0)]}"
                         }
                     }
                     
-                    str += "\n}"
+                    str += "}\n}"
                     print(str)
                     let response = GCDWebServerDataResponse(text: str)
                     
