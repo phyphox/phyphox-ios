@@ -219,8 +219,7 @@ final class ExperimentViewController: CollectionViewController {
                             }
                             else {
                                 let extraComponents = offset.componentsSeparatedByString("|")
-                                let offsetInt = Int(extraComponents.first!) ?? Int.min
-                                let offsetD = Double(offsetInt)
+                                let threshold = Double(extraComponents.first!) ?? -Double.infinity
                                 
                                 var final: [Double] = []
                                 
@@ -241,7 +240,7 @@ final class ExperimentViewController: CollectionViewController {
                                             break
                                         }
                                         
-                                        if v > offsetD {
+                                        if v > threshold {
                                             let val = raw[i]
                                             
                                             final.append(val)
@@ -250,7 +249,7 @@ final class ExperimentViewController: CollectionViewController {
                                 }
                                 else {
                                     for v in raw {
-                                        if v > offsetD {
+                                        if v > threshold {
                                             final.append(v)
                                         }
                                     }
@@ -270,7 +269,6 @@ final class ExperimentViewController: CollectionViewController {
                     
                     str += "}"
                     
-                    print(str)
                     let response = GCDWebServerDataResponse(text: str)
                     
                     completionBlock(response)

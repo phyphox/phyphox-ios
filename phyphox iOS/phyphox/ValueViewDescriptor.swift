@@ -9,7 +9,7 @@
 import Foundation
 import CoreGraphics
 
-public final class ValueViewDescriptor: ViewDescriptor {
+final class ValueViewDescriptor: ViewDescriptor {
     let scientific: Bool
     let precision: Int
     let unit: String?

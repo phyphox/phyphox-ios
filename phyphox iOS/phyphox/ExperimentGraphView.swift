@@ -18,7 +18,7 @@ struct GraphGridLine {
     let relativeValue: CGFloat
 }
 
-public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
+final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
     typealias T = GraphViewDescriptor
     
     private let xLabel: UILabel
@@ -126,7 +126,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         }
     }
     
-    required public init(descriptor: GraphViewDescriptor) {
+    required init(descriptor: GraphViewDescriptor) {
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
         var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
@@ -427,7 +427,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
     
     //Mark - General UI
     
-    public override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(size: CGSize) -> CGSize {
         return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio, size.height))
     }
     
@@ -435,7 +435,7 @@ public final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor
         return gridView.insetRect
     }
     
-    public override func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         
         let spacing: CGFloat = 1.0

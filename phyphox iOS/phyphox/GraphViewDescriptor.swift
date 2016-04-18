@@ -8,8 +8,7 @@
 
 import Foundation
 
-
-public final class GraphViewDescriptor: ViewDescriptor {
+final class GraphViewDescriptor: ViewDescriptor {
     private let xLabel: String
     private let yLabel: String
     

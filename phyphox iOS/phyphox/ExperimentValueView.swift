@@ -8,8 +8,8 @@
 
 import UIKit
 
-public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
-    required public init(descriptor: ValueViewDescriptor) {
+final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
+    required init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
         
         newValueIn()
@@ -24,7 +24,7 @@ public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor
     func newValueIn() {
         let str = NSMutableAttributedString(string: self.descriptor.localizedLabel.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
         
-        if let last = self.descriptor.buffer.last {
+        if let last = descriptor.buffer.last {
             let formatter = NSNumberFormatter()
             formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
             formatter.maximumFractionDigits = self.descriptor.precision
@@ -38,16 +38,16 @@ public final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor
             str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
         }
         
-        self.label.attributedText = str
+        label.attributedText = str
         
-        self.setNeedsLayout()
+        setNeedsLayout()
     }
     
-    public override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(size: CGSize) -> CGSize {
         return CGSizeMake(size.width, label.sizeThatFits(size).height)
     }
     
-    override public func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         
         let s = label.sizeThatFits(self.bounds.size)

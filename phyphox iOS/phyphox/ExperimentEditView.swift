@@ -11,7 +11,7 @@ import UIKit
 private let spacing: CGFloat = 5.0
 private let textFieldWidth: CGFloat = 60.0
 
-public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
+final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
     let textField: UITextField
     let unitLabel: UILabel?
     
@@ -21,7 +21,7 @@ public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>,
         return (descriptor.decimal ? String(Int(raw)) : String(raw))
     }
     
-    required public init(descriptor: EditViewDescriptor) {
+    required init(descriptor: EditViewDescriptor) {
         textField = UITextField()
         textField.returnKeyType = .Done
         
@@ -65,7 +65,7 @@ public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>,
         edited = true
     }
     
-    public func textFieldDidEndEditing(_: UITextField) {
+    func textFieldDidEndEditing(_: UITextField) {
         if edited {
             updateTextField(textField, write: true)
             edited = false
@@ -110,7 +110,7 @@ public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>,
         }
     }
     
-    public override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(size: CGSize) -> CGSize {
         let s1 = label.sizeThatFits(size)
         var s2 = textField.sizeThatFits(size)
         s2.width = textFieldWidth
@@ -127,7 +127,7 @@ public final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>,
         return CGSize(width: width, height: height)
     }
     
-    public override func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         
         let s1 = label.sizeThatFits(self.bounds.size)

@@ -12,7 +12,7 @@ import CoreGraphics
 /**
  Represents an experiment view, which contais zero or more views, represented by view descriptors.
  */
-public final class ExperimentViewCollectionDescriptor: ViewDescriptor {
+final class ExperimentViewCollectionDescriptor: ViewDescriptor {
     let views: [ViewDescriptor]
     
     init(label: String, translation: ExperimentTranslationCollection?, views: [ViewDescriptor]) {

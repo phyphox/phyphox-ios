@@ -9,7 +9,7 @@
 import Foundation
 import CoreGraphics
 
-public final class EditViewDescriptor: ViewDescriptor {
+final class EditViewDescriptor: ViewDescriptor {
     let signed: Bool
     let decimal: Bool
     let unit: String?

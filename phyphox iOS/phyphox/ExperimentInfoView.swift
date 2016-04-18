@@ -8,18 +8,18 @@
 
 import UIKit
 
-public final class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
-    required public init(descriptor: InfoViewDescriptor) {
+final class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
+    required init(descriptor: InfoViewDescriptor) {
         super.init(descriptor: descriptor)
     }
     
-    public override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(size: CGSize) -> CGSize {
         return label.sizeThatFits(size)
     }
     
-    override public func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         
-        label.frame = self.bounds
+        label.frame = bounds
     }
 }
