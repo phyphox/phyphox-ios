@@ -9,7 +9,7 @@
 import Foundation
 
 final class WebServerUtilities {
-    private class func genPlaceHolderBase64Image() -> String {
+    class func genPlaceHolderImage() -> UIImage {
         let s = CGSizeMake(30, 30)
         
         UIGraphicsBeginImageContextWithOptions(s, true, 0.0)
@@ -22,7 +22,11 @@ final class WebServerUtilities {
         
         UIGraphicsEndImageContext()
         
-        return UIImagePNGRepresentation(img)!.base64EncodedStringWithOptions([])
+        return img
+    }
+    
+    class func genPlaceHolderBase64Image() -> String {
+        return UIImagePNGRepresentation(genPlaceHolderImage())!.base64EncodedStringWithOptions([])
     }
     
     private class func prepareStyleFile(backgroundColor backgroundColor: UIColor, mainColor: UIColor, highlightColor: UIColor) -> String {
@@ -102,10 +106,36 @@ final class WebServerUtilities {
         
         viewLayout += "];\n"
         
+        var exportStr = ""
+        
+        if let export = experiment.export {
+            for (i, set) in export.sets.enumerate() {
+                exportStr += "<div class=\"setSelector\"><input type=\"checkbox\" id=\"set\(i)\" name=\"set\(i)\" /><label for=\"set\(i)\"\">\(set.localizedName)</label></div>\n"
+            }
+        }
+       
+        let exportFormats = "<option value=\"0\">CSV</option> <option value=\"1\">Excel</option> <option value=\"2\">CSV (tab separated)</option>"
+        
         raw.replaceOccurrencesOfString("<!-- [[viewLayout]] -->", withString: viewLayout, options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[viewOptions]] -->", withString: viewOptions, options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrencesOfString("<!-- [[exportFormatOptions]] -->", withString: exportFormats, options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrencesOfString("<!-- [[exportSetSelectors]] -->", withString: exportStr, options: [], range: NSMakeRange(0, raw.length))
         
         return raw as String
+    }
+    
+    class func mapFormatString(str: String) -> ExportFileFormat? {
+        if str == "0" {
+            return ExportFileFormat.CSV(separator: ",")
+        }
+        else if str == "1" {
+            return ExportFileFormat.Excel
+        }
+        else if str == "2" {
+            return ExportFileFormat.CSV(separator: "\t")
+        }
+        
+        return nil
     }
     
     class func prepareWebServerFilesForExperiment(experiment: Experiment) -> String {

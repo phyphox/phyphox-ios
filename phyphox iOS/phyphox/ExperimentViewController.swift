@@ -183,13 +183,135 @@ final class ExperimentViewController: CollectionViewController {
         return 5.0
     }
     
+    func queryDictionary(query: String) -> [String: String] {
+        var dict = [String: String]()
+        
+        for item in query.componentsSeparatedByString("&") {
+            let c = item.componentsSeparatedByString("=")
+            
+            if c.count > 1 {
+                dict[c.first!] = c.last!
+            }
+            else {
+                dict[c.first!] = ""
+            }
+        }
+        
+        return dict
+    }
+    
     private func launchWebServer() {
         if !webServerActive {
             server = GCDWebServer()
             let path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
             
             server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+            
+            server!.addHandlerForMethod("GET", pathRegex: "/logo", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+                let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(WebServerUtilities.genPlaceHolderImage()), contentType: "image/png")
+                
+                completionBlock(response)
+                })
+            
+            server!.addHandlerForMethod("GET", pathRegex: "/export", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+                func returnErrorResponse(response: AnyObject) {
+                    let response = GCDWebServerDataResponse(JSONObject: response)
+                    
+                    completionBlock(response)
+                }
+                
+                let result: String
+                
+                let components = NSURLComponents(URL: request.URL, resolvingAgainstBaseURL: true)!
+                let query = self.queryDictionary(components.query!)
+                
+                if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
+                    var sets = [ExperimentExportSet]()
+                    
+                    for (i, set) in self.experiment.export!.sets.enumerate() {
+                        if query["set\(i)"] != nil {
+                            sets.append(set)
+                        }
+                    }
+                    
+                    if sets.count == 0 {
+                        sets = self.experiment.export!.sets
+                    }
+                    
+                    self.runExport(sets, format: format) { error, URL in
+                        if error == nil {
+                            let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
+                            completionBlock(response)
+                        }
+                        else {
+                            returnErrorResponse(["error": error!.localizedDescription])
+                        }
+                    }
+                }
+                else {
+                    returnErrorResponse(["error": "Format out of range"])
+                }
+                })
+            
+            server!.addHandlerForMethod("GET", pathRegex: "/control", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+                func returnErrorResponse() {
+                    let response = GCDWebServerDataResponse(JSONObject: ["result": false])
+                    
+                    completionBlock(response)
+                }
+                
+                func returnSuccessResponse() {
+                    let response = GCDWebServerDataResponse(JSONObject: ["result": true])
+                    
+                    completionBlock(response)
+                }
+                
+                let result: String
+                
+                let components = NSURLComponents(URL: request.URL, resolvingAgainstBaseURL: true)!
+                let query = self.queryDictionary(components.query!)
+                
+                let cmd = query["cmd"]
+                
+                if cmd == "start" {
+                    mainThread {
+                        self.startExperiment()
+                    }
+                    
+                    returnSuccessResponse()
+                }
+                else if cmd == "stop" {
+                    mainThread {
+                        self.stopExperiment()
+                    }
+                    returnSuccessResponse()
+                }
+                else if cmd == "set" {
+                    guard let bufferName = query["buffer"], let valueString = query["value"], let buffer = self.experiment.buffers.0?[bufferName], let value = Double(valueString) else {
+                        returnErrorResponse()
+                        return
+                    }
+                    
+                    if !isfinite(value) {
+                        returnErrorResponse()
+                    }
+                    else {
+                        buffer.append(value)
+                        returnSuccessResponse()
+                    }
+                }
+                else {
+                    returnErrorResponse()
+                }
+            })
+            
             server!.addHandlerForMethod("GET", pathRegex: "/get", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+                func returnErrorResponse() {
+                    let response = GCDWebServerResponse(statusCode: 400)
+                    
+                    completionBlock(response)
+                }
+                
                 if let query = request.URL.query?.stringByRemovingPercentEncoding {
                     var str = "{\"buffer\":\n{"
                     var first = true
@@ -205,9 +327,7 @@ final class ExperimentViewController: CollectionViewController {
                         let bufferName = components.first!
                         
                         guard let b = self.experiment.buffers.0?[bufferName] else {
-                            let response = GCDWebServerResponse(statusCode: 400)
-                            
-                            completionBlock(response)
+                            returnErrorResponse()
                             return
                         }
                         
@@ -274,9 +394,7 @@ final class ExperimentViewController: CollectionViewController {
                     completionBlock(response)
                 }
                 else {
-                    let response = GCDWebServerResponse(statusCode: 400)
-                    
-                    completionBlock(response)
+                    returnErrorResponse()
                 }
             })
             
@@ -318,7 +436,7 @@ final class ExperimentViewController: CollectionViewController {
         }
     }
     
-    private func runExport() {
+    private func runExportFromActionSheet() {
         let sets = exportSelectionView!.activeSets()!
         let format = exportSelectionView!.selectedFormat()
         
@@ -328,17 +446,31 @@ final class ExperimentViewController: CollectionViewController {
         
         HUD.showInView(navigationController!.view)
         
-        self.experiment.export!.runExport(format, selectedSets: sets) { (errorMessage, fileURL) in
-            if let error = errorMessage {
+        runExport(sets, format: format) { error, URL in
+            if error != nil {
                 HUD.indicatorView = JGProgressHUDErrorIndicatorView()
-                HUD.textLabel.text = error
+                HUD.textLabel.text = error!.localizedDescription
                 HUD.dismissAfterDelay(3.0)
             }
-            else if let URL = fileURL {
-                let vc = UIActivityViewController(activityItems: [URL], applicationActivities: nil)
+            else {
+                let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
                 
                 self.navigationController!.presentViewController(vc, animated: true) {
                     HUD.dismiss()
+                }
+            }
+        }
+    }
+    
+    private func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: ((NSError?, NSURL?) -> Void)? = nil) {
+        
+        self.experiment.export!.runExport(format, selectedSets: sets) { (errorMessage, fileURL) in
+            if completion != nil {
+                if let error = errorMessage {
+                    completion!(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
+                }
+                else if let URL = fileURL {
+                    completion!(nil, URL)
                 }
             }
         }
@@ -348,7 +480,7 @@ final class ExperimentViewController: CollectionViewController {
         let alert = UIAlertController(title: "Export", message: "Select the data sets to export:", preferredStyle: .Alert)
         
         let exportAction = UIAlertAction(title: "Export", style: .Default, handler: { [unowned self] action in
-            self.runExport()
+            self.runExportFromActionSheet()
             })
         
         if exportSelectionView == nil {
