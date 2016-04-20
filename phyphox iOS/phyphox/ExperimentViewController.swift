@@ -9,10 +9,19 @@
 import UIKit
 import GCDWebServers
 
-final class ExperimentViewController: CollectionViewController {
+final class ExperimentViewController: CollectionViewController, ExperimentWebServerDelegate {
     let experiment: Experiment
     
+    let webServer: ExperimentWebServer
     private let viewModules: [[UIView]]
+    
+    var timerRunning: Bool {
+        return experimentRunTimer != nil
+    }
+    
+    var remainingTimerTime: Double {
+        return experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0
+    }
     
     private var timerDelayString: String?
     private var timerDurationString: String?
@@ -22,10 +31,6 @@ final class ExperimentViewController: CollectionViewController {
     private var experimentRunTimer: NSTimer?
     
     private var exportSelectionView: ExperimentExportSetSelectionView?
-    
-    private var webServerActive = false
-    
-    private var server: GCDWebServer?
     
     var selectedViewCollection: Int {
         didSet {
@@ -71,6 +76,7 @@ final class ExperimentViewController: CollectionViewController {
     
     init(experiment: Experiment) {
         self.experiment = experiment
+        self.webServer = ExperimentWebServer(experiment: experiment)
         
         var modules: [[UIView]] = []
         
@@ -103,6 +109,8 @@ final class ExperimentViewController: CollectionViewController {
                 self.presentViewCollectionSelector()
             }
         }
+        
+        webServer.delegate = self
     }
     
     override class var viewClass: CollectionContainerView.Type {
@@ -183,256 +191,29 @@ final class ExperimentViewController: CollectionViewController {
         return 5.0
     }
     
-    func queryDictionary(query: String) -> [String: String] {
-        var dict = [String: String]()
-        
-        for item in query.componentsSeparatedByString("&") {
-            let c = item.componentsSeparatedByString("=")
-            
-            if c.count > 1 {
-                dict[c.first!] = c.last!
-            }
-            else {
-                dict[c.first!] = ""
-            }
-        }
-        
-        return dict
-    }
-    
     private func launchWebServer() {
-        if !webServerActive {
-            server = GCDWebServer()
-            let path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
+        if !webServer.start() {
+            let hud = JGProgressHUD(style: .Dark)
+            hud.interactionType = .BlockTouchesOnHUDView
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud.textLabel.text = "Failed to initialize HTTP server"
             
-            server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+            hud.showInView(self.view)
             
-            server!.addHandlerForMethod("GET", pathRegex: "/logo", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
-                let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(WebServerUtilities.genPlaceHolderImage()), contentType: "image/png")
-                
-                completionBlock(response)
-                })
-            
-            server!.addHandlerForMethod("GET", pathRegex: "/export", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
-                func returnErrorResponse(response: AnyObject) {
-                    let response = GCDWebServerDataResponse(JSONObject: response)
-                    
-                    completionBlock(response)
-                }
-                
-                let result: String
-                
-                let components = NSURLComponents(URL: request.URL, resolvingAgainstBaseURL: true)!
-                let query = self.queryDictionary(components.query!)
-                
-                if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
-                    var sets = [ExperimentExportSet]()
-                    
-                    for (i, set) in self.experiment.export!.sets.enumerate() {
-                        if query["set\(i)"] != nil {
-                            sets.append(set)
-                        }
-                    }
-                    
-                    if sets.count == 0 {
-                        sets = self.experiment.export!.sets
-                    }
-                    
-                    self.runExport(sets, format: format) { error, URL in
-                        if error == nil {
-                            let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
-                            completionBlock(response)
-                        }
-                        else {
-                            returnErrorResponse(["error": error!.localizedDescription])
-                        }
-                    }
-                }
-                else {
-                    returnErrorResponse(["error": "Format out of range"])
-                }
-                })
-            
-            server!.addHandlerForMethod("GET", pathRegex: "/control", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
-                func returnErrorResponse() {
-                    let response = GCDWebServerDataResponse(JSONObject: ["result": false])
-                    
-                    completionBlock(response)
-                }
-                
-                func returnSuccessResponse() {
-                    let response = GCDWebServerDataResponse(JSONObject: ["result": true])
-                    
-                    completionBlock(response)
-                }
-                
-                let result: String
-                
-                let components = NSURLComponents(URL: request.URL, resolvingAgainstBaseURL: true)!
-                let query = self.queryDictionary(components.query!)
-                
-                let cmd = query["cmd"]
-                
-                if cmd == "start" {
-                    mainThread {
-                        self.startExperiment()
-                    }
-                    
-                    returnSuccessResponse()
-                }
-                else if cmd == "stop" {
-                    mainThread {
-                        self.stopExperiment()
-                    }
-                    returnSuccessResponse()
-                }
-                else if cmd == "set" {
-                    guard let bufferName = query["buffer"], let valueString = query["value"], let buffer = self.experiment.buffers.0?[bufferName], let value = Double(valueString) else {
-                        returnErrorResponse()
-                        return
-                    }
-                    
-                    if !isfinite(value) {
-                        returnErrorResponse()
-                    }
-                    else {
-                        buffer.append(value)
-                        returnSuccessResponse()
-                    }
-                }
-                else {
-                    returnErrorResponse()
-                }
-            })
-            
-            server!.addHandlerForMethod("GET", pathRegex: "/get", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
-                func returnErrorResponse() {
-                    let response = GCDWebServerResponse(statusCode: 400)
-                    
-                    completionBlock(response)
-                }
-                
-                if let query = request.URL.query?.stringByRemovingPercentEncoding {
-                    var str = "{\"buffer\":\n{"
-                    var first = true
-                    
-                    for buffer in query.componentsSeparatedByString("&") {
-                        if !first {
-                            str += ",\n"
-                        }
-                        first = false
-                        
-                        let components = buffer.componentsSeparatedByString("=")
-                        
-                        let bufferName = components.first!
-                        
-                        guard let b = self.experiment.buffers.0?[bufferName] else {
-                            returnErrorResponse()
-                            return
-                        }
-                        
-                        if let offset = components.last {
-                            let raw = b.toArray()
-                            
-                            if offset == "full" {
-                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"full\", \"buffer\": \(raw.description) }"
-                            }
-                            else {
-                                let extraComponents = offset.componentsSeparatedByString("|")
-                                let threshold = Double(extraComponents.first!) ?? -Double.infinity
-                                
-                                var final: [Double] = []
-                                
-                                if extraComponents.count > 1 {
-                                    let extra = extraComponents.last!
-                                    
-                                    guard let extraBuffer = self.experiment.buffers.0?[extra] else {
-                                        let response = GCDWebServerResponse(statusCode: 400)
-                                        
-                                        completionBlock(response)
-                                        return
-                                    }
-                                    
-                                    let extraArray = extraBuffer.toArray()
-                                    
-                                    for (i, v) in extraArray.enumerate() {
-                                        if i >= raw.count {
-                                            break
-                                        }
-                                        
-                                        if v > threshold {
-                                            let val = raw[i]
-                                            
-                                            final.append(val)
-                                        }
-                                    }
-                                }
-                                else {
-                                    for v in raw {
-                                        if v > threshold {
-                                            final.append(v)
-                                        }
-                                    }
-                                }
-                                
-                                str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"partial\", \"buffer\": \(final.description) }"
-                            }
-                        }
-                        else {
-                            str += "\"\(bufferName)\": {\"size\": \(b.size), \"updateMode\": \"single\", \"buffer\": [\(b.last ?? 0.0)]}"
-                        }
-                    }
-                    
-                    str += "},\n"
-                    
-                    str += "\"status\": {\"measuring\": \(self.experiment.running), \"timedRun\": \(self.experimentRunTimer != nil), \"countDown\": \(self.experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0)}\n"
-                    
-                    str += "}"
-                    
-                    let response = GCDWebServerDataResponse(text: str)
-                    
-                    completionBlock(response)
-                }
-                else {
-                    returnErrorResponse()
-                }
-            })
-            
-            if server!.start() {
-                webServerActive = true
-                print("Webserver running on \(server!.serverURL)")
-            }
-            else {
-                webServerActive = false
-                server!.stop()
-                server = nil
-                
-                let hud = JGProgressHUD(style: .Dark)
-                hud.interactionType = .BlockTouchesOnHUDView
-                hud.indicatorView = JGProgressHUDErrorIndicatorView()
-                hud.textLabel.text = "Failed to initialize HTTP server"
-                
-                hud.showInView(self.view)
-                
-                hud.dismissAfterDelay(3.0)
-            }
+            hud.dismissAfterDelay(3.0)
         }
     }
     
     private func tearDownWebServer() {
-        if webServerActive {
-            server!.stop()
-            server = nil
-            webServerActive = false
-        }
+        webServer.stop()
     }
     
     private func toggleWebServer() {
-        if !webServerActive {
-            launchWebServer()
+        if webServer.running {
+            tearDownWebServer()
         }
         else {
-            tearDownWebServer()
+            launchWebServer()
         }
     }
     
@@ -455,6 +236,10 @@ final class ExperimentViewController: CollectionViewController {
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
                 
+                vc.completionWithItemsHandler = { _ in
+                    do { try NSFileManager.defaultManager().removeItemAtURL(URL!) } catch {}
+                }
+                
                 self.navigationController!.presentViewController(vc, animated: true) {
                     HUD.dismiss()
                 }
@@ -462,16 +247,13 @@ final class ExperimentViewController: CollectionViewController {
         }
     }
     
-    private func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: ((NSError?, NSURL?) -> Void)? = nil) {
-        
+    func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void) {
         self.experiment.export!.runExport(format, selectedSets: sets) { (errorMessage, fileURL) in
-            if completion != nil {
-                if let error = errorMessage {
-                    completion!(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
-                }
-                else if let URL = fileURL {
-                    completion!(nil, URL)
-                }
+            if let error = errorMessage {
+                completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
+            }
+            else if let URL = fileURL {
+                completion(nil, URL)
             }
         }
     }
@@ -520,14 +302,14 @@ final class ExperimentViewController: CollectionViewController {
             
             self.timerDelayString = alert.textFields!.first!.text
             self.timerDurationString = alert.textFields!.last!.text
-        }))
+            }))
         
         alert.addAction(UIAlertAction(title: "Disable Automatic Control", style: .Cancel, handler: { [unowned self, unowned alert] action in
             self.timerEnabled = false
             
             self.timerDelayString = alert.textFields!.first!.text
             self.timerDurationString = alert.textFields!.last!.text
-        }))
+            }))
         
         self.navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
@@ -538,14 +320,14 @@ final class ExperimentViewController: CollectionViewController {
         if experiment.export != nil {
             alert.addAction(UIAlertAction(title: "Export", style: .Default, handler: { [unowned self] action in
                 self.showExport()
-            }))
+                }))
         }
         
         alert.addAction(UIAlertAction(title: "Automatic Control", style: .Default, handler: { [unowned self] action in
             self.showTimerOptions()
-        }))
+            }))
         
-        alert.addAction(UIAlertAction(title: (webServerActive ? "Disable Remote Access" : "Enable Remote Access"), style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: (webServer.running ? "Disable Remote Access" : "Enable Remote Access"), style: .Default, handler: { [unowned self] action in
             self.toggleWebServer()
             }))
         
@@ -555,8 +337,8 @@ final class ExperimentViewController: CollectionViewController {
             al.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
             
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
-        }))
-
+            }))
+        
         if experiment.hasStarted {
             alert.addAction(UIAlertAction(title: "Share Screenshot", style: .Default, handler: { [unowned self] action in
                 var s = self.selfView.collectionView.contentSize
@@ -635,15 +417,15 @@ final class ExperimentViewController: CollectionViewController {
         
         navigationItem.rightBarButtonItems = items
         
-        func decrease(t: Int) {
+        func updateT() {
             if self.experimentRunTimer != nil {
-                let reduced = max(0, t-1)
+                let t = Int(round(self.experimentRunTimer!.fireDate.timeIntervalSinceNow))
                 
                 after(1.0, closure: {
-                    decrease(reduced)
+                    updateT()
                 })
                 
-                label.text = "\(reduced)"
+                label.text = "\(t)"
                 label.sizeToFit()
                 
                 var items = navigationItem.rightBarButtonItems!
@@ -656,7 +438,7 @@ final class ExperimentViewController: CollectionViewController {
         }
         
         after(1.0, closure: {
-            decrease(i)
+            updateT()
         })
         
         experimentRunTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
@@ -693,15 +475,15 @@ final class ExperimentViewController: CollectionViewController {
                 
                 navigationItem.rightBarButtonItems = items
                 
-                func decrease(t: Int) {
+                func updateT() {
                     if self.experimentStartTimer != nil {
-                        let reduced = max(0, t-1)
+                        let t = Int(round(self.experimentStartTimer!.fireDate.timeIntervalSinceNow))
                         
                         after(1.0, closure: {
-                            decrease(reduced)
+                            updateT()
                         })
                         
-                        label.text = "\(reduced)"
+                        label.text = "\(t)"
                         label.sizeToFit()
                         
                         var items = navigationItem.rightBarButtonItems!
@@ -714,7 +496,7 @@ final class ExperimentViewController: CollectionViewController {
                 }
                 
                 after(1.0, closure: {
-                    decrease(i)
+                    updateT()
                 })
                 
                 experimentStartTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
@@ -746,7 +528,7 @@ final class ExperimentViewController: CollectionViewController {
             }
             
             experiment.stop()
-
+            
             items[1] = UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))
             
             navigationItem.rightBarButtonItems = items

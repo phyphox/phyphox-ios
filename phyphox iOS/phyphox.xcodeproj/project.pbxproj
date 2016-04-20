@@ -23,6 +23,7 @@
 		6B00F0B21C46CE2300971941 /* ExperimentOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */; };
 		6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B61C46F23000971941 /* ExperimentExport.swift */; };
 		6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */; };
+		6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */; };
 		6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6B0814DF1CABEE3000EE2791 /* BEMAnimationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B0814DA1CABEE3000EE2791 /* BEMAnimationManager.m */; };
 		6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B0814DC1CABEE3000EE2791 /* BEMCheckBox.m */; };
@@ -434,6 +435,7 @@
 		6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSet.swift; sourceTree = "<group>"; };
 		6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "phyphox-Bridging-Header.h"; sourceTree = "<group>"; };
 		6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAudioInput.swift; sourceTree = "<group>"; };
+		6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentWebServer.swift; sourceTree = "<group>"; };
 		6B0814C81CABEE0700EE2791 /* phyphox-experiments */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "phyphox-experiments"; path = "../../phyphox-experiments"; sourceTree = "<group>"; };
 		6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JGProgressHUD.xcodeproj; path = ../../External/JGProgressHUD/JGProgressHUD.xcodeproj; sourceTree = "<group>"; };
 		6B0814D91CABEE3000EE2791 /* BEMAnimationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMAnimationManager.h; sourceTree = "<group>"; };
@@ -603,7 +605,7 @@
 			isa = PBXGroup;
 			children = (
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
-				6B63C8E31CC14A96007DC09B /* WebServerUtilities.swift */,
+				6B06C22E1CC7702A0030BB7D /* Web Server */,
 				6B00F09B1C457A6600971941 /* ExperimentView.swift */,
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
 				6B6319621C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift */,
@@ -672,6 +674,15 @@
 				6B0815361CABEF9100EE2791 /* Shaders.metal */,
 			);
 			name = Graph;
+			sourceTree = "<group>";
+		};
+		6B06C22E1CC7702A0030BB7D /* Web Server */ = {
+			isa = PBXGroup;
+			children = (
+				6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */,
+				6B63C8E31CC14A96007DC09B /* WebServerUtilities.swift */,
+			);
+			name = "Web Server";
 			sourceTree = "<group>";
 		};
 		6B0814CD1CABEE2600EE2791 /* Products */ = {
@@ -1518,6 +1529,7 @@
 				6B6319631C4820070038BE22 /* ExperimentViewModuleCollectionViewCell.swift in Sources */,
 				6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */,
 				6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */,
+				6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */,
 				6B00F0991C4463A300971941 /* ExperimentAnalysis.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */,

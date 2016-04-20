@@ -105,3 +105,19 @@ func measure(label: String? = nil, closure: () -> ()) {
     print("\(label ?? "measurement") took: \(t)")
 }
 
+func queryDictionary(query: String) -> [String: String] {
+    var dict = [String: String]()
+    
+    for item in query.componentsSeparatedByString("&") {
+        let c = item.componentsSeparatedByString("=")
+        
+        if c.count > 1 {
+            dict[c.first!] = c.last!
+        }
+        else {
+            dict[c.first!] = ""
+        }
+    }
+    
+    return dict
+}

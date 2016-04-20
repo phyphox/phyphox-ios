@@ -57,7 +57,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         
         vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageBackgroundColorFill))
         
-        let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, UnsafeMutablePointer<Float>.self), count: count)).map { Double($0) }
+        let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
         
         outputData.destroy()
         outputData.dealloc(count)

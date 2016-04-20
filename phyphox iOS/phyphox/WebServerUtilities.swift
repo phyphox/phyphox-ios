@@ -139,7 +139,7 @@ final class WebServerUtilities {
     }
     
     class func prepareWebServerFilesForExperiment(experiment: Experiment) -> String {
-        let path = NSTemporaryDirectory().stringByAppendingString("/\(NSUUID().UUIDString)")
+        let path = NSTemporaryDirectory() + "/" + NSUUID().UUIDString
         
         try! NSFileManager.defaultManager().createDirectoryAtPath(path, withIntermediateDirectories: false, attributes: nil)
         
@@ -147,8 +147,8 @@ final class WebServerUtilities {
         
         let html = prepareIndexFile(experiment)
         
-        try! css.writeToFile(path.stringByAppendingString("/style.css"), atomically: true, encoding: NSUTF8StringEncoding)
-        try! html.writeToFile(path.stringByAppendingString("/index.html"), atomically: true, encoding: NSUTF8StringEncoding)
+        try! css.writeToFile(path + "/style.css", atomically: true, encoding: NSUTF8StringEncoding)
+        try! html.writeToFile(path + "/index.html", atomically: true, encoding: NSUTF8StringEncoding)
         
         return path
     }

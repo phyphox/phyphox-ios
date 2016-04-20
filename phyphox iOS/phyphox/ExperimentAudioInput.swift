@@ -30,7 +30,7 @@ final class ExperimentAudioInput {
                         
                         AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, data, &arrayPointer, frames)
                         
-                        let final = array.map{ Double($0) }
+                        let final = array.map(Double.init)
                         
                         for out in self.outBuffers {
                             out.appendFromArray(final)
