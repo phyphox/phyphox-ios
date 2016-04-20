@@ -25,7 +25,7 @@ final class ExperimentWebServer {
     
     private(set) var path: String?
     
-    private var server: GCDWebServer?
+    private(set) var server: GCDWebServer?
     private var temporaryFiles = [String]()
     
     weak var delegate: ExperimentWebServerDelegate?

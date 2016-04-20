@@ -202,6 +202,13 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
             
             hud.dismissAfterDelay(3.0)
         }
+        else {
+            let al = UIAlertController(title: "Remote Access Enabled", message: "You can now remotely access the experiment from any browser connected to the same WiFi network as this device by opening this URL:\n\(webServer.server!.serverURL)", preferredStyle: .Alert)
+            
+            al.addAction(UIAlertAction(title: "Dismiss", style: .Cancel, handler: nil))
+            
+            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+        }
     }
     
     private func tearDownWebServer() {
