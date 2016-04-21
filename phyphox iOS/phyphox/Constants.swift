@@ -44,7 +44,7 @@ func !=-= <T: Equatable>(a: T?, b: T?) -> Bool {
 }
 
 /**
-Runs a closure on the main thread, synchronically if the current thread is the main thread, otherwise asynchronically.
+Runs a closure on the main thread.
 */
 func mainThread(closure: () -> Void) {
     if NSThread.isMainThread() {
@@ -95,7 +95,8 @@ func generateDots(height: CGFloat) -> UIImage {
     return img
 }
 
-func measure(label: String? = nil, closure: () -> ()) {
+#if DEBUG
+func measure(label: String? = nil, closure: () -> Void) {
     let start = CFAbsoluteTimeGetCurrent()
     
     closure()
@@ -104,6 +105,7 @@ func measure(label: String? = nil, closure: () -> ()) {
     
     print("\(label ?? "measurement") took: \(t)")
 }
+#endif
 
 func queryDictionary(query: String) -> [String: String] {
     var dict = [String: String]()

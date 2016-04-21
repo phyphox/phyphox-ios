@@ -40,60 +40,56 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     }
     
     private var max: GraphPoint<Double>? {
-        get {
-            if dataSets.count > 1 {
-                var maxX = -Double.infinity
-                var maxY = -Double.infinity
+        if dataSets.count > 1 {
+            var maxX = -Double.infinity
+            var maxY = -Double.infinity
+            
+            for (i, set) in dataSets.enumerate() {
+                let maxPoint = set.bounds.max
+                let minPoint = set.bounds.min
                 
-                for (i, set) in dataSets.enumerate() {
-                    let maxPoint = set.bounds.max
-                    let minPoint = set.bounds.min
-                    
-                    if i == 0 {
-                        if maxPoint.x > maxX {
-                            maxX = maxPoint.x
-                        }
-                    }
-                    else {
-                        maxX += maxPoint.x-minPoint.x //add delta
-                    }
-                    
-                    if maxPoint.y > maxY {
-                        maxY = maxPoint.y
+                if i == 0 {
+                    if maxPoint.x > maxX {
+                        maxX = maxPoint.x
                     }
                 }
+                else {
+                    maxX += maxPoint.x-minPoint.x //add delta
+                }
                 
-                return GraphPoint(x: maxX, y: maxY)
+                if maxPoint.y > maxY {
+                    maxY = maxPoint.y
+                }
             }
-            else {
-                return dataSets.first?.bounds.max
-            }
+            
+            return GraphPoint(x: maxX, y: maxY)
+        }
+        else {
+            return dataSets.first?.bounds.max
         }
     }
     
     private var min: GraphPoint<Double>? {
-        get {
-            if dataSets.count > 1 {
-                var minX = Double.infinity
-                var minY = Double.infinity
+        if dataSets.count > 1 {
+            var minX = Double.infinity
+            var minY = Double.infinity
+            
+            for set in dataSets {
+                let minPoint = set.bounds.min
                 
-                for set in dataSets {
-                    let minPoint = set.bounds.min
-                    
-                    if minPoint.x < minX {
-                        minX = minPoint.x
-                    }
-                    
-                    if minPoint.y < minY {
-                        minY = minPoint.y
-                    }
+                if minPoint.x < minX {
+                    minX = minPoint.x
                 }
                 
-                return GraphPoint(x: minX, y: minY)
+                if minPoint.y < minY {
+                    minY = minPoint.y
+                }
             }
-            else {
-                return dataSets.first?.bounds.min
-            }
+            
+            return GraphPoint(x: minX, y: minY)
+        }
+        else {
+            return dataSets.first?.bounds.min
         }
     }
     
@@ -453,4 +449,3 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         glGraph.frame = graphFrame
     }
 }
-

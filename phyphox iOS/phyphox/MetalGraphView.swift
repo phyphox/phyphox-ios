@@ -129,5 +129,4 @@ final class MetalGraphView: MTKView {
             command_buffer.commit()
         }
     }
-    
 }

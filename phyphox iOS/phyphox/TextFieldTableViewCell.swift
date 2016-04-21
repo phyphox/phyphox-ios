@@ -24,8 +24,8 @@ private final class InsetTextField: UITextField {
 
 final class TextFieldTableViewCell: UITableViewCell {
     let textField: UITextField = InsetTextField()
-    var editingEndedCallback: (() -> ())?
-    var editingChangedCallback: (() -> ())?
+    var editingEndedCallback: (() -> Void)?
+    var editingChangedCallback: (() -> Void)?
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)

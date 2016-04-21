@@ -106,20 +106,20 @@ final class WebServerUtilities {
         
         viewLayout += "];\n"
         
-        var exportStr = ""
+        /*var exportStr = ""
         
         if let export = experiment.export {
             for (i, set) in export.sets.enumerate() {
                 exportStr += "<div class=\"setSelector\"><input type=\"checkbox\" id=\"set\(i)\" name=\"set\(i)\" /><label for=\"set\(i)\"\">\(set.localizedName)</label></div>\n"
             }
-        }
+        }*/
        
         let exportFormats = "<option value=\"0\">CSV</option> <option value=\"1\">Excel</option> <option value=\"2\">CSV (tab separated)</option>"
         
         raw.replaceOccurrencesOfString("<!-- [[viewLayout]] -->", withString: viewLayout, options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[viewOptions]] -->", withString: viewOptions, options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[exportFormatOptions]] -->", withString: exportFormats, options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrencesOfString("<!-- [[exportSetSelectors]] -->", withString: exportStr, options: [], range: NSMakeRange(0, raw.length))
+        //raw.replaceOccurrencesOfString("<!-- [[exportSetSelectors]] -->", withString: exportStr, options: [], range: NSMakeRange(0, raw.length))
         
         return raw as String
     }
