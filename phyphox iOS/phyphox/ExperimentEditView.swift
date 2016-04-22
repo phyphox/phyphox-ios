@@ -11,7 +11,7 @@ import UIKit
 private let spacing: CGFloat = 5.0
 private let textFieldWidth: CGFloat = 60.0
 
-final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
+final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate, DataBufferObserver {
     let textField: UITextField
     let unitLabel: UILabel?
     
@@ -43,6 +43,8 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         
         super.init(descriptor: descriptor)
         
+        descriptor.buffer.addObserver(self)
+        
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), forControlEvents: .EditingDidEndOnExit)
         
         updateTextField(textField, write: false)
@@ -72,10 +74,14 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
     }
     
-    func updateTextField(_: UITextField, write: Bool) {
+    func dataBufferUpdated(buffer: DataBuffer) {
+        updateTextField(textField, write: false, forceReadFromBuffer: true)
+    }
+    
+    func updateTextField(_: UITextField, write: Bool, forceReadFromBuffer: Bool = false) {
         let val: Double
         
-        if textField.text?.characters.count == 0 || Double(textField.text!) == nil {
+        if forceReadFromBuffer || textField.text?.characters.count == 0 || Double(textField.text!) == nil {
             val = descriptor.value
             
             textField.text = formattedValue(val*self.descriptor.factor)

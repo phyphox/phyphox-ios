@@ -37,7 +37,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
 
     private var stateToken: NSUUID?
     
-    private var observers: NSMutableOrderedSet = NSMutableOrderedSet()
+    private var observers = NSMutableOrderedSet()
     
     /**
      Notifications are sent in order, first registered, first notified.
