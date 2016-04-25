@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 //http://phyphox.com/wiki/index.php?title=Phyphox_file_format
 
 import Foundation

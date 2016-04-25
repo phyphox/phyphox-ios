@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 import Foundation
 
 internal final class ValueSource : CustomStringConvertible {

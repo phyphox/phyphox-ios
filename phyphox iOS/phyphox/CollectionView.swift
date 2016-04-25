@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 import UIKit
 
 class CollectionContainerView: UIView {

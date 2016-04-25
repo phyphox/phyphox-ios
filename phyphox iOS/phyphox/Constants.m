@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 #import "Constants.h"
 
 BOOL ptHelperFunctionIsIOS9(void) {

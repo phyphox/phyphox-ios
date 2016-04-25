@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 import UIKit
 
 private let spacing: CGFloat = 5.0

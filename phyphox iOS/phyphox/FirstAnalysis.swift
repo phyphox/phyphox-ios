@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 import Foundation
 
 final class FirstAnalysis: ExperimentAnalysisModule {

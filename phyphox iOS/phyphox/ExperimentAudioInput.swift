@@ -7,7 +7,6 @@
 //  By Order of RWTH Aachen.
 //
 
-
 import Foundation
 
 private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioInput", DISPATCH_QUEUE_SERIAL)
