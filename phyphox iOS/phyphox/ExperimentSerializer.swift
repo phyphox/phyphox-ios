@@ -3,8 +3,10 @@
 //  phyphox
 //
 //  Created by Jonas Gessner on 04.12.15.
-//  Copyright © 2015 RWTH Aachen. All rights reserved.
+//  Copyright © 2015 Jonas Gessner. All rights reserved.
+//  By Order of RWTH Aachen.
 //
+
 
 import Foundation
 

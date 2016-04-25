@@ -3,8 +3,10 @@
 //  phyphox
 //
 //  Created by Jonas Gessner on 06.12.15.
-//  Copyright © 2015 RWTH Aachen. All rights reserved.
+//  Copyright © 2015 Jonas Gessner. All rights reserved.
+//  By Order of RWTH Aachen.
 //
+
 
 import Foundation
 import Accelerate
@@ -69,7 +71,8 @@ func nextFFTSize(c: Int, minN: Int = 3) -> Int {
 }
 
 final class FFTAnalysis: ExperimentAnalysisModule {
-    private var fftSetup: vDSP_DFT_SetupD!
+    private var dftSetup: vDSP_DFT_SetupD?
+    private var currentDFTLength = 0
     
     private var realInput: DataBuffer!
     private var imagInput: DataBuffer?
@@ -90,7 +93,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         }
         
         hasImagInBuffer = imagInput != nil
-
+        
         for output in outputs {
             if output.asString == "im" {
                 imagOutput = output
@@ -104,9 +107,9 @@ final class FFTAnalysis: ExperimentAnalysisModule {
     }
     
     deinit {
-        if fftSetup != nil {
-            vDSP_DFT_DestroySetupD(fftSetup!)
-            fftSetup = nil
+        if dftSetup != nil {
+            vDSP_DFT_DestroySetupD(dftSetup!)
+            dftSetup = nil
         }
     }
     
@@ -124,7 +127,10 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             let count = vDSP_Length(nextFFTSize(bufferCount))
             let countI = Int(count)
             
-            self.fftSetup = vDSP_DFT_zop_CreateSetupD(self.fftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+            if dftSetup == nil || countI != currentDFTLength {
+                dftSetup = vDSP_DFT_zop_CreateSetupD(dftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
+                currentDFTLength = countI
+            }
             
             var realInputArray = realInput.toArray()
             var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
@@ -146,7 +152,8 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             realOutputArray = [Double](count: countI, repeatedValue: 0.0)
             imagOutputArray = realOutputArray
             
-            vDSP_DFT_ExecuteD(self.fftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+            //FIXME: Crashes when called with little delay in between updates. Crash can be fixed by destroying dft setup after each update.
+            vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
             
             if !hasImagInBuffer {
                 realOutputArray = Array(realOutputArray[0..<countI/2])
