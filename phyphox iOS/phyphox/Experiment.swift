@@ -291,6 +291,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     func clear() {
         stop()
+        pauseBegin = 0.0
+        startTimestamp = nil
         hasStarted = false
         
         if buffers.1 != nil {
