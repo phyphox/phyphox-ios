@@ -45,18 +45,19 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         }
         
         var x: Double?
+        var last = Double.NaN
         
         for (i, value) in yIn.enumerate() {
-            if (falling ? value < threshold : value > threshold) {
+            if (falling ? (value < threshold && last > threshold) : (value > threshold && last < threshold)) {
                 if let v = xIn?.objectAtIndex(i) {
                     x = v
                 }
                 else {
                     x = Double(i)
                 }
-                
                 break
             }
+            last = value
         }
         
         guard x != nil else {

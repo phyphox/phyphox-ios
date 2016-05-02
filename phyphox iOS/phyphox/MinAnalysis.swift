@@ -1,0 +1,138 @@
+//
+//  MinAnalysis.swift
+//  phyphox
+//
+//  Created by Sebastian Kuhlen on 02.05.16.
+//  Copyright © 2016 RWTH Aachen. All rights reserved.
+//
+
+import Foundation
+import Accelerate
+
+final class MinAnalysis: ExperimentAnalysisModule {
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
+    
+    private var minOut: ExperimentAnalysisDataIO?
+    private var positionOut: ExperimentAnalysisDataIO?
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        for input in inputs {
+            if input.asString == "x" {
+                xIn = input.buffer
+            }
+            else if input.asString == "y" {
+                yIn = input.buffer
+            }
+            else {
+                print("Error: Invalid analysis input: \(input.asString)")
+            }
+        }
+        
+        for output in outputs {
+            if output.asString == "min" {
+                minOut = output
+            }
+            else if output.asString == "position" {
+                positionOut = output
+            }
+            else {
+                print("Error: Invalid analysis output: \(output.asString)")
+            }
+        }
+        
+        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
+    
+    override func update() {
+        #if DEBUG_ANALYSIS
+            if xIn != nil {
+                debug_noteInputs(["valIn" : yIn, "posIn" : xIn])
+            }
+            else {
+                debug_noteInputs(["valIn" : yIn])
+            }
+        #endif
+        
+        let inArray = yIn.toArray()
+        
+        if inArray.count == 0 {
+            if minOut != nil {
+                if minOut!.clear {
+                    minOut!.buffer!.replaceValues([])
+                }
+            }
+            
+            if positionOut != nil {
+                if positionOut!.clear {
+                    positionOut!.buffer!.replaceValues([])
+                }
+            }
+            
+            return
+        }
+        
+        if positionOut == nil {
+            var min = 0.0
+            
+            vDSP_minvD(inArray, 1, &min, vDSP_Length(inArray.count))
+            
+            if minOut != nil {
+                if minOut!.clear {
+                    minOut!.buffer!.replaceValues([min])
+                }
+                else {
+                    minOut!.buffer!.append(min)
+                }
+            }
+            
+            #if DEBUG_ANALYSIS
+                debug_noteOutputs(min)
+            #endif
+            
+        }
+        else {
+            var min = -Double.infinity
+            var index: vDSP_Length = 0
+            
+            vDSP_minviD(inArray, 1, &min, &index, vDSP_Length(inArray.count))
+            
+            let x: Double
+            
+            if xIn != nil {
+                guard let n = xIn!.objectAtIndex(Int(index)) else {
+                    print("[Min analysis]: Index \(Int(index)) is out of bounds of x value array \(xIn!)")
+                    return
+                }
+                
+                x = n
+            }
+            else {
+                x = Double(index)
+            }
+            
+            if minOut != nil {
+                if minOut!.clear {
+                    minOut!.buffer!.replaceValues([min])
+                }
+                else {
+                    minOut!.buffer!.append(min)
+                }
+            }
+            
+            if positionOut != nil {
+                if positionOut!.clear {
+                    positionOut!.buffer!.replaceValues([x])
+                }
+                else {
+                    positionOut!.buffer!.append(x)
+                }
+            }
+            
+            #if DEBUG_ANALYSIS
+                debug_noteOutputs(["min" : min, "pos" : x])
+            #endif
+            
+        }
+    }
+}

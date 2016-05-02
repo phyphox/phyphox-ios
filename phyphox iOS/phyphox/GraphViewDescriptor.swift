@@ -24,6 +24,20 @@ final class GraphViewDescriptor: ViewDescriptor {
     let logX: Bool
     let logY: Bool
     
+    enum scaleMode {
+        case auto, extend, fixed
+    }
+    
+    let minX: CGFloat
+    let maxX: CGFloat
+    let minY: CGFloat
+    let maxY: CGFloat
+    
+    let scaleMinX: scaleMode
+    let scaleMaxX: scaleMode
+    let scaleMinY: scaleMode
+    let scaleMaxY: scaleMode
+    
     var xInputBuffer: DataBuffer?
     var yInputBuffer: DataBuffer
     
@@ -33,12 +47,22 @@ final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
         self.logX = logX
         self.logY = logY
+        
+        self.minX = minX
+        self.maxX = maxX
+        self.minY = minY
+        self.maxY = maxY
+        
+        self.scaleMinX = scaleMinX
+        self.scaleMaxX = scaleMaxX
+        self.scaleMinY = scaleMinY
+        self.scaleMaxY = scaleMaxY
         
         self.xInputBuffer = xInputBuffer
         self.yInputBuffer = yInputBuffer

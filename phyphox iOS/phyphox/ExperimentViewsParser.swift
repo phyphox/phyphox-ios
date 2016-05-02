@@ -144,6 +144,49 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
                 let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
                 
+                let scaleMinX: GraphViewDescriptor.scaleMode
+                switch stringFromXML(attributes, key: "scaleMinX", defaultValue: "auto") {
+                    case "auto": scaleMinX = GraphViewDescriptor.scaleMode.auto
+                    case "extend": scaleMinX = GraphViewDescriptor.scaleMode.extend
+                    case "fixed": scaleMinX = GraphViewDescriptor.scaleMode.fixed
+                    default:
+                        scaleMinX = GraphViewDescriptor.scaleMode.auto
+                        print("Error! Unknown value for scaleMinX.")
+                }
+                let scaleMaxX: GraphViewDescriptor.scaleMode
+                switch stringFromXML(attributes, key: "scaleMaxX", defaultValue: "auto") {
+                    case "auto": scaleMaxX = GraphViewDescriptor.scaleMode.auto
+                    case "extend": scaleMaxX = GraphViewDescriptor.scaleMode.extend
+                    case "fixed": scaleMaxX = GraphViewDescriptor.scaleMode.fixed
+                    default:
+                        scaleMaxX = GraphViewDescriptor.scaleMode.auto
+                        print("Error! Unknown value for scaleMaxX.")
+                }
+                let scaleMinY: GraphViewDescriptor.scaleMode
+                switch stringFromXML(attributes, key: "scaleMinY", defaultValue: "auto") {
+                    case "auto": scaleMinY = GraphViewDescriptor.scaleMode.auto
+                    case "extend": scaleMinY = GraphViewDescriptor.scaleMode.extend
+                    case "fixed": scaleMinY = GraphViewDescriptor.scaleMode.fixed
+                    default:
+                        scaleMinY = GraphViewDescriptor.scaleMode.auto
+                        print("Error! Unknown value for scaleMinY.")
+                }
+                let scaleMaxY: GraphViewDescriptor.scaleMode
+                switch stringFromXML(attributes, key: "scaleMaxY", defaultValue: "auto") {
+                    case "auto": scaleMaxY = GraphViewDescriptor.scaleMode.auto
+                    case "extend": scaleMaxY = GraphViewDescriptor.scaleMode.extend
+                    case "fixed": scaleMaxY = GraphViewDescriptor.scaleMode.fixed
+                    default:
+                        scaleMaxY = GraphViewDescriptor.scaleMode.auto
+                        print("Error! Unknown value for scaleMaxY.")
+                }
+                
+                let minX = CGFloatFromXML(attributes, key: "minX", defaultValue: 0.0)
+                let maxX = CGFloatFromXML(attributes, key: "maxX", defaultValue: 0.0)
+                let minY = CGFloatFromXML(attributes, key: "minY", defaultValue: 0.0)
+                let maxY = CGFloatFromXML(attributes, key: "maxY", defaultValue: 0.0)
+                
+                
                 let xLabel = attributes["labelX"]!
                 let yLabel = attributes["labelY"]!
                 
@@ -193,7 +236,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     print("Error! No Y axis input buffer!")
                 }
                 
-                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
             }
             
             func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {

@@ -33,7 +33,7 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         let result = method(process)
         
         #if DEBUG_ANALYSIS
-            debug_noteOutputs(append)
+//            debug_noteOutputs(append)
         #endif
         
         for output in outputs {

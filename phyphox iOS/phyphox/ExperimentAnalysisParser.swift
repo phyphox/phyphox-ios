@@ -115,6 +115,9 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 else if key == "max" {
                     analysis = MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
+                else if key == "min" {
+                    analysis = MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
                 else if key == "threshold" {
                     analysis = ThresholdAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }

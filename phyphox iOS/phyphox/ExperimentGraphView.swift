@@ -28,6 +28,11 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     private let glGraph: GLGraphView
     private let gridView: GraphGridView
     
+    private var maxX: Double
+    private var minX: Double
+    private var maxY: Double
+    private var minY: Double
+    
     var queue: dispatch_queue_t!
     
     private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
@@ -124,6 +129,12 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     }
     
     required init(descriptor: GraphViewDescriptor) {
+        self.maxX = -Double.infinity
+        self.minX = Double.infinity
+        
+        self.maxY = -Double.infinity
+        self.minY = Double.infinity
+        
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
         var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
@@ -305,12 +316,6 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                     return
                 }
                 
-                var maxX = -Double.infinity
-                var minX = Double.infinity
-                
-                var maxY = -Double.infinity
-                var minY = Double.infinity
-                
                 var points: [GraphPoint<GLfloat>] = []
                 points.reserveCapacity(count)
                 
@@ -318,6 +323,43 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 
                 let logX = self.descriptor.logX
                 let logY = self.descriptor.logY
+                
+                switch self.descriptor.scaleMinX {
+                case GraphViewDescriptor.scaleMode.auto:
+                    self.minX = Double.infinity
+                case GraphViewDescriptor.scaleMode.extend:
+                break
+                case GraphViewDescriptor.scaleMode.fixed:
+                    self.minX = Double(self.descriptor.minX)
+                }
+                
+                switch self.descriptor.scaleMaxX {
+                case GraphViewDescriptor.scaleMode.auto:
+                    self.maxX = -Double.infinity
+                case GraphViewDescriptor.scaleMode.extend:
+                    break
+                case GraphViewDescriptor.scaleMode.fixed:
+                    self.maxX = Double(self.descriptor.maxX)
+                }
+                
+                switch self.descriptor.scaleMinY {
+                case GraphViewDescriptor.scaleMode.auto:
+                    self.minY = Double.infinity
+                case GraphViewDescriptor.scaleMode.extend:
+                    break
+                case GraphViewDescriptor.scaleMode.fixed:
+                    self.minY = Double(self.descriptor.minY)
+                }
+                
+                switch self.descriptor.scaleMaxY {
+                case GraphViewDescriptor.scaleMode.auto:
+                    self.maxY = -Double.infinity
+                case GraphViewDescriptor.scaleMode.extend:
+                    break
+                case GraphViewDescriptor.scaleMode.fixed:
+                    self.maxY = Double(self.descriptor.maxY)
+                }
+                
                 
                 var xOrderOK = true
                 var valuesOK = true
@@ -340,20 +382,20 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                         continue
                     }
                     
-                    if x < minX {
-                        minX = x
+                    if x < self.minX && self.descriptor.scaleMinX != GraphViewDescriptor.scaleMode.fixed {
+                        self.minX = x
                     }
                     
-                    if x > maxX {
-                        maxX = x
+                    if x > self.maxX && self.descriptor.scaleMaxX != GraphViewDescriptor.scaleMode.fixed {
+                        self.maxX = x
                     }
                     
-                    if y < minY {
-                        minY = y
+                    if y < self.minY && self.descriptor.scaleMinY != GraphViewDescriptor.scaleMode.fixed {
+                        self.minY = y
                     }
                     
-                    if y > maxY {
-                        maxY = y
+                    if y > self.maxY && self.descriptor.scaleMaxY != GraphViewDescriptor.scaleMode.fixed {
+                        self.maxY = y
                     }
                     
                     points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
@@ -367,34 +409,34 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                     print("Tried drawing NaN or inf")
                 }
                 
-                let dataSet = (bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points)
+                let dataSet = (bounds: (min: GraphPoint(x: self.minX, y: self.minY), max: GraphPoint(x: self.maxX, y: self.maxY)), data: points)
                 
                 self.addDataSet(dataSet)
                 
                 let min = self.min!
                 let max = self.max!
                 
-                minX = min.x
-                maxX = max.x
+                self.minX = min.x
+                self.maxX = max.x
                 
-                minY = min.y
-                maxY = max.y
+                self.minY = min.y
+                self.maxY = max.y
                 
-                let xTicks = self.getTicks(minX, max: maxX, maxTicks: 6)
-                let yTicks = self.getTicks(minY, max: maxY, maxTicks: 4)
+                let xTicks = self.getTicks(self.minX, max: self.maxX, maxTicks: 6)
+                let yTicks = self.getTicks(self.minY, max: self.maxY, maxTicks: 4)
                 
                 var mappedXTicks: [GraphGridLine]? = nil
                 var mappedYTicks: [GraphGridLine]? = nil
                 
                 if xTicks != nil {
                     mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-                        return GraphGridLine(absoluteValue: logX ? round(exp(val)) : val, relativeValue: CGFloat((val-minX)/(maxX-minX)))
+                        return GraphGridLine(absoluteValue: logX ? round(exp(val)) : val, relativeValue: CGFloat((val-self.minX)/(self.maxX-self.minX)))
                     })
                 }
                 
                 if yTicks != nil {
                     mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-                        return GraphGridLine(absoluteValue: logY ? round(exp(val)) : val, relativeValue: CGFloat((val-minY)/(maxY-minY)))
+                        return GraphGridLine(absoluteValue: logY ? round(exp(val)) : val, relativeValue: CGFloat((val-self.minY)/(self.maxY-self.minY)))
                     })
                 }
                 
@@ -417,6 +459,12 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     }
     
     func clearGraph() {
+        self.maxX = -Double.infinity
+        self.minX = Double.infinity
+        
+        self.maxY = -Double.infinity
+        self.minY = Double.infinity
+        
         self.gridView.grid = nil
         
         self.glGraph.setPoints(nil, min: nil, max: nil)
