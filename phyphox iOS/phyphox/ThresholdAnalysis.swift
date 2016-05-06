@@ -45,19 +45,22 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         }
         
         var x: Double?
-        var last = Double.NaN
+        var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
         
         for (i, value) in yIn.enumerate() {
-            if (falling ? (value < threshold && last > threshold) : (value > threshold && last < threshold)) {
-                if let v = xIn?.objectAtIndex(i) {
-                    x = v
+            if (falling ? (value < threshold) : (value > threshold)) {
+                if onOppositeSide {
+                    if let v = xIn?.objectAtIndex(i) {
+                        x = v
+                    }
+                    else {
+                        x = Double(i)
+                    }
+                    break
                 }
-                else {
-                    x = Double(i)
-                }
-                break
+            } else {
+                onOppositeSide = true
             }
-            last = value
         }
         
         guard x != nil else {

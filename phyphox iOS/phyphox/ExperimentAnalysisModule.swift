@@ -73,7 +73,7 @@ class ExperimentAnalysisModule {
     
     internal func didUpdate() {
         for input in inputs {
-            if input.clear && input.buffer != nil && !input.buffer!.staticBuffer {
+            if input.clear && (input.buffer?.staticBuffer == false) {
                 input.buffer?.clear()
             }
         }
