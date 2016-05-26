@@ -142,6 +142,9 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 else if key == "gausssmooth" {
                     analysis = GaussSmoothAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
+                else if key == "match" {
+                    analysis = MatchAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
                 else if key == "rangefilter" {
                     analysis = RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }

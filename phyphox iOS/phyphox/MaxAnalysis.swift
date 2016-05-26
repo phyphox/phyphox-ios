@@ -13,17 +13,26 @@ import Accelerate
 final class MaxAnalysis: ExperimentAnalysisModule {
     private var xIn: DataBuffer?
     private var yIn: DataBuffer!
+    private var thresholdIn: ExperimentAnalysisDataIO?
     
     private var maxOut: ExperimentAnalysisDataIO?
     private var positionOut: ExperimentAnalysisDataIO?
     
+    private var multiple: Bool
+    
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+        
+        multiple = boolFromXML(additionalAttributes, key: "multiple", defaultValue: false)
+        
         for input in inputs {
             if input.asString == "x" {
                 xIn = input.buffer
             }
             else if input.asString == "y" {
                 yIn = input.buffer
+            }
+            else if input.asString == "threshold" {
+                thresholdIn = input
             }
             else {
                 print("Error: Invalid analysis input: \(input.asString)")
@@ -47,8 +56,14 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         #if DEBUG_ANALYSIS
-            if xIn != nil {
+            if xIn != nil && thresholdIn != nil {
+                debug_noteInputs(["valIn" : yIn, "posIn" : xIn, "thresholdIn" : thresholdIn])
+            }
+            else if xIn != nil {
                 debug_noteInputs(["valIn" : yIn, "posIn" : xIn])
+            }
+            else if thresholdIn != nil {
+                debug_noteInputs(["valIn" : yIn, "thresholdIn" : thresholdIn])
             }
             else {
                 debug_noteInputs(["valIn" : yIn])
@@ -73,7 +88,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             return
         }
         
-        if positionOut == nil {
+        if positionOut == nil && !multiple {
             var max = 0.0
             
             vDSP_maxvD(inArray, 1, &max, vDSP_Length(inArray.count))
@@ -91,6 +106,45 @@ final class MaxAnalysis: ExperimentAnalysisModule {
                 debug_noteOutputs(max)
             #endif
             
+        }
+        else if multiple {
+            var max = [Double]()
+            var x = [Double]()
+            let threshold = thresholdIn?.getSingleValue() ?? 0.0
+            
+            var thisMax = -Double.infinity
+            var thisX = -Double.infinity
+            for (i, v) in inArray.enumerate() {
+                if v < threshold {
+                    if (thisX.isFinite) {
+                        max.append(thisMax)
+                        x.append(thisX)
+                        thisMax = -Double.infinity
+                        thisX = -Double.infinity
+                    }
+                } else if v > thisMax {
+                    thisMax = v
+                    thisX = xIn?.objectAtIndex(i) ?? Double(i)
+                }
+            }
+            
+            if maxOut != nil {
+                if maxOut!.clear {
+                    maxOut!.buffer!.replaceValues(max)
+                }
+                else {
+                    maxOut!.buffer!.appendFromArray(max)
+                }
+            }
+            
+            if positionOut != nil {
+                if positionOut!.clear {
+                    positionOut!.buffer!.replaceValues(x)
+                }
+                else {
+                    positionOut!.buffer!.appendFromArray(x)
+                }
+            }
         }
         else {
             var max = -Double.infinity

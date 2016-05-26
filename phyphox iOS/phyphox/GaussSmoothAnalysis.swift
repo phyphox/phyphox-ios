@@ -21,16 +21,18 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             kernel.removeAll()
             kernel.reserveCapacity(2*calcWidth+1)
             
-            let a = Float(sigma * sqrt(2.0*M_PI))
-            let b = calcWidth
             let c = Float(sigma*sigma)
+            var sum = Float(0)
             
-            for i in 0...2*calcWidth {
-                let d = powf(Float(i-b), 2.0)
+            for i in -calcWidth...calcWidth {
+                let d = Float(i*i)
                 
-                let value = expf(-d/(2.0*c))/a
-                
+                let value = expf(-d/(2.0*c))
+                sum += value
                 kernel.append(value)
+            }
+            for i in 0..<kernel.count {
+                kernel[i] /= sum
             }
         }
     }
@@ -56,7 +58,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         var inImg = vImage_Buffer(data: &input, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
         var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
         
-        vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageBackgroundColorFill))
+        vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageTruncateKernel))
         
         let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
         
