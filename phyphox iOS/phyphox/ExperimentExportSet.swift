@@ -23,6 +23,8 @@ enum ExportFileFormat {
     }
 }
 
+let exportTypes = [("CSV", ExportFileFormat.CSV(separator: ",")), ("CSV (Tab separated)", ExportFileFormat.CSV(separator: "\t")), ("Excel", ExportFileFormat.Excel)]
+
 final class ExperimentExportSet {
     private let name: String
     private let data: [(name: String, buffer: DataBuffer)]

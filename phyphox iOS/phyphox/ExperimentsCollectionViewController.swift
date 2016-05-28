@@ -39,30 +39,29 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
         
-        let infoButton = UIButton(type: .InfoLight)
+        let infoButton = UIButton(type: .InfoDark)
         infoButton.addTarget(self, action: #selector(infoPressed), forControlEvents: .TouchUpInside)
         infoButton.sizeToFit()
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))
+        navigationItem.rightBarButtonItems = [UIBarButtonItem(customView: infoButton), UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))]
     }
     
     private func showOpenSourceLicenses() {
         let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(NSBundle.mainBundle().pathForResource("Licenses", ofType: "ptf")!), preferredStyle: .Alert)
         
-        alert.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
         
         navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
     func infoPressed() {
-        let alert = UIAlertController(title: "Information", message: "Things\n\niOS app: Jonas Gessner\n\nAndroid app, creator:\nSebastian Kuhlen\n\nRWTH Aachen.", preferredStyle: .Alert)
+        let alert = UIAlertController(title: NSLocalizedString("credits", comment: ""), message: NSLocalizedString("creditsRWTH", comment: "") + "\n\n" + NSLocalizedString("creditsNames", comment: ""), preferredStyle: .Alert)
         
         alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .Default, handler: { [unowned self] _ in
             self.showOpenSourceLicenses()
         }))
         
-        alert.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
         
         navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
@@ -118,9 +117,9 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     private func showDeleteConfirmationForExperiment(experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: "Confirm Delete?", message: "This cannot be undone", preferredStyle: .ActionSheet)
+        let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .ActionSheet)
         
-        alert.addAction(UIAlertAction(title: "Delete \(experiment.localizedTitle)", style: .Destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.localizedTitle)", style: .Destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.sharedInstance().deleteExperiment(experiment)
             }
@@ -136,7 +135,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             }
             }))
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -149,11 +148,11 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     private func showOptionsForExperiment(experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .ActionSheet)
         
-        alert.addAction(UIAlertAction(title: "Delete", style: .Destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .Destructive, handler: { [unowned self] action in
             self.showDeleteConfirmationForExperiment(experiment, button: button)
         }))
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -224,9 +223,9 @@ final class ExperimentsCollectionViewController: CollectionViewController {
                     try sensor.verifySensorAvailibility()
                 }
                 catch SensorError.SensorUnavailable(let type) {
-                    let controller = UIAlertController(title: "Sensor Unavailable", message: "The \(type) sensor is not available on this device.", preferredStyle: .Alert)
+                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .Alert)
                     
-                    controller.addAction(UIAlertAction(title: "OK", style: .Cancel, handler:nil))
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
                     
                     presentViewController(controller, animated: true, completion: nil)
                     

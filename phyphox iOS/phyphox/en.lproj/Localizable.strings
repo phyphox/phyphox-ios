@@ -1,0 +1,95 @@
+/* 
+  localization.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 28.05.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+
+"app_name" = "phyphox";
+"actions" = "Actions";
+"action_settings" = "Settings";
+"title_activity_experiment" = "phyphox";
+
+"newExperiment" = "Add simple experiment";
+"newExperimentPhyphoxInfo" = "Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
+"newExperimentInputTitle" = "Title";
+"newExperimentInputBufferSize" = "Buffer size";
+"newExperimentInputRate" = "Sensor rate (in Hz, 0 = as fast as possible)";
+"newExperimentInputSensors" = "Active sensors";
+
+"warning" = "Warning";
+"donotshowagain" = "Do not show again";
+"damageWarning" = "Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.";
+
+"credits" = "Credits";
+"creditsRWTH" = "phyphox has been created at the 2nd Institute of Physics A at the RWTH Aachen University.";
+"creditsNames" = "iOS implementation: Jonas Gessner\nDevelopment: Dr. Sebastian Kuhlen\nDesign: Frank Posthoff (A.NikoPol)\nHead of Institute: Prof. Christoph Stampfer";
+
+"sensorLinearAcceleration" = "Linear Acceleration";
+"sensorLight" = "Light";
+"sensorGyroscope" = "Gyroscope";
+"sensorAccelerometer" = "Accelerometer";
+"sensorMagneticField" = "Magnetic Field";
+"sensorPressure" = "Pressure";
+
+"sensorNotAvailableWarningTitle" = "Sensor not available";
+"sensorNotAvailableWarningText1" = "The sensor";
+"sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
+
+"ok" = "OK";
+"close" = "Close";
+"next" = "Next";
+"cancel" = "Cancel";
+"unknown" = "unknown";
+
+"delete" = "Delete";
+"confirmDelete" = "Do you want to delete this experiment from your collection?";
+"confirmDeleteTitle" = "Confirm delete?";
+
+"stop" = "Stop";
+"start" = "Start";
+"clear_data" = "Clear data";
+"timed_stop" = "Stop timed run";
+"timed_start" = "Start timed run";
+
+"loadingTitle" = "Loading";
+"loadingText" = "Loading experiment…";
+
+"timedRunDialogTitle" = "Timed Run";
+"timedRunStartDelay" = "Start delay (s)";
+"timedRunStopDelay" = "Experiment duration (s)";
+"enableTimedRun" = "Enable a timed run";
+"disableTimedRun" = "Disable a timed run";
+
+"export" = "Export Data";
+"export_subject" = "Data from phyphox";
+"export_pick_share" = "Pick an export method";
+
+"share" = "Share screenshot";
+"share_subject" = "Screenshot from phyPhox";
+"share_pick_share" = "Pick a share method";
+
+"enableRemoteServer" = "Enable remote access";
+"disableRemoteServer" = "Disable remote access";
+"remoteServerWarning" = "You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.";
+"remoteServerWarningTitle" = "Security warning!";
+"remoteServerActive" = "Remote access enabled. Access this experiment from te following URL:";
+"hotspotSettings" = "Hotspot Settings";
+
+"switchColumns1" = "View: 1 column";
+"switchColumns2" = "View: 2 columns";
+"switchColumns3" = "View: 3 columns";
+
+"show_description" = "Show Description";
+"save_locally" = "Add experiment to collection";
+"save_locally_done" = "Experiment successfully added to collection";
+
+"timedRun" = "Timed run";
+
+"pick_exportSets" = "Pick the data sets to export.";
+"pick_exportFormat" = "Choose the data format.";
+
+"noDrawableData" = "No drawable data.";
+
+"categoryNewExperiment" = "Simple custom experiments";

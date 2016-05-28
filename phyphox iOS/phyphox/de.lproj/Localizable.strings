@@ -1,0 +1,78 @@
+/* 
+  localization.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 28.05.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+
+"app_name" = "phyphox";
+"actions" = "Aktionen";
+"action_settings" = "Einstellungen";
+"cancel" = "Abbrechen";
+"clear_data" = "Daten löschen";
+"close" = "Schließen";
+"confirmDelete" = "Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?";
+"confirmDeleteTitle" = "Löschen bestätigen?";
+"credits" = "Credits";
+"creditsNames" = "iOS Umsetzung: Jonas Gessner\nEntwicklung: Dr. Sebastian Kuhlen\nDesign: Frank Posthoff (A.NikoPol)\nInstitutsleiter: Prof. Christoph Stampfer";
+
+"creditsRWTH" = "Phyphox wurde am 2. Physikalischen Institut A der RWTH Aachen entwickelt.";
+"damageWarning" = "Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.";
+"delete" = "Löschen";
+"disableRemoteServer" = "Fernzugriff deaktivieren";
+"disableTimedRun" = "Zeitautomatik deaktivieren";
+"donotshowagain" = "Nicht erneut anzeigen";
+"enableRemoteServer" = "Fernzugriff aktivieren";
+"enableTimedRun" = "Zeitautomatik aktivieren";
+"export" = "Daten exportieren";
+"export_pick_share" = "Wählen Sie eine App für den Export";
+"export_subject" = "Daten aus phyphox";
+"hotspotSettings" = "Hotspot Einstellungen";
+"loadingText" = "Experiment wird geladen…";
+"loadingTitle" = "Laden";
+"newExperiment" = "Neues einfaches Experiment";
+"newExperimentInputBufferSize" = "Puffergröße";
+"newExperimentInputRate" = "Sensorrate (in Hz, 0 = so schnell wie möglich)";
+"newExperimentInputSensors" = "Aktive Sensoren";
+"newExperimentInputTitle" = "Titel";
+"newExperimentPhyphoxInfo" = "Besuchen Sie phyphox.com, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.";
+"next" = "Weiter";
+"ok" = "OK";
+"pick_exportFormat" = "Wählen Sie ein Datei-Format.";
+"pick_exportSets" = "Wählen Sie die zu exportierenden Datensätze.";
+"remoteServer" = "Fernzugriff erlauben";
+"remoteServerActive" = "Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:";
+"remoteServerWarning" = "Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie auf Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.";
+"remoteServerWarningTitle" = "Sicherheitswarnung!";
+"save_locally" = "Experiment zur Sammlung hinzufügen";
+"save_locally_done" = "Das Experiment wurde zur Sammlung hinzugefügt.";
+"sensorAccelerometer" = "Beschleunigungssensor";
+"sensorGyroscope" = "Gyroskop";
+"sensorLight" = "Licht";
+"sensorLinearAcceleration" = "Lineare Beschleunigung";
+"sensorMagneticField" = "Magnetfeld";
+"sensorNotAvailableWarningText1" = "Der Sensor";
+"sensorNotAvailableWarningText2" = "ist nicht verfügbar. Normalerweise bedeutet dies, dass Ihr Gerät über keinen solchen Sensor verfügt.";
+"sensorNotAvailableWarningTitle" = "Sensor nicht verfügbar.";
+"sensorPressure" = "Druck";
+"share" = "Screenshot teilen";
+"share_pick_share" = "Wählen Sie eine App zum Teilen";
+"share_subject" = "Screenshot aus phyphox";
+"show_description" = "Beschreibung zeigen";
+"start" = "Start";
+"stop" = "Stop";
+"switchColumns1" = "Ansicht: 1 Spalte";
+"switchColumns2" = "Ansicht: 2 Spalten";
+"switchColumns3" = "Ansicht: 3 Spalten";
+"timedRun" = "Zeitautomatik";
+"timedRunDialogTitle" = "Zeitautomatik";
+"timedRunStartDelay" = "Startverzögerung (s)";
+"timedRunStopDelay" = "Dauer des Experiments (s)";
+"timed_start" = "Zeitautomatik starten";
+"timed_stop" = "Zeitautomatik stoppen";
+"title_activity_experiment" = "phyphox";
+"unknown" = "unbekannt";
+"warning" = "Warnung";
+"noDrawableData" = "Keine darstellbaren Daten.";
+"categoryNewExperiment" = "Einfache eigene Experimente";

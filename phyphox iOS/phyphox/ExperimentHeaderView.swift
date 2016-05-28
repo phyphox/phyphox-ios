@@ -36,7 +36,8 @@ final class ExperimentHeaderView: UICollectionReusableView {
         label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
         addSubview(label)
         
-        label.textColor = UIColor.blackColor()// kHighlightColor
+        label.textColor = kTextColor
+        label.backgroundColor = kHighlightColor
         
         separator.backgroundColor = UIColor.blackColor()
         separator.alpha = 0.1
@@ -45,10 +46,8 @@ final class ExperimentHeaderView: UICollectionReusableView {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        let s = label.sizeThatFits(bounds.size)
-        
-        label.frame = CGRect(origin: CGPointMake(5.0, (bounds.size.height-s.height)/2.0), size: s)
+      
+        label.frame = CGRect(origin: CGPointMake(0.0, 1.0), size: CGSize(width: bounds.width, height: bounds.height-2.0))
         
         let separatorHeight = 1.0/UIScreen.mainScreen().scale
         

@@ -20,7 +20,9 @@ final class ExperimentIcon {
     
     func generateResizableRepresentativeView() -> UIView {
         if image != nil {
-            return UIImageView(image: image!)
+            let imageView = UIImageView(image: image!)
+            imageView.backgroundColor = kHighlightColor
+            return imageView
         }
         else {
             let label = UILabel()
@@ -29,6 +31,9 @@ final class ExperimentIcon {
             label.textAlignment = .Center
             label.adjustsFontSizeToFitWidth = true
             label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+            
+            label.textColor = kTextColor
+            label.backgroundColor = kHighlightColor
             
             return label
         }

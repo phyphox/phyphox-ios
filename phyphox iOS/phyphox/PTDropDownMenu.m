@@ -17,8 +17,8 @@
 #import "UIColor+Expanded.h"
 #import "Constants.h"
 
-#define kTitleColor [UIColor blackColor]
-#define kBorderColor [UIColor blackColor]
+#define kTitleColor [UIColor whiteColor]
+#define kBorderColor [UIColor whiteColor]
 
 @implementation PTDropDownMenu {
     NSArray <UIButton *>*_buttons;

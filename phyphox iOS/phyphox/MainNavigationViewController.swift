@@ -14,7 +14,8 @@ class MainNavigationViewController: UINavigationController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        hidesBarsOnSwipe = true
+        hidesBarsOnSwipe = false
+        
         // Do any additional setup after loading the view.
     }
 
@@ -22,7 +23,6 @@ class MainNavigationViewController: UINavigationController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
 
     /*
     // MARK: - Navigation

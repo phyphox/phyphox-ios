@@ -135,7 +135,7 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        selfView.collectionView.backgroundColor = kLightBackgroundColor
+        selfView.collectionView.backgroundColor = kBackgroundColor
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .Plain, target: self, action: #selector(action(_:)))
         actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
@@ -204,9 +204,9 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
             hud.dismissAfterDelay(3.0)
         }
         else {
-            let al = UIAlertController(title: "Remote Access Enabled", message: "You can now remotely access the experiment from any browser connected to the same WiFi network as this device by opening this URL:\n\(webServer.server!.serverURL)", preferredStyle: .Alert)
+            let al = UIAlertController(title: NSLocalizedString("remoteServer", comment: ""), message: NSLocalizedString("remoteServerActive", comment: "")+"\n\(webServer.server!.serverURL)", preferredStyle: .Alert)
             
-            al.addAction(UIAlertAction(title: "Dismiss", style: .Cancel, handler: nil))
+            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler: nil))
             
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
         }
@@ -267,9 +267,9 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
     }
     
     private func showExport() {
-        let alert = UIAlertController(title: "Export", message: "Select the data sets to export:", preferredStyle: .Alert)
+        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: "Select the data sets to export:", preferredStyle: .Alert)
         
-        let exportAction = UIAlertAction(title: "Export", style: .Default, handler: { [unowned self] action in
+        let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .Default, handler: { [unowned self] action in
             self.runExportFromActionSheet()
             })
         
@@ -281,7 +281,7 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
         
         alert.addAction(exportAction)
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
         alert.__pt__setAccessoryView(exportSelectionView!)
         
@@ -289,30 +289,30 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
     }
     
     private func showTimerOptions() {
-        let alert = UIAlertController(title: "Automatic Control", message: nil, preferredStyle: .Alert)
+        let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .Alert)
         
         alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
             textField.keyboardType = .DecimalPad
-            textField.placeholder = "Start delay"
+            textField.placeholder = NSLocalizedString("timedRunStartDelay", comment: "")
             
             textField.text = self.timerDelayString
         }
         
         alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
             textField.keyboardType = .DecimalPad
-            textField.placeholder = "Experiment duration"
+            textField.placeholder = NSLocalizedString("timedRunStopDelay", comment: "")
             
             textField.text = self.timerDurationString
         }
         
-        alert.addAction(UIAlertAction(title: "Enable Automatic Control", style: .Default, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("enableTimedRun", comment: ""), style: .Default, handler: { [unowned self, unowned alert] action in
             self.timerEnabled = true
             
             self.timerDelayString = alert.textFields!.first!.text
             self.timerDurationString = alert.textFields!.last!.text
             }))
         
-        alert.addAction(UIAlertAction(title: "Disable Automatic Control", style: .Cancel, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("disableTimedRun", comment: ""), style: .Cancel, handler: { [unowned self, unowned alert] action in
             self.timerEnabled = false
             
             self.timerDelayString = alert.textFields!.first!.text
@@ -323,32 +323,32 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
     }
     
     func action(item: UIBarButtonItem) {
-        let alert = UIAlertController(title: "Actions", message: nil, preferredStyle: .ActionSheet)
+        let alert = UIAlertController(title: NSLocalizedString("actions", comment: ""), message: nil, preferredStyle: .ActionSheet)
         
         if experiment.export != nil {
-            alert.addAction(UIAlertAction(title: "Export", style: .Default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .Default, handler: { [unowned self] action in
                 self.showExport()
                 }))
         }
         
-        alert.addAction(UIAlertAction(title: "Automatic Control", style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("timedRun", comment: ""), style: .Default, handler: { [unowned self] action in
             self.showTimerOptions()
             }))
         
-        alert.addAction(UIAlertAction(title: (webServer.running ? "Disable Remote Access" : "Enable Remote Access"), style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: (webServer.running ? NSLocalizedString("disableRemoteServer", comment: "") : NSLocalizedString("enableRemoteServer", comment: "")), style: .Default, handler: { [unowned self] action in
             self.toggleWebServer()
             }))
         
-        alert.addAction(UIAlertAction(title: "Show Description", style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .Default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .Alert)
             
-            al.addAction(UIAlertAction(title: "Done", style: .Cancel, handler: nil))
+            al.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
             
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
             }))
         
         if experiment.hasStarted {
-            alert.addAction(UIAlertAction(title: "Share Screenshot", style: .Default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .Default, handler: { [unowned self] action in
                 var s = self.selfView.collectionView.contentSize
                 let inset = self.selfView.collectionView.contentInset.top
                 
@@ -377,21 +377,12 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
                 }
                 }))
             
-            alert.addAction(UIAlertAction(title: "Clear Data", style: .Destructive, handler: { [unowned self] action in
-                self.stopExperiment()
-                self.experiment.clear()
-                
-                for section in self.viewModules {
-                    for view in section {
-                        if let graphView = view as? ExperimentGraphView {
-                            graphView.clearAllDataSets()
-                        }
-                    }
-                }
+            alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .Destructive, handler: { [unowned self] action in
+                self.clearData()
                 }))
         }
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.barButtonItem = item
@@ -549,6 +540,19 @@ final class ExperimentViewController: CollectionViewController, ExperimentWebSer
         }
         else {
             startExperiment()
+        }
+    }
+    
+    func clearData() {
+        self.stopExperiment()
+        self.experiment.clear()
+        
+        for section in self.viewModules {
+            for view in section {
+                if let graphView = view as? ExperimentGraphView {
+                    graphView.clearAllDataSets()
+                }
+            }
         }
     }
 }

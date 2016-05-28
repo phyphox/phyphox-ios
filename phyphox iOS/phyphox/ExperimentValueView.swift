@@ -23,7 +23,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
     }
     
     func newValueIn() {
-        let str = NSMutableAttributedString(string: self.descriptor.localizedLabel.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : UIColor.blackColor()])
+        let str = NSMutableAttributedString(string: self.descriptor.localizedLabel.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : kTextColor])
         
         if let last = descriptor.buffer.last {
             let formatter = NSNumberFormatter()
@@ -33,10 +33,10 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
             
             let formatted = formatter.stringFromNumber(NSNumber(double: last*self.descriptor.factor))!
             
-            str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
+            str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : kTextColor]))
         }
         else {
-            str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : UIColor.blackColor()]))
+            str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : kTextColor]))
         }
         
         label.attributedText = str

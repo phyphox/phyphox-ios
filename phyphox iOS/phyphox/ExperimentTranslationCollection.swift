@@ -20,13 +20,14 @@ final class ExperimentTranslationCollection {
         self.translations = translations
         
         for code in  NSLocale.preferredLanguages() {
-            if code == defaultLanguageCode {
+            let languageCode = code.componentsSeparatedByString("-")[0]
+            if languageCode == defaultLanguageCode {
                 selectedLanguageCode = defaultLanguageCode
                 break
             }
             
-            if let selected = translations?[code] {
-                selectedLanguageCode = code
+            if let selected = translations?[languageCode] {
+                selectedLanguageCode = languageCode
                 selectedTranslation = selected
                 break
             }

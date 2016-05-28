@@ -157,6 +157,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         xLabel = makeLabel(descriptor.localizedXLabel)
         yLabel = makeLabel(descriptor.localizedYLabel)
+        xLabel.textColor = kTextColor
+        yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransformMakeRotation(-CGFloat(M_PI/2.0))
         
         super.init(descriptor: descriptor)

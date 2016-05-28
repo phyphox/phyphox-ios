@@ -25,6 +25,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         label.text = descriptor.localizedLabel
         
         label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote)
+        label.textColor = kTextColor
         
         self.descriptor = descriptor
         

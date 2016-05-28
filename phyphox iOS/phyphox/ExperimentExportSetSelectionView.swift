@@ -12,8 +12,6 @@ import UIKit
 private let ySpacing: CGFloat = 3.0
 private let xSpacing: CGFloat = 10.0
 
-private let exportTypes = [("CSV", ExportFileFormat.CSV(separator: ",")), ("CSV (Tab separated)", ExportFileFormat.CSV(separator: "\t")), ("Excel", ExportFileFormat.Excel)]
-
 private let checkboxSize = CGSize(width: 24.0, height: 24.0)
 
 final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
@@ -120,7 +118,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
         }
         
         formatLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote)
-        formatLabel.text = "Select the file format:"
+        formatLabel.text = NSLocalizedString("pick_exportFormat", comment: "")
         
         addSubview(formatLabel)
     }

@@ -24,6 +24,9 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     
     required init(descriptor: EditViewDescriptor) {
         textField = UITextField()
+        textField.backgroundColor = kLightBackgroundColor
+        textField.textColor = kTextColor
+        
         textField.returnKeyType = .Done
         
         textField.borderStyle = .RoundedRect
@@ -32,6 +35,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             unitLabel = {
                 let l = UILabel()
                 l.text = descriptor.unit
+                l.textColor = kTextColor
                 
                 l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
                 

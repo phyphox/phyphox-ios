@@ -15,7 +15,7 @@ final class GraphGridView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        borderView.layer.borderColor = UIColor(white: 0.0, alpha: 0.5).CGColor
+        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 0.5).CGColor
         borderView.layer.borderWidth = 1.0/UIScreen.mainScreen().scale
         
         addSubview(borderView)
@@ -159,6 +159,7 @@ final class GraphGridView: UIView {
                     view.frame = CGRectMake(origin+insetRect.origin.x, insetRect.origin.y, smallestUnit, insetRect.size.height)
                     
                     let label = labels[index]
+                    label.textColor = kTextColor
                     
                     label.text = format(line.absoluteValue)
                     label.sizeToFit()
@@ -187,6 +188,7 @@ final class GraphGridView: UIView {
                     view.frame = CGRectMake(insetRect.origin.x, origin+insetRect.origin.y, insetRect.size.width, smallestUnit)
                     
                     let label = labels[index]
+                    label.textColor = kTextColor
                     
                     label.text = format(line.absoluteValue)
                     label.sizeToFit()

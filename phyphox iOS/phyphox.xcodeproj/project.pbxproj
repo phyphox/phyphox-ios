@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4B09C6C51CD78E79004C7FA1 /* MinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */; };
 		4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */; };
+		4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4B6AE7141CF9AF0B0070A691 /* Localizable.strings */; };
 		6B00F0271C40713300971941 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0261C40713300971941 /* MainNavigationViewController.swift */; };
 		6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0291C4072B700971941 /* ExperimentViewController.swift */; };
 		6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */; };
@@ -421,6 +422,8 @@
 /* Begin PBXFileReference section */
 		4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MinAnalysis.swift; sourceTree = "<group>"; };
 		4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchAnalysis.swift; sourceTree = "<group>"; };
+		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6B00F0261C40713300971941 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		6B00F0291C4072B700971941 /* ExperimentViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewController.swift; sourceTree = "<group>"; };
 		6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysisDataIO.swift; sourceTree = "<group>"; };
@@ -920,6 +923,7 @@
 				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
 				6B7BF7891C130425007408FB /* Info.plist */,
 				6B0815431CABF61B00EE2791 /* libc++.tbd */,
+				4B6AE7141CF9AF0B0070A691 /* Localizable.strings */,
 			);
 			name = Assets;
 			sourceTree = "<group>";
@@ -1223,6 +1227,7 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1471,6 +1476,7 @@
 				6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */,
 				6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */,
 				6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */,
+				4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */,
 				6BE320981CB11A7200DCC1ED /* FragmentShader.glsl in Resources */,
 				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
 			);
@@ -1695,6 +1701,15 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		4B6AE7141CF9AF0B0070A691 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4B6AE7131CF9AF0B0070A691 /* en */,
+				4B6AE7151CF9AF0D0070A691 /* de */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		6B7BF7861C130425007408FB /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

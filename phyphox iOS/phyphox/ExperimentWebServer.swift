@@ -16,6 +16,7 @@ protocol ExperimentWebServerDelegate: class {
     
     func startExperiment()
     func stopExperiment()
+    func clearData()
     func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void)
 }
 
@@ -55,7 +56,9 @@ final class ExperimentWebServer {
         server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
         
         server!.addHandlerForMethod("GET", pathRegex: "/logo", requestClass:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
-            let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(WebServerUtilities.genPlaceHolderImage()), contentType: "image/png")
+            let file = NSBundle.mainBundle().pathForResource("phyphox-webinterface/phyphox_orange", ofType: "png")
+            let image = UIImage.init(contentsOfFile: file!)
+            let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(image!), contentType: "image/png")
             
             completionBlock(response)
         })
@@ -134,6 +137,12 @@ final class ExperimentWebServer {
                 }
                 returnSuccessResponse()
             }
+            else if cmd == "clear" {
+                mainThread {
+                    self.delegate!.clearData()
+                }
+                returnSuccessResponse()
+            }
             else if cmd == "set" {
                 guard let bufferName = query["buffer"], let valueString = query["value"], let buffer = self.experiment.buffers.0?[bufferName], let value = Double(valueString) else {
                     returnErrorResponse()
@@ -185,7 +194,9 @@ final class ExperimentWebServer {
                     
                     if value == "full" {
                         dict["updateMode"] = "full"
-                        dict["buffer"] = raw
+                        dict["buffer"] = raw.map({$0.isFinite ? $0 : NSNull()}) //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
+                        //Detailed thoughts on this problem:
+                        //Suppose we have two graphs which plot A vs. t and B vs. t (note: same x-axis!). If A contains invalid values (NaN or Inf), we cannot simply remove them as the indices of A would no longer align with t. Also, we cannot remove the value pair from A and t as t would not align with B, which might have a good value at this index. So, in the end we need to send some kind of "invalid" value
                     }
                     else {
                         let extraComponents = value.componentsSeparatedByString("|")
@@ -220,14 +231,22 @@ final class ExperimentWebServer {
                         else {
                             final = raw.filter{ $0 > threshold }
                         }
-                        
+
                         dict["updateMode"] = "partial"
-                        dict["buffer"] = final
+                        dict["buffer"] = final.map({$0.isFinite ? $0 : NSNull()}) //The array may contain NaN or Inf, which will throw an error in the JSON conversion. (See above)
                     }
                 }
                 else {
                     dict["updateMode"] = "single"
-                    dict["buffer"] = [b.last ?? 0.0]
+                    if let v = b.last {
+                        if v.isFinite {
+                            dict["buffer"] = [v]
+                        } else {
+                            dict["buffer"] = [String(v)]
+                        }
+                    } else {
+                        dict["buffer"] = [NSNull()]
+                    }
                 }
                 
                 

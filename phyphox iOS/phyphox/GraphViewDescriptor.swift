@@ -77,7 +77,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div class=\\\"graphElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><div class=\\\"graphBox\\\"><div class=\\\"graphRatio\\\" style=\\\"padding-top: \(100.0/aspectRatio)%\\\"></div><div class=\\\"graph\\\"></div></div></div>"
+        return "<div style=\\\"font-size: 120%;\\\" class=\\\"graphElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><div class=\\\"graphBox\\\"><div class=\\\"graphRatio\\\" style=\\\"padding-top: \(100.0/aspectRatio)%\\\"></div><div class=\\\"graph\\\"></div></div></div>"
     }
     
     override func generateDataCompleteHTMLWithID(id: Int) -> String {
@@ -108,7 +108,7 @@ final class GraphViewDescriptor: ViewDescriptor {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(kHighlightColor.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(UIColor(white: 0.4, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(UIColor(white: 0.4, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(UIColor(white: 0.0, alpha: 0.5).hexStringValue)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(kHighlightColor.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
     }
     
     override func setDataXHTMLWithID(id: Int) -> String {

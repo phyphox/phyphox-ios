@@ -58,7 +58,7 @@ class ExperimentCell: UICollectionViewCell {
     override var highlighted: Bool {
         didSet {
             UIView.animateWithDuration(0.1) {
-                self.contentView.backgroundColor = UIColor(white: (self.highlighted ? 0.85 : 0.975), alpha: 1.0)
+                self.contentView.backgroundColor = self.highlighted ? kLightBackgroundColor : kBackgroundColor
             }
         }
     }
@@ -89,7 +89,8 @@ class ExperimentCell: UICollectionViewCell {
         titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
         subtitleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption2)
         
-        titleLabel.textColor = kHighlightColor
+        titleLabel.textColor = kTextColor
+        subtitleLabel.textColor = kText2Color
         
         separator.backgroundColor = UIColor.blackColor()
         separator.alpha = 0.1
@@ -98,7 +99,7 @@ class ExperimentCell: UICollectionViewCell {
         sideSeparator.alpha = 0.1
         
         
-        contentView.backgroundColor = kLightBackgroundColor
+        contentView.backgroundColor = kBackgroundColor
         
         contentView.addSubview(titleLabel)
         contentView.addSubview(subtitleLabel)
@@ -121,9 +122,9 @@ class ExperimentCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s1 = CGSizeMake(bounds.size.height-8.0, bounds.size.height-8.0)
+        let s1 = CGSizeMake(bounds.size.height-2.0, bounds.size.height-2.0)
         
-        iconView?.frame = CGRectMake(4.0, 4.0, s1.width, s1.height)
+        iconView?.frame = CGRectMake(0.0, 1.0, s1.width, s1.height)
         
         let x = (iconView != nil ? CGRectGetMaxX(iconView!.frame) : 0.0)
         
