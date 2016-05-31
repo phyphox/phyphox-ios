@@ -13,8 +13,8 @@ public var keyboardFrame = CGRect.zero
 
 class CollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout  {
     
-    final var selfView: CollectionContainerView? {
-        return view as? CollectionContainerView
+    final var selfView: CollectionContainerView {
+        return view as! CollectionContainerView
     }
     
     private var lastViewSize: CGRect?
@@ -43,32 +43,34 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     }
     
     override func viewDidLoad() {
+        super.viewDidLoad()
+        
         if let cells = self.dynamicType.customCells {
             for (key, cellClass) in cells {
-                selfView!.collectionView.registerClass(cellClass, forCellWithReuseIdentifier: key)
+                selfView.collectionView.registerClass(cellClass, forCellWithReuseIdentifier: key)
             }
         }
         
         if let headers = self.dynamicType.customHeaders {
             for (key, headerClass) in headers {
-                selfView!.collectionView.registerClass(headerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: key)
+                selfView.collectionView.registerClass(headerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: key)
             }
         }
         
         if let footers = self.dynamicType.customFooters {
             for (key, footerClass) in footers {
-                selfView!.collectionView.registerClass(footerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: key)
+                selfView.collectionView.registerClass(footerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: key)
             }
         }
         
-        selfView!.collectionView.dataSource = self;
-        selfView!.collectionView.delegate = self;
+        selfView.collectionView.dataSource = self;
+        selfView.collectionView.delegate = self;
         
     }
     
     private func attemptInvalidateLayout() {
         if lastViewSize == nil || !CGRectEqualToRect(lastViewSize!, view.frame) {
-            selfView?.collectionView.collectionViewLayout.invalidateLayout()
+            selfView.collectionView.collectionViewLayout.invalidateLayout()
         }
     }
     
@@ -101,15 +103,15 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
             bottomInset = view.frame.size.height-view.convertRect(keyboardFrame, fromView: nil).origin.y
         }
         
-        var contentInset = selfView!.collectionView.contentInset
-        var scrollInset = selfView!.collectionView.scrollIndicatorInsets
+        var contentInset = selfView.collectionView.contentInset
+        var scrollInset = selfView.collectionView.scrollIndicatorInsets
         
         contentInset.bottom = bottomInset
         scrollInset.bottom = bottomInset
         
         UIView.animateWithDuration(duration, delay: 0.0, options: [UIViewAnimationOptions.BeginFromCurrentState, UIViewAnimationOptionsFromUIViewAnimationCurve(curve)], animations: { () -> Void in
-            self.selfView!.collectionView.contentInset = contentInset
-            self.selfView!.collectionView.scrollIndicatorInsets = scrollInset
+            self.selfView.collectionView.contentInset = contentInset
+            self.selfView.collectionView.scrollIndicatorInsets = scrollInset
             }, completion: nil)
     }
     
@@ -181,8 +183,10 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     //MARK: -
     
     deinit {
-        selfView?.collectionView.dataSource = nil;
-        selfView?.collectionView.delegate = nil;
+        if isViewLoaded() {
+            selfView.collectionView.dataSource = nil;
+            selfView.collectionView.delegate = nil;
+        }
         NSNotificationCenter.defaultCenter().removeObserver(self)
     }
 }

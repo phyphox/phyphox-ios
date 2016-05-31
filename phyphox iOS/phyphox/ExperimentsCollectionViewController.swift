@@ -36,6 +36,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         super.viewWillAppear(animated)
         
         self.navigationController?.navigationBar.barTintColor = kBackgroundColor
+        self.navigationController?.navigationBar.translucent = true
     }
     
     override func viewDidLoad() {
@@ -74,7 +75,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
 
     func reload() {
-        selfView!.collectionView.reloadData()
+        selfView.collectionView.reloadData()
     }
     
     deinit {
@@ -194,8 +195,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     func updateRowSeparators() {
-        for indexPath in self.selfView!.collectionView.indexPathsForVisibleItems() {
-            let cell = self.selfView!.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
+        for indexPath in self.selfView.collectionView.indexPathsForVisibleItems() {
+            let cell = self.selfView.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
             
             cell.showSideSeparator = self.cellsPerRow > 1 && (indexPath.row % self.cellsPerRow) != self.cellsPerRow-1
         }

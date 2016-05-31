@@ -16,7 +16,6 @@ class MainNavigationViewController: UINavigationController {
         
         hidesBarsOnSwipe = false
         
-        self.navigationBar.translucent = true
         self.navigationBar.tintColor = kTextColor
         self.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName: kTextColor]
         

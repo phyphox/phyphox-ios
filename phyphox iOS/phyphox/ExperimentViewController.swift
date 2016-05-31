@@ -33,7 +33,7 @@ final class ExperimentViewController: CollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        selfView!.collectionView.backgroundColor = kBackgroundColor
+        selfView.collectionView.backgroundColor = kBackgroundColor
     }
     
     override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
