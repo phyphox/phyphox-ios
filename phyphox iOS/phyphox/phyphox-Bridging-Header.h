@@ -4,9 +4,7 @@
 
 #import "XMLDictionary.h"
 #import "Constants.h"
-#import "PTDropDownMenu.h"
 #import "VBFPopFlatButton.h"
-#import "PTNavigationBarTitleView.h"
 #import <TheAmazingAudioEngine/TheAmazingAudioEngine.h>
 #import "UIAlertController+PTExtensions.h"
 #import "BEMCheckbox.h"

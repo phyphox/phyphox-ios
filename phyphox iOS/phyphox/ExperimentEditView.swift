@@ -64,6 +64,10 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
     }
     
+    override func unregisterFromBuffer() {
+        descriptor.buffer.removeObserver(self)
+    }
+    
     func hideKeyboard(_: UITextField) {
         textField.endEditing(true)
     }

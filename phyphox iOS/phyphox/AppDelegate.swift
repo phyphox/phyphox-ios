@@ -24,16 +24,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
-        window!.tintColor = kTextColor
-        window!.backgroundColor = kBackgroundColor
         
         let main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(ExperimentsCollectionViewController(), animated: false)
-        
-        main.navigationBar.tintColor = kTextColor
-        main.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName: kTextColor]
-        main.navigationBar.backgroundColor = kBackgroundColor
-        main.navigationBar.barTintColor = kBackgroundColor
         
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController

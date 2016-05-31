@@ -18,6 +18,10 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         descriptor.buffer.addObserver(self)
     }
     
+    override func unregisterFromBuffer() {
+        descriptor.buffer.removeObserver(self)
+    }
+    
     func dataBufferUpdated(buffer: DataBuffer) {
         newValueIn()
     }

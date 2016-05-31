@@ -10,8 +10,6 @@
 #import <UIKit/UIKit.h>
 @import JGProgressHUD;
 
-#define kHighlightColor [UIColor colorWithRed:(255.0/255.0) green:(126.0/255.0) blue:(34.0/255.0) alpha: 1.0]
-
 NS_INLINE UIImage *UIImageCreateColorImage(UIColor *color, CGSize size, BOOL opaque) {
     UIGraphicsBeginImageContextWithOptions(size, opaque,  0.0f);
     

@@ -32,6 +32,12 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         return ["Header" : ExperimentHeaderView.self]
     }
     
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        self.navigationController?.navigationBar.barTintColor = kBackgroundColor
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -43,7 +49,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         infoButton.addTarget(self, action: #selector(infoPressed), forControlEvents: .TouchUpInside)
         infoButton.sizeToFit()
         
-        navigationItem.rightBarButtonItems = [UIBarButtonItem(customView: infoButton), UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExpriment))]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
     }
     
     private func showOpenSourceLicenses() {
@@ -67,7 +74,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
 
     func reload() {
-        selfView.collectionView.reloadData()
+        selfView!.collectionView.reloadData()
     }
     
     deinit {
@@ -76,7 +83,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
-    func createNewExpriment() {
+    func createNewExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         
@@ -187,8 +194,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     func updateRowSeparators() {
-        for indexPath in self.selfView.collectionView.indexPathsForVisibleItems() {
-            let cell = self.selfView.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
+        for indexPath in self.selfView!.collectionView.indexPathsForVisibleItems() {
+            let cell = self.selfView!.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
             
             cell.showSideSeparator = self.cellsPerRow > 1 && (indexPath.row % self.cellsPerRow) != self.cellsPerRow-1
         }
@@ -235,7 +242,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             }
         }
         
-        let vc = ExperimentViewController(experiment: experiment)
+        let vc = ExperimentPageViewController(experiment: experiment)
         
         var denied = false
         var showing = false

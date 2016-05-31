@@ -11,12 +11,15 @@ import UIKit
 
 protocol ExperimentViewModuleProtocol {
     func setNeedsUpdate()
+    func unregisterFromBuffer()
+    var active: Bool { get set}
 }
 
 public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
     weak var descriptor: T!
     
     let label: UILabel
+    var active = false
     
     required public init(descriptor: T) {
         label = UILabel()
@@ -34,10 +37,14 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         addSubview(label)
     }
     
+    func unregisterFromBuffer() {
+        
+    }
+    
     private var updateScheduled: Bool = false
     
     func setNeedsUpdate() {
-        if !updateScheduled {
+        if active && !updateScheduled {
             updateScheduled = true
             
             //60fps max

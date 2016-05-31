@@ -16,22 +16,15 @@ class MainNavigationViewController: UINavigationController {
         
         hidesBarsOnSwipe = false
         
-        // Do any additional setup after loading the view.
+        self.navigationBar.translucent = true
+        self.navigationBar.tintColor = kTextColor
+        self.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName: kTextColor]
+        
+        //barTintColor is set per view controller...
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    
 }

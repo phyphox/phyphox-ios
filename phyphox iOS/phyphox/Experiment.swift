@@ -135,7 +135,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
      Called when the experiment view controller did dismiss.
      */
     func didBecomeInactive() {
-        
+        self.clear()
     }
     
     func checkAndAskForPermissions(failed: (Void) -> Void) {

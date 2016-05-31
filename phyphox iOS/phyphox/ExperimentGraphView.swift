@@ -171,6 +171,10 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         descriptor.yInputBuffer.addObserver(self)
     }
     
+    override func unregisterFromBuffer() {
+        descriptor.yInputBuffer.removeObserver(self)
+    }
+    
     func dataBufferUpdated(buffer: DataBuffer) {
         setNeedsUpdate()
     }
