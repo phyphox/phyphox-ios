@@ -134,13 +134,39 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             segControl = UISegmentedControl(items: buttons)
             segControl!.addTarget(self, action: #selector(switchToCollection), forControlEvents: .ValueChanged)
             
-            segControl!.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
-            segControl!.autoresizingMask = .FlexibleWidth
+            segControl!.apportionsSegmentWidthsByContent = true
             
             segControl!.tintColor = kTextColor
-            segControl!.backgroundColor = kLightBackgroundColor
+            segControl!.backgroundColor = kTextColor
             
-            self.view.addSubview(segControl!)
+            //Generate new background and divider images for the segControl
+            let rect = CGRectMake(0, 0, 1, tabBarHeight)
+            UIGraphicsBeginImageContext(rect.size)
+            let ctx = UIGraphicsGetCurrentContext()
+            
+            //Background
+            CGContextSetFillColorWithColor(ctx, kLightBackgroundColor.CGColor)
+            CGContextFillRect(ctx, rect)
+            let bgImage = UIGraphicsGetImageFromCurrentImageContext()
+            
+            //Higlighted image, bg with underline
+            CGContextSetFillColorWithColor(ctx, kHighlightColor.CGColor)
+            CGContextFillRect(ctx, CGRectMake(0, tabBarHeight-2, 1, 2))
+            let highlightImage = UIGraphicsGetImageFromCurrentImageContext()
+            
+            UIGraphicsEndImageContext()
+            
+            segControl!.setBackgroundImage(bgImage, forState: .Normal, barMetrics: .Default)
+            segControl!.setBackgroundImage(highlightImage, forState: .Selected, barMetrics: .Default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: .Normal, rightSegmentState: .Normal, barMetrics: .Default)
+            
+            let tabBar = UIView()
+            tabBar.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
+            tabBar.autoresizingMask = .FlexibleWidth
+            tabBar.backgroundColor = kLightBackgroundColor
+            tabBar.addSubview(segControl!)
+            
+            self.view.addSubview(tabBar)
             
             offsetTop += tabBarHeight
         }
@@ -228,7 +254,38 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             hud.dismissAfterDelay(3.0)
         }
         else {
-            let al = UIAlertController(title: NSLocalizedString("remoteServer", comment: ""), message: NSLocalizedString("remoteServerActive", comment: "")+"\n\(webServer.server!.serverURL)", preferredStyle: .Alert)
+            var url = String(webServer.server!.serverURL)
+            //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
+            if url == "nil" {
+                print("Fallback to generate URL from IP.")
+                var ip: String? = nil
+                var interfaceAdresses: UnsafeMutablePointer<ifaddrs> = nil
+                if getifaddrs(&interfaceAdresses) == 0 {
+                    var iPtr = interfaceAdresses
+                    while iPtr != nil {
+                        defer {iPtr = iPtr.memory.ifa_next}
+                        
+                        let interface = iPtr.memory
+                        if interface.ifa_addr.memory.sa_family == UInt8(AF_INET) {
+                            if let name = String.fromCString(interface.ifa_name) {
+                                if name == "bridge100" { //This is the "hotspot interface"
+                                    var addr = interface.ifa_addr.memory
+                                    var hostname = [CChar](count: Int(NI_MAXHOST), repeatedValue: 0)
+                                    getnameinfo(&addr, socklen_t(interface.ifa_addr.memory.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
+                                    ip = String.fromCString(hostname)
+                                }
+                            }
+                        }
+                    }
+                }
+                if ip != nil {
+                    url = "http://\(ip!)/"
+                } else {
+                    url = "Error: No active network."
+                }
+            }
+            
+            let al = UIAlertController(title: NSLocalizedString("remoteServer", comment: ""), message: NSLocalizedString("remoteServerActive", comment: "")+"\n\(url)", preferredStyle: .Alert)
             
             al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler: nil))
             
