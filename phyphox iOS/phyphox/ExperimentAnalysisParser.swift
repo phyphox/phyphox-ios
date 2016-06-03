@@ -170,6 +170,10 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                     }
                     
                     processed[index] = analysis
+                    
+                    for output in outputs {
+                        output.buffer?.dataFromAnalysis = true
+                    }
                 }
             }
         }

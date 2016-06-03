@@ -117,6 +117,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
+        for buffer in buffers.1! {
+            buffer.sendAnalysisCompleteNotification()
+        }
         if running {
             playAudio()
         }
@@ -214,15 +217,16 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         let hasOutput = output?.audioOutput.count > 0
         let hasInput = audioInputs?.count > 0
         
+        if hasInput || hasOutput {
+            ExperimentManager.sharedInstance().audioController.stop()
+        }
+        
         if hasOutput {
             for audio in (self.output?.audioOutput)! {
                 audio.destroyAudioEngine()
             }
         }
         
-        if hasInput || hasOutput {
-            ExperimentManager.sharedInstance().audioController.stop()
-        }
     }
     
     func start() {
@@ -299,7 +303,16 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             for buffer in buffers.1! {
                 if !buffer.attachedToTextField {
                     buffer.clear()
+                } else {
+                    //Edit fields are not cleared to retain user input, but we need to mark its content as new, as this now is "new data" for the now empty experiment. (Otherwise analysis with onUserInput=true will not update after clearing the data.) For most of these experiments clearing the data does not make sense anyway, but who know what future experiments with this setting might look like...
+                    buffer.sendUpdateNotification()
                 }
+            }
+        }
+        
+        if self.sensorInputs != nil {
+            for sensor in self.sensorInputs! {
+                sensor.clear()
             }
         }
     }

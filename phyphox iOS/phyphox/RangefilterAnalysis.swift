@@ -104,6 +104,17 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        //If values have been missing on one output, we need to fill these with NaN as the results are treated as a group and would not match up if appended subsequently
+        var nOut = 0
+        for o in out {
+            nOut = max(nOut, o.count)
+        }
+        for i in 0..<out.count {
+            while out[i].count < nOut {
+                out[i].append(Double.NaN)
+            }
+        }
+        
         #if DEBUG_ANALYSIS
             debug_noteOutputs(out)
         #endif

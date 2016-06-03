@@ -10,8 +10,20 @@
 import UIKit
 
 final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
+    let valueLabel: UILabel = UILabel()
+    let spacing = CGFloat(10.0)
+    
     required init(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
+        
+        self.valueLabel.text = "-"
+        self.valueLabel.textColor = kTextColor
+        self.valueLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+        self.valueLabel.textAlignment = NSTextAlignment.Left
+        
+        addSubview(self.valueLabel)
+        
+        label.textAlignment = NSTextAlignment.Right
         
         newValueIn()
         
@@ -27,8 +39,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
     }
     
     func newValueIn() {
-        let str = NSMutableAttributedString(string: self.descriptor.localizedLabel.stringByAppendingString(": "), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline), NSForegroundColorAttributeName : kTextColor])
-        
+        let str: String
         if let last = descriptor.buffer.last {
             let formatter = NSNumberFormatter()
             formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
@@ -37,26 +48,28 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
             
             let formatted = formatter.stringFromNumber(NSNumber(double: last*self.descriptor.factor))!
             
-            str.appendAttributedString(NSAttributedString(string: String(format: "%@%@", formatted, (self.descriptor.unit != nil ? String(format: " %@", self.descriptor.unit!) : "")), attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : kTextColor]))
+            str = formatted + (self.descriptor.unit == nil ? "" : " " + self.descriptor.unit!)
         }
         else {
-            str.appendAttributedString(NSAttributedString(string: "-", attributes: [NSFontAttributeName : UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote), NSForegroundColorAttributeName : kTextColor]))
+            str = "-"
         }
         
-        label.attributedText = str
+        valueLabel.text = str
         
         setNeedsLayout()
     }
     
     override func sizeThatFits(size: CGSize) -> CGSize {
-        return CGSizeMake(size.width, label.sizeThatFits(size).height)
+        return CGSizeMake(size.width, valueLabel.sizeThatFits(size).height)
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s = label.sizeThatFits(self.bounds.size)
+        let s1 = label.sizeThatFits(self.bounds.size)
+        let s2 = valueLabel.sizeThatFits(self.bounds.size)
         
-        label.frame = CGRectMake((self.bounds.size.width-s.width)/2.0, (self.bounds.size.height-s.height)/2.0, s.width, s.height)
+        label.frame = CGRectMake(0, (self.bounds.size.height-s1.height)/2.0, (self.bounds.size.width-spacing)/2.0, s1.height)
+        valueLabel.frame = CGRectMake((self.bounds.size.width+spacing)/2.0, (self.bounds.size.height-s2.height)/2.0, (self.bounds.size.width-spacing)/2.0, s2.height)
     }
 }

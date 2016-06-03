@@ -11,6 +11,7 @@ import Foundation
 
 protocol DataBufferObserver : AnyObject {
     func dataBufferUpdated(buffer: DataBuffer)
+    func analysisComplete()
 }
 
 func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
@@ -31,6 +32,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     }
     
     var attachedToTextField = false
+    var dataFromAnalysis = false
     
     var hashValue: Int {
         return name.hash
@@ -115,6 +117,14 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         for observer in observers {
             mainThread {
                 (observer as! DataBufferObserver).dataBufferUpdated(self)
+            }
+        }
+    }
+    
+    func sendAnalysisCompleteNotification() {
+        for observer in observers {
+            mainThread {
+                (observer as! DataBufferObserver).analysisComplete()
             }
         }
     }

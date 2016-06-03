@@ -11,7 +11,7 @@
 "action_settings" = "Settings";
 "title_activity_experiment" = "phyphox";
 
-"newExperiment" = "Add simple experiment";
+"newExperiment" = "Add experiment";
 "newExperimentPhyphoxInfo" = "Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
 "newExperimentInputTitle" = "Title";
 "newExperimentInputBufferSize" = "Buffer size";

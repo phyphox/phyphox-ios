@@ -60,6 +60,13 @@ final class ExperimentAudioOutput {
                         self.pcmPlayer.stop()
                     }
                     
+                    if source.count == 0 {
+                        //There is no data to play
+                        self.engine.stop()
+                        self.playing = false
+                        return
+                    }
+                    
                     self.pcmBuffer = AVAudioPCMBuffer(PCMFormat: self.format, frameCapacity: UInt32(source.count))
                     self.pcmBuffer.floatChannelData[0].assignFrom(&source, count: source.count)
                     self.pcmBuffer.frameLength = UInt32(source.count)

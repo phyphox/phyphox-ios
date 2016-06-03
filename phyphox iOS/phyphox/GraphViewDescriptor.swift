@@ -47,7 +47,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -73,7 +73,7 @@ final class GraphViewDescriptor: ViewDescriptor {
         self.forceFullDataset = forceFullDataset
         self.history = history
         
-        super.init(label: label, translation: translation)
+        super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {

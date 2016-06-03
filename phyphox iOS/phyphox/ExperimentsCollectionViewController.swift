@@ -12,13 +12,7 @@ import UIKit
 private let minCellWidth: CGFloat = 320.0
 
 final class ExperimentsCollectionViewController: CollectionViewController {
-    private var cellsPerRow: Int = 1 {
-        didSet {
-            if cellsPerRow != oldValue {
-                updateRowSeparators()
-            }
-        }
-    }
+    private var cellsPerRow: Int = 1
     
     override class var viewClass: CollectionContainerView.Type {
         return MainView.self
@@ -121,7 +115,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cellsPerRow = Int(cells)
         
-        return CGSizeMake(width, 44.0)
+        return CGSizeMake(width, 46.0)
     }
     
     private func showDeleteConfirmationForExperiment(experiment: Experiment, button: UIButton) {
@@ -178,8 +172,6 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cell.experiment = experiment
         
-        cell.showSideSeparator = cellsPerRow > 1 && (indexPath.row % cellsPerRow) != cellsPerRow-1
-        
         if collection.customExperiments {
             cell.showsOptionsButton = true
             cell.optionsButtonCallback = { [unowned experiment, unowned self] button in
@@ -194,16 +186,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         return cell
     }
     
-    func updateRowSeparators() {
-        for indexPath in self.selfView.collectionView.indexPathsForVisibleItems() {
-            let cell = self.selfView.collectionView.cellForItemAtIndexPath(indexPath) as! ExperimentCell
-            
-            cell.showSideSeparator = self.cellsPerRow > 1 && (indexPath.row % self.cellsPerRow) != self.cellsPerRow-1
-        }
-    }
-    
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        return CGSizeMake(self.view.frame.size.width, 28.0)
+        return CGSizeMake(self.view.frame.size.width, 36.0)
     }
     
     func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {

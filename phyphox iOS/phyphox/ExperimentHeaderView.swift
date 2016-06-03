@@ -12,13 +12,7 @@ import UIKit
 final class ExperimentHeaderView: UICollectionReusableView {
     private let label = UILabel()
     
-    private let separator = UIView()
-    
-    var showSeparator = true {
-        didSet {
-            separator.hidden = !showSeparator
-        }
-    }
+    private let background = UIView()
 
     var title: String? {
         set {
@@ -33,25 +27,21 @@ final class ExperimentHeaderView: UICollectionReusableView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+        background.backgroundColor = kHighlightColor
+        addSubview(background)
+        
+        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         addSubview(label)
         
         label.textColor = kTextColor
-        label.backgroundColor = kHighlightColor
-        
-        separator.backgroundColor = UIColor.blackColor()
-        separator.alpha = 0.1
-        addSubview(separator)
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
       
-        label.frame = CGRect(origin: CGPointMake(0.0, 1.0), size: CGSize(width: bounds.width, height: bounds.height-2.0))
+        label.frame = CGRect(origin: CGPointMake(16.0, 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
         
-        let separatorHeight = 1.0/UIScreen.mainScreen().scale
-        
-        separator.frame = CGRectMake(0.0, bounds.size.height-separatorHeight, bounds.size.width, separatorHeight)
+        background.frame = CGRect(origin: CGPointMake(8.0, 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
     }
     
     convenience init() {

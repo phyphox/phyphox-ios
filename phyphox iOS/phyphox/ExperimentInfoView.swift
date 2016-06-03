@@ -12,10 +12,13 @@ import UIKit
 final class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
     required init(descriptor: InfoViewDescriptor) {
         super.init(descriptor: descriptor)
+        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleFootnote)
     }
     
     override func sizeThatFits(size: CGSize) -> CGSize {
-        return label.sizeThatFits(size)
+        var s = size
+        s.width = size.width - 20.0 //A litte margin at the sides looks nicer
+        return label.sizeThatFits(s)
     }
     
     override func layoutSubviews() {

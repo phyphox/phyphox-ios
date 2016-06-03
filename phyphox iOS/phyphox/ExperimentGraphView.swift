@@ -137,6 +137,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
+        glGraph.lineWidth = descriptor.drawDots ? 4.0 : 2.0
         var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
         
         kHighlightColor.getRed(&r, green: &g, blue: &b, alpha: &a)

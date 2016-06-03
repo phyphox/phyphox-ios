@@ -9,7 +9,7 @@
 
 import UIKit
 
-private let spacing: CGFloat = 5.0
+private let spacing: CGFloat = 10.0
 private let textFieldWidth: CGFloat = 60.0
 
 final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate, DataBufferObserver {
@@ -62,6 +62,8 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         if unitLabel != nil {
             addSubview(unitLabel!)
         }
+        
+        label.textAlignment = NSTextAlignment.Right
     }
     
     override func unregisterFromBuffer() {
@@ -126,18 +128,23 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     }
     
     override func sizeThatFits(size: CGSize) -> CGSize {
+        //We want to have the gap between label and value centered, so we require atwice the width of the larger half
         let s1 = label.sizeThatFits(size)
         var s2 = textField.sizeThatFits(size)
         s2.width = textFieldWidth
         
-        var width = s1.width+spacing+textFieldWidth
         var height = max(s1.height, s2.height)
+        
+        let left = s1.width + spacing/2.0
+        var right = s2.width + spacing/2.0
         
         if unitLabel != nil {
             let s3 = unitLabel!.sizeThatFits(size)
-            width += (spacing+s3.width)*2.0
+            right += (spacing+s3.width)
             height = max(height, s3.height)
         }
+        
+        let width = 2.0 * max(left, right)
         
         return CGSize(width: width, height: height)
     }
@@ -145,14 +152,12 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s1 = label.sizeThatFits(self.bounds.size)
-        var s2 = textField.sizeThatFits(self.bounds.size)
-        s2.width = textFieldWidth
+        let h = label.sizeThatFits(self.bounds.size).height
+        let h2 = textField.sizeThatFits(self.bounds.size).height
+        let w = (self.bounds.size.width-spacing)/2.0
         
-        let width = s1.width+spacing+s2.width
-        
-        label.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width-width)/2.0, y: (self.bounds.size.height-s1.height)/2.0), size: s1)
-        textField.frame = CGRect(origin: CGPoint(x: CGRectGetMaxX(label.frame)+spacing, y: (self.bounds.size.height-s2.height)/2.0), size: s2)
+        label.frame = CGRect(origin: CGPoint(x: 0, y: (self.bounds.size.height-h)/2.0), size: CGSize(width: w, height: h))
+        textField.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0, y: (self.bounds.size.height-h2)/2.0), size: CGSize(width: textFieldWidth, height: h2))
         
         if unitLabel != nil {
             let s3 = unitLabel!.sizeThatFits(self.bounds.size)

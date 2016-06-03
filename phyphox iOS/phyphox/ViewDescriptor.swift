@@ -11,15 +11,17 @@ import Foundation
 
 public class ViewDescriptor {
     private let label: String
+    let requiresAnalysis: Bool
     weak var translation: ExperimentTranslationCollection?
     
     var localizedLabel: String {
         return translation?.localize(label) ?? label
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?) {
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool = false) {
         self.label = label
         self.translation = translation
+        self.requiresAnalysis = requiresAnalysis
     }
     
     func generateViewHTMLWithID(id: Int) -> String {

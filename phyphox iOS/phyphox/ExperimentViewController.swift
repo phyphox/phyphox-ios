@@ -62,6 +62,7 @@ final class ExperimentViewController: CollectionViewController {
         cell.module = module
         
         (module as! ExperimentViewModuleProtocol).setNeedsUpdate()
+        (module as! ExperimentViewModuleProtocol).triggerUpdate()
         
         return cell
     }

@@ -61,6 +61,10 @@ final class ExperimentAnalysis : DataBufferObserver {
         }
     }
     
+    func analysisComplete() {
+        
+    }
+    
     func reset() {
         timestamp = 0.0
     }

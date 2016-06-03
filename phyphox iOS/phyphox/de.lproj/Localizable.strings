@@ -31,7 +31,7 @@
 "hotspotSettings" = "Hotspot Einstellungen";
 "loadingText" = "Experiment wird geladen…";
 "loadingTitle" = "Laden";
-"newExperiment" = "Neues einfaches Experiment";
+"newExperiment" = "Neues Experiment";
 "newExperimentInputBufferSize" = "Puffergröße";
 "newExperimentInputRate" = "Sensorrate (in Hz, 0 = so schnell wie möglich)";
 "newExperimentInputSensors" = "Aktive Sensoren";

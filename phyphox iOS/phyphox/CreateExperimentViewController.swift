@@ -234,7 +234,6 @@ class CreateExperimentViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = kBackgroundColor
     }
 
     override func didReceiveMemoryWarning() {

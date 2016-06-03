@@ -54,6 +54,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     if index == selectedViewCollection {
                         proto.active = true
                         proto.setNeedsUpdate()
+                        proto.triggerUpdate()
                     } else {
                         proto.active = false
                     }

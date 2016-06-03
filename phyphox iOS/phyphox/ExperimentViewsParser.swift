@@ -89,7 +89,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 outputBuffer!.attachedToTextField = true
                 
                 if outputBuffer!.last == nil {
-                    outputBuffer!.append(defaultValue) //Set the default value.
+                    outputBuffer!.append(defaultValue/factor) //Set the default value.
                 }
                 
                 return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
@@ -127,7 +127,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     return nil
                 }
                 
-                return ValueViewDescriptor(label: label, translation: translation, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
+                let requiresAnalysis = inputBuffer!.dataFromAnalysis
+                
+                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
             func handleGraph(graph: [String: AnyObject]) -> GraphViewDescriptor? {
@@ -236,7 +238,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     print("Error! No Y axis input buffer!")
                 }
                 
-                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                let requiresAnalysis = (yInputBuffer!.dataFromAnalysis || xInputBuffer?.dataFromAnalysis ?? false)
+                
+                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
             }
             
             func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {

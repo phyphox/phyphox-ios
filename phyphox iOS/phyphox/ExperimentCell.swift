@@ -15,7 +15,6 @@ class ExperimentCell: UICollectionViewCell {
     private var iconView: UIView?
     
     private let separator = UIView()
-    private let sideSeparator = UIView()
     
     private var optionsButton: PTButton?
     
@@ -46,12 +45,6 @@ class ExperimentCell: UICollectionViewCell {
     var showSeparator = true {
         didSet {
             separator.hidden = !showSeparator
-        }
-    }
-    
-    var showSideSeparator = true {
-        didSet {
-            sideSeparator.hidden = !showSideSeparator
         }
     }
     
@@ -86,18 +79,14 @@ class ExperimentCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
-        subtitleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption2)
+        titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+        subtitleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
         
         titleLabel.textColor = kTextColor
         subtitleLabel.textColor = kText2Color
         
-        separator.backgroundColor = UIColor.blackColor()
+        separator.backgroundColor = UIColor.whiteColor()
         separator.alpha = 0.1
-        
-        sideSeparator.backgroundColor = UIColor.blackColor()
-        sideSeparator.alpha = 0.1
-        
         
         contentView.backgroundColor = kBackgroundColor
         
@@ -105,7 +94,6 @@ class ExperimentCell: UICollectionViewCell {
         contentView.addSubview(subtitleLabel)
         
         contentView.addSubview(separator)
-        contentView.addSubview(sideSeparator)
     }
 
     @available(*, unavailable)
@@ -122,13 +110,13 @@ class ExperimentCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s1 = CGSizeMake(bounds.size.height-2.0, bounds.size.height-2.0)
+        let s1 = CGSizeMake(bounds.size.height-4.0, bounds.size.height-4.0)
         
-        iconView?.frame = CGRectMake(0.0, 1.0, s1.width, s1.height)
+        iconView?.frame = CGRectMake(8.0, 2.0, s1.width, s1.height)
         
         let x = (iconView != nil ? CGRectGetMaxX(iconView!.frame) : 0.0)
         
-        var maxLabelSize = CGSizeMake(contentView.bounds.size.width-x-8.0, contentView.bounds.height)
+        var maxLabelSize = CGSizeMake(contentView.bounds.size.width-x-16.0, contentView.bounds.height)
         
         if let op = optionsButton {
             let size = CGSizeMake(contentView.bounds.height, contentView.bounds.height)
@@ -141,20 +129,18 @@ class ExperimentCell: UICollectionViewCell {
         var s2 = titleLabel.sizeThatFits(maxLabelSize)
         s2.width = min(maxLabelSize.width, s2.width)
         
-        titleLabel.frame = CGRectMake(x+4.0, 4.0, s2.width, s2.height)
+        titleLabel.frame = CGRectMake(x+8.0, 5.0, s2.width, s2.height)
         
         var s3 = subtitleLabel.sizeThatFits(maxLabelSize)
         s3.width = min(maxLabelSize.width, s3.width)
         
-        subtitleLabel.frame = CGRectMake(x+4.0, contentView.bounds.size.height-s3.height-4.0, s3.width, s3.height)
+        subtitleLabel.frame = CGRectMake(x+8.0, contentView.bounds.size.height-s3.height-5.0, s3.width, s3.height)
         
         
         
         let separatorHeight = 1.0/UIScreen.mainScreen().scale
         
-        separator.frame = CGRectMake(0.0, contentView.bounds.size.height-separatorHeight, contentView.bounds.size.width, separatorHeight)
-        
-        sideSeparator.frame = CGRectMake(contentView.bounds.size.width-separatorHeight, 0.0, separatorHeight, contentView.bounds.size.height)
+        separator.frame = CGRectMake(x+8.0, contentView.bounds.size.height-separatorHeight, contentView.bounds.size.width-x-16.0, separatorHeight)
         
 
     }

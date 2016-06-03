@@ -17,14 +17,14 @@ final class ValueViewDescriptor: ViewDescriptor {
     let factor: Double
     let buffer: DataBuffer
     
-    init(label: String, translation: ExperimentTranslationCollection?, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer) {
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
         self.factor = factor
         self.buffer = buffer
         
-        super.init(label: label, translation: translation)
+        super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {

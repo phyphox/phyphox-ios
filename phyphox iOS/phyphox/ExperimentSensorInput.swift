@@ -274,6 +274,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
+    func clear() {
+        self.startTimestamp = nil
+    }
+    
     private func writeToBuffers(x: Double?, y: Double?, z: Double?, t: NSTimeInterval) {
         if x != nil && self.xBuffer != nil {
             self.xBuffer!.append(x)
