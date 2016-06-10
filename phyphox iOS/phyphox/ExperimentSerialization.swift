@@ -36,6 +36,19 @@ final class ExperimentSerialization: NSObject {
         }
     }
     
+    class func readExperimentFromURL(url: NSURL) throws -> Experiment {
+        let data = NSData(contentsOfURL: url)
+        
+        if (data != nil && data!.length > 0) {
+            let experiment = try deserializeExperiment(data!);
+            experiment.source = url
+            return experiment
+        }
+        else {
+            throw SerializationError.InvalidFilePath
+        }
+    }
+    
     class func serializeExperiment(experiment: Experiment) throws -> NSData {
         return try ExperimentSerializer(experiment: experiment).serialize()
     }

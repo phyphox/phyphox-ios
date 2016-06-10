@@ -20,13 +20,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    var main: MainNavigationViewController!
     var mainNavViewController: ScalableViewController!
-
+    
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         window = UIWindow(frame: UIScreen.mainScreen().bounds)
         window!.tintColor = UIColor.blackColor()
         
-        let main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
+        main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(ExperimentsCollectionViewController(), animated: false)
         
         mainNavViewController = ScalableViewController(hostedVC: main)
@@ -34,9 +35,15 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         window!.makeKeyAndVisible()
         
-        // Override point for customization after application launch.
         return true
     }
+    
+    
+    func application(application: UIApplication, openURL url: NSURL, options: [String: AnyObject]) -> Bool {
+        cleanInbox(url.lastPathComponent)
+        return launchExperimentByURL(url)
+    }
+    
 
     func applicationWillResignActive(application: UIApplication) {
         var id = UIBackgroundTaskInvalid
@@ -73,5 +80,75 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 
+    func launchExperimentByURL(url: NSURL) -> Bool {
+        print("Opening \(url)")
+        
+        let experiment: Experiment
+        do {
+            experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        } catch let error {
+            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(error)", preferredStyle: .Alert)
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
+            main.presentViewController(controller, animated: true, completion: nil)
+            return false
+        }
+        
+        if let sensors = experiment.sensorInputs {
+            for sensor in sensors {
+                do {
+                    try sensor.verifySensorAvailibility()
+                }
+                catch SensorError.SensorUnavailable(let type) {
+                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .Alert)
+                    
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
+                    main.presentViewController(controller, animated: true, completion: nil)
+                    return false
+                }
+                catch {}
+            }
+        }
+        
+        while (main.viewControllers.count > 1) {
+            main.popViewControllerAnimated(true)
+        }
+        
+        let controller = ExperimentPageViewController(experiment: experiment)
+        
+        var denied = false
+        var showing = false
+        
+        experiment.willGetActive {
+            denied = true
+            if showing {
+                self.main.popViewControllerAnimated(true)
+            }
+        }
+        
+        if !denied {
+            main.pushViewController(controller, animated: true)
+            showing = true
+        } else {
+            return false
+        }
+        
+        return true
+    }
+    
+    func cleanInbox(skipFile: String?) {
+        let fileMgr = NSFileManager.defaultManager()
+        let inbox = fileMgr.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0].URLByAppendingPathComponent("Inbox")
+        do {
+            for file in try fileMgr.contentsOfDirectoryAtURL(inbox, includingPropertiesForKeys: nil, options: .SkipsHiddenFiles) {
+                if (skipFile != file.lastPathComponent) {
+                    try fileMgr.removeItemAtURL(file)
+                }
+            }
+        } catch {
+            
+        }
+    }
+    
+    
 }
 

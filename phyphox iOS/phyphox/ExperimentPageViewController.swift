@@ -458,6 +458,43 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
+        if experiment.source != nil {
+            alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .Default, handler: { [unowned self] action in
+                var i = 1
+                let title = self.experiment.source!.lastPathComponent
+                var t = title
+                
+                var path: String
+                
+                let directory = customExperimentsDirectory
+                
+                do {
+                    if !NSFileManager.defaultManager().fileExistsAtPath(directory) {
+                        try NSFileManager.defaultManager().createDirectoryAtPath(directory, withIntermediateDirectories: false, attributes: nil)
+                    }
+                } catch {
+                    return
+                }
+                
+                repeat {
+                    path = (directory as NSString).stringByAppendingPathComponent("\(t).phyphox")
+                    
+                    t = "\(title)-\(i)"
+                    i += 1
+                    
+                } while NSFileManager.defaultManager().fileExistsAtPath(path)
+                
+                do {
+                    try NSFileManager.defaultManager().copyItemAtURL(self.experiment.source!, toURL: NSURL(fileURLWithPath: path))
+                    self.experiment.source = nil
+                } catch {
+                    
+                }
+                
+                ExperimentManager.sharedInstance().loadCustomExperiments()
+                }))
+        }
+        
         if let popover = alert.popoverPresentationController {
             popover.barButtonItem = item
         }

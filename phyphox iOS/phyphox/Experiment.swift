@@ -44,6 +44,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     var local: Bool
     
+    var source: NSURL? = nil
+    
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translation: ExperimentTranslationCollection?

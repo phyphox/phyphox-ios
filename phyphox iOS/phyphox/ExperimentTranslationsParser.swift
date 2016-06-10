@@ -55,7 +55,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                 }
                 else if key as! String == "string" {
                     for dict in getElemetArrayFromValue(value) as! [NSDictionary] {
-                        let translated = dict[XMLDictionaryTextKey] as! String
+                        let translated = dict[XMLDictionaryTextKey] as? String ?? ""
                         let originalText = (dict[XMLDictionaryAttributesKey] as! [String: String])["original"]!
                         
                         strings[originalText] = translated
