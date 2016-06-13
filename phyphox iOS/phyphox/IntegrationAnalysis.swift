@@ -27,7 +27,7 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
             result = [Double](count: count, repeatedValue: 0.0)
             
             var factor = 1.0
-            vDSP_vrsumD(inArray, 1, &factor, &result, 1, vDSP_Length(count+1))
+            vDSP_vrsumD(inArray, 1, &factor, &result, 1, vDSP_Length(count))
             
             var repeatedVal = inArray[0]
             
