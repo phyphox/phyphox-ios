@@ -474,6 +474,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         self.gridView.grid = nil
         
+        self.lastIndexXArray = nil
+        
         self.glGraph.setPoints(nil, min: nil, max: nil)
     }
     
