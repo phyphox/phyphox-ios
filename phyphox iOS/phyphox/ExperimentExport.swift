@@ -16,11 +16,11 @@ final class ExperimentExport {
         self.sets = sets
     }
     
-    func runExport(format: ExportFileFormat, selectedSets: [ExperimentExportSet], callback: (errorMessage: String?, fileURL: NSURL?) -> Void) {
+    func runExport(format: ExportFileFormat, callback: (errorMessage: String?, fileURL: NSURL?) -> Void) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             autoreleasepool {
                 if format.isCSV() {
-                    if selectedSets.count == 1 {
+                    if self.sets.count == 1 {
                         let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.csv")
                         
                         do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
@@ -28,7 +28,7 @@ final class ExperimentExport {
                         let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
                         
                         
-                        let set = selectedSets.first!
+                        let set = self.sets.first!
                         
                         let data = set.serialize(format, additionalInfo: nil) as! NSData?
                         
@@ -58,7 +58,7 @@ final class ExperimentExport {
                             
                             var entries = [ZZArchiveEntry]()
                             
-                            for set in selectedSets {
+                            for set in self.sets {
                                 let data = set.serialize(format, additionalInfo: nil) as! NSData?
                                 
                                 entries.append(ZZArchiveEntry(fileName: set.localizedName + ".csv", compress: true, dataBlock: { error -> NSData? in
@@ -90,7 +90,7 @@ final class ExperimentExport {
                     
                     let workbook = JXLSWorkBook()
                     
-                    for set in selectedSets {
+                    for set in self.sets {
                         set.serialize(format, additionalInfo: workbook)
                     }
                     

@@ -188,24 +188,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewDidDisappear(animated: Bool) {
         super.viewDidDisappear(animated)
         
-        for collection in viewModules {
-            for module in collection {
-                if let proto = module as? ExperimentViewModuleProtocol {
-                    proto.unregisterFromBuffer()
+        if (self.isMovingFromParentViewController()) {
+            for collection in viewModules {
+                for module in collection {
+                    if let proto = module as? ExperimentViewModuleProtocol {
+                        proto.unregisterFromBuffer()
+                    }
                 }
             }
+        
+            tearDownWebServer()
+        
+            experimentStartTimer?.invalidate()
+            experimentStartTimer = nil
+        
+            experimentRunTimer?.invalidate()
+            experimentRunTimer = nil
+        
+            experiment.stop()
+            experiment.didBecomeInactive()
         }
-        
-        tearDownWebServer()
-        
-        experimentStartTimer?.invalidate()
-        experimentStartTimer = nil
-        
-        experimentRunTimer?.invalidate()
-        experimentRunTimer = nil
-        
-        experiment.stop()
-        experiment.didBecomeInactive()
     }
     
     func switchToCollection(sender: UISegmentedControl) {
@@ -308,7 +310,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func runExportFromActionSheet() {
-        let sets = exportSelectionView!.activeSets()!
         let format = exportSelectionView!.selectedFormat()
         
         let HUD = JGProgressHUD(style: .Dark)
@@ -317,7 +318,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         HUD.showInView(navigationController!.view)
         
-        runExport(sets, format: format) { error, URL in
+        runExport(format) { error, URL in
             if error != nil {
                 HUD.indicatorView = JGProgressHUDErrorIndicatorView()
                 HUD.textLabel.text = error!.localizedDescription
@@ -337,8 +338,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void) {
-        self.experiment.export!.runExport(format, selectedSets: sets) { (errorMessage, fileURL) in
+    func runExport(format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void) {
+        self.experiment.export!.runExport(format) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -349,7 +350,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func showExport() {
-        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: "Select the data sets to export:", preferredStyle: .Alert)
+        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: NSLocalizedString("pick_exportFormat", comment: ""), preferredStyle: .Alert)
         
         let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .Default, handler: { [unowned self] action in
             self.runExportFromActionSheet()
@@ -657,6 +658,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func clearData() {
         self.stopExperiment()
         self.experiment.clear()
+        
+        self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
         
         for section in self.viewModules {
             for view in section {

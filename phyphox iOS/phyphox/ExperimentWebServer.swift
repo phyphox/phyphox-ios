@@ -17,7 +17,7 @@ protocol ExperimentWebServerDelegate: class {
     func startExperiment()
     func stopExperiment()
     func clearData()
-    func runExport(sets: [ExperimentExportSet], format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void)
+    func runExport(format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void)
 }
 
 final class ExperimentWebServer {
@@ -33,6 +33,8 @@ final class ExperimentWebServer {
     weak var delegate: ExperimentWebServerDelegate?
     
     unowned let experiment: Experiment
+    
+    var forceFullUpdate = false
     
     init(experiment: Experiment) {
         self.experiment = experiment
@@ -78,17 +80,7 @@ final class ExperimentWebServer {
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
                 var sets = [ExperimentExportSet]()
                 
-                for (i, set) in self.experiment.export!.sets.enumerate() {
-                    if query["set\(i)"] != nil {
-                        sets.append(set)
-                    }
-                }
-                
-                if sets.count == 0 {
-                    sets = self.experiment.export!.sets
-                }
-                
-                self.delegate!.runExport(sets, format: format) { error, URL in
+                self.delegate!.runExport(format) { error, URL in
                     if error == nil {
                         self.temporaryFiles.append(URL!.path!)
                         let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
@@ -192,7 +184,7 @@ final class ExperimentWebServer {
                 if value.characters.count > 0 {
                     let raw = b.toArray()
                     
-                    if value == "full" {
+                    if value == "full" || (value == "partial" && self.forceFullUpdate == true) {
                         dict["updateMode"] = "full"
                         dict["buffer"] = raw.map({$0.isFinite ? $0 : NSNull()}) //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
                         //Detailed thoughts on this problem:
@@ -255,6 +247,8 @@ final class ExperimentWebServer {
             
             mainDict["buffer"] = bufferDict
             mainDict["status"] = ["measuring": self.experiment.running, "timedRun": self.delegate!.timerRunning, "countDown": Int(round(1000*self.delegate!.remainingTimerTime))]
+            
+            self.forceFullUpdate = false
             
             let response = GCDWebServerDataResponse(JSONObject: mainDict)
             
