@@ -46,6 +46,19 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
+        
+        let defaults = NSUserDefaults.standardUserDefaults()
+        let key = "donotshowagain"
+        if (!defaults.boolForKey(key)) {
+            let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .Default, handler: { [unowned self] _ in
+                defaults.setBool(true, forKey: key)
+            }))
+        
+            alert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: nil))
+        
+            navigationController!.presentViewController(alert, animated: true, completion: nil)
+        }
     }
     
     private func showOpenSourceLicenses() {
