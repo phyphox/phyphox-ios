@@ -246,6 +246,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func launchWebServer() {
+        UIApplication.sharedApplication().idleTimerDisabled = true
         if !webServer.start() {
             let hud = JGProgressHUD(style: .Dark)
             hud.interactionType = .BlockTouchesOnHUDView
@@ -298,6 +299,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     private func tearDownWebServer() {
         webServer.stop()
+        if (!self.experiment.running) {
+            UIApplication.sharedApplication().idleTimerDisabled = false
+        }
     }
     
     private func toggleWebServer() {
@@ -573,6 +577,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func startExperiment() {
         if !experiment.running {
+            UIApplication.sharedApplication().idleTimerDisabled = true
+            
             if experimentStartTimer != nil {
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
@@ -639,6 +645,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func stopExperiment() {
         if experiment.running {
+            if (!self.webServer.running) {
+                UIApplication.sharedApplication().idleTimerDisabled = false
+            }
+            
             var items = navigationItem.rightBarButtonItems!
             
             if experimentRunTimer != nil {
