@@ -43,7 +43,7 @@
 "pick_exportSets" = "Wählen Sie die zu exportierenden Datensätze.";
 "remoteServer" = "Fernzugriff erlauben";
 "remoteServerActive" = "Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:";
-"remoteServerWarning" = "Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie auf Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.";
+"remoteServerWarning" = "Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.";
 "remoteServerWarningTitle" = "Sicherheitswarnung!";
 "save_locally" = "Experiment zur Sammlung hinzufügen";
 "save_locally_done" = "Das Experiment wurde zur Sammlung hinzugefügt.";

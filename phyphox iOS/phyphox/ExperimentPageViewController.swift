@@ -13,6 +13,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var segControl: UISegmentedControl? = nil
     
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.Scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.Horizontal, options: nil)
+    
+    var serverLabel: UILabel? = nil
+    
     let experiment: Experiment
     
     var experimentViewControllers: [ExperimentViewController] = []
@@ -113,13 +116,31 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController?.navigationBar.translucent = false
     }
     
+    func updateLayout() {
+        var offsetTop : CGFloat = self.topLayoutGuide.length
+        let tabBarHeight : CGFloat = 30
+        if (experiment.viewDescriptors!.count > 1) {
+            offsetTop += tabBarHeight
+        }
+        var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
+        
+        if let label = self.serverLabel {
+            let s = label.sizeThatFits(CGSize(width: pageViewControlerRect.width, height: 200))
+            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height))
+            
+            let labelFrame = CGRect(x: 0, y: self.view.frame.height - s.height, width: pageViewControlerRect.width, height: s.height)
+            label.frame = labelFrame
+            label.autoresizingMask = [.FlexibleTopMargin, .FlexibleWidth]
+        }
+        
+        self.pageViewControler.view.frame = pageViewControlerRect
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge.None
-        
-        var offsetTop : CGFloat = self.topLayoutGuide.length
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .Plain, target: self, action: #selector(action(_:)))
         actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
@@ -162,20 +183,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             segControl!.setDividerImage(bgImage, forLeftSegmentState: .Normal, rightSegmentState: .Normal, barMetrics: .Default)
             
             let tabBar = UIView()
-            tabBar.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
+            tabBar.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
             tabBar.autoresizingMask = .FlexibleWidth
             tabBar.backgroundColor = kLightBackgroundColor
             tabBar.addSubview(segControl!)
             
             self.view.addSubview(tabBar)
-            
-            offsetTop += tabBarHeight
+           
         }
         
         pageViewControler.delegate = self
         pageViewControler.dataSource = self
-        pageViewControler.view.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .Forward, animated: false, completion: nil)
+        pageViewControler.view.autoresizingMask = [.FlexibleHeight, .FlexibleWidth]
+        
+        updateLayout()
         
         self.addChildViewController(pageViewControler)
         self.view.addSubview(pageViewControler.view)
@@ -289,16 +311,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
             }
             
-            let al = UIAlertController(title: NSLocalizedString("remoteServer", comment: ""), message: NSLocalizedString("remoteServerActive", comment: "")+"\n\(url)", preferredStyle: .Alert)
+            self.serverLabel = UILabel()
+            self.serverLabel!.lineBreakMode = .ByWordWrapping
+            self.serverLabel!.numberOfLines = 0
+            self.serverLabel!.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            self.serverLabel!.textColor = kTextColor
+            self.serverLabel!.backgroundColor = kLightBackgroundColor
+            self.serverLabel!.text = NSLocalizedString("remoteServerActive", comment: "")+"\n\(url)"
+            self.view.addSubview(self.serverLabel!)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler: nil))
-            
-            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+            updateLayout()
         }
     }
     
     private func tearDownWebServer() {
         webServer.stop()
+        if let label = self.serverLabel {
+            label.removeFromSuperview()
+        }
+        self.serverLabel = nil
+        updateLayout()
         if (!self.experiment.running) {
             UIApplication.sharedApplication().idleTimerDisabled = false
         }
@@ -309,7 +341,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tearDownWebServer()
         }
         else {
-            launchWebServer()
+            let al = UIAlertController(title: NSLocalizedString("remoteServerWarningTitle", comment: ""), message: NSLocalizedString("remoteServerWarning", comment: ""), preferredStyle: .Alert)
+            
+            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: { [unowned self] action in
+                self.launchWebServer()
+                }))
+            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+            
+            self.navigationController!.presentViewController(al, animated: true, completion: nil)
         }
     }
     
