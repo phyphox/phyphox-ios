@@ -389,15 +389,31 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("enableTimedRun", comment: ""), style: .Default, handler: { [unowned self, unowned alert] action in
-            self.timerEnabled = true
+            if (!self.timerEnabled) {
+                let label = UILabel()
+                label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+                label.textColor = kTextColor
+                label.text = "\(alert.textFields!.first!.text ?? "0")s"
+                label.sizeToFit()
             
+                var items = self.navigationItem.rightBarButtonItems!
+                items.append(UIBarButtonItem(customView: label))
+                self.navigationItem.rightBarButtonItems = items
+            }
+            
+            self.timerEnabled = true
             self.timerDelayString = alert.textFields!.first!.text
             self.timerDurationString = alert.textFields!.last!.text
             }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("disableTimedRun", comment: ""), style: .Cancel, handler: { [unowned self, unowned alert] action in
-            self.timerEnabled = false
+            if (self.timerEnabled) {
+                var items = self.navigationItem.rightBarButtonItems!
+                items.removeLast()
+                self.navigationItem.rightBarButtonItems = items
+            }
             
+            self.timerEnabled = false
             self.timerDelayString = alert.textFields!.first!.text
             self.timerDurationString = alert.textFields!.last!.text
             }))
@@ -520,7 +536,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let label = items.last!.customView! as! UILabel
         
-        label.text = "\(i)"
+        label.text = "\(i)s"
         label.sizeToFit()
         
         items.removeLast()
@@ -536,7 +552,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     updateT()
                 })
                 
-                label.text = "\(t)"
+                label.text = "\(t)s"
                 label.sizeToFit()
                 
                 var items = navigationItem.rightBarButtonItems!
@@ -561,12 +577,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
-                var items = navigationItem.rightBarButtonItems!
-                
-                items.removeLast()
-                
-                navigationItem.rightBarButtonItems = items
-                
                 return
             }
             
@@ -576,12 +586,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 var items = navigationItem.rightBarButtonItems!
                 
-                let label = UILabel()
-                label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
-                label.textColor = kHighlightColor
-                label.text = "\(i)"
+                let label = items.last!.customView! as! UILabel
+                
+                label.text = "\(i)s"
                 label.sizeToFit()
                 
+                items.removeLast()
                 items.append(UIBarButtonItem(customView: label))
                 
                 navigationItem.rightBarButtonItems = items
@@ -594,7 +604,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                             updateT()
                         })
                         
-                        label.text = "\(t)"
+                        label.text = "\(t)s"
                         label.sizeToFit()
                         
                         var items = navigationItem.rightBarButtonItems!
@@ -635,7 +645,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 experimentRunTimer!.invalidate()
                 experimentRunTimer = nil
                 
+                let label = items.last!.customView! as! UILabel
+                
+                label.text = "\(self.timerDelayString ?? "0")s"
+                label.sizeToFit()
+                
                 items.removeLast()
+                items.append(UIBarButtonItem(customView: label))
+
             }
             
             experiment.stop()
