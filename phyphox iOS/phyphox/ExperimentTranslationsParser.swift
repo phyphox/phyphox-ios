@@ -11,9 +11,15 @@ import Foundation
 
 final class ExperimentTranslationsParser: ExperimentMetadataParser {
     let translations: [NSDictionary]?
+    var defaultLanguage = ""
     
-    required init(_ data: NSDictionary) {
+    init (_ data: NSDictionary, defaultLanguage: String) {
         translations = getElementsWithKey(data, key: "translation") as! [NSDictionary]?
+        self.defaultLanguage = defaultLanguage
+    }
+    
+    required convenience init(_ data: NSDictionary) {
+        self.init(data)
     }
     
     /**
@@ -79,7 +85,6 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
             
         }
         
-        //TODO: modify phyphox file format to allow specification of default language code
-        return (trs.count > 0 ? ExperimentTranslationCollection(translations: trs, defaultLanguageCode: "en") : nil)
+        return (trs.count > 0 ? ExperimentTranslationCollection(translations: trs, defaultLanguageCode: defaultLanguage) : nil)
     }
 }

@@ -53,7 +53,14 @@ final class ExperimentDeserializer: NSObject {
     func deserialize() throws -> Experiment {
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.Dictionary
         
-        let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser)
+        let dictionary = XMLDictionaryParser.sharedInstance().dictionaryWithParser(parser) as NSDictionary
+        guard dictionary.nodeName() == "phyphox" else {
+            throw SerializationError.InvalidExperimentFile
+        }
+        
+        let attributes = dictionary[XMLDictionaryAttributesKey] as! [String: AnyObject]?
+        let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
+        print("Language: \(defaultLanguage)")
         
         var d = dictionary["description"]
         let description: String? = (d != nil ? textFromXML(d!) : nil)
@@ -68,7 +75,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let translation = parseTranslations(dictionary["translations"] as! NSDictionary?)
+        let translation = parseTranslations(dictionary["translations"] as! NSDictionary?, defaultLanguage: defaultLanguage)
         
         let analysis = parseAnalysis(dictionary["analysis"] as! NSDictionary?, buffers: buffers)
         
@@ -86,15 +93,18 @@ final class ExperimentDeserializer: NSObject {
         let iconRaw = dictionary["icon"]
         let icon = parseIcon(iconRaw ?? title ?? "")
         
-        guard icon != nil && title != nil && category != nil else {
+        let anyTitle = title ?? translation?.selectedTranslation?.titleString
+        let anyCategory = category ?? translation?.selectedTranslation?.categoryString
+        
+        guard icon != nil && anyTitle != nil && anyCategory != nil else {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: title!, description: description, category: category!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle!, description: description, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }
-    
+
     func deserializeAsynchronous(completion: (experiment: Experiment?, error: SerializationError?) -> Void) {
         dispatch_async(serializationQueue) { () -> Void in
             do {
@@ -179,9 +189,9 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseTranslations(translations: NSDictionary?) -> ExperimentTranslationCollection? {
+    func parseTranslations(translations: NSDictionary?, defaultLanguage: String) -> ExperimentTranslationCollection? {
         if (translations != nil) {
-            let parser = ExperimentTranslationsParser(translations!)
+            let parser = ExperimentTranslationsParser(translations!, defaultLanguage: defaultLanguage)
             
             return parser.parse()
         }
