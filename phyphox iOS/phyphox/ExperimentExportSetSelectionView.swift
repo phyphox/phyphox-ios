@@ -40,6 +40,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             sw.offAnimationType = .Bounce
             sw.onAnimationType = .Bounce
             sw.on = on
+            sw.userInteractionEnabled = !on
             sw.lineWidth = 1.0
             sw.onTintColor = kHighlightColor
             sw.onCheckColor = kHighlightColor
@@ -96,7 +97,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             }
         }
         
-        assert(false, "No file format selected")
+        fatalError("No file format selected")
     }
     
     //Auto Layout is evil. This works:

@@ -214,7 +214,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             return view
         }
         
-        assert(false, "Invalid supplementary view: \(kind)")
+        fatalError("Invalid supplementary view: \(kind)")
     }
     
     //MARK: - UICollectionViewDelegate

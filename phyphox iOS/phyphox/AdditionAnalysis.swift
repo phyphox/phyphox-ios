@@ -54,6 +54,6 @@ final class AdditionAnalysis: ExperimentComplexUpdateValueAnalysis {
             return ValueSource(vector: out)
         }
         
-        assert(false, "Invalid value sources")
+        fatalError("Invalid value sources")
     }
 }
