@@ -32,7 +32,7 @@
 "loadingText" = "Experiment wird geladen…";
 "loadingTitle" = "Laden";
 "newExperiment" = "Neues Experiment";
-"newExperimentInputBufferSize" = "Puffergröße";
+"newExperimentInputBufferSize" = "Puffergröße (Anzahl zu speichernder Werte)";
 "newExperimentInputRate" = "Sensorrate (in Hz, 0 = so schnell wie möglich)";
 "newExperimentInputSensors" = "Aktive Sensoren";
 "newExperimentInputTitle" = "Titel";

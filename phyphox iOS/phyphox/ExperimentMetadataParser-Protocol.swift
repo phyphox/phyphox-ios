@@ -110,6 +110,29 @@ func textFromXML(xml: AnyObject) -> String {
     }
 }
 
+func UIColorFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UIColor) -> UIColor {
+    if xml == nil {
+        return defaultValue
+    }
+    
+    if let str = xml![key] as? String {
+        if str.characters.count != 6 {
+            print("Count: \(str.characters.count)")
+            return defaultValue
+        }
+        
+        var hex: UInt32 = 0
+        NSScanner(string: str).scanHexInt(&hex)
+        
+        let r = CGFloat((hex & 0xff0000) >> 16)/255.0
+        let g = CGFloat((hex & 0xff00) >> 8)/255.0
+        let b = CGFloat((hex & 0xff) >> 0)/255.0
+        
+        return UIColor(red: r, green: g, blue: b, alpha: 1)
+    }
+    return defaultValue
+}
+
 //MARK: - Protocol
 
 protocol ExperimentMetadataParser {

@@ -137,11 +137,13 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let label = attributes["label"]!
                 
-                let aspectRatio = CGFloatFromXML(attributes, key: "aspectRatio", defaultValue: 3.0)
+                let aspectRatio = CGFloatFromXML(attributes, key: "aspectRatio", defaultValue: 2.5)
                 let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
                 let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
                 let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
                 let history = intTypeFromXML(attributes, key: "history", defaultValue: UInt(1))
+                let lineWidth = CGFloatFromXML(attributes, key: "lineWidth", defaultValue: 1.0)
+                let color = UIColorFromXML(attributes, key: "color", defaultValue: kHighlightColor)
                 
                 let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
                 let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
@@ -240,7 +242,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let requiresAnalysis = (yInputBuffer!.dataFromAnalysis || xInputBuffer?.dataFromAnalysis ?? false)
                 
-                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history)
+                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
             }
             
             func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {

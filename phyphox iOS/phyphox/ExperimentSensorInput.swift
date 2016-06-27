@@ -208,9 +208,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let field = magnetometerData.magneticField
                 
-                let x = field.x
-                let y = field.y
-                let z = field.z
+                let x = field.x/10.0
+                let y = field.y/10.0
+                let z = field.z/10.0
                 
                 let t = magnetometerData.timestamp
                 
@@ -243,7 +243,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     return
                 }
                 
-                let pressure = altimeterData.pressure.doubleValue/10.0 //hPa
+                let pressure = altimeterData.pressure.doubleValue*10.0 //hPa
                 
                 let t = altimeterData.timestamp
                 
@@ -353,6 +353,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), t: t!)
                     
                     self.resetValuesForAveraging()
+                    av.iterationStartTimestamp = t
                 }
             }
         }

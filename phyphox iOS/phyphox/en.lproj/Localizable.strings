@@ -14,7 +14,7 @@
 "newExperiment" = "Add experiment";
 "newExperimentPhyphoxInfo" = "Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
 "newExperimentInputTitle" = "Title";
-"newExperimentInputBufferSize" = "Buffer size";
+"newExperimentInputBufferSize" = "Buffer size (number of values to be stored)";
 "newExperimentInputRate" = "Sensor rate (in Hz, 0 = as fast as possible)";
 "newExperimentInputSensors" = "Active sensors";
 

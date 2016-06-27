@@ -47,7 +47,10 @@ final class GraphViewDescriptor: ViewDescriptor {
     let forceFullDataset: Bool
     let history: UInt
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt) {
+    let lineWidth: CGFloat
+    let color: UIColor
+    
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -72,6 +75,9 @@ final class GraphViewDescriptor: ViewDescriptor {
         self.drawDots = drawDots
         self.forceFullDataset = forceFullDataset
         self.history = history
+        
+        self.lineWidth = lineWidth
+        self.color = color
         
         super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
@@ -108,7 +114,7 @@ final class GraphViewDescriptor: ViewDescriptor {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(kHighlightColor.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue)\" , \"data\": d }], {\"xaxis\": {\(transformX)\"axisLabel\": \"\(xLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(yLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
     }
     
     override func setDataXHTMLWithID(id: Int) -> String {
