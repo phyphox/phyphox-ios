@@ -490,25 +490,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .Default, handler: { [unowned self] action in
-            let l = UIApplication.sharedApplication().keyWindow!.layer
+            let w = UIApplication.sharedApplication().keyWindow!
             let s = UIScreen.mainScreen().scale
-            UIGraphicsBeginImageContextWithOptions(l.frame.size, false, s)
-
-            l.renderInContext(UIGraphicsGetCurrentContext()!)
+            UIGraphicsBeginImageContextWithOptions(w.frame.size, false, s)
+            w.drawViewHierarchyInRect(w.frame, afterScreenUpdates: false)
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
             let png = UIImagePNGRepresentation(img)!
-
+            
             let HUD = JGProgressHUD(style: .Dark)
             HUD.interactionType = .BlockTouchesOnHUDView
             HUD.textLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
 
             HUD.showInView(self.navigationController!.view)
 
-            let vc = UIActivityViewController(activityItems: [png], applicationActivities: nil)
+            let dateFormatter = NSDateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+            let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).png")
+            
+            do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
+            do { try png.writeToFile(tmpFile, options: .DataWritingFileProtectionNone) } catch {}
+            let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+            
+            let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
 
             self.navigationController!.presentViewController(vc, animated: true) {
                 HUD.dismiss()
+                do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
             }
             }))
         

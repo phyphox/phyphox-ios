@@ -27,7 +27,36 @@ final class ExperimentManager {
     
     var experimentCollections: [ExperimentCollection] {
         if allExperimentCollections == nil {
-            allExperimentCollections = readOnlyExperimentCollections + customExperimentCollections
+            allExperimentCollections = readOnlyExperimentCollections
+            for experimentCollection in customExperimentCollections {
+                var placed = false
+                for (i, targetCollection) in allExperimentCollections!.enumerate() {
+                    if (experimentCollection.title == targetCollection.title) {
+                        allExperimentCollections![i].experiments! += experimentCollection.experiments!
+                        placed = true
+                        break;
+                    }
+                }
+                if !placed {
+                    allExperimentCollections! += [experimentCollection]
+                }
+            }
+            
+            for experimentCollection in allExperimentCollections! {
+                experimentCollection.experiments?.sortInPlace({$0.localizedTitle < $1.localizedTitle})
+            }
+            
+            let sensorCat = NSLocalizedString("categoryRawSensor", comment: "")
+            
+            allExperimentCollections?.sortInPlace({(a: ExperimentCollection, b: ExperimentCollection) -> Bool in
+                if a.title == sensorCat {
+                    return true
+                }
+                if b.title == sensorCat {
+                    return false
+                }
+                return a.title < b.title
+            })
         }
         
         return allExperimentCollections!

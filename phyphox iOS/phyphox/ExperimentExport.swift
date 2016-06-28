@@ -19,9 +19,12 @@ final class ExperimentExport {
     func runExport(format: ExportFileFormat, callback: (errorMessage: String?, fileURL: NSURL?) -> Void) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             autoreleasepool {
+                let dateFormatter = NSDateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+                
                 if format.isCSV() {
                     if self.sets.count == 1 {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.csv")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).csv")
                         
                         do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
                         
@@ -47,7 +50,7 @@ final class ExperimentExport {
                         }
                     }
                     else {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.zip")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).zip")
                         
                         do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
                         
@@ -82,7 +85,7 @@ final class ExperimentExport {
                     }
                 }
                 else {
-                    let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox-export.xls")
+                    let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).xls")
                     
                     do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
                     

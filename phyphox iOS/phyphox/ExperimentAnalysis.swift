@@ -79,9 +79,6 @@ final class ExperimentAnalysis : DataBufferObserver {
             busy = true
             
             after(sleep, closure: {
-                #if DEBUG
-                    print("Analysis update")
-                #endif
                 self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
                 self.delegate?.analysisWillUpdate(self)

@@ -460,7 +460,6 @@
 		6B08150E1CABEE6100EE2791 /* XMLDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XMLDictionary.h; sourceTree = "<group>"; };
 		6B08150F1CABEE6100EE2791 /* XMLDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XMLDictionary.m; sourceTree = "<group>"; };
 		6B0815111CABEE6700EE2791 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = ../../External/ZipZap/ZipZap.xcodeproj; sourceTree = "<group>"; };
-		6B0815361CABEF9100EE2791 /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		6B0815381CABEFAC00EE2791 /* JXLSiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JXLSiOS.xcodeproj; path = ../../External/JXLS/JXLSiOS.xcodeproj; sourceTree = "<group>"; };
 		6B0815431CABF61B00EE2791 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentHeaderView.swift; sourceTree = "<group>"; };
@@ -474,7 +473,6 @@
 		6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIAlertController+PTExtensions.m"; sourceTree = "<group>"; };
 		6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSetSelectionView.swift; sourceTree = "<group>"; };
 		6B2F60331CA8401D007A0C98 /* Test.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Test.phyphox; sourceTree = "<group>"; };
-		6B422E251CA4045300E945BC /* MetalGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalGraphView.swift; sourceTree = "<group>"; };
 		6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridView.swift; sourceTree = "<group>"; };
 		6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridLineView.swift; sourceTree = "<group>"; };
 		6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAudioOutput.swift; sourceTree = "<group>"; };
@@ -676,8 +674,6 @@
 				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
 				6BE320951CB06F7200DCC1ED /* VertexShader.glsl */,
 				6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */,
-				6B422E251CA4045300E945BC /* MetalGraphView.swift */,
-				6B0815361CABEF9100EE2791 /* Shaders.metal */,
 			);
 			name = Graph;
 			sourceTree = "<group>";

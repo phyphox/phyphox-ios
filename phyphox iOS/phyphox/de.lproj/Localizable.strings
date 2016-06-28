@@ -76,3 +76,5 @@
 "warning" = "Warnung";
 "noDrawableData" = "Keine darstellbaren Daten.";
 "categoryNewExperiment" = "Einfache eigene Experimente";
+"categoryRawSensor" = "Sensoren";
+

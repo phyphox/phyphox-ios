@@ -25,7 +25,7 @@ enum SensorError : ErrorType {
     case SensorUnavailable(SensorType)
 }
 
-private let kG = 9.81
+private let kG = -9.81
 
 final class ExperimentSensorInput : MotionSessionReceiver {
     let sensorType: SensorType

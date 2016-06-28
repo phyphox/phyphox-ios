@@ -27,9 +27,7 @@ class CreateExperimentViewController: UITableViewController {
     private var bufferSizeString: String?
     private var rateString: String?
     
-    init() {
-        super.init(style: .Grouped)
-        
+    func actualInit() {
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tableView.registerClass(TextFieldTableViewCell.self, forCellReuseIdentifier: "TextCell")
         
@@ -43,8 +41,19 @@ class CreateExperimentViewController: UITableViewController {
         self.navigationItem.rightBarButtonItem!.enabled = false
     }
     
-    required convenience init?(coder aDecoder: NSCoder) {
-        self.init()
+    init() {
+        super.init(style: .Grouped)
+        actualInit()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        actualInit()
+    }
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        actualInit()
     }
     
     func cancel() {

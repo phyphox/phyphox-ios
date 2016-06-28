@@ -19,7 +19,7 @@ struct GraphGridLine {
     let relativeValue: CGFloat
 }
 
-final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver {
+final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver, GraphGridDelegate {
     typealias T = GraphViewDescriptor
     
     private let xLabel: UILabel
@@ -50,17 +50,11 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
             var maxX = -Double.infinity
             var maxY = -Double.infinity
             
-            for (i, set) in dataSets.enumerate() {
+            for set in dataSets {
                 let maxPoint = set.bounds.max
-                let minPoint = set.bounds.min
                 
-                if i == 0 {
-                    if maxPoint.x > maxX {
-                        maxX = maxPoint.x
-                    }
-                }
-                else {
-                    maxX += maxPoint.x-minPoint.x //add delta
+                if maxPoint.x > maxX {
+                    maxX = maxPoint.x
                 }
                 
                 if maxPoint.y > maxY {
@@ -99,33 +93,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    private var points: [GraphPoint<GLfloat>]? {
-        if dataSets.count > 1 {
-            var p: [GraphPoint<GLfloat>] = []
-            
-            var xAdd: GLfloat = 0.0
-            
-            for set in dataSets {
-                let max = set.bounds.max
-                let min = set.bounds.min
-                
-                if xAdd > 0 {
-                    p.appendContentsOf(set.data.map({ (p) -> GraphPoint<GLfloat> in
-                        return GraphPoint(x: p.x+xAdd, y: p.y)
-                    }))
-                }
-                else {
-                    p.appendContentsOf(set.data)
-                }
-                
-                xAdd += GLfloat(max.x-min.x)
-            }
-            
-            return p
-        }
-        else {
-            return dataSets.first?.data
-        }
+    private var points: [[GraphPoint<GLfloat>]] {
+        return dataSets.map{$0.data}
     }
     
     required init(descriptor: GraphViewDescriptor) {
@@ -142,16 +111,18 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         descriptor.color.getRed(&r, green: &g, blue: &b, alpha: &a)
         glGraph.lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
+        glGraph.historyLength = descriptor.history
         
         gridView = GraphGridView()
-        gridView.gridInset = CGPoint(x: 25.0, y: 25.0)
-        gridView.gridOffset = CGPointMake(0.0, -4.0)
+        gridView.gridInset = CGPointMake(2.0, 2.0)
+        gridView.gridOffset = CGPointMake(0.0, 0.0)
         
         func makeLabel(text: String?) -> UILabel {
             let l = UILabel()
             l.text = text
             
-            l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
+            let defaultFont = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            l.font = defaultFont.fontWithSize(defaultFont.pointSize * 0.8)
             
             return l
         }
@@ -163,6 +134,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         yLabel.transform = CGAffineTransformMakeRotation(-CGFloat(M_PI/2.0))
         
         super.init(descriptor: descriptor)
+        
+        gridView.delegate = self
         
         addSubview(gridView)
         addSubview(glGraph)
@@ -447,11 +420,10 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                     })
                 }
                 
-                let finalPoints = self.points!
+                let finalPoints = self.points
                 
                 mainThread {
                     self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
-                    
                     self.glGraph.setPoints(finalPoints, min: min, max: max)
                 }
             })
@@ -476,17 +448,25 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         self.lastIndexXArray = nil
         
-        self.glGraph.setPoints(nil, min: nil, max: nil)
+        self.glGraph.setPoints([], min: nil, max: nil)
     }
     
     //Mark - General UI
     
     override func sizeThatFits(size: CGSize) -> CGSize {
-        return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio, size.height))
+        let s1 = label.sizeThatFits(self.bounds.size)
+        return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
     }
     
     var graphFrame: CGRect {
-        return gridView.insetRect
+        return CGRectOffset(gridView.insetRect, gridView.frame.origin.x, gridView.frame.origin.y)
+    }
+    
+    func updatePlotArea() {
+        if (self.glGraph.frame != self.graphFrame) {
+            self.glGraph.frame = self.graphFrame
+            self.glGraph.setNeedsLayout()
+        }
     }
     
     override func layoutSubviews() {
@@ -501,9 +481,9 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         xLabel.frame = CGRectMake((self.bounds.size.width-s2.width)/2.0, self.bounds.size.height-s2.height-spacing, s2.width, s2.height)
         
         let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
-        yLabel.frame = CGRectMake(spacing+5.0, (self.bounds.size.height-s3.height)/2.0-4.0, s3.width, s3.height)
         
-        gridView.frame = bounds
-        glGraph.frame = graphFrame
+        gridView.frame = CGRectMake(s3.width + spacing, s1.height+spacing, self.bounds.size.width - s3.width - 2*spacing, self.bounds.size.height - s1.height - s2.height - 2*spacing)
+        
+        yLabel.frame = CGRectMake(spacing, graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, s3.width, s3.height)
     }
 }

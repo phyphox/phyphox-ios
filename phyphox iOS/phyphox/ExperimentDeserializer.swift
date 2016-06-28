@@ -60,7 +60,6 @@ final class ExperimentDeserializer: NSObject {
         
         let attributes = dictionary[XMLDictionaryAttributesKey] as! [String: AnyObject]?
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
-        print("Language: \(defaultLanguage)")
         
         var d = dictionary["description"]
         let description: String? = (d != nil ? textFromXML(d!) : nil)

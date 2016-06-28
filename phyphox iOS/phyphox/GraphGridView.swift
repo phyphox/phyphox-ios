@@ -9,13 +9,18 @@
 
 import UIKit
 
+protocol GraphGridDelegate: class {
+    func updatePlotArea()
+}
+
 final class GraphGridView: UIView {
     private let borderView = UIView()
+    var delegate: GraphGridDelegate? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 0.5).CGColor
+        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 1.0).CGColor
         borderView.layer.borderWidth = 1.0/UIScreen.mainScreen().scale
         
         addSubview(borderView)
@@ -33,8 +38,14 @@ final class GraphGridView: UIView {
         }
     }
     
+    var gridLabelSpace: CGPoint = .zero {
+        didSet {
+            self.delegate?.updatePlotArea()
+        }
+    }
+    
     var insetRect: CGRect {
-        return CGRectOffset(CGRectInset(bounds, gridInset.x, gridInset.y), gridOffset.x, gridOffset.y)
+        return CGRectOffset(CGRectInset(bounds, gridInset.x + gridLabelSpace.x/2.0, gridInset.y + gridLabelSpace.y/2.0), gridOffset.x+gridLabelSpace.x/2.0, gridOffset.y - gridLabelSpace.y/2.0)
     }
     
     convenience init() {
@@ -72,7 +83,8 @@ final class GraphGridView: UIView {
         
         func makeLabel() -> UILabel {
             let label = UILabel()
-            label.font = UIFont.systemFontOfSize(9.0)
+            let defaultFont = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            label.font = defaultFont.fontWithSize(defaultFont.pointSize * 0.8)
             
             addSubview(label)
             
@@ -120,13 +132,8 @@ final class GraphGridView: UIView {
     }
     
     override func layoutSubviews() {
+        let spacing = 1.0/UIScreen.mainScreen().scale
         super.layoutSubviews()
-        
-        let insetRect = self.insetRect
-        
-        let add = 2.0/UIScreen.mainScreen().scale
-        
-        borderView.frame = CGRectInset(insetRect, -add, -add)
         
         let formatter = NSNumberFormatter()
         formatter.maximumFractionDigits = 3
@@ -136,8 +143,44 @@ final class GraphGridView: UIView {
             return formatter.stringFromNumber(NSNumber(double: n))!
         }
         
+        var xSpace = CGFloat(0.0)
+        var ySpace = CGFloat(0.0)
+        var index = 0
         if grid != nil {
-            var index = 0
+            if grid!.xGridLines != nil {
+                for line in grid!.xGridLines! {
+                    let label = labels[index]
+                    label.textColor = kTextColor
+                    
+                    label.text = format(line.absoluteValue)
+                    label.sizeToFit()
+                    
+                    ySpace = max(ySpace, label.frame.size.height)
+                    
+                    index += 1
+                }
+            }
+            if grid!.yGridLines != nil {
+                for line in grid!.yGridLines! {
+                    let label = labels[index]
+                    label.textColor = kTextColor
+                    
+                    label.text = format(line.absoluteValue)
+                    label.sizeToFit()
+                    
+                    xSpace = max(xSpace, label.frame.size.width)
+                    
+                    index += 1
+                }
+            }
+        }
+        
+        gridLabelSpace = CGPoint(x: xSpace, y: ySpace)
+        
+        borderView.frame = insetRect
+        
+        if grid != nil {
+            index = 0
             
             let smallestUnit = 1.0/UIScreen.mainScreen().scale
             
@@ -154,17 +197,12 @@ final class GraphGridView: UIView {
                         continue
                     }
                     
-                    view.hidden = (origin <= 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.hidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
                     view.frame = CGRectMake(origin+insetRect.origin.x, insetRect.origin.y, smallestUnit, insetRect.size.height)
                     
                     let label = labels[index]
-                    label.textColor = kTextColor
-                    
-                    label.text = format(line.absoluteValue)
-                    label.sizeToFit()
-                    
-                    label.frame = CGRectMake(origin+insetRect.origin.x-label.frame.size.width/2.0, CGRectGetMaxY(insetRect)+2.0, label.frame.size.width, label.frame.size.height)
+                    label.frame = CGRectMake(origin+insetRect.origin.x-label.frame.size.width/2.0, CGRectGetMaxY(insetRect)+spacing, label.frame.size.width, label.frame.size.height)
                     
                     index += 1
                 }
@@ -183,17 +221,12 @@ final class GraphGridView: UIView {
                         continue
                     }
                     
-                    view.hidden = (origin <= 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.hidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
                     view.frame = CGRectMake(insetRect.origin.x, origin+insetRect.origin.y, insetRect.size.width, smallestUnit)
                     
                     let label = labels[index]
-                    label.textColor = kTextColor
-                    
-                    label.text = format(line.absoluteValue)
-                    label.sizeToFit()
-                    
-                    label.frame = CGRectMake(CGRectGetMaxX(insetRect)+3.0, origin+insetRect.origin.y-label.frame.size.height/2.0, label.frame.size.width, label.frame.size.height)
+                    label.frame = CGRectMake(insetRect.origin.x-spacing-label.frame.size.width, origin+insetRect.origin.y-label.frame.size.height/2.0, label.frame.size.width, label.frame.size.height)
                     
                     index += 1
                 }

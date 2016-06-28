@@ -110,8 +110,6 @@ final class GLGraphView: GLKView {
     
     private var vbo: GLuint = 0
     
-    private var length = 0
-    
     private var xScale: GLfloat = 1.0
     private var yScale: GLfloat = 1.0
     
@@ -136,6 +134,12 @@ final class GLGraphView: GLKView {
         }
     }
     
+    var historyLength: UInt = 0 {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     override convenience init(frame: CGRect) {
         self.init(frame: frame, context: EAGLContext(API: .OpenGLES2))
     }
@@ -155,6 +159,8 @@ final class GLGraphView: GLKView {
         
         shader = ShaderProgram()
         
+        self.points = []
+        
         super.init(frame: frame, context: context)
         
         self.drawableColorFormat = .RGBA8888
@@ -169,31 +175,10 @@ final class GLGraphView: GLKView {
         glGenBuffers(1, &vbo)
     }
     
-    #if DEBUG
-    var points: [GraphPoint<GLfloat>]?
-    #endif
+    var points: [[GraphPoint<GLfloat>]]
     
-    func setPoints(p: [GraphPoint<GLfloat>]?, min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
-        #if DEBUG
-            points = p
-        #endif
-        length = p?.count ?? 0
-        
-        if length == 0 {
-            setNeedsDisplay()
-            return
-        }
-        
-        EAGLContext.setCurrentContext(context)
-        
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-        
-        if p != nil {
-            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p!, GLenum(GL_DYNAMIC_DRAW))
-        }
-        else {
-            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(0), nil, GLenum(GL_DYNAMIC_DRAW))
-        }
+    func setPoints(psets: [[GraphPoint<GLfloat>]], min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
+        points = psets
         
         if max != nil && min != nil {
             xScale = GLfloat(2.0/(max!.x-min!.x))
@@ -229,7 +214,9 @@ final class GLGraphView: GLKView {
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
-        if length == 0 {
+        let nSets = points.count
+        
+        if nSets == 0 {
             return
         }
         
@@ -241,21 +228,35 @@ final class GLGraphView: GLKView {
         
         shader.use()
         
-//        glEnable(GLenum(GL_POINT_SMOOTH))
-//        glEnable(GLenum(GL_LINE_SMOOTH))
-//        glEnable(GLenum(GL_BLEND))
-//        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
+        glEnable(GLenum(GL_BLEND))
+        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
         
         let xTranslation = GLfloat(-min.x-(max.x-min.x)/2.0)
         let yTranslation = GLfloat(-min.y-(max.y-min.y)/2.0)
         
-        shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
         shader.setPointSize(lineWidth)
         
         glLineWidth(lineWidth)
         
-        shader.drawPositions((drawDots ? GL_POINTS : GL_LINE_STRIP), length)
+        for (i,p) in points.enumerate() {
+            let length = p.count
+            
+            if length == 0 {
+                continue
+            }
+            
+            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p, GLenum(GL_DYNAMIC_DRAW))
+            
+            if (i == nSets-1) {
+                shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
+            } else {
+                shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
+            }
+            
+            shader.drawPositions((drawDots ? GL_POINTS : GL_LINE_STRIP), length)
+            
+        }
     }
 }
