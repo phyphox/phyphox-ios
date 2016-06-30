@@ -44,7 +44,6 @@ final class GraphViewDescriptor: ViewDescriptor {
     let aspectRatio: CGFloat
     let partialUpdate: Bool
     let drawDots: Bool
-    let forceFullDataset: Bool
     let history: UInt
     
     let lineWidth: CGFloat
@@ -73,7 +72,6 @@ final class GraphViewDescriptor: ViewDescriptor {
         self.aspectRatio = aspectRatio
         self.partialUpdate = partialUpdate
         self.drawDots = drawDots
-        self.forceFullDataset = forceFullDataset
         self.history = history
         
         self.lineWidth = lineWidth

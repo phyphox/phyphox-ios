@@ -51,7 +51,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let key = "donotshowagain"
         if (!defaults.boolForKey(key)) {
             let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .Default, handler: { [unowned self] _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .Default, handler: { _ in
                 defaults.setBool(true, forKey: key)
             }))
         

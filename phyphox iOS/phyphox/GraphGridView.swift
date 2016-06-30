@@ -136,11 +136,17 @@ final class GraphGridView: UIView {
         super.layoutSubviews()
         
         let formatter = NSNumberFormatter()
-        formatter.maximumFractionDigits = 3
-        formatter.minimumIntegerDigits = 1
+        formatter.usesSignificantDigits = true
+        formatter.minimumSignificantDigits = 3
         
         func format(n: Double) -> String {
-            return formatter.stringFromNumber(NSNumber(double: n))!
+            if (abs(n) < 1e3 && abs(n) > 1e-3) {
+                formatter.numberStyle = .DecimalStyle
+                return formatter.stringFromNumber(NSNumber(double: n))!
+            } else {
+                formatter.numberStyle = .ScientificStyle
+                return formatter.stringFromNumber(NSNumber(double: n))!
+            }
         }
         
         var xSpace = CGFloat(0.0)

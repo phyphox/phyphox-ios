@@ -25,7 +25,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     let name: String
     var size: Int {
         didSet {
-            while count > size {
+            while count > size && size > 0 {
                 queue.dequeue()
             }
         }
@@ -79,7 +79,11 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     
     var count: Int {
         get {
-            return Swift.min(queue.count, size)
+            if size > 0 {
+                return Swift.min(queue.count, size)
+            } else {
+                return queue.count
+            }
         }
     }
     
@@ -158,7 +162,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
             
             var vals = values
             
-            if vals.count > size {
+            if vals.count > size && size > 0 {
                 vals = Array(vals[vals.count-size..<vals.count])
             }
             
@@ -183,7 +187,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
             let operations = {
                 self.queue.enqueue(value!, async: true)
                 
-                if (self.actualCount > self.size) {
+                if (self.actualCount > self.size && self.size > 0) {
                     self.queue.dequeue(true)
                     self.trashedCount += 1
                 }
@@ -224,13 +228,13 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
                     
                     let cutAfter = cut > array.count
                     
-                    if !cutAfter && cut > 0  {
+                    if !cutAfter && cut > 0 && self.size > 0  {
                         array.removeFirst(cut)
                     }
                     
                     array.appendContentsOf(values)
                     
-                    if cutAfter && cut > 0 {
+                    if cutAfter && cut > 0 && self.size > 0 {
                         array.removeFirst(cut)
                     }
                     

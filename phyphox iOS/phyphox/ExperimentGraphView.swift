@@ -154,9 +154,62 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     }
     
     //MARK - Graph
-    func getTicks(min: Double, max: Double, maxTicks: Int) -> [Double]? {
+    func getTicks(min: Double, max: Double, maxTicks: Int, log: Bool) -> [Double]? {
         if max <= min || !isfinite(min) || !isfinite(max) {
             return nil
+        }
+        
+        var tickLocations = [Double]()
+        tickLocations.reserveCapacity(maxTicks)
+        
+        if log {
+            let expMax = exp(max)
+            let expMin = exp(min)
+            let logMax = log10(expMax)
+            let logMin = log10(expMin)
+            
+            let digitRange = Int(ceil(logMax)-floor(logMin))
+            if (digitRange < 1) {
+                return nil
+            }
+            
+            var first: Double = pow(10, floor(logMin))
+            
+            var magStep = 1
+            while digitRange > maxTicks * magStep {
+                magStep += 1
+            }
+            let magFactor: Double = pow(10.0, Double(magStep))
+            
+            for _ in 0..<digitRange {
+                if first > expMax || tickLocations.count >= maxTicks {
+                    break
+                }
+                if (first > expMin) {
+                    tickLocations.append(Double(first))
+                }
+                
+                if (digitRange < 4) {
+                    if 2*first > expMax || tickLocations.count >= maxTicks {
+                        break
+                    }
+                    if (2*first > expMin) {
+                        tickLocations.append(Double(2*first))
+                    }
+                }
+                
+                if (digitRange < 3) {
+                    if 5*first > expMax || tickLocations.count >= maxTicks {
+                        break
+                    }
+                    if (5*first > expMin) {
+                        tickLocations.append(Double(5*first))
+                    }
+                }
+                
+                first *= magFactor
+            }
+            return tickLocations
         }
         
         let range = max-min
@@ -200,9 +253,6 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
         
         let first = ceil(min/step)*step
-        
-        var tickLocations = [Double]()
-        tickLocations.reserveCapacity(maxTicks)
         
         var i = 0
         
@@ -402,21 +452,21 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 self.minY = min.y
                 self.maxY = max.y
                 
-                let xTicks = self.getTicks(self.minX, max: self.maxX, maxTicks: 6)
-                let yTicks = self.getTicks(self.minY, max: self.maxY, maxTicks: 4)
+                let xTicks = self.getTicks(self.minX, max: self.maxX, maxTicks: 6, log: logX)
+                let yTicks = self.getTicks(self.minY, max: self.maxY, maxTicks: 6, log: logY)
                 
                 var mappedXTicks: [GraphGridLine]? = nil
                 var mappedYTicks: [GraphGridLine]? = nil
                 
                 if xTicks != nil {
                     mappedXTicks = xTicks!.map({ (val) -> GraphGridLine in
-                        return GraphGridLine(absoluteValue: logX ? round(exp(val)) : val, relativeValue: CGFloat((val-self.minX)/(self.maxX-self.minX)))
+                        return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val)-self.minX)/(self.maxX-self.minX)))
                     })
                 }
                 
                 if yTicks != nil {
                     mappedYTicks = yTicks!.map({ (val) -> GraphGridLine in
-                        return GraphGridLine(absoluteValue: logY ? round(exp(val)) : val, relativeValue: CGFloat((val-self.minY)/(self.maxY-self.minY)))
+                        return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val)-self.minY)/(self.maxY-self.minY)))
                     })
                 }
                 

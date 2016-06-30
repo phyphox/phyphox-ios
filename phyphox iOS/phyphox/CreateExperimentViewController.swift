@@ -24,7 +24,6 @@ struct MapSensorType: OptionSetType {
 class CreateExperimentViewController: UITableViewController {
     private var selectedSensors = MapSensorType.None
     private var experimentTitle: String?
-    private var bufferSizeString: String?
     private var rateString: String?
     
     func actualInit() {
@@ -61,7 +60,7 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     func save() {
-        guard let title = experimentTitle, let size = Int(bufferSizeString!), let rate = Double(rateString!.stringByReplacingOccurrencesOfString(",", withString: ".")) else {
+        guard let title = experimentTitle, let rate = Double(rateString!.stringByReplacingOccurrencesOfString(",", withString: ".")) else {
             let hud = JGProgressHUD(style: .Dark)
             hud.interactionType = .BlockTouchesOnHUDView
             hud.indicatorView = JGProgressHUDErrorIndicatorView()
@@ -81,7 +80,7 @@ class CreateExperimentViewController: UITableViewController {
         hud.showInView(self.presentingViewController!.view)
         
         do {
-            try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: size, rate: rate, sensors: selected)
+            try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
             hud.dismiss()
         }
         catch let error as NSError {
@@ -97,11 +96,11 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return 4
+        return 3
     }
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section < 3 {
+        if section < 2 {
             return 1
         }
         else {
@@ -117,7 +116,7 @@ class CreateExperimentViewController: UITableViewController {
 //            return "Buffer Size"
 //        case 2:
 //            return "Sensor Refresh Rate"
-        case 3:
+        case 2:
             return NSLocalizedString("newExperimentInputSensors", comment: "")
         default:
             return nil
@@ -125,7 +124,7 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        if indexPath.section == 3 {
+        if indexPath.section == 2 {
             let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath)
             
             switch indexPath.row {
@@ -159,11 +158,6 @@ class CreateExperimentViewController: UITableViewController {
                 cell.textField.text = experimentTitle
             }
             else if indexPath.section == 1 {
-                cell.textField.placeholder = NSLocalizedString("newExperimentInputBufferSize", comment: "")
-                cell.textField.keyboardType = .DecimalPad
-                cell.textField.text = bufferSizeString
-            }
-            else if indexPath.section == 2 {
                 cell.textField.placeholder = NSLocalizedString("newExperimentInputRate", comment: "")
                 cell.textField.keyboardType = .DecimalPad
                 cell.textField.text = rateString
@@ -178,9 +172,6 @@ class CreateExperimentViewController: UITableViewController {
                     self.experimentTitle = cell.textField.text
                 }
                 else if indexPath.section == 1 {
-                    self.bufferSizeString = cell.textField.text
-                }
-                else if indexPath.section == 2 {
                     self.rateString = cell.textField.text
                 }
                 
@@ -193,16 +184,15 @@ class CreateExperimentViewController: UITableViewController {
     
     func updateSaveButton() {
         let titleCellCheck = experimentTitle?.characters.count > 0
-        let sizeCellCheck = bufferSizeString?.characters.count > 0
         let rateCellCheck = rateString?.characters.count > 0
         
-        self.navigationItem.rightBarButtonItem!.enabled = titleCellCheck && sizeCellCheck && rateCellCheck && selectedSensors != .None
+        self.navigationItem.rightBarButtonItem!.enabled = titleCellCheck && rateCellCheck && selectedSensors != .None
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
         
-        if indexPath.section == 3 {
+        if indexPath.section == 2 {
             var t: MapSensorType! = nil
             
             switch indexPath.row {
