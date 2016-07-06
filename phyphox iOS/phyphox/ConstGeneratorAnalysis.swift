@@ -10,8 +10,8 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
-    private var lengthInput: ExperimentAnalysisDataIO!
-    private var valueInput: ExperimentAnalysisDataIO!
+    private var lengthInput: ExperimentAnalysisDataIO?
+    private var valueInput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
         for input in inputs {
@@ -33,11 +33,11 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         var value: Double = 0
         var length: Int = 0
         
-        if let v = valueInput.getSingleValue() {
+        if let v = valueInput?.getSingleValue() {
             value = v
         }
         
-        if let l = lengthInput.getSingleValue() {
+        if let l = lengthInput?.getSingleValue() {
             length = Int(l)
         }
         
