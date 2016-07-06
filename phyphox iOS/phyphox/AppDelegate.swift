@@ -10,6 +10,8 @@
 import UIKit
 
 let EndBackgroundMotionSessionNotification = "EndBackgroundMotionSessionNotification"
+let ResignActiveNotification = "ResignActiveNotification"
+let DidBecomeActiveNotification = "DidBecomeActiveNotification"
 
 var iOS9: Bool {
     return ptHelperFunctionIsIOS9()
@@ -46,6 +48,15 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     
 
     func applicationWillResignActive(application: UIApplication) {
+        
+        NSNotificationCenter.defaultCenter().postNotificationName(ResignActiveNotification, object: nil)
+        
+        
+        //Original implementation below by Jonas. Should be re-enabled at some point as it "usually" nicely leaves the measurement running in the background.
+        //Unfortunately, this does not work for every input (audio!) and sometimes the experiment is interrupted nevertheless, leading to a gap / jump in the data, sometimes even to a crash.
+        //So, for now we will choose the "uncool" solution and stop the experiment whenever we lose focus as this behaviour is reliable and can be anticipated by the user.
+        
+        /*
         var id = UIBackgroundTaskInvalid
         
         id = UIApplication.sharedApplication().beginBackgroundTaskWithName("task") {
@@ -56,7 +67,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                     NSNotificationCenter.defaultCenter().postNotificationName(EndBackgroundMotionSessionNotification, object: nil)
                 }
             }
-        }
+        }*/
         
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
@@ -72,6 +83,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(application: UIApplication) {
+        NSNotificationCenter.defaultCenter().postNotificationName(DidBecomeActiveNotification, object: nil)
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 

@@ -107,6 +107,28 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationItem.title = experiment.localizedTitle
         
         webServer.delegate = self
+        
+        defer {
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: ResignActiveNotification, object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: DidBecomeActiveNotification, object: nil)
+        }
+    }
+    
+    var webserverWasRunning = false
+    dynamic func onResignActiveNotification() {
+        stopExperiment()
+        if (webServer.running) {
+            webserverWasRunning = true
+            tearDownWebServer()
+        } else {
+            webserverWasRunning = false
+        }
+    }
+    
+    dynamic func onDidBecomeActiveNotification() {
+        if (webserverWasRunning) {
+            launchWebServer()
+        }
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -370,12 +392,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
                 
-                vc.completionWithItemsHandler = { _ in
-                    do { try NSFileManager.defaultManager().removeItemAtURL(URL!) } catch {}
-                }
-                
                 self.navigationController!.presentViewController(vc, animated: true) {
                     HUD.dismiss()
+                }
+                
+                vc.completionWithItemsHandler = { _ in
+                    do { try NSFileManager.defaultManager().removeItemAtURL(URL!) } catch {}
                 }
             }
         }
@@ -513,11 +535,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
             
             let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
-
+            
             self.navigationController!.presentViewController(vc, animated: true) {
                 HUD.dismiss()
+            }
+            
+            vc.completionWithItemsHandler = { _ in
                 do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
             }
+            
             }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .Destructive, handler: { [unowned self] action in
