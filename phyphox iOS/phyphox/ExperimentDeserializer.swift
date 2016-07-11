@@ -68,6 +68,16 @@ final class ExperimentDeserializer: NSObject {
         d = dictionary["title"]
         let title: String? = (d != nil ? textFromXML(d!) : nil)
         
+        var links: [String: String] = [:]
+        if (dictionary["link"] != nil) {
+            for dict in getElemetArrayFromValue(dictionary["link"]!) as! [NSDictionary] {
+                let url = dict[XMLDictionaryTextKey] as? String ?? ""
+                let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
+                
+                links[label] = url
+            }
+        }
+        
         let buffersRaw = parseDataContainers(dictionary["data-containers"] as! NSDictionary?)
         
         guard let buffers = buffersRaw.0 else {
@@ -99,7 +109,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile
         }
         
-        let experiment = Experiment(title: anyTitle!, description: description, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle!, description: description, links: links, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }

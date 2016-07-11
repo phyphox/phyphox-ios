@@ -40,6 +40,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
             var category: String = ""
             
             var strings: [String: String] = [:]
+            var links: [String: String] = [:]
             
             for (key, value) in translation {
                 if let translated = value as? String {
@@ -67,6 +68,14 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                         strings[originalText] = translated
                     }
                 }
+                else if key as! String == "link" {
+                    for dict in getElemetArrayFromValue(value) as! [NSDictionary] {
+                        let url = dict[XMLDictionaryTextKey] as? String ?? ""
+                        let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
+                        
+                        links[label] = url
+                    }
+                }
                 else if key as! String == XMLDictionaryAttributesKey {
                     locale = (value as! [String: String])["locale"]!
                 }
@@ -79,7 +88,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                 }
             }
             
-            let tr = ExperimentTranslation(withLocale: locale, strings: (strings.count > 0 ? strings : nil), titleString: title, descriptionString: description, categoryString: category)
+            let tr = ExperimentTranslation(withLocale: locale, strings: (strings.count > 0 ? strings : nil), titleString: title, descriptionString: description, categoryString: category, links: links)
             
             trs[locale] = tr
             

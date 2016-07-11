@@ -506,6 +506,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .Default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .Alert)
             
+            let links: [String:String] = self.experiment.localizedLinks
+            for (key, value) in links {
+                al.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .Default, handler: { _ in
+                    UIApplication.sharedApplication().openURL(NSURL(string: value)!)
+                }))
+            }
+            
             al.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
             
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
