@@ -89,7 +89,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                     let delta = maxCount-array.count
                     
                     if delta > 0 {
-                        array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? 0.0))
+                        array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? Double.NaN))
                         valueSource.vector = array
                     }
                 }
