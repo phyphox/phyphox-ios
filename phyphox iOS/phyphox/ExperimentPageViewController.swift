@@ -585,12 +585,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     
                 } while NSFileManager.defaultManager().fileExistsAtPath(path)
                 
-                do {
-                    try NSFileManager.defaultManager().copyItemAtURL(self.experiment.source!, toURL: NSURL(fileURLWithPath: path))
-                    self.experiment.source = nil
-                } catch {
-                    
-                }
+                self.experiment.sourceData!.writeToFile(path, atomically: true)
+                self.experiment.source = nil
                 
                 ExperimentManager.sharedInstance().loadCustomExperiments()
                 }))

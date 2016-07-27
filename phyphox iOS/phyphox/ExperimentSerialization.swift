@@ -42,6 +42,7 @@ final class ExperimentSerialization: NSObject {
         if (data != nil && data!.length > 0) {
             let experiment = try deserializeExperiment(data!);
             experiment.source = url
+            experiment.sourceData = data
             return experiment
         }
         else {

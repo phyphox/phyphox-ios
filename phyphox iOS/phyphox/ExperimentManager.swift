@@ -27,8 +27,8 @@ final class ExperimentManager {
     
     var experimentCollections: [ExperimentCollection] {
         if allExperimentCollections == nil {
-            allExperimentCollections = readOnlyExperimentCollections
-            for experimentCollection in customExperimentCollections {
+            allExperimentCollections = customExperimentCollections
+            for experimentCollection in readOnlyExperimentCollections {
                 var placed = false
                 for (i, targetCollection) in allExperimentCollections!.enumerate() {
                     if (experimentCollection.title == targetCollection.title) {
@@ -43,7 +43,7 @@ final class ExperimentManager {
             }
             
             for experimentCollection in allExperimentCollections! {
-                experimentCollection.experiments?.sortInPlace({$0.localizedTitle < $1.localizedTitle})
+                experimentCollection.experiments?.sortInPlace({$0.experiment.localizedTitle < $1.experiment.localizedTitle})
             }
             
             let sensorCat = NSLocalizedString("categoryRawSensor", comment: "")
@@ -146,7 +146,7 @@ final class ExperimentManager {
                     let category = experiment.localizedCategory
                     
                     if let collection = lookupTable[category] {
-                        collection.experiments!.append(experiment)
+                        collection.experiments!.append((experiment: experiment, custom: true))
                     }
                     else {
                         let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: true)
@@ -185,7 +185,7 @@ final class ExperimentManager {
                 let category = experiment.localizedCategory
                 
                 if let collection = lookupTable[category] {
-                    collection.experiments!.append(experiment)
+                    collection.experiments!.append((experiment: experiment, custom: false))
                 }
                 else {
                     let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: false)

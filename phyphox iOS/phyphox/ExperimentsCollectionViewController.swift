@@ -183,12 +183,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
         let experiment = collection.experiments![indexPath.row]
         
-        cell.experiment = experiment
+        cell.experiment = experiment.experiment
         
-        if collection.customExperiments {
+        if experiment.custom {
             cell.showsOptionsButton = true
-            cell.optionsButtonCallback = { [unowned experiment, unowned self] button in
-                self.showOptionsForExperiment(experiment, button: button)
+            let exp = experiment.experiment
+            cell.optionsButtonCallback = { [unowned exp, unowned self] button in
+                self.showOptionsForExperiment(exp, button: button)
             }
         }
         else {
@@ -222,7 +223,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
         
-        if let sensors = experiment.sensorInputs {
+        if let sensors = experiment.experiment.sensorInputs {
             for sensor in sensors {
                 do {
                     try sensor.verifySensorAvailibility()
@@ -240,12 +241,12 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             }
         }
         
-        let vc = ExperimentPageViewController(experiment: experiment)
+        let vc = ExperimentPageViewController(experiment: experiment.experiment)
         
         var denied = false
         var showing = false
         
-        experiment.willGetActive {
+        experiment.experiment.willGetActive {
             denied = true
             if showing {
                 self.navigationController!.popViewControllerAnimated(true)

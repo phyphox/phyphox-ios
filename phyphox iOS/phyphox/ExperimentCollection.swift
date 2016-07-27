@@ -11,14 +11,17 @@ import Foundation
 
 final class ExperimentCollection {
     private(set) var title: String
-    var experiments: [Experiment]?
-    
-    let customExperiments: Bool
+    var experiments: [(experiment: Experiment, custom: Bool)]?
     
     init(title: String, experiments: [Experiment]?, customExperiments: Bool) {
         self.title = title
-        self.experiments = experiments
-        self.customExperiments = customExperiments
+        self.experiments = []
+        if (experiments == nil) {
+            return
+        }
+        for experiment in experiments! {
+            self.experiments?.append(experiment: experiment, custom: customExperiments)
+        }
     }
 
 }

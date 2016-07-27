@@ -95,17 +95,39 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func launchExperimentByURL(url: NSURL) -> Bool {
         print("Opening \(url)")
         
-        let experiment: Experiment
-        do {
-            experiment = try ExperimentSerialization.readExperimentFromURL(url)
-        } catch let error {
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(error)", preferredStyle: .Alert)
+        var experiment: Experiment?
+        
+        var fatalError: ErrorType?
+        
+        if (url.scheme == "phyphox") {
+            let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: true)
+            components?.scheme = "https"
+            do {
+                experiment = try ExperimentSerialization.readExperimentFromURL(components!.URL!)
+            } catch {
+                components?.scheme = "http"
+                do {
+                    experiment = try ExperimentSerialization.readExperimentFromURL(components!.URL!)
+                } catch let error {
+                    fatalError = error
+                }
+            }
+        } else {
+            do {
+                experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            } catch let error {
+                fatalError = error
+            }
+        }
+        
+        if (fatalError != nil) {
+            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(fatalError!)", preferredStyle: .Alert)
             controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
             main.presentViewController(controller, animated: true, completion: nil)
             return false
         }
         
-        if let sensors = experiment.sensorInputs {
+        if let sensors = experiment!.sensorInputs {
             for sensor in sensors {
                 do {
                     try sensor.verifySensorAvailibility()
@@ -125,12 +147,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             main.popViewControllerAnimated(true)
         }
         
-        let controller = ExperimentPageViewController(experiment: experiment)
+        let controller = ExperimentPageViewController(experiment: experiment!)
         
         var denied = false
         var showing = false
         
-        experiment.willGetActive {
+        experiment!.willGetActive {
             denied = true
             if showing {
                 self.main.popViewControllerAnimated(true)
