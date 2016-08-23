@@ -15,7 +15,7 @@
 "confirmDelete" = "Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?";
 "confirmDeleteTitle" = "Löschen bestätigen?";
 "credits" = "Credits";
-"creditsNames" = "iOS Umsetzung: Jonas Gessner\nEntwicklung: Dr. Sebastian Kuhlen\nDesign: Frank Posthoff (A.NikoPol)\nInstitutsleiter: Prof. Christoph Stampfer";
+"creditsNames" = "iOS Umsetzung: Jonas Gessner\nEntwicklung und Konzept: Dr. Sebastian Kuhlen\nKonzept: Prof. Christoph Stampfer\nDesign: Frank Posthoff (A.NikoPol)";
 
 "creditsRWTH" = "Phyphox wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.";
 "damageWarning" = "Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.";
