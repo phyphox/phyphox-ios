@@ -169,14 +169,14 @@ final class ExperimentDeserializer: NSObject {
         return nil
     }
     
-    func parseInputs(inputs: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
+    func parseInputs(inputs: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
         if (inputs != nil) {
             let parser = ExperimentInputsParser(inputs!)
             
             return parser.parse(buffers, analysis: analysis)
         }
         
-        return (nil, nil)
+        return (nil, nil, nil)
     }
     
     func parseViews(views: NSDictionary?, buffers: [String : DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) -> [ExperimentViewCollectionDescriptor]? {

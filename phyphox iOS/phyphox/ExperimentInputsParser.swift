@@ -12,10 +12,12 @@ import Foundation
 final class ExperimentInputsParser: ExperimentMetadataParser {
     let sensors: [NSDictionary]?
     let audio: [NSDictionary]?
+    let bluetooth: [NSDictionary]?
     
     required init(_ inputs: NSDictionary) {
         sensors = getElementsWithKey(inputs, key: "sensor") as! [NSDictionary]?
         audio = getElementsWithKey(inputs, key: "audio") as! [NSDictionary]?
+        bluetooth = getElementsWithKey(inputs, key: "bluetooth") as! [NSDictionary]?
     }
     
     func mapTypeStringToSensorType(type: String) -> SensorType? {
@@ -63,9 +65,9 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         return sensorType
     }
     
-    func parse(buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?) {
-        if sensors == nil && audio == nil {
-            return (nil, nil)
+    func parse(buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
+        if sensors == nil && audio == nil && bluetooth == nil {
+            return (nil, nil, nil)
         }
         
         var sensorsOut: [ExperimentSensorInput]?
@@ -168,6 +170,83 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             }
         }
         
-        return ((sensorsOut?.count > 0 ? sensorsOut : nil), (audioOut?.count > 0 ? audioOut : nil))
+        var bluetoothOut: [ExperimentBluetoothInput]?
+        
+        if bluetooth != nil {
+            
+            
+            bluetoothOut = []
+            
+            for bluetoothIn in bluetooth! {
+                let attributes = bluetoothIn[XMLDictionaryAttributesKey] as! [String: String]?
+                
+                let average = boolFromXML(attributes, key: "average", defaultValue: false)
+                
+                let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //Hz
+                let rate = isnormal(frequency) ? 1.0/frequency : 0.0
+                
+                let device = stringFromXML(attributes, key: "devicename", defaultValue: "")
+                let address = stringFromXML(attributes, key: "address", defaultValue: "")
+                var separator = stringFromXML(attributes, key: "separator", defaultValue: "")
+                let protocolStr = stringFromXML(attributes, key: "protocol", defaultValue: "")
+                
+                var outNames: [String] = []
+                var i = 0
+                var outName = ""
+                repeat {
+                    i += 1
+                    outName = stringFromXML(attributes, key: "out\(i)", defaultValue: "")
+                    outNames.append(outName)
+                } while outName != ""
+                
+                let serialProtocol: SerialProtocol
+                switch protocolStr {
+                case "simple":
+                    if separator == "" {
+                        separator = "\n"
+                    }
+                    let sepChar = separator.characters.first!
+                    serialProtocol = SimpleSerialProtocol(separator: sepChar)
+                case "csv":
+                    if separator == "" {
+                        separator = ","
+                    }
+                    serialProtocol = CSVSerialProtocol()
+                case "json":
+                    serialProtocol = JSONSerialProtocol()
+                default:
+                    print("Error! Unknown protocol: \(protocolStr)")
+                }
+                
+                let outputs = getElementsWithKey(bluetoothIn, key: "output") as! [[String: AnyObject]]
+                
+                var outBuffers: [DataBuffer] = []
+                
+                for output in outputs {
+                    let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let name = output[XMLDictionaryTextKey] as! String
+                    
+                    let buf = buffers[name]
+                    
+                    //Register for updates
+                    if buf != nil && analysis != nil {
+                        outBuffers.append(buf!)
+//TODO?                        analysis!.registerBluetoothBuffer(buf!)
+                    }
+                }
+                
+                if average && rate == 0.0 {
+                    print("Error! Averaging is enabled but rate is 0")
+                }
+                
+                //TODO: Pass data needed to connect to device
+                let input = ExperimentBluetoothInput(rate: rate, average: average, buffers: outBuffers)
+                
+                bluetoothOut!.append(input)
+            }
+        }
+        
+        return ((sensorsOut?.count > 0 ? sensorsOut : nil), (audioOut?.count > 0 ? audioOut : nil), (bluetoothOut?.count > 0 ? bluetoothOut : nil))
     }
 }
