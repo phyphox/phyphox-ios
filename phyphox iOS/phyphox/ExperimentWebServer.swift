@@ -30,6 +30,8 @@ final class ExperimentWebServer {
     private(set) var server: GCDWebServer?
     private var temporaryFiles = [String]()
     
+    private var sessionID: String = ""
+    
     weak var delegate: ExperimentWebServerDelegate?
     
     unowned let experiment: Experiment
@@ -51,6 +53,9 @@ final class ExperimentWebServer {
         }
         
         precondition(delegate != nil, "Cannot start web server without a delegate")
+        
+        let startTime = NSDate()
+        sessionID = String(Int(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
         
         server = GCDWebServer()
         path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
@@ -246,7 +251,7 @@ final class ExperimentWebServer {
             }
             
             mainDict["buffer"] = bufferDict
-            mainDict["status"] = ["measuring": self.experiment.running, "timedRun": self.delegate!.timerRunning, "countDown": Int(round(1000*self.delegate!.remainingTimerTime))]
+            mainDict["status"] = ["session": self.sessionID, "measuring": self.experiment.running, "timedRun": self.delegate!.timerRunning, "countDown": Int(round(1000*self.delegate!.remainingTimerTime))]
             
             self.forceFullUpdate = false
             
