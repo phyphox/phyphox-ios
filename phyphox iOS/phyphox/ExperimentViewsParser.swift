@@ -89,7 +89,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 outputBuffer!.attachedToTextField = true
                 
                 if outputBuffer!.last == nil {
-                    outputBuffer!.append(defaultValue/factor) //Set the default value.
+                    outputBuffer!.append(defaultValue) //Set the default value.
                 }
                 
                 return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
