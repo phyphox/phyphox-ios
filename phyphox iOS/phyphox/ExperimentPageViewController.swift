@@ -391,7 +391,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
-                
+
+                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+
                 self.navigationController!.presentViewController(vc, animated: true) {
                     HUD.dismiss()
                 }
