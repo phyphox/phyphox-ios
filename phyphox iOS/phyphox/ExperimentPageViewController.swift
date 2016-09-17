@@ -114,6 +114,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
     var webserverWasRunning = false
     dynamic func onResignActiveNotification() {
         stopExperiment()
