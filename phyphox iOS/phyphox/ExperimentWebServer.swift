@@ -179,8 +179,7 @@ final class ExperimentWebServer {
             
             for (bufferName, value) in query {
                 guard let b = self.experiment.buffers.0?[bufferName] else {
-                    returnErrorResponse()
-                    return
+                    continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
                 }
                 
                 var dict = [String: AnyObject]()
