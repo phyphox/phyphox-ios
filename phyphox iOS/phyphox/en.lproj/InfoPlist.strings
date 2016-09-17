@@ -1,0 +1,8 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox records audio from the microphone like from other sensors and analyzes it according to the selected experiment. The data will only be exported from the app if the user elects to do so using the export function.";

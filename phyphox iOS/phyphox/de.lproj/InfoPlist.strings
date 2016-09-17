@@ -1,0 +1,8 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox nimmt Audio vom Mikrofon auf wie von anderen Sensoren und analysiert sie entsprechend dem jeweiligen Experiment. Die Daten werden nur auf Wunsch über die Export-Funktion aus der App exportiert.";

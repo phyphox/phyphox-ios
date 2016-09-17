@@ -13,6 +13,7 @@
 		4B5770A91D7836F700394B07 /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */; };
 		4B5770C21D7868A500394B07 /* SerialProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770C11D7868A500394B07 /* SerialProtocol.swift */; };
 		4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4B6AE7141CF9AF0B0070A691 /* Localizable.strings */; };
+		4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */; };
 		6B00F0271C40713300971941 /* MainNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0261C40713300971941 /* MainNavigationViewController.swift */; };
 		6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0291C4072B700971941 /* ExperimentViewController.swift */; };
 		6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */; };
@@ -428,6 +429,8 @@
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
 		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4BBA0C9B1D8D75A300A9A634 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4BBA0C9D1D8D75AE00A9A634 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6B00F0261C40713300971941 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		6B00F0291C4072B700971941 /* ExperimentViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewController.swift; sourceTree = "<group>"; };
 		6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysisDataIO.swift; sourceTree = "<group>"; };
@@ -912,6 +915,7 @@
 				6B7BF7841C130425007408FB /* Assets.xcassets */,
 				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
 				6B7BF7891C130425007408FB /* Info.plist */,
+				4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */,
 				6B0815431CABF61B00EE2791 /* libc++.tbd */,
 				4B6AE7141CF9AF0B0070A691 /* Localizable.strings */,
 			);
@@ -1185,6 +1189,7 @@
 						CreatedOnToolsVersion = 7.1.1;
 						DevelopmentTeam = 44GTV4NJA9;
 						LastSwiftMigration = 0800;
+						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -1461,6 +1466,7 @@
 				6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */,
 				4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */,
 				6BE320981CB11A7200DCC1ED /* FragmentShader.glsl in Resources */,
+				4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */,
 				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1694,6 +1700,15 @@
 			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
+		4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4BBA0C9B1D8D75A300A9A634 /* en */,
+				4BBA0C9D1D8D75AE00A9A634 /* de */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
 		6B7BF7861C130425007408FB /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1815,6 +1830,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = YES;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1871,7 +1887,8 @@
 				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = YES;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
