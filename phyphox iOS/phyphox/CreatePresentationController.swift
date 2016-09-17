@@ -12,7 +12,7 @@ import UIKit
 final class OverlayPresentationController: UIPresentationController {
     let dimmingView = UIView()
     
-    override init(presentedViewController: UIViewController, presentingViewController: UIViewController) {
+    override init(presentedViewController: UIViewController, presentingViewController: UIViewController?) {
         super.init(presentedViewController: presentedViewController, presentingViewController: presentingViewController)
 
         dimmingView.backgroundColor = UIColor(white: 0.0, alpha: 0.5)

@@ -173,7 +173,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let fileMgr = NSFileManager.defaultManager()
         let inbox = fileMgr.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0].URLByAppendingPathComponent("Inbox")
         do {
-            for file in try fileMgr.contentsOfDirectoryAtURL(inbox, includingPropertiesForKeys: nil, options: .SkipsHiddenFiles) {
+            for file in try fileMgr.contentsOfDirectoryAtURL(inbox!, includingPropertiesForKeys: nil, options: .SkipsHiddenFiles) {
                 if (skipFile != file.lastPathComponent) {
                     try fileMgr.removeItemAtURL(file)
                 }

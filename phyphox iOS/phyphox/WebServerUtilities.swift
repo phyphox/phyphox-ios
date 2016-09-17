@@ -23,7 +23,7 @@ final class WebServerUtilities {
         
         UIGraphicsEndImageContext()
         
-        return img
+        return img!
     }
     
     class func genPlaceHolderBase64Image() -> String {

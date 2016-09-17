@@ -189,13 +189,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let ctx = UIGraphicsGetCurrentContext()
             
             //Background
-            CGContextSetFillColorWithColor(ctx, kLightBackgroundColor.CGColor)
-            CGContextFillRect(ctx, rect)
+            CGContextSetFillColorWithColor(ctx!, kLightBackgroundColor.CGColor)
+            CGContextFillRect(ctx!, rect)
             let bgImage = UIGraphicsGetImageFromCurrentImageContext()
             
             //Higlighted image, bg with underline
-            CGContextSetFillColorWithColor(ctx, kHighlightColor.CGColor)
-            CGContextFillRect(ctx, CGRectMake(0, tabBarHeight-2, 1, 2))
+            CGContextSetFillColorWithColor(ctx!, kHighlightColor.CGColor)
+            CGContextFillRect(ctx!, CGRectMake(0, tabBarHeight-2, 1, 2))
             let highlightImage = UIGraphicsGetImageFromCurrentImageContext()
             
             UIGraphicsEndImageContext()
@@ -527,7 +527,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             w.drawViewHierarchyInRect(w.frame, afterScreenUpdates: false)
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
-            let png = UIImagePNGRepresentation(img)!
+            let png = UIImagePNGRepresentation(img!)!
             
             let HUD = JGProgressHUD(style: .Dark)
             HUD.interactionType = .BlockTouchesOnHUDView

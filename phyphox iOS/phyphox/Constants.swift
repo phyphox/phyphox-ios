@@ -93,7 +93,7 @@ func generateDots(height: CGFloat) -> UIImage {
     
     path.fill()
     
-    let img = UIGraphicsGetImageFromCurrentImageContext().imageWithRenderingMode(.AlwaysTemplate)
+    let img = UIGraphicsGetImageFromCurrentImageContext()!.imageWithRenderingMode(.AlwaysTemplate)
     
     UIGraphicsEndImageContext()
     

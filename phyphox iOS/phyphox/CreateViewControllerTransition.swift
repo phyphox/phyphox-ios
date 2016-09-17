@@ -39,7 +39,7 @@ final class CreateViewControllerTransition : NSObject, UIViewControllerAnimatedT
         if presenting {
             center = toView.center
             toView.center = CGPointMake(center.x, toView.bounds.size.height)
-            transitionContext.containerView()!.addSubview(toView)
+            transitionContext.containerView().addSubview(toView)
         }
         else {
             center = CGPointMake(toView.center.x, toView.bounds.size.height + fromView.bounds.size.height)
