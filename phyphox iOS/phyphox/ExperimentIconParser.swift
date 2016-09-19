@@ -27,7 +27,7 @@ final class ExperimentIconParser: ExperimentMetadataParser {
         else if let icon = data as? NSDictionary {
             let attributes = icon[XMLDictionaryAttributesKey] as! [String: AnyObject]?
             
-            let string = icon[XMLDictionaryTextKey] as! String
+            let string = icon[XMLDictionaryTextKey] as? String ?? ""
             
             if stringFromXML(attributes, key: "format", defaultValue: "string") == "base64" {
                 let data = NSData(base64EncodedString: string, options: [])!
