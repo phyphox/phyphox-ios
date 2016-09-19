@@ -19,7 +19,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     var edited = false
     
     func formattedValue(raw: Double) -> String {
-        return (descriptor.decimal ? String(Int(raw)) : String(raw))
+        return (descriptor.decimal ? String(raw) : String(Int(raw)))
     }
     
     required init(descriptor: EditViewDescriptor) {
@@ -102,18 +102,18 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             
             if descriptor.decimal {
                 if descriptor.signed {
-                    rawVal = floor(Double(textField.text!)!)
-                }
-                else {
-                    rawVal = floor(abs(Double(textField.text!)!))
-                }
-            }
-            else {
-                if descriptor.signed {
                     rawVal = Double(textField.text!)!
                 }
                 else {
                     rawVal = abs(Double(textField.text!)!)
+                }
+            }
+            else {
+                if descriptor.signed {
+                    rawVal = floor(Double(textField.text!)!)
+                }
+                else {
+                    rawVal = floor(abs(Double(textField.text!)!))
                 }
             }
             
