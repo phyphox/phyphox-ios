@@ -85,7 +85,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
     }
     
-    func dataBufferUpdated(buffer: DataBuffer) {
+    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
         updateTextField(textField, write: false, forceReadFromBuffer: true)
     }
     

@@ -34,7 +34,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         descriptor.buffer.removeObserver(self)
     }
     
-    func dataBufferUpdated(buffer: DataBuffer) {
+    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
         newValueIn()
     }
     

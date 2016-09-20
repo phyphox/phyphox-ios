@@ -10,7 +10,7 @@
 import Foundation
 
 protocol DataBufferObserver : AnyObject {
-    func dataBufferUpdated(buffer: DataBuffer)
+    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
     func analysisComplete()
 }
 
@@ -117,10 +117,10 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func sendUpdateNotification() {
+    func sendUpdateNotification(noData: Bool = false) {
         for observer in observers {
             mainThread {
-                (observer as! DataBufferObserver).dataBufferUpdated(self)
+                (observer as! DataBufferObserver).dataBufferUpdated(self, noData: noData)
             }
         }
     }
@@ -143,7 +143,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         return queue.objectAtIndex(index, async: async)
     }
     
-    func clear(notify: Bool = true) {
+    func clear(notify: Bool = true, noData: Bool = true) {
         queue.clear()
         trashedCount = 0
         written = false
@@ -151,7 +151,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         bufferMutated()
         
         if notify {
-            sendUpdateNotification()
+            sendUpdateNotification(noData)
         }
     }
     

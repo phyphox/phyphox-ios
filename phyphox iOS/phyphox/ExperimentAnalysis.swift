@@ -55,8 +55,8 @@ final class ExperimentAnalysis : DataBufferObserver {
         editBuffers.insert(dataBuffer)
     }
     
-    func dataBufferUpdated(buffer: DataBuffer) {
-        if !onUserInput || editBuffers.contains(buffer) {
+    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
+        if (!onUserInput || editBuffers.contains(buffer)) && !noData {
             setNeedsUpdate()
         }
     }
