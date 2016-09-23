@@ -94,3 +94,5 @@
 
 "categoryNewExperiment" = "Simple custom experiments";
 "categoryRawSensor" = "Raw Sensors";
+
+"experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";

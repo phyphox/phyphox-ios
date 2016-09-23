@@ -9,7 +9,7 @@
 import Foundation
 import GCDWebServers
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate {
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate {
     var segControl: UISegmentedControl? = nil
     
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.Scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.Horizontal, options: nil)
@@ -231,6 +231,45 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         pageViewControler.didMoveToParentViewController(self)
         
         updateSelectedViewCollection()
+        
+        //Show a hint for the experiment info
+        if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
+            let label = UILabel()
+            label.text = NSLocalizedString("experimentinfo_hint", comment: "")
+            label.lineBreakMode = .ByWordWrapping
+            label.numberOfLines = 0
+            label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            label.textColor = kDarkBackgroundColor
+            let maxSize = CGSizeMake(self.view.frame.width*2/3, self.view.frame.height*2/3)
+            label.frame.size = label.sizeThatFits(maxSize)
+            label.frame.offsetInPlace(dx: 10, dy: 10)
+            let paddedFrame = CGRectInset(label.frame, -10, -10)
+            let popoverHint = UIViewController()
+            popoverHint.view.addSubview(label)
+            popoverHint.preferredContentSize = paddedFrame.size
+            popoverHint.modalPresentationStyle = UIModalPresentationStyle.Popover
+            let pc = popoverHint.popoverPresentationController
+            pc?.permittedArrowDirections = .Any
+            pc?.barButtonItem = actionItem
+            pc?.sourceView = self.view
+            pc?.delegate = self
+            self.presentViewController(popoverHint, animated: true, completion: nil)
+            
+            let tapHandler = UITapGestureRecognizer.init(target: self, action: #selector(closeHint))
+            tapHandler.delegate = self
+            tapHandler.numberOfTapsRequired = 1
+            popoverHint.view.userInteractionEnabled = true
+            popoverHint.view.addGestureRecognizer(tapHandler)
+        }
+    }
+    
+    //Force iPad-style popups (for the hint to the menu)
+    func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .None
+    }
+    
+    func closeHint(sender: UITapGestureRecognizer? = nil) {
+        self.dismissViewControllerAnimated(true, completion: nil)
     }
     
     override func viewDidDisappear(animated: Bool) {
