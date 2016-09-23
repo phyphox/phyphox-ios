@@ -19,6 +19,8 @@ class MainNavigationViewController: UINavigationController {
         self.navigationBar.tintColor = kTextColor
         self.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName: kTextColor]
         
+        self.interactivePopGestureRecognizer?.enabled = false
+        
         //barTintColor is set per view controller...
     }
 
