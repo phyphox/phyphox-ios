@@ -16,6 +16,9 @@ final class EditViewDescriptor: ViewDescriptor {
     let unit: String?
     let factor: Double
     
+    let min: Double
+    let max: Double
+    
     let defaultValue: Double
     let buffer: DataBuffer
     
@@ -23,11 +26,13 @@ final class EditViewDescriptor: ViewDescriptor {
         return buffer.last ?? defaultValue
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, defaultValue: Double, buffer: DataBuffer) {
+    init(label: String, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed
         self.decimal = decimal
         self.unit = unit
         self.factor = factor
+        self.min = min
+        self.max = max
         self.defaultValue = defaultValue
         self.buffer = buffer
         
@@ -38,8 +43,13 @@ final class EditViewDescriptor: ViewDescriptor {
         //Construct value restrictions in HTML5
         var restrictions = ""
         
-        if (!signed) {
+        if (!signed && min < 0) {
             restrictions += "min=\\\"0\\\" "
+        } else if (min.isFinite) {
+            restrictions += "min=\\\"\(min*factor)\\\" "
+        }
+        if (max.isFinite) {
+            restrictions += "max=\\\"\(max*factor)\\\" "
         }
         if (!decimal) {
             restrictions += "step=\\\"1\\\" "

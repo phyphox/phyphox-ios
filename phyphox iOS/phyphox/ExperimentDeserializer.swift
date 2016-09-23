@@ -58,6 +58,18 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile
         }
         
+        //Check file version
+        let supported_major = 1
+        let supported_minor = 1
+        if let version = dictionary.attributes()["version"] as? String {
+            let versionArray = version.characters.split{$0 == "."}.map(String.init)
+            let major = Int(versionArray[0])
+            let minor = Int(versionArray[1])
+            if (major > supported_major || (major == supported_major && minor > supported_minor)) {
+                throw SerializationError.NewExperimentFileVersion
+            }
+        }
+        
         let attributes = dictionary[XMLDictionaryAttributesKey] as! [String: AnyObject]?
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
         

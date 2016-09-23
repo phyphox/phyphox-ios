@@ -17,6 +17,7 @@ enum SerializationError: ErrorType {
     case InvalidFilePath
     case WriteFailed
     case EmptyData
+    case NewExperimentFileVersion
 }
 
 let serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)

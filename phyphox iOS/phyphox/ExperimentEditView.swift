@@ -90,7 +90,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     }
     
     func updateTextField(_: UITextField, write: Bool, forceReadFromBuffer: Bool = false) {
-        let val: Double
+        var val: Double
         
         if forceReadFromBuffer || textField.text?.characters.count == 0 || Double(textField.text!) == nil {
             val = descriptor.value
@@ -118,6 +118,14 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             }
             
             val = rawVal/self.descriptor.factor
+            
+            if (descriptor.min.isFinite && val < descriptor.min) {
+                val = descriptor.min
+            }
+            
+            if (descriptor.max.isFinite && val > descriptor.max) {
+                val = descriptor.max
+            }
             
             textField.text = formattedValue(rawVal)
         }

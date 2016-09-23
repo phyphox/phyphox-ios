@@ -59,6 +59,9 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                 
+                let min = floatTypeFromXML(attributes, key: "min", defaultValue: -Double.infinity)
+                let max = floatTypeFromXML(attributes, key: "max", defaultValue: Double.infinity)
+                
                 let defaultValue = floatTypeFromXML(attributes, key: "default", defaultValue: 0.0)
                 
                 var outputBuffer: DataBuffer? = nil
@@ -92,7 +95,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     outputBuffer!.append(defaultValue) //Set the default value.
                 }
                 
-                return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, defaultValue: defaultValue, buffer: outputBuffer!)
+                return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, min: min, max: max, defaultValue: defaultValue, buffer: outputBuffer!)
             }
             
             func handleValue(value: [String: AnyObject]) -> ValueViewDescriptor? {
