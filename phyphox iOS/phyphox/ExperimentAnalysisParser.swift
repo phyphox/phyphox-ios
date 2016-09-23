@@ -34,7 +34,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
     }
     
-    func parse(buffers: [String : DataBuffer]) -> ExperimentAnalysis? {
+    func parse(buffers: [String : DataBuffer]) throws -> ExperimentAnalysis? {
         if analyses == nil {
             return nil
         }
@@ -161,7 +161,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                     analysis = TimerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else {
-                    print("Error! Invalid analysis type: \(key)")
+                    throw SerializationError.InvalidExperimentFile(message: "Error! Invalid analysis type: \(key)")
                 }
                 
                 if analysis != nil {

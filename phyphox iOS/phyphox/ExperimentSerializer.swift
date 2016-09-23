@@ -18,7 +18,7 @@ final class ExperimentSerializer: NSObject {
     }
     
     func serialize() throws -> NSData {
-        throw SerializationError.GenericError
+        throw SerializationError.GenericError(message: "Serializer not implemented.")
     }
     
     func serializeAsynchronous(completion: (data: NSData?, error: SerializationError?) -> Void) {

@@ -12,12 +12,12 @@
 import Foundation
 
 enum SerializationError: ErrorType {
-    case GenericError
-    case InvalidExperimentFile
+    case GenericError(message: String)
+    case InvalidExperimentFile(message: String)
     case InvalidFilePath
     case WriteFailed
     case EmptyData
-    case NewExperimentFileVersion
+    case NewExperimentFileVersion(phyphoxFormat: String, fileFormat: String)
 }
 
 let serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)

@@ -110,15 +110,14 @@ func textFromXML(xml: AnyObject) -> String {
     }
 }
 
-func UIColorFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UIColor) -> UIColor {
+func UIColorFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UIColor) throws -> UIColor {
     if xml == nil {
         return defaultValue
     }
     
     if let str = xml![key] as? String {
         if str.characters.count != 6 {
-            print("Count: \(str.characters.count)")
-            return defaultValue
+            throw SerializationError.InvalidExperimentFile(message: "Invalid color: \(str)")
         }
         
         var hex: UInt32 = 0

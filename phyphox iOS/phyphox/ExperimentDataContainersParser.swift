@@ -21,19 +21,18 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
         case Unknown
     }
     
-    func dataContainerTypeFromXML(xml: [String: AnyObject]?, key: String) -> ExperimentDataContainerType {
+    func dataContainerTypeFromXML(xml: [String: AnyObject]?, key: String) throws -> ExperimentDataContainerType {
         let str = stringFromXML(xml, key: key, defaultValue: "buffer")
         
         if str == "buffer" {
             return .Buffer
         }
         else {
-            print("Error! Invalid data container type: \(str)")
-            return .Unknown
+            throw SerializationError.InvalidExperimentFile(message: "Invalid data container type: \(str)")
         }
     }
     
-    func parse() -> ([String: DataBuffer]?, [DataBuffer]?) {
+    func parse() throws -> ([String: DataBuffer]?, [DataBuffer]?) {
         if let cont = containers {
             var buffers: [String: DataBuffer] = [:]
             var ordered: [DataBuffer] = []
@@ -55,7 +54,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                         bufferSize = intTypeFromXML(attributes, key: "size", defaultValue: 1)
                         stat = boolFromXML(attributes, key: "static", defaultValue: false)
                         
-                        containerType = dataContainerTypeFromXML(attributes, key: "type")
+                        containerType = try dataContainerTypeFromXML(attributes, key: "type")
                     }
                     
                     name = dict[XMLDictionaryTextKey] as! String

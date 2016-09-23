@@ -121,7 +121,28 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         if (fatalError != nil) {
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(fatalError!)", preferredStyle: .Alert)
+            let message: String
+            if let sError = fatalError as? SerializationError {
+                switch sError {
+                case .EmptyData:
+                    message = "Empty data."
+                case .GenericError(let emessage):
+                    message = emessage
+                case .InvalidExperimentFile(let emessage):
+                    message = "Invalid experiment file. \(emessage)"
+                case .InvalidFilePath:
+                    message = "Invalid file path"
+                case .NewExperimentFileVersion(let phyphoxFormat, let fileFormat):
+                    message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
+                case .WriteFailed:
+                    message = "Write failed."
+                default:
+                    message = String(sError)
+                }
+            } else {
+                message = String(fatalError)
+            }
+            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .Alert)
             controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
             main.presentViewController(controller, animated: true, completion: nil)
             return false

@@ -25,7 +25,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
     /**
      - returns: `nil` if no translations where found
      */
-    func parse() -> ExperimentTranslationCollection? {
+    func parse() throws -> ExperimentTranslationCollection? {
         if translations == nil {
             return nil
         }
@@ -56,8 +56,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                         description = translated
                     }
                     else {
-                        print("Error! Invalid metadata type: \(metadataType)")
-                        continue
+                        throw SerializationError.InvalidExperimentFile(message: "Invalid metadata type: \(metadataType)")
                     }
                 }
                 else if key as! String == "string" {
@@ -83,8 +82,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                     continue
                 }
                 else {
-                    print("Invalid translation: \(value)")
-                    continue
+                    throw SerializationError.InvalidExperimentFile(message: "Invalid translation: \(value)")
                 }
             }
             
