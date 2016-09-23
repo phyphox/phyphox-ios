@@ -232,8 +232,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+        //Ask to save the experiment locally if it has been loaded from a remote source
+        if experiment.source != nil {
+            let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .Alert)
+            
+            al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .Default, handler: { _ in
+                self.saveLocally()}))
+            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+            
+            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+            
         //Show a hint for the experiment info
-        if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
+        } else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
             let label = UILabel()
             label.text = NSLocalizedString("experimentinfo_hint", comment: "")
             label.lineBreakMode = .ByWordWrapping
@@ -261,6 +271,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             popoverHint.view.userInteractionEnabled = true
             popoverHint.view.addGestureRecognizer(tapHandler)
         }
+        
     }
     
     //Force iPad-style popups (for the hint to the menu)
@@ -608,35 +619,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if experiment.source != nil {
             alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .Default, handler: { [unowned self] action in
-                var i = 1
-                let title = self.experiment.source!.lastPathComponent
-                var t = title
-                
-                var path: String
-                
-                let directory = customExperimentsDirectory
-                
-                do {
-                    if !NSFileManager.defaultManager().fileExistsAtPath(directory) {
-                        try NSFileManager.defaultManager().createDirectoryAtPath(directory, withIntermediateDirectories: false, attributes: nil)
-                    }
-                } catch {
-                    return
-                }
-                
-                repeat {
-                    path = (directory as NSString).stringByAppendingPathComponent("\(t).phyphox")
-                    
-                    t = "\(title)-\(i)"
-                    i += 1
-                    
-                } while NSFileManager.defaultManager().fileExistsAtPath(path)
-                
-                self.experiment.sourceData!.writeToFile(path, atomically: true)
-                self.experiment.source = nil
-                
-                ExperimentManager.sharedInstance().loadCustomExperiments()
-                }))
+                self.saveLocally()
+            }))
         }
         
         if let popover = alert.popoverPresentationController {
@@ -646,10 +630,46 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
+    func saveLocally() {
+        var i = 1
+        let title = self.experiment.source!.lastPathComponent
+        var t = title
+        
+        var path: String
+        
+        let directory = customExperimentsDirectory
+        
+        do {
+            if !NSFileManager.defaultManager().fileExistsAtPath(directory) {
+                try NSFileManager.defaultManager().createDirectoryAtPath(directory, withIntermediateDirectories: false, attributes: nil)
+            }
+        } catch {
+            return
+        }
+        
+        repeat {
+            path = (directory as NSString).stringByAppendingPathComponent("\(t).phyphox")
+            
+            t = "\(title)-\(i)"
+            i += 1
+            
+        } while NSFileManager.defaultManager().fileExistsAtPath(path)
+        
+        self.experiment.sourceData!.writeToFile(path, atomically: true)
+        self.experiment.source = nil
+        
+        ExperimentManager.sharedInstance().loadCustomExperiments()
+        
+        let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .Alert)
+        
+        confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: nil))
+        self.navigationController!.presentViewController(confirmation, animated: true, completion: nil)
+    }
+
     func stopTimerFired() {
         stopExperiment()
     }
-    
+
     func startTimerFired() {
         actuallyStartExperiment()
         

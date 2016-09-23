@@ -83,6 +83,8 @@
 
 "show_description" = "Experiment info";
 "save_locally" = "Add experiment to collection";
+"save_locally_message" = "This experiment has been opened from a remote source. Do you want to add it to your experiment collection?";
+"save_locally_button" = "Save to collection";
 "save_locally_done" = "Experiment successfully added to collection";
 
 "timedRun" = "Timed run";
