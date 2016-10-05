@@ -46,6 +46,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return launchExperimentByURL(url)
     }
     
+    func application(application: UIApplication, openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
+        cleanInbox(url.lastPathComponent)
+        return launchExperimentByURL(url)
+    }
+    
 
     func applicationWillResignActive(application: UIApplication) {
         
