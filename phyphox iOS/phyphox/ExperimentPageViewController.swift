@@ -11,6 +11,8 @@ import GCDWebServers
 
 final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate {
     var segControl: UISegmentedControl? = nil
+    var tabBar: UIScrollView? = nil
+    let tabBarHeight : CGFloat = 30
     
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.Scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.Horizontal, options: nil)
     
@@ -48,8 +50,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    func updateTabScrollPosition(target: Int) {
+        if segControl == nil {
+            return
+        }
+        let w = segControl!.frame.width/CGFloat(experimentViewControllers.count)
+        let targetFrame = CGRectMake((CGFloat(target)-0.5)*w, 0, 2*w, tabBarHeight)
+        
+        tabBar?.scrollRectToVisible(targetFrame, animated: true)
+    }
+    
     func updateSelectedViewCollection() {
         segControl?.selectedSegmentIndex = selectedViewCollection
+        updateTabScrollPosition(selectedViewCollection)
         
         for (index, collection) in viewModules.enumerate() {
             for module in collection {
@@ -173,7 +186,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))]
         
         //TabBar to switch collections
-        let tabBarHeight : CGFloat = 30
         if (experiment.viewDescriptors!.count > 1) {
             var buttons: [String] = []
             for collection in experiment.viewDescriptors! {
@@ -207,14 +219,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             segControl!.setBackgroundImage(bgImage, forState: .Normal, barMetrics: .Default)
             segControl!.setBackgroundImage(highlightImage, forState: .Selected, barMetrics: .Default)
             segControl!.setDividerImage(bgImage, forLeftSegmentState: .Normal, rightSegmentState: .Normal, barMetrics: .Default)
+            segControl!.sizeToFit()
             
-            let tabBar = UIView()
-            tabBar.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
-            tabBar.autoresizingMask = .FlexibleWidth
-            tabBar.backgroundColor = kLightBackgroundColor
-            tabBar.addSubview(segControl!)
+            tabBar = UIScrollView()
+            tabBar!.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
+            tabBar!.contentSize = segControl!.frame.size
+            tabBar!.showsHorizontalScrollIndicator = false
+            tabBar!.autoresizingMask = .FlexibleWidth
+            tabBar!.backgroundColor = kLightBackgroundColor
+            tabBar!.addSubview(segControl!)
             
-            self.view.addSubview(tabBar)
+            self.view.addSubview(tabBar!)
            
         }
         
@@ -328,6 +343,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         return experimentViewControllers[selectedViewCollection+1]
+    }
+    
+    func pageViewController(pageViewController: UIPageViewController, willTransitionToViewControllers pendingViewControllers: [UIViewController]) {
+        for (index, view) in experimentViewControllers.enumerate() {
+            if view == pendingViewControllers[0] as! ExperimentViewController {
+                updateTabScrollPosition(index)
+            }
+        }
     }
     
     func pageViewController(pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
