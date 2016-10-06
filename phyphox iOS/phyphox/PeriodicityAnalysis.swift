@@ -76,26 +76,36 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
         
         let n = y.count
         
-        let dx = Int(dxInput.getSingleValue()!)
+        var dx = Int(dxInput.getSingleValue()!)
+        if dx <= 0 {
+            dx = 1
+        }
         
         var overlap = 0
         
         if let o = overlapInput?.getSingleValue() {
-            overlap = Int(o)
+            if o.isFinite {
+                overlap = Int(o)
+            }
         }
         
         var minPeriod = 0
         var userSelectedRange = false
         
         if let m = minInput?.getSingleValue() {
-            minPeriod = Int(m)
-            userSelectedRange = true
+            if m.isFinite {
+                minPeriod = Int(m)
+                userSelectedRange = true
+            }
         }
         
         var maxPeriod = Int.max
         
         if let m = maxInput?.getSingleValue() {
-            maxPeriod = Int(m)
+            if m.isFinite {
+                maxPeriod = Int(m)
+                userSelectedRange = true
+            }
         }
         
         var timeOut = [Double]()
