@@ -154,7 +154,9 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 
                 minimizedX = x.filter { d -> Bool in
                     if d < minX || d > maxX {
-                        minimizedY.removeAtIndex(index)
+                        if index < minimizedY.count {
+                            minimizedY.removeAtIndex(index)
+                        }
                         return false
                     }
                     
