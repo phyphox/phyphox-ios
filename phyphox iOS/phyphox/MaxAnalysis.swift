@@ -20,7 +20,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     
     private var multiple: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         
         multiple = boolFromXML(additionalAttributes, key: "multiple", defaultValue: false)
         
@@ -51,7 +51,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

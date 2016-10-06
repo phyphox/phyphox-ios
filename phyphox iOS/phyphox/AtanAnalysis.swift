@@ -1,16 +1,15 @@
 //
-//  CosAnalysis.swift
+//  AtanAnalysis.swift
 //  phyphox
 //
-//  Created by Jonas Gessner on 06.12.15.
-//  Copyright © 2015 Jonas Gessner. All rights reserved.
-//  By Order of RWTH Aachen.
+//  Created by Sebastian Kuhlen on 06.10.16.
+//  Copyright © 2016 RWTH Aachen. All rights reserved.
 //
 
 import Foundation
 import Accelerate
 
-final class CosAnalysis: UpdateValueAnalysis {
+final class AtanAnalysis: UpdateValueAnalysis {
     private let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
@@ -21,14 +20,15 @@ final class CosAnalysis: UpdateValueAnalysis {
     override func update() {
         updateAllWithMethod { array -> [Double] in
             var results = array
+            
+            vvatan(&results, array, [Int32(array.count)])
+            
             if self.deg {
-                var f = M_PI/180.0
-                vDSP_vsmulD(array, 1, &f, &results, 1, vDSP_Length(array.count))
+                var f = 180.0/M_PI
+                vDSP_vsmulD(results, 1, &f, &results, 1, vDSP_Length(results.count))
             }
-            vvcos(&results, results, [Int32(results.count)])
             
             return results
         }
     }
 }
-

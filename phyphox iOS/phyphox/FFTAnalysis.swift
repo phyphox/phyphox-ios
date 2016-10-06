@@ -81,7 +81,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
     private var realOutput: ExperimentAnalysisDataIO?
     private var imagOutput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
             if input.asString == "im" {
                 imagInput = input.buffer
@@ -102,7 +102,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     deinit {

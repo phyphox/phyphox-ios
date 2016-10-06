@@ -12,7 +12,7 @@ import Foundation
 final class AppendAnalysis: ExperimentAnalysisModule {
     private let buffers: [DataBuffer]
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var buf = [DataBuffer]()
         
         for input in inputs {
@@ -23,7 +23,7 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         
         buffers = buf
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

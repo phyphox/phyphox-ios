@@ -77,88 +77,118 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 let index = (value["__index"] as! NSNumber).integerValue
                 
                 if key == "add" {
-                    analysis = AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "subtract" {
-                    analysis = SubtractionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try SubtractionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "multiply" {
-                     analysis = MultiplicationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                     analysis = try MultiplicationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "divide" {
-                    analysis = DivisionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try DivisionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "power" {
-                    analysis = PowerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try PowerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "gcd" {
-                    analysis = GCDAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try GCDAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "lcm" {
-                    analysis = LCMAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try LCMAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "abs" {
-                    analysis = ABSAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try ABSAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "sin" {
-                    analysis = SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "cos" {
-                    analysis = CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "tan" {
-                    analysis = TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "sinh" {
+                    analysis = try SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "cosh" {
+                    analysis = try CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "tanh" {
+                    analysis = try TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "asin" {
+                    analysis = try AsinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "acos" {
+                    analysis = try AcosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "atan" {
+                    analysis = try AtanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "atan2" {
+                    analysis = try Atan2Analysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "first" {
-                    analysis = FirstAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try FirstAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "max" {
-                    analysis = MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "min" {
-                    analysis = MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "threshold" {
-                    analysis = ThresholdAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try ThresholdAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "append" {
-                    analysis = AppendAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try AppendAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "fft" {
-                    analysis = FFTAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try FFTAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "autocorrelation" {
-                    analysis = AutocorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try AutocorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "differentiate" {
-                    analysis = DifferentiationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try DifferentiationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "integrate" {
-                    analysis = IntegrationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try IntegrationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "crosscorrelation" {
-                    analysis = CrosscorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try CrosscorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "gausssmooth" {
-                    analysis = GaussSmoothAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try GaussSmoothAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "match" {
-                    analysis = MatchAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try MatchAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "rangefilter" {
-                    analysis = RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "ramp" {
-                    analysis = RampGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try RampGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "const" {
-                    analysis = ConstGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try ConstGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "periodicity" {
-                    analysis = PeriodicityAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try PeriodicityAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else if key == "timer" {
-                    analysis = TimerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                    analysis = try TimerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "count" {
+                    analysis = try CountAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "average" {
+                    analysis = try AverageAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "binning" {
+                    analysis = try BinningAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else {
                     throw SerializationError.InvalidExperimentFile(message: "Error! Invalid analysis type: \(key)")

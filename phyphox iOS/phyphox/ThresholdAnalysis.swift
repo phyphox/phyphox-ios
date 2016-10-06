@@ -16,7 +16,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
     private var yIn: DataBuffer!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         falling = boolFromXML(additionalAttributes, key: "falling", defaultValue: false)
 
         for input in inputs {
@@ -34,7 +34,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

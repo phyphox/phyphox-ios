@@ -20,7 +20,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     private var xOut: ExperimentAnalysisDataIO?
     private var yOut: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
             if input.asString == "x" {
                 xIn = input.buffer!
@@ -51,7 +51,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

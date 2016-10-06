@@ -9,6 +9,16 @@
 /* Begin PBXBuildFile section */
 		4B09C6C51CD78E79004C7FA1 /* MinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */; };
 		4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */; };
+		4B47B02B1DA6A19000CCBA6E /* AsinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */; };
+		4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */; };
+		4B47B02F1DA6A1FC00CCBA6E /* AtanAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02E1DA6A1FC00CCBA6E /* AtanAnalysis.swift */; };
+		4B47B0311DA6A2F900CCBA6E /* Atan2Analysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */; };
+		4B47B0331DA6A87A00CCBA6E /* CountAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B0321DA6A87A00CCBA6E /* CountAnalysis.swift */; };
+		4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B0341DA6A93200CCBA6E /* AverageAnalysis.swift */; };
+		4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B0361DA6AF2400CCBA6E /* SinhAnalysis.swift */; };
+		4B47B0391DA6AF5200CCBA6E /* CoshAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B0381DA6AF5200CCBA6E /* CoshAnalysis.swift */; };
+		4B47B03B1DA6AF6900CCBA6E /* TanhAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B03A1DA6AF6900CCBA6E /* TanhAnalysis.swift */; };
+		4B47B03D1DA6B12500CCBA6E /* BinningAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */; };
 		4B53E8491CFC65EE004E6164 /* ExperimentPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */; };
 		4B5770A91D7836F700394B07 /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */; };
 		4B5770C21D7868A500394B07 /* SerialProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770C11D7868A500394B07 /* SerialProtocol.swift */; };
@@ -424,6 +434,16 @@
 /* Begin PBXFileReference section */
 		4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MinAnalysis.swift; sourceTree = "<group>"; };
 		4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchAnalysis.swift; sourceTree = "<group>"; };
+		4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsinAnalysis.swift; sourceTree = "<group>"; };
+		4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AcosAnalysis.swift; sourceTree = "<group>"; };
+		4B47B02E1DA6A1FC00CCBA6E /* AtanAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AtanAnalysis.swift; sourceTree = "<group>"; };
+		4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Atan2Analysis.swift; sourceTree = "<group>"; };
+		4B47B0321DA6A87A00CCBA6E /* CountAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CountAnalysis.swift; sourceTree = "<group>"; };
+		4B47B0341DA6A93200CCBA6E /* AverageAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AverageAnalysis.swift; sourceTree = "<group>"; };
+		4B47B0361DA6AF2400CCBA6E /* SinhAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinhAnalysis.swift; sourceTree = "<group>"; };
+		4B47B0381DA6AF5200CCBA6E /* CoshAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoshAnalysis.swift; sourceTree = "<group>"; };
+		4B47B03A1DA6AF6900CCBA6E /* TanhAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TanhAnalysis.swift; sourceTree = "<group>"; };
+		4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BinningAnalysis.swift; sourceTree = "<group>"; };
 		4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentPageViewController.swift; sourceTree = "<group>"; };
 		4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothInput.swift; sourceTree = "<group>"; };
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
@@ -652,6 +672,9 @@
 				6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */,
 				6B0815491CAFD3A900EE2791 /* PeriodicityAnalysis.swift */,
 				6B08154E1CB00F4600EE2791 /* TimerAnalysis.swift */,
+				4B47B0321DA6A87A00CCBA6E /* CountAnalysis.swift */,
+				4B47B0341DA6A93200CCBA6E /* AverageAnalysis.swift */,
+				4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */,
 			);
 			name = Modules;
 			sourceTree = "<group>";
@@ -1096,6 +1119,7 @@
 				6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */,
 				6B7BF8041C146B23007408FB /* GCDAnalysis.swift */,
 				6B7BF8061C146DC2007408FB /* LCMAnalysis.swift */,
+				4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */,
 			);
 			name = "Complex update value modules";
 			sourceTree = "<group>";
@@ -1107,6 +1131,12 @@
 				6B7BF80A1C147236007408FB /* SinAnalysis.swift */,
 				6B7BF80C1C14723D007408FB /* CosAnalysis.swift */,
 				6B7BF80E1C147244007408FB /* TanAnalysis.swift */,
+				4B47B0361DA6AF2400CCBA6E /* SinhAnalysis.swift */,
+				4B47B0381DA6AF5200CCBA6E /* CoshAnalysis.swift */,
+				4B47B03A1DA6AF6900CCBA6E /* TanhAnalysis.swift */,
+				4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */,
+				4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */,
+				4B47B02E1DA6A1FC00CCBA6E /* AtanAnalysis.swift */,
 			);
 			name = "Simple update value modules";
 			sourceTree = "<group>";
@@ -1511,6 +1541,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */,
+				4B47B02F1DA6A1FC00CCBA6E /* AtanAnalysis.swift in Sources */,
 				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
 				4B53E8491CFC65EE004E6164 /* ExperimentPageViewController.swift in Sources */,
 				6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */,
@@ -1536,6 +1567,7 @@
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
 				6BB52BC31C199A8C00217CF1 /* ExperimentDataContainersParser.swift in Sources */,
@@ -1543,6 +1575,7 @@
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */,
+				4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */,
 				6B0814E11CABEE3000EE2791 /* BEMPathManager.m in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6BE3209F1CB19E0300DCC1ED /* CreatePresentationController.swift in Sources */,
@@ -1577,6 +1610,7 @@
 				6B7BF80B1C147236007408FB /* SinAnalysis.swift in Sources */,
 				4B5770C21D7868A500394B07 /* SerialProtocol.swift in Sources */,
 				6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */,
+				4B47B03B1DA6AF6900CCBA6E /* TanhAnalysis.swift in Sources */,
 				6B00F0A21C457B5D00971941 /* ExperimentValueView.swift in Sources */,
 				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,
 				6B7BF8211C147CF3007408FB /* AutocorrelationAnalysis.swift in Sources */,
@@ -1585,12 +1619,15 @@
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,
 				6B08154D1CB005D900EE2791 /* PeriodicityAnalysis.swift in Sources */,
 				6B00F09C1C457A6600971941 /* ExperimentView.swift in Sources */,
+				4B47B0391DA6AF5200CCBA6E /* CoshAnalysis.swift in Sources */,
 				6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
+				4B47B0311DA6A2F900CCBA6E /* Atan2Analysis.swift in Sources */,
 				6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */,
 				6B7BF7F61C132722007408FB /* ExperimentSensorInput.swift in Sources */,
 				6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */,
+				4B47B0331DA6A87A00CCBA6E /* CountAnalysis.swift in Sources */,
 				6B7BF81F1C147CE0007408FB /* DifferentiationAnalysis.swift in Sources */,
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */,
@@ -1601,9 +1638,11 @@
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
 				6BBA063A1C518BC900E4B1B0 /* UpdateValueAnalysis.swift in Sources */,
+				4B47B02B1DA6A19000CCBA6E /* AsinAnalysis.swift in Sources */,
 				6B0814DF1CABEE3000EE2791 /* BEMAnimationManager.m in Sources */,
 				6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */,
 				6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */,
+				4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
 				6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */,
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
@@ -1614,6 +1653,7 @@
 				6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */,
 				6B422E2C1CA4A4BF00E945BC /* GraphGridView.swift in Sources */,
 				6B08150B1CABEE5600EE2791 /* VBFDoubleSegment.m in Sources */,
+				4B47B03D1DA6B12500CCBA6E /* BinningAnalysis.swift in Sources */,
 				6B08154F1CB00F4600EE2791 /* TimerAnalysis.swift in Sources */,
 				6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */,
 				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnalysis.swift in Sources */,

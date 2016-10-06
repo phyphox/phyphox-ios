@@ -15,7 +15,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     private var stopInput: ExperimentAnalysisDataIO!
     private var lengthInput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
             if input.asString == "start" {
                 startInput = input
@@ -31,7 +31,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

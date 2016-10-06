@@ -30,7 +30,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     private var timeOutput: ExperimentAnalysisDataIO?
     private var periodOutput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
             if input.asString == "x" {
                 xInput = input
@@ -67,7 +67,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

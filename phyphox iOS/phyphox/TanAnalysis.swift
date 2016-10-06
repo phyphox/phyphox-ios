@@ -11,11 +11,21 @@ import Foundation
 import Accelerate
 
 final class TanAnalysis: UpdateValueAnalysis {
+    private let deg: Bool
+    
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+        deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+    }
     
     override func update() {
         updateAllWithMethod { array -> [Double] in
             var results = array
-            vvtan(&results, array, [Int32(array.count)])
+            if self.deg {
+                var f = M_PI/180.0
+                vDSP_vsmulD(array, 1, &f, &results, 1, vDSP_Length(array.count))
+            }
+            vvtan(&results, results, [Int32(results.count)])
             
             return results
         }

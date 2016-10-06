@@ -13,7 +13,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
     private var lengthInput: ExperimentAnalysisDataIO?
     private var valueInput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
             if input.asString == "value" {
                 valueInput = input
@@ -26,7 +26,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
+        try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {

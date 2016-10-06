@@ -35,7 +35,7 @@ class ExperimentAnalysisModule {
     
     internal var timestamp: NSTimeInterval = 0.0
 
-    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) {
+    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) throws {
         self.inputs = inputs
         self.outputs = outputs
     }
