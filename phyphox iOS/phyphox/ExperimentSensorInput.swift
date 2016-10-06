@@ -347,7 +347,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
             }
             
             if let av = self.averaging {
-                if av.requiresFlushing(t!) {
+                if av.requiresFlushing(t!) && av.numberOfUpdates > 0 {
                     let u = Double(av.numberOfUpdates)
                     
                     writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), t: t!)
