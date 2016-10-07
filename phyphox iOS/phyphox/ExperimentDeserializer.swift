@@ -74,7 +74,13 @@ final class ExperimentDeserializer: NSObject {
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
         
         var d = dictionary["description"]
-        let description: String? = (d != nil ? textFromXML(d!) : nil)
+        let descriptionRAW: String? = (d != nil ? textFromXML(d!) : nil)
+        let description: String?
+        if descriptionRAW == nil {
+            description = descriptionRAW
+        } else {
+            description = descriptionRAW!.stringByReplacingOccurrencesOfString("(?m)((?:^\\s+)|(?:\\s+$))", withString: "\n", options: NSStringCompareOptions.RegularExpressionSearch, range: nil)
+        }
         d = dictionary["category"]
         let category: String? = (d != nil ? textFromXML(d!) : nil)
         d = dictionary["title"]

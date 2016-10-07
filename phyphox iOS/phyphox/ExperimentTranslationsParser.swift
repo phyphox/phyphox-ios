@@ -53,7 +53,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                         category = translated
                     }
                     else if metadataType == "description" {
-                        description = translated
+                        description = translated.stringByReplacingOccurrencesOfString("(?m)((?:^\\s+)|(?:\\s+$))", withString: "\n", options: NSStringCompareOptions.RegularExpressionSearch, range: nil)
                     }
                     else {
                         throw SerializationError.InvalidExperimentFile(message: "Invalid metadata type: \(metadataType)")

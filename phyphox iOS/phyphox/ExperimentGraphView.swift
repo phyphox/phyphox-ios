@@ -113,7 +113,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         glGraph.lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
         glGraph.historyLength = descriptor.history
         
-        gridView = GraphGridView()
+        gridView = GraphGridView(descriptor: descriptor)
         gridView.gridInset = CGPointMake(2.0, 2.0)
         gridView.gridOffset = CGPointMake(0.0, 0.0)
         

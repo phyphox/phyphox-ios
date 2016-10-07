@@ -148,6 +148,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
                 let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
+                let xPrecision = UInt(intTypeFromXML(attributes, key: "xPrecision", defaultValue: 3))
+                let yPrecision = UInt(intTypeFromXML(attributes, key: "yPrecision", defaultValue: 3))
                 
                 let scaleMinX: GraphViewDescriptor.scaleMode
                 switch stringFromXML(attributes, key: "scaleMinX", defaultValue: "auto") {
@@ -241,7 +243,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let requiresAnalysis = (yInputBuffer!.dataFromAnalysis || xInputBuffer?.dataFromAnalysis ?? false)
                 
-                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
+                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
             }
             
             func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {

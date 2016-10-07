@@ -16,6 +16,7 @@ protocol GraphGridDelegate: class {
 final class GraphGridView: UIView {
     private let borderView = UIView()
     var delegate: GraphGridDelegate? = nil
+    var descriptor: GraphViewDescriptor? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,12 +49,13 @@ final class GraphGridView: UIView {
         return CGRectOffset(CGRectInset(bounds, gridInset.x + gridLabelSpace.x/2.0, gridInset.y + gridLabelSpace.y/2.0), gridOffset.x+gridLabelSpace.x/2.0, gridOffset.y - gridLabelSpace.y/2.0)
     }
     
-    convenience init() {
+    convenience init(descriptor: GraphViewDescriptor?) {
         self.init(frame: .zero)
+        self.descriptor = descriptor
     }
     
     required convenience init?(coder aDecoder: NSCoder) {
-        self.init()
+        self.init(descriptor: nil)
     }
     
     var grid: GraphGrid? {
@@ -135,12 +137,17 @@ final class GraphGridView: UIView {
         let spacing = 1.0/UIScreen.mainScreen().scale
         super.layoutSubviews()
         
-        let formatter = NSNumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 3
+        let formatterX = NSNumberFormatter()
+        formatterX.usesSignificantDigits = true
+        formatterX.minimumSignificantDigits = Int(descriptor?.xPrecision ?? 3)
         
-        func format(n: Double) -> String {
-            if (abs(n) < 1e3 && abs(n) > 1e-3) {
+        let formatterY = NSNumberFormatter()
+        formatterY.usesSignificantDigits = true
+        formatterY.minimumSignificantDigits = Int(descriptor?.yPrecision ?? 3)
+        
+        func format(n: Double, formatter: NSNumberFormatter) -> String {
+            let expThreshold = max(formatter.minimumSignificantDigits, 3)
+            if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
                 formatter.numberStyle = .DecimalStyle
                 return formatter.stringFromNumber(NSNumber(double: n))!
             } else {
@@ -158,7 +165,7 @@ final class GraphGridView: UIView {
                     let label = labels[index]
                     label.textColor = kTextColor
                     
-                    label.text = format(line.absoluteValue)
+                    label.text = format(line.absoluteValue, formatter: formatterX)
                     label.sizeToFit()
                     
                     ySpace = max(ySpace, label.frame.size.height)
@@ -171,7 +178,7 @@ final class GraphGridView: UIView {
                     let label = labels[index]
                     label.textColor = kTextColor
                     
-                    label.text = format(line.absoluteValue)
+                    label.text = format(line.absoluteValue, formatter: formatterY)
                     label.sizeToFit()
                     
                     xSpace = max(xSpace, label.frame.size.width)

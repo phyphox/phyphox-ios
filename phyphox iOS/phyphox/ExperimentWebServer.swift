@@ -55,7 +55,7 @@ final class ExperimentWebServer {
         precondition(delegate != nil, "Cannot start web server without a delegate")
         
         let startTime = NSDate()
-        sessionID = String(Int(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
+        sessionID = String(Int64(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
         
         server = GCDWebServer()
         path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)

@@ -24,6 +24,9 @@ final class GraphViewDescriptor: ViewDescriptor {
     let logX: Bool
     let logY: Bool
     
+    let xPrecision: UInt
+    let yPrecision: UInt
+    
     enum scaleMode {
         case auto, extend, fixed
     }
@@ -49,12 +52,15 @@ final class GraphViewDescriptor: ViewDescriptor {
     let lineWidth: CGFloat
     let color: UIColor
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
         self.logX = logX
         self.logY = logY
+        
+        self.xPrecision = xPrecision
+        self.yPrecision = yPrecision
         
         self.minX = minX
         self.maxX = maxX
