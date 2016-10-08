@@ -196,13 +196,13 @@ final class ExperimentWebServer {
                     }
                     else {
                         let extraComponents = value.componentsSeparatedByString("|")
-                        let threshold = Double(extraComponents.first!) ?? -Double.infinity
+                        let threshold = (Double(extraComponents.first!) ?? -Double.infinity)+1e-8
                         
                         var final: [Double] = []
                         
                         if extraComponents.count > 1 {
                             let extra = extraComponents.last!
-                            
+
                             guard let extraBuffer = self.experiment.buffers.0?[extra] else {
                                 let response = GCDWebServerResponse(statusCode: 400)
                                 
