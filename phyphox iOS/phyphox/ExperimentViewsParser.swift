@@ -109,6 +109,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
                 
+                let size = floatTypeFromXML(attributes, key: "size", defaultValue: 1.0)
+                
                 var inputBuffer: DataBuffer? = nil
                 
                 if let input = getElementsWithKey(value, key: "input") {
@@ -130,7 +132,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 let requiresAnalysis = inputBuffer!.dataFromAnalysis
                 
-                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
+                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
             func handleGraph(graph: [String: AnyObject]) throws -> GraphViewDescriptor? {

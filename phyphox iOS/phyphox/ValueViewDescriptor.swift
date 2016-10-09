@@ -16,19 +16,21 @@ final class ValueViewDescriptor: ViewDescriptor {
     let unit: String?
     let factor: Double
     let buffer: DataBuffer
+    let size: Double
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer) {
+    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
         self.factor = factor
         self.buffer = buffer
+        self.size = size
         
         super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div style=\\\"font-size:120%;\\\" class=\\\"valueElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><span class=\\\"value\\\"></span></div>"
+        return "<div style=\\\"font-size:120%;\\\" class=\\\"valueElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><span style=\\\"font-size:\(100*size)%;\\\" class=\\\"value\\\"></span></div>"
     }
     
     override func setValueHTMLWithID(id: Int) -> String {
