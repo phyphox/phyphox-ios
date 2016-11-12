@@ -208,9 +208,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let field = magnetometerData.magneticField
                 
-                let x = field.x/10.0
-                let y = field.y/10.0
-                let z = field.z/10.0
+                let x = field.x
+                let y = field.y
+                let z = field.z
                 
                 let t = magnetometerData.timestamp
                 
