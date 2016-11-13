@@ -597,6 +597,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.navigationController!.presentViewController(al, animated: true, completion: nil)
             }))
         
+        let links: [String:String] = self.experiment.localizedHighlightedLinks
+        for (key, value) in links {
+            alert.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .Default, handler: { _ in
+                UIApplication.sharedApplication().openURL(NSURL(string: value)!)
+            }))
+        }
+        
         alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .Default, handler: { [unowned self] action in
             let w = UIApplication.sharedApplication().keyWindow!
             let s = UIScreen.mainScreen().scale

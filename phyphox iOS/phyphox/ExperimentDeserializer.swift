@@ -87,12 +87,18 @@ final class ExperimentDeserializer: NSObject {
         let title: String? = (d != nil ? textFromXML(d!) : nil)
         
         var links: [String: String] = [:]
+        var highlightedLinks: [String: String] = [:]
         if (dictionary["link"] != nil) {
             for dict in getElemetArrayFromValue(dictionary["link"]!) as! [NSDictionary] {
                 let url = dict[XMLDictionaryTextKey] as? String ?? ""
                 let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
                 
+                let highlight = boolFromXML(attributes, key: "highlight", defaultValue: false)
+                
                 links[label] = url
+                if (highlight) {
+                    highlightedLinks[label] = url
+                }
             }
         }
         
@@ -130,7 +136,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.InvalidExperimentFile(message: "Experiment must define a title and a category.")
         }
         
-        let experiment = Experiment(title: anyTitle!, description: description, links: links, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle!, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }

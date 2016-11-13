@@ -128,7 +128,12 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cellsPerRow = Int(cells)
         
-        return CGSizeMake(width, 46.0)
+        
+        
+        
+        let h = ceil(UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline).lineHeight + UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1).lineHeight + 12)
+        
+        return CGSizeMake(width, h)
     }
     
     private func showDeleteConfirmationForExperiment(experiment: Experiment, button: UIButton) {

@@ -25,6 +25,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     private var title: String
     private var description: String?
     private var links: [String: String]
+    private var highlightedLinks: [String: String]
     private var category: String
     
     var localizedTitle: String {
@@ -37,6 +38,16 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     var localizedLinks: [String:String] {
         var allLinks = self.links
+        if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
+            for (key, value) in translatedLinks {
+                allLinks[key] = value
+            }
+        }
+        return allLinks
+    }
+    
+    var localizedHighlightedLinks: [String:String] {
+        var allLinks = self.highlightedLinks
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, value) in translatedLinks {
                 allLinks[key] = value
@@ -79,10 +90,11 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     private(set) var startTimestamp: NSTimeInterval?
     private var pauseBegin: NSTimeInterval = 0.0
     
-    init(title: String, description: String?, links: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.links = links
+        self.highlightedLinks = highlightedLinks
         self.category = category
         
         self.icon = icon
