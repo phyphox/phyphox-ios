@@ -10,7 +10,7 @@
 import Foundation
 
 enum ExportFileFormat {
-    case CSV(separator: String)
+    case CSV(separator: String, decimalPoint: String)
     case Excel
     
     func isCSV() -> Bool {
@@ -23,7 +23,12 @@ enum ExportFileFormat {
     }
 }
 
-let exportTypes = [("CSV", ExportFileFormat.CSV(separator: ",")), ("CSV (Tab separated)", ExportFileFormat.CSV(separator: "\t")), ("Excel", ExportFileFormat.Excel)]
+let exportTypes = [("Excel", ExportFileFormat.Excel),
+                   ("CSV (Comma, decimal point)", ExportFileFormat.CSV(separator: ",", decimalPoint: ".")),
+                   ("CSV (Tabulator, decimal point)", ExportFileFormat.CSV(separator: "\t", decimalPoint: ".")),
+                   ("CSV (Semicolon, decimal point)", ExportFileFormat.CSV(separator: ";", decimalPoint: ".")),
+                   ("CSV (Tabulator, decimal comma)", ExportFileFormat.CSV(separator: "\t", decimalPoint: ",")),
+                   ("CSV (Semicolon, decimal comma)", ExportFileFormat.CSV(separator: ";", decimalPoint: ","))]
 
 final class ExperimentExportSet {
     private let name: String
@@ -56,22 +61,23 @@ final class ExperimentExportSet {
     
     func serialize(format: ExportFileFormat, additionalInfo: AnyObject?) -> AnyObject? {
         switch format {
-        case .CSV(let separator):
-            return serializeToCSVWithSeparator(separator)
+        case .CSV(let separator, let decimalPoint):
+            return serializeToCSVWithSeparator(separator, decimalPoint: decimalPoint)
         case .Excel:
             return serializeToExcel(additionalInfo as! JXLSWorkBook)
         }
     }
     
-    private func serializeToCSVWithSeparator(separator: String) -> NSData? {
+    private func serializeToCSVWithSeparator(separator: String, decimalPoint: String) -> NSData? {
         var string = ""
         
         var index = 0
         
         let formatter = NSNumberFormatter()
-        formatter.maximumFractionDigits = 3
-        formatter.minimumIntegerDigits = 1
-        formatter.decimalSeparator = "."
+        formatter.maximumSignificantDigits = 10
+        formatter.minimumSignificantDigits = 10
+        formatter.decimalSeparator = decimalPoint
+        formatter.numberStyle = .ScientificStyle
         
         func format(n: Double) -> String {
             return formatter.stringFromNumber(NSNumber(double: n))!

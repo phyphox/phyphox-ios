@@ -136,8 +136,8 @@ final class WebServerUtilities {
        
         
         var exportFormats = ""
-        for (i, format) in exportTypes.enumerate() {
-            exportFormats += "<option value=\"\(i)\">\(format.0)</option>"
+        for i in 0..<exportTypes.count {
+            exportFormats += "<option value=\"\(i)\">\(exportTypes[i].0)</option>"
         }
         
         
