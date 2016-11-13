@@ -26,6 +26,7 @@ let kLightBackgroundHoverColor = UIColor(white: 0.5, alpha: 1.0)
 let kHighlightColor = UIColor(red: (255.0/255.0), green: (126.0/255.0), blue: (34.0/255.0), alpha: 1.0)
 let kTextColor = UIColor(white: 1.0, alpha: 1.0)
 let kText2Color = UIColor(white: 0.88, alpha: 1.0)
+let kTextColorDeactivated = UIColor(white: 0.5, alpha: 1.0)
 
 infix operator =-= { associativity left }
 infix operator !=-= { associativity left }

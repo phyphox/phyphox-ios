@@ -62,6 +62,27 @@ class ExperimentCell: UICollectionViewCell {
                 titleLabel.text = experiment?.localizedTitle
                 subtitleLabel.text = experiment?.localizedDescription
                 
+                var available = true
+                if let sensors = experiment!.sensorInputs {
+                    for sensor in sensors {
+                        do {
+                            try sensor.verifySensorAvailibility()
+                        }
+                        catch SensorError.SensorUnavailable(_) {
+                            available = false
+                            break
+                        }
+                        catch {}
+                    }
+                }
+                if (available) {
+                    titleLabel.textColor = kTextColor
+                    subtitleLabel.textColor = kText2Color
+                } else {
+                    titleLabel.textColor = kTextColorDeactivated
+                    subtitleLabel.textColor = kTextColorDeactivated
+                }
+                
                 if iconView != nil {
                     iconView?.removeFromSuperview()
                 }
@@ -81,9 +102,6 @@ class ExperimentCell: UICollectionViewCell {
         
         titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         subtitleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
-        
-        titleLabel.textColor = kTextColor
-        subtitleLabel.textColor = kText2Color
         
         separator.backgroundColor = UIColor.whiteColor()
         separator.alpha = 0.1
