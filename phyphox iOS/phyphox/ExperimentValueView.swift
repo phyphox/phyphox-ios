@@ -52,6 +52,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
             let formatter = NSNumberFormatter()
             formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
             formatter.maximumFractionDigits = self.descriptor.precision
+            formatter.minimumFractionDigits = self.descriptor.precision
             formatter.minimumIntegerDigits = 1
             
             str = formatter.stringFromNumber(NSNumber(double: last*self.descriptor.factor))! + " "

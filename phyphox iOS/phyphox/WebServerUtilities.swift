@@ -51,7 +51,7 @@ final class WebServerUtilities {
         return raw as String
     }
     
-    private class func prepareIndexFile(experiment: Experiment) -> String {
+    private class func prepareIndexFile(experiment: Experiment) -> (String, [ViewDescriptor]) {
         let raw = try! NSMutableString(contentsOfFile: NSBundle.mainBundle().pathForResource("phyphox-webinterface/index", ofType: "html")!, encoding: NSUTF8StringEncoding)
         
         raw.replaceOccurrencesOfString("<!-- [[title]] -->", withString: experiment.localizedTitle, options: [], range: NSMakeRange(0, raw.length))
@@ -64,6 +64,8 @@ final class WebServerUtilities {
         
         var viewLayout = "var views = ["
         var viewOptions = ""
+        
+        var htmlId2ViewElement: [ViewDescriptor] = []
         
         if let views = experiment.viewDescriptors {
             var idx = 0
@@ -81,12 +83,17 @@ final class WebServerUtilities {
                 var ffirst = true
                 
                 for element in v.views {
+                    htmlId2ViewElement.append(element)
+                    
                     if !ffirst {
                         viewLayout += ", "
                     }
                     ffirst = false
                     
-                    viewLayout += "{\"label\": \"\(element.localizedLabel)\", \"index\": \(idx), \"html\": \"\(element.generateViewHTMLWithID(idx))\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
+                    let escapedLabel = element.localizedLabel.stringByReplacingOccurrencesOfString("\\", withString: "\\\\").stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+                    let escapedHTML = element.generateViewHTMLWithID(idx).stringByReplacingOccurrencesOfString("\\", withString: "\\\\").stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+                    
+                    viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
 
                     if let graph = element as? GraphViewDescriptor {
                         viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffer.name)\", \"dataYInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
@@ -103,6 +110,9 @@ final class WebServerUtilities {
                     }
                     else if let edit = element as? EditViewDescriptor {
                         viewLayout += ", \"partialUpdate\": \"input\", \"valueInput\":\"\(edit.buffer.name)\", \"valueInputFunction\":\n\(edit.setValueHTMLWithID(idx))\n"
+                    }
+                    else if element is ButtonViewDescriptor {
+                        viewLayout += ", \"partialUpdate\": \"none\""
                     }
                     
                     viewLayout += "}"
@@ -136,25 +146,25 @@ final class WebServerUtilities {
         raw.replaceOccurrencesOfString("<!-- [[exportFormatOptions]] -->", withString: exportFormats, options: [], range: NSMakeRange(0, raw.length))
         //raw.replaceOccurrencesOfString("<!-- [[exportSetSelectors]] -->", withString: exportStr, options: [], range: NSMakeRange(0, raw.length))
         
-        return raw as String
+        return (raw as String, htmlId2ViewElement)
     }
     
     class func mapFormatString(str: String) -> ExportFileFormat? {
         return exportTypes[Int(str) ?? 0].1
     }
     
-    class func prepareWebServerFilesForExperiment(experiment: Experiment) -> String {
+    class func prepareWebServerFilesForExperiment(experiment: Experiment) -> (String, [ViewDescriptor]) {
         let path = NSTemporaryDirectory() + "/" + NSUUID().UUIDString
         
         try! NSFileManager.defaultManager().createDirectoryAtPath(path, withIntermediateDirectories: false, attributes: nil)
         
         let css = prepareStyleFile(backgroundColor: kBackgroundColor, lightBackgroundColor: kLightBackgroundColor, lightBackgroundHoverColor: kLightBackgroundHoverColor, mainColor: kTextColor, highlightColor: kHighlightColor)
         
-        let html = prepareIndexFile(experiment)
+        let (html, htmlId2ViewElement) = prepareIndexFile(experiment)
         
         try! css.writeToFile(path + "/style.css", atomically: true, encoding: NSUTF8StringEncoding)
         try! html.writeToFile(path + "/index.html", atomically: true, encoding: NSUTF8StringEncoding)
         
-        return path
+        return (path, htmlId2ViewElement)
     }
 }

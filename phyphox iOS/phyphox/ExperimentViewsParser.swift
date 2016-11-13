@@ -256,6 +256,40 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return InfoViewDescriptor(label: label, translation: translation)
             }
             
+            func handleButton(button: [String: AnyObject]) throws -> ButtonViewDescriptor? {
+                let attributes = button[XMLDictionaryAttributesKey] as! [String: String]
+                
+                let label = attributes["label"]!
+                var inputList : [ExperimentAnalysisDataIO] = []
+                var outputList : [DataBuffer] = []
+                
+                if let inputs = getElementsWithKey(button, key: "input") {
+                    for input_ in inputs {
+                        if let input = input_ as? [String: AnyObject] {
+                            inputList.append(ExperimentAnalysisDataIO(dictionary: input, buffers: buffers))
+                        }
+                    }
+                }
+                if let outputs = getElementsWithKey(button, key: "output") {
+                    for output in outputs {
+                        if let bufferName = output as? String {
+                            let buffer = buffers[bufferName]
+                            
+                            if buffer == nil {
+                                throw SerializationError.InvalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
+                            }
+
+                            if analysis != nil {
+                                analysis!.registerEditBuffer(buffer!)
+                            }
+                            outputList.append(buffer!)
+                        }
+                    }
+                }
+                
+                return ButtonViewDescriptor(label: label, translation: translation, inputs: inputList, outputs: outputList)
+            }
+            
             var deleteIndices: [Int] = []
             
             for (key, child) in view {
@@ -306,6 +340,21 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                             deleteIndices.append(index)
                         }
                     }
+                }
+                else if key as! String == "button" {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).integerValue
+                        
+                        if let button = try handleButton(g) {
+                            views[index] = button
+                        }
+                        else {
+                            deleteIndices.append(index)
+                        }
+                    }
+                }
+                else if !(key as! String).hasPrefix("__") {
+                    throw SerializationError.InvalidExperimentFile(message: "Error! Unknown view element: \(key as! String)")
                 }
             }
             

@@ -87,7 +87,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div style=\\\"font-size: 120%;\\\" class=\\\"graphElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><div class=\\\"graphBox\\\"><div class=\\\"graphRatio\\\" style=\\\"padding-top: \(100.0/aspectRatio)%\\\"></div><div class=\\\"graph\\\"></div></div></div>"
+        return "<div style=\"font-size: 120%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: \(100.0/aspectRatio)%\"></div><div class=\"graph\"></div></div></div>"
     }
     
     override func generateDataCompleteHTMLWithID(id: Int) -> String {

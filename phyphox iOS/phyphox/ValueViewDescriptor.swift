@@ -30,7 +30,7 @@ final class ValueViewDescriptor: ViewDescriptor {
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div style=\\\"font-size:120%;\\\" class=\\\"valueElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><span style=\\\"font-size:\(100*size)%;\\\" class=\\\"value\\\"></span></div>"
+        return "<div style=\"font-size:120%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span style=\"font-size:\(100*size)%;\" class=\"value\"></span></div>"
     }
     
     override func setValueHTMLWithID(id: Int) -> String {

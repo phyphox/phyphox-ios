@@ -45,6 +45,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 var containerType = ExperimentDataContainerType.Buffer //Default
                 var bufferSize = 1 //Default
                 var stat = false //Default
+                var vInit = Double.NaN
                 
                 if let str = container as? String {
                     name = str
@@ -53,6 +54,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     if let attributes = dict[XMLDictionaryAttributesKey] as? [String: String] {
                         bufferSize = intTypeFromXML(attributes, key: "size", defaultValue: 1)
                         stat = boolFromXML(attributes, key: "static", defaultValue: false)
+                        vInit = floatTypeFromXML(attributes, key: "init", defaultValue: Double.NaN)
                         
                         containerType = try dataContainerTypeFromXML(attributes, key: "type")
                     }
@@ -61,7 +63,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 }
                 
                 if containerType == .Buffer && name.characters.count > 0 {
-                    let buffer = DataBuffer(name: name, size: bufferSize)
+                    let buffer = DataBuffer(name: name, size: bufferSize, vInit: vInit)
                     buffer.staticBuffer = stat
                     
                     buffers[name] = buffer

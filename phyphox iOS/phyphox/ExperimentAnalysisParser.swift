@@ -190,6 +190,9 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 else if key == "binning" {
                     analysis = try BinningAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
+                else if key == "if" {
+                    analysis = try IfAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
                 else {
                     throw SerializationError.InvalidExperimentFile(message: "Error! Invalid analysis type: \(key)")
                 }

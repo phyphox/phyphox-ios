@@ -24,6 +24,9 @@ public class ViewDescriptor {
         self.requiresAnalysis = requiresAnalysis
     }
     
+    func onTrigger() {
+    }
+    
     func generateViewHTMLWithID(id: Int) -> String {
         fatalError("Override this method")
     }

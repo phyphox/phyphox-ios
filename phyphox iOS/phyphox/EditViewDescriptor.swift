@@ -44,18 +44,18 @@ final class EditViewDescriptor: ViewDescriptor {
         var restrictions = ""
         
         if (!signed && min < 0) {
-            restrictions += "min=\\\"0\\\" "
+            restrictions += "min=\"0\" "
         } else if (min.isFinite) {
-            restrictions += "min=\\\"\(min*factor)\\\" "
+            restrictions += "min=\"\(min*factor)\" "
         }
         if (max.isFinite) {
-            restrictions += "max=\\\"\(max*factor)\\\" "
+            restrictions += "max=\"\(max*factor)\" "
         }
         if (!decimal) {
-            restrictions += "step=\\\"1\\\" "
+            restrictions += "step=\"1\" "
         }
         
-        return "<div style=\\\"font-size: 120%;\\\" class=\\\"editElement\\\" id=\\\"element\(id)\\\"><span class=\\\"label\\\">\(localizedLabel)</span><input onchange=\\\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\\\" type=\\\"number\\\" class=\\\"value\\\" \(restrictions) /><span class=\\\"unit\\\">\(unit ?? "")</span></div>"
+        return "<div style=\"font-size: 120%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(unit ?? "")</span></div>"
     }
     
     override func setValueHTMLWithID(id: Int) -> String {

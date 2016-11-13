@@ -25,10 +25,12 @@ final class ExperimentWebServer {
         return server != nil
     }
     
-    private(set) var path: String?
+    private(set) var path: String
     
     private(set) var server: GCDWebServer?
     private var temporaryFiles = [String]()
+    
+    var htmlId2ViewElement: [ViewDescriptor]
     
     private var sessionID: String = ""
     
@@ -39,6 +41,7 @@ final class ExperimentWebServer {
     var forceFullUpdate = false
     
     init(experiment: Experiment) {
+        (path, htmlId2ViewElement) = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
         self.experiment = experiment
     }
     
@@ -58,7 +61,6 @@ final class ExperimentWebServer {
         sessionID = String(Int64(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
         
         server = GCDWebServer()
-        path = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
         
         server!.addGETHandlerForBasePath("/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
         
@@ -153,6 +155,18 @@ final class ExperimentWebServer {
                     buffer.append(value)
                     returnSuccessResponse()
                 }
+            }
+            else if cmd == "trigger" {
+                guard let indexStr = query["element"], let elementIndex = Int(indexStr) else {
+                    returnErrorResponse()
+                    return
+                }
+                
+                if (self.htmlId2ViewElement.count > elementIndex) {
+                    self.htmlId2ViewElement[elementIndex].onTrigger()
+                }
+                
+                returnSuccessResponse()
             }
             else {
                 returnErrorResponse()
@@ -284,6 +298,6 @@ final class ExperimentWebServer {
         
         temporaryFiles.removeAll()
         
-        do { try NSFileManager.defaultManager().removeItemAtPath(path!) } catch {}
+        do { try NSFileManager.defaultManager().removeItemAtPath(path) } catch {}
     }
 }

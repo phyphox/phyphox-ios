@@ -27,6 +27,9 @@ final class ExperimentViewModuleFactory {
             else if let d = descriptor as? EditViewDescriptor {
                 m.append(ExperimentEditView(descriptor: d))
             }
+            else if let d = descriptor as? ButtonViewDescriptor {
+                m.append(ExperimentButtonView(descriptor: d))
+            }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }
