@@ -49,8 +49,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     var localizedHighlightedLinks: [String:String] {
         var allLinks = self.highlightedLinks
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
-            for (key, value) in translatedLinks {
-                allLinks[key] = value
+            for (key, _) in allLinks {
+                allLinks[key] = translatedLinks[key]
             }
         }
         return allLinks

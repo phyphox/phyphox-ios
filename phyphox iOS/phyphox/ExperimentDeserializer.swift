@@ -91,7 +91,9 @@ final class ExperimentDeserializer: NSObject {
         if (dictionary["link"] != nil) {
             for dict in getElemetArrayFromValue(dictionary["link"]!) as! [NSDictionary] {
                 let url = dict[XMLDictionaryTextKey] as? String ?? ""
-                let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
+                let attributes = dict[XMLDictionaryAttributesKey] as! [String: AnyObject]?
+                
+                let label = stringFromXML(attributes, key: "label", defaultValue: "Link")
                 
                 let highlight = boolFromXML(attributes, key: "highlight", defaultValue: false)
                 
