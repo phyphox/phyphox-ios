@@ -24,10 +24,10 @@ final class IfAnalysis: ExperimentAnalysisModule {
         greater = boolFromXML(additionalAttributes, key: "greater", defaultValue: false)
         
         for input in inputs {
-            if input.asString == "less" {
+            if input.asString == "a" {
                 in1 = input
             }
-            else if input.asString == "more" {
+            else if input.asString == "b" {
                 in2 = input
             }
             else if input.asString == "true" {
