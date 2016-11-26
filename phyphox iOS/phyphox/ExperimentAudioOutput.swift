@@ -37,6 +37,11 @@ final class ExperimentAudioOutput {
         format = AVAudioFormat(streamDescription: &audioDescription)
     }
     
+    @objc func audioEngineConfigurationChange(notification: NSNotification) -> Void {
+        pause()
+        play()
+    }
+    
     func play() {
         if !playing || !self.dataSource.stateTokenIsValid(self.stateToken) {
             playing = true
@@ -45,6 +50,8 @@ final class ExperimentAudioOutput {
                 if self.engine == nil {
                     self.pcmPlayer = AVAudioPlayerNode()
                     self.engine = AVAudioEngine()
+                    
+                    NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(audioEngineConfigurationChange), name: AVAudioEngineConfigurationChangeNotification, object: self.engine)
                     
                     self.engine.attachNode(self.pcmPlayer)
                     self.engine.connect(self.pcmPlayer, to: self.engine.mainMixerNode, format: self.format)

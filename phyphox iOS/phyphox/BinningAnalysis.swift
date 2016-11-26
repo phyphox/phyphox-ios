@@ -65,7 +65,10 @@ final class BinningAnalysis: ExperimentAnalysisModule {
     override func update() {
 
         let x0 = x0Input?.getSingleValue() ?? 0.0
-        let dx = dxInput?.getSingleValue() ?? 1.0
+        var dx = dxInput?.getSingleValue() ?? 1.0
+        if dx == 0.0 {
+            dx = 1.0
+        }
         
         var binStarts = [Double]()
         var binCounts = [Double]()
@@ -74,6 +77,7 @@ final class BinningAnalysis: ExperimentAnalysisModule {
             if !v.isFinite {
                 continue
             }
+
             let binIndex = Int((v-x0)/dx)
             if binStarts.count == 0 {
                 binStarts.append(x0+Double(binIndex)*dx)
