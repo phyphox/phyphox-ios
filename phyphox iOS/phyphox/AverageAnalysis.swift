@@ -12,6 +12,8 @@ final class AverageAnalysis: ExperimentAnalysisModule {
     private var avgOutput: ExperimentAnalysisDataIO?
     private var stdOutput: ExperimentAnalysisDataIO?
     
+    private var input: ExperimentAnalysisDataIO!
+    
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var avg: ExperimentAnalysisDataIO? = nil
         var std: ExperimentAnalysisDataIO? = nil
@@ -26,18 +28,23 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         avgOutput = avg
         stdOutput = std
         
+        if inputs.count == 0 || inputs[0].buffer == nil {
+            throw SerializationError.GenericError(message: "Average needs a buffer as input.")
+        } else {
+            input = inputs[0]
+        }
+        
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
-     
-        if inputs.count == 0 || inputs[0].buffer == nil {
-            return
-        }
         
         var sum = 0.0
         var count = 0
-        for v in inputs[0].buffer! {
+        
+        let x = input.buffer!.toArray()
+        
+        for v in x {
             if v.isFinite {
                 sum += v
                 count += 1
@@ -65,7 +72,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
             } else {
                 sum = 0.0
                 count = 0
-                for v in inputs[0].buffer! {
+                for v in x {
                     if v.isFinite {
                         sum += (v-avg)*(v-avg)
                         count += 1
