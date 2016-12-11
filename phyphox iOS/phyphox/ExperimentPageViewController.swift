@@ -641,6 +641,29 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             }))
         
+        var magnetometer: ExperimentSensorInput? = nil
+        if (experiment.sensorInputs != nil) {
+            for sensor in experiment.sensorInputs! {
+                if (sensor.sensorType == SensorType.MagneticField) {
+                    magnetometer = sensor
+                }
+            }
+        }
+        if (magnetometer != nil) {
+            if magnetometer!.calibrated {
+                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .Default, handler: { [unowned self] action in
+                    self.stopExperiment()
+                    magnetometer?.calibrated = false
+                    }))
+            } else {
+                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .Default, handler: { [unowned self] action in
+                    self.stopExperiment()
+                    magnetometer?.calibrated = true
+                    }))
+            }
+            
+        }
+        
         alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .Destructive, handler: { [unowned self] action in
             self.clearData()
             }))

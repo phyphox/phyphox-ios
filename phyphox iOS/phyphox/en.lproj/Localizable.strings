@@ -72,6 +72,9 @@
 "share_subject" = "Screenshot from phyPhox";
 "share_pick_share" = "Pick a share method";
 
+"switch_to_calibrated_magnetometer" = "Switch to calibrated magnetometer";
+"switch_to_raw_magnetometer" = "Switch to raw magnetometer";
+
 "enableRemoteServer" = "Enable remote access";
 "disableRemoteServer" = "Disable remote access";
 "remoteServerWarning" = "You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.";

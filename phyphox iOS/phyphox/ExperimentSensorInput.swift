@@ -46,6 +46,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
+    var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
+    
     private(set) var startTimestamp: NSTimeInterval?
     private var pauseBegin: NSTimeInterval = 0.0
     
@@ -95,9 +97,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    init(sensorType: SensorType, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?) {
+    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.rate = rate
+        self.calibrated = calibrated
         
         self.xBuffer = xBuffer
         self.yBuffer = yBuffer
@@ -105,6 +108,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         self.tBuffer = tBuffer
         
         self.motionSession = motionSession
+        
+        if (sensorType == .MagneticField) {
+            self.motionSession.calibratedMagnetometer = calibrated
+        }
         
         if average {
             self.averaging = Averaging(averagingInterval: rate)
@@ -200,23 +207,45 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 })
             
         case .MagneticField:
-            motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
-                guard let magnetometerData = data else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
-                    return
-                }
-                
-                let field = magnetometerData.magneticField
-                
-                let x = field.x
-                let y = field.y
-                let z = field.z
-                
-                let t = magnetometerData.timestamp
-                
-                self.dataIn(x, y: y, z: z, t: t, error: error)
-                })
-            
+            if calibrated {
+                motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+                    guard let motion = deviceMotion else {
+                        self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                        return
+                    }
+                    
+                    if motion.magneticField.accuracy.hashValue < 1 {
+                        return
+                    }
+                    
+                    let field = motion.magneticField.field
+                    
+                    let x = field.x
+                    let y = field.y
+                    let z = field.z
+                    
+                    let t = motion.timestamp
+                    
+                    self.dataIn(x, y: y, z: z, t: t, error: error)
+                    })
+            } else {
+                motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
+                    guard let magnetometerData = data else {
+                        self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                        return
+                    }
+                    
+                    let field = magnetometerData.magneticField
+                    
+                    let x = field.x
+                    let y = field.y
+                    let z = field.z
+                    
+                    let t = magnetometerData.timestamp
+                    
+                    self.dataIn(x, y: y, z: z, t: t, error: error)
+                    })
+            }
         case .LinearAcceleration:
             motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
@@ -266,7 +295,11 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         case .Gyroscope:
             motionSession.stopDeviceMotionUpdates(self)
         case .MagneticField:
-            motionSession.stopMagnetometerUpdates(self)
+            if calibrated {
+                motionSession.stopDeviceMotionUpdates(self)
+            } else {
+                motionSession.stopMagnetometerUpdates(self)
+            }
         case .Pressure:
             motionSession.stopAltimeterUpdates(self)
         case .Light:

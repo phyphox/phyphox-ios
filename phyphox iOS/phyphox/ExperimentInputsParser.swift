@@ -131,7 +131,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     throw SerializationError.InvalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
                 }
                 
-                let sensor = ExperimentSensorInput(sensorType: sensorType!, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
+                let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer)
                 
                 sensorsOut!.append(sensor)
             }

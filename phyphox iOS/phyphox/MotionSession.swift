@@ -24,6 +24,8 @@ final class MotionSession {
     private lazy var motionManager = CMMotionManager()
     private lazy var altimeter = CMAltimeter()
     
+    var calibratedMagnetometer = true
+    
     private(set) var altimeterRunning = false
     private(set) var accelerometerRunning = false
     private(set) var gyroscopeRunning = false
@@ -211,11 +213,19 @@ final class MotionSession {
                 
                 motionManager.deviceMotionUpdateInterval = interval
                 motionManager.showsDeviceMovementDisplay = true
-                motionManager.startDeviceMotionUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (motion, error) in
-                    for (_, h) in self.deviceMotionReceivers {
-                        h(deviceMotion: motion, error: error)
-                    }
-                    })
+                if calibratedMagnetometer {
+                    motionManager.startDeviceMotionUpdatesUsingReferenceFrame(.XArbitraryCorrectedZVertical, toQueue: makeQueue(), withHandler: { [unowned self] (motion, error) in
+                        for (_, h) in self.deviceMotionReceivers {
+                            h(deviceMotion: motion, error: error)
+                        }
+                        })
+                } else {
+                    motionManager.startDeviceMotionUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (motion, error) in
+                        for (_, h) in self.deviceMotionReceivers {
+                            h(deviceMotion: motion, error: error)
+                        }
+                        })
+                }
             }
             
             return true
