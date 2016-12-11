@@ -290,12 +290,17 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
                 sensor.start()
             }
         }
+        
+        analysis?.running = true
+        analysis?.setNeedsUpdate()
     }
     
     func stop() {
         guard running else {
             return
         }
+        
+        analysis?.running = false
         
         pauseBegin = CFAbsoluteTimeGetCurrent()
         

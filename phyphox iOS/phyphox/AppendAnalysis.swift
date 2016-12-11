@@ -10,18 +10,16 @@
 import Foundation
 
 final class AppendAnalysis: ExperimentAnalysisModule {
-    private let buffers: [DataBuffer]
+    private let inputElements: [ExperimentAnalysisDataIO]
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        var buf = [DataBuffer]()
+        var inputElements = [ExperimentAnalysisDataIO]()
         
         for input in inputs {
-            if let b = input.buffer {
-                buf.append(b)
-            }
+            inputElements.append(input)
         }
         
-        buffers = buf
+        self.inputElements = inputElements
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
@@ -32,9 +30,12 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteInputs(inputs)
         #endif
-        
-        for b in buffers {
-            result.appendContentsOf(b.toArray())
+        for input in inputElements {
+            if let b = input.buffer {
+                result.appendContentsOf(b.toArray())
+            } else {
+                result.append(input.getSingleValue()!)
+            }
         }
         
         #if DEBUG_ANALYSIS

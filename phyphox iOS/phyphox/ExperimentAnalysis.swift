@@ -26,6 +26,8 @@ final class ExperimentAnalysis : DataBufferObserver {
     let sleep: Double
     let onUserInput: Bool
     
+    var running = false
+    
     weak var timeManager: ExperimentAnalysisTimeManager?
     weak var delegate: ExperimentAnalysisDelegate?
     
@@ -36,7 +38,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
-        self.sleep = max(1/30.0, sleep) //Max analysis rate: 30Hz
+        self.sleep = max(1/50.0, sleep) //Max analysis rate: 30Hz
         self.onUserInput = onUserInput
     }
     
@@ -77,7 +79,6 @@ final class ExperimentAnalysis : DataBufferObserver {
     func setNeedsUpdate() {
         if !busy {
             busy = true
-            
             after(sleep, closure: {
                 self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
@@ -85,6 +86,12 @@ final class ExperimentAnalysis : DataBufferObserver {
                 self.update {
                     self.busy = false
                     self.delegate?.analysisDidUpdate(self)
+                    
+                    //Originally, Jonas set up a clever construct of notifications to let the app decide when recalculation is necessary, which will be disabled to some extend by the following. The reason for this is, that in the original design analysis could only be triggered by user input or new sensor data. But there are some experiments, which simply generate a sequence of values and recalculate the input to their own next analysis process, which cannot not trigger it using a notification. If it was triggered only by notification, it would run indefinitely while the experiment is stopped.
+                    //Therefore: TODO Make this more clever by at least checking if an input has been changed by this analysis run after its output has been calculated
+                    if self.running && !self.onUserInput {
+                        self.setNeedsUpdate()
+                    }
                 }
             })
         }

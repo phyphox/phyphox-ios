@@ -49,7 +49,6 @@ class ExperimentAnalysisModule {
                 print("Analysis should run in the background!")
             }
             self.timestamp = timestamp
-            
             willUpdate()
             update()
             didUpdate()
