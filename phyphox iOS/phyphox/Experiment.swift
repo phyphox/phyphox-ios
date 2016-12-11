@@ -292,7 +292,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
         
         analysis?.running = true
-        analysis?.setNeedsUpdate()
+        if (analysis != nil && !analysis!.onUserInput) {
+            analysis?.setNeedsUpdate()
+        }
     }
     
     func stop() {

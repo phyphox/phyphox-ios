@@ -98,6 +98,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     }
     
     private func update(completion: Void -> Void) {
+        print("UPDATE")
         let c = analyses.count-1
         
         for (i, analysis) in analyses.enumerate() {
