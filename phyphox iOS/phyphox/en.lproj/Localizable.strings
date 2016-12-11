@@ -36,6 +36,8 @@
 "sensorNotAvailableWarningTitle" = "Sensor not available";
 "sensorNotAvailableWarningText1" = "The sensor";
 "sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
+"sensorNotAvailableWarningMoreInfo" = "More info";
+"sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
 
 "ok" = "OK";
 "close" = "Close";

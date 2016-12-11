@@ -236,6 +236,9 @@ final class ExperimentsCollectionViewController: CollectionViewController {
                 catch SensorError.SensorUnavailable(let type) {
                     let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .Alert)
                     
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .Default, handler:{ _ in
+                        UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                    }))
                     controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
                     
                     presentViewController(controller, animated: true, completion: nil)
