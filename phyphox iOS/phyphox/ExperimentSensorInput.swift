@@ -47,6 +47,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     }
     
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
+    var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
     private(set) var startTimestamp: NSTimeInterval?
     private var pauseBegin: NSTimeInterval = 0.0
@@ -184,6 +185,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let t = accelerometerData.timestamp
                 
+                self.ready = true
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
@@ -203,6 +205,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let t = motion.timestamp
                 
+                self.ready = true
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
@@ -214,18 +217,19 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                         return
                     }
                     
-                    if motion.magneticField.accuracy.hashValue < 1 {
-                        return
-                    }
-                    
                     let field = motion.magneticField.field
                     
                     let x = field.x
                     let y = field.y
                     let z = field.z
                     
+                    if !self.ready && x == 0 && y == 0 && z == 0 {
+                        return
+                    }
+                    
                     let t = motion.timestamp
                     
+                    self.ready = true
                     self.dataIn(x, y: y, z: z, t: t, error: error)
                     })
             } else {
@@ -243,6 +247,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     
                     let t = magnetometerData.timestamp
                     
+                    self.ready = true
                     self.dataIn(x, y: y, z: z, t: t, error: error)
                     })
             }
@@ -262,6 +267,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let t = motion.timestamp
                 
+                self.ready = true
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
@@ -276,6 +282,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 
                 let t = altimeterData.timestamp
                 
+                self.ready = true
                 self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
                 })
             
@@ -286,6 +293,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     
     func stop() {
         pauseBegin = CFAbsoluteTimeGetCurrent()
+        
+        ready = false
         
         switch sensorType {
         case .Accelerometer:
