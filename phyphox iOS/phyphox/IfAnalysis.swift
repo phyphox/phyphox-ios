@@ -55,22 +55,17 @@ final class IfAnalysis: ExperimentAnalysisModule {
                 }
                 throw SerializationError.GenericError(message: "Error: Invalid analysis input: \(input.asString)")
             }
-            if (in1 == nil) {
-                throw SerializationError.GenericError(message: "Error: Missing input for in1.")
-            }
-            if (in2 == nil) {
-                throw SerializationError.GenericError(message: "Error: Missing input for in2.")
-            }
-            if (inTrue == nil) {
-                throw SerializationError.GenericError(message: "Error: Missing input for inTrue.")
-            }
-            if (inFalse == nil) {
-                throw SerializationError.GenericError(message: "Error: Missing input for inFalse.")
-            }
-            
-            if (outputs.count < 1) {
-                throw SerializationError.GenericError(message: "Error: No output for if-module specified.")
-            }
+        }
+        
+        if (in1 == nil) {
+            throw SerializationError.GenericError(message: "Error: Missing input for in1.")
+        }
+        if (in2 == nil) {
+            throw SerializationError.GenericError(message: "Error: Missing input for in2.")
+        }
+        
+        if (outputs.count < 1) {
+            throw SerializationError.GenericError(message: "Error: No output for if-module specified.")
         }
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
@@ -84,26 +79,30 @@ final class IfAnalysis: ExperimentAnalysisModule {
             return
         }
         
-        let out: ExperimentAnalysisDataIO!
+        let out: ExperimentAnalysisDataIO?
         
         if (v1 < v2 && less) || (v1 == v2 && equal) || (v1 > v2 && greater) {
-            out = inTrue!
+            out = inTrue
         } else {
-            out = inFalse!
+            out = inFalse
+        }
+        
+        if out == nil {
+            return
         }
         
         if outputs[0].clear {
-            if (out.value != nil) {
-                outputs[0].buffer!.replaceValues([out.value!])
+            if (out!.value != nil) {
+                outputs[0].buffer!.replaceValues([out!.value!])
             } else {
-                outputs[0].buffer!.replaceValues(out.buffer!.toArray())
+                outputs[0].buffer!.replaceValues(out!.buffer!.toArray())
             }
         }
         else {
-            if (out.value != nil) {
-                outputs[0].buffer!.append(out.value!)
+            if (out!.value != nil) {
+                outputs[0].buffer!.append(out!.value!)
             } else {
-                outputs[0].buffer!.appendFromArray(out.buffer!.toArray())
+                outputs[0].buffer!.appendFromArray(out!.buffer!.toArray())
             }
         }
     }
