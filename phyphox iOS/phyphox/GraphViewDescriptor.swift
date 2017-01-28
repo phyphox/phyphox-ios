@@ -108,6 +108,21 @@ final class GraphViewDescriptor: ViewDescriptor {
             transformY = "\"ticks\": 3, "
         }
         
+        var scaleX: String = ""
+        if scaleMinX == GraphViewDescriptor.scaleMode.fixed && minX.isFinite {
+            scaleX += "\"min\": " + String(minX) + ", "
+        }
+        if scaleMaxX == GraphViewDescriptor.scaleMode.fixed && maxX.isFinite {
+            scaleX += "\"max\": " + String(maxX) + ", "
+        }
+        var scaleY: String = ""
+        if scaleMinY == GraphViewDescriptor.scaleMode.fixed && minY.isFinite {
+            scaleY += "\"min\": " + String(minY) + ", "
+        }
+        if scaleMaxY == GraphViewDescriptor.scaleMode.fixed && maxY.isFinite {
+            scaleY += "\"max\": " + String(maxY) + ", "
+        }
+        
         return "function () {" +
             "var d = [];" +
             "if (!elementData[\(id)].hasOwnProperty(\"y\"))return;" +
@@ -118,7 +133,7 @@ final class GraphViewDescriptor: ViewDescriptor {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
     }
     
     override func setDataXHTMLWithID(id: Int) -> String {
