@@ -626,8 +626,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
             do { try png.writeToFile(tmpFile, options: .DataWritingFileProtectionNone) } catch {}
             let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+            let shareText = NSLocalizedString("share_subject", comment: "")
             
-            let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
+            let vc = UIActivityViewController(activityItems: [tmpFileURL, shareText], applicationActivities: nil)
             
             vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
             

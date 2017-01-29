@@ -36,7 +36,7 @@
 "newExperimentInputRate" = "Sensorrate (in Hz, 0 = so schnell wie möglich)";
 "newExperimentInputSensors" = "Aktive Sensoren";
 "newExperimentInputTitle" = "Titel";
-"newExperimentPhyphoxInfo" = "Besuchen Sie phyphox.com, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.";
+"newExperimentPhyphoxInfo" = "Besuchen Sie phyphox.org, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.";
 "next" = "Weiter";
 "ok" = "OK";
 "pick_exportFormat" = "Wählen Sie ein Datei-Format.";

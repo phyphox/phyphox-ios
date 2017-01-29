@@ -12,7 +12,7 @@
 "title_activity_experiment" = "phyphox";
 
 "newExperiment" = "Add experiment";
-"newExperimentPhyphoxInfo" = "Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
+"newExperimentPhyphoxInfo" = "Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
 "newExperimentInputTitle" = "Title";
 "newExperimentInputBufferSize" = "Buffer size (number of values to be stored)";
 "newExperimentInputRate" = "Sensor rate (in Hz, 0 = as fast as possible)";
@@ -69,7 +69,7 @@
 "export_pick_share" = "Pick an export method";
 
 "share" = "Share screenshot";
-"share_subject" = "Screenshot from phyPhox";
+"share_subject" = "Screenshot from phyphox";
 "share_pick_share" = "Pick a share method";
 
 "switch_to_calibrated_magnetometer" = "Switch to calibrated magnetometer";
