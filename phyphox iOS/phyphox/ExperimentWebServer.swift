@@ -25,12 +25,12 @@ final class ExperimentWebServer {
         return server != nil
     }
     
-    private(set) var path: String
+    private(set) var path: String = ""
     
     private(set) var server: GCDWebServer?
     private var temporaryFiles = [String]()
     
-    var htmlId2ViewElement: [ViewDescriptor]
+    var htmlId2ViewElement: [ViewDescriptor] = []
     
     private var sessionID: String = ""
     
@@ -41,7 +41,6 @@ final class ExperimentWebServer {
     var forceFullUpdate = false
     
     init(experiment: Experiment) {
-        (path, htmlId2ViewElement) = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
         self.experiment = experiment
     }
     
@@ -56,6 +55,8 @@ final class ExperimentWebServer {
         }
         
         precondition(delegate != nil, "Cannot start web server without a delegate")
+        
+        (path, htmlId2ViewElement) = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
         
         let startTime = NSDate()
         sessionID = String(Int64(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
