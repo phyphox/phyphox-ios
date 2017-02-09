@@ -33,7 +33,7 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         for input in inputElements {
             if let b = input.buffer {
                 result.appendContentsOf(b.toArray())
-            } else {
+            } else if input.value != nil {
                 result.append(input.getSingleValue()!)
             }
         }

@@ -94,14 +94,16 @@ final class IfAnalysis: ExperimentAnalysisModule {
         if outputs[0].clear {
             if (out!.value != nil) {
                 outputs[0].buffer!.replaceValues([out!.value!])
-            } else {
+            } else if (out!.buffer != nil) {
                 outputs[0].buffer!.replaceValues(out!.buffer!.toArray())
+            } else {
+                outputs[0].buffer!.clear()
             }
         }
         else {
             if (out!.value != nil) {
                 outputs[0].buffer!.append(out!.value!)
-            } else {
+            } else if (out!.buffer != nil) {
                 outputs[0].buffer!.appendFromArray(out!.buffer!.toArray())
             }
         }

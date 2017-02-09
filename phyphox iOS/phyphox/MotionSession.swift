@@ -272,6 +272,7 @@ final class MotionSession {
                 let device = UIDevice.currentDevice()
                 device.proximityMonitoringEnabled = true
                 NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(proximityChanged), name: "UIDeviceProximityStateDidChangeNotification", object: device)
+                proximityChanged(NSNotification(name: "First value", object: device))
             }
             
             return true

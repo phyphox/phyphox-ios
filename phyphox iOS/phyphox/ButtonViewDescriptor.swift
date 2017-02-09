@@ -27,8 +27,10 @@ final class ButtonViewDescriptor: ViewDescriptor {
                 let input = self.inputs[i]
                 if input.value != nil {
                     output.replaceValues([input.value!])
-                } else {
+                } else if input.buffer != nil {
                     output.replaceValues(input.buffer!.toArray())
+                } else {
+                    output.clear()
                 }
             }
         }
