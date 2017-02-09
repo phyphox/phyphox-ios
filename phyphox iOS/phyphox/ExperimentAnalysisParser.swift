@@ -42,13 +42,13 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         let sleep = floatTypeFromXML(attributes, key: "sleep", defaultValue: 0.0)
         let onUserInput = boolFromXML(attributes, key: "onUserInput", defaultValue: false)
         
-        func getDataFlows(dictionaries: [AnyObject]?) -> [ExperimentAnalysisDataIO] {
+        func getDataFlows(dictionaries: [AnyObject]?) throws -> [ExperimentAnalysisDataIO] {
             var a = [ExperimentAnalysisDataIO]()
             
             if dictionaries != nil {
                 for object in dictionaries! {
                     if object is NSDictionary {
-                        a.append(ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers))
+                        a.append(try ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers))
                     }
                     else {
                         a.append(ExperimentAnalysisDataIO(buffer: buffers[object as! String]!))
@@ -67,8 +67,8 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             }
             
             for value in values as! [NSDictionary] {
-                let inputs = getDataFlows(getElementsWithKey(value, key: "input"))
-                let outputs = getDataFlows(getElementsWithKey(value, key: "output"))
+                let inputs = try getDataFlows(getElementsWithKey(value, key: "input"))
+                let outputs = try getDataFlows(getElementsWithKey(value, key: "output"))
                 
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: AnyObject]?
                 

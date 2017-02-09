@@ -57,6 +57,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     private(set) weak var yBuffer: DataBuffer?
     private(set) weak var zBuffer: DataBuffer?
     private(set) weak var tBuffer: DataBuffer?
+    private(set) weak var absBuffer: DataBuffer?
     
     private(set) var motionSession: MotionSession
     
@@ -99,7 +100,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?) {
+    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.rate = rate
         self.calibrated = calibrated
@@ -108,6 +109,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         self.yBuffer = yBuffer
         self.zBuffer = zBuffer
         self.tBuffer = tBuffer
+        self.absBuffer = absBuffer
         
         self.motionSession = motionSession
         
@@ -356,6 +358,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
             let relativeT = t-self.startTimestamp!
             
             self.tBuffer!.append(relativeT)
+        }
+        
+        if x != nil && y != nil && z != nil && self.absBuffer != nil {
+            self.absBuffer!.append(sqrt(x!*x!+y!*y!+z!*z!))
         }
     }
     

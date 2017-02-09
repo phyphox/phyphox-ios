@@ -25,7 +25,7 @@ final class ExperimentAnalysisDataIO {
         self.buffer = buffer
     }
     
-    init(dictionary: NSDictionary, buffers: [String: DataBuffer]) {
+    init(dictionary: NSDictionary, buffers: [String: DataBuffer]) throws {
         var typeIsValue = false
         
         if let attributes = dictionary[XMLDictionaryAttributesKey] as? [String: AnyObject] {
@@ -44,13 +44,21 @@ final class ExperimentAnalysisDataIO {
             clear = boolFromXML(attributes, key: "clear", defaultValue: true)
         }
         
-        let text = dictionary[XMLDictionaryTextKey] as! String
+        let text = dictionary[XMLDictionaryTextKey] as? String
         
         if typeIsValue {
-            value = Double(text)
+            if text != nil {
+                value = Double(text!)
+            } else {
+                throw SerializationError.InvalidExperimentFile(message: "Error! Input or output tag missing reference.")
+            }
         }
         else {
-            buffer = buffers[text]
+            if text != nil {
+                buffer = buffers[text!]
+            } else {
+                throw SerializationError.InvalidExperimentFile(message: "Error! Input or output tag missing reference.")
+            }
         }
     }
 }

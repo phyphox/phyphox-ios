@@ -266,7 +266,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 if let inputs = getElementsWithKey(button, key: "input") {
                     for input_ in inputs {
                         if let input = input_ as? [String: AnyObject] {
-                            inputList.append(ExperimentAnalysisDataIO(dictionary: input, buffers: buffers))
+                            inputList.append(try ExperimentAnalysisDataIO(dictionary: input, buffers: buffers))
                         }
                     }
                 }
