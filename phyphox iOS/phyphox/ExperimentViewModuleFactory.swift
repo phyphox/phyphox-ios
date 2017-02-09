@@ -30,6 +30,9 @@ final class ExperimentViewModuleFactory {
             else if let d = descriptor as? ButtonViewDescriptor {
                 m.append(ExperimentButtonView(descriptor: d))
             }
+            else if let d = descriptor as? SeparatorViewDescriptor {
+                m.append(ExperimentSeparatorView(descriptor: d))
+            }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }

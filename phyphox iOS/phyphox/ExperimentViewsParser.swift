@@ -256,6 +256,16 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return InfoViewDescriptor(label: label, translation: translation)
             }
             
+            func handleSeparator(separator: [String: AnyObject]) throws -> SeparatorViewDescriptor? {
+                let attributes = separator[XMLDictionaryAttributesKey] as! [String: String]
+                
+                let height = CGFloatFromXML(attributes, key: "height", defaultValue: 0.1)
+                let color = try UIColorFromXML(attributes, key: "color", defaultValue: kBackgroundColor)
+                
+                
+                return SeparatorViewDescriptor(height: height, color: color)
+            }
+            
             func handleButton(button: [String: AnyObject]) throws -> ButtonViewDescriptor? {
                 let attributes = button[XMLDictionaryAttributesKey] as! [String: String]
                 
@@ -333,8 +343,20 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
                         let index = (g["__index"] as! NSNumber).integerValue
                         
-                        if let graph = handleInfo(g) {
-                            views[index] = graph
+                        if let info = handleInfo(g) {
+                            views[index] = info
+                        }
+                        else {
+                            deleteIndices.append(index)
+                        }
+                    }
+                }
+                else if key as! String == "separator" {
+                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).integerValue
+                        
+                        if let sep = try handleSeparator(g) {
+                            views[index] = sep
                         }
                         else {
                             deleteIndices.append(index)
