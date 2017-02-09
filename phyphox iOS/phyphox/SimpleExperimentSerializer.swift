@@ -98,6 +98,16 @@ final class SimpleExperimentSerializer {
             export += "<set name=\"Barometer\">\n<data name=\"Time (s)\">baro_time</data>\n<data name=\"X (hPa)\">baroX</data>\n</set>\n"
         }
         
+        if sensors.contains(.Proximity) {
+            containers += "<container size=\"\(bufferSize)\">proxX</container>\n<container size=\"\(bufferSize)\">prox_time</container>\n"
+            
+            input += "<sensor type=\"proximity\" rate=\"\(rate)\">\n<output component=\"x\">proxX</output>\n<output component=\"t\">prox_time</output>\n</sensor>\n"
+            
+            views += "<view label=\"Proximity\">\n<graph label=\"Proximity\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\">\n<input axis=\"x\">prox_time</input>\n<input axis=\"y\">proxX</input>\n</graph>\n</view>\n"
+            
+            export += "<set name=\"Proximity\">\n<data name=\"Time (s)\">prox_time</data>\n<data name=\"Distance (cm)\">proxX</data>\n</set>\n"
+        }
+        
         let inner = "<data-containers>\n\(containers)</data-containers>\n<input>\n\(input)</input>\n<views>\n\(views)</views>\n<export>\n\(export)</export>"
         
         let outer = "<phyphox version=\"1.0\">\n<title>\(title)</title>\n<category>\(NSLocalizedString("categoryNewExperiment", comment: ""))</category>\n<description>A simple experiment.</description>\n\(inner)\n</phyphox>"

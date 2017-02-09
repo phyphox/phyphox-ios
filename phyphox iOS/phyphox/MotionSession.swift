@@ -31,12 +31,14 @@ final class MotionSession {
     private(set) var gyroscopeRunning = false
     private(set) var magnetometerRunning = false
     private(set) var deviceMotionRunning = false
+    private(set) var proximityRunning = false
     
     private var altimeterReceivers: [MotionSessionReceiver: (data: CMAltitudeData?, error: NSError?) -> Void] = [:]
     private var accelerometerReceivers: [MotionSessionReceiver: (data: CMAccelerometerData?, error: NSError?) -> Void] = [:]
     private var gyroscopeReceivers: [MotionSessionReceiver: (data: CMGyroData?, error: NSError?) -> Void] = [:]
     private var magnetometerReceivers: [MotionSessionReceiver: (data: CMMagnetometerData?, error: NSError?) -> Void] = [:]
     private var deviceMotionReceivers: [MotionSessionReceiver: (deviceMotion: CMDeviceMotion?, error: NSError?) -> Void] = [:]
+    private var proximityReceivers: [MotionSessionReceiver: (proximityState: Bool) -> Void] = [:]
     
     private func makeQueue() -> NSOperationQueue {
         let q = NSOperationQueue()
@@ -240,6 +242,52 @@ final class MotionSession {
         if deviceMotionReceivers.count == 0 && deviceMotionRunning {
             deviceMotionRunning = false
             motionManager.stopDeviceMotionUpdates()
+        }
+    }
+    
+    //MARK: - Proximity sensor
+    
+    var proximityAvailable: Bool {
+        let device = UIDevice.currentDevice()
+        device.proximityMonitoringEnabled = true
+        let available = device.proximityMonitoringEnabled
+        device.proximityMonitoringEnabled = false
+        return available
+    }
+    
+    @objc func proximityChanged(notification: NSNotification) {
+        let state = (notification.object as! UIDevice).proximityState
+        for (_, h) in self.proximityReceivers {
+            h(proximityState: state)
+        }
+    }
+    
+    func getProximityData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (proximity: Bool) -> Void) -> Bool {
+        if proximityAvailable {
+            proximityReceivers[receiver] = handler
+            
+            if !proximityRunning {
+                proximityRunning = true
+                
+                let device = UIDevice.currentDevice()
+                device.proximityMonitoringEnabled = true
+                NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(proximityChanged), name: "UIDeviceProximityStateDidChangeNotification", object: device)
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+    
+    func stopProximityUpdates(receiver: MotionSessionReceiver) {
+        proximityReceivers.removeValueForKey(receiver)
+        print("Stopping")
+        if proximityReceivers.count == 0 && proximityRunning {
+            print("Full stop")
+            proximityRunning = false
+            NSNotificationCenter.defaultCenter().removeObserver(self)
+            UIDevice.currentDevice().proximityMonitoringEnabled = false
         }
     }
     

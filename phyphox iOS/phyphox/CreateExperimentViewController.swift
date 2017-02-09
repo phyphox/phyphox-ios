@@ -19,6 +19,7 @@ struct MapSensorType: OptionSetType {
     static let Gyroscope = MapSensorType(rawValue: 1 << 2) //4
     static let Magnetometer = MapSensorType(rawValue: 1 << 3) //8
     static let Barometer = MapSensorType(rawValue: 1 << 4) //16
+    static let Proximity = MapSensorType(rawValue: 1 << 5) //32
 }
 
 class CreateExperimentViewController: UITableViewController {
@@ -104,7 +105,7 @@ class CreateExperimentViewController: UITableViewController {
             return 1
         }
         else {
-            return 5
+            return 6
         }
     }
     
@@ -143,6 +144,9 @@ class CreateExperimentViewController: UITableViewController {
             case 4:
                 cell.textLabel!.text = NSLocalizedString("sensorPressure", comment: "")
                 cell.accessoryType = selectedSensors.contains(.Barometer) ? .Checkmark : .None
+            case 5:
+                cell.textLabel!.text = NSLocalizedString("sensorProximity", comment: "")
+                cell.accessoryType = selectedSensors.contains(.Proximity) ? .Checkmark : .None
             default:
                 break
             }
@@ -210,6 +214,9 @@ class CreateExperimentViewController: UITableViewController {
                 
             case 4:
                 t = .Barometer
+                
+            case 5:
+                t = .Proximity
                 
             default:
                 break

@@ -17,6 +17,7 @@ enum SensorType {
     case MagneticField
     case Pressure
     case Light
+    case Proximity
 }
 
 enum SensorError : ErrorType {
@@ -141,6 +142,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 throw SensorError.SensorUnavailable(sensorType)
             }
             break;
+        case .Proximity:
+            guard motionSession.proximityAvailable else {
+                throw SensorError.SensorUnavailable(sensorType)
+            }
         case .Light:
             throw SensorError.SensorUnavailable(sensorType)
         }
@@ -285,6 +290,16 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 self.ready = true
                 self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
                 })
+        case .Proximity:
+            motionSession.getProximityData(self, interval: effectiveRate, handler: { [unowned self] (state) -> Void in
+                
+                let distance = state ? 0.0 : 5.0 //Estimate in cm
+                
+                let t = CFAbsoluteTimeGetCurrent()
+                
+                self.ready = true
+                self.dataIn(distance, y: nil, z: nil, t: t, error: nil)
+                })
             
         default:
             break
@@ -311,6 +326,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
             }
         case .Pressure:
             motionSession.stopAltimeterUpdates(self)
+        case .Proximity:
+            motionSession.stopProximityUpdates(self)
         case .Light:
             break
         }

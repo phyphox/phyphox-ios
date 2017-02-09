@@ -39,6 +39,9 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         else if type == "magnetic_field" {
             return .MagneticField
         }
+        else if type == "proximity" {
+            return .Proximity
+        }
         
         return nil
     }
