@@ -13,6 +13,7 @@ private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audi
 
 final class ExperimentAudioInput {
     let sampleRate: UInt
+    var buffer: DataBuffer?
     let outBuffers: [DataBuffer]
     
     private var receiver: AEBlockAudioReceiver!
@@ -20,6 +21,13 @@ final class ExperimentAudioInput {
     init(sampleRate: UInt, outBuffers: [DataBuffer]) {
         self.sampleRate = sampleRate
         self.outBuffers = outBuffers
+
+        if (outBuffers.count == 0) {
+            buffer = nil
+            return
+        }
+        
+        buffer = DataBuffer(name: "", size: outBuffers[0].size, vInit: Double.NaN)
         
         defer {
             receiver = AEBlockAudioReceiver { [unowned self] (from: UnsafeMutablePointer<Void>, timestamp: UnsafePointer<AudioTimeStamp>, frames: UInt32, data: UnsafeMutablePointer<AudioBufferList>) in
@@ -33,13 +41,22 @@ final class ExperimentAudioInput {
                         
                         let final = array.map(Double.init)
                         
-                        for out in self.outBuffers {
-                            out.appendFromArray(final)
-                        }
+                        self.buffer!.appendFromArray(final)
                     })
                 })
             }
         }
+    }
+    
+    func receiveData() {
+        if self.outBuffers.count == 0 {
+            return
+        }
+        
+        for out in self.outBuffers {
+            out.appendFromArray(self.buffer!.toArray())
+        }
+        self.buffer!.clear()
     }
     
     func startRecording(experiment: Experiment) {

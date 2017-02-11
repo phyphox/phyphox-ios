@@ -141,6 +141,11 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     func analysisWillUpdate(_: ExperimentAnalysis) {
+        if audioInputs != nil {
+            for audioIn in self.audioInputs! {
+                audioIn.receiveData()
+            }
+        }
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
