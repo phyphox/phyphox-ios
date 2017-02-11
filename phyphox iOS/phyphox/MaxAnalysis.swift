@@ -183,7 +183,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
                     positionOut!.buffer!.append(x)
                 }
             }
-            
+
             #if DEBUG_ANALYSIS
                 debug_noteOutputs(["max" : max, "pos" : x])
             #endif

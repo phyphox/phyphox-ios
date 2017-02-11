@@ -54,7 +54,7 @@ final class ExperimentAudioInput {
         }
         
         for out in self.outBuffers {
-            out.appendFromArray(self.buffer!.toArray())
+            out.replaceValues(self.buffer!.toArray())
         }
         self.buffer!.clear()
     }

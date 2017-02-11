@@ -85,9 +85,7 @@ final class ExperimentAudioOutput {
                     }
                     
                     weak var bufferRef = self.pcmBuffer
-                    
                     self.pcmPlayer.play()
-                    
                     self.pcmPlayer.scheduleBuffer(self.pcmBuffer, atTime: nil, options: (self.loop ? .Loops : []), completionHandler: { [unowned self] in
                         if bufferRef == self.pcmBuffer { //bufferRef != self.pcmBuffer <=> pcmBuffer was cancelled and recreated because the data source changed, playback should not be cancelled.
                             self.pause()

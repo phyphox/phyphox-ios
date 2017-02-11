@@ -83,6 +83,7 @@ final class ExperimentAnalysis : DataBufferObserver {
                 self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
                 self.delegate?.analysisWillUpdate(self)
+
                 self.update {
                     self.busy = false
                     self.delegate?.analysisDidUpdate(self)
