@@ -169,6 +169,9 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 else if key == "rangefilter" {
                     analysis = try RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
+                else if key == "subrange" {
+                    analysis = try SubrangeAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
                 else if key == "ramp" {
                     analysis = try RampGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
