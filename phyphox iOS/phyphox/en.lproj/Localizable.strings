@@ -104,3 +104,11 @@
 "categoryRawSensor" = "Raw Sensors";
 
 "experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";
+
+"help" = "Help and infos";
+"experimentsPhyphoxOrg" = "Experiment ideas and instructions";
+"experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
+"faqPhyphoxOrg" = "Frequently asked questions";
+"faqPhyphoxOrgURL" = "http://phyphox.org/faq";
+"remotePhyphoxOrg" = "Remote control help";
+"remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";

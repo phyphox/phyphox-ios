@@ -85,3 +85,10 @@
 "categoryNewExperiment" = "Einfache eigene Experimente";
 "categoryRawSensor" = "Sensoren";
 "experimentinfo_hint" = "Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.";
+"help" = "Hilfe und Infos";
+"experimentsPhyphoxOrg" = "Experiment-Ideen und Anleitungen";
+"experimentsPhyphoxOrgURL" = "http://phyphox.org/experimente";
+"faqPhyphoxOrg" = "Häufig gestellte Fragen";
+"faqPhyphoxOrgURL" = "http://phyphox.org/faq-de";
+"remotePhyphoxOrg" = "Hilfe zum Fernzugriff";
+"remotePhyphoxOrgURL" = "http://phyphox.org/fernsteuerung";

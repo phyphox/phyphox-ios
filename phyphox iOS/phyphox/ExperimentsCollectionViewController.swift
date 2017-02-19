@@ -33,6 +33,33 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         self.navigationController?.navigationBar.translucent = true
     }
     
+    func showHelpMenu(item: UIBarButtonItem) {
+        let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .ActionSheet)
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .Default, handler: infoPressed))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("experimentsPhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
+            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("experimentsPhyphoxOrgURL", comment: ""))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("faqPhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
+            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("faqPhyphoxOrgURL", comment: ""))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("remotePhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
+            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.navigationController!.view
+            popover.sourceRect = item.valueForKey("view")?.bounds ?? CGRect(x: 1, y: 1, width: 1, height: 1)
+        }
+        
+        presentViewController(alert, animated: true, completion: nil)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -41,11 +68,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
         
         let infoButton = UIButton(type: .InfoDark)
-        infoButton.addTarget(self, action: #selector(infoPressed), forControlEvents: .TouchUpInside)
+        infoButton.addTarget(self, action: #selector(showHelpMenu(_:)), forControlEvents: .TouchUpInside)
         infoButton.sizeToFit()
         
+        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
+        
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
+        navigationItem.rightBarButtonItem = addButton
         
         let defaults = NSUserDefaults.standardUserDefaults()
         let key = "donotshowagain"
@@ -69,7 +98,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         navigationController!.presentViewController(alert, animated: true, completion: nil)
     }
     
-    func infoPressed() {
+    func infoPressed(action: UIAlertAction) {
         let alert = UIAlertController(title: NSLocalizedString("credits", comment: ""), message: NSLocalizedString("creditsRWTH", comment: "") + "\n\n" + NSLocalizedString("creditsNames", comment: ""), preferredStyle: .Alert)
         
         alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .Default, handler: { [unowned self] _ in
