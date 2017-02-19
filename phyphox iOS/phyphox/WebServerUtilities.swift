@@ -58,6 +58,7 @@ final class WebServerUtilities {
         
         raw.replaceOccurrencesOfString("<!-- [[clearDataTranslation]] -->", withString: NSLocalizedString("clear_data", comment: ""), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[exportTranslation]] -->", withString: NSLocalizedString("export", comment: ""), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrencesOfString("<!-- [[switchToPhoneLayoutTranslation]] -->", withString: NSLocalizedString("switchToPhoneLayout", comment: ""), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[switchColumns1Translation]] -->", withString: NSLocalizedString("switchColumns1", comment: ""), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[switchColumns2Translation]] -->", withString: NSLocalizedString("switchColumns2", comment: ""), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrencesOfString("<!-- [[switchColumns3Translation]] -->", withString: NSLocalizedString("switchColumns3", comment: ""), options: [], range: NSMakeRange(0, raw.length))

@@ -12,6 +12,6 @@ import Foundation
 final class InfoViewDescriptor: ViewDescriptor {
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div style=\"font-size:120%;\" class=\"infoElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
+        return "<div style=\"font-size:90%;\" class=\"infoElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

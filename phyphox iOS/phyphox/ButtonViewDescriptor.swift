@@ -37,7 +37,7 @@ final class ButtonViewDescriptor: ViewDescriptor {
     }
     
     override func generateViewHTMLWithID(id: Int) -> String {
-        return "<div style=\"font-size: 120%;\" class=\"buttonElement\" id=\"element\(id)\"><button onclick=\"$.getJSON('control?cmd=trigger&element=\(id)')\">\(localizedLabel)</button></div>"
+        return "<div style=\"font-size: 105%;\" class=\"buttonElement\" id=\"element\(id)\"><button onclick=\"$.getJSON('control?cmd=trigger&element=\(id)')\">\(localizedLabel)</button></div>"
     }
 }
 

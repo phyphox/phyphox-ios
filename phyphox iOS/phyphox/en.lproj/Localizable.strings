@@ -82,6 +82,7 @@
 "remoteServerActive" = "Remote access enabled. Access this experiment from te following URL:";
 "hotspotSettings" = "Hotspot Settings";
 
+"switchToPhoneLayout" = "View: Narrow";
 "switchColumns1" = "View: 1 column";
 "switchColumns2" = "View: 2 columns";
 "switchColumns3" = "View: 3 columns";
