@@ -13,6 +13,7 @@ private let minCellWidth: CGFloat = 320.0
 
 final class ExperimentsCollectionViewController: CollectionViewController {
     private var cellsPerRow: Int = 1
+    private var infoButton: UIButton? = nil
     
     override class var viewClass: CollectionContainerView.Type {
         return MainView.self
@@ -53,8 +54,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
-            popover.sourceView = self.navigationController!.view
-            popover.sourceRect = item.valueForKey("view")?.bounds ?? CGRect(x: 1, y: 1, width: 1, height: 1)
+            popover.sourceView = infoButton!
+            popover.sourceRect = infoButton!.frame
         }
         
         presentViewController(alert, animated: true, completion: nil)
@@ -67,13 +68,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
         
-        let infoButton = UIButton(type: .InfoDark)
-        infoButton.addTarget(self, action: #selector(showHelpMenu(_:)), forControlEvents: .TouchUpInside)
-        infoButton.sizeToFit()
+        infoButton = UIButton(type: .InfoDark)
+        infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), forControlEvents: .TouchUpInside)
+        infoButton!.sizeToFit()
         
         let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
         navigationItem.rightBarButtonItem = addButton
         
         let defaults = NSUserDefaults.standardUserDefaults()
