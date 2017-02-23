@@ -60,6 +60,7 @@
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/de/faq-de/#faqMissingSensor";
 "sensorNotAvailableWarningTitle" = "Sensor nicht verfügbar.";
 "sensorPressure" = "Druck";
+"sensorProximity" = "Annäherung";
 "share" = "Screenshot teilen";
 "share_pick_share" = "Wählen Sie eine App zum Teilen";
 "share_subject" = "Screenshot aus phyphox";

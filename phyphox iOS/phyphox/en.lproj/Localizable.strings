@@ -32,6 +32,7 @@
 "sensorAccelerometer" = "Accelerometer";
 "sensorMagneticField" = "Magnetic Field";
 "sensorPressure" = "Pressure";
+"sensorProximity" = "Proximity";
 
 "sensorNotAvailableWarningTitle" = "Sensor not available";
 "sensorNotAvailableWarningText1" = "The sensor";
