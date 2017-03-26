@@ -70,9 +70,6 @@ func nextFFTSize(c: Int, minN: Int = 3) -> Int {
 }
 
 final class FFTAnalysis: ExperimentAnalysisModule {
-    private var dftSetup: vDSP_DFT_SetupD?
-    private var currentDFTLength = 0
-    
     private var realInput: DataBuffer!
     private var imagInput: DataBuffer?
     
@@ -105,13 +102,6 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
-    deinit {
-        if dftSetup != nil {
-            vDSP_DFT_DestroySetupD(dftSetup!)
-            dftSetup = nil
-        }
-    }
-    
     override func update() {
         let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
         
@@ -125,11 +115,6 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         else {
             let count = vDSP_Length(nextFFTSize(bufferCount))
             let countI = Int(count)
-            
-            if dftSetup == nil || countI != currentDFTLength {
-                dftSetup = vDSP_DFT_zop_CreateSetupD(dftSetup ?? nil, count, vDSP_DFT_Direction.FORWARD)
-                currentDFTLength = countI
-            }
             
             var realInputArray = realInput.toArray()
             var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
@@ -151,8 +136,13 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             realOutputArray = [Double](count: countI, repeatedValue: 0.0)
             imagOutputArray = realOutputArray
             
-            //FIXME: Crashes when called with little delay in between updates. Crash can be fixed by destroying dft setup after each update.
-            vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+            //For now we recreate the DFT setup each time as it fixes some crashes.
+            //Jonas noted before, that to fast calling of the DFT leads to crashes when reusing the setup, but I (Sebastian) was not able to reproduce this
+            //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
+            //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
+            let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, vDSP_DFT_Direction.FORWARD)
+            vDSP_DFT_ExecuteD(dftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+            vDSP_DFT_DestroySetupD(dftSetup)
             
             if !hasImagInBuffer {
                 realOutputArray = Array(realOutputArray[0..<countI/2])

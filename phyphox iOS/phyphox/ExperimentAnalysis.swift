@@ -38,7 +38,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
         self.analyses = analyses
         
-        self.sleep = max(1/50.0, sleep) //Max analysis rate: 30Hz
+        self.sleep = max(1/50.0, sleep) //Max analysis rate: 50Hz
         self.onUserInput = onUserInput
     }
     
