@@ -257,12 +257,12 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
             scaleY = pinchCoordScaleY
         }
         
-        if scaleX < 0.1 {
-            scaleX = 0.1
+        if scaleX > 10*pinchCoordScaleX {
+            scaleX = 10*pinchCoordScaleX
         }
         
-        if scaleY < 0.1 {
-            scaleY = 0.1
+        if scaleY > 10*pinchCoordScaleY {
+            scaleY = 10*pinchCoordScaleY
         }
         
         zoomMinX = pinchCoordOriginX - Double(centerX)/Double(self.frame.width) * scaleX
