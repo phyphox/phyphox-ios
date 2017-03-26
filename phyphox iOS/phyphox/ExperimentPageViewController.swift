@@ -157,7 +157,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func updateLayout() {
         var offsetTop : CGFloat = self.topLayoutGuide.length
-        let tabBarHeight : CGFloat = 30
         if (experiment.viewDescriptors!.count > 1) {
             offsetTop += tabBarHeight
         }

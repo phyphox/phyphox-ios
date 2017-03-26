@@ -8,11 +8,19 @@
 
 import UIKit
 
-final class ExperimentViewController: UIViewController {
+protocol ModuleExclusiveViewDelegate {
+    func presentExclusiveView(view: UIView)
+    func hideExclusiveView()
+}
+
+final class ExperimentViewController: UIViewController, ModuleExclusiveViewDelegate {
     private let modules: [UIView]
+    var exclusiveView: UIView? = nil
     
     private let scrollView = UIScrollView()
     private let linearView = UIView()
+    
+    let insetTop: CGFloat = 10
     
     @available(*, unavailable)
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
@@ -28,6 +36,12 @@ final class ExperimentViewController: UIViewController {
         self.modules = modules
         super.init(nibName: nil, bundle: nil)
         
+        for module in modules {
+            if let eMod = module as? ExperimentGraphView {
+                eMod.delegate = self
+            }
+        }
+        
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:UIKeyboardDidChangeFrameNotification, object: nil)
     }
@@ -40,25 +54,58 @@ final class ExperimentViewController: UIViewController {
         }
         scrollView.addSubview(linearView)
         scrollView.backgroundColor = kBackgroundColor
-        scrollView.contentInset = UIEdgeInsetsMake(10, 0, 0, 0)
+        scrollView.contentInset = UIEdgeInsetsMake(insetTop, 0, 0, 0)
         self.view.addSubview(scrollView)
+    }
+    
+    func updateLayout(animate: Bool) {
+        scrollView.frame = view.bounds
+        
+        var contentSize = CGRectMake(0, 0, view.bounds.width, 0)
+        var availableSize = view.bounds.size
+        availableSize.height = availableSize.height - insetTop
+        
+        for module in modules {
+            let hidden: Bool
+            if self.exclusiveView != nil && module != self.exclusiveView {
+                hidden = true
+            } else {
+                hidden = false
+                let s = module.sizeThatFits(availableSize)
+                let frame = CGRectMake((view.bounds.width-s.width)/2.0, contentSize.height, s.width, s.height)
+                
+                if animate {
+                    if let eMod = module as? ExperimentGraphView {
+                        eMod.animateFrame(frame)
+                    } else {
+                        module.frame = frame
+                    }
+                } else {
+                    module.frame = frame
+                }
+                
+                contentSize = CGRectMake(0, 0, view.bounds.width, contentSize.height + s.height)
+            }
+            
+            if module.hidden != hidden {
+                if animate {
+                    UIView.transitionWithView(module, duration: 0.15,  options: .TransitionCrossDissolve, animations: {
+                        module.hidden = hidden
+                        }, completion: nil)
+                } else {
+                    module.hidden = hidden
+                }
+            }
+        }
+        
+        linearView.frame = contentSize
+        scrollView.contentSize = contentSize.size
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        scrollView.frame = view.bounds
-        
-        var contentSize = CGRectMake(0, 0, view.bounds.width, 0)
-        
-        for module in modules {
-            let s = module.sizeThatFits(view.bounds.size)
-            module.frame = CGRectMake((view.bounds.width-s.width)/2.0, contentSize.height, s.width, s.height)
-            contentSize = CGRectMake(0, 0, view.bounds.width, contentSize.height + s.height)
-        }
-        
-        linearView.frame = contentSize
-        scrollView.contentSize = contentSize.size
+        updateLayout(false)
     }
     
     //MARK: - Keyboard handler
@@ -112,6 +159,16 @@ final class ExperimentViewController: UIViewController {
     
     dynamic private class func keyboardFrameDidChange(notification: NSNotification) {
         keyboardFrame = notification.userInfo![UIKeyboardFrameEndUserInfoKey]!.CGRectValue;
+    }
+    
+    func presentExclusiveView(view: UIView) {
+        exclusiveView = view
+        updateLayout(true)
+    }
+    
+    func hideExclusiveView() {
+        exclusiveView = nil
+        updateLayout(true)
     }
 
     

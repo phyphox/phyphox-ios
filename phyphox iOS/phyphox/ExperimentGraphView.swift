@@ -20,6 +20,7 @@ struct GraphGridLine {
 }
 
 final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver, GraphGridDelegate {
+    var isExclusiveView = false
     typealias T = GraphViewDescriptor
     
     private let xLabel: UILabel
@@ -32,6 +33,14 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     private var minX: Double
     private var maxY: Double
     private var minY: Double
+    
+    private var zoomMaxX: Double
+    private var zoomMinX: Double
+    private var zoomMaxY: Double
+    private var zoomMinY: Double
+    
+    var panGesture: UIPanGestureRecognizer? = nil
+    var pinchGesture: UIPinchGestureRecognizer? = nil
     
     var queue: dispatch_queue_t!
     
@@ -104,6 +113,11 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         self.maxY = -Double.infinity
         self.minY = Double.infinity
         
+        self.zoomMinX = Double.NaN
+        self.zoomMaxX = Double.NaN
+        self.zoomMinY = Double.NaN
+        self.zoomMaxY = Double.NaN
+        
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
         glGraph.lineWidth = Float(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0))
@@ -142,7 +156,121 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         addSubview(xLabel)
         addSubview(yLabel)
         
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        glGraph.addGestureRecognizer(tapGesture)
+        
         descriptor.yInputBuffer.addObserver(self)
+    }
+    
+    func tapped(sender: UITapGestureRecognizer) {
+        if isExclusiveView {
+            isExclusiveView = false
+            glGraph.removeGestureRecognizer(panGesture!)
+            glGraph.removeGestureRecognizer(pinchGesture!)
+            panGesture = nil
+            pinchGesture = nil
+            self.delegate?.hideExclusiveView()
+        } else {
+            isExclusiveView = true
+            self.delegate?.presentExclusiveView(self)
+            panGesture = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
+            pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
+            glGraph.addGestureRecognizer(panGesture!)
+            glGraph.addGestureRecognizer(pinchGesture!)
+        }
+    }
+    
+    var panStartMinX = Double.NaN
+    var panStartMaxX = Double.NaN
+    var panStartMinY = Double.NaN
+    var panStartMaxY = Double.NaN
+    
+    func panned(sender: UIPanGestureRecognizer) {
+        let offset = sender.translationInView(self)
+        
+        if sender.state == .Began {
+            panStartMinX = self.minX
+            panStartMaxX = self.maxX
+            panStartMinY = self.minY
+            panStartMaxY = self.maxY
+        }
+        
+        let dx = Double(offset.x / self.frame.width) * (self.maxX - self.minX)
+        let dy = Double(offset.y / self.frame.height) * (self.minY - self.maxY)
+        
+        zoomMinX = panStartMinX - dx
+        zoomMaxX = panStartMaxX - dx
+        zoomMinY = panStartMinY - dy
+        zoomMaxY = panStartMaxY - dy
+        
+        self.update()
+    }
+    
+    
+    var pinchCoordOriginX = Double.NaN
+    var pinchCoordOriginY = Double.NaN
+    var pinchCoordScaleX = Double.NaN
+    var pinchCoordScaleY = Double.NaN
+    var pinchTouchScaleX = CGFloat.NaN
+    var pinchTouchScaleY = CGFloat.NaN
+    
+    func pinched(sender: UIPinchGestureRecognizer) {
+        if sender.numberOfTouches() != 2 {
+            return
+        }
+        
+        let maxX = self.maxX
+        let minX = self.minX
+        let maxY = self.maxY
+        let minY = self.minY
+        
+        let t1 = sender.locationOfTouch(0, inView: self)
+        let t2 = sender.locationOfTouch(1, inView: self)
+        
+        let centerX = (t1.x + t2.x)/2.0;
+        let centerY = (t1.y + t2.y)/2.0;
+        
+        if sender.state == .Began {
+            pinchTouchScaleX = abs(t1.x - t2.x)/sender.scale;
+            pinchTouchScaleY = abs(t1.y - t2.y)/sender.scale;
+            
+            pinchCoordScaleX = maxX-minX
+            pinchCoordScaleY = maxY-minY
+            pinchCoordOriginX = minX + Double(centerX)/Double(self.frame.width)*(pinchCoordScaleX)
+            pinchCoordOriginY = maxY - Double(centerY)/Double(self.frame.height)*(pinchCoordScaleY)
+        }
+        
+        let dx = abs(t1.x-t2.x)
+        let dy = abs(t1.y-t2.y)
+        
+        var scaleX: Double
+        var scaleY: Double
+        
+        if pinchTouchScaleX/pinchTouchScaleY > 0.5 {
+            scaleX = Double(pinchTouchScaleX / dx) * pinchCoordScaleX
+        } else {
+            scaleX = pinchCoordScaleX
+        }
+        if pinchTouchScaleY/pinchTouchScaleX > 0.5 {
+            scaleY = Double(pinchTouchScaleY / dy) * pinchCoordScaleY
+        } else {
+            scaleY = pinchCoordScaleY
+        }
+        
+        if scaleX < 0.1 {
+            scaleX = 0.1
+        }
+        
+        if scaleY < 0.1 {
+            scaleY = 0.1
+        }
+        
+        zoomMinX = pinchCoordOriginX - Double(centerX)/Double(self.frame.width) * scaleX
+        zoomMaxX = zoomMinX + scaleX
+        zoomMaxY = pinchCoordOriginY + Double(centerY)/Double(self.frame.height) * scaleY
+        zoomMinY = zoomMaxY - scaleY
+        
+        self.update()
     }
     
     override func unregisterFromBuffer() {
@@ -354,40 +482,56 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 let logX = self.descriptor.logX
                 let logY = self.descriptor.logY
                 
-                switch self.descriptor.scaleMinX {
-                case GraphViewDescriptor.scaleMode.auto:
-                    self.minX = Double.infinity
-                case GraphViewDescriptor.scaleMode.extend:
-                break
-                case GraphViewDescriptor.scaleMode.fixed:
-                    self.minX = Double(self.descriptor.minX)
+                if self.zoomMinX.isFinite {
+                    self.minX = self.zoomMinX
+                } else {
+                    switch self.descriptor.scaleMinX {
+                        case GraphViewDescriptor.scaleMode.auto:
+                            self.minX = Double.infinity
+                        case GraphViewDescriptor.scaleMode.extend:
+                            break
+                        case GraphViewDescriptor.scaleMode.fixed:
+                            self.minX = Double(self.descriptor.minX)
+                    }
                 }
                 
-                switch self.descriptor.scaleMaxX {
-                case GraphViewDescriptor.scaleMode.auto:
-                    self.maxX = -Double.infinity
-                case GraphViewDescriptor.scaleMode.extend:
-                    break
-                case GraphViewDescriptor.scaleMode.fixed:
-                    self.maxX = Double(self.descriptor.maxX)
+                if self.zoomMaxX.isFinite {
+                    self.maxX = self.zoomMaxX
+                } else {
+                    switch self.descriptor.scaleMaxX {
+                        case GraphViewDescriptor.scaleMode.auto:
+                            self.maxX = -Double.infinity
+                        case GraphViewDescriptor.scaleMode.extend:
+                            break
+                        case GraphViewDescriptor.scaleMode.fixed:
+                            self.maxX = Double(self.descriptor.maxX)
+                    }
                 }
                 
-                switch self.descriptor.scaleMinY {
-                case GraphViewDescriptor.scaleMode.auto:
-                    self.minY = Double.infinity
-                case GraphViewDescriptor.scaleMode.extend:
-                    break
-                case GraphViewDescriptor.scaleMode.fixed:
-                    self.minY = Double(self.descriptor.minY)
+                if self.zoomMinY.isFinite {
+                    self.minY = self.zoomMinY
+                } else {
+                    switch self.descriptor.scaleMinY {
+                        case GraphViewDescriptor.scaleMode.auto:
+                            self.minY = Double.infinity
+                        case GraphViewDescriptor.scaleMode.extend:
+                            break
+                        case GraphViewDescriptor.scaleMode.fixed:
+                            self.minY = Double(self.descriptor.minY)
+                    }
                 }
                 
-                switch self.descriptor.scaleMaxY {
-                case GraphViewDescriptor.scaleMode.auto:
-                    self.maxY = -Double.infinity
-                case GraphViewDescriptor.scaleMode.extend:
-                    break
-                case GraphViewDescriptor.scaleMode.fixed:
-                    self.maxY = Double(self.descriptor.maxY)
+                if self.zoomMaxY.isFinite {
+                    self.maxY = self.zoomMaxY
+                } else {
+                    switch self.descriptor.scaleMaxY {
+                        case GraphViewDescriptor.scaleMode.auto:
+                            self.maxY = -Double.infinity
+                        case GraphViewDescriptor.scaleMode.extend:
+                            break
+                        case GraphViewDescriptor.scaleMode.fixed:
+                            self.maxY = Double(self.descriptor.maxY)
+                    }
                 }
                 
                 
@@ -412,19 +556,19 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                         continue
                     }
                     
-                    if x < self.minX && self.descriptor.scaleMinX != GraphViewDescriptor.scaleMode.fixed {
+                    if x < self.minX && self.descriptor.scaleMinX != GraphViewDescriptor.scaleMode.fixed && !self.zoomMinX.isFinite {
                         self.minX = x
                     }
                     
-                    if x > self.maxX && self.descriptor.scaleMaxX != GraphViewDescriptor.scaleMode.fixed {
+                    if x > self.maxX && self.descriptor.scaleMaxX != GraphViewDescriptor.scaleMode.fixed && !self.zoomMaxX.isFinite {
                         self.maxX = x
                     }
                     
-                    if y < self.minY && self.descriptor.scaleMinY != GraphViewDescriptor.scaleMode.fixed {
+                    if y < self.minY && self.descriptor.scaleMinY != GraphViewDescriptor.scaleMode.fixed && !self.zoomMinY.isFinite {
                         self.minY = y
                     }
                     
-                    if y > self.maxY && self.descriptor.scaleMaxY != GraphViewDescriptor.scaleMode.fixed {
+                    if y > self.maxY && self.descriptor.scaleMaxY != GraphViewDescriptor.scaleMode.fixed && !self.zoomMaxY.isFinite {
                         self.maxY = y
                     }
                     
@@ -505,7 +649,13 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     
     override func sizeThatFits(size: CGSize) -> CGSize {
         let s1 = label.sizeThatFits(self.bounds.size)
-        return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+        
+        //For now, we just zoom, but eventually we want to add some controls and maybe not zoom in all the way right away?
+        if isExclusiveView {
+            return CGSizeMake(size.width, size.height)
+        } else {
+            return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+        }
     }
     
     var graphFrame: CGRect {
@@ -535,5 +685,13 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         gridView.frame = CGRectMake(s3.width + spacing, s1.height+spacing, self.bounds.size.width - s3.width - 2*spacing, self.bounds.size.height - s1.height - s2.height - 2*spacing)
         
         yLabel.frame = CGRectMake(spacing, graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, s3.width, s3.height)
+    }
+    
+    func animateFrame(frame: CGRect) {
+        self.layoutIfNeeded()
+        UIView.animateWithDuration(0.15, animations: {
+            self.frame = frame
+            self.layoutIfNeeded()
+        })
     }
 }

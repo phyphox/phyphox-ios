@@ -22,6 +22,8 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
     let label: UILabel
     var active = false
     
+    var delegate: ModuleExclusiveViewDelegate? = nil
+    
     var requiresAnalysis = false
     
     required public init(descriptor: T) {
