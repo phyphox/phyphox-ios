@@ -31,7 +31,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    var vInit: Double
+    var vInit: [Double]
     
     var attachedToTextField = false
     var dataFromAnalysis = false
@@ -97,14 +97,13 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     
     private let queue: Queue<Double>
     
-    init(name: String, size: Int, vInit: Double) {
+    init(name: String, size: Int, vInit: [Double]) {
         self.name = name
         self.size = size
         self.vInit = vInit
         queue = Queue<Double>(capacity: size)
-        if (!vInit.isNaN) {
-            self.append(vInit, async: false, notify: false)
-        }
+        
+        self.appendFromArray(vInit, notify: false)
     }
     
     func generate() -> IndexingGenerator<[Double]> {
@@ -154,9 +153,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         trashedCount = 0
         written = false
         
-        if (!vInit.isNaN) {
-            self.append(vInit, async: false, notify: false)
-        }
+        self.appendFromArray(vInit, notify: false)
         
         bufferMutated()
         
