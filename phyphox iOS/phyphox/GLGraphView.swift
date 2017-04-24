@@ -21,23 +21,23 @@ public struct GLcolor {
 }
 
 private final class ShaderProgram {
-    private let programHandle: GLuint
+    fileprivate let programHandle: GLuint
     
-    private let positionAttributeHandle: GLuint
-    private let translationUniformHandle: GLint
-    private let scaleUniformHandle: GLint
-    private let pointSizeUniformHandle: GLint
-    private let colorUniformHandle: GLint
+    fileprivate let positionAttributeHandle: GLuint
+    fileprivate let translationUniformHandle: GLint
+    fileprivate let scaleUniformHandle: GLint
+    fileprivate let pointSizeUniformHandle: GLint
+    fileprivate let colorUniformHandle: GLint
     
     init() {
-        let vertexStr = try! String(contentsOfFile: NSBundle.mainBundle().pathForResource("VertexShader", ofType: "glsl")!)
-        let fragmentStr = try! String(contentsOfFile: NSBundle.mainBundle().pathForResource("FragmentShader", ofType: "glsl")!)
+        let vertexStr = try! String(contentsOfFile: Bundle.main.path(forResource: "VertexShader", ofType: "glsl")!)
+        let fragmentStr = try! String(contentsOfFile: Bundle.main.path(forResource: "FragmentShader", ofType: "glsl")!)
         
-        let vertexShady = vertexStr.cStringUsingEncoding(NSUTF8StringEncoding)!
-        var vertexPointer = UnsafePointer<GLchar>(vertexShady)
+        let vertexShady = vertexStr.cString(using: String.Encoding.utf8)!
+        var vertexPointer:UnsafePointer<GLchar>? = UnsafePointer<GLchar>(vertexShady)
         
-        let fragmentShady = fragmentStr.cStringUsingEncoding(NSUTF8StringEncoding)!
-        var fragmentPointer = UnsafePointer<GLchar>(fragmentShady)
+        let fragmentShady = fragmentStr.cString(using: String.Encoding.utf8)!
+        var fragmentPointer:UnsafePointer<GLchar>? = UnsafePointer<GLchar>(fragmentShady)
         
         let vertexShader = glCreateShader(GLenum(GL_VERTEX_SHADER))
         glShaderSource(vertexShader, GLsizei(1), &vertexPointer, nil)
@@ -82,39 +82,39 @@ private final class ShaderProgram {
         glUseProgram(programHandle)
     }
     
-    func setScale(x: GLfloat, _ y: GLfloat) {
+    func setScale(_ x: GLfloat, _ y: GLfloat) {
         glUniform2f(scaleUniformHandle, x, y)
     }
     
-    func setPointSize(size: GLfloat) {
+    func setPointSize(_ size: GLfloat) {
         glUniform1f(pointSizeUniformHandle, size)
     }
     
-    func setTranslation(x: GLfloat, _ y: GLfloat) {
+    func setTranslation(_ x: GLfloat, _ y: GLfloat) {
         glUniform2f(translationUniformHandle, x, y)
     }
     
-    func setColor(r: GLfloat, _ g: GLfloat, _ b: GLfloat, _ a: GLfloat) {
+    func setColor(_ r: GLfloat, _ g: GLfloat, _ b: GLfloat, _ a: GLfloat) {
         glUniform4f(colorUniformHandle, r, g, b, a)
     }
     
-    func drawPositions(mode: Int32, _ count: Int) {
-        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(sizeof(GraphPoint<GLfloat>)), nil)
+    func drawPositions(_ mode: Int32, _ count: Int) {
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.size), nil)
         
         glDrawArrays(GLenum(mode), 0, GLsizei(count))
     }
 }
 
 final class GLGraphView: GLKView {
-    private let shader: ShaderProgram
+    fileprivate let shader: ShaderProgram
     
-    private var vbo: GLuint = 0
+    fileprivate var vbo: GLuint = 0
     
-    private var xScale: GLfloat = 1.0
-    private var yScale: GLfloat = 1.0
+    fileprivate var xScale: GLfloat = 1.0
+    fileprivate var yScale: GLfloat = 1.0
     
-    private var min: GraphPoint<Double>!
-    private var max: GraphPoint<Double>!
+    fileprivate var min: GraphPoint<Double>!
+    fileprivate var max: GraphPoint<Double>!
     
     var lineWidth: GLfloat = 2.0 {
         didSet {
@@ -141,7 +141,7 @@ final class GLGraphView: GLKView {
     }
     
     override convenience init(frame: CGRect) {
-        self.init(frame: frame, context: EAGLContext(API: .OpenGLES2))
+        self.init(frame: frame, context: EAGLContext(api: .openGLES2))
     }
     
     convenience init() {
@@ -153,9 +153,9 @@ final class GLGraphView: GLKView {
     }
     
     override init(frame: CGRect, context: EAGLContext) {
-        context.multiThreaded = true
+        context.isMultiThreaded = true
         
-        EAGLContext.setCurrentContext(context)
+        EAGLContext.setCurrent(context)
         
         shader = ShaderProgram()
         
@@ -164,10 +164,10 @@ final class GLGraphView: GLKView {
         super.init(frame: frame, context: context)
         
         self.drawableColorFormat = .RGBA8888
-        self.drawableDepthFormat = .Format24
-        self.drawableStencilFormat = .Format8
-        self.drawableMultisample = .Multisample4X //Anti aliasing
-        self.opaque = false
+        self.drawableDepthFormat = .format24
+        self.drawableStencilFormat = .format8
+        self.drawableMultisample = .multisample4X //Anti aliasing
+        self.isOpaque = false
         self.enableSetNeedsDisplay = true
         
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -177,7 +177,7 @@ final class GLGraphView: GLKView {
     
     var points: [[GraphPoint<GLfloat>]]
     
-    func setPoints(psets: [[GraphPoint<GLfloat>]], min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
+    func setPoints(_ psets: [[GraphPoint<GLfloat>]], min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
         points = psets
         
         if max != nil && min != nil {
@@ -199,7 +199,7 @@ final class GLGraphView: GLKView {
         setNeedsDisplay()
     }
     
-    override func drawRect(rect: CGRect) {
+    override func draw(_ rect: CGRect) {
         render()
     }
     
@@ -210,7 +210,7 @@ final class GLGraphView: GLKView {
     }
     
     internal func render() {
-        EAGLContext.setCurrentContext(context)
+        EAGLContext.setCurrent(context)
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
         
@@ -240,14 +240,14 @@ final class GLGraphView: GLKView {
         
         glLineWidth(lineWidth)
         
-        for (i,p) in points.enumerate() {
+        for (i,p) in points.enumerated() {
             let length = p.count
             
             if length == 0 {
                 continue
             }
             
-            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * sizeof(GraphPoint<GLfloat>)), p, GLenum(GL_DYNAMIC_DRAW))
+            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.size), p, GLenum(GL_DYNAMIC_DRAW))
             
             if (i == nSets-1) {
                 shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)

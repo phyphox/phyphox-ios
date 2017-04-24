@@ -15,9 +15,9 @@ final class ExperimentBluetoothInput {
     /**
      The update frequency of the sensor.
      */
-    private(set) var rate: NSTimeInterval //in s
+    fileprivate(set) var rate: TimeInterval //in s
     
-    var effectiveRate: NSTimeInterval {
+    var effectiveRate: TimeInterval {
         get {
             if self.averaging != nil {
                 return 0.0
@@ -28,32 +28,32 @@ final class ExperimentBluetoothInput {
         }
     }
     
-    private(set) var startTimestamp: NSTimeInterval?
+    fileprivate(set) var startTimestamp: TimeInterval?
     
-    private(set) var buffers: [DataBuffer]?
+    fileprivate(set) var buffers: [DataBuffer]?
     
-    private let queue = dispatch_queue_create("de.rwth-aachen.phyphox.bluetoothInputQueue", DISPATCH_QUEUE_SERIAL)
+    fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothInputQueue", attributes: [])
     
-    private class Averaging {
+    fileprivate class Averaging {
         /**
          The duration of averaging intervals.
          */
-        var averagingInterval: NSTimeInterval
+        var averagingInterval: TimeInterval
         
         /**
          Start of current average mesurement.
          */
-        var iterationStartTimestamp: NSTimeInterval?
+        var iterationStartTimestamp: TimeInterval?
         
         var v: [Double]?
         
         var numberOfUpdates: UInt = 0
         
-        init(averagingInterval: NSTimeInterval) {
+        init(averagingInterval: TimeInterval) {
             self.averagingInterval = averagingInterval
         }
         
-        func requiresFlushing(currentT: NSTimeInterval) -> Bool {
+        func requiresFlushing(_ currentT: TimeInterval) -> Bool {
             return iterationStartTimestamp != nil && iterationStartTimestamp! + averagingInterval <= currentT
         }
     }
@@ -61,7 +61,7 @@ final class ExperimentBluetoothInput {
     /**
      Information on averaging. Set to `nil` to disable averaging.
      */
-    private var averaging: Averaging?
+    fileprivate var averaging: Averaging?
     
     var recordingAverages: Bool {
         get {
@@ -69,7 +69,7 @@ final class ExperimentBluetoothInput {
         }
     }
     
-    init(rate: NSTimeInterval, average: Bool, buffers: [DataBuffer]?) {
+    init(rate: TimeInterval, average: Bool, buffers: [DataBuffer]?) {
         self.rate = rate
         
         self.buffers = buffers
@@ -79,7 +79,7 @@ final class ExperimentBluetoothInput {
         }
     }
     
-    private func resetValuesForAveraging() {
+    fileprivate func resetValuesForAveraging() {
         guard let averaging = self.averaging else {
             return
         }
@@ -105,14 +105,14 @@ final class ExperimentBluetoothInput {
         self.startTimestamp = nil
     }
     
-    private func writeToBuffers(x: Double?, y: Double?, z: Double?, t: NSTimeInterval) {
+    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
         //TODO
     }
     
-    private func dataIn(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
         //TODO
         
-        func dataInSync(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+        func dataInSync(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
             guard error == nil else {
                 print("Sensor error: \(error!.localizedDescription)")
                 return
@@ -144,8 +144,8 @@ final class ExperimentBluetoothInput {
             }
         }
         
-        dispatch_async(queue) {
-            autoreleasepool({
+        queue.async {
+            autoreleasepool(invoking: {
                 dataInSync(x, y: y, z: z, t: t, error: error)
             })
         }

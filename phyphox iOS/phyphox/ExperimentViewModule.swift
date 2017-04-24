@@ -16,7 +16,7 @@ protocol ExperimentViewModuleProtocol {
     var active: Bool { get set}
 }
 
-public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
+open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
     weak var descriptor: T!
     
     let label: UILabel
@@ -34,7 +34,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         
         requiresAnalysis = descriptor.requiresAnalysis
         
-        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+        label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
         label.textColor = kTextColor
         
         self.descriptor = descriptor
@@ -48,7 +48,7 @@ public class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModul
         
     }
     
-    private var updateScheduled: Bool = false
+    fileprivate var updateScheduled: Bool = false
     
     func setNeedsUpdate() {
         if active && !updateScheduled {

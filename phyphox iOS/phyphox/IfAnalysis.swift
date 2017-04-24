@@ -8,15 +8,16 @@
 
 import Foundation
 
+
 final class IfAnalysis: ExperimentAnalysisModule {
-    private let less: Bool
-    private let equal: Bool
-    private let greater: Bool
+    fileprivate let less: Bool
+    fileprivate let equal: Bool
+    fileprivate let greater: Bool
     
-    private var in1: ExperimentAnalysisDataIO? = nil
-    private var in2: ExperimentAnalysisDataIO? = nil
-    private var inTrue: ExperimentAnalysisDataIO? = nil
-    private var inFalse: ExperimentAnalysisDataIO? = nil
+    fileprivate var in1: ExperimentAnalysisDataIO? = nil
+    fileprivate var in2: ExperimentAnalysisDataIO? = nil
+    fileprivate var inTrue: ExperimentAnalysisDataIO? = nil
+    fileprivate var inFalse: ExperimentAnalysisDataIO? = nil
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         less = boolFromXML(additionalAttributes, key: "less", defaultValue: false)
@@ -53,19 +54,19 @@ final class IfAnalysis: ExperimentAnalysisModule {
                     inFalse = input
                     continue
                 }
-                throw SerializationError.GenericError(message: "Error: Invalid analysis input: \(input.asString)")
+                throw SerializationError.genericError(message: "Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
         if (in1 == nil) {
-            throw SerializationError.GenericError(message: "Error: Missing input for in1.")
+            throw SerializationError.genericError(message: "Error: Missing input for in1.")
         }
         if (in2 == nil) {
-            throw SerializationError.GenericError(message: "Error: Missing input for in2.")
+            throw SerializationError.genericError(message: "Error: Missing input for in2.")
         }
         
         if (outputs.count < 1) {
-            throw SerializationError.GenericError(message: "Error: No output for if-module specified.")
+            throw SerializationError.genericError(message: "Error: No output for if-module specified.")
         }
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
@@ -81,7 +82,7 @@ final class IfAnalysis: ExperimentAnalysisModule {
         
         let out: ExperimentAnalysisDataIO?
         
-        if (v1 < v2 && less) || (v1 == v2 && equal) || (v1 > v2 && greater) {
+        if (v1! < v2! && less) || (v1! == v2! && equal) || (v1! > v2! && greater) {
             out = inTrue
         } else {
             out = inFalse

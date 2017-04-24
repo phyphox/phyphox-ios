@@ -16,7 +16,7 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
         updateAllWithMethod({ (inputs) -> ValueSource in
             var main = inputs.first!
             
-            for (i, input) in inputs.enumerate() {
+            for (i, input) in inputs.enumerated() {
                 if i > 0 {
                     main = self.powValueSources(main, b: input)
                 }
@@ -26,7 +26,7 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
             },  priorityInputKey: "base")
     }
     
-    func powValueSources(a: ValueSource, b: ValueSource) -> ValueSource {
+    func powValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // scalar^scalar
             let result = pow(scalarA, scalarB)
             
@@ -35,7 +35,7 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
         else if let scalar = a.scalar, let vector = b.vector { // scalar^vector
             var out = vector
             
-            let vecScalar = [Double](count: out.count, repeatedValue: scalar)
+            let vecScalar = [Double](repeating: scalar, count: out.count)
             
             var count = Int32(out.count)
             

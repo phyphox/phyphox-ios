@@ -43,7 +43,7 @@ internal final class ValueSource : CustomStringConvertible {
 
 class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     
-    func updateAllWithMethod(method: [ValueSource] -> ValueSource, priorityInputKey: String?) {
+    func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
         var maxNonScalarCount = 0 //Scalar and an empty vector should give an empty result
@@ -53,7 +53,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                 let src = ValueSource(scalar: fixed)
                 
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(src, atIndex: 0)
+                    values.insert(src, at: 0)
                 }
                 else {
                     values.append(src)
@@ -67,7 +67,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                 let src = ValueSource(vector: array)
                 
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(src, atIndex: 0)
+                    values.insert(src, at: 0)
                 }
                 else {
                     values.append(src)
@@ -89,7 +89,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
                     let delta = maxCount-array.count
                     
                     if delta > 0 {
-                        array.appendContentsOf([Double](count: delta, repeatedValue: array.last ?? Double.NaN))
+                        array.append(contentsOf: [Double](repeating: array.last ?? Double.nan, count: delta))
                         valueSource.vector = array
                     }
                 }

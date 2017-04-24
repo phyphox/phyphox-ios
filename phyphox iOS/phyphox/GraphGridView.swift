@@ -14,15 +14,15 @@ protocol GraphGridDelegate: class {
 }
 
 final class GraphGridView: UIView {
-    private let borderView = UIView()
+    fileprivate let borderView = UIView()
     var delegate: GraphGridDelegate? = nil
     var descriptor: GraphViewDescriptor? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 1.0).CGColor
-        borderView.layer.borderWidth = 1.0/UIScreen.mainScreen().scale
+        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 1.0).cgColor
+        borderView.layer.borderWidth = 1.0/UIScreen.main.scale
         
         addSubview(borderView)
     }
@@ -46,7 +46,7 @@ final class GraphGridView: UIView {
     }
     
     var insetRect: CGRect {
-        return CGRectOffset(CGRectInset(bounds, gridInset.x + gridLabelSpace.x/2.0, gridInset.y + gridLabelSpace.y/2.0), gridOffset.x+gridLabelSpace.x/2.0, gridOffset.y - gridLabelSpace.y/2.0)
+        return bounds.insetBy(dx: gridInset.x + gridLabelSpace.x/2.0, dy: gridInset.y + gridLabelSpace.y/2.0).offsetBy(dx: gridOffset.x+gridLabelSpace.x/2.0, dy: gridOffset.y - gridLabelSpace.y/2.0)
     }
     
     convenience init(descriptor: GraphViewDescriptor?) {
@@ -65,10 +65,10 @@ final class GraphGridView: UIView {
         }
     }
     
-    private var lineViews: [GraphGridLineView] = []
-    private var labels: [UILabel] = []
+    fileprivate var lineViews: [GraphGridLineView] = []
+    fileprivate var labels: [UILabel] = []
     
-    private func updateLineViews() {
+    fileprivate func updateLineViews() {
         var neededViews = 0
         
         if grid != nil {
@@ -85,8 +85,8 @@ final class GraphGridView: UIView {
         
         func makeLabel() -> UILabel {
             let label = UILabel()
-            let defaultFont = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
-            label.font = defaultFont.fontWithSize(defaultFont.pointSize * 0.8)
+            let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            label.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
             
             addSubview(label)
             
@@ -134,25 +134,25 @@ final class GraphGridView: UIView {
     }
     
     override func layoutSubviews() {
-        let spacing = 1.0/UIScreen.mainScreen().scale
+        let spacing = 1.0/UIScreen.main.scale
         super.layoutSubviews()
         
-        let formatterX = NSNumberFormatter()
+        let formatterX = NumberFormatter()
         formatterX.usesSignificantDigits = true
         formatterX.minimumSignificantDigits = Int(descriptor?.xPrecision ?? 3)
         
-        let formatterY = NSNumberFormatter()
+        let formatterY = NumberFormatter()
         formatterY.usesSignificantDigits = true
         formatterY.minimumSignificantDigits = Int(descriptor?.yPrecision ?? 3)
         
-        func format(n: Double, formatter: NSNumberFormatter) -> String {
+        func format(_ n: Double, formatter: NumberFormatter) -> String {
             let expThreshold = max(formatter.minimumSignificantDigits, 3)
             if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
-                formatter.numberStyle = .DecimalStyle
-                return formatter.stringFromNumber(NSNumber(double: n))!
+                formatter.numberStyle = .decimal
+                return formatter.string(from: NSNumber(value: n as Double))!
             } else {
-                formatter.numberStyle = .ScientificStyle
-                return formatter.stringFromNumber(NSNumber(double: n))!
+                formatter.numberStyle = .scientific
+                return formatter.string(from: NSNumber(value: n as Double))!
             }
         }
         
@@ -195,7 +195,7 @@ final class GraphGridView: UIView {
         if grid != nil {
             index = 0
             
-            let smallestUnit = 1.0/UIScreen.mainScreen().scale
+            let smallestUnit = 1.0/UIScreen.main.scale
             
             if grid!.xGridLines != nil {
                 for line in grid!.xGridLines! {
@@ -205,17 +205,17 @@ final class GraphGridView: UIView {
                     
                     let origin = insetRect.size.width*line.relativeValue
                     
-                    if !isfinite(origin) {
-                        view.hidden = true
+                    if !origin.isFinite {
+                        view.isHidden = true
                         continue
                     }
                     
-                    view.hidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.isHidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
-                    view.frame = CGRectMake(origin+insetRect.origin.x, insetRect.origin.y, smallestUnit, insetRect.size.height)
+                    view.frame = CGRect(x: origin+insetRect.origin.x, y: insetRect.origin.y, width: smallestUnit, height: insetRect.size.height)
                     
                     let label = labels[index]
-                    label.frame = CGRectMake(origin+insetRect.origin.x-label.frame.size.width/2.0, CGRectGetMaxY(insetRect)+spacing, label.frame.size.width, label.frame.size.height)
+                    label.frame = CGRect(x: origin+insetRect.origin.x-label.frame.size.width/2.0, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
                     
                     index += 1
                 }
@@ -229,17 +229,17 @@ final class GraphGridView: UIView {
                     
                     let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
                     
-                    if !isfinite(origin) {
-                       view.hidden = true
+                    if !origin.isFinite {
+                       view.isHidden = true
                         continue
                     }
                     
-                    view.hidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+                    view.isHidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
                     
-                    view.frame = CGRectMake(insetRect.origin.x, origin+insetRect.origin.y, insetRect.size.width, smallestUnit)
+                    view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
                     
                     let label = labels[index]
-                    label.frame = CGRectMake(insetRect.origin.x-spacing-label.frame.size.width, origin+insetRect.origin.y-label.frame.size.height/2.0, label.frame.size.width, label.frame.size.height)
+                    label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
                     
                     index += 1
                 }

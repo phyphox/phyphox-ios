@@ -9,7 +9,7 @@
 
 import Foundation
 
-func gcd(u: UInt, _ v: UInt) -> UInt {
+func gcd(_ u: UInt, _ v: UInt) -> UInt {
     // simple cases (termination)
     if (u == v) {
         return u
@@ -51,7 +51,7 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
         updateAllWithMethod({ inputs -> ValueSource in
             var main = inputs.first!
             
-            for (i, input) in inputs.enumerate() {
+            for (i, input) in inputs.enumerated() {
                 if i > 0 {
                     main = self.gcdValueSources(main, b: input)
                 }
@@ -62,10 +62,10 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
             }, priorityInputKey: nil)
     }
     
-    func gcdValueSources(a: ValueSource, b: ValueSource) -> ValueSource {
+    func gcdValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // gcd(scalar,scalar)
-            if !isfinite(scalarA) || !isfinite(scalarB) {
-                return ValueSource(scalar: Double.NaN)
+            if !scalarA.isFinite || !scalarB.isFinite {
+                return ValueSource(scalar: Double.nan)
             }
             
             let result = Double(gcd(UInt(scalarA), UInt(scalarB)))
@@ -77,8 +77,8 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
             out.reserveCapacity(vector.count)
             
             for val in vector {
-                if !isfinite(val) || !isfinite(scalar) {
-                    out.append(Double.NaN)
+                if !val.isFinite || !scalar.isFinite {
+                    out.append(Double.nan)
                 }
                 else {
                     out.append(Double(gcd(UInt(scalar), UInt(val))))
@@ -92,8 +92,8 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
             out.reserveCapacity(vector.count)
             
             for val in vector {
-                if !isfinite(val) || !isfinite(scalar) {
-                    out.append(Double.NaN)
+                if !val.isFinite || !scalar.isFinite {
+                    out.append(Double.nan)
                 }
                 else {
                     out.append(Double(gcd(UInt(scalar), UInt(val))))
@@ -106,11 +106,11 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
             var out = [Double]()
             out.reserveCapacity(vectorA.count)
             
-            for (i, val) in vectorA.enumerate() {
+            for (i, val) in vectorA.enumerated() {
                 let valB = vectorB[i]
                 
-                if !isfinite(val) || !isfinite(valB) {
-                    out.append(Double.NaN)
+                if !val.isFinite || !valB.isFinite {
+                    out.append(Double.nan)
                 }
                 else {
                     out.append(Double(gcd(UInt(valB), UInt(val))))

@@ -10,8 +10,8 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
-    private var lengthInput: ExperimentAnalysisDataIO?
-    private var valueInput: ExperimentAnalysisDataIO?
+    fileprivate var lengthInput: ExperimentAnalysisDataIO?
+    fileprivate var valueInput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
@@ -22,7 +22,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
                 lengthInput = input
             }
             else {
-                print("Error: Invalid analysis input: \(input.asString)")
+                print("Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
@@ -49,7 +49,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(["value" : value, "length" : length])
         #endif
         
-        let result = [Double](count: length, repeatedValue: value)
+        let result = [Double](repeating: value, count: length)
         
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)

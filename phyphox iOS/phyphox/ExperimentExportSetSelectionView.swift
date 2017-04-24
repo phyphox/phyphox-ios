@@ -20,9 +20,9 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
     let formatSwitches: [BEMCheckBox]
     let formatLabels: [UILabel]
     
-    let exportAvailabilityCallback: Bool -> Void
+    let exportAvailabilityCallback: (Bool) -> Void
     
-    init(export: ExperimentExport, translation: ExperimentTranslationCollection?, exportAvailabilityCallback: Bool -> Void) {
+    init(export: ExperimentExport, translation: ExperimentTranslationCollection?, exportAvailabilityCallback: @escaping (Bool) -> Void) {
         self.export = export
         self.exportAvailabilityCallback = exportAvailabilityCallback
         
@@ -36,11 +36,11 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
         
         for (string, _) in exportTypes {
             let sw = BEMCheckBox()
-            sw.boxType = .Circle
-            sw.offAnimationType = .Bounce
-            sw.onAnimationType = .Bounce
+            sw.boxType = .circle
+            sw.offAnimationType = .bounce
+            sw.onAnimationType = .bounce
             sw.on = on
-            sw.userInteractionEnabled = !on
+            sw.isUserInteractionEnabled = !on
             sw.lineWidth = 1.0
             sw.onTintColor = kHighlightColor
             sw.onCheckColor = kHighlightColor
@@ -51,7 +51,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             
             
             let la = UILabel()
-            la.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
+            la.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1)
             
             la.text = string
             
@@ -79,19 +79,19 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func didTapCheckBox(checkBox: BEMCheckBox) {
-        checkBox.userInteractionEnabled = false
+    func didTap(_ checkBox: BEMCheckBox) {
+        checkBox.isUserInteractionEnabled = false
             
         formatSwitches.forEach { sw in
             if sw !== checkBox {
                 sw.setOn(false, animated: true)
-                sw.userInteractionEnabled = true
+                sw.isUserInteractionEnabled = true
             }
         }
     }
     
     func selectedFormat() -> ExportFileFormat {
-        for (i, sw) in formatSwitches.enumerate() {
+        for (i, sw) in formatSwitches.enumerated() {
             if sw.on {
                 return exportTypes[i].1
             }
@@ -102,7 +102,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
     
     //Auto Layout is evil. This works:
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
         var w: CGFloat = 0.0
         var h: CGFloat = 0.0
         
@@ -125,15 +125,15 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
         
         let switchSize = checkboxSize
         
-        for (i, label) in formatLabels.enumerate() {
+        for (i, label) in formatLabels.enumerated() {
             let s = label.sizeThatFits(bounds.size)
             let sw = formatSwitches[i]
             
             let heightDelta = (switchSize.height-s.height)/2.0
             
-            label.frame = CGRectMake(xSpacing, h+2*ySpacing+heightDelta, s.width, s.height)
+            label.frame = CGRect(x: xSpacing, y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
             
-            sw.frame = CGRectMake(self.bounds.size.width-switchSize.width-xSpacing, label.center.y-switchSize.height/2.0, switchSize.width, switchSize.height)
+            sw.frame = CGRect(x: self.bounds.size.width-switchSize.width-xSpacing, y: label.center.y-switchSize.height/2.0, width: switchSize.width, height: switchSize.height)
             
             h += 2*ySpacing+max(s.height, switchSize.height)
         }

@@ -9,28 +9,28 @@
 
 import UIKit
 
-let experimentsBaseDirectory = NSBundle.mainBundle().pathForResource("phyphox-experiments", ofType: nil)!
-let customExperimentsDirectory = (NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first! as NSString).stringByAppendingPathComponent("Experiments")
+let experimentsBaseDirectory = Bundle.main.path(forResource: "phyphox-experiments", ofType: nil)!
+let customExperimentsDirectory = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as NSString).appendingPathComponent("Experiments")
 let fileExtension = "phyphox"
 
 let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
 
-enum FileError: ErrorType {
-    case GenericError
+enum FileError: Error {
+    case genericError
 }
 
 final class ExperimentManager {
-    private var readOnlyExperimentCollections = [ExperimentCollection]()
-    private var customExperimentCollections = [ExperimentCollection]()
+    fileprivate var readOnlyExperimentCollections = [ExperimentCollection]()
+    fileprivate var customExperimentCollections = [ExperimentCollection]()
     
-    private var allExperimentCollections: [ExperimentCollection]?
+    fileprivate var allExperimentCollections: [ExperimentCollection]?
     
     var experimentCollections: [ExperimentCollection] {
         if allExperimentCollections == nil {
             allExperimentCollections = customExperimentCollections
             for experimentCollection in readOnlyExperimentCollections {
                 var placed = false
-                for (i, targetCollection) in allExperimentCollections!.enumerate() {
+                for (i, targetCollection) in allExperimentCollections!.enumerated() {
                     if (experimentCollection.title == targetCollection.title) {
                         allExperimentCollections![i].experiments! += experimentCollection.experiments!
                         placed = true
@@ -43,12 +43,12 @@ final class ExperimentManager {
             }
             
             for experimentCollection in allExperimentCollections! {
-                experimentCollection.experiments?.sortInPlace({$0.experiment.localizedTitle < $1.experiment.localizedTitle})
+                experimentCollection.experiments?.sort(by: {$0.experiment.localizedTitle < $1.experiment.localizedTitle})
             }
             
             let sensorCat = NSLocalizedString("categoryRawSensor", comment: "")
             
-            allExperimentCollections?.sortInPlace({(a: ExperimentCollection, b: ExperimentCollection) -> Bool in
+            allExperimentCollections?.sort(by: {(a: ExperimentCollection, b: ExperimentCollection) -> Bool in
                 if a.title == sensorCat {
                     return true
                 }
@@ -62,8 +62,8 @@ final class ExperimentManager {
         return allExperimentCollections!
     }
     
-    private var adc: AEAudioController?
-    private var fltc: AEFloatConverter?
+    fileprivate var adc: AEAudioController?
+    fileprivate var fltc: AEFloatConverter?
     
     var floatConverter: AEFloatConverter {
         get {
@@ -77,7 +77,7 @@ final class ExperimentManager {
         }
     }
     
-    func setAudioControllerDescription(audioDescription: AudioStreamBasicDescription, inputEnabled: Bool, outputEnabled: Bool) -> AEAudioController {
+    func setAudioControllerDescription(_ audioDescription: AudioStreamBasicDescription, inputEnabled: Bool, outputEnabled: Bool) -> AEAudioController {
         if adc == nil {
             var bitmask = AEAudioControllerOptionAllowMixingWithOtherApps.rawValue
             
@@ -107,33 +107,33 @@ final class ExperimentManager {
         return adc!
     }
     
-    private static let instance = ExperimentManager() //static => lazy, let => synchronized
+    fileprivate static let instance = ExperimentManager() //static => lazy, let => synchronized
     
     class func sharedInstance() -> ExperimentManager {
         return instance
     }
     
-    func deleteExperiment(experiment: Experiment) throws {
+    func deleteExperiment(_ experiment: Experiment) throws {
         if let path = experiment.filePath {
-            try NSFileManager.defaultManager().removeItemAtPath(path)
+            try FileManager.default.removeItem(atPath: path)
             loadCustomExperiments()
         }
         else {
-            throw FileError.GenericError
+            throw FileError.genericError
         }
     }
     
     func loadCustomExperiments() {
         var lookupTable: [String: ExperimentCollection] = [:]
         
-        let customExperiments = try? NSFileManager.defaultManager().contentsOfDirectoryAtPath(customExperimentsDirectory)
+        let customExperiments = try? FileManager.default.contentsOfDirectory(atPath: customExperimentsDirectory)
         
         customExperimentCollections.removeAll()
         allExperimentCollections = nil
         
         if customExperiments != nil {
             for custom in customExperiments! {
-                let path = (customExperimentsDirectory as NSString).stringByAppendingPathComponent(custom)
+                let path = (customExperimentsDirectory as NSString).appendingPathComponent(custom)
                 
                 if (path as NSString).pathExtension != fileExtension {
                     continue
@@ -161,11 +161,11 @@ final class ExperimentManager {
             }
         }
         
-        NSNotificationCenter.defaultCenter().postNotificationName(ExperimentsReloadedNotification, object: nil)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
     
-    private func loadExperiments() {
-        let folders = try! NSFileManager.defaultManager().contentsOfDirectoryAtPath(experimentsBaseDirectory)
+    fileprivate func loadExperiments() {
+        let folders = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseDirectory)
         
         var lookupTable: [String: ExperimentCollection] = [:]
         
@@ -173,7 +173,7 @@ final class ExperimentManager {
         allExperimentCollections = nil
         
         for title in folders {
-            let path = (experimentsBaseDirectory as NSString).stringByAppendingPathComponent(title)
+            let path = (experimentsBaseDirectory as NSString).appendingPathComponent(title)
             
             if (path as NSString).pathExtension != fileExtension {
                 continue

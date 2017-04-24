@@ -11,9 +11,9 @@ import Foundation
 import Accelerate
 
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
-    private var startInput: ExperimentAnalysisDataIO!
-    private var stopInput: ExperimentAnalysisDataIO!
-    private var lengthInput: ExperimentAnalysisDataIO?
+    fileprivate var startInput: ExperimentAnalysisDataIO!
+    fileprivate var stopInput: ExperimentAnalysisDataIO!
+    fileprivate var lengthInput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
@@ -27,7 +27,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
                 lengthInput = input
             }
             else {
-                print("Error: Invalid analysis input: \(input.asString)")
+                print("Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
@@ -55,7 +55,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
             length = outputs.first!.buffer!.size
         }
         
-        var result = [Double](count: length, repeatedValue: 0.0)
+        var result = [Double](repeating: 0.0, count: length)
         
         #if DEBUG_ANALYSIS
             debug_noteInputs(["start" : start, "stop" : stop, "length" : length])

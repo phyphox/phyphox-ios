@@ -9,14 +9,14 @@
 
 import Foundation
 
-private let audioInputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioInput", DISPATCH_QUEUE_SERIAL)
+private let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioInput", attributes: [])
 
 final class ExperimentAudioInput {
     let sampleRate: UInt
     var buffer: DataBuffer?
     let outBuffers: [DataBuffer]
     
-    private var receiver: AEBlockAudioReceiver!
+    fileprivate var receiver: AEBlockAudioReceiver!
     
     init(sampleRate: UInt, outBuffers: [DataBuffer]) {
         self.sampleRate = sampleRate
@@ -27,25 +27,30 @@ final class ExperimentAudioInput {
             return
         }
         
-        buffer = DataBuffer(name: "", size: outBuffers[0].size, vInit: Double.NaN)
+        buffer = DataBuffer(name: "", size: outBuffers[0].size, vInit: [])
         
-        defer {
-            receiver = AEBlockAudioReceiver { [unowned self] (from: UnsafeMutablePointer<Void>, timestamp: UnsafePointer<AudioTimeStamp>, frames: UInt32, data: UnsafeMutablePointer<AudioBufferList>) in
-                dispatch_async(audioInputQueue, {
-                    autoreleasepool({
-                        var array = [Float](count: Int(frames), repeatedValue: 0.0)
+        
+        
+/*        defer {
+            let block = AEBlockAudioReceiverBlock({ (source: UnsafeMutablePointer<Void>?, time: UnsafePointer<AudioTimeStamp>?, frames: UInt32, audio: UnsafeMutablePointer<AudioBufferList>?) -> Void in
+                audioInputQueue.async(execute: {
+                    autoreleasepool(invoking: {
+                        var array = [Float](repeating: 0.0, count: Int(frames))
                         
-                        var arrayPointer = UnsafeMutablePointer<Float>(array)
+                        var arrayPointer: UnsafeMutablePointer? = UnsafeMutablePointer<Float>(mutating: array)
                         
-                        AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, data, &arrayPointer, frames)
+                        AEFloatConverterToFloat(ExperimentManager.sharedInstance().floatConverter, audio, &arrayPointer, frames)
                         
-                        let final = array.map(Double.init)
+                        let final = array.map({Double.init($0)})
                         
                         self.buffer!.appendFromArray(final)
                     })
                 })
-            }
+            })
+            
+            receiver = AEBlockAudioReceiver(block: block)
         }
+ */
     }
     
     func receiveData() {
@@ -59,11 +64,11 @@ final class ExperimentAudioInput {
         self.buffer!.clear()
     }
     
-    func startRecording(experiment: Experiment) {
+    func startRecording(_ experiment: Experiment) {
         ExperimentManager.sharedInstance().audioController.addInputReceiver(receiver)
     }
     
-    func stopRecording(experiment: Experiment) {
+    func stopRecording(_ experiment: Experiment) {
         ExperimentManager.sharedInstance().audioController.removeInputReceiver(receiver)
     }
 }

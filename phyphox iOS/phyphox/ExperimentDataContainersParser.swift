@@ -17,18 +17,18 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
     }
     
     enum ExperimentDataContainerType {
-        case Buffer
-        case Unknown
+        case buffer
+        case unknown
     }
     
-    func dataContainerTypeFromXML(xml: [String: AnyObject]?, key: String) throws -> ExperimentDataContainerType {
+    func dataContainerTypeFromXML(_ xml: [String: AnyObject]?, key: String) throws -> ExperimentDataContainerType {
         let str = stringFromXML(xml, key: key, defaultValue: "buffer")
         
         if str == "buffer" {
-            return .Buffer
+            return .buffer
         }
         else {
-            throw SerializationError.InvalidExperimentFile(message: "Invalid data container type: \(str)")
+            throw SerializationError.invalidExperimentFile(message: "Invalid data container type: \(str)")
         }
     }
     
@@ -42,7 +42,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
             for container in cont {
                 var name: String!
                 
-                var containerType = ExperimentDataContainerType.Buffer //Default
+                var containerType = ExperimentDataContainerType.buffer //Default
                 var bufferSize = 1 //Default
                 var stat = false //Default
                 var vInit: [Double] = []
@@ -52,18 +52,18 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 }
                 else if let dict = container as? NSDictionary {
                     if let attributes = dict[XMLDictionaryAttributesKey] as? [String: String] {
-                        bufferSize = intTypeFromXML(attributes, key: "size", defaultValue: 1)
-                        stat = boolFromXML(attributes, key: "static", defaultValue: false)
-                        let sInit = stringFromXML(attributes, key: "init", defaultValue: "")
-                        vInit = sInit.componentsSeparatedByString(",").flatMap{Double($0.stringByTrimmingCharactersInSet(.whitespaceCharacterSet()))}
+                        bufferSize = intTypeFromXML(attributes as [String : AnyObject], key: "size", defaultValue: 1)
+                        stat = boolFromXML(attributes as [String : AnyObject], key: "static", defaultValue: false)
+                        let sInit = stringFromXML(attributes as [String : AnyObject], key: "init", defaultValue: "")
+                        vInit = sInit.components(separatedBy: ",").flatMap{Double($0.trimmingCharacters(in: .whitespaces))}
                         
-                        containerType = try dataContainerTypeFromXML(attributes, key: "type")
+                        containerType = try dataContainerTypeFromXML(attributes as [String : AnyObject], key: "type")
                     }
                     
                     name = dict[XMLDictionaryTextKey] as! String
                 }
                 
-                if containerType == .Buffer && name.characters.count > 0 {
+                if containerType == .buffer && name.characters.count > 0 {
                     let buffer = DataBuffer(name: name, size: bufferSize, vInit: vInit)
                     buffer.staticBuffer = stat
                     

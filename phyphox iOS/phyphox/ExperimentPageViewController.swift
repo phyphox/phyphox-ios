@@ -14,7 +14,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
     
-    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.Scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.Horizontal, options: nil)
+    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.horizontal, options: nil)
     
     var serverLabel: UILabel? = nil
     
@@ -23,7 +23,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var experimentViewControllers: [ExperimentViewController] = []
     
     let webServer: ExperimentWebServer
-    private let viewModules: [[UIView]]
+    fileprivate let viewModules: [[UIView]]
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -33,14 +33,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0
     }
     
-    private var timerDelayString: String?
-    private var timerDurationString: String?
-    private var timerEnabled = false
+    fileprivate var timerDelayString: String?
+    fileprivate var timerDurationString: String?
+    fileprivate var timerEnabled = false
     
-    private var experimentStartTimer: NSTimer?
-    private var experimentRunTimer: NSTimer?
+    fileprivate var experimentStartTimer: Timer?
+    fileprivate var experimentRunTimer: Timer?
     
-    private var exportSelectionView: ExperimentExportSetSelectionView?
+    fileprivate var exportSelectionView: ExperimentExportSetSelectionView?
     
     var selectedViewCollection: Int {
         didSet {
@@ -50,12 +50,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func updateTabScrollPosition(target: Int) {
+    func updateTabScrollPosition(_ target: Int) {
         if segControl == nil {
             return
         }
         let w = segControl!.frame.width/CGFloat(experimentViewControllers.count)
-        let targetFrame = CGRectMake((CGFloat(target)-0.5)*w, 0, 2*w, tabBarHeight)
+        let targetFrame = CGRect(x: (CGFloat(target)-0.5)*w, y: 0, width: 2*w, height: tabBarHeight)
         
         tabBar?.scrollRectToVisible(targetFrame, animated: true)
     }
@@ -64,7 +64,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         segControl?.selectedSegmentIndex = selectedViewCollection
         updateTabScrollPosition(selectedViewCollection)
         
-        for (index, collection) in viewModules.enumerate() {
+        for (index, collection) in viewModules.enumerated() {
             for module in collection {
                 if var proto = module as? ExperimentViewModuleProtocol {
                     if index == selectedViewCollection {
@@ -80,7 +80,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @available(*, unavailable)
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         fatalError("Unavailable")
     }
     
@@ -122,13 +122,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         webServer.delegate = self
         
         defer {
-            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: ResignActiveNotification, object: nil)
-            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: DidBecomeActiveNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: NSNotification.Name(rawValue: DidBecomeActiveNotification), object: nil)
         }
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
     var webserverWasRunning = false
@@ -148,11 +148,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         self.navigationController?.navigationBar.barTintColor = kHighlightColor
-        self.navigationController?.navigationBar.translucent = false
+        self.navigationController?.navigationBar.isTranslucent = false
     }
     
     func updateLayout() {
@@ -168,7 +168,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             let labelFrame = CGRect(x: 0, y: self.view.frame.height - s.height, width: pageViewControlerRect.width, height: s.height)
             label.frame = labelFrame
-            label.autoresizingMask = [.FlexibleTopMargin, .FlexibleWidth]
+            label.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
         }
         
         self.pageViewControler.view.frame = pageViewControlerRect
@@ -178,11 +178,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.viewDidLoad()
         
         self.automaticallyAdjustsScrollViewInsets = false
-        self.edgesForExtendedLayout = UIRectEdge.None
+        self.edgesForExtendedLayout = UIRectEdge()
         
-        let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .Plain, target: self, action: #selector(action(_:)))
+        let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
-        self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))]
+        self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))]
         
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
@@ -191,7 +191,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 buttons.append(collection.localizedLabel)
             }
             segControl = UISegmentedControl(items: buttons)
-            segControl!.addTarget(self, action: #selector(switchToCollection), forControlEvents: .ValueChanged)
+            segControl!.addTarget(self, action: #selector(switchToCollection), for: .valueChanged)
             
             segControl!.apportionsSegmentWidthsByContent = true
             
@@ -199,32 +199,32 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             segControl!.backgroundColor = kTextColor
             
             //Generate new background and divider images for the segControl
-            let rect = CGRectMake(0, 0, 1, tabBarHeight)
+            let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
             UIGraphicsBeginImageContext(rect.size)
             let ctx = UIGraphicsGetCurrentContext()
             
             //Background
-            CGContextSetFillColorWithColor(ctx!, kLightBackgroundColor.CGColor)
-            CGContextFillRect(ctx!, rect)
+            ctx!.setFillColor(kLightBackgroundColor.cgColor)
+            ctx!.fill(rect)
             let bgImage = UIGraphicsGetImageFromCurrentImageContext()
             
             //Higlighted image, bg with underline
-            CGContextSetFillColorWithColor(ctx!, kHighlightColor.CGColor)
-            CGContextFillRect(ctx!, CGRectMake(0, tabBarHeight-2, 1, 2))
+            ctx!.setFillColor(kHighlightColor.cgColor)
+            ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
             let highlightImage = UIGraphicsGetImageFromCurrentImageContext()
             
             UIGraphicsEndImageContext()
             
-            segControl!.setBackgroundImage(bgImage, forState: .Normal, barMetrics: .Default)
-            segControl!.setBackgroundImage(highlightImage, forState: .Selected, barMetrics: .Default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .Normal, rightSegmentState: .Normal, barMetrics: .Default)
+            segControl!.setBackgroundImage(bgImage, for: UIControlState(), barMetrics: .default)
+            segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: UIControlState(), rightSegmentState: UIControlState(), barMetrics: .default)
             segControl!.sizeToFit()
             
             tabBar = UIScrollView()
             tabBar!.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
             tabBar!.contentSize = segControl!.frame.size
             tabBar!.showsHorizontalScrollIndicator = false
-            tabBar!.autoresizingMask = .FlexibleWidth
+            tabBar!.autoresizingMask = .flexibleWidth
             tabBar!.backgroundColor = kLightBackgroundColor
             tabBar!.addSubview(segControl!)
             
@@ -234,73 +234,73 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         pageViewControler.delegate = self
         pageViewControler.dataSource = self
-        pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .Forward, animated: false, completion: nil)
-        pageViewControler.view.autoresizingMask = [.FlexibleHeight, .FlexibleWidth]
+        pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .forward, animated: false, completion: nil)
+        pageViewControler.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
         updateLayout()
         
         self.addChildViewController(pageViewControler)
         self.view.addSubview(pageViewControler.view)
         
-        pageViewControler.didMoveToParentViewController(self)
+        pageViewControler.didMove(toParentViewController: self)
         
         updateSelectedViewCollection()
         
         //Ask to save the experiment locally if it has been loaded from a remote source
         if experiment.source != nil {
-            let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .Alert)
+            let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .Default, handler: { _ in
+            al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .default, handler: { _ in
                 self.saveLocally()}))
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
             
-            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+            self.navigationController!.present(al, animated: true, completion: nil)
             
         //Show a hint for the experiment info
         } else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
             let label = UILabel()
             label.text = NSLocalizedString("experimentinfo_hint", comment: "")
-            label.lineBreakMode = .ByWordWrapping
+            label.lineBreakMode = .byWordWrapping
             label.numberOfLines = 0
-            label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
             label.textColor = kDarkBackgroundColor
-            let maxSize = CGSizeMake(self.view.frame.width*2/3, self.view.frame.height*2/3)
+            let maxSize = CGSize(width: self.view.frame.width*2/3, height: self.view.frame.height*2/3)
             label.frame.size = label.sizeThatFits(maxSize)
-            label.frame.offsetInPlace(dx: 10, dy: 10)
-            let paddedFrame = CGRectInset(label.frame, -10, -10)
+            label.frame = label.frame.offsetBy(dx: 10, dy: 10)
+            let paddedFrame = label.frame.insetBy(dx: -10, dy: -10)
             let popoverHint = UIViewController()
             popoverHint.view.addSubview(label)
             popoverHint.preferredContentSize = paddedFrame.size
-            popoverHint.modalPresentationStyle = UIModalPresentationStyle.Popover
+            popoverHint.modalPresentationStyle = UIModalPresentationStyle.popover
             let pc = popoverHint.popoverPresentationController
-            pc?.permittedArrowDirections = .Any
+            pc?.permittedArrowDirections = .any
             pc?.barButtonItem = actionItem
             pc?.sourceView = self.view
             pc?.delegate = self
-            self.presentViewController(popoverHint, animated: true, completion: nil)
+            self.present(popoverHint, animated: true, completion: nil)
             
             let tapHandler = UITapGestureRecognizer.init(target: self, action: #selector(closeHint))
             tapHandler.delegate = self
             tapHandler.numberOfTapsRequired = 1
-            popoverHint.view.userInteractionEnabled = true
+            popoverHint.view.isUserInteractionEnabled = true
             popoverHint.view.addGestureRecognizer(tapHandler)
         }
         
     }
     
     //Force iPad-style popups (for the hint to the menu)
-    func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
-        return .None
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none
     }
     
-    func closeHint(sender: UITapGestureRecognizer? = nil) {
-        self.dismissViewControllerAnimated(true, completion: nil)
+    func closeHint(_ sender: UITapGestureRecognizer? = nil) {
+        self.dismiss(animated: true, completion: nil)
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
-        if (self.isMovingFromParentViewController()) {
+        if (self.isMovingFromParentViewController) {
             for collection in viewModules {
                 for module in collection {
                     if let proto = module as? ExperimentViewModuleProtocol {
@@ -322,13 +322,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func switchToCollection(sender: UISegmentedControl) {
-        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewControllerNavigationDirection.Forward : UIPageViewControllerNavigationDirection.Reverse
+    func switchToCollection(_ sender: UISegmentedControl) {
+        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewControllerNavigationDirection.forward : UIPageViewControllerNavigationDirection.reverse
         pageViewControler.setViewControllers([experimentViewControllers[sender.selectedSegmentIndex]], direction: direction, animated: true, completion: nil)
         selectedViewCollection = sender.selectedSegmentIndex
     }
     
-    func pageViewController(pageViewController: UIPageViewController, viewControllerBeforeViewController viewController: UIViewController) -> UIViewController? {
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
         if selectedViewCollection == 0 {
             return nil
         }
@@ -336,7 +336,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return experimentViewControllers[selectedViewCollection-1]
     }
     
-    func pageViewController(pageViewController: UIPageViewController, viewControllerAfterViewController viewController: UIViewController) -> UIViewController? {
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
         if selectedViewCollection + 1 >= experimentViewControllers.count {
             return nil
         }
@@ -344,20 +344,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return experimentViewControllers[selectedViewCollection+1]
     }
     
-    func pageViewController(pageViewController: UIPageViewController, willTransitionToViewControllers pendingViewControllers: [UIViewController]) {
-        for (index, view) in experimentViewControllers.enumerate() {
+    func pageViewController(_ pageViewController: UIPageViewController, willTransitionTo pendingViewControllers: [UIViewController]) {
+        for (index, view) in experimentViewControllers.enumerated() {
             if view == pendingViewControllers[0] as! ExperimentViewController {
                 updateTabScrollPosition(index)
             }
         }
     }
     
-    func pageViewController(pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
         if !completed {
             return
         }
         
-        for (index, view) in experimentViewControllers.enumerate() {
+        for (index, view) in experimentViewControllers.enumerated() {
             if view == pageViewControler.viewControllers![0] as! ExperimentViewController {
                 selectedViewCollection = index
                 break
@@ -365,38 +365,38 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func launchWebServer() {
-        UIApplication.sharedApplication().idleTimerDisabled = true
+    fileprivate func launchWebServer() {
+        UIApplication.shared.isIdleTimerDisabled = true
         if !webServer.start() {
-            let hud = JGProgressHUD(style: .Dark)
-            hud.interactionType = .BlockTouchesOnHUDView
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
-            hud.textLabel.text = "Failed to initialize HTTP server"
+            let hud = JGProgressHUD(style: .dark)
+            hud?.interactionType = .blockTouchesOnHUDView
+            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud?.textLabel.text = "Failed to initialize HTTP server"
             
-            hud.showInView(self.view)
+            hud?.show(in: self.view)
             
-            hud.dismissAfterDelay(3.0)
+            hud?.dismiss(afterDelay: 3.0)
         }
         else {
-            var url = String(webServer.server!.serverURL)
+            var url = webServer.server!.serverURL.absoluteString
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == "nil" {
                 print("Fallback to generate URL from IP.")
                 var ip: String? = nil
-                var interfaceAdresses: UnsafeMutablePointer<ifaddrs> = nil
+                var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
                 if getifaddrs(&interfaceAdresses) == 0 {
                     var iPtr = interfaceAdresses
                     while iPtr != nil {
-                        defer {iPtr = iPtr.memory.ifa_next}
+                        defer {iPtr = iPtr?.pointee.ifa_next}
                         
-                        let interface = iPtr.memory
-                        if interface.ifa_addr.memory.sa_family == UInt8(AF_INET) {
-                            if let name = String.fromCString(interface.ifa_name) {
+                        let interface = iPtr?.pointee
+                        if interface?.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
+                            if let name = String(validatingUTF8: (interface?.ifa_name)!) {
                                 if name == "bridge100" { //This is the "hotspot interface"
-                                    var addr = interface.ifa_addr.memory
-                                    var hostname = [CChar](count: Int(NI_MAXHOST), repeatedValue: 0)
-                                    getnameinfo(&addr, socklen_t(interface.ifa_addr.memory.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
-                                    ip = String.fromCString(hostname)
+                                    var addr = interface?.ifa_addr.pointee
+                                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                                    getnameinfo(&addr!, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
+                                    ip = String(cString: hostname)
                                 }
                             }
                         }
@@ -410,9 +410,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             self.serverLabel = UILabel()
-            self.serverLabel!.lineBreakMode = .ByWordWrapping
+            self.serverLabel!.lineBreakMode = .byWordWrapping
             self.serverLabel!.numberOfLines = 0
-            self.serverLabel!.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
+            self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
             self.serverLabel!.text = NSLocalizedString("remoteServerActive", comment: "")+"\n\(url)"
@@ -422,7 +422,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func tearDownWebServer() {
+    fileprivate func tearDownWebServer() {
         webServer.stop()
         if let label = self.serverLabel {
             label.removeFromSuperview()
@@ -430,58 +430,58 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.serverLabel = nil
         updateLayout()
         if (!self.experiment.running) {
-            UIApplication.sharedApplication().idleTimerDisabled = false
+            UIApplication.shared.isIdleTimerDisabled = false
         }
     }
     
-    private func toggleWebServer() {
+    fileprivate func toggleWebServer() {
         if webServer.running {
             tearDownWebServer()
         }
         else {
-            let al = UIAlertController(title: NSLocalizedString("remoteServerWarningTitle", comment: ""), message: NSLocalizedString("remoteServerWarning", comment: ""), preferredStyle: .Alert)
+            let al = UIAlertController(title: NSLocalizedString("remoteServerWarningTitle", comment: ""), message: NSLocalizedString("remoteServerWarning", comment: ""), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: { [unowned self] action in
+            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: { [unowned self] action in
                 self.launchWebServer()
                 }))
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
             
-            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+            self.navigationController!.present(al, animated: true, completion: nil)
         }
     }
     
-    private func runExportFromActionSheet() {
+    fileprivate func runExportFromActionSheet() {
         let format = exportSelectionView!.selectedFormat()
         
-        let HUD = JGProgressHUD(style: .Dark)
-        HUD.interactionType = .BlockTouchesOnHUDView
-        HUD.textLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+        let HUD = JGProgressHUD(style: .dark)
+        HUD?.interactionType = .blockTouchesOnHUDView
+        HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         
-        HUD.showInView(navigationController!.view)
+        HUD?.show(in: navigationController!.view)
         
-        runExport(format) { error, URL in
+        runExport(format: format) { error, URL in
             if error != nil {
-                HUD.indicatorView = JGProgressHUDErrorIndicatorView()
-                HUD.textLabel.text = error!.localizedDescription
-                HUD.dismissAfterDelay(3.0)
+                HUD?.indicatorView = JGProgressHUDErrorIndicatorView()
+                HUD?.textLabel.text = error!.localizedDescription
+                HUD?.dismiss(afterDelay: 3.0)
             }
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
 
                 vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
 
-                self.navigationController!.presentViewController(vc, animated: true) {
-                    HUD.dismiss()
+                self.navigationController!.present(vc, animated: true) {
+                    HUD?.dismiss()
                 }
                 
                 vc.completionWithItemsHandler = { _ in
-                    do { try NSFileManager.defaultManager().removeItemAtURL(URL!) } catch {}
+                    do { try FileManager.default.removeItem(at: URL!) } catch {}
                 }
             }
         }
     }
     
-    func runExport(format: ExportFileFormat, completion: (NSError?, NSURL?) -> Void) {
+    func runExport(format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
         self.experiment.export!.runExport(format) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
@@ -492,49 +492,49 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func showExport() {
-        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: NSLocalizedString("pick_exportFormat", comment: ""), preferredStyle: .Alert)
+    fileprivate func showExport() {
+        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: NSLocalizedString("pick_exportFormat", comment: ""), preferredStyle: .alert)
         
-        let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .Default, handler: { [unowned self] action in
+        let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .default, handler: { [unowned self] action in
             self.runExportFromActionSheet()
             })
         
         if exportSelectionView == nil {
             exportSelectionView = ExperimentExportSetSelectionView(export: experiment.export!, translation: experiment.translation) { [unowned exportAction] available in
-                exportAction.enabled = available
+                exportAction.isEnabled = available
             }
         }
         
         alert.addAction(exportAction)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         alert.__pt__setAccessoryView(exportSelectionView!)
         
-        self.navigationController!.presentViewController(alert, animated: true, completion: nil)
+        self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    private func showTimerOptions() {
-        let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .Alert)
+    fileprivate func showTimerOptions() {
+        let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .alert)
         
-        alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
-            textField.keyboardType = .DecimalPad
+        alert.addTextField { [unowned self] textField in
+            textField.keyboardType = .decimalPad
             textField.placeholder = NSLocalizedString("timedRunStartDelay", comment: "")
             
             textField.text = self.timerDelayString
         }
         
-        alert.addTextFieldWithConfigurationHandler { [unowned self] textField in
-            textField.keyboardType = .DecimalPad
+        alert.addTextField { [unowned self] textField in
+            textField.keyboardType = .decimalPad
             textField.placeholder = NSLocalizedString("timedRunStopDelay", comment: "")
             
             textField.text = self.timerDurationString
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("enableTimedRun", comment: ""), style: .Default, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("enableTimedRun", comment: ""), style: .default, handler: { [unowned self, unowned alert] action in
             if (!self.timerEnabled) {
                 let label = UILabel()
-                label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+                label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
                 label.textColor = kTextColor
                 label.text = "\(alert.textFields!.first!.text ?? "0")s"
                 label.sizeToFit()
@@ -549,7 +549,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerDurationString = alert.textFields!.last!.text
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("disableTimedRun", comment: ""), style: .Cancel, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("disableTimedRun", comment: ""), style: .cancel, handler: { [unowned self, unowned alert] action in
             if (self.timerEnabled) {
                 var items = self.navigationItem.rightBarButtonItems!
                 items.removeLast()
@@ -561,82 +561,82 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerDurationString = alert.textFields!.last!.text
             }))
         
-        self.navigationController!.presentViewController(alert, animated: true, completion: nil)
+        self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    func action(item: UIBarButtonItem) {
-        let alert = UIAlertController(title: NSLocalizedString("actions", comment: ""), message: nil, preferredStyle: .ActionSheet)
+    func action(_ item: UIBarButtonItem) {
+        let alert = UIAlertController(title: NSLocalizedString("actions", comment: ""), message: nil, preferredStyle: .actionSheet)
         
         if experiment.export != nil {
-            alert.addAction(UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .Default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .default, handler: { [unowned self] action in
                 self.showExport()
                 }))
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("timedRun", comment: ""), style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("timedRun", comment: ""), style: .default, handler: { [unowned self] action in
             self.showTimerOptions()
             }))
         
-        alert.addAction(UIAlertAction(title: (webServer.running ? NSLocalizedString("disableRemoteServer", comment: "") : NSLocalizedString("enableRemoteServer", comment: "")), style: .Default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: (webServer.running ? NSLocalizedString("disableRemoteServer", comment: "") : NSLocalizedString("enableRemoteServer", comment: "")), style: .default, handler: { [unowned self] action in
             self.toggleWebServer()
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .Default, handler: { [unowned self] action in
-            let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .Alert)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .default, handler: { [unowned self] action in
+            let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .alert)
             
             let links: [String:String] = self.experiment.localizedLinks
             for (key, value) in links {
-                al.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .Default, handler: { _ in
-                    UIApplication.sharedApplication().openURL(NSURL(string: value)!)
+                al.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
+                    UIApplication.shared.openURL(URL(string: value)!)
                 }))
             }
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
+            al.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
             
-            self.navigationController!.presentViewController(al, animated: true, completion: nil)
+            self.navigationController!.present(al, animated: true, completion: nil)
             }))
         
         let links: [String:String] = self.experiment.localizedHighlightedLinks
         for (key, value) in links {
-            alert.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .Default, handler: { _ in
-                UIApplication.sharedApplication().openURL(NSURL(string: value)!)
+            alert.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
+                UIApplication.shared.openURL(URL(string: value)!)
             }))
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .Default, handler: { [unowned self] action in
-            let w = UIApplication.sharedApplication().keyWindow!
-            let s = UIScreen.mainScreen().scale
+        alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .default, handler: { [unowned self] action in
+            let w = UIApplication.shared.keyWindow!
+            let s = UIScreen.main.scale
             UIGraphicsBeginImageContextWithOptions(w.frame.size, false, s)
-            w.drawViewHierarchyInRect(w.frame, afterScreenUpdates: false)
+            w.drawHierarchy(in: w.frame, afterScreenUpdates: false)
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
             let png = UIImagePNGRepresentation(img!)!
             
-            let HUD = JGProgressHUD(style: .Dark)
-            HUD.interactionType = .BlockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+            let HUD = JGProgressHUD(style: .dark)
+            HUD?.interactionType = .blockTouchesOnHUDView
+            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
 
-            HUD.showInView(self.navigationController!.view)
+            HUD?.show(in: self.navigationController!.view)
 
-            let dateFormatter = NSDateFormatter()
+            let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-            let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).png")
+            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).png")
             
-            do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
-            do { try png.writeToFile(tmpFile, options: .DataWritingFileProtectionNone) } catch {}
-            let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+            do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+            do { try png.write(to: URL(fileURLWithPath: tmpFile), options: .noFileProtection) } catch {}
+            let tmpFileURL = URL(fileURLWithPath: tmpFile)
             let shareText = NSLocalizedString("share_subject", comment: "")
             
             let vc = UIActivityViewController(activityItems: [tmpFileURL, shareText], applicationActivities: nil)
             
             vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
             
-            self.navigationController!.presentViewController(vc, animated: true) {
-                HUD.dismiss()
+            self.navigationController!.present(vc, animated: true) {
+                HUD?.dismiss()
             }
             
             vc.completionWithItemsHandler = { _ in
-                do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
+                do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             }
             
             }))
@@ -644,19 +644,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         var magnetometer: ExperimentSensorInput? = nil
         if (experiment.sensorInputs != nil) {
             for sensor in experiment.sensorInputs! {
-                if (sensor.sensorType == SensorType.MagneticField) {
+                if (sensor.sensorType == SensorType.magneticField) {
                     magnetometer = sensor
                 }
             }
         }
         if (magnetometer != nil) {
             if magnetometer!.calibrated {
-                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .Default, handler: { [unowned self] action in
+                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
                     self.stopExperiment()
                     magnetometer?.calibrated = false
                     }))
             } else {
-                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .Default, handler: { [unowned self] action in
+                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
                     self.stopExperiment()
                     magnetometer?.calibrated = true
                     }))
@@ -664,14 +664,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .Destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .destructive, handler: { [unowned self] action in
             self.clearData()
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if experiment.source != nil {
-            alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .Default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .default, handler: { [unowned self] action in
                 self.saveLocally()
             }))
         }
@@ -680,7 +680,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             popover.barButtonItem = item
         }
         
-        self.navigationController!.presentViewController(alert, animated: true, completion: nil)
+        self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
     func saveLocally() {
@@ -693,30 +693,30 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let directory = customExperimentsDirectory
         
         do {
-            if !NSFileManager.defaultManager().fileExistsAtPath(directory) {
-                try NSFileManager.defaultManager().createDirectoryAtPath(directory, withIntermediateDirectories: false, attributes: nil)
+            if !FileManager.default.fileExists(atPath: directory) {
+                try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false, attributes: nil)
             }
         } catch {
             return
         }
         
         repeat {
-            path = (directory as NSString).stringByAppendingPathComponent("\(t).phyphox")
+            path = (directory as NSString).appendingPathComponent("\(t).phyphox")
             
             t = "\(title)-\(i)"
             i += 1
             
-        } while NSFileManager.defaultManager().fileExistsAtPath(path)
+        } while FileManager.default.fileExists(atPath: path)
         
-        self.experiment.sourceData!.writeToFile(path, atomically: true)
+        try? self.experiment.sourceData!.write(to: URL(fileURLWithPath: path), options: [.atomic])
         self.experiment.source = nil
         
         ExperimentManager.sharedInstance().loadCustomExperiments()
         
-        let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .Alert)
+        let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
         
-        confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: nil))
-        self.navigationController!.presentViewController(confirmation, animated: true, completion: nil)
+        confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+        self.navigationController!.present(confirmation, animated: true, completion: nil)
     }
 
     func stopTimerFired() {
@@ -768,12 +768,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             updateT()
         })
         
-        experimentRunTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
+        experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
     }
     
     func startExperiment() {
         if !experiment.running {
-            UIApplication.sharedApplication().idleTimerDisabled = true
+            UIApplication.shared.isIdleTimerDisabled = true
             
             if experimentStartTimer != nil {
                 experimentStartTimer!.invalidate()
@@ -822,7 +822,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     updateT()
                 })
                 
-                experimentStartTimer = NSTimer.scheduledTimerWithTimeInterval(d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
+                experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
             }
             else {
                 actuallyStartExperiment()
@@ -834,7 +834,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experiment.start()
         var items = navigationItem.rightBarButtonItems!
         
-        items[1] = UIBarButtonItem(barButtonSystemItem: .Pause, target: self, action: #selector(toggleExperiment))
+        items[1] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
         
         navigationItem.rightBarButtonItems = items
     }
@@ -842,7 +842,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func stopExperiment() {
         if experiment.running {
             if (!self.webServer.running) {
-                UIApplication.sharedApplication().idleTimerDisabled = false
+                UIApplication.shared.isIdleTimerDisabled = false
             }
             
             var items = navigationItem.rightBarButtonItems!
@@ -863,7 +863,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             experiment.stop()
             
-            items[1] = UIBarButtonItem(barButtonSystemItem: .Play, target: self, action: #selector(toggleExperiment))
+            items[1] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
             
             navigationItem.rightBarButtonItems = items
         }

@@ -14,13 +14,13 @@ An abstract analysis module that takes one input and one output, writing each va
 */
 class UpdateValueAnalysis: ExperimentAnalysisModule {
     
-    internal func updateAllWithMethod(method: ([Double]) -> [Double]) {
+    internal func updateAllWithMethod(_ method: ([Double]) -> [Double]) {
         let input = inputs.first!
         
         var process: [Double] = []
         
         if let buffer = input.buffer {
-            process.appendContentsOf(buffer)
+            process.append(contentsOf: buffer)
         }
         else {
             process.append(input.value!)

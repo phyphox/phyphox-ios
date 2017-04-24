@@ -21,18 +21,18 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         case y
     }
     
-    func stringToGraphAxis(string: String) -> GraphAxis? {
-        if string.lowercaseString == "x" {
+    func stringToGraphAxis(_ string: String) -> GraphAxis? {
+        if string.lowercased() == "x" {
             return .x
         }
-        else if string.lowercaseString == "y" {
+        else if string.lowercased() == "y" {
             return .y
         }
         
         return nil
     }
     
-    func parse(buffers: [String: DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) throws -> [ExperimentViewCollectionDescriptor]? {
+    func parse(_ buffers: [String: DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) throws -> [ExperimentViewCollectionDescriptor]? {
         if views == nil {
             return nil
         }
@@ -43,30 +43,29 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let attributes = view[XMLDictionaryAttributesKey] as! [String: String]
             
             let label = attributes["label"]!
+            var views = [ViewDescriptor!](repeating: nil, count: (view["__count"] as! NSNumber).intValue)
             
-            var views = [ViewDescriptor!](count: (view["__count"] as! NSNumber).integerValue, repeatedValue: nil)
-            
-            func handleEdit(edit: [String: AnyObject]) throws -> EditViewDescriptor? {
+            func handleEdit(_ edit: [String: AnyObject]) throws -> EditViewDescriptor? {
                 let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
                 
-                let signed = boolFromXML(attributes, key: "signed", defaultValue: true)
+                let signed = boolFromXML(attributes as [String : AnyObject], key: "signed", defaultValue: true)
                 
-                let decimal = boolFromXML(attributes, key: "decimal", defaultValue: true)
+                let decimal = boolFromXML(attributes as [String : AnyObject], key: "decimal", defaultValue: true)
                 
                 let unit = attributes["unit"]
                 
-                let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
+                let factor = floatTypeFromXML(attributes as [String : AnyObject], key: "factor", defaultValue: 1.0)
                 
-                let min = floatTypeFromXML(attributes, key: "min", defaultValue: -Double.infinity)
-                let max = floatTypeFromXML(attributes, key: "max", defaultValue: Double.infinity)
+                let min = floatTypeFromXML(attributes as [String : AnyObject], key: "min", defaultValue: -Double.infinity)
+                let max = floatTypeFromXML(attributes as [String : AnyObject], key: "max", defaultValue: Double.infinity)
                 
-                let defaultValue = floatTypeFromXML(attributes, key: "default", defaultValue: 0.0)
+                let defaultValue = floatTypeFromXML(attributes as [String : AnyObject], key: "default", defaultValue: 0.0)
                 
                 var outputBuffer: DataBuffer? = nil
                 
-                if let output = getElementsWithKey(edit, key: "output") {
+                if let output = getElementsWithKey(edit as NSDictionary, key: "output") {
                     let first = output.first!
                     
                     if first is NSDictionary {
@@ -80,7 +79,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 }
                 
                 if outputBuffer == nil {
-                    throw SerializationError.InvalidExperimentFile(message: "No output buffer for edit view.")
+                    throw SerializationError.invalidExperimentFile(message: "No output buffer for edit view.")
                 }
                 
                 //Register for updates
@@ -97,23 +96,23 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return EditViewDescriptor(label: label, translation: translation, signed: signed, decimal: decimal, unit: unit, factor: factor, min: min, max: max, defaultValue: defaultValue, buffer: outputBuffer!)
             }
             
-            func handleValue(value: [String: AnyObject]) throws -> ValueViewDescriptor? {
+            func handleValue(_ value: [String: AnyObject]) throws -> ValueViewDescriptor? {
                 let attributes = value[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
                 
-                let scientific = boolFromXML(attributes, key: "scientific", defaultValue: false)
-                let precision = intTypeFromXML(attributes, key: "precision", defaultValue: 2)
+                let scientific = boolFromXML(attributes as [String : AnyObject], key: "scientific", defaultValue: false)
+                let precision = intTypeFromXML(attributes as [String : AnyObject], key: "precision", defaultValue: 2)
                 
                 let unit = attributes["unit"]
                 
-                let factor = floatTypeFromXML(attributes, key: "factor", defaultValue: 1.0)
+                let factor = floatTypeFromXML(attributes as [String : AnyObject], key: "factor", defaultValue: 1.0)
                 
-                let size = floatTypeFromXML(attributes, key: "size", defaultValue: 1.0)
+                let size = floatTypeFromXML(attributes as [String : AnyObject], key: "size", defaultValue: 1.0)
                 
                 var inputBuffer: DataBuffer? = nil
                 
-                if let input = getElementsWithKey(value, key: "input") {
+                if let input = getElementsWithKey(value as NSDictionary, key: "input") {
                     let first = input.first!
                     
                     if first is NSDictionary {
@@ -127,7 +126,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 }
                 
                 if inputBuffer == nil {
-                    throw SerializationError.InvalidExperimentFile(message: "No input buffer for value view.")
+                    throw SerializationError.invalidExperimentFile(message: "No input buffer for value view.")
                 }
                 
                 let requiresAnalysis = inputBuffer!.dataFromAnalysis
@@ -135,65 +134,65 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
             }
             
-            func handleGraph(graph: [String: AnyObject]) throws -> GraphViewDescriptor? {
+            func handleGraph(_ graph: [String: AnyObject]) throws -> GraphViewDescriptor? {
                 let attributes = graph[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
                 
-                let aspectRatio = CGFloatFromXML(attributes, key: "aspectRatio", defaultValue: 2.5)
-                let dots = stringFromXML(attributes, key: "style", defaultValue: "line") == "dots"
-                let partialUpdate = boolFromXML(attributes, key: "partialUpdate", defaultValue: false)
-                let forceFullDataset = boolFromXML(attributes, key: "forceFullDataset", defaultValue: false)
-                let history = intTypeFromXML(attributes, key: "history", defaultValue: UInt(1))
-                let lineWidth = CGFloatFromXML(attributes, key: "lineWidth", defaultValue: 1.0)
-                let color = try UIColorFromXML(attributes, key: "color", defaultValue: kHighlightColor)
+                let aspectRatio = CGFloatFromXML(attributes as [String : AnyObject], key: "aspectRatio", defaultValue: 2.5)
+                let dots = stringFromXML(attributes as [String : AnyObject], key: "style", defaultValue: "line") == "dots"
+                let partialUpdate = boolFromXML(attributes as [String : AnyObject], key: "partialUpdate", defaultValue: false)
+                let forceFullDataset = boolFromXML(attributes as [String : AnyObject], key: "forceFullDataset", defaultValue: false)
+                let history = intTypeFromXML(attributes as [String : AnyObject], key: "history", defaultValue: UInt(1))
+                let lineWidth = CGFloatFromXML(attributes as [String : AnyObject], key: "lineWidth", defaultValue: 1.0)
+                let color = try UIColorFromXML(attributes as [String : AnyObject], key: "color", defaultValue: kHighlightColor)
                 
-                let logX = boolFromXML(attributes, key: "logX", defaultValue: false)
-                let logY = boolFromXML(attributes, key: "logY", defaultValue: false)
-                let xPrecision = UInt(intTypeFromXML(attributes, key: "xPrecision", defaultValue: 3))
-                let yPrecision = UInt(intTypeFromXML(attributes, key: "yPrecision", defaultValue: 3))
+                let logX = boolFromXML(attributes as [String : AnyObject], key: "logX", defaultValue: false)
+                let logY = boolFromXML(attributes as [String : AnyObject], key: "logY", defaultValue: false)
+                let xPrecision = UInt(intTypeFromXML(attributes as [String : AnyObject], key: "xPrecision", defaultValue: 3))
+                let yPrecision = UInt(intTypeFromXML(attributes as [String : AnyObject], key: "yPrecision", defaultValue: 3))
                 
                 let scaleMinX: GraphViewDescriptor.scaleMode
-                switch stringFromXML(attributes, key: "scaleMinX", defaultValue: "auto") {
+                switch stringFromXML(attributes as [String : AnyObject], key: "scaleMinX", defaultValue: "auto") {
                     case "auto": scaleMinX = GraphViewDescriptor.scaleMode.auto
                     case "extend": scaleMinX = GraphViewDescriptor.scaleMode.extend
                     case "fixed": scaleMinX = GraphViewDescriptor.scaleMode.fixed
                     default:
                         scaleMinX = GraphViewDescriptor.scaleMode.auto
-                        throw SerializationError.InvalidExperimentFile(message: "Unknown value for scaleMinX.")
+                        throw SerializationError.invalidExperimentFile(message: "Unknown value for scaleMinX.")
                 }
                 let scaleMaxX: GraphViewDescriptor.scaleMode
-                switch stringFromXML(attributes, key: "scaleMaxX", defaultValue: "auto") {
+                switch stringFromXML(attributes as [String : AnyObject], key: "scaleMaxX", defaultValue: "auto") {
                     case "auto": scaleMaxX = GraphViewDescriptor.scaleMode.auto
                     case "extend": scaleMaxX = GraphViewDescriptor.scaleMode.extend
                     case "fixed": scaleMaxX = GraphViewDescriptor.scaleMode.fixed
                     default:
                         scaleMaxX = GraphViewDescriptor.scaleMode.auto
-                        throw SerializationError.InvalidExperimentFile(message: "Error! Unknown value for scaleMaxX.")
+                        throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMaxX.")
                 }
                 let scaleMinY: GraphViewDescriptor.scaleMode
-                switch stringFromXML(attributes, key: "scaleMinY", defaultValue: "auto") {
+                switch stringFromXML(attributes as [String : AnyObject], key: "scaleMinY", defaultValue: "auto") {
                     case "auto": scaleMinY = GraphViewDescriptor.scaleMode.auto
                     case "extend": scaleMinY = GraphViewDescriptor.scaleMode.extend
                     case "fixed": scaleMinY = GraphViewDescriptor.scaleMode.fixed
                     default:
                         scaleMinY = GraphViewDescriptor.scaleMode.auto
-                        throw SerializationError.InvalidExperimentFile(message: "Error! Unknown value for scaleMinY.")
+                        throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMinY.")
                 }
                 let scaleMaxY: GraphViewDescriptor.scaleMode
-                switch stringFromXML(attributes, key: "scaleMaxY", defaultValue: "auto") {
+                switch stringFromXML(attributes as [String : AnyObject], key: "scaleMaxY", defaultValue: "auto") {
                     case "auto": scaleMaxY = GraphViewDescriptor.scaleMode.auto
                     case "extend": scaleMaxY = GraphViewDescriptor.scaleMode.extend
                     case "fixed": scaleMaxY = GraphViewDescriptor.scaleMode.fixed
                     default:
                         scaleMaxY = GraphViewDescriptor.scaleMode.auto
-                        throw SerializationError.InvalidExperimentFile(message: "Error! Unknown value for scaleMaxY.")
+                        throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMaxY.")
                 }
                 
-                let minX = CGFloatFromXML(attributes, key: "minX", defaultValue: 0.0)
-                let maxX = CGFloatFromXML(attributes, key: "maxX", defaultValue: 0.0)
-                let minY = CGFloatFromXML(attributes, key: "minY", defaultValue: 0.0)
-                let maxY = CGFloatFromXML(attributes, key: "maxY", defaultValue: 0.0)
+                let minX = CGFloatFromXML(attributes as [String : AnyObject], key: "minX", defaultValue: 0.0)
+                let maxX = CGFloatFromXML(attributes as [String : AnyObject], key: "maxX", defaultValue: 0.0)
+                let minY = CGFloatFromXML(attributes as [String : AnyObject], key: "minY", defaultValue: 0.0)
+                let maxY = CGFloatFromXML(attributes as [String : AnyObject], key: "maxY", defaultValue: 0.0)
                 
                 
                 let xLabel = attributes["labelX"]!
@@ -202,7 +201,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 var xInputBuffer: DataBuffer?
                 var yInputBuffer: DataBuffer?
                 
-                if let inputs = getElementsWithKey(graph, key: "input") {
+                if let inputs = getElementsWithKey(graph as NSDictionary, key: "input") {
                     for input_ in inputs {
                         if let input = input_ as? [String: AnyObject] {
                             let attributes = input[XMLDictionaryAttributesKey] as! [String: AnyObject]
@@ -212,7 +211,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                             let axis = stringToGraphAxis(axisString)
                             
                             if axis == nil {
-                                throw SerializationError.InvalidExperimentFile(message: "Error! Invalid graph axis: \(axisString)")
+                                throw SerializationError.invalidExperimentFile(message: "Error! Invalid graph axis: \(axisString)")
                             }
                             
                             let bufferName = input[XMLDictionaryTextKey] as! String
@@ -220,7 +219,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                             let buffer = buffers[bufferName]
                             
                             if buffer == nil {
-                                throw SerializationError.InvalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
+                                throw SerializationError.invalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
                             }
                             else {
                                 switch axis! {
@@ -240,7 +239,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 }
                 
                 if yInputBuffer == nil {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! No Y axis input buffer!")
+                    throw SerializationError.invalidExperimentFile(message: "Error! No Y axis input buffer!")
                 }
                 
                 let requiresAnalysis = (yInputBuffer!.dataFromAnalysis || xInputBuffer?.dataFromAnalysis ?? false)
@@ -248,7 +247,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
             }
             
-            func handleInfo(info: [String: AnyObject]) -> InfoViewDescriptor? {
+            func handleInfo(_ info: [String: AnyObject]) -> InfoViewDescriptor? {
                 let attributes = info[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
@@ -256,37 +255,37 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 return InfoViewDescriptor(label: label, translation: translation)
             }
             
-            func handleSeparator(separator: [String: AnyObject]) throws -> SeparatorViewDescriptor? {
+            func handleSeparator(_ separator: [String: AnyObject]) throws -> SeparatorViewDescriptor? {
                 let attributes = separator[XMLDictionaryAttributesKey] as! [String: String]
                 
-                let height = CGFloatFromXML(attributes, key: "height", defaultValue: 0.1)
-                let color = try UIColorFromXML(attributes, key: "color", defaultValue: kBackgroundColor)
+                let height = CGFloatFromXML(attributes as [String : AnyObject], key: "height", defaultValue: 0.1)
+                let color = try UIColorFromXML(attributes as [String : AnyObject], key: "color", defaultValue: kBackgroundColor)
                 
                 
                 return SeparatorViewDescriptor(height: height, color: color)
             }
             
-            func handleButton(button: [String: AnyObject]) throws -> ButtonViewDescriptor? {
+            func handleButton(_ button: [String: AnyObject]) throws -> ButtonViewDescriptor? {
                 let attributes = button[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
                 var inputList : [ExperimentAnalysisDataIO] = []
                 var outputList : [DataBuffer] = []
                 
-                if let inputs = getElementsWithKey(button, key: "input") {
+                if let inputs = getElementsWithKey(button as NSDictionary, key: "input") {
                     for input_ in inputs {
                         if let input = input_ as? [String: AnyObject] {
-                            inputList.append(try ExperimentAnalysisDataIO(dictionary: input, buffers: buffers))
+                            inputList.append(try ExperimentAnalysisDataIO(dictionary: input as NSDictionary, buffers: buffers))
                         }
                     }
                 }
-                if let outputs = getElementsWithKey(button, key: "output") {
+                if let outputs = getElementsWithKey(button as NSDictionary, key: "output") {
                     for output in outputs {
                         if let bufferName = output as? String {
                             let buffer = buffers[bufferName]
                             
                             if buffer == nil {
-                                throw SerializationError.InvalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
+                                throw SerializationError.invalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
                             }
 
                             if analysis != nil {
@@ -304,8 +303,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             
             for (key, child) in view {
                 if key as! String == "graph" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let graph = try handleGraph(g) {
                             views[index] = graph
@@ -316,8 +315,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "value" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let graph = try handleValue(g) {
                             views[index] = graph
@@ -328,8 +327,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "edit" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let graph = try handleEdit(g) {
                             views[index] = graph
@@ -340,8 +339,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "info" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let info = handleInfo(g) {
                             views[index] = info
@@ -352,8 +351,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "separator" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let sep = try handleSeparator(g) {
                             views[index] = sep
@@ -364,8 +363,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "button" {
-                    for g in getElemetArrayFromValue(child) as! [[String: AnyObject]] {
-                        let index = (g["__index"] as! NSNumber).integerValue
+                    for g in getElemetArrayFromValue(child as AnyObject) as! [[String: AnyObject]] {
+                        let index = (g["__index"] as! NSNumber).intValue
                         
                         if let button = try handleButton(g) {
                             views[index] = button
@@ -376,7 +375,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 else if !(key as! String).hasPrefix("__") {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Unknown view element: \(key as! String)")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Unknown view element: \(key as! String)")
                 }
             }
             

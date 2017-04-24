@@ -20,7 +20,7 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
         //Only use accelerate for long arrays
         if array.count > 260 {
             var subtract = array
-            subtract.insert(0.0, atIndex: 0)
+            subtract.insert(0.0, at: 0)
             
             result = array
             

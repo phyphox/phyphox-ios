@@ -10,7 +10,7 @@ import Foundation
 import Accelerate
 
 final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
-    private let deg: Bool
+    fileprivate let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)
@@ -21,7 +21,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
         updateAllWithMethod({ (inputs) -> ValueSource in
             var main = inputs.first!
             
-            for (i, input) in inputs.enumerate() {
+            for (i, input) in inputs.enumerated() {
                 if i > 0 {
                     main = self.Atan2ValueSources(main, b: input)
                 }
@@ -31,12 +31,12 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             },  priorityInputKey: "y")
     }
     
-    func Atan2ValueSources(a: ValueSource, b: ValueSource) -> ValueSource {
+    func Atan2ValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // scalar*scalar
             var result = atan2(scalarA, scalarB)
             
             if self.deg {
-                let f = 180.0/M_PI
+                let f = 180.0/Double.pi
                 result = result * f
             }
             
@@ -47,7 +47,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             var result = atan2(scalarA, scalarB)
             
             if self.deg {
-                let f = 180.0/M_PI
+                let f = 180.0/Double.pi
                 result = result * f
             }
             
@@ -58,7 +58,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             var result = atan2(scalarA, scalarB)
             
             if self.deg {
-                let f = 180.0/M_PI
+                let f = 180.0/Double.pi
                 result = result * f
             }
             
@@ -74,7 +74,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             vvatan2(&results, vectorA, vectorB, [Int32(count)])
             
             if self.deg {
-                var f = 180.0/M_PI
+                var f = 180.0/Double.pi
                 vDSP_vsmulD(results, 1, &f, &results, 1, vDSP_Length(results.count))
             }
             

@@ -11,71 +11,71 @@
 
 import Foundation
 
-enum SerializationError: ErrorType {
-    case GenericError(message: String)
-    case InvalidExperimentFile(message: String)
-    case InvalidFilePath
-    case WriteFailed
-    case EmptyData
-    case NewExperimentFileVersion(phyphoxFormat: String, fileFormat: String)
+enum SerializationError: Error {
+    case genericError(message: String)
+    case invalidExperimentFile(message: String)
+    case invalidFilePath
+    case writeFailed
+    case emptyData
+    case newExperimentFileVersion(phyphoxFormat: String, fileFormat: String)
 }
 
-let serializationQueue = dispatch_queue_create("de.rwth-aachen.phyphox.serialization", DISPATCH_QUEUE_CONCURRENT)
+let serializationQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.serialization", attributes: DispatchQueue.Attributes.concurrent)
 
 final class ExperimentSerialization: NSObject {
     /**
      
      */
-    class func readExperimentFromFile(path: String) throws -> Experiment {
-        let data = NSData(contentsOfFile: path)
+    class func readExperimentFromFile(_ path: String) throws -> Experiment {
+        let data = try? Data(contentsOf: URL(fileURLWithPath: path))
         
-        if (data != nil && data!.length > 0) {
+        if (data != nil && data!.count > 0) {
             return try deserializeExperiment(data!);
         }
         else {
-            throw SerializationError.InvalidFilePath
+            throw SerializationError.invalidFilePath
         }
     }
     
-    class func readExperimentFromURL(url: NSURL) throws -> Experiment {
-        let data = NSData(contentsOfURL: url)
+    class func readExperimentFromURL(_ url: URL) throws -> Experiment {
+        let data = try? Data(contentsOf: url)
         
-        if (data != nil && data!.length > 0) {
+        if (data != nil && data!.count > 0) {
             let experiment = try deserializeExperiment(data!);
             experiment.source = url
             experiment.sourceData = data
             return experiment
         }
         else {
-            throw SerializationError.InvalidFilePath
+            throw SerializationError.invalidFilePath
         }
     }
     
-    class func serializeExperiment(experiment: Experiment) throws -> NSData {
-        return try ExperimentSerializer(experiment: experiment).serialize()
+    class func serializeExperiment(_ experiment: Experiment) throws -> Data {
+        return try ExperimentSerializer(experiment: experiment).serialize() as Data
     }
     
-    class func deserializeExperiment(data: NSData) throws -> Experiment {
+    class func deserializeExperiment(_ data: Data) throws -> Experiment {
         return try ExperimentDeserializer(data: data).deserialize()
     }
     
-    class func serializeExperimentAsynchronous(experiment: Experiment, completion: ((data: NSData?, error: SerializationError?) -> Void)) {
+    class func serializeExperimentAsynchronous(_ experiment: Experiment, completion: @escaping ((_ data: Data?, _ error: SerializationError?) -> Void)) {
         ExperimentSerializer(experiment: experiment).serializeAsynchronous(completion)
     }
     
-    class func deserializeExperiment(data: NSData, completion: ((Experiment: Experiment?, error: SerializationError?) -> Void)) {
+    class func deserializeExperiment(_ data: Data, completion: @escaping ((_ Experiment: Experiment?, _ error: SerializationError?) -> Void)) {
         ExperimentDeserializer(data: data).deserializeAsynchronous(completion)
     }
     
-    class func writeExperimentToFile(experiment: Experiment, path: String) throws -> Bool {
+    class func writeExperimentToFile(_ experiment: Experiment, path: String) throws -> Bool {
         let data = try serializeExperiment(experiment)
         
-        if (data.length > 0) {
-            guard data.writeToFile(path, atomically: true) else {
-                throw SerializationError.WriteFailed
+        if (data.count > 0) {
+            guard (try? data.write(to: URL(fileURLWithPath: path), options: [.atomic])) != nil else {
+                throw SerializationError.writeFailed
             }
         }
         
-        throw SerializationError.EmptyData
+        throw SerializationError.emptyData
     }
 }

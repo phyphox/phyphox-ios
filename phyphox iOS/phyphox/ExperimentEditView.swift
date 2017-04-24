@@ -18,7 +18,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     
     var edited = false
     
-    func formattedValue(raw: Double) -> String {
+    func formattedValue(_ raw: Double) -> String {
         return (descriptor.decimal ? String(raw) : String(Int(raw)))
     }
     
@@ -27,9 +27,9 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         textField.backgroundColor = kLightBackgroundColor
         textField.textColor = kTextColor
         
-        textField.returnKeyType = .Done
+        textField.returnKeyType = .done
         
-        textField.borderStyle = .RoundedRect
+        textField.borderStyle = .roundedRect
         
         if descriptor.unit != nil {
             unitLabel = {
@@ -37,7 +37,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
                 l.text = descriptor.unit
                 l.textColor = kTextColor
                 
-                l.font = UIFont.preferredFontForTextStyle(UIFontTextStyleSubheadline)
+                l.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.subheadline)
                 
                 return l
             }()
@@ -50,20 +50,20 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         
         descriptor.buffer.addObserver(self)
         
-        textField.addTarget(self, action: #selector(hideKeyboard(_:)), forControlEvents: .EditingDidEndOnExit)
+        textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
         
         updateTextField(textField, write: false)
         
         textField.delegate = self
         
-        textField.addTarget(self, action: #selector(ExperimentEditView.textFieldChanged), forControlEvents: .EditingChanged)
+        textField.addTarget(self, action: #selector(ExperimentEditView.textFieldChanged), for: .editingChanged)
         
         addSubview(textField)
         if unitLabel != nil {
             addSubview(unitLabel!)
         }
         
-        label.textAlignment = NSTextAlignment.Right
+        label.textAlignment = NSTextAlignment.right
     }
     
     override func unregisterFromBuffer() {
@@ -85,7 +85,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
     }
     
-    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
+    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
         updateTextField(textField, write: false, forceReadFromBuffer: true)
     }
     
@@ -135,7 +135,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
     }
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
         //We want to have the gap between label and value centered, so we require atwice the width of the larger half
         let s1 = label.sizeThatFits(size)
         var s2 = textField.sizeThatFits(size)
@@ -169,7 +169,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         
         if unitLabel != nil {
             let s3 = unitLabel!.sizeThatFits(self.bounds.size)
-            unitLabel!.frame = CGRect(origin: CGPoint(x: CGRectGetMaxX(textField.frame)+spacing, y: (self.bounds.size.height-s3.height)/2.0), size: s3)
+            unitLabel!.frame = CGRect(origin: CGPoint(x: textField.frame.maxX+spacing, y: (self.bounds.size.height-s3.height)/2.0), size: s3)
         }
     }
 }

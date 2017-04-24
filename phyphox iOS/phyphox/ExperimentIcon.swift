@@ -10,8 +10,8 @@
 import UIKit
 
 final class ExperimentIcon {
-    private let string: String?
-    private let image: UIImage?
+    fileprivate let string: String?
+    fileprivate let image: UIImage?
     
     init(string: String?, image: UIImage?) {
         self.string = string
@@ -28,9 +28,9 @@ final class ExperimentIcon {
             let label = UILabel()
             
             label.text = string
-            label.textAlignment = .Center
+            label.textAlignment = .center
             label.adjustsFontSizeToFitWidth = true
-            label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+            label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
             
             label.textColor = kTextColor
             label.backgroundColor = kHighlightColor

@@ -12,9 +12,9 @@ import Foundation
  Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
-    private let lockQueue = dispatch_queue_create("de.j-gessner.queue.lock", DISPATCH_QUEUE_SERIAL)
+    fileprivate let lockQueue = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
     
-    private var array: [Element]
+    fileprivate var array: [Element]
     
     var count: Int {
         get {
@@ -41,7 +41,7 @@ final class Queue<Element> {
         }
     }
     
-    init<S : SequenceType where S.Generator.Element == Element>(_ sequence: S) {
+    init<S : Sequence>(_ sequence: S) where S.Iterator.Element == Element {
         array = Array(sequence)
     }
     
@@ -49,8 +49,8 @@ final class Queue<Element> {
         return array
     }
     
-    func sync(closure: (() -> Void)) {
-        dispatch_sync(lockQueue, closure)
+    func sync(_ closure: (() -> Void)) {
+        lockQueue.sync(execute: closure)
     }
     
     var first: Element? {
@@ -65,7 +65,7 @@ final class Queue<Element> {
         }
     }
     
-    func objectAtIndex(index: Int, async: Bool = false) -> Element? {
+    func objectAtIndex(_ index: Int, async: Bool = false) -> Element? {
         var element: Element? = nil
         
         let op = { [unowned self] in
@@ -90,7 +90,7 @@ final class Queue<Element> {
 //MARK - Mutating
 
 extension Queue {
-    func enqueue(value: Element, async: Bool = false) {
+    func enqueue(_ value: Element, async: Bool = false) {
         let op = {
             self.array.append(value)
         }
@@ -103,7 +103,7 @@ extension Queue {
         }
     }
     
-    func dequeue(async: Bool = false) -> Element? {
+    func dequeue(_ async: Bool = false) -> Element? {
         var element: Element? = nil
         
         let op = { [unowned self] in
@@ -130,7 +130,7 @@ extension Queue {
         }
     }
     
-    func replaceValues(values: [Element], async: Bool = false) {
+    func replaceValues(_ values: [Element], async: Bool = false) {
         let op = { [unowned self] in
             self.array = values
         }
@@ -146,16 +146,21 @@ extension Queue {
 
 //MARK - Protocols
 
-extension Queue: SequenceType {
-    typealias Generator = IndexingGenerator<[Element]>
+extension Queue: Sequence {
+    typealias Iterator = IndexingIterator<[Element]>
     
-    func generate() -> Generator {
-        return array.generate()
+    func makeIterator() -> Iterator {
+        return array.makeIterator()
     }
 }
 
-extension Queue: CollectionType {
+extension Queue: Collection {
+
     typealias Index = Int
+    
+    func index(after i: Int) -> Int {
+        return i+1
+    }
     
     var startIndex: Int {
         return 0
@@ -176,4 +181,5 @@ extension Queue: CollectionType {
         
         return value
     }
+    
 }

@@ -11,10 +11,10 @@ import Foundation
 
 final class SubrangeAnalysis: ExperimentAnalysisModule {
     
-    private var from: ExperimentAnalysisDataIO? = nil
-    private var to: ExperimentAnalysisDataIO? = nil
-    private var length: ExperimentAnalysisDataIO? = nil
-    private var arrayIns: [ExperimentAnalysisDataIO] = []
+    fileprivate var from: ExperimentAnalysisDataIO? = nil
+    fileprivate var to: ExperimentAnalysisDataIO? = nil
+    fileprivate var length: ExperimentAnalysisDataIO? = nil
+    fileprivate var arrayIns: [ExperimentAnalysisDataIO] = []
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         
@@ -30,14 +30,14 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             }
             else {
                 if (input.buffer == nil) {
-                    throw SerializationError.GenericError(message: "Error: Regular inputs of the subrange module besides from, to or length must be buffers.")
+                    throw SerializationError.genericError(message: "Error: Regular inputs of the subrange module besides from, to or length must be buffers.")
                 }
                 arrayIns.append(input)
             }
         }
         
         if (outputs.count < 1) {
-            throw SerializationError.GenericError(message: "Error: No output for subrange-module specified.")
+            throw SerializationError.genericError(message: "Error: No output for subrange-module specified.")
         }
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
@@ -71,7 +71,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        for (i, arrayIn) in arrayIns.enumerate() {
+        for (i, arrayIn) in arrayIns.enumerated() {
             if (outputs.count > i) && outputs[i].buffer != nil {
                 let thisEnd = min(end, arrayIn.buffer!.actualCount)
                 if (thisEnd < start) {

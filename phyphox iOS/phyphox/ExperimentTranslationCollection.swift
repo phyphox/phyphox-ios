@@ -10,17 +10,17 @@
 import Foundation
 
 final class ExperimentTranslationCollection {
-    private let translations: [String: ExperimentTranslation]?
+    fileprivate let translations: [String: ExperimentTranslation]?
     
-    private var selectedLanguageCode: String?
+    fileprivate var selectedLanguageCode: String?
     
-    private(set) var selectedTranslation: ExperimentTranslation?
+    fileprivate(set) var selectedTranslation: ExperimentTranslation?
     
     init(translations: [String: ExperimentTranslation]?, defaultLanguageCode: String) {
         self.translations = translations
         
-        for code in  NSLocale.preferredLanguages() {
-            let languageCode = code.componentsSeparatedByString("-")[0]
+        for code in  Locale.preferredLanguages {
+            let languageCode = code.components(separatedBy: "-")[0]
             
             //If the preferred language matches a translation block, this always takes precedence and so we select this and are done. Translations will fall back to the default language anyways...
             if let selected = translations?[languageCode] {
@@ -38,7 +38,7 @@ final class ExperimentTranslationCollection {
         }
     }
     
-    func localize(string: String) -> String {
+    func localize(_ string: String) -> String {
         return selectedTranslation?.translatedStrings?[string] ?? string
     }
 }

@@ -10,12 +10,12 @@
 import Foundation
 
 final class ExperimentAnalysisDataIO {
-    private(set) var asString: String?
+    fileprivate(set) var asString: String?
     
-    private(set) var buffer: DataBuffer?
-    private(set) var value: Double?
+    fileprivate(set) var buffer: DataBuffer?
+    fileprivate(set) var value: Double?
     
-    private(set) var clear = true
+    fileprivate(set) var clear = true
     
     func getSingleValue() -> Double? {
         return value ?? buffer!.last
@@ -53,14 +53,14 @@ final class ExperimentAnalysisDataIO {
             if text != nil {
                 value = Double(text!)
             } else {
-                throw SerializationError.InvalidExperimentFile(message: "Error! Input or output tag missing reference.")
+                throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
             }
         }
         else if !typeIsEmpty {
             if text != nil {
                 buffer = buffers[text!]
             } else {
-                throw SerializationError.InvalidExperimentFile(message: "Error! Input or output tag missing reference.")
+                throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
             }
         }
     }

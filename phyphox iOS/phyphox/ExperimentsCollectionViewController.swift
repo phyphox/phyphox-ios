@@ -12,8 +12,8 @@ import UIKit
 private let minCellWidth: CGFloat = 320.0
 
 final class ExperimentsCollectionViewController: CollectionViewController {
-    private var cellsPerRow: Int = 1
-    private var infoButton: UIButton? = nil
+    fileprivate var cellsPerRow: Int = 1
+    fileprivate var infoButton: UIButton? = nil
     
     override class var viewClass: CollectionContainerView.Type {
         return MainView.self
@@ -27,38 +27,38 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         return ["Header" : ExperimentHeaderView.self]
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         self.navigationController?.navigationBar.barTintColor = kBackgroundColor
-        self.navigationController?.navigationBar.translucent = true
+        self.navigationController?.navigationBar.isTranslucent = true
     }
     
-    func showHelpMenu(item: UIBarButtonItem) {
-        let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .ActionSheet)
+    func showHelpMenu(_ item: UIBarButtonItem) {
+        let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .Default, handler: infoPressed))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .default, handler: infoPressed))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("experimentsPhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
-            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("experimentsPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("experimentsPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: NSLocalizedString("experimentsPhyphoxOrgURL", comment: ""))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("faqPhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
-            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("faqPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("faqPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: NSLocalizedString("faqPhyphoxOrgURL", comment: ""))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("remotePhyphoxOrg", comment: ""), style: .Default, handler:{ _ in
-            UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("remotePhyphoxOrg", comment: ""), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = infoButton!
             popover.sourceRect = infoButton!.frame
         }
         
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
     
     override func viewDidLoad() {
@@ -66,49 +66,49 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         self.title = "phyphox"
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(reload), name: ExperimentsReloadedNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
         
-        infoButton = UIButton(type: .InfoDark)
-        infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), forControlEvents: .TouchUpInside)
+        infoButton = UIButton(type: .infoDark)
+        infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), for: .touchUpInside)
         infoButton!.sizeToFit()
         
-        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(createNewExperiment))
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(createNewExperiment))
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
         navigationItem.rightBarButtonItem = addButton
         
-        let defaults = NSUserDefaults.standardUserDefaults()
+        let defaults = UserDefaults.standard
         let key = "donotshowagain"
-        if (!defaults.boolForKey(key)) {
-            let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .Default, handler: { _ in
-                defaults.setBool(true, forKey: key)
+        if (!defaults.bool(forKey: key)) {
+            let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .default, handler: { _ in
+                defaults.set(true, forKey: key)
             }))
         
-            alert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Default, handler: nil))
+            alert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
         
-            navigationController!.presentViewController(alert, animated: true, completion: nil)
+            navigationController!.present(alert, animated: true, completion: nil)
         }
     }
     
-    private func showOpenSourceLicenses() {
-        let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(NSBundle.mainBundle().pathForResource("Licenses", ofType: "ptf")!), preferredStyle: .Alert)
+    fileprivate func showOpenSourceLicenses() {
+        let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!), preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
         
-        navigationController!.presentViewController(alert, animated: true, completion: nil)
+        navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    func infoPressed(action: UIAlertAction) {
-        let alert = UIAlertController(title: NSLocalizedString("credits", comment: ""), message: NSLocalizedString("creditsRWTH", comment: "") + "\n\n" + NSLocalizedString("creditsNames", comment: ""), preferredStyle: .Alert)
+    func infoPressed(_ action: UIAlertAction) {
+        let alert = UIAlertController(title: NSLocalizedString("credits", comment: ""), message: NSLocalizedString("creditsRWTH", comment: "") + "\n\n" + NSLocalizedString("creditsNames", comment: ""), preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .Default, handler: { [unowned self] _ in
+        alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .default, handler: { [unowned self] _ in
             self.showOpenSourceLicenses()
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
         
-        navigationController!.presentViewController(alert, animated: true, completion: nil)
+        navigationController!.present(alert, animated: true, completion: nil)
     }
 
     func reload() {
@@ -116,7 +116,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
@@ -126,27 +126,27 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let nav = UINavigationController(rootViewController: vc)
         
         if iPad {
-            nav.modalPresentationStyle = .FormSheet
+            nav.modalPresentationStyle = .formSheet
         }
         else {
             nav.transitioningDelegate = overlayTransitioningDelegate
-            nav.modalPresentationStyle = .Custom
+            nav.modalPresentationStyle = .custom
         }
         
-        navigationController!.parentViewController!.presentViewController(nav, animated: true, completion: nil)
+        navigationController!.parent!.present(nav, animated: true, completion: nil)
     }
     
     //MARK: - UICollectionViewDataSource
     
-    override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return ExperimentManager.sharedInstance().experimentCollections.count
     }
     
-    override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return ExperimentManager.sharedInstance().experimentCollections[section].experiments!.count
     }
     
-    override func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+    override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         var cells: CGFloat = 1.0
         
         var width = self.view.frame.size.width
@@ -161,59 +161,59 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         
         
-        let h = ceil(UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline).lineHeight + UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1).lineHeight + 12)
+        let h = ceil(UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1).lineHeight + 12)
         
-        return CGSizeMake(width, h)
+        return CGSize(width: width, height: h)
     }
     
-    private func showDeleteConfirmationForExperiment(experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .ActionSheet)
+    fileprivate func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
+        let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.localizedTitle)", style: .Destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.localizedTitle)", style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.sharedInstance().deleteExperiment(experiment)
             }
             catch let error as NSError {
-                let hud = JGProgressHUD(style: .Dark)
-                hud.interactionType = .BlockTouchesOnHUDView
-                hud.indicatorView = JGProgressHUDErrorIndicatorView()
-                hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+                let hud = JGProgressHUD(style: .dark)
+                hud?.interactionType = .blockTouchesOnHUDView
+                hud?.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud?.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
                 
-                hud.showInView(self.view)
+                hud?.show(in: self.view)
                 
-                hud.dismissAfterDelay(3.0)
+                hud?.dismiss(afterDelay: 3.0)
             }
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
-            popover.sourceRect = button.convertRect(button.bounds, toView: self.navigationController!.view)
+            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
         }
         
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
     
-    private func showOptionsForExperiment(experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .ActionSheet)
+    fileprivate func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .Destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .destructive, handler: { [unowned self] action in
             self.showDeleteConfirmationForExperiment(experiment, button: button)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .Cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
-            popover.sourceRect = button.convertRect(button.bounds, toView: self.navigationController!.view)
+            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
         }
         
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
     
-    override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ExperimentCell", forIndexPath: indexPath) as! ExperimentCell
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ExperimentCell", for: indexPath) as! ExperimentCell
         
         let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
         let experiment = collection.experiments![indexPath.row]
@@ -235,13 +235,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         return cell
     }
     
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        return CGSizeMake(self.view.frame.size.width, 36.0)
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        return CGSize(width: self.view.frame.size.width, height: 36.0)
     }
     
-    func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionElementKindSectionHeader {
-            let view = collectionView.dequeueReusableSupplementaryViewOfKind(kind, withReuseIdentifier: "Header", forIndexPath: indexPath) as! ExperimentHeaderView
+            let view = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "Header", for: indexPath) as! ExperimentHeaderView
             
             let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
             
@@ -255,7 +255,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     
     //MARK: - UICollectionViewDelegate
     
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: IndexPath) {
         let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
         
         if let sensors = experiment.experiment.sensorInputs {
@@ -263,15 +263,15 @@ final class ExperimentsCollectionViewController: CollectionViewController {
                 do {
                     try sensor.verifySensorAvailibility()
                 }
-                catch SensorError.SensorUnavailable(let type) {
-                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .Alert)
+                catch SensorError.sensorUnavailable(let type) {
+                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
                     
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .Default, handler:{ _ in
-                        UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                        UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
                     }))
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
                     
-                    presentViewController(controller, animated: true, completion: nil)
+                    present(controller, animated: true, completion: nil)
                     
                     return
                 }
@@ -287,7 +287,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         experiment.experiment.willGetActive {
             denied = true
             if showing {
-                self.navigationController!.popViewControllerAnimated(true)
+                self.navigationController!.popViewController(animated: true)
             }
         }
         

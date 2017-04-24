@@ -82,7 +82,7 @@ class QueueTests: XCTestCase {
             c += 1
         }
         
-        var iterator = q.generate()
+        var iterator = q.makeIterator()
         
         c = 0
         
@@ -201,18 +201,18 @@ class QueueTests: XCTestCase {
 		let sut = Queue<Int>()
 		let numberofiterations = 2_000_00
 
-		let addingexpectation = expectationWithDescription("adding completed")
-		let addingqueue = dispatch_queue_create( "adding", DISPATCH_QUEUE_SERIAL)
-		dispatch_async(addingqueue)  {
+		let addingexpectation = expectation(description: "adding completed")
+		let addingqueue = DispatchQueue( label: "adding", attributes: [])
+		addingqueue.async  {
 			for i in  1...numberofiterations {
 				sut.enqueue(i)
 			}
 			addingexpectation.fulfill()
 		}
 		
-		let deletingexpectation = expectationWithDescription("deleting completed")
-		let deletingqueue = dispatch_queue_create( "deleting", DISPATCH_QUEUE_SERIAL)
-		dispatch_async(deletingqueue)  {
+		let deletingexpectation = expectation(description: "deleting completed")
+		let deletingqueue = DispatchQueue( label: "deleting", attributes: [])
+		deletingqueue.async  {
             var i = 1
             while i <= numberofiterations {
                 if let result = sut.dequeue() {
@@ -226,6 +226,6 @@ class QueueTests: XCTestCase {
 			deletingexpectation.fulfill()
 		}
 		
-		waitForExpectationsWithTimeout( 600, handler:  nil)
+		waitForExpectations( timeout: 600, handler:  nil)
 	} 
 }

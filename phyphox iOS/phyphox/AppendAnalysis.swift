@@ -10,7 +10,7 @@
 import Foundation
 
 final class AppendAnalysis: ExperimentAnalysisModule {
-    private let inputElements: [ExperimentAnalysisDataIO]
+    fileprivate let inputElements: [ExperimentAnalysisDataIO]
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var inputElements = [ExperimentAnalysisDataIO]()
@@ -32,7 +32,7 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         #endif
         for input in inputElements {
             if let b = input.buffer {
-                result.appendContentsOf(b.toArray())
+                result.append(contentsOf: b.toArray())
             } else if input.value != nil {
                 result.append(input.getSingleValue()!)
             }

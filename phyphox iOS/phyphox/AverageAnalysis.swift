@@ -9,10 +9,10 @@
 import Foundation
 
 final class AverageAnalysis: ExperimentAnalysisModule {
-    private var avgOutput: ExperimentAnalysisDataIO?
-    private var stdOutput: ExperimentAnalysisDataIO?
+    fileprivate var avgOutput: ExperimentAnalysisDataIO?
+    fileprivate var stdOutput: ExperimentAnalysisDataIO?
     
-    private var input: ExperimentAnalysisDataIO!
+    fileprivate var input: ExperimentAnalysisDataIO!
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var avg: ExperimentAnalysisDataIO? = nil
@@ -29,7 +29,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         stdOutput = std
         
         if inputs.count == 0 || inputs[0].buffer == nil {
-            throw SerializationError.GenericError(message: "Average needs a buffer as input.")
+            throw SerializationError.genericError(message: "Average needs a buffer as input.")
         } else {
             input = inputs[0]
         }
@@ -68,7 +68,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         if stdOutput != nil {
             let std: Double
             if (count < 2) {
-                std = Double.NaN
+                std = Double.nan
             } else {
                 sum = 0.0
                 count = 0

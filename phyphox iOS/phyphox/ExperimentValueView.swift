@@ -19,19 +19,19 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         
         self.valueLabel.text = "-"
         self.valueLabel.textColor = kTextColor
-        let defaultFont = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
-        self.valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor(), size: CGFloat(descriptor.size)*defaultFont.pointSize)
-        self.valueLabel.textAlignment = NSTextAlignment.Left
+        let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        self.valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size)*defaultFont.pointSize)
+        self.valueLabel.textAlignment = NSTextAlignment.left
         
         self.unitLabel.text = descriptor.unit
         self.unitLabel.textColor = kTextColor
-        self.unitLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
-        self.unitLabel.textAlignment = NSTextAlignment.Left
+        self.unitLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        self.unitLabel.textAlignment = NSTextAlignment.left
         
         addSubview(self.valueLabel)
         addSubview(self.unitLabel)
         
-        label.textAlignment = NSTextAlignment.Right
+        label.textAlignment = NSTextAlignment.right
         
         newValueIn()
         
@@ -42,7 +42,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         descriptor.buffer.removeObserver(self)
     }
     
-    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
+    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
         newValueIn()
     }
     
@@ -50,13 +50,13 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         let str: String
         let last = descriptor.buffer.last
         if last != nil && !last!.isNaN {
-            let formatter = NSNumberFormatter()
-            formatter.numberStyle = (self.descriptor.scientific ? .ScientificStyle : .DecimalStyle)
+            let formatter = NumberFormatter()
+            formatter.numberStyle = (self.descriptor.scientific ? .scientific : .decimal)
             formatter.maximumFractionDigits = self.descriptor.precision
             formatter.minimumFractionDigits = self.descriptor.precision
             formatter.minimumIntegerDigits = 1
             
-            str = formatter.stringFromNumber(NSNumber(double: last!*self.descriptor.factor))! + " "
+            str = formatter.string(from: NSNumber(value: last!*self.descriptor.factor as Double))! + " "
         }
         else {
             str = "- "
@@ -67,8 +67,8 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         setNeedsLayout()
     }
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
-        return CGSizeMake(size.width, valueLabel.sizeThatFits(size).height)
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        return CGSize(width: size.width, height: valueLabel.sizeThatFits(size).height)
     }
     
     override func layoutSubviews() {
@@ -82,10 +82,10 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         let hangOver = (self.bounds.size.width-spacing)/2.0 - s2.width - s3.width - spacing
         let push = hangOver < 0 ? hangOver : 0.0
         
-        label.frame = CGRectMake(push, (self.bounds.size.height-s1.height)/2.0, (self.bounds.size.width-spacing)/2.0, s1.height)
+        label.frame = CGRect(x: push, y: (self.bounds.size.height-s1.height)/2.0, width: (self.bounds.size.width-spacing)/2.0, height: s1.height)
         
-        valueLabel.frame = CGRectMake(push + (self.bounds.size.width+spacing)/2.0, (self.bounds.size.height-s2.height)/2.0, s2.width, s2.height)
-        unitLabel.frame = CGRectMake(valueLabel.frame.maxX, (self.bounds.size.height-s3.height)/2.0, s3.width, s3.height)
+        valueLabel.frame = CGRect(x: push + (self.bounds.size.width+spacing)/2.0, y: (self.bounds.size.height-s2.height)/2.0, width: s2.width, height: s2.height)
+        unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (self.bounds.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
         
     }
 }

@@ -20,33 +20,33 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         bluetooth = getElementsWithKey(inputs, key: "bluetooth") as! [NSDictionary]?
     }
     
-    func mapTypeStringToSensorType(type: String) -> SensorType? {
+    func mapTypeStringToSensorType(_ type: String) -> SensorType? {
         if type == "pressure" {
-            return .Pressure
+            return .pressure
         }
         else if type == "accelerometer" {
-            return .Accelerometer
+            return .accelerometer
         }
         else if type == "linear_acceleration" {
-            return .LinearAcceleration
+            return .linearAcceleration
         }
         else if type == "gyroscope" {
-            return .Gyroscope
+            return .gyroscope
         }
         else if type == "light" {
-            return .Light
+            return .light
         }
         else if type == "magnetic_field" {
-            return .MagneticField
+            return .magneticField
         }
         else if type == "proximity" {
-            return .Proximity
+            return .proximity
         }
         
         return nil
     }
     
-    func sensorTypeFromXML(xml: [String: AnyObject]?, key: String) throws -> SensorType? {
+    func sensorTypeFromXML(_ xml: [String: AnyObject]?, key: String) throws -> SensorType? {
         if xml == nil {
             return nil
         }
@@ -54,19 +54,19 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         let typeString = xml![key] as! String?
         
         if typeString == nil {
-            throw SerializationError.InvalidExperimentFile(message: "Error! Empty sensor type")
+            throw SerializationError.invalidExperimentFile(message: "Error! Empty sensor type")
         }
         
         let sensorType = mapTypeStringToSensorType(typeString!)
         
         if sensorType == nil {
-            throw SerializationError.InvalidExperimentFile(message: "Error! Invalid sensor type: \(typeString)")
+            throw SerializationError.invalidExperimentFile(message: "Error! Invalid sensor type: \(String(describing: typeString))")
         }
         
         return sensorType
     }
     
-    func parse(buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) throws -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
+    func parse(_ buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) throws -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
         if sensors == nil && audio == nil && bluetooth == nil {
             return (nil, nil, nil)
         }
@@ -79,22 +79,22 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             for sensor in sensors! {
                 let attributes = sensor[XMLDictionaryAttributesKey] as! [String: String]
                 
-                let average = boolFromXML(attributes, key: "average", defaultValue: false)
+                let average = boolFromXML(attributes as [String : AnyObject], key: "average", defaultValue: false)
                 
-                let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //Hz
+                let frequency = floatTypeFromXML(attributes as [String : AnyObject], key: "rate", defaultValue: 0.0) //Hz
                 
-                let rate = isnormal(frequency) ? 1.0/frequency : 0.0
+                let rate = frequency.isNormal ? 1.0/frequency : 0.0
                 
-                let sensorType = try sensorTypeFromXML(attributes, key: "type")
+                let sensorType = try sensorTypeFromXML(attributes as [String : AnyObject], key: "type")
                 
                 if sensorType == nil {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Sensor type not set")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Sensor type not set")
                 }
                 
                 let outputs = getElementsWithKey(sensor, key: "output") as? [[String: AnyObject]]
                 
                 guard outputs != nil else {
-                    throw SerializationError.InvalidExperimentFile(message: "Sensor has no output.")
+                    throw SerializationError.invalidExperimentFile(message: "Sensor has no output.")
                 }
                 
                 var xBuffer, yBuffer, zBuffer, tBuffer, absBuffer: DataBuffer?
@@ -124,7 +124,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                         absBuffer = buf
                     }
                     else {
-                        throw SerializationError.InvalidExperimentFile(message: "Error! Invalid sensor parameter: \(component)")
+                        throw SerializationError.invalidExperimentFile(message: "Error! Invalid sensor parameter: \(String(describing: component))")
                     }
                     
                     //Register for updates
@@ -134,7 +134,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 }
                 
                 if average && rate == 0.0 {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
                 }
                 
                 let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer)
@@ -151,7 +151,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             for audioIn in audio! {
                 let attributes = audioIn[XMLDictionaryAttributesKey] as! [String: String]?
                 
-                let sampleRate = intTypeFromXML(attributes, key: "rate", defaultValue: UInt(48000))
+                let sampleRate = intTypeFromXML(attributes as [String : AnyObject]?, key: "rate", defaultValue: UInt(48000))
                 
                 let output = getElementsWithKey(audioIn, key: "output")!
                 
@@ -186,22 +186,22 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             for bluetoothIn in bluetooth! {
                 let attributes = bluetoothIn[XMLDictionaryAttributesKey] as! [String: String]?
                 
-                let average = boolFromXML(attributes, key: "average", defaultValue: false)
+                let average = boolFromXML(attributes as [String : AnyObject]?, key: "average", defaultValue: false)
                 
-                let frequency = floatTypeFromXML(attributes, key: "rate", defaultValue: 0.0) //Hz
-                let rate = isnormal(frequency) ? 1.0/frequency : 0.0
+                let frequency = floatTypeFromXML(attributes as [String : AnyObject]?, key: "rate", defaultValue: 0.0) //Hz
+                let rate = frequency.isNormal ? 1.0/frequency : 0.0
                 
-                let device = stringFromXML(attributes, key: "devicename", defaultValue: "")
-                let address = stringFromXML(attributes, key: "address", defaultValue: "")
-                var separator = stringFromXML(attributes, key: "separator", defaultValue: "")
-                let protocolStr = stringFromXML(attributes, key: "protocol", defaultValue: "")
+                let device = stringFromXML(attributes as [String : AnyObject]?, key: "devicename", defaultValue: "")
+                let address = stringFromXML(attributes as [String : AnyObject]?, key: "address", defaultValue: "")
+                var separator = stringFromXML(attributes as [String : AnyObject]?, key: "separator", defaultValue: "")
+                let protocolStr = stringFromXML(attributes as [String : AnyObject]?, key: "protocol", defaultValue: "")
                 
                 var outNames: [String] = []
                 var i = 0
                 var outName = ""
                 repeat {
                     i += 1
-                    outName = stringFromXML(attributes, key: "out\(i)", defaultValue: "")
+                    outName = stringFromXML(attributes as [String : AnyObject]?, key: "out\(i)", defaultValue: "")
                     outNames.append(outName)
                 } while outName != ""
                 
@@ -221,7 +221,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 case "json":
                     serialProtocol = JSONSerialProtocol()
                 default:
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Unknown protocol: \(protocolStr)")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Unknown protocol: \(protocolStr)")
                 }
                 
                 let outputs = getElementsWithKey(bluetoothIn, key: "output") as! [[String: AnyObject]]
@@ -243,7 +243,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 }
                 
                 if average && rate == 0.0 {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
                 }
                 
                 //TODO: Pass data needed to connect to device
@@ -253,6 +253,6 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             }
         }
         
-        return ((sensorsOut?.count > 0 ? sensorsOut : nil), (audioOut?.count > 0 ? audioOut : nil), (bluetoothOut?.count > 0 ? bluetoothOut : nil))
+        return ((sensorsOut?.count ?? 0 > 0 ? sensorsOut : nil), (audioOut?.count ?? 0 > 0 ? audioOut : nil), (bluetoothOut?.count ?? 0 > 0 ? bluetoothOut : nil))
     }
 }

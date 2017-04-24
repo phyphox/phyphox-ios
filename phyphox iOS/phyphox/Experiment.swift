@@ -10,7 +10,7 @@
 import Foundation
 import AVFoundation
 
-struct ExperimentRequiredPermission : OptionSetType {
+struct ExperimentRequiredPermission : OptionSet {
     let rawValue: Int
     
     static let None = ExperimentRequiredPermission(rawValue: 0)
@@ -22,11 +22,11 @@ func ==(lhs: Experiment, rhs: Experiment) -> Bool {
 }
 
 final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager, Equatable {
-    private var title: String
-    private var description: String?
-    private var links: [String: String]
-    private var highlightedLinks: [String: String]
-    private var category: String
+    fileprivate var title: String
+    fileprivate var description: String?
+    fileprivate var links: [String: String]
+    fileprivate var highlightedLinks: [String: String]
+    fileprivate var category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
@@ -66,8 +66,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     var local: Bool
     
-    var source: NSURL? = nil
-    var sourceData: NSData? = nil
+    var source: URL? = nil
+    var sourceData: Data? = nil
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
@@ -80,15 +80,15 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let buffers: ([String: DataBuffer]?, [DataBuffer]?)
     
-    let queue: dispatch_queue_t
+    let queue: DispatchQueue
     
     let requiredPermissions: ExperimentRequiredPermission
     
-    private(set) var running = false
-    private(set) var hasStarted = false
+    fileprivate(set) var running = false
+    fileprivate(set) var hasStarted = false
     
-    private(set) var startTimestamp: NSTimeInterval?
-    private var pauseBegin: NSTimeInterval = 0.0
+    fileprivate(set) var startTimestamp: TimeInterval?
+    fileprivate var pauseBegin: TimeInterval = 0.0
     
     init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
@@ -111,10 +111,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.analysis = analysis
         self.export = export
         
-        queue = dispatch_queue_create("de.rwth-aachen.phyphox.experiment.queue", DISPATCH_QUEUE_CONCURRENT)
+        queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: DispatchQueue.Attributes.concurrent)
         
         defer {
-            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: EndBackgroundMotionSessionNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
         }
         
         if audioInputs != nil {
@@ -133,10 +133,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
-    func getCurrentTimestamp() -> NSTimeInterval {
+    func getCurrentTimestamp() -> TimeInterval {
         return startTimestamp != nil ? CFAbsoluteTimeGetCurrent()-startTimestamp! : 0.0
     }
     
@@ -160,7 +160,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     /**
      Called when the experiment view controller will be presented.
      */
-    func willGetActive(dismiss: () -> ()) {
+    func willGetActive(_ dismiss: @escaping () -> ()) {
         if self.audioInputs != nil {
             checkAndAskForPermissions(dismiss)
         }
@@ -173,26 +173,26 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.clear()
     }
     
-    func checkAndAskForPermissions(failed: (Void) -> Void) {
+    func checkAndAskForPermissions(_ failed: @escaping (Void) -> Void) {
         if requiredPermissions.contains(.Microphone) {
             
-            let status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeAudio)
+            let status = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeAudio)
             
             switch status {
-            case .Denied:
+            case .denied:
                 failed()
-                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone", preferredStyle: .Alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .Cancel, handler: nil))
-                UIApplication.sharedApplication().keyWindow!.rootViewController!.presentViewController(alert, animated: true, completion: nil)
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
-            case .Restricted:
+            case .restricted:
                 failed()
-                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->General->Restrctions->Microphone", preferredStyle: .Alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .Cancel, handler: nil))
-                UIApplication.sharedApplication().keyWindow!.rootViewController!.presentViewController(alert, animated: true, completion: nil)
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->General->Restrctions->Microphone", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
-            case .NotDetermined:
-                AVCaptureDevice.requestAccessForMediaType(AVMediaTypeAudio, completionHandler: { (allowed) in
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeAudio, completionHandler: { (allowed) in
                     if !allowed {
                         failed()
                     }
@@ -204,7 +204,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    private func playAudio() {
+    fileprivate func playAudio() {
         if ((self.output?.audioOutput) != nil) {
             for audio in (self.output?.audioOutput)! {
                 audio.play()
@@ -212,7 +212,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    private func stopAudio() {
+    fileprivate func stopAudio() {
         if ((self.output?.audioOutput) != nil) {
             for audio in (self.output?.audioOutput)! {
                 audio.pause()
@@ -220,9 +220,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    private func setUpAudio() {
-        let hasOutput = output?.audioOutput.count > 0
-        let hasInput = audioInputs?.count > 0
+    fileprivate func setUpAudio() {
+        let hasOutput = output?.audioOutput.count ?? 0 > 0
+        let hasInput = audioInputs?.count ?? 0 > 0
         
         var rate = 48_000.0
         
@@ -235,7 +235,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             return
         }
         
-        ExperimentManager.sharedInstance().setAudioControllerDescription(monoFloatFormatWithSampleRate(Double(rate)), inputEnabled: hasInput, outputEnabled: hasOutput)
+        _ = ExperimentManager.sharedInstance().setAudioControllerDescription(monoFloatFormatWithSampleRate(Double(rate)), inputEnabled: hasInput, outputEnabled: hasOutput)
         
         do {
             try ExperimentManager.sharedInstance().audioController.start()
@@ -245,9 +245,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    private func tearDownAudio() {
-        let hasOutput = output?.audioOutput.count > 0
-        let hasInput = audioInputs?.count > 0
+    fileprivate func tearDownAudio() {
+        let hasOutput = output?.audioOutput.count ?? 0 > 0
+        let hasInput = audioInputs?.count ?? 0 > 0
         
         if hasInput || hasOutput {
             ExperimentManager.sharedInstance().audioController.stop()
@@ -278,7 +278,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         running = true
         hasStarted = true
         
-        UIApplication.sharedApplication().idleTimerDisabled = true
+        UIApplication.shared.isIdleTimerDisabled = true
         
         setUpAudio()
         
@@ -327,7 +327,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         
         tearDownAudio()
         
-        UIApplication.sharedApplication().idleTimerDisabled = false
+        UIApplication.shared.isIdleTimerDisabled = false
         
         running = false
     }

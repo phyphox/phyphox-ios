@@ -10,16 +10,16 @@
 import UIKit
 
 private final class InsetTextField: UITextField {
-    private override func editingRectForBounds(bounds: CGRect) -> CGRect {
-        return CGRectInset(bounds, 10.0, 5.0)
+    fileprivate override func editingRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
     
-    private override func textRectForBounds(bounds: CGRect) -> CGRect {
-        return CGRectInset(bounds, 10.0, 5.0)
+    fileprivate override func textRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
     
-    private override func placeholderRectForBounds(bounds: CGRect) -> CGRect {
-        return CGRectInset(bounds, 10.0, 5.0)
+    fileprivate override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
 }
 
@@ -31,10 +31,10 @@ final class TextFieldTableViewCell: UITableViewCell {
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        textField.addTarget(self, action: #selector(didEndOnExit), forControlEvents: UIControlEvents(rawValue: UIControlEvents.EditingDidEndOnExit.rawValue | UIControlEvents.EditingDidEnd.rawValue))
-        textField.addTarget(self, action: #selector(editingChanged), forControlEvents: .EditingChanged)
+        textField.addTarget(self, action: #selector(didEndOnExit), for: UIControlEvents(rawValue: UIControlEvents.editingDidEndOnExit.rawValue | UIControlEvents.editingDidEnd.rawValue))
+        textField.addTarget(self, action: #selector(editingChanged), for: .editingChanged)
         
-        textField.borderStyle = .None
+        textField.borderStyle = .none
         contentView.addSubview(textField)
     }
     

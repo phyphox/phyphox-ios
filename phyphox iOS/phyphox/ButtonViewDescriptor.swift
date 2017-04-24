@@ -22,7 +22,7 @@ final class ButtonViewDescriptor: ViewDescriptor {
     }
     
     override func onTrigger() {
-        for (i, output) in self.outputs.enumerate() {
+        for (i, output) in self.outputs.enumerated() {
             if self.inputs.count > i {
                 let input = self.inputs[i]
                 if input.value != nil {
@@ -36,7 +36,7 @@ final class ButtonViewDescriptor: ViewDescriptor {
         }
     }
     
-    override func generateViewHTMLWithID(id: Int) -> String {
+    override func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size: 105%;\" class=\"buttonElement\" id=\"element\(id)\"><button onclick=\"$.getJSON('control?cmd=trigger&element=\(id)')\">\(localizedLabel)</button></div>"
     }
 }

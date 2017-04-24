@@ -14,19 +14,19 @@ class CollectionContainerView: UIView {
         return UICollectionView.self
     }
     
-    private(set) var collectionView: UICollectionView
+    fileprivate(set) var collectionView: UICollectionView
     
     override init(frame: CGRect) {
         let layout = UICollectionViewFlowLayout()
         
-        collectionView = self.dynamicType.collectionViewClass.init(frame: CGRect.zero, collectionViewLayout: layout)
+        collectionView = type(of: self).collectionViewClass.init(frame: CGRect.zero, collectionViewLayout: layout)
         
         super.init(frame: frame)
         
         addSubview(collectionView)
         
-        self.backgroundColor = UIColor.whiteColor()
-        collectionView.backgroundColor = UIColor.whiteColor()
+        self.backgroundColor = UIColor.white
+        collectionView.backgroundColor = UIColor.white
     }
     
     override func layoutSubviews() {

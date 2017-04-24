@@ -12,23 +12,23 @@
 import Foundation
 
 protocol SerialProtocol {
-    func read(newData: String) -> [[Double]]
-    func write(data: [[Double]])
+    func read(_ newData: String) -> [[Double]]
+    func write(_ data: [[Double]])
 }
 
 class SerialBufferedReader {
     var buffer: String = ""
-    let newData: (buffer: String) -> (Int, [[Double]])
+    let newData: (_ buffer: String) -> (Int, [[Double]])
     
-    init(newData: (buffer: String) -> (Int, [[Double]])) {
+    init(newData: @escaping (_ buffer: String) -> (Int, [[Double]])) {
         self.newData = newData
     }
     
-    func read(data: String) -> [[Double]] {
+    func read(_ data: String) -> [[Double]] {
         buffer += data
-        let result = newData(buffer: buffer)
-        let index = buffer.startIndex.advancedBy(result.0)
-        buffer = buffer.substringFromIndex(index)
+        let result = newData(buffer)
+        let index = buffer.characters.index(buffer.startIndex, offsetBy: result.0)
+        buffer = buffer.substring(from: index)
         return result.1
     }
 }
@@ -41,7 +41,7 @@ class SimpleSerialProtocol: SerialProtocol {
         reader = SerialBufferedReader(newData: {(buffer: String) -> (Int, [[Double]]) in
             var result: [[Double]] = [[]]
             
-            var elements = buffer.characters.split(separator, allowEmptySlices: true).map(String.init)
+            var elements = buffer.characters.split(separator: separator, omittingEmptySubsequences: false).map(String.init)
             elements.removeLast() //The last element may be incomplete until a separator has been received.
             
             var processed = 0
@@ -57,33 +57,33 @@ class SimpleSerialProtocol: SerialProtocol {
     }
     
     
-    func read(newData: String) -> [[Double]] {
+    func read(_ newData: String) -> [[Double]] {
         return reader.read(newData)
     }
     
-    func write(data: [[Double]]) {
+    func write(_ data: [[Double]]) {
         //TODO
     }
 }
 
 class CSVSerialProtocol: SerialProtocol {
-    func read(newData: String) -> [[Double]] {
+    func read(_ newData: String) -> [[Double]] {
         //TODO
         return [[]]
     }
     
-    func write(data: [[Double]]) {
+    func write(_ data: [[Double]]) {
         //TODO
     }
 }
 
 class JSONSerialProtocol: SerialProtocol {
-    func read(newData: String) -> [[Double]] {
+    func read(_ newData: String) -> [[Double]] {
         //TODO
         return [[]]
     }
     
-    func write(data: [[Double]]) {
+    func write(_ data: [[Double]]) {
         //TODO
     }
 }

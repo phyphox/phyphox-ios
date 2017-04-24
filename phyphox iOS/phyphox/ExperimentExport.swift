@@ -16,55 +16,55 @@ final class ExperimentExport {
         self.sets = sets
     }
     
-    func runExport(format: ExportFileFormat, callback: (errorMessage: String?, fileURL: NSURL?) -> Void) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+    func runExport(_ format: ExportFileFormat, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
+        DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.default).async {
             autoreleasepool {
-                let dateFormatter = NSDateFormatter()
+                let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
                 
                 if format.isCSV() {
                     if self.sets.count == 1 {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).csv")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).csv")
                         
-                        do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
+                        do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
-                        let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+                        let tmpFileURL = URL(fileURLWithPath: tmpFile)
                         
                         
                         let set = self.sets.first!
                         
-                        let data = set.serialize(format, additionalInfo: nil) as! NSData?
+                        let data = set.serialize(format, additionalInfo: nil) as! Data?
                         
                         do {
-                            try data!.writeToFile(tmpFile, options: [])
+                            try data!.write(to: URL(fileURLWithPath: tmpFile), options: [])
                             
                             mainThread {
-                                callback(errorMessage: nil, fileURL: tmpFileURL)
+                                callback(nil, tmpFileURL)
                             }
                         }
                         catch let error {
                             print("File write error: \(error)")
                             mainThread {
-                                callback(errorMessage: "Could not create csv file", fileURL: nil)
+                                callback("Could not create csv file", nil)
                             }
                         }
                     }
                     else {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).zip")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).zip")
                         
-                        do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
+                        do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
-                        let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+                        let tmpFileURL = URL(fileURLWithPath: tmpFile)
                         
                         do {
-                            let archive = try ZZArchive(URL: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(bool: true)])
+                            let archive = try ZZArchive(url: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(value: true as Bool)])
                             
                             var entries = [ZZArchiveEntry]()
                             
                             for set in self.sets {
-                                let data = set.serialize(format, additionalInfo: nil) as! NSData?
+                                let data = set.serialize(format, additionalInfo: nil) as! Data?
                                 
-                                entries.append(ZZArchiveEntry(fileName: set.localizedName + ".csv", compress: true, dataBlock: { error -> NSData? in
+                                entries.append(ZZArchiveEntry(fileName: set.localizedName + ".csv", compress: true, dataBlock: { error -> Data? in
                                     return data
                                 }))
                             }
@@ -72,42 +72,42 @@ final class ExperimentExport {
                             try archive.updateEntries(entries)
                             
                             mainThread {
-                                callback(errorMessage: nil, fileURL: tmpFileURL)
+                                callback(nil, tmpFileURL)
                             }
                             
                         }
                         catch let error {
                             print("Zip error: \(error)")
                             mainThread {
-                                callback(errorMessage: "Could not create csv file", fileURL: nil)
+                                callback("Could not create csv file", nil)
                             }
                         }
                     }
                 }
                 else {
-                    let tmpFile = (NSTemporaryDirectory() as NSString).stringByAppendingPathComponent("phyphox \(dateFormatter.stringFromDate(NSDate())).xls")
+                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).xls")
                     
-                    do { try NSFileManager.defaultManager().removeItemAtPath(tmpFile) } catch {}
+                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                     
-                    let tmpFileURL = NSURL(fileURLWithPath: tmpFile)
+                    let tmpFileURL = URL(fileURLWithPath: tmpFile)
                     
                     let workbook = JXLSWorkBook()
                     
                     for set in self.sets {
-                        set.serialize(format, additionalInfo: workbook)
+                        _ = set.serialize(format, additionalInfo: workbook)
                     }
                     
-                    let err = workbook.writeToFile(tmpFile)
+                    let err = workbook.write(toFile: tmpFile)
                     
                     if err == 0 {
                         mainThread {
-                            callback(errorMessage: nil, fileURL: tmpFileURL)
+                            callback(nil, tmpFileURL)
                         }
                     }
                     else {
                         print("Excel error: \(err)")
                         mainThread {
-                            callback(errorMessage: "Could not create xls file", fileURL: nil)
+                            callback("Could not create xls file", nil)
                         }
                     }
                 }

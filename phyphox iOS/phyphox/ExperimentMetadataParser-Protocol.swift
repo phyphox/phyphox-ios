@@ -30,13 +30,13 @@ extension UInt: intNumberType {}
 extension UInt32: intNumberType {}
 extension UInt64: intNumberType {}
 
-func boolFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> Bool {
+func boolFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> Bool {
     if xml == nil {
         return defaultValue
     }
     
-    func stringToBool(string: String) -> Bool {
-        if string == "1" || string.lowercaseString == "true" || string.lowercaseString == "yes" {
+    func stringToBool(_ string: String) -> Bool {
+        if string == "1" || string.lowercased() == "true" || string.lowercased() == "yes" {
             return true
         }
         
@@ -51,7 +51,7 @@ func boolFromXML(xml: [String: AnyObject]?, key: String, defaultValue: Bool) -> 
     }
 }
 
-func stringFromXML(xml: [String: AnyObject]?, key: String, defaultValue: String) -> String {
+func stringFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: String) -> String {
     if xml == nil {
         return defaultValue
     }
@@ -59,7 +59,7 @@ func stringFromXML(xml: [String: AnyObject]?, key: String, defaultValue: String)
     return xml![key] as? String ?? defaultValue // <=> (xml![key] != nil ? xml![key] as? String : defaultValue)
 }
 
-func intTypeFromXML<T:intNumberType>(xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
+func intTypeFromXML<T:intNumberType>(_ xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
     if xml == nil {
         return defaultValue
     }
@@ -72,7 +72,7 @@ func intTypeFromXML<T:intNumberType>(xml: [String: AnyObject]?, key: String, def
     return defaultValue
 }
 
-func floatTypeFromXML<T:floatNumberType>(xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
+func floatTypeFromXML<T:floatNumberType>(_ xml: [String: AnyObject]?, key: String, defaultValue: T) -> T {
     if xml == nil {
         return defaultValue
     }
@@ -85,7 +85,7 @@ func floatTypeFromXML<T:floatNumberType>(xml: [String: AnyObject]?, key: String,
     return defaultValue
 }
 
-func CGFloatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: CGFloat) -> CGFloat {
+func CGFloatFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: CGFloat) -> CGFloat {
     if xml == nil {
         return defaultValue
     }
@@ -98,7 +98,7 @@ func CGFloatFromXML(xml: [String: AnyObject]?, key: String, defaultValue: CGFloa
     return defaultValue
 }
 
-func textFromXML(xml: AnyObject) -> String {
+func textFromXML(_ xml: AnyObject) -> String {
     if let str = xml as? String {
         return str
     }
@@ -110,18 +110,18 @@ func textFromXML(xml: AnyObject) -> String {
     }
 }
 
-func UIColorFromXML(xml: [String: AnyObject]?, key: String, defaultValue: UIColor) throws -> UIColor {
+func UIColorFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: UIColor) throws -> UIColor {
     if xml == nil {
         return defaultValue
     }
     
     if let str = xml![key] as? String {
         if str.characters.count != 6 {
-            throw SerializationError.InvalidExperimentFile(message: "Invalid color: \(str)")
+            throw SerializationError.invalidExperimentFile(message: "Invalid color: \(str)")
         }
         
         var hex: UInt32 = 0
-        NSScanner(string: str).scanHexInt(&hex)
+        Scanner(string: str).scanHexInt32(&hex)
         
         let r = CGFloat((hex & 0xff0000) >> 16)/255.0
         let g = CGFloat((hex & 0xff00) >> 8)/255.0

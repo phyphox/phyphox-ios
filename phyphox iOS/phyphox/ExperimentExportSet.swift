@@ -10,12 +10,12 @@
 import Foundation
 
 enum ExportFileFormat {
-    case CSV(separator: String, decimalPoint: String)
-    case Excel
+    case csv(separator: String, decimalPoint: String)
+    case excel
     
     func isCSV() -> Bool {
         switch self {
-        case .CSV(_):
+        case .csv(_):
             return true
         default:
             return false
@@ -23,16 +23,16 @@ enum ExportFileFormat {
     }
 }
 
-let exportTypes = [("Excel", ExportFileFormat.Excel),
-                   ("CSV (Comma, decimal point)", ExportFileFormat.CSV(separator: ",", decimalPoint: ".")),
-                   ("CSV (Tabulator, decimal point)", ExportFileFormat.CSV(separator: "\t", decimalPoint: ".")),
-                   ("CSV (Semicolon, decimal point)", ExportFileFormat.CSV(separator: ";", decimalPoint: ".")),
-                   ("CSV (Tabulator, decimal comma)", ExportFileFormat.CSV(separator: "\t", decimalPoint: ",")),
-                   ("CSV (Semicolon, decimal comma)", ExportFileFormat.CSV(separator: ";", decimalPoint: ","))]
+let exportTypes = [("Excel", ExportFileFormat.excel),
+                   ("CSV (Comma, decimal point)", ExportFileFormat.csv(separator: ",", decimalPoint: ".")),
+                   ("CSV (Tabulator, decimal point)", ExportFileFormat.csv(separator: "\t", decimalPoint: ".")),
+                   ("CSV (Semicolon, decimal point)", ExportFileFormat.csv(separator: ";", decimalPoint: ".")),
+                   ("CSV (Tabulator, decimal comma)", ExportFileFormat.csv(separator: "\t", decimalPoint: ",")),
+                   ("CSV (Semicolon, decimal comma)", ExportFileFormat.csv(separator: ";", decimalPoint: ","))]
 
 final class ExperimentExportSet {
-    private let name: String
-    private let data: [(name: String, buffer: DataBuffer)]
+    fileprivate let name: String
+    fileprivate let data: [(name: String, buffer: DataBuffer)]
     
     weak var translation: ExperimentTranslationCollection?
     
@@ -59,28 +59,28 @@ final class ExperimentExportSet {
         self.data = data
     }
     
-    func serialize(format: ExportFileFormat, additionalInfo: AnyObject?) -> AnyObject? {
+    func serialize(_ format: ExportFileFormat, additionalInfo: AnyObject?) -> AnyObject? {
         switch format {
-        case .CSV(let separator, let decimalPoint):
-            return serializeToCSVWithSeparator(separator, decimalPoint: decimalPoint)
-        case .Excel:
+        case .csv(let separator, let decimalPoint):
+            return serializeToCSVWithSeparator(separator, decimalPoint: decimalPoint) as AnyObject
+        case .excel:
             return serializeToExcel(additionalInfo as! JXLSWorkBook)
         }
     }
     
-    private func serializeToCSVWithSeparator(separator: String, decimalPoint: String) -> NSData? {
+    fileprivate func serializeToCSVWithSeparator(_ separator: String, decimalPoint: String) -> Data? {
         var string = ""
         
         var index = 0
         
-        let formatter = NSNumberFormatter()
+        let formatter = NumberFormatter()
         formatter.maximumSignificantDigits = 10
         formatter.minimumSignificantDigits = 10
         formatter.decimalSeparator = decimalPoint
-        formatter.numberStyle = .ScientificStyle
+        formatter.numberStyle = .scientific
         
-        func format(n: Double) -> String {
-            return formatter.stringFromNumber(NSNumber(double: n))!
+        func format(_ n: Double) -> String {
+            return formatter.string(from: NSNumber(value: n as Double))!
         }
         
         while true {
@@ -90,7 +90,7 @@ final class ExperimentExportSet {
             
             
             if index == 0 {
-                for (j, entry) in localizedData.enumerate() {
+                for (j, entry) in localizedData.enumerated() {
                     if j == 0 {
                         line += "\"\(entry.name)\""
                     }
@@ -102,7 +102,7 @@ final class ExperimentExportSet {
                 addedValue = true
             }
             else {
-                for (j, entry) in localizedData.enumerate() {
+                for (j, entry) in localizedData.enumerated() {
                     let val = entry.buffer.objectAtIndex(index-1)
                     
                     let str = val != nil ? format(val!) : "\"\""
@@ -130,11 +130,11 @@ final class ExperimentExportSet {
             index += 1
         }
         
-        return string.characters.count > 0 ? string.dataUsingEncoding(NSUTF8StringEncoding) : nil
+        return string.characters.count > 0 ? string.data(using: String.Encoding.utf8) : nil
     }
     
-    private func serializeToExcel(workbook: JXLSWorkBook) -> JXLSWorkSheet {
-        let sheet = workbook.workSheetWithName(localizedName)
+    fileprivate func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
+        let sheet = workbook.workSheet(withName: localizedName)
         
         var i = 0
         
@@ -143,17 +143,17 @@ final class ExperimentExportSet {
             
             if i == 0 {
                 addedValue = true
-                for (j, entry) in localizedData.enumerate() {
-                    sheet.setCellAtRow(0, column: UInt32(j), toString: entry.name)
+                for (j, entry) in localizedData.enumerated() {
+                    _ = sheet?.setCellAtRow(0, column: UInt32(j), to: entry.name)
                 }
             }
             else {
-                for (j, entry) in localizedData.enumerate() {
+                for (j, entry) in localizedData.enumerated() {
                     let value = entry.buffer.objectAtIndex(i-1)
                     
                     if value != nil {
                         addedValue = true
-                        sheet.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
+                        _ = sheet?.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
                     }
                 }
             }
@@ -165,6 +165,6 @@ final class ExperimentExportSet {
             i += 1
         }
         
-        return sheet
+        return sheet!
     }
 }

@@ -11,14 +11,14 @@ import Foundation
 import Accelerate
 
 final class MinAnalysis: ExperimentAnalysisModule {
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
-    private var thresholdIn: ExperimentAnalysisDataIO?
+    fileprivate var xIn: DataBuffer?
+    fileprivate var yIn: DataBuffer!
+    fileprivate var thresholdIn: ExperimentAnalysisDataIO?
     
-    private var minOut: ExperimentAnalysisDataIO?
-    private var positionOut: ExperimentAnalysisDataIO?
+    fileprivate var minOut: ExperimentAnalysisDataIO?
+    fileprivate var positionOut: ExperimentAnalysisDataIO?
     
-    private var multiple: Bool
+    fileprivate var multiple: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         
@@ -35,7 +35,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 thresholdIn = input
             }
             else {
-                print("Error: Invalid analysis input: \(input.asString)")
+                print("Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
@@ -47,7 +47,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 positionOut = output
             }
             else {
-                print("Error: Invalid analysis output: \(output.asString)")
+                print("Error: Invalid analysis output: \(String(describing: output.asString))")
             }
         }
         
@@ -114,7 +114,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
             
             var thisMin = Double.infinity
             var thisX = -Double.infinity
-            for (i, v) in inArray.enumerate() {
+            for (i, v) in inArray.enumerated() {
                 if v > threshold {
                     if (thisX.isFinite) {
                         min.append(thisMin)

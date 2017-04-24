@@ -10,11 +10,11 @@
 import Foundation
 
 final class RangefilterAnalysis: ExperimentAnalysisModule {
-    private final class Range: CustomStringConvertible {
+    fileprivate final class Range: CustomStringConvertible {
         let min: Double
         let max: Double
         
-        func inBounds(value: Double) -> Bool {
+        func inBounds(_ value: Double) -> Bool {
             return min <= value && value <= max
         }
         
@@ -25,7 +25,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         var description: String {
             get {
-                return "Range <\(unsafeAddressOf(self))> (\(min), \(max))"
+                return "Range <\(Unmanaged.passUnretained(self).toOpaque())> (\(min), \(max))"
             }
         }
     }
@@ -65,7 +65,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         
         var delete = Set<Int>()
         
-        var out = [[Double]](count: iterators.count, repeatedValue: [])
+        var out = [[Double]](repeating: [], count: iterators.count)
         
         var deleteCount = 0
         
@@ -75,8 +75,8 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }))
         #endif
         
-        for (index, (range, buffer)) in iterators.enumerate() {
-            for (i, value) in buffer.enumerate() {
+        for (index, (range, buffer)) in iterators.enumerated() {
+            for (i, value) in buffer.enumerated() {
                 if delete.contains(i) {
                     continue
                 }
@@ -89,7 +89,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     for j in 0..<index {
                         var ar = out[j]
                         if delIdx >= 0 && delIdx < ar.count {
-                            ar.removeAtIndex(delIdx) //Remove values from previous buffers that passed.
+                            ar.remove(at: delIdx) //Remove values from previous buffers that passed.
                             out[j] = ar
                         }
                     }
@@ -110,7 +110,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         }
         for i in 0..<out.count {
             while out[i].count < nOut {
-                out[i].append(Double.NaN)
+                out[i].append(Double.nan)
             }
         }
         
@@ -118,7 +118,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(out)
         #endif
         
-        for (i, output) in outputs.enumerate() {
+        for (i, output) in outputs.enumerated() {
             if output.clear {
                 output.buffer!.replaceValues(out[i])
             }

@@ -14,7 +14,7 @@ import Accelerate
  For vDSP_DFT_zop_CreateSetup and vDSP_DFT_zrop_CreateSetup
  - Parameter minN: 3 for vDSP_DFT_zop_CreateSetup and 4 for vDSP_DFT_zrop_CreateSetup. Default 3.
  */
-func nextFFTSize(c: Int, minN: Int = 3) -> Int {
+func nextFFTSize(_ c: Int, minN: Int = 3) -> Int {
     var options = [Int]()
     
     let d = Double(c)
@@ -70,13 +70,13 @@ func nextFFTSize(c: Int, minN: Int = 3) -> Int {
 }
 
 final class FFTAnalysis: ExperimentAnalysisModule {
-    private var realInput: DataBuffer!
-    private var imagInput: DataBuffer?
+    fileprivate var realInput: DataBuffer!
+    fileprivate var imagInput: DataBuffer?
     
-    private let hasImagInBuffer: Bool
+    fileprivate let hasImagInBuffer: Bool
     
-    private var realOutput: ExperimentAnalysisDataIO?
-    private var imagOutput: ExperimentAnalysisDataIO?
+    fileprivate var realOutput: ExperimentAnalysisDataIO?
+    fileprivate var imagOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
@@ -117,23 +117,23 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             let countI = Int(count)
             
             var realInputArray = realInput.toArray()
-            var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](count: countI, repeatedValue: 0.0))
+            var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](repeating: 0.0, count: countI))
             
             //Fill arrays if needed
             let realOffset = countI-realInputArray.count
             
             if realOffset > 0 {
-                realInputArray.appendContentsOf(Repeat(count: realOffset, repeatedValue: 0.0))
+                realInputArray.append(contentsOf: [Double](repeating: 0.0, count: realOffset))
             }
             
             let imagOffset = countI-imagInputArray.count
             
             if imagOffset > 0 {
-                imagInputArray.appendContentsOf(Repeat(count: imagOffset, repeatedValue: 0.0))
+                imagInputArray.append(contentsOf: [Double](repeating: 0.0, count: imagOffset))
             }
             
             //Run DFT
-            realOutputArray = [Double](count: countI, repeatedValue: 0.0)
+            realOutputArray = [Double](repeating: 0.0, count: countI)
             imagOutputArray = realOutputArray
             
             //For now we recreate the DFT setup each time as it fixes some crashes.
@@ -141,7 +141,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
             //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
             let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, vDSP_DFT_Direction.FORWARD)
-            vDSP_DFT_ExecuteD(dftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+            vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
             vDSP_DFT_DestroySetupD(dftSetup)
             
             if !hasImagInBuffer {

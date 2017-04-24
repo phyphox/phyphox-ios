@@ -10,15 +10,15 @@
 import UIKit
 
 final class CreateViewControllerTransitioningDelegate : NSObject, UIViewControllerTransitioningDelegate {
-    func presentationControllerForPresentedViewController(presented: UIViewController, presentingViewController presenting: UIViewController??, sourceViewController source: UIViewController) -> UIPresentationController? {
-        return OverlayPresentationController(presentedViewController: presented, presentingViewController: presenting!)
+    func presentationControllerForPresentedViewController(_ presented: UIViewController, presentingViewController presenting: UIViewController??, sourceViewController source: UIViewController) -> UIPresentationController? {
+        return OverlayPresentationController(presentedViewController: presented, presenting: presenting!)
     }
     
-    func animationControllerForPresentedController(presented: UIViewController, presentingController presenting: UIViewController, sourceController source: UIViewController)-> UIViewControllerAnimatedTransitioning? {
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController)-> UIViewControllerAnimatedTransitioning? {
         return CreateViewControllerTransition(presenting: true)
     }
     
-    func animationControllerForDismissedController(dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         return CreateViewControllerTransition(presenting: false)
     }
 }

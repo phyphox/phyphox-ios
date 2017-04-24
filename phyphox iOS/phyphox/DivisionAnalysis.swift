@@ -16,7 +16,7 @@ final class DivisionAnalysis: ExperimentComplexUpdateValueAnalysis {
         updateAllWithMethod({ (inputs) -> ValueSource in
             var main = inputs.first!
             
-            for (i, input) in inputs.enumerate() {
+            for (i, input) in inputs.enumerated() {
                 if i > 0 {
                     main = self.divideValueSources(main, b: input)
                 }
@@ -26,7 +26,7 @@ final class DivisionAnalysis: ExperimentComplexUpdateValueAnalysis {
             },  priorityInputKey: "dividend")
     }
     
-    func divideValueSources(a: ValueSource, b: ValueSource) -> ValueSource {
+    func divideValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // scalar/scalar
             let result = scalarA/scalarB
             

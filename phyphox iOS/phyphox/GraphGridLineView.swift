@@ -16,19 +16,19 @@ private final class GraphGridLineLayer: CAShapeLayer {
         commonInit()
     }
     
-    override init(layer: AnyObject) {
+    override init(layer: Any) {
         super.init(layer: layer)
         
         commonInit()
     }
     
     func commonInit() {
-        lineDashPattern = [NSNumber(double: 6.0), NSNumber(double: 5.0)]
+        lineDashPattern = [NSNumber(value: 6.0 as Double), NSNumber(value: 5.0 as Double)]
         lineCap = kCALineCapRound
         
-        strokeColor = UIColor(white: 1.0, alpha: 0.3).CGColor
-        fillColor = UIColor.clearColor().CGColor
-        backgroundColor = UIColor.clearColor().CGColor
+        strokeColor = UIColor(white: 1.0, alpha: 0.3).cgColor
+        fillColor = UIColor.clear.cgColor
+        backgroundColor = UIColor.clear.cgColor
     }
     
     @available(*, unavailable)
@@ -42,25 +42,25 @@ private final class GraphGridLineLayer: CAShapeLayer {
         }
     }
     
-    private override func layoutSublayers() {
+    fileprivate override func layoutSublayers() {
         super.layoutSublayers()
         
         lineWidth = (horizontal ? bounds.size.height : bounds.size.width)
 
-        let path = CGPathCreateMutable()
+        let path = CGMutablePath()
         
         let beginPoint = CGPoint(x: (horizontal ? 0.0 : bounds.size.width/2.0), y: (horizontal ? bounds.size.height/2.0 : 0.0))
         let endPoint = CGPoint(x: (horizontal ? bounds.size.width : bounds.size.width/2.0), y: (horizontal ? bounds.size.height/2.0 : bounds.size.height))
         
-        CGPathMoveToPoint(path, nil, beginPoint.x, beginPoint.y)
-        CGPathAddLineToPoint(path, nil, endPoint.x, endPoint.y)
+        path.move(to: beginPoint)
+        path.addLine(to: endPoint)
         
         self.path = path
     }
 }
 
 final class GraphGridLineView: UIView {
-    private var gridLayer: GraphGridLineLayer {
+    fileprivate var gridLayer: GraphGridLineLayer {
         get {
             return self.layer as! GraphGridLineLayer
         }
@@ -77,7 +77,7 @@ final class GraphGridLineView: UIView {
         }
     }
     
-    override class func layerClass() -> AnyClass {
+    override class var layerClass : AnyClass {
         return GraphGridLineLayer.self
     }
 }

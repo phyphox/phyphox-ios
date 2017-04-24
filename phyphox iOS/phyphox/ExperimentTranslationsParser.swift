@@ -53,14 +53,14 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                         category = translated
                     }
                     else if metadataType == "description" {
-                        description = translated.stringByReplacingOccurrencesOfString("(?m)((?:^\\s+)|(?:\\s+$))", withString: "\n", options: NSStringCompareOptions.RegularExpressionSearch, range: nil)
+                        description = translated.replacingOccurrences(of: "(?m)((?:^\\s+)|(?:\\s+$))", with: "\n", options: NSString.CompareOptions.regularExpression, range: nil)
                     }
                     else {
-                        throw SerializationError.InvalidExperimentFile(message: "Invalid metadata type: \(metadataType)")
+                        throw SerializationError.invalidExperimentFile(message: "Invalid metadata type: \(metadataType)")
                     }
                 }
                 else if key as! String == "string" {
-                    for dict in getElemetArrayFromValue(value) as! [NSDictionary] {
+                    for dict in getElemetArrayFromValue(value as AnyObject) as! [NSDictionary] {
                         let translated = dict[XMLDictionaryTextKey] as? String ?? ""
                         let originalText = (dict[XMLDictionaryAttributesKey] as! [String: String])["original"]!
                         
@@ -68,7 +68,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                     }
                 }
                 else if key as! String == "link" {
-                    for dict in getElemetArrayFromValue(value) as! [NSDictionary] {
+                    for dict in getElemetArrayFromValue(value as AnyObject) as! [NSDictionary] {
                         let url = dict[XMLDictionaryTextKey] as? String ?? ""
                         let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
                         
@@ -82,7 +82,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                     continue
                 }
                 else {
-                    throw SerializationError.InvalidExperimentFile(message: "Invalid translation: \(value)")
+                    throw SerializationError.invalidExperimentFile(message: "Invalid translation: \(value)")
                 }
             }
             

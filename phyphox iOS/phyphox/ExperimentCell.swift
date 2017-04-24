@@ -10,24 +10,24 @@
 import UIKit
 
 class ExperimentCell: UICollectionViewCell {
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private var iconView: UIView?
+    fileprivate let titleLabel = UILabel()
+    fileprivate let subtitleLabel = UILabel()
+    fileprivate var iconView: UIView?
     
-    private let separator = UIView()
+    fileprivate let separator = UIView()
     
-    private var optionsButton: PTButton?
+    fileprivate var optionsButton: PTButton?
     
     var showsOptionsButton = false {
         didSet {
             if showsOptionsButton {
                 if optionsButton == nil {
                     optionsButton = PTButton()
-                    optionsButton!.setImage(generateDots(15.0), forState: .Normal)
-                    optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), forControlEvents: .TouchUpInside)
+                    optionsButton!.setImage(generateDots(15.0), for: UIControlState())
+                    optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), for: .touchUpInside)
                     
-                    optionsButton!.setTintColor(kHighlightColor, forState: .Normal)
-                    optionsButton!.setTintColor(kHighlightColor.colorByInterpolatingToColor(UIColor.blackColor(), byFraction: 0.5), forState: .Highlighted)
+                    optionsButton!.setTintColor(kHighlightColor, for: UIControlState())
+                    optionsButton!.setTintColor(kHighlightColor.interpolating(to: UIColor.black, byFraction: 0.5), for: .highlighted)
                     contentView.addSubview(optionsButton!)
                 }
             }
@@ -40,25 +40,25 @@ class ExperimentCell: UICollectionViewCell {
         }
     }
     
-    var optionsButtonCallback: ((button: UIButton) -> ())?
+    var optionsButtonCallback: ((_ button: UIButton) -> ())?
     
     var showSeparator = true {
         didSet {
-            separator.hidden = !showSeparator
+            separator.isHidden = !showSeparator
         }
     }
     
-    override var highlighted: Bool {
+    override var isHighlighted: Bool {
         didSet {
-            UIView.animateWithDuration(0.1) {
-                self.contentView.backgroundColor = self.highlighted ? kLightBackgroundColor : kBackgroundColor
-            }
+            UIView.animate(withDuration: 0.1, animations: {
+                self.contentView.backgroundColor = self.isHighlighted ? kLightBackgroundColor : kBackgroundColor
+            }) 
         }
     }
     
     weak var experiment: Experiment? {
         didSet {
-            if experiment !=-= oldValue {
+            if experiment != oldValue || (experiment == nil && oldValue == nil) {
                 titleLabel.text = experiment?.localizedTitle
                 subtitleLabel.text = experiment?.localizedDescription
                 
@@ -68,7 +68,7 @@ class ExperimentCell: UICollectionViewCell {
                         do {
                             try sensor.verifySensorAvailibility()
                         }
-                        catch SensorError.SensorUnavailable(_) {
+                        catch SensorError.sensorUnavailable(_) {
                             available = false
                             break
                         }
@@ -100,10 +100,10 @@ class ExperimentCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        titleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
-        subtitleLabel.font = UIFont.preferredFontForTextStyle(UIFontTextStyleCaption1)
+        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        subtitleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1)
         
-        separator.backgroundColor = UIColor.whiteColor()
+        separator.backgroundColor = UIColor.white
         separator.alpha = 0.1
         
         contentView.backgroundColor = kBackgroundColor
@@ -119,27 +119,27 @@ class ExperimentCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func optionsButtonPressed(button: UIButton) {
+    func optionsButtonPressed(_ button: UIButton) {
         if optionsButtonCallback != nil {
-            optionsButtonCallback!(button: button)
+            optionsButtonCallback!(button)
         }
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s1 = CGSizeMake(bounds.size.height-4.0, bounds.size.height-4.0)
+        let s1 = CGSize(width: bounds.size.height-4.0, height: bounds.size.height-4.0)
         
-        iconView?.frame = CGRectMake(8.0, 2.0, s1.width, s1.height)
+        iconView?.frame = CGRect(x: 8.0, y: 2.0, width: s1.width, height: s1.height)
         
-        let x = (iconView != nil ? CGRectGetMaxX(iconView!.frame) : 0.0)
+        let x = (iconView != nil ? iconView!.frame.maxX : 0.0)
         
-        var maxLabelSize = CGSizeMake(contentView.bounds.size.width-x-16.0, contentView.bounds.height)
+        var maxLabelSize = CGSize(width: contentView.bounds.size.width-x-16.0, height: contentView.bounds.height)
         
         if let op = optionsButton {
-            let size = CGSizeMake(contentView.bounds.height, contentView.bounds.height)
+            let size = CGSize(width: contentView.bounds.height, height: contentView.bounds.height)
             
-            op.frame = CGRect(origin: CGPointMake(self.contentView.bounds.width-size.width, (contentView.bounds.height-size.height)/2.0), size: size)
+            op.frame = CGRect(origin: CGPoint(x: self.contentView.bounds.width-size.width, y: (contentView.bounds.height-size.height)/2.0), size: size)
             
             maxLabelSize.width -= size.width+5.0
         }
@@ -147,18 +147,18 @@ class ExperimentCell: UICollectionViewCell {
         var s2 = titleLabel.sizeThatFits(maxLabelSize)
         s2.width = min(maxLabelSize.width, s2.width)
         
-        titleLabel.frame = CGRectMake(x+8.0, 5.0, s2.width, s2.height)
+        titleLabel.frame = CGRect(x: x+8.0, y: 5.0, width: s2.width, height: s2.height)
         
         var s3 = subtitleLabel.sizeThatFits(maxLabelSize)
         s3.width = min(maxLabelSize.width, s3.width)
         
-        subtitleLabel.frame = CGRectMake(x+8.0, contentView.bounds.size.height-s3.height-5.0, s3.width, s3.height)
+        subtitleLabel.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-s3.height-5.0, width: s3.width, height: s3.height)
         
         
         
-        let separatorHeight = 1.0/UIScreen.mainScreen().scale
+        let separatorHeight = 1.0/UIScreen.main.scale
         
-        separator.frame = CGRectMake(x+8.0, contentView.bounds.size.height-separatorHeight, contentView.bounds.size.width-x-16.0, separatorHeight)
+        separator.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-separatorHeight, width: contentView.bounds.size.width-x-16.0, height: separatorHeight)
         
 
     }

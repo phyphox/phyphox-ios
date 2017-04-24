@@ -11,7 +11,7 @@ import Foundation
 import Accelerate
 
 final class TanAnalysis: UpdateValueAnalysis {
-    private let deg: Bool
+    fileprivate let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)
@@ -22,7 +22,7 @@ final class TanAnalysis: UpdateValueAnalysis {
         updateAllWithMethod { array -> [Double] in
             var results = array
             if self.deg {
-                var f = M_PI/180.0
+                var f = Double.pi/180.0
                 vDSP_vsmulD(array, 1, &f, &results, 1, vDSP_Length(array.count))
             }
             vvtan(&results, results, [Int32(results.count)])

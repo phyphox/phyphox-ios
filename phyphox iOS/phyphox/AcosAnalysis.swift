@@ -10,7 +10,7 @@ import Foundation
 import Accelerate
 
 final class AcosAnalysis: UpdateValueAnalysis {
-    private let deg: Bool
+    fileprivate let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)
@@ -24,7 +24,7 @@ final class AcosAnalysis: UpdateValueAnalysis {
             vvacos(&results, array, [Int32(array.count)])
             
             if self.deg {
-                var f = 180.0/M_PI
+                var f = 180.0/Double.pi
                 vDSP_vsmulD(results, 1, &f, &results, 1, vDSP_Length(results.count))
             }
             

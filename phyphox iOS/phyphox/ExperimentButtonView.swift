@@ -15,11 +15,11 @@ final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
     required init(descriptor: ButtonViewDescriptor) {
         button = UIButton()
         button.backgroundColor = kLightBackgroundColor
-        button.setTitle(descriptor.localizedLabel, forState: .Normal)
+        button.setTitle(descriptor.localizedLabel, for: UIControlState())
       
         super.init(descriptor: descriptor)
         
-        button.addTarget(self, action: #selector(ExperimentButtonView.buttonPressed), forControlEvents: .TouchUpInside)
+        button.addTarget(self, action: #selector(ExperimentButtonView.buttonPressed), for: .touchUpInside)
         
         addSubview(button)
     }
@@ -28,9 +28,9 @@ final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
         descriptor.onTrigger();
     }
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
         let s = button.sizeThatFits(size)
-        return CGSizeMake(s.width+2*spacing, s.height+2*spacing)
+        return CGSize(width: s.width+2*spacing, height: s.height+2*spacing)
     }
     
     override func layoutSubviews() {

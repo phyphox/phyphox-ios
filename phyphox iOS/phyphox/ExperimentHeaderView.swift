@@ -10,9 +10,9 @@
 import UIKit
 
 final class ExperimentHeaderView: UICollectionReusableView {
-    private let label = UILabel()
+    fileprivate let label = UILabel()
     
-    private let background = UIView()
+    fileprivate let background = UIView()
 
     var title: String? {
         set {
@@ -30,7 +30,7 @@ final class ExperimentHeaderView: UICollectionReusableView {
         background.backgroundColor = kHighlightColor
         addSubview(background)
         
-        label.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+        label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         addSubview(label)
         
         label.textColor = kTextColor
@@ -39,9 +39,9 @@ final class ExperimentHeaderView: UICollectionReusableView {
     override func layoutSubviews() {
         super.layoutSubviews()
       
-        label.frame = CGRect(origin: CGPointMake(16.0, 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
+        label.frame = CGRect(origin: CGPoint(x: 16.0, y: 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
         
-        background.frame = CGRect(origin: CGPointMake(8.0, 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
+        background.frame = CGRect(origin: CGPoint(x: 8.0, y: 8.0), size: CGSize(width: bounds.width-16.0, height: bounds.height-10.0))
     }
     
     convenience init() {

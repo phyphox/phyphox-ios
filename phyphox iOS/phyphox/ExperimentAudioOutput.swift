@@ -10,22 +10,22 @@
 import Foundation
 import AVFoundation
 
-private let audioOutputQueue = dispatch_queue_create("de.rwth-aachen.phyphox.audioOutput", DISPATCH_QUEUE_CONCURRENT)
+private let audioOutputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioOutput", attributes: DispatchQueue.Attributes.concurrent)
 
 final class ExperimentAudioOutput {
     let dataSource: DataBuffer
     let loop: Bool
     let sampleRate: UInt
     
-    private var pcmPlayer: AVAudioPlayerNode!
-    private var engine: AVAudioEngine!
-    private var pcmBuffer: AVAudioPCMBuffer!
+    fileprivate var pcmPlayer: AVAudioPlayerNode!
+    fileprivate var engine: AVAudioEngine!
+    fileprivate var pcmBuffer: AVAudioPCMBuffer!
     
-    private var playing = false
+    fileprivate var playing = false
     
-    private let format: AVAudioFormat
+    fileprivate let format: AVAudioFormat
     
-    private var stateToken: NSUUID?
+    fileprivate var stateToken: UUID?
     
     init(sampleRate: UInt, loop: Bool, dataSource: DataBuffer) {
         self.dataSource = dataSource;
@@ -37,7 +37,7 @@ final class ExperimentAudioOutput {
         format = AVAudioFormat(streamDescription: &audioDescription)
     }
     
-    @objc func audioEngineConfigurationChange(notification: NSNotification) -> Void {
+    @objc func audioEngineConfigurationChange(_ notification: Notification) -> Void {
         pause()
         play()
     }
@@ -46,23 +46,23 @@ final class ExperimentAudioOutput {
         if !playing || !self.dataSource.stateTokenIsValid(self.stateToken) {
             playing = true
             
-            dispatch_sync(audioOutputQueue, {
+            audioOutputQueue.sync(execute: {
                 if self.engine == nil {
                     self.pcmPlayer = AVAudioPlayerNode()
                     self.engine = AVAudioEngine()
                     
-                    NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(audioEngineConfigurationChange), name: AVAudioEngineConfigurationChangeNotification, object: self.engine)
+                    NotificationCenter.default.addObserver(self, selector: #selector(audioEngineConfigurationChange), name: NSNotification.Name.AVAudioEngineConfigurationChange, object: self.engine)
                     
-                    self.engine.attachNode(self.pcmPlayer)
+                    self.engine.attach(self.pcmPlayer)
                     self.engine.connect(self.pcmPlayer, to: self.engine.mainMixerNode, format: self.format)
                 }
                 
                 //If a buffer gets played and paused repeatedly (like the sonar) but the content that is played is always the same the buffer doesn't need to be created again.
                 if self.pcmBuffer == nil || !self.dataSource.stateTokenIsValid(self.stateToken) {
                     var source = self.dataSource.toArray().map { Float($0) }
-                    self.stateToken = self.dataSource.getStateToken()
+                    self.stateToken = self.dataSource.getStateToken() as UUID?
                     
-                    if self.pcmPlayer.playing {
+                    if self.pcmPlayer.isPlaying {
                         self.pcmBuffer = nil
                         self.pcmPlayer.stop()
                     }
@@ -74,19 +74,19 @@ final class ExperimentAudioOutput {
                         return
                     }
                     
-                    self.pcmBuffer = AVAudioPCMBuffer(PCMFormat: self.format, frameCapacity: UInt32(source.count))
-                    self.pcmBuffer.floatChannelData[0].assignFrom(&source, count: source.count)
+                    self.pcmBuffer = AVAudioPCMBuffer(pcmFormat: self.format, frameCapacity: UInt32(source.count))
+                    self.pcmBuffer.floatChannelData?[0].assign(from: &source, count: source.count)
                     self.pcmBuffer.frameLength = UInt32(source.count)
                 }
                 
                 do {
-                    if !self.engine.running {
+                    if !self.engine.isRunning {
                         try self.engine.start()
                     }
                     
                     weak var bufferRef = self.pcmBuffer
                     self.pcmPlayer.play()
-                    self.pcmPlayer.scheduleBuffer(self.pcmBuffer, atTime: nil, options: (self.loop ? .Loops : []), completionHandler: { [unowned self] in
+                    self.pcmPlayer.scheduleBuffer(self.pcmBuffer, at: nil, options: (self.loop ? .loops : []), completionHandler: { [unowned self] in
                         if bufferRef == self.pcmBuffer { //bufferRef != self.pcmBuffer <=> pcmBuffer was cancelled and recreated because the data source changed, playback should not be cancelled.
                             self.pause()
                         }
@@ -116,7 +116,7 @@ final class ExperimentAudioOutput {
         stateToken = nil
         pcmBuffer = nil
         
-        engine.detachNode(pcmPlayer)
+        engine.detach(pcmPlayer)
         pcmPlayer = nil
         engine = nil
     }

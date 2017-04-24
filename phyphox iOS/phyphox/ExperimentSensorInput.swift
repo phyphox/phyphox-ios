@@ -11,19 +11,19 @@ import Foundation
 import CoreMotion
 
 enum SensorType {
-    case Accelerometer
-    case Gyroscope
-    case LinearAcceleration
-    case MagneticField
-    case Pressure
-    case Light
-    case Proximity
+    case accelerometer
+    case gyroscope
+    case linearAcceleration
+    case magneticField
+    case pressure
+    case light
+    case proximity
 }
 
-enum SensorError : ErrorType {
-    case InvalidSensorType
-    case MotionSessionAbsent
-    case SensorUnavailable(SensorType)
+enum SensorError : Error {
+    case invalidSensorType
+    case motionSessionAbsent
+    case sensorUnavailable(SensorType)
 }
 
 private let kG = -9.81
@@ -34,9 +34,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     /**
      The update frequency of the sensor.
      */
-    private(set) var rate: NSTimeInterval //in s
+    fileprivate(set) var rate: TimeInterval //in s
     
-    var effectiveRate: NSTimeInterval {
+    var effectiveRate: TimeInterval {
         get {
             if self.averaging != nil {
                 return 0.0
@@ -50,29 +50,29 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
-    private(set) var startTimestamp: NSTimeInterval?
-    private var pauseBegin: NSTimeInterval = 0.0
+    fileprivate(set) var startTimestamp: TimeInterval?
+    fileprivate var pauseBegin: TimeInterval = 0.0
     
-    private(set) weak var xBuffer: DataBuffer?
-    private(set) weak var yBuffer: DataBuffer?
-    private(set) weak var zBuffer: DataBuffer?
-    private(set) weak var tBuffer: DataBuffer?
-    private(set) weak var absBuffer: DataBuffer?
+    fileprivate(set) weak var xBuffer: DataBuffer?
+    fileprivate(set) weak var yBuffer: DataBuffer?
+    fileprivate(set) weak var zBuffer: DataBuffer?
+    fileprivate(set) weak var tBuffer: DataBuffer?
+    fileprivate(set) weak var absBuffer: DataBuffer?
     
-    private(set) var motionSession: MotionSession
+    fileprivate(set) var motionSession: MotionSession
     
-    private let queue = dispatch_queue_create("de.rwth-aachen.phyphox.sensorQueue", DISPATCH_QUEUE_SERIAL)
+    fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.sensorQueue", attributes: [])
     
-    private class Averaging {
+    fileprivate class Averaging {
         /**
          The duration of averaging intervals.
          */
-        var averagingInterval: NSTimeInterval
+        var averagingInterval: TimeInterval
         
         /**
          Start of current average mesurement.
          */
-        var iterationStartTimestamp: NSTimeInterval?
+        var iterationStartTimestamp: TimeInterval?
         
         var x: Double?
         var y: Double?
@@ -80,11 +80,11 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         
         var numberOfUpdates: UInt = 0
         
-        init(averagingInterval: NSTimeInterval) {
+        init(averagingInterval: TimeInterval) {
             self.averagingInterval = averagingInterval
         }
         
-        func requiresFlushing(currentT: NSTimeInterval) -> Bool {
+        func requiresFlushing(_ currentT: TimeInterval) -> Bool {
             return iterationStartTimestamp != nil && iterationStartTimestamp! + averagingInterval <= currentT
         }
     }
@@ -92,7 +92,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     /**
      Information on averaging. Set to `nil` to disable averaging.
      */
-    private var averaging: Averaging?
+    fileprivate var averaging: Averaging?
     
     var recordingAverages: Bool {
         get {
@@ -100,7 +100,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: NSTimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?) {
+    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.rate = rate
         self.calibrated = calibrated
@@ -113,7 +113,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         
         self.motionSession = motionSession
         
-        if (sensorType == .MagneticField) {
+        if (sensorType == .magneticField) {
             self.motionSession.calibratedMagnetometer = calibrated
         }
         
@@ -124,36 +124,36 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     
     func verifySensorAvailibility() throws {
         switch sensorType {
-        case .Accelerometer, .LinearAcceleration:
+        case .accelerometer, .linearAcceleration:
             guard motionSession.accelerometerAvailable else {
-                throw SensorError.SensorUnavailable(sensorType)
+                throw SensorError.sensorUnavailable(sensorType)
             }
             break;
-        case .Gyroscope:
+        case .gyroscope:
             guard motionSession.gyroAvailable else {
-                throw SensorError.SensorUnavailable(sensorType)
+                throw SensorError.sensorUnavailable(sensorType)
             }
             break;
-        case .MagneticField:
+        case .magneticField:
             guard motionSession.magnetometerAvailable else {
-                throw SensorError.SensorUnavailable(sensorType)
+                throw SensorError.sensorUnavailable(sensorType)
             }
             break;
-        case .Pressure:
+        case .pressure:
             guard motionSession.altimeterAvailable else {
-                throw SensorError.SensorUnavailable(sensorType)
+                throw SensorError.sensorUnavailable(sensorType)
             }
             break;
-        case .Proximity:
+        case .proximity:
             guard motionSession.proximityAvailable else {
-                throw SensorError.SensorUnavailable(sensorType)
+                throw SensorError.sensorUnavailable(sensorType)
             }
-        case .Light:
-            throw SensorError.SensorUnavailable(sensorType)
+        case .light:
+            throw SensorError.sensorUnavailable(sensorType)
         }
     }
     
-    private func resetValuesForAveraging() {
+    fileprivate func resetValuesForAveraging() {
         guard let averaging = self.averaging else {
             return
         }
@@ -176,8 +176,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         resetValuesForAveraging()
         
         switch sensorType {
-        case .Accelerometer:
-            motionSession.getAccelerometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
+        case .accelerometer:
+            _ = motionSession.getAccelerometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                 guard let accelerometerData = data else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
@@ -196,8 +196,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
-        case .Gyroscope:
-            motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+        case .gyroscope:
+            _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
@@ -216,9 +216,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
-        case .MagneticField:
+        case .magneticField:
             if calibrated {
-                motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+                _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                     guard let motion = deviceMotion else {
                         self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                         return
@@ -240,7 +240,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     self.dataIn(x, y: y, z: z, t: t, error: error)
                     })
             } else {
-                motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
+                _ = motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                     guard let magnetometerData = data else {
                         self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                         return
@@ -258,8 +258,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     self.dataIn(x, y: y, z: z, t: t, error: error)
                     })
             }
-        case .LinearAcceleration:
-            motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+        case .linearAcceleration:
+            _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
@@ -278,8 +278,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 self.dataIn(x, y: y, z: z, t: t, error: error)
                 })
             
-        case .Pressure:
-            motionSession.getAltimeterData(self, interval: effectiveRate, handler: { [unowned self] (data, error) -> Void in
+        case .pressure:
+            _ = motionSession.getAltimeterData(self, interval: effectiveRate, handler: { [unowned self] (data, error) -> Void in
                 guard let altimeterData = data else {
                     self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
                     return
@@ -292,8 +292,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 self.ready = true
                 self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
                 })
-        case .Proximity:
-            motionSession.getProximityData(self, interval: effectiveRate, handler: { [unowned self] (state) -> Void in
+        case .proximity:
+            _ = motionSession.getProximityData(self, interval: effectiveRate, handler: { [unowned self] (state) -> Void in
                 
                 let distance = state ? 0.0 : 5.0 //Estimate in cm
                 
@@ -314,23 +314,23 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         ready = false
         
         switch sensorType {
-        case .Accelerometer:
+        case .accelerometer:
             motionSession.stopAccelerometerUpdates(self)
-        case .LinearAcceleration:
+        case .linearAcceleration:
             motionSession.stopDeviceMotionUpdates(self)
-        case .Gyroscope:
+        case .gyroscope:
             motionSession.stopDeviceMotionUpdates(self)
-        case .MagneticField:
+        case .magneticField:
             if calibrated {
                 motionSession.stopDeviceMotionUpdates(self)
             } else {
                 motionSession.stopMagnetometerUpdates(self)
             }
-        case .Pressure:
+        case .pressure:
             motionSession.stopAltimeterUpdates(self)
-        case .Proximity:
+        case .proximity:
             motionSession.stopProximityUpdates(self)
-        case .Light:
+        case .light:
             break
         }
     }
@@ -339,7 +339,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         self.startTimestamp = nil
     }
     
-    private func writeToBuffers(x: Double?, y: Double?, z: Double?, t: NSTimeInterval) {
+    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
         if x != nil && self.xBuffer != nil {
             self.xBuffer!.append(x)
         }
@@ -365,9 +365,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    private func dataIn(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
         
-        func dataInSync(x: Double?, y: Double?, z: Double?, t: NSTimeInterval?, error: NSError?) {
+        func dataInSync(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
             guard error == nil else {
                 print("Sensor error: \(error!.localizedDescription)")
                 return
@@ -423,8 +423,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
             }
         }
         
-        dispatch_async(queue) {
-            autoreleasepool({
+        queue.async {
+            autoreleasepool(invoking: {
                 dataInSync(x, y: y, z: z, t: t, error: error)
             })
         }

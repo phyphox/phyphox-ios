@@ -27,7 +27,7 @@ class ScalableViewController: UIViewController {
         addChildViewController(vc)
         vc.view.frame = view.bounds
         view.addSubview(vc.view)
-        vc.didMoveToParentViewController(self)
+        vc.didMove(toParentViewController: self)
     }
     
     @available(*, unavailable)
@@ -38,8 +38,8 @@ class ScalableViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        vc.view.transform = CGAffineTransformIdentity
+        vc.view.transform = CGAffineTransform.identity
         vc.view.frame = view.bounds
-        vc.view.transform = CGAffineTransformMakeScale(viewControllerScale, viewControllerScale)
+        vc.view.transform = CGAffineTransform(scaleX: viewControllerScale, y: viewControllerScale)
     }
 }

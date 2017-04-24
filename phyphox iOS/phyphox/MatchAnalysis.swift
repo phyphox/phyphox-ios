@@ -11,7 +11,7 @@ import Foundation
 final class MatchAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        var out = [[Double]](count: inputs.count, repeatedValue: [])
+        var out = [[Double]](repeating: [], count: inputs.count)
 
         var allInputs = true
         var i = 0
@@ -33,13 +33,13 @@ final class MatchAnalysis: ExperimentAnalysisModule {
             }
             i += 1
             if allOK && allInputs {
-                for (index, value) in values.enumerate() {
+                for (index, value) in values.enumerated() {
                     out[index].append(value)
                 }
             }
         }
         
-        for (i, output) in outputs.enumerate() {
+        for (i, output) in outputs.enumerated() {
             if output.clear {
                 output.buffer!.replaceValues(out[i])
             }

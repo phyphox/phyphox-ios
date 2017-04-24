@@ -9,8 +9,8 @@
 
 import Foundation
 
-public class ViewDescriptor {
-    private let label: String
+open class ViewDescriptor {
+    fileprivate let label: String
     let requiresAnalysis: Bool
     weak var translation: ExperimentTranslationCollection?
     
@@ -27,23 +27,23 @@ public class ViewDescriptor {
     func onTrigger() {
     }
     
-    func generateViewHTMLWithID(id: Int) -> String {
+    func generateViewHTMLWithID(_ id: Int) -> String {
         fatalError("Override this method")
     }
     
-    func generateDataCompleteHTMLWithID(id: Int) -> String {
+    func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         return "function() {}"
     }
     
-    func setValueHTMLWithID(id: Int) -> String {
+    func setValueHTMLWithID(_ id: Int) -> String {
         return "function(x) {}"
     }
     
-    func setDataXHTMLWithID(id: Int) -> String {
+    func setDataXHTMLWithID(_ id: Int) -> String {
         return "function(x) {}"
     }
     
-    func setDataYHTMLWithID(id: Int) -> String {
+    func setDataYHTMLWithID(_ id: Int) -> String {
         return "function(y) {}"
     }
 }

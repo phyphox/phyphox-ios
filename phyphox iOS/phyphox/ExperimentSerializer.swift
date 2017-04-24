@@ -10,26 +10,26 @@
 import Foundation
 
 final class ExperimentSerializer: NSObject {
-    private var experiment: Experiment
+    fileprivate var experiment: Experiment
     
     init(experiment: Experiment) {
         self.experiment = experiment
         super.init()
     }
     
-    func serialize() throws -> NSData {
-        throw SerializationError.GenericError(message: "Serializer not implemented.")
+    func serialize() throws -> Data {
+        throw SerializationError.genericError(message: "Serializer not implemented.")
     }
     
-    func serializeAsynchronous(completion: (data: NSData?, error: SerializationError?) -> Void) {
-        dispatch_async(serializationQueue) { () -> Void in
+    func serializeAsynchronous(_ completion: @escaping (_ data: Data?, _ error: SerializationError?) -> Void) {
+        serializationQueue.async { () -> Void in
             do {
                 let data = try self.serialize()
                 
-                completion(data: data, error: nil)
+                completion(data, nil)
             }
             catch {
-                completion(data: nil, error: error as? SerializationError)
+                completion(nil, error as? SerializationError)
             }
         }
     }

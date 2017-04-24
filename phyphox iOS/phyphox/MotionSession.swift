@@ -16,40 +16,40 @@ func ==(x: MotionSessionReceiver, y: MotionSessionReceiver) -> Bool {
 
 class MotionSessionReceiver: Hashable {
     var hashValue: Int {
-        return unsafeAddressOf(self).hashValue
+        return Unmanaged.passUnretained(self).toOpaque().hashValue
     }
 }
 
 final class MotionSession {
-    private lazy var motionManager = CMMotionManager()
-    private lazy var altimeter = CMAltimeter()
+    fileprivate lazy var motionManager = CMMotionManager()
+    fileprivate lazy var altimeter = CMAltimeter()
     
     var calibratedMagnetometer = true
     
-    private(set) var altimeterRunning = false
-    private(set) var accelerometerRunning = false
-    private(set) var gyroscopeRunning = false
-    private(set) var magnetometerRunning = false
-    private(set) var deviceMotionRunning = false
-    private(set) var proximityRunning = false
+    fileprivate(set) var altimeterRunning = false
+    fileprivate(set) var accelerometerRunning = false
+    fileprivate(set) var gyroscopeRunning = false
+    fileprivate(set) var magnetometerRunning = false
+    fileprivate(set) var deviceMotionRunning = false
+    fileprivate(set) var proximityRunning = false
     
-    private var altimeterReceivers: [MotionSessionReceiver: (data: CMAltitudeData?, error: NSError?) -> Void] = [:]
-    private var accelerometerReceivers: [MotionSessionReceiver: (data: CMAccelerometerData?, error: NSError?) -> Void] = [:]
-    private var gyroscopeReceivers: [MotionSessionReceiver: (data: CMGyroData?, error: NSError?) -> Void] = [:]
-    private var magnetometerReceivers: [MotionSessionReceiver: (data: CMMagnetometerData?, error: NSError?) -> Void] = [:]
-    private var deviceMotionReceivers: [MotionSessionReceiver: (deviceMotion: CMDeviceMotion?, error: NSError?) -> Void] = [:]
-    private var proximityReceivers: [MotionSessionReceiver: (proximityState: Bool) -> Void] = [:]
+    fileprivate var altimeterReceivers: [MotionSessionReceiver: (_ data: CMAltitudeData?, _ error: NSError?) -> Void] = [:]
+    fileprivate var accelerometerReceivers: [MotionSessionReceiver: (_ data: CMAccelerometerData?, _ error: NSError?) -> Void] = [:]
+    fileprivate var gyroscopeReceivers: [MotionSessionReceiver: (_ data: CMGyroData?, _ error: NSError?) -> Void] = [:]
+    fileprivate var magnetometerReceivers: [MotionSessionReceiver: (_ data: CMMagnetometerData?, _ error: NSError?) -> Void] = [:]
+    fileprivate var deviceMotionReceivers: [MotionSessionReceiver: (_ deviceMotion: CMDeviceMotion?, _ error: NSError?) -> Void] = [:]
+    fileprivate var proximityReceivers: [MotionSessionReceiver: (_ proximityState: Bool) -> Void] = [:]
     
-    private func makeQueue() -> NSOperationQueue {
-        let q = NSOperationQueue()
+    fileprivate func makeQueue() -> OperationQueue {
+        let q = OperationQueue()
         
         q.maxConcurrentOperationCount = 1 //FIFO/serial queue
-        q.qualityOfService = .UserInitiated
+        q.qualityOfService = .userInitiated
         
         return q
     }
     
-    private static let instance = MotionSession()
+    fileprivate static let instance = MotionSession()
     
     class func sharedSession() -> MotionSession {
         return instance
@@ -61,16 +61,16 @@ final class MotionSession {
         return CMAltimeter.isRelativeAltitudeAvailable()
     }
     
-    func getAltimeterData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (data: CMAltitudeData?, error: NSError?) -> Void) -> Bool {
+    func getAltimeterData(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ data: CMAltitudeData?, _ error: NSError?) -> Void) -> Bool {
         if altimeterAvailable {
             altimeterReceivers[receiver] = handler
             
             if !altimeterRunning {
                 altimeterRunning = true
                 
-                altimeter.startRelativeAltitudeUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (data, error) in
+                altimeter.startRelativeAltitudeUpdates(to: makeQueue(), withHandler: { [unowned self] (data, error) in
                     for (_, h) in self.altimeterReceivers {
-                        h(data: data, error: error)
+                        h(data, error as NSError?)
                     }
                     })
             }
@@ -81,8 +81,8 @@ final class MotionSession {
         return false
     }
     
-    func stopAltimeterUpdates(receiver: MotionSessionReceiver) {
-        altimeterReceivers.removeValueForKey(receiver)
+    func stopAltimeterUpdates(_ receiver: MotionSessionReceiver) {
+        altimeterReceivers.removeValue(forKey: receiver)
         
         if altimeterReceivers.count == 0 && altimeterRunning {
             altimeterRunning = false
@@ -94,10 +94,10 @@ final class MotionSession {
     //MARK: - Accelerometer
     
     var accelerometerAvailable: Bool {
-        return motionManager.accelerometerAvailable
+        return motionManager.isAccelerometerAvailable
     }
     
-    func getAccelerometerData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (data: CMAccelerometerData?, error: NSError?) -> Void) -> Bool {
+    func getAccelerometerData(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ data: CMAccelerometerData?, _ error: NSError?) -> Void) -> Bool {
         if accelerometerAvailable {
             accelerometerReceivers[receiver] = handler
             
@@ -105,9 +105,9 @@ final class MotionSession {
                 accelerometerRunning = true
                 
                 motionManager.accelerometerUpdateInterval = interval
-                motionManager.startAccelerometerUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (data, error) in
+                motionManager.startAccelerometerUpdates(to: makeQueue(), withHandler: { [unowned self] (data, error) in
                     for (_, h) in self.accelerometerReceivers {
-                        h(data: data, error: error)
+                        h(data, error as NSError?)
                     }
                     })
             }
@@ -118,8 +118,8 @@ final class MotionSession {
         return false
     }
     
-    func stopAccelerometerUpdates(receiver: MotionSessionReceiver) {
-        accelerometerReceivers.removeValueForKey(receiver)
+    func stopAccelerometerUpdates(_ receiver: MotionSessionReceiver) {
+        accelerometerReceivers.removeValue(forKey: receiver)
         
         if accelerometerReceivers.count == 0 && accelerometerRunning {
             accelerometerRunning = false
@@ -130,10 +130,10 @@ final class MotionSession {
     //MARK: - Gyroscope
     
     var gyroAvailable: Bool {
-        return motionManager.gyroAvailable
+        return motionManager.isGyroAvailable
     }
     
-    func getGyroData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (data: CMGyroData?, error: NSError?) -> Void) -> Bool {
+    func getGyroData(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ data: CMGyroData?, _ error: NSError?) -> Void) -> Bool {
         if gyroAvailable {
             gyroscopeReceivers[receiver] = handler
             
@@ -141,9 +141,9 @@ final class MotionSession {
                 gyroscopeRunning = true
                 
                 motionManager.gyroUpdateInterval = interval
-                motionManager.startGyroUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (data, error) in
+                motionManager.startGyroUpdates(to: makeQueue(), withHandler: { [unowned self] (data, error) in
                     for (_, h) in self.gyroscopeReceivers {
-                        h(data: data, error: error)
+                        h(data, error as NSError?)
                     }
                     })
             }
@@ -154,8 +154,8 @@ final class MotionSession {
         return false
     }
     
-    func stopGyroUpdates(receiver: MotionSessionReceiver) {
-        gyroscopeReceivers.removeValueForKey(receiver)
+    func stopGyroUpdates(_ receiver: MotionSessionReceiver) {
+        gyroscopeReceivers.removeValue(forKey: receiver)
         
         if gyroscopeReceivers.count == 0 && gyroscopeRunning {
             gyroscopeRunning = false
@@ -167,10 +167,10 @@ final class MotionSession {
     //MARK: - Magnetometer
     
     var magnetometerAvailable: Bool {
-        return motionManager.magnetometerAvailable
+        return motionManager.isMagnetometerAvailable
     }
     
-    func getMagnetometerData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (data: CMMagnetometerData?, error: NSError?) -> Void) -> Bool {
+    func getMagnetometerData(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ data: CMMagnetometerData?, _ error: NSError?) -> Void) -> Bool {
         if magnetometerAvailable {
             magnetometerReceivers[receiver] = handler
             
@@ -178,9 +178,9 @@ final class MotionSession {
                 magnetometerRunning = true
                 
                 motionManager.magnetometerUpdateInterval = interval
-                motionManager.startMagnetometerUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (data, error) in
+                motionManager.startMagnetometerUpdates(to: makeQueue(), withHandler: { [unowned self] (data, error) in
                     for (_, h) in self.magnetometerReceivers {
-                        h(data: data, error: error)
+                        h(data, error as NSError?)
                     }
                     })
             }
@@ -191,8 +191,8 @@ final class MotionSession {
         return false
     }
     
-    func stopMagnetometerUpdates(receiver: MotionSessionReceiver) {
-        magnetometerReceivers.removeValueForKey(receiver)
+    func stopMagnetometerUpdates(_ receiver: MotionSessionReceiver) {
+        magnetometerReceivers.removeValue(forKey: receiver)
         
         if magnetometerReceivers.count == 0 && magnetometerRunning {
             magnetometerRunning = false
@@ -203,10 +203,10 @@ final class MotionSession {
     //MARK: - Device Motion
     
     var deviceMotionAvailable: Bool {
-        return motionManager.deviceMotionAvailable
+        return motionManager.isDeviceMotionAvailable
     }
     
-    func getDeviceMotion(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (deviceMotion: CMDeviceMotion?, error: NSError?) -> Void) -> Bool {
+    func getDeviceMotion(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ deviceMotion: CMDeviceMotion?, _ error: NSError?) -> Void) -> Bool {
         if deviceMotionAvailable {
             deviceMotionReceivers[receiver] = handler
             
@@ -216,15 +216,15 @@ final class MotionSession {
                 motionManager.deviceMotionUpdateInterval = interval
                 motionManager.showsDeviceMovementDisplay = true
                 if calibratedMagnetometer {
-                    motionManager.startDeviceMotionUpdatesUsingReferenceFrame(.XArbitraryCorrectedZVertical, toQueue: makeQueue(), withHandler: { [unowned self] (motion, error) in
+                    motionManager.startDeviceMotionUpdates(using: .xArbitraryCorrectedZVertical, to: makeQueue(), withHandler: { [unowned self] (motion, error) in
                         for (_, h) in self.deviceMotionReceivers {
-                            h(deviceMotion: motion, error: error)
+                            h(motion, error as NSError?)
                         }
                         })
                 } else {
-                    motionManager.startDeviceMotionUpdatesToQueue(makeQueue(), withHandler: { [unowned self] (motion, error) in
+                    motionManager.startDeviceMotionUpdates(to: makeQueue(), withHandler: { [unowned self] (motion, error) in
                         for (_, h) in self.deviceMotionReceivers {
-                            h(deviceMotion: motion, error: error)
+                            h(motion, error as NSError?)
                         }
                         })
                 }
@@ -236,8 +236,8 @@ final class MotionSession {
         return false
     }
     
-    func stopDeviceMotionUpdates(receiver: MotionSessionReceiver) {
-        deviceMotionReceivers.removeValueForKey(receiver)
+    func stopDeviceMotionUpdates(_ receiver: MotionSessionReceiver) {
+        deviceMotionReceivers.removeValue(forKey: receiver)
         
         if deviceMotionReceivers.count == 0 && deviceMotionRunning {
             deviceMotionRunning = false
@@ -248,31 +248,31 @@ final class MotionSession {
     //MARK: - Proximity sensor
     
     var proximityAvailable: Bool {
-        let device = UIDevice.currentDevice()
-        device.proximityMonitoringEnabled = true
-        let available = device.proximityMonitoringEnabled
-        device.proximityMonitoringEnabled = false
+        let device = UIDevice.current
+        device.isProximityMonitoringEnabled = true
+        let available = device.isProximityMonitoringEnabled
+        device.isProximityMonitoringEnabled = false
         return available
     }
     
-    @objc func proximityChanged(notification: NSNotification) {
+    @objc func proximityChanged(_ notification: Notification) {
         let state = (notification.object as! UIDevice).proximityState
         for (_, h) in self.proximityReceivers {
-            h(proximityState: state)
+            h(state)
         }
     }
     
-    func getProximityData(receiver: MotionSessionReceiver, interval: NSTimeInterval = 0.1, handler: (proximity: Bool) -> Void) -> Bool {
+    func getProximityData(_ receiver: MotionSessionReceiver, interval: TimeInterval = 0.1, handler: @escaping (_ proximity: Bool) -> Void) -> Bool {
         if proximityAvailable {
             proximityReceivers[receiver] = handler
             
             if !proximityRunning {
                 proximityRunning = true
                 
-                let device = UIDevice.currentDevice()
-                device.proximityMonitoringEnabled = true
-                NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(proximityChanged), name: "UIDeviceProximityStateDidChangeNotification", object: device)
-                proximityChanged(NSNotification(name: "First value", object: device))
+                let device = UIDevice.current
+                device.isProximityMonitoringEnabled = true
+                NotificationCenter.default.addObserver(self, selector: #selector(proximityChanged), name: NSNotification.Name(rawValue: "UIDeviceProximityStateDidChangeNotification"), object: device)
+                proximityChanged(Notification(name: Notification.Name(rawValue: "First value"), object: device))
             }
             
             return true
@@ -281,14 +281,14 @@ final class MotionSession {
         return false
     }
     
-    func stopProximityUpdates(receiver: MotionSessionReceiver) {
-        proximityReceivers.removeValueForKey(receiver)
+    func stopProximityUpdates(_ receiver: MotionSessionReceiver) {
+        proximityReceivers.removeValue(forKey: receiver)
         print("Stopping")
         if proximityReceivers.count == 0 && proximityRunning {
             print("Full stop")
             proximityRunning = false
-            NSNotificationCenter.defaultCenter().removeObserver(self)
-            UIDevice.currentDevice().proximityMonitoringEnabled = false
+            NotificationCenter.default.removeObserver(self)
+            UIDevice.current.isProximityMonitoringEnabled = false
         }
     }
     

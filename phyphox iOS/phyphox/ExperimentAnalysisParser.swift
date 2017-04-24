@@ -21,7 +21,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 attributes = (value as! [String: String])
             }
             else {
-                a[key] = (getElemetArrayFromValue(value) as! [NSDictionary])
+                a[key] = (getElemetArrayFromValue(value) as! [NSDictionary] as AnyObject)
             }
             
         }
@@ -34,15 +34,15 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
     }
     
-    func parse(buffers: [String : DataBuffer]) throws -> ExperimentAnalysis? {
+    func parse(_ buffers: [String : DataBuffer]) throws -> ExperimentAnalysis? {
         if analyses == nil {
             return nil
         }
         
-        let sleep = floatTypeFromXML(attributes, key: "sleep", defaultValue: 0.0)
-        let onUserInput = boolFromXML(attributes, key: "onUserInput", defaultValue: false)
+        let sleep = floatTypeFromXML(attributes as [String : AnyObject]?, key: "sleep", defaultValue: 0.0)
+        let onUserInput = boolFromXML(attributes as [String : AnyObject]?, key: "onUserInput", defaultValue: false)
         
-        func getDataFlows(dictionaries: [AnyObject]?) throws -> [ExperimentAnalysisDataIO] {
+        func getDataFlows(_ dictionaries: [AnyObject]?) throws -> [ExperimentAnalysisDataIO] {
             var a = [ExperimentAnalysisDataIO]()
             
             if dictionaries != nil {
@@ -59,7 +59,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             return a
         }
         
-        var processed: [ExperimentAnalysisModule!] = []
+        var processed: [ExperimentAnalysisModule?] = []
         
         for (key, values) in analyses! {
             if key == "__count" || key == "__index" {
@@ -74,7 +74,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 
                 var analysis: ExperimentAnalysisModule! = nil
                 
-                let index = (value["__index"] as! NSNumber).integerValue
+                let index = (value["__index"] as! NSNumber).intValue
                 
                 if key == "add" {
                     analysis = try AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
@@ -197,12 +197,14 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                     analysis = try IfAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
                 else {
-                    throw SerializationError.InvalidExperimentFile(message: "Error! Invalid analysis type: \(key)")
+                    throw SerializationError.invalidExperimentFile(message: "Error! Invalid analysis type: \(key)")
                 }
                 
                 if analysis != nil {
                     if index >= processed.count {
-                        processed.appendContentsOf([ExperimentAnalysisModule!](count: index-processed.count+1, repeatedValue: nil))
+                        for _ in processed.count...index {
+                            processed.append(nil)
+                        }
                     }
                     
                     processed[index] = analysis
@@ -216,7 +218,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         
         var deleteIndices: [Int] = []
         
-        for (i, v) in processed.enumerate() {
+        for (i, v) in processed.enumerated() {
             if v == nil {
                 deleteIndices.append(i)
             }

@@ -23,7 +23,7 @@ class ExperimentAnalysisModule {
      */
     internal var outputs: [ExperimentAnalysisDataIO]
     
-    private var executed = false
+    fileprivate var executed = false
     
     internal var staticAnalysis = false {
         didSet {
@@ -33,7 +33,7 @@ class ExperimentAnalysisModule {
         }
     }
     
-    internal var timestamp: NSTimeInterval = 0.0
+    internal var timestamp: TimeInterval = 0.0
 
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) throws {
         self.inputs = inputs
@@ -43,9 +43,9 @@ class ExperimentAnalysisModule {
     /**
      Updates immediately.
      */
-    func setNeedsUpdate(timestamp: NSTimeInterval) {
+    func setNeedsUpdate(_ timestamp: TimeInterval) {
         if !staticAnalysis || !executed {
-            if NSThread.isMainThread() {
+            if Thread.isMainThread {
                 print("Analysis should run in the background!")
             }
             self.timestamp = timestamp
@@ -58,11 +58,11 @@ class ExperimentAnalysisModule {
     
     #if DEBUG
     internal func debug_noteInputs(inputs: AnyObject) {
-        print("\(self.dynamicType) inputs: \(inputs)")
+        print("\(type(of: self)) inputs: \(inputs)")
     }
     
     internal func debug_noteOutputs(outputs: AnyObject) {
-        print("\(self.dynamicType) outputs: \(outputs)")
+        print("\(type(of: self)) outputs: \(outputs)")
     }
     #endif
     

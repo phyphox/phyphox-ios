@@ -11,14 +11,14 @@ import Foundation
 import Accelerate
 
 final class AutocorrelationAnalysis: ExperimentAnalysisModule {
-    private var minXIn: ExperimentAnalysisDataIO?
-    private var maxXIn: ExperimentAnalysisDataIO?
+    fileprivate var minXIn: ExperimentAnalysisDataIO?
+    fileprivate var maxXIn: ExperimentAnalysisDataIO?
     
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
+    fileprivate var xIn: DataBuffer?
+    fileprivate var yIn: DataBuffer!
     
-    private var xOut: ExperimentAnalysisDataIO?
-    private var yOut: ExperimentAnalysisDataIO?
+    fileprivate var xOut: ExperimentAnalysisDataIO?
+    fileprivate var yOut: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
@@ -35,7 +35,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 maxXIn = input
             }
             else {
-                print("Error: Invalid analysis input: \(input.asString)")
+                print("Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
@@ -47,7 +47,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 yOut = output
             }
             else {
-                print("Error: Invalid analysis output: \(output.asString)")
+                print("Error: Invalid analysis output: \(String(describing: output.asString))")
             }
         }
         
@@ -85,7 +85,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             
             if xOut != nil {
                 if xIn != nil {
-                    x = [Double](count: count, repeatedValue: 0.0)
+                    x = [Double](repeating: 0.0, count: count)
                     
                     let xRaw = xIn!.toArray()
                     
@@ -103,7 +103,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                     }
                 }
                 else {
-                    x = [Double](count: count, repeatedValue: 0.0)
+                    x = [Double](repeating: 0.0, count: count)
                     
                     vDSP_vrampD([0.0], [1.0], &x!, 1, vDSP_Length(count))
                 }
@@ -128,7 +128,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 C[n] = sum(A[n+p] * F[p], 0 <= p < P);
              */
             
-            var normalizeVector = [Double](count: count, repeatedValue: 0.0)
+            var normalizeVector = [Double](repeating: 0.0, count: count)
             
             let paddedY = y + normalizeVector
             
@@ -155,7 +155,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 minimizedX = x.filter { d -> Bool in
                     if d < minX || d > maxX {
                         if index < minimizedY.count {
-                            minimizedY.removeAtIndex(index)
+                            minimizedY.remove(at: index)
                         }
                         return false
                     }

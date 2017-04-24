@@ -11,10 +11,10 @@ import Foundation
 import Accelerate
 
 final class GaussSmoothAnalysis: ExperimentAnalysisModule {
-    private var calcWidth: Int = 0
-    private var kernel: [Float] = []
+    fileprivate var calcWidth: Int = 0
+    fileprivate var kernel: [Float] = []
     
-    private var sigma: Double = 0.0 {
+    fileprivate var sigma: Double = 0.0 {
         didSet {
             calcWidth = Int(round(sigma*3.0))
             
@@ -54,17 +54,17 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         
         let count = input.count
         
-        let outputData = UnsafeMutablePointer<Float>.alloc(count)
+        let outputData = UnsafeMutablePointer<Float>.allocate(capacity: count)
         
-        var inImg = vImage_Buffer(data: &input, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
-        var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*sizeof(Float))
+        var inImg = vImage_Buffer(data: &input, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
+        var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
         
         vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageTruncateKernel))
         
-        let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
+        let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, to: UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
         
-        outputData.destroy()
-        outputData.dealloc(count)
+        outputData.deinitialize()
+        outputData.deallocate(capacity: count)
         
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)

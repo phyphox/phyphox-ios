@@ -16,7 +16,7 @@ final class ExperimentExportParser: ExperimentMetadataParser {
         sets = getElementsWithKey(data, key: "set") as! [NSDictionary]?
     }
     
-    func parse(buffers: [String: DataBuffer], translation: ExperimentTranslationCollection?) -> ExperimentExport? {
+    func parse(_ buffers: [String: DataBuffer], translation: ExperimentTranslationCollection?) -> ExperimentExport? {
         if sets == nil {
             return nil
         }

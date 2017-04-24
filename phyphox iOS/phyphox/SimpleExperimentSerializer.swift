@@ -10,7 +10,7 @@
 import Foundation
 
 final class SimpleExperimentSerializer {
-    class func writeSimpleExperiment(title title: String, bufferSize: Int, rate: Double, sensors: MapSensorType) throws -> String {
+    class func writeSimpleExperiment(title: String, bufferSize: Int, rate: Double, sensors: MapSensorType) throws -> String {
         let str = serializeExperiment(title: title, bufferSize: bufferSize, rate: rate, sensors: sensors)
         
         var i = 1
@@ -20,19 +20,19 @@ final class SimpleExperimentSerializer {
         
         let directory = customExperimentsDirectory
         
-        if !NSFileManager.defaultManager().fileExistsAtPath(directory) {
-            try NSFileManager.defaultManager().createDirectoryAtPath(directory, withIntermediateDirectories: false, attributes: nil)
+        if !FileManager.default.fileExists(atPath: directory) {
+            try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false, attributes: nil)
         }
         
         repeat {
-            path = (directory as NSString).stringByAppendingPathComponent("\(t).phyphox")
+            path = (directory as NSString).appendingPathComponent("\(t).phyphox")
             
             t = "\(title)-\(i)"
             i += 1
             
-        } while NSFileManager.defaultManager().fileExistsAtPath(path)
+        } while FileManager.default.fileExists(atPath: path)
         
-        try str.writeToFile(path, atomically: true, encoding: NSUTF8StringEncoding)
+        try str.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
         
         ExperimentManager.sharedInstance().loadCustomExperiments()
         
@@ -40,7 +40,7 @@ final class SimpleExperimentSerializer {
     }
     
     
-    class func serializeExperiment(title title: String, bufferSize: Int, rate: Double, sensors: MapSensorType) -> String {
+    class func serializeExperiment(title: String, bufferSize: Int, rate: Double, sensors: MapSensorType) -> String {
         var containers = ""
         var views = ""
         var export = ""

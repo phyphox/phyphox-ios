@@ -11,7 +11,7 @@ import UIKit
 
 final class ExperimentViewModuleFactory {
     
-    class func createViews(viewDescriptor: ExperimentViewCollectionDescriptor) -> [UIView] {
+    class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor) -> [UIView] {
         var m: [UIView] = []
         
         for descriptor in viewDescriptor.views {

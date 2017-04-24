@@ -29,11 +29,11 @@ final class ValueViewDescriptor: ViewDescriptor {
         super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
     
-    override func generateViewHTMLWithID(id: Int) -> String {
+    override func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> \(unit ?? "")</span></div>"
     }
     
-    override func setValueHTMLWithID(id: Int) -> String {
+    override func setValueHTMLWithID(_ id: Int) -> String {
         if scientific {
             return "function (x) { $(\"#element\(id) .value .valueNumber\").text((x*\(factor)).toExponential(\(precision))) }"
         }

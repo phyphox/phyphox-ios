@@ -10,11 +10,11 @@
 import Foundation
 
 final class ThresholdAnalysis: ExperimentAnalysisModule {
-    private let falling: Bool
+    fileprivate let falling: Bool
     
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
-    private var thresholdIn: ExperimentAnalysisDataIO?
+    fileprivate var xIn: DataBuffer?
+    fileprivate var yIn: DataBuffer!
+    fileprivate var thresholdIn: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         falling = boolFromXML(additionalAttributes, key: "falling", defaultValue: false)
@@ -30,7 +30,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
                 xIn = input.buffer
             }
             else {
-                print("Error: Invalid analysis input: \(input.asString)")
+                print("Error: Invalid analysis input: \(String(describing: input.asString))")
             }
         }
         
@@ -47,7 +47,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         var x: Double?
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
         
-        for (i, value) in yIn.enumerate() {
+        for (i, value) in yIn.enumerated() {
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
                     if let v = xIn?.objectAtIndex(i) {

@@ -16,36 +16,36 @@ final class CreateViewControllerTransition : NSObject, UIViewControllerAnimatedT
         self.presenting = presenting
     }
     
-    func transitionDuration(transitionContext: UIViewControllerContextTransitioning?) -> NSTimeInterval {
+    func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
         return 0.75
     }
     
-    func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
-        let fromViewC = transitionContext.viewControllerForKey(UITransitionContextFromViewControllerKey)!
-        let toViewC = transitionContext.viewControllerForKey(UITransitionContextToViewControllerKey)!
+    func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+        let fromViewC = transitionContext.viewController(forKey: UITransitionContextViewControllerKey.from)!
+        let toViewC = transitionContext.viewController(forKey: UITransitionContextViewControllerKey.to)!
         
         
         let fromView = fromViewC.view
         let toView = toViewC.view
 
         if presenting {
-            var f = fromView.frame
-            f.size.height -= 40.0
-            toView.frame = f
+            var f = fromView?.frame
+            f?.size.height -= 40.0
+            toView?.frame = f!
         }
         
         let center: CGPoint
         
         if presenting {
-            center = toView.center
-            toView.center = CGPointMake(center.x, toView.bounds.size.height)
-            transitionContext.containerView().addSubview(toView)
+            center = (toView?.center)!
+            toView?.center = CGPoint(x: center.x, y: (toView?.bounds.size.height)!)
+            transitionContext.containerView.addSubview(toView!)
         }
         else {
-            center = CGPointMake(toView.center.x, toView.bounds.size.height + fromView.bounds.size.height)
+            center = CGPoint(x: (toView?.center.x)!, y: (toView?.bounds.size.height)! + (fromView?.bounds.size.height)!)
         }
         
-        UIView.animateWithDuration(self.transitionDuration(transitionContext), delay: 0.0, usingSpringWithDamping: 250.0, initialSpringVelocity: 7.0, options: [], animations: {
+        UIView.animate(withDuration: self.transitionDuration(using: transitionContext), delay: 0.0, usingSpringWithDamping: 250.0, initialSpringVelocity: 7.0, options: [], animations: {
             if self.presenting {
                 let v = fromViewC as! ScalableViewController
                 
@@ -54,18 +54,18 @@ final class CreateViewControllerTransition : NSObject, UIViewControllerAnimatedT
                 var c = center
                 c.y += 40.0
                 
-                toView.center = c
+                toView?.center = c
             }
             else {
                 let v = toViewC as! ScalableViewController
                 
                 v.viewControllerScale = 1.0
                 
-                fromView.center = center
+                fromView?.center = center
             }
             }, completion: { _ in
                 if !self.presenting {
-                    fromView.removeFromSuperview()
+                    fromView?.removeFromSuperview()
                 }
                 
                 transitionContext.completeTransition(true)

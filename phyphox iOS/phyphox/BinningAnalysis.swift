@@ -9,16 +9,16 @@
 import Foundation
 
 final class BinningAnalysis: ExperimentAnalysisModule {
-    private var inInput: ExperimentAnalysisDataIO!
-    private var x0Input: ExperimentAnalysisDataIO?
-    private var dxInput: ExperimentAnalysisDataIO?
+    fileprivate var inInput: ExperimentAnalysisDataIO!
+    fileprivate var x0Input: ExperimentAnalysisDataIO?
+    fileprivate var dxInput: ExperimentAnalysisDataIO?
     
-    private var binStartsOutput: ExperimentAnalysisDataIO?
-    private var binCountsOutput: ExperimentAnalysisDataIO?
+    fileprivate var binStartsOutput: ExperimentAnalysisDataIO?
+    fileprivate var binCountsOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         if inputs.count == 0 || outputs.count == 0 {
-            throw SerializationError.GenericError(message: "Binning analysis needs at least one input and ine output.")
+            throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
         var tIn: ExperimentAnalysisDataIO? = nil
         var tX0: ExperimentAnalysisDataIO? = nil
@@ -46,11 +46,11 @@ final class BinningAnalysis: ExperimentAnalysisModule {
         }
         
         if tIn == nil {
-            throw SerializationError.GenericError(message: "Binning analysis needs a valid input designated as \"in\".")
+            throw SerializationError.genericError(message: "Binning analysis needs a valid input designated as \"in\".")
         }
         
         if tIn?.buffer == nil {
-            throw SerializationError.GenericError(message: "Binning input \"in\" needs to be a buffer.")
+            throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
         }
         
         inInput = tIn
@@ -89,8 +89,8 @@ final class BinningAnalysis: ExperimentAnalysisModule {
                     binCounts.append(0)
                 }
                 while binIndex < firstBinIndex {
-                    binStarts.insert(x0+Double(firstBinIndex-1)*dx, atIndex: 0)
-                    binCounts.insert(0, atIndex: 0)
+                    binStarts.insert(x0+Double(firstBinIndex-1)*dx, at: 0)
+                    binCounts.insert(0, at: 0)
                     firstBinIndex = Int(round((binStarts[0]-x0)/dx))
                 }
                 binCounts[binIndex-firstBinIndex] += 1

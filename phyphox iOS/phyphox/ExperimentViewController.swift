@@ -9,21 +9,21 @@
 import UIKit
 
 protocol ModuleExclusiveViewDelegate {
-    func presentExclusiveView(view: UIView)
+    func presentExclusiveView(_ view: UIView)
     func hideExclusiveView()
 }
 
 final class ExperimentViewController: UIViewController, ModuleExclusiveViewDelegate {
-    private let modules: [UIView]
+    fileprivate let modules: [UIView]
     var exclusiveView: UIView? = nil
     
-    private let scrollView = UIScrollView()
-    private let linearView = UIView()
+    fileprivate let scrollView = UIScrollView()
+    fileprivate let linearView = UIView()
     
     let insetTop: CGFloat = 10
     
     @available(*, unavailable)
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         fatalError("Unavailable")
     }
     
@@ -42,8 +42,8 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
             }
         }
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:UIKeyboardDidChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
     }
     
     override func viewDidLoad() {
@@ -58,10 +58,10 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
         self.view.addSubview(scrollView)
     }
     
-    func updateLayout(animate: Bool) {
+    func updateLayout(_ animate: Bool) {
         scrollView.frame = view.bounds
         
-        var contentSize = CGRectMake(0, 0, view.bounds.width, 0)
+        var contentSize = CGRect(x: 0, y: 0, width: view.bounds.width, height: 0)
         var availableSize = view.bounds.size
         availableSize.height = availableSize.height - insetTop
         
@@ -72,7 +72,7 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
             } else {
                 hidden = false
                 let s = module.sizeThatFits(availableSize)
-                let frame = CGRectMake((view.bounds.width-s.width)/2.0, contentSize.height, s.width, s.height)
+                let frame = CGRect(x: (view.bounds.width-s.width)/2.0, y: contentSize.height, width: s.width, height: s.height)
                 
                 if animate {
                     if let eMod = module as? ExperimentGraphView {
@@ -84,16 +84,16 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
                     module.frame = frame
                 }
                 
-                contentSize = CGRectMake(0, 0, view.bounds.width, contentSize.height + s.height)
+                contentSize = CGRect(x: 0, y: 0, width: view.bounds.width, height: contentSize.height + s.height)
             }
             
-            if module.hidden != hidden {
+            if module.isHidden != hidden {
                 if animate {
-                    UIView.transitionWithView(module, duration: 0.15,  options: .TransitionCrossDissolve, animations: {
-                        module.hidden = hidden
+                    UIView.transition(with: module, duration: 0.15,  options: .transitionCrossDissolve, animations: {
+                        module.isHidden = hidden
                         }, completion: nil)
                 } else {
-                    module.hidden = hidden
+                    module.isHidden = hidden
                 }
             }
         }
@@ -110,25 +110,25 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
     
     //MARK: - Keyboard handler
     
-    dynamic private func keyboardFrameChanged(notification: NSNotification) {
-        func UIViewAnimationOptionsFromUIViewAnimationCurve(curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
-            let testOptions = UInt(UIViewAnimationCurve.Linear.rawValue << 16);
+    dynamic fileprivate func keyboardFrameChanged(_ notification: Notification) {
+        func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
+            let testOptions = UInt(UIViewAnimationCurve.linear.rawValue << 16);
             
-            if (testOptions != UIViewAnimationOptions.CurveLinear.rawValue) {
+            if (testOptions != UIViewAnimationOptions.curveLinear.rawValue) {
                 NSLog("Unexpected implementation of UIViewAnimationOptionCurveLinear");
             }
             
             return UIViewAnimationOptions(rawValue: UInt(curve.rawValue << 16));
         }
         
-        let duration = notification.userInfo![UIKeyboardAnimationDurationUserInfoKey]!.doubleValue!
+        let duration = (notification.userInfo![UIKeyboardAnimationDurationUserInfoKey]! as AnyObject).doubleValue!
         
-        let curve = UIViewAnimationCurve(rawValue: notification.userInfo![UIKeyboardAnimationCurveUserInfoKey]!.integerValue!)!
+        let curve = UIViewAnimationCurve(rawValue: (notification.userInfo![UIKeyboardAnimationCurveUserInfoKey]! as AnyObject).intValue!)!
         
         var bottomInset: CGFloat = 0.0
         
-        if !CGRectIsEmpty(keyboardFrame) {
-            bottomInset = view.frame.size.height-view.convertRect(keyboardFrame, fromView: nil).origin.y
+        if !keyboardFrame.isEmpty {
+            bottomInset = view.frame.size.height-view.convert(keyboardFrame, from: nil).origin.y
         }
         
         var contentInset = scrollView.contentInset
@@ -137,7 +137,7 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
         contentInset.bottom = bottomInset
         scrollInset.bottom = bottomInset
         
-        UIView.animateWithDuration(duration, delay: 0.0, options: [UIViewAnimationOptions.BeginFromCurrentState, UIViewAnimationOptionsFromUIViewAnimationCurve(curve)], animations: { () -> Void in
+        UIView.animate(withDuration: duration, delay: 0.0, options: [UIViewAnimationOptions.beginFromCurrentState, UIViewAnimationOptionsFromUIViewAnimationCurve(curve)], animations: { () -> Void in
             self.scrollView.contentInset = contentInset
             self.scrollView.scrollIndicatorInsets = scrollInset
             }, completion: nil)
@@ -146,22 +146,22 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
     override class func initialize() {
         super.initialize()
         
-        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: UIKeyboardWillChangeFrameNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name:UIKeyboardDidChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name:NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
     }
     
-    dynamic private class func keyboardFrameWillChange(notification: NSNotification) {
-        keyboardFrame = notification.userInfo![UIKeyboardFrameEndUserInfoKey]!.CGRectValue;
-        if (CGRectIsEmpty(keyboardFrame)) {
-            keyboardFrame = notification.userInfo![UIKeyboardFrameBeginUserInfoKey]!.CGRectValue;
+    dynamic fileprivate class func keyboardFrameWillChange(_ notification: Notification) {
+        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
+        if (keyboardFrame.isEmpty) {
+            keyboardFrame = (notification.userInfo![UIKeyboardFrameBeginUserInfoKey]! as AnyObject).cgRectValue;
         }
     }
     
-    dynamic private class func keyboardFrameDidChange(notification: NSNotification) {
-        keyboardFrame = notification.userInfo![UIKeyboardFrameEndUserInfoKey]!.CGRectValue;
+    dynamic fileprivate class func keyboardFrameDidChange(_ notification: Notification) {
+        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
     }
     
-    func presentExclusiveView(view: UIView) {
+    func presentExclusiveView(_ view: UIView) {
         exclusiveView = view
         updateLayout(true)
     }

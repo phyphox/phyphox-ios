@@ -10,7 +10,7 @@
 import Foundation
 
 protocol DataBufferObserver : AnyObject {
-    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
+    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
     func analysisComplete()
 }
 
@@ -21,12 +21,12 @@ func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
 /**
  Data buffer used for raw or processed data from sensors.
  */
-final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
+final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
     let name: String
     var size: Int {
         didSet {
             while count > size && size > 0 {
-                queue.dequeue()
+                _ = queue.dequeue()
             }
         }
     }
@@ -40,37 +40,37 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         return name.hash
     }
 
-    private var stateToken: NSUUID?
+    fileprivate var stateToken: UUID?
     
-    private var observers = NSMutableOrderedSet()
+    fileprivate var observers = NSMutableOrderedSet()
     
     /**
      Notifications are sent in order, first registered, first notified.
      */
-    func addObserver(observer: DataBufferObserver) {
-        observers.addObject(observer)
+    func addObserver(_ observer: DataBufferObserver) {
+        observers.add(observer)
     }
     
-    func removeObserver(observer: DataBufferObserver) {
-        observers.removeObject(observer)
+    func removeObserver(_ observer: DataBufferObserver) {
+        observers.remove(observer)
     }
     
     /**
      A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
      */
-    func getStateToken() -> NSUUID? {
+    func getStateToken() -> UUID? {
         if stateToken == nil {
-            stateToken = NSUUID()
+            stateToken = UUID()
         }
         
         return stateToken
     }
     
-    func stateTokenIsValid(token: NSUUID?) -> Bool {
+    func stateTokenIsValid(_ token: UUID?) -> Bool {
         return token != nil && stateToken != nil && stateToken == token
     }
     
-    private func bufferMutated() {
+    fileprivate func bufferMutated() {
         stateToken = nil
     }
     
@@ -95,7 +95,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    private let queue: Queue<Double>
+    fileprivate let queue: Queue<Double>
     
     init(name: String, size: Int, vInit: [Double]) {
         self.name = name
@@ -106,8 +106,8 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         self.appendFromArray(vInit, notify: false)
     }
     
-    func generate() -> IndexingGenerator<[Double]> {
-        return queue.generate()
+    func makeIterator() -> IndexingIterator<[Double]> {
+        return queue.makeIterator()
     }
     
     var last: Double? {
@@ -122,7 +122,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func sendUpdateNotification(noData: Bool = false) {
+    func sendUpdateNotification(_ noData: Bool = false) {
         for observer in observers {
             mainThread {
                 (observer as! DataBufferObserver).dataBufferUpdated(self, noData: noData)
@@ -144,11 +144,11 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func objectAtIndex(index: Int, async: Bool = false) -> Double? {
+    func objectAtIndex(_ index: Int, async: Bool = false) -> Double? {
         return queue.objectAtIndex(index, async: async)
     }
     
-    func clear(notify: Bool = true, noData: Bool = true) {
+    func clear(_ notify: Bool = true, noData: Bool = true) {
         queue.clear()
         trashedCount = 0
         written = false
@@ -162,7 +162,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func replaceValues(values: [Double], notify: Bool = true) {
+    func replaceValues(_ values: [Double], notify: Bool = true) {
         if !staticBuffer || !written {
             written = true
             trashedCount = 0
@@ -183,7 +183,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func append(value: Double?, async: Bool = false, notify: Bool = true) {
+    func append(_ value: Double?, async: Bool = false, notify: Bool = true) {
         if !staticBuffer || !written {
             if (value == nil) {
                 return
@@ -195,7 +195,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
                 self.queue.enqueue(value!, async: true)
                 
                 if (self.actualCount > self.size && self.size > 0) {
-                    self.queue.dequeue(true)
+                    _ = self.queue.dequeue(true)
                     self.trashedCount += 1
                 }
             }
@@ -205,7 +205,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
             }
             else {
                 queue.sync {
-                    autoreleasepool(operations)
+                    autoreleasepool(invoking: operations)
                 }
             }
             
@@ -217,7 +217,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
         }
     }
     
-    func appendFromArray(values: [Double], notify: Bool = true) {
+    func appendFromArray(_ values: [Double], notify: Bool = true) {
         if values.count == 0 {
             return
         }
@@ -239,7 +239,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
                         array.removeFirst(cut)
                     }
                     
-                    array.appendContentsOf(values)
+                    array.append(contentsOf: values)
                     
                     if cutAfter && cut > 0 && self.size > 0 {
                         array.removeFirst(cut)
@@ -263,7 +263,7 @@ final class DataBuffer: SequenceType, CustomStringConvertible, Hashable {
     
     var description: String {
         get {
-            return "<\(self.dynamicType): \(unsafeAddressOf(self)): \(toArray())>"
+            return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
         }
     }
 }

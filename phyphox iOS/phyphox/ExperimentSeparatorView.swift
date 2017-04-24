@@ -14,10 +14,10 @@ final class ExperimentSeparatorView: ExperimentViewModule<SeparatorViewDescripto
     required init(descriptor: SeparatorViewDescriptor) {
         super.init(descriptor: descriptor)
         self.backgroundColor = descriptor.color
-        label.hidden = true
+        label.isHidden = true
     }
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
         var s = size
         s.height = descriptor.height * label.font!.pointSize
         return s

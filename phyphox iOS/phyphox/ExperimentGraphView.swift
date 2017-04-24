@@ -23,30 +23,30 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     var isExclusiveView = false
     typealias T = GraphViewDescriptor
     
-    private let xLabel: UILabel
-    private let yLabel: UILabel
+    fileprivate let xLabel: UILabel
+    fileprivate let yLabel: UILabel
     
-    private let glGraph: GLGraphView
-    private let gridView: GraphGridView
+    fileprivate let glGraph: GLGraphView
+    fileprivate let gridView: GraphGridView
     
-    private var maxX: Double
-    private var minX: Double
-    private var maxY: Double
-    private var minY: Double
+    fileprivate var maxX: Double
+    fileprivate var minX: Double
+    fileprivate var maxY: Double
+    fileprivate var minY: Double
     
-    private var zoomMaxX: Double
-    private var zoomMinX: Double
-    private var zoomMaxY: Double
-    private var zoomMinY: Double
+    fileprivate var zoomMaxX: Double
+    fileprivate var zoomMinX: Double
+    fileprivate var zoomMaxY: Double
+    fileprivate var zoomMinY: Double
     
     var panGesture: UIPanGestureRecognizer? = nil
     var pinchGesture: UIPinchGestureRecognizer? = nil
     
-    var queue: dispatch_queue_t!
+    var queue: DispatchQueue!
     
-    private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+    fileprivate var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
     
-    func addDataSet(set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
+    func addDataSet(_ set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
         if self.dataSets.count >= Int(self.descriptor.history) {
             self.dataSets.removeFirst()
         }
@@ -54,7 +54,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         self.dataSets.append(set)
     }
     
-    private var max: GraphPoint<Double>? {
+    fileprivate var max: GraphPoint<Double>? {
         if dataSets.count > 1 {
             var maxX = -Double.infinity
             var maxY = -Double.infinity
@@ -78,7 +78,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    private var min: GraphPoint<Double>? {
+    fileprivate var min: GraphPoint<Double>? {
         if dataSets.count > 1 {
             var minX = Double.infinity
             var minY = Double.infinity
@@ -102,7 +102,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    private var points: [[GraphPoint<GLfloat>]] {
+    fileprivate var points: [[GraphPoint<GLfloat>]] {
         return dataSets.map{$0.data}
     }
     
@@ -113,10 +113,10 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         self.maxY = -Double.infinity
         self.minY = Double.infinity
         
-        self.zoomMinX = Double.NaN
-        self.zoomMaxX = Double.NaN
-        self.zoomMinY = Double.NaN
-        self.zoomMaxY = Double.NaN
+        self.zoomMinX = Double.nan
+        self.zoomMaxX = Double.nan
+        self.zoomMinY = Double.nan
+        self.zoomMaxY = Double.nan
         
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
@@ -128,15 +128,15 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         glGraph.historyLength = descriptor.history
         
         gridView = GraphGridView(descriptor: descriptor)
-        gridView.gridInset = CGPointMake(2.0, 2.0)
-        gridView.gridOffset = CGPointMake(0.0, 0.0)
+        gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
+        gridView.gridOffset = CGPoint(x: 0.0, y: 0.0)
         
-        func makeLabel(text: String?) -> UILabel {
+        func makeLabel(_ text: String?) -> UILabel {
             let l = UILabel()
             l.text = text
             
-            let defaultFont = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
-            l.font = defaultFont.fontWithSize(defaultFont.pointSize * 0.8)
+            let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            l.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
             
             return l
         }
@@ -145,7 +145,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         yLabel = makeLabel(descriptor.localizedYLabel)
         xLabel.textColor = kTextColor
         yLabel.textColor = kTextColor
-        yLabel.transform = CGAffineTransformMakeRotation(-CGFloat(M_PI/2.0))
+        yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
         
         super.init(descriptor: descriptor)
         
@@ -162,7 +162,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         descriptor.yInputBuffer.addObserver(self)
     }
     
-    func tapped(sender: UITapGestureRecognizer) {
+    func tapped(_ sender: UITapGestureRecognizer) {
         if isExclusiveView {
             isExclusiveView = false
             glGraph.removeGestureRecognizer(panGesture!)
@@ -180,15 +180,15 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    var panStartMinX = Double.NaN
-    var panStartMaxX = Double.NaN
-    var panStartMinY = Double.NaN
-    var panStartMaxY = Double.NaN
+    var panStartMinX = Double.nan
+    var panStartMaxX = Double.nan
+    var panStartMinY = Double.nan
+    var panStartMaxY = Double.nan
     
-    func panned(sender: UIPanGestureRecognizer) {
-        let offset = sender.translationInView(self)
+    func panned(_ sender: UIPanGestureRecognizer) {
+        let offset = sender.translation(in: self)
         
-        if sender.state == .Began {
+        if sender.state == .began {
             panStartMinX = self.minX
             panStartMaxX = self.maxX
             panStartMinY = self.minY
@@ -207,15 +207,15 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     }
     
     
-    var pinchCoordOriginX = Double.NaN
-    var pinchCoordOriginY = Double.NaN
-    var pinchCoordScaleX = Double.NaN
-    var pinchCoordScaleY = Double.NaN
-    var pinchTouchScaleX = CGFloat.NaN
-    var pinchTouchScaleY = CGFloat.NaN
+    var pinchCoordOriginX = Double.nan
+    var pinchCoordOriginY = Double.nan
+    var pinchCoordScaleX = Double.nan
+    var pinchCoordScaleY = Double.nan
+    var pinchTouchScaleX = CGFloat.nan
+    var pinchTouchScaleY = CGFloat.nan
     
-    func pinched(sender: UIPinchGestureRecognizer) {
-        if sender.numberOfTouches() != 2 {
+    func pinched(_ sender: UIPinchGestureRecognizer) {
+        if sender.numberOfTouches != 2 {
             return
         }
         
@@ -224,13 +224,13 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         let maxY = self.maxY
         let minY = self.minY
         
-        let t1 = sender.locationOfTouch(0, inView: self)
-        let t2 = sender.locationOfTouch(1, inView: self)
+        let t1 = sender.location(ofTouch: 0, in: self)
+        let t2 = sender.location(ofTouch: 1, in: self)
         
         let centerX = (t1.x + t2.x)/2.0;
         let centerY = (t1.y + t2.y)/2.0;
         
-        if sender.state == .Began {
+        if sender.state == .began {
             pinchTouchScaleX = abs(t1.x - t2.x)/sender.scale;
             pinchTouchScaleY = abs(t1.y - t2.y)/sender.scale;
             
@@ -277,13 +277,13 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         descriptor.yInputBuffer.removeObserver(self)
     }
     
-    func dataBufferUpdated(buffer: DataBuffer, noData: Bool) {
+    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
         setNeedsUpdate()
     }
     
     //MARK - Graph
-    func getTicks(min: Double, max: Double, maxTicks: Int, log: Bool) -> [Double]? {
-        if max <= min || !isfinite(min) || !isfinite(max) {
+    func getTicks(_ min: Double, max: Double, maxTicks: Int, log: Bool) -> [Double]? {
+        if max <= min || !min.isFinite || !max.isFinite {
             return nil
         }
         
@@ -398,12 +398,12 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         return tickLocations
     }
     
-    private var lastIndexXArray: [Double]?
-    private var lastCount: Int?
+    fileprivate var lastIndexXArray: [Double]?
+    fileprivate var lastCount: Int?
     
-    private var lastCut: Int = 0
+    fileprivate var lastCut: Int = 0
     
-    private var hasUpdateBlockEnqueued = false
+    fileprivate var hasUpdateBlockEnqueued = false
     
     override func update() {
         if hasUpdateBlockEnqueued || superview == nil || window == nil {
@@ -412,8 +412,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         
         hasUpdateBlockEnqueued = true
         
-        dispatch_async(queue) { [unowned self] in
-            autoreleasepool({
+        queue.async { [unowned self] in
+            autoreleasepool(invoking: {
                 var xValues: [Double]
                 
                 let yValues = self.descriptor.yInputBuffer.toArray()
@@ -551,7 +551,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                     let x = (logX ? log(rawX) : rawX)
                     let y = (logY ? log(rawY) : rawY)
                     
-                    guard isfinite(x) && isfinite(y) else {
+                    guard x.isFinite && y.isFinite else {
                         valuesOK = false
                         continue
                     }
@@ -647,19 +647,19 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     
     //Mark - General UI
     
-    override func sizeThatFits(size: CGSize) -> CGSize {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
         let s1 = label.sizeThatFits(self.bounds.size)
         
         //For now, we just zoom, but eventually we want to add some controls and maybe not zoom in all the way right away?
         if isExclusiveView {
-            return CGSizeMake(size.width, size.height)
+            return CGSize(width: size.width, height: size.height)
         } else {
-            return CGSizeMake(size.width, Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+            return CGSize(width: size.width, height: Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
         }
     }
     
     var graphFrame: CGRect {
-        return CGRectOffset(gridView.insetRect, gridView.frame.origin.x, gridView.frame.origin.y)
+        return gridView.insetRect.offsetBy(dx: gridView.frame.origin.x, dy: gridView.frame.origin.y)
     }
     
     func updatePlotArea() {
@@ -675,21 +675,21 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         let spacing: CGFloat = 1.0
         
         let s1 = label.sizeThatFits(self.bounds.size)
-        label.frame = CGRectMake((self.bounds.size.width-s1.width)/2.0, spacing, s1.width, s1.height)
+        label.frame = CGRect(x: (self.bounds.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
         
         let s2 = xLabel.sizeThatFits(self.bounds.size)
-        xLabel.frame = CGRectMake((self.bounds.size.width-s2.width)/2.0, self.bounds.size.height-s2.height-spacing, s2.width, s2.height)
+        xLabel.frame = CGRect(x: (self.bounds.size.width-s2.width)/2.0, y: self.bounds.size.height-s2.height-spacing, width: s2.width, height: s2.height)
         
-        let s3 = CGSizeApplyAffineTransform(yLabel.sizeThatFits(self.bounds.size), yLabel.transform)
+        let s3 = yLabel.sizeThatFits(self.bounds.size).applying(yLabel.transform)
         
-        gridView.frame = CGRectMake(s3.width + spacing, s1.height+spacing, self.bounds.size.width - s3.width - 2*spacing, self.bounds.size.height - s1.height - s2.height - 2*spacing)
+        gridView.frame = CGRect(x: s3.width + spacing, y: s1.height+spacing, width: self.bounds.size.width - s3.width - 2*spacing, height: self.bounds.size.height - s1.height - s2.height - 2*spacing)
         
-        yLabel.frame = CGRectMake(spacing, graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, s3.width, s3.height)
+        yLabel.frame = CGRect(x: spacing, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
     }
     
-    func animateFrame(frame: CGRect) {
+    func animateFrame(_ frame: CGRect) {
         self.layoutIfNeeded()
-        UIView.animateWithDuration(0.15, animations: {
+        UIView.animate(withDuration: 0.15, animations: {
             self.frame = frame
             self.layoutIfNeeded()
         })

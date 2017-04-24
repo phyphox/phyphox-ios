@@ -16,7 +16,7 @@ final class ExperimentOutputParser: ExperimentMetadataParser {
         audio = getElementsWithKey(data, key: "audio") as! [NSDictionary]?
     }
     
-    func parse(buffers: [String: DataBuffer]) -> ExperimentOutput? {
+    func parse(_ buffers: [String: DataBuffer]) -> ExperimentOutput? {
         if audio == nil {
             return nil
         }

@@ -23,7 +23,7 @@ class phyphoxTests: XCTestCase {
     }
     
     func testRangefilter1() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 4.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
         
@@ -50,11 +50,11 @@ class phyphoxTests: XCTestCase {
             }
         }
         
-        self.waitForExpectationsWithTimeout(2.0, handler: nil)
+        self.waitForExpectations(timeout: 2.0, handler: nil)
     }
     
     func testRangefilter2() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 1.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
         
@@ -81,11 +81,11 @@ class phyphoxTests: XCTestCase {
             }
         }
         
-        self.waitForExpectationsWithTimeout(2.0, handler: nil)
+        self.waitForExpectations(timeout: 2.0, handler: nil)
     }
     
     func testRangefilter3() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(NSBundle(forClass: self.dynamicType).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 2.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.2, -0.2]]
         
@@ -112,7 +112,7 @@ class phyphoxTests: XCTestCase {
             }
         }
         
-        self.waitForExpectationsWithTimeout(2.0, handler: nil)
+        self.waitForExpectations(timeout: 2.0, handler: nil)
     }
     
 //    func testFFTSize() {
@@ -128,7 +128,7 @@ class phyphoxTests: XCTestCase {
     
     func testPerformanceExample() {
         // This is an example of a performance test case.
-        self.measureBlock {
+        self.measure {
             // Put the code you want to measure the time of here.
         }
     }

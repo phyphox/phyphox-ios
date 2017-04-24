@@ -9,7 +9,7 @@
 
 import UIKit
 
-struct MapSensorType: OptionSetType {
+struct MapSensorType: OptionSet {
     let rawValue: Int
     
     static let None = MapSensorType(rawValue: 0)
@@ -23,26 +23,26 @@ struct MapSensorType: OptionSetType {
 }
 
 class CreateExperimentViewController: UITableViewController {
-    private var selectedSensors = MapSensorType.None
-    private var experimentTitle: String?
-    private var rateString: String?
+    fileprivate var selectedSensors = MapSensorType.None
+    fileprivate var experimentTitle: String?
+    fileprivate var rateString: String?
     
     func actualInit() {
-        tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        tableView.registerClass(TextFieldTableViewCell.self, forCellReuseIdentifier: "TextCell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        tableView.register(TextFieldTableViewCell.self, forCellReuseIdentifier: "TextCell")
         
-        tableView.keyboardDismissMode = .OnDrag
+        tableView.keyboardDismissMode = .onDrag
         
         title = NSLocalizedString("newExperiment", comment: "")
         
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Save, target: self, action: #selector(save))
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: self, action: #selector(cancel))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(save))
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
         
-        self.navigationItem.rightBarButtonItem!.enabled = false
+        self.navigationItem.rightBarButtonItem!.isEnabled = false
     }
     
     init() {
-        super.init(style: .Grouped)
+        super.init(style: .grouped)
         actualInit()
     }
     
@@ -51,56 +51,56 @@ class CreateExperimentViewController: UITableViewController {
         actualInit()
     }
     
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         actualInit()
     }
     
     func cancel() {
-        self.navigationController!.dismissViewControllerAnimated(true, completion: nil)
+        self.navigationController!.dismiss(animated: true, completion: nil)
     }
     
     func save() {
-        guard let title = experimentTitle, let rate = Double(rateString!.stringByReplacingOccurrencesOfString(",", withString: ".")) else {
-            let hud = JGProgressHUD(style: .Dark)
-            hud.interactionType = .BlockTouchesOnHUDView
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+        guard let title = experimentTitle, let rate = Double(rateString!.replacingOccurrences(of: ",", with: ".")) else {
+            let hud = JGProgressHUD(style: .dark)
+            hud?.interactionType = .blockTouchesOnHUDView
+            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
             
-            hud.textLabel.text = "Invalid input"
+            hud?.textLabel.text = "Invalid input"
             
-            hud.showInView(self.navigationController!.view)
-            hud.dismissAfterDelay(3.0)
+            hud?.show(in: self.navigationController!.view)
+            hud?.dismiss(afterDelay: 3.0)
             
             return
         }
         
         let selected = selectedSensors
         
-        let hud = JGProgressHUD(style: .Dark)
-        hud.interactionType = .BlockTouchesOnHUDView
-        hud.showInView(self.presentingViewController!.view)
+        let hud = JGProgressHUD(style: .dark)
+        hud?.interactionType = .blockTouchesOnHUDView
+        hud?.show(in: self.presentingViewController!.view)
         
         do {
-            try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
-            hud.dismiss()
+            try _ = SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
+            hud?.dismiss()
         }
         catch let error as NSError {
             
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
             
-            hud.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
+            hud?.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
             
-            hud.dismissAfterDelay(3.0)
+            hud?.dismiss(afterDelay: 3.0)
         }
         
-        self.navigationController!.dismissViewControllerAnimated(true, completion: nil)
+        self.navigationController!.dismiss(animated: true, completion: nil)
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 3
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section < 2 {
             return 1
         }
@@ -109,7 +109,7 @@ class CreateExperimentViewController: UITableViewController {
         }
     }
     
-    override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch section {
 //        case 0:
 //            return "Title"
@@ -124,29 +124,29 @@ class CreateExperimentViewController: UITableViewController {
         }
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 2 {
-            let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath)
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
             
             switch indexPath.row {
             case 0:
                 cell.textLabel!.text = NSLocalizedString("sensorAccelerometer", comment: "")
-                cell.accessoryType = selectedSensors.contains(.Accelerometer) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.Accelerometer) ? .checkmark : .none
             case 1:
                 cell.textLabel!.text = NSLocalizedString("sensorLinearAcceleration", comment: "")
-                cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .checkmark : .none
             case 2:
                 cell.textLabel!.text = NSLocalizedString("sensorGyroscope", comment: "")
-                cell.accessoryType = selectedSensors.contains(.Gyroscope) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.Gyroscope) ? .checkmark : .none
             case 3:
                 cell.textLabel!.text = NSLocalizedString("sensorMagneticField", comment: "")
-                cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .checkmark : .none
             case 4:
                 cell.textLabel!.text = NSLocalizedString("sensorPressure", comment: "")
-                cell.accessoryType = selectedSensors.contains(.Barometer) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.Barometer) ? .checkmark : .none
             case 5:
                 cell.textLabel!.text = NSLocalizedString("sensorProximity", comment: "")
-                cell.accessoryType = selectedSensors.contains(.Proximity) ? .Checkmark : .None
+                cell.accessoryType = selectedSensors.contains(.Proximity) ? .checkmark : .none
             default:
                 break
             }
@@ -154,16 +154,16 @@ class CreateExperimentViewController: UITableViewController {
             return cell
         }
         else {
-            let cell = tableView.dequeueReusableCellWithIdentifier("TextCell", forIndexPath: indexPath) as! TextFieldTableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "TextCell", for: indexPath) as! TextFieldTableViewCell
             
             if indexPath.section == 0 {
                 cell.textField.placeholder = NSLocalizedString("newExperimentInputTitle", comment: "")
-                cell.textField.keyboardType = .Default
+                cell.textField.keyboardType = .default
                 cell.textField.text = experimentTitle
             }
             else if indexPath.section == 1 {
                 cell.textField.placeholder = NSLocalizedString("newExperimentInputRate", comment: "")
-                cell.textField.keyboardType = .DecimalPad
+                cell.textField.keyboardType = .decimalPad
                 cell.textField.text = rateString
             }
             
@@ -187,14 +187,14 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     func updateSaveButton() {
-        let titleCellCheck = experimentTitle?.characters.count > 0
-        let rateCellCheck = rateString?.characters.count > 0
+        let titleCellCheck = experimentTitle?.characters.count ?? 0 > 0
+        let rateCellCheck = rateString?.characters.count ?? 0 > 0
         
-        self.navigationItem.rightBarButtonItem!.enabled = titleCellCheck && rateCellCheck && selectedSensors != .None
+        self.navigationItem.rightBarButtonItem!.isEnabled = titleCellCheck && rateCellCheck && selectedSensors != .None
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         
         if indexPath.section == 2 {
             var t: MapSensorType! = nil
@@ -222,15 +222,15 @@ class CreateExperimentViewController: UITableViewController {
                 break
             }
             
-            let cell = tableView.cellForRowAtIndexPath(indexPath)!
+            let cell = tableView.cellForRow(at: indexPath)!
             
             if selectedSensors.contains(t) {
                 selectedSensors.remove(t)
-                cell.accessoryType = .None
+                cell.accessoryType = .none
             }
             else {
-                selectedSensors.unionInPlace(t)
-                cell.accessoryType = .Checkmark
+                selectedSensors.formUnion(t)
+                cell.accessoryType = .checkmark
             }
             
             updateSaveButton()

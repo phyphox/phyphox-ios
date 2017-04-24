@@ -20,15 +20,15 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     //input6 is the precision in samples (optional, default: 1)
     
     //output1 is the periodicity in units of input1
-    private var xInput: ExperimentAnalysisDataIO!
-    private var yInput: ExperimentAnalysisDataIO!
-    private var dxInput: ExperimentAnalysisDataIO!
-    private var overlapInput: ExperimentAnalysisDataIO?
-    private var minInput: ExperimentAnalysisDataIO?
-    private var maxInput: ExperimentAnalysisDataIO?
+    fileprivate var xInput: ExperimentAnalysisDataIO!
+    fileprivate var yInput: ExperimentAnalysisDataIO!
+    fileprivate var dxInput: ExperimentAnalysisDataIO!
+    fileprivate var overlapInput: ExperimentAnalysisDataIO?
+    fileprivate var minInput: ExperimentAnalysisDataIO?
+    fileprivate var maxInput: ExperimentAnalysisDataIO?
     
-    private var timeOutput: ExperimentAnalysisDataIO?
-    private var periodOutput: ExperimentAnalysisDataIO?
+    fileprivate var timeOutput: ExperimentAnalysisDataIO?
+    fileprivate var periodOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {
@@ -51,7 +51,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
                 maxInput = input
             }
             else {
-                print("Error: Invalid analysis output: \(input.asString)")
+                print("Error: Invalid analysis output: \(String(describing: input.asString))")
             }
         }
         
@@ -63,7 +63,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
                 periodOutput = output
             }
             else {
-                print("Error: Invalid analysis output: \(output.asString)")
+                print("Error: Invalid analysis output: \(String(describing: output.asString))")
             }
         }
         
@@ -111,7 +111,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
         var timeOut = [Double]()
         var periodOut = [Double]()
         
-        for stepX in 0.stride(through: n-dx, by: dx) {
+        for stepX in stride(from: 0, through: n-dx, by: dx) {
             //Calculate actual autocorrelation range as it might be cut off at the edges
             let x1 = max(stepX-overlap, 0)
             
@@ -168,7 +168,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
                 i += step
             }
             
-            var xMax = Double.NaN
+            var xMax = Double.nan
             
             if (maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0) {
                 let dy = 0.5 * (maxValueRight - maxValueLeft)

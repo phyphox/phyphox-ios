@@ -10,7 +10,7 @@
 import Foundation
 
 final class PTFile {
-    class func stringWithContentsOfFile(path: String) -> String {
+    class func stringWithContentsOfFile(_ path: String) -> String {
         var str = ""
         var empty = true
         
@@ -27,15 +27,15 @@ final class PTFile {
         return str
     }
     
-    class func contentsOfFile(path: String) -> [(String, String)] {
-        let plain = try! String(contentsOfFile: path, encoding: NSUTF8StringEncoding)
+    class func contentsOfFile(_ path: String) -> [(String, String)] {
+        let plain = try! String(contentsOfFile: path, encoding: String.Encoding.utf8)
         
-        let components = plain.componentsSeparatedByString("\n-->\n")
+        let components = plain.components(separatedBy: "\n-->\n")
         
         var results = [(String, String)]()
         
         for component in components {
-            let comps = component.componentsSeparatedByString("::\n")
+            let comps = component.components(separatedBy: "::\n")
             
             if comps.count != 2 || component.characters.count == 0 {
                 continue

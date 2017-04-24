@@ -10,8 +10,8 @@
 import Foundation
 
 final class GraphViewDescriptor: ViewDescriptor {
-    private let xLabel: String
-    private let yLabel: String
+    fileprivate let xLabel: String
+    fileprivate let yLabel: String
     
     var localizedXLabel: String {
         return translation?.localize(xLabel) ?? xLabel
@@ -86,11 +86,11 @@ final class GraphViewDescriptor: ViewDescriptor {
         super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
     }
     
-    override func generateViewHTMLWithID(id: Int) -> String {
+    override func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: \(100.0/aspectRatio)%\"></div><div class=\"graph\"></div></div></div>"
     }
     
-    override func generateDataCompleteHTMLWithID(id: Int) -> String {
+    override func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         let transformX: String
         let transformY: String
         
@@ -110,17 +110,17 @@ final class GraphViewDescriptor: ViewDescriptor {
         
         var scaleX: String = ""
         if scaleMinX == GraphViewDescriptor.scaleMode.fixed && minX.isFinite {
-            scaleX += "\"min\": " + String(minX) + ", "
+            scaleX += "\"min\": " + String(describing: minX) + ", "
         }
         if scaleMaxX == GraphViewDescriptor.scaleMode.fixed && maxX.isFinite {
-            scaleX += "\"max\": " + String(maxX) + ", "
+            scaleX += "\"max\": " + String(describing: maxX) + ", "
         }
         var scaleY: String = ""
         if scaleMinY == GraphViewDescriptor.scaleMode.fixed && minY.isFinite {
-            scaleY += "\"min\": " + String(minY) + ", "
+            scaleY += "\"min\": " + String(describing: minY) + ", "
         }
         if scaleMaxY == GraphViewDescriptor.scaleMode.fixed && maxY.isFinite {
-            scaleY += "\"max\": " + String(maxY) + ", "
+            scaleY += "\"max\": " + String(describing: maxY) + ", "
         }
         
         return "function () {" +
@@ -133,14 +133,14 @@ final class GraphViewDescriptor: ViewDescriptor {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
     }
     
-    override func setDataXHTMLWithID(id: Int) -> String {
+    override func setDataXHTMLWithID(_ id: Int) -> String {
         return "function (x) { elementData[\(id)][\"x\"] = x }"
     }
     
-    override func setDataYHTMLWithID(id: Int) -> String {
+    override func setDataYHTMLWithID(_ id: Int) -> String {
         return "function (y) { elementData[\(id)][\"y\"] = y }"
     }
 }

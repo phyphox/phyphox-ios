@@ -25,9 +25,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     var main: MainNavigationViewController!
     var mainNavViewController: ScalableViewController!
     
-    func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
-        window = UIWindow(frame: UIScreen.mainScreen().bounds)
-        window!.tintColor = UIColor.blackColor()
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        window = UIWindow(frame: UIScreen.main.bounds)
+        window!.tintColor = UIColor.black
         
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(ExperimentsCollectionViewController(), animated: false)
@@ -41,20 +41,20 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     
-    func application(application: UIApplication, openURL url: NSURL, options: [String: AnyObject]) -> Bool {
+    func application(_ application: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey: Any]) -> Bool {
         cleanInbox(url.lastPathComponent)
         return launchExperimentByURL(url)
     }
     
-    func application(application: UIApplication, openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
+    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         cleanInbox(url.lastPathComponent)
         return launchExperimentByURL(url)
     }
     
 
-    func applicationWillResignActive(application: UIApplication) {
+    func applicationWillResignActive(_ application: UIApplication) {
         
-        NSNotificationCenter.defaultCenter().postNotificationName(ResignActiveNotification, object: nil)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: ResignActiveNotification), object: nil)
         
         
         //Original implementation below by Jonas. Should be re-enabled at some point as it "usually" nicely leaves the measurement running in the background.
@@ -78,41 +78,41 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     }
 
-    func applicationDidEnterBackground(application: UIApplication) {
+    func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
 
-    func applicationWillEnterForeground(application: UIApplication) {
+    func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     }
 
-    func applicationDidBecomeActive(application: UIApplication) {
-        NSNotificationCenter.defaultCenter().postNotificationName(DidBecomeActiveNotification, object: nil)
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        NotificationCenter.default.post(name: Notification.Name(rawValue: DidBecomeActiveNotification), object: nil)
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 
-    func applicationWillTerminate(application: UIApplication) {
+    func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
 
-    func launchExperimentByURL(url: NSURL) -> Bool {
+    func launchExperimentByURL(_ url: URL) -> Bool {
         print("Opening \(url)")
         
         var experiment: Experiment?
         
-        var fatalError: ErrorType?
+        var fatalError: Error?
         
         if (url.scheme == "phyphox") {
-            let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: true)
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
             components?.scheme = "https"
             do {
-                experiment = try ExperimentSerialization.readExperimentFromURL(components!.URL!)
+                experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
             } catch {
                 components?.scheme = "http"
                 do {
-                    experiment = try ExperimentSerialization.readExperimentFromURL(components!.URL!)
+                    experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
                 } catch let error {
                     fatalError = error
                 }
@@ -129,27 +129,25 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             let message: String
             if let sError = fatalError as? SerializationError {
                 switch sError {
-                case .EmptyData:
+                case .emptyData:
                     message = "Empty data."
-                case .GenericError(let emessage):
+                case .genericError(let emessage):
                     message = emessage
-                case .InvalidExperimentFile(let emessage):
+                case .invalidExperimentFile(let emessage):
                     message = "Invalid experiment file. \(emessage)"
-                case .InvalidFilePath:
+                case .invalidFilePath:
                     message = "Invalid file path"
-                case .NewExperimentFileVersion(let phyphoxFormat, let fileFormat):
+                case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
                     message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
-                case .WriteFailed:
+                case .writeFailed:
                     message = "Write failed."
-                default:
-                    message = String(sError)
                 }
             } else {
-                message = String(fatalError)
+                message = String(describing: fatalError!)
             }
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .Alert)
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
-            main.presentViewController(controller, animated: true, completion: nil)
+            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            main.present(controller, animated: true, completion: nil)
             return false
         }
         
@@ -158,14 +156,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                 do {
                     try sensor.verifySensorAvailibility()
                 }
-                catch SensorError.SensorUnavailable(let type) {
-                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .Alert)
+                catch SensorError.sensorUnavailable(let type) {
+                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
                     
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .Default, handler:{ _ in
-                        UIApplication.sharedApplication().openURL(NSURL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                        UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
                     }))
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .Cancel, handler:nil))
-                    main.presentViewController(controller, animated: true, completion: nil)
+                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                    main.present(controller, animated: true, completion: nil)
                     return false
                 }
                 catch {}
@@ -173,7 +171,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         while (main.viewControllers.count > 1) {
-            main.popViewControllerAnimated(true)
+            main.popViewController(animated: true)
         }
         
         let controller = ExperimentPageViewController(experiment: experiment!)
@@ -184,7 +182,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         experiment!.willGetActive {
             denied = true
             if showing {
-                self.main.popViewControllerAnimated(true)
+                self.main.popViewController(animated: true)
             }
         }
         
@@ -198,13 +196,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
-    func cleanInbox(skipFile: String?) {
-        let fileMgr = NSFileManager.defaultManager()
-        let inbox = fileMgr.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0].URLByAppendingPathComponent("Inbox")
+    func cleanInbox(_ skipFile: String?) {
+        let fileMgr = FileManager.default
+        let inbox = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Inbox")
         do {
-            for file in try fileMgr.contentsOfDirectoryAtURL(inbox!, includingPropertiesForKeys: nil, options: .SkipsHiddenFiles) {
+            for file in try fileMgr.contentsOfDirectory(at: inbox, includingPropertiesForKeys: nil, options: .skipsHiddenFiles) {
                 if (skipFile != file.lastPathComponent) {
-                    try fileMgr.removeItemAtURL(file)
+                    try fileMgr.removeItem(at: file)
                 }
             }
         } catch {
