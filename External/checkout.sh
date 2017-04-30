@@ -10,10 +10,6 @@ sleep 3s
 #git clone https://github.com/nicklockwood/XMLDictionary
 #rm -rf XMLDictionary/.git
 
-rm -rf TheAmazingAudioEngine
-git clone https://github.com/TheAmazingAudioEngine/TheAmazingAudioEngine
-rm -rf TheAmazingAudioEngine/.git
-
 rm -rf JXLS
 git clone --recursive https://github.com/JanX2/JXLS
 rm -rf JXLS/.git

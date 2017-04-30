@@ -20,6 +20,8 @@ enum FileError: Error {
 }
 
 final class ExperimentManager {
+    let audioEngine = AudioEngine()
+    
     fileprivate var readOnlyExperimentCollections = [ExperimentCollection]()
     fileprivate var customExperimentCollections = [ExperimentCollection]()
     
@@ -62,50 +64,6 @@ final class ExperimentManager {
         return allExperimentCollections!
     }
     
-    fileprivate var adc: AEAudioController?
-    fileprivate var fltc: AEFloatConverter?
-    
-    var floatConverter: AEFloatConverter {
-        get {
-            return fltc!
-        }
-    }
-    
-    var audioController: AEAudioController {
-        get {
-            return adc!
-        }
-    }
-    
-    func setAudioControllerDescription(_ audioDescription: AudioStreamBasicDescription, inputEnabled: Bool, outputEnabled: Bool) -> AEAudioController {
-        if adc == nil {
-            var bitmask = AEAudioControllerOptionAllowMixingWithOtherApps.rawValue
-            
-            if inputEnabled {
-                bitmask |= AEAudioControllerOptionEnableInput.rawValue
-            }
-            
-            if outputEnabled {
-                bitmask |= AEAudioControllerOptionEnableOutput.rawValue
-            }
-            
-            adc = AEAudioController(audioDescription: audioDescription, options: AEAudioControllerOptions(bitmask))
-            
-            fltc = AEFloatConverter(sourceFormat: audioDescription)
-        }
-        else {
-            fltc = AEFloatConverter(sourceFormat: audioDescription)
-            
-            do {
-                try adc!.setAudioDescription(audioDescription, inputEnabled: inputEnabled, outputEnabled: outputEnabled)
-            }
-            catch let error {
-                print("Audio controller error: \(error)")
-            }
-        }
-        
-        return adc!
-    }
     
     fileprivate static let instance = ExperimentManager() //static => lazy, let => synchronized
     

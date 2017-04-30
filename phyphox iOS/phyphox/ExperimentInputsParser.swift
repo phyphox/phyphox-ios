@@ -170,7 +170,11 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     outBuffers.append(buffer)
                 }
                 
-                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffers: outBuffers)
+                if outBuffers.count < 1 {
+                    continue
+                }
+                
+                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: outBuffers[0])
                 
                 audioOut!.append(input)
             }

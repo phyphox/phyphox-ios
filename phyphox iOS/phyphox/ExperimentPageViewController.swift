@@ -830,8 +830,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    func showError(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default))
+        present(alert, animated: true)
+    }
+    
     func actuallyStartExperiment() {
-        experiment.start()
+        do {
+            try experiment.start()
+        } catch {
+            showError(message: "Could not start experiment. Unknown exception.")
+            experiment.stop()
+            return
+        }
+        
         var items = navigationItem.rightBarButtonItems!
         
         items[1] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))

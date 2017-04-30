@@ -13,9 +13,9 @@ final class ExperimentOutput {
     /**
      The only available output is audio at the moment
      */
-    let audioOutput: [ExperimentAudioOutput]
+    let audioOutput: ExperimentAudioOutput?
     
-    init(audioOutput: [ExperimentAudioOutput]) {
+    init(audioOutput: ExperimentAudioOutput?) {
         self.audioOutput = audioOutput
     }
 }

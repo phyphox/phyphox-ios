@@ -26,6 +26,7 @@
 		4B5770A91D7836F700394B07 /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */; };
 		4B5770C21D7868A500394B07 /* SerialProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5770C11D7868A500394B07 /* SerialProtocol.swift */; };
 		4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4B6AE7141CF9AF0B0070A691 /* Localizable.strings */; };
+		4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA406C11EB618B30046E36A /* AudioEngine.swift */; };
 		4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */; };
 		4BE1DEFB1E5096F400F10C71 /* SubrangeAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */; };
 		4BE7CAE01E4CD20F00C31090 /* SeparatorViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE7CADF1E4CD20F00C31090 /* SeparatorViewDescriptor.swift */; };
@@ -59,7 +60,6 @@
 		6B08152E1CABEE7B00EE2791 /* pop.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0814EF1CABEE4100EE2791 /* pop.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6B0815311CABEE7F00EE2791 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08151C1CABEE6700EE2791 /* ZipZap.framework */; };
 		6B0815321CABEE7F00EE2791 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08151C1CABEE6700EE2791 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		6B0815351CABEEB200EE2791 /* libTheAmazingAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0815011CABEE4800EE2791 /* libTheAmazingAudioEngine.a */; };
 		6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B08153D1CABEFAC00EE2791 /* libJXLS.a */; };
 		6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B0815431CABF61B00EE2791 /* libc++.tbd */; };
 		6B0815461CAC29E300EE2791 /* ExperimentHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */; };
@@ -234,27 +234,6 @@
 			remoteGlobalIDString = 0755AE8C1BEA19580094AB41;
 			remoteInfo = "pop-tests-tvos";
 		};
-		6B0815001CABEE4800EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 4C215CEC1523A7D500D36CAD;
-			remoteInfo = TheAmazingAudioEngine;
-		};
-		6B0815021CABEE4800EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 7A5687101B54610900243427;
-			remoteInfo = "TheAmazingAudioEngine OS X";
-		};
-		6B0815041CABEE4800EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 17BB5B401BECD101007A2892;
-			remoteInfo = "TheAmazingAudioEngine tvOS";
-		};
 		6B08151B1CABEE6700EE2791 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B0815111CABEE6700EE2791 /* ZipZap.xcodeproj */;
@@ -338,13 +317,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = DEF79A2116E80B5200E4B803;
 			remoteInfo = JXLS;
-		};
-		6B0815401CABEFB900EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 4C215CEB1523A7D500D36CAD;
-			remoteInfo = TheAmazingAudioEngine;
 		};
 		6B7BF78F1C130425007408FB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -456,6 +428,7 @@
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
 		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4BA406C11EB618B30046E36A /* AudioEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		4BBA0C9B1D8D75A300A9A634 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4BBA0C9D1D8D75AE00A9A634 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubrangeAnalysis.swift; sourceTree = "<group>"; };
@@ -488,7 +461,6 @@
 		6B0814DD1CABEE3000EE2791 /* BEMPathManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMPathManager.h; sourceTree = "<group>"; };
 		6B0814DE1CABEE3000EE2791 /* BEMPathManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMPathManager.m; sourceTree = "<group>"; };
 		6B0814E21CABEE4100EE2791 /* pop.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = pop.xcodeproj; path = ../../External/pop/pop.xcodeproj; sourceTree = "<group>"; };
-		6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TheAmazingAudioEngine.xcodeproj; path = ../../External/TheAmazingAudioEngine/TheAmazingAudioEngine.xcodeproj; sourceTree = "<group>"; };
 		6B0815071CABEE5600EE2791 /* VBFDoubleSegment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBFDoubleSegment.h; sourceTree = "<group>"; };
 		6B0815081CABEE5600EE2791 /* VBFDoubleSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VBFDoubleSegment.m; sourceTree = "<group>"; };
 		6B0815091CABEE5600EE2791 /* VBFPopFlatButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBFPopFlatButton.h; sourceTree = "<group>"; };
@@ -613,7 +585,6 @@
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				6BD026E51CB571A4005085B1 /* GCDWebServers.framework in Frameworks */,
 				6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */,
-				6B0815351CABEEB200EE2791 /* libTheAmazingAudioEngine.a in Frameworks */,
 				6B0815311CABEE7F00EE2791 /* ZipZap.framework in Frameworks */,
 				6B08152D1CABEE7B00EE2791 /* pop.framework in Frameworks */,
 				6B0815291CABEE7700EE2791 /* JGProgressHUD.framework in Frameworks */,
@@ -765,16 +736,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6B0814FB1CABEE4700EE2791 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				6B0815011CABEE4800EE2791 /* libTheAmazingAudioEngine.a */,
-				6B0815031CABEE4800EE2791 /* libTheAmazingAudioEngine OS X.a */,
-				6B0815051CABEE4800EE2791 /* libTheAmazingAudioEngine tvOS.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		6B0815061CABEE5600EE2791 /* VBFPopFlatButtonClasses */ = {
 			isa = PBXGroup;
 			children = (
@@ -862,7 +823,6 @@
 				6B0815381CABEFAC00EE2791 /* JXLSiOS.xcodeproj */,
 				6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */,
 				6B0814E21CABEE4100EE2791 /* pop.xcodeproj */,
-				6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */,
 				6B0815111CABEE6700EE2791 /* ZipZap.xcodeproj */,
 				6B0814D81CABEE3000EE2791 /* BEMCheckBox */,
 				6B0815061CABEE5600EE2791 /* VBFPopFlatButtonClasses */,
@@ -966,6 +926,7 @@
 				6BB52BC51C1B11CA00217CF1 /* ExperimentTranslation.swift */,
 				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
 				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
+				4BA406C11EB618B30046E36A /* AudioEngine.swift */,
 				6B0C71511C1C701E00500FEE /* View Descriptors */,
 				6B0C71571C1C71C500500FEE /* Serialization */,
 				6B0C71521C1C703700500FEE /* Data Containers */,
@@ -1170,7 +1131,6 @@
 			);
 			dependencies = (
 				6B08153F1CABEFB900EE2791 /* PBXTargetDependency */,
-				6B0815411CABEFB900EE2791 /* PBXTargetDependency */,
 				6B08152C1CABEE7700EE2791 /* PBXTargetDependency */,
 				6B0815301CABEE7B00EE2791 /* PBXTargetDependency */,
 				6B0815341CABEE7F00EE2791 /* PBXTargetDependency */,
@@ -1280,10 +1240,6 @@
 					ProjectRef = 6B0814E21CABEE4100EE2791 /* pop.xcodeproj */;
 				},
 				{
-					ProductGroup = 6B0814FB1CABEE4700EE2791 /* Products */;
-					ProjectRef = 6B0814FA1CABEE4700EE2791 /* TheAmazingAudioEngine.xcodeproj */;
-				},
-				{
 					ProductGroup = 6B0815121CABEE6700EE2791 /* Products */;
 					ProjectRef = 6B0815111CABEE6700EE2791 /* ZipZap.xcodeproj */;
 				},
@@ -1366,27 +1322,6 @@
 			fileType = wrapper.cfbundle;
 			path = "pop-tests.xctest";
 			remoteRef = 6B0814F81CABEE4100EE2791 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		6B0815011CABEE4800EE2791 /* libTheAmazingAudioEngine.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libTheAmazingAudioEngine.a;
-			remoteRef = 6B0815001CABEE4800EE2791 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		6B0815031CABEE4800EE2791 /* libTheAmazingAudioEngine OS X.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libTheAmazingAudioEngine OS X.a";
-			remoteRef = 6B0815021CABEE4800EE2791 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		6B0815051CABEE4800EE2791 /* libTheAmazingAudioEngine tvOS.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libTheAmazingAudioEngine tvOS.a";
-			remoteRef = 6B0815041CABEE4800EE2791 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		6B08151C1CABEE6700EE2791 /* ZipZap.framework */ = {
@@ -1658,6 +1593,7 @@
 				6BBD28B01C20C5CE009E3757 /* ExperimentIconParser.swift in Sources */,
 				6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */,
 				4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */,
+				4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
 				6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */,
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
@@ -1723,11 +1659,6 @@
 			isa = PBXTargetDependency;
 			name = JXLS;
 			targetProxy = 6B08153E1CABEFB900EE2791 /* PBXContainerItemProxy */;
-		};
-		6B0815411CABEFB900EE2791 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = TheAmazingAudioEngine;
-			targetProxy = 6B0815401CABEFB900EE2791 /* PBXContainerItemProxy */;
 		};
 		6B7BF7901C130425007408FB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

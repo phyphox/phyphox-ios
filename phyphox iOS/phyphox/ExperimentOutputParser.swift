@@ -40,7 +40,14 @@ final class ExperimentOutputParser: ExperimentMetadataParser {
             audios.append(out)
         }
         
-        return ExperimentOutput(audioOutput: audios)
+        let audioOut: ExperimentAudioOutput?
+        if audios.count > 0 {
+            audioOut = audios[0]
+        } else {
+            audioOut = nil
+        }
+        
+        return ExperimentOutput(audioOutput: audioOut)
     }
 }
 

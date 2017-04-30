@@ -73,7 +73,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let translation: ExperimentTranslationCollection?
     let sensorInputs: [ExperimentSensorInput]?
-    let audioInputs: [ExperimentAudioInput]?
+    let audioInput: ExperimentAudioInput?
     let output: ExperimentOutput?
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
@@ -90,7 +90,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     fileprivate(set) var startTimestamp: TimeInterval?
     fileprivate var pauseBegin: TimeInterval = 0.0
     
-    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInputs: [ExperimentAudioInput]?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
         self.links = links
@@ -105,7 +105,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
 
         self.buffers = buffers
         self.sensorInputs = sensorInputs
-        self.audioInputs = audioInputs
+        self.audioInput = audioInput
         self.output = output
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
@@ -117,7 +117,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
         }
         
-        if audioInputs != nil {
+        if audioInput != nil {
             self.requiredPermissions = .Microphone
         }
         else {
@@ -141,11 +141,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     func analysisWillUpdate(_: ExperimentAnalysis) {
-        if audioInputs != nil {
-            for audioIn in self.audioInputs! {
-                audioIn.receiveData()
-            }
-        }
+        audioInput?.receiveData()
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
@@ -153,7 +149,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             buffer.sendAnalysisCompleteNotification()
         }
         if running {
-            playAudio()
+            self.output?.audioOutput?.play()
         }
     }
     
@@ -161,7 +157,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
      Called when the experiment view controller will be presented.
      */
     func willGetActive(_ dismiss: @escaping () -> ()) {
-        if self.audioInputs != nil {
+        if self.audioInput != nil {
             checkAndAskForPermissions(dismiss)
         }
     }
@@ -204,64 +200,16 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    fileprivate func playAudio() {
-        if ((self.output?.audioOutput) != nil) {
-            for audio in (self.output?.audioOutput)! {
-                audio.play()
-            }
-        }
+    fileprivate func startAudio() throws {
+        try ExperimentManager.sharedInstance().audioEngine.startEngine(playback: self.output?.audioOutput, record: self.audioInput)
+        self.output?.audioOutput?.play()
     }
     
     fileprivate func stopAudio() {
-        if ((self.output?.audioOutput) != nil) {
-            for audio in (self.output?.audioOutput)! {
-                audio.pause()
-            }
-        }
+        ExperimentManager.sharedInstance().audioEngine.stopEngine()
     }
     
-    fileprivate func setUpAudio() {
-        let hasOutput = output?.audioOutput.count ?? 0 > 0
-        let hasInput = audioInputs?.count ?? 0 > 0
-        
-        var rate = 48_000.0
-        
-        //TheAmazingAudioEngine is used for: Setting up the audio session, routing inout and output but only for reading the input. Output is done independently. Therefore the input rate is the important one.
-        
-        if hasInput {
-            rate = Double(audioInputs!.first!.sampleRate)
-        }
-        else if !hasOutput {
-            return
-        }
-        
-        _ = ExperimentManager.sharedInstance().setAudioControllerDescription(monoFloatFormatWithSampleRate(Double(rate)), inputEnabled: hasInput, outputEnabled: hasOutput)
-        
-        do {
-            try ExperimentManager.sharedInstance().audioController.start()
-        }
-        catch let error {
-            print("Audio error: \(error)")
-        }
-    }
-    
-    fileprivate func tearDownAudio() {
-        let hasOutput = output?.audioOutput.count ?? 0 > 0
-        let hasInput = audioInputs?.count ?? 0 > 0
-        
-        if hasInput || hasOutput {
-            ExperimentManager.sharedInstance().audioController.stop()
-        }
-        
-        if hasOutput {
-            for audio in (self.output?.audioOutput)! {
-                audio.destroyAudioEngine()
-            }
-        }
-        
-    }
-    
-    func start() {
+    func start() throws {
         guard !running else {
             return
         }
@@ -280,15 +228,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         
         UIApplication.shared.isIdleTimerDisabled = true
         
-        setUpAudio()
-        
-        playAudio()
-        
-        if audioInputs != nil {
-            for input in audioInputs! {
-                input.startRecording(self)
-            }
-        }
+        try startAudio()
         
         if self.sensorInputs != nil {
             for sensor in self.sensorInputs! {
@@ -317,15 +257,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             }
         }
         
-        if audioInputs != nil {
-            for input in audioInputs! {
-                input.stopRecording(self)
-            }
-        }
-        
         stopAudio()
-        
-        tearDownAudio()
         
         UIApplication.shared.isIdleTimerDisabled = false
         
