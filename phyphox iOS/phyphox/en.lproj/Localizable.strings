@@ -24,7 +24,7 @@
 
 "credits" = "Credits";
 "creditsRWTH" = "phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.";
-"creditsNames" = "iOS implementation: Jonas Gessner\nDevelopment and Concept: Dr. Sebastian Kuhlen\nConcept: Prof. Christoph Stampfer\nDesign: Frank Posthoff (A.NikoPol)";
+"creditsNames" = "iOS implementation:\nJonas Gessner\nDevelopment and Concept:\nDr. Sebastian Kuhlen\nConcept:\nProf. Christoph Stampfer\nDesign:\nFrank Posthoff (A.NikoPol)";
 
 "sensorLinearAcceleration" = "Linear Acceleration";
 "sensorLight" = "Light";

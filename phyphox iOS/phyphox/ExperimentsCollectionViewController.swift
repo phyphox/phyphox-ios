@@ -100,15 +100,21 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     func infoPressed(_ action: UIAlertAction) {
-        let alert = UIAlertController(title: NSLocalizedString("credits", comment: ""), message: NSLocalizedString("creditsRWTH", comment: "") + "\n\n" + NSLocalizedString("creditsNames", comment: ""), preferredStyle: .alert)
+        let vc = UIViewController()
+        vc.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
+        vc.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
         
-        alert.addAction(UIAlertAction(title: "Open Source Licenses", style: .default, handler: { [unowned self] _ in
+        let v = creditsView()
+        v.onCloseCallback = { _ in
+            vc.dismiss(animated: true, completion: nil)
+        }
+        v.onLicenceCallback = { _ in
+            vc.dismiss(animated: true, completion: nil)
             self.showOpenSourceLicenses()
-        }))
+        }
+        vc.view = v
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
-        
-        navigationController!.present(alert, animated: true, completion: nil)
+        navigationController!.present(vc, animated: true, completion: nil)
     }
 
     func reload() {
