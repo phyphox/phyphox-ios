@@ -181,6 +181,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.edgesForExtendedLayout = UIRectEdge()
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
+        actionItem.accessibilityLabel = NSLocalizedString("actions", comment: "")
         actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
         self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))]
         

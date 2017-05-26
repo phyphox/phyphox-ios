@@ -58,7 +58,7 @@ final class AudioEngine {
         } else if playback != nil {
             try avSession.setCategory(AVAudioSessionCategoryPlayback)
         } else if record != nil {
-            try avSession.setCategory(AVAudioSessionCategoryRecord)
+            try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSessionModeMeasurement)
         if (avSession.isInputGainSettable) {
