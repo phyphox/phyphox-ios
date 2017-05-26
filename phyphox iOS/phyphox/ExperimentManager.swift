@@ -45,16 +45,23 @@ final class ExperimentManager {
             }
             
             for experimentCollection in allExperimentCollections! {
-                experimentCollection.experiments?.sort(by: {$0.experiment.localizedTitle < $1.experiment.localizedTitle})
+                experimentCollection.experiments?.sort(by: {($0.experiment.stateTitle ?? $0.experiment.localizedTitle) < ($1.experiment.stateTitle ?? $1.experiment.localizedTitle)})
             }
             
             let sensorCat = NSLocalizedString("categoryRawSensor", comment: "")
+            let stateCat = NSLocalizedString("save_state_category", comment: "")
             
             allExperimentCollections?.sort(by: {(a: ExperimentCollection, b: ExperimentCollection) -> Bool in
                 if a.title == sensorCat {
                     return true
                 }
                 if b.title == sensorCat {
+                    return false
+                }
+                if a.title == stateCat {
+                    return true
+                }
+                if b.title == stateCat {
                     return false
                 }
                 return a.title < b.title

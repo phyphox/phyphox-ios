@@ -94,6 +94,8 @@
 "save_locally_button" = "Save to collection";
 "save_locally_done" = "Experiment successfully added to collection";
 
+"save_state_category" = "Saved experiment states";
+
 "timedRun" = "Timed run";
 
 "pick_exportSets" = "Pick the data sets to export.";

@@ -49,6 +49,7 @@
 "save_locally_message" = "Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen?";
 "save_locally_button" = "In Sammlung speichern";
 "save_locally_done" = "Das Experiment wurde zur Sammlung hinzugefügt.";
+"save_state_category" = "Gespeicherte Zustände";
 "sensorAccelerometer" = "Beschleunigungssensor";
 "sensorGyroscope" = "Gyroskop";
 "sensorLight" = "Licht";

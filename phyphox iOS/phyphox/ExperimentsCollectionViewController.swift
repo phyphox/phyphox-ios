@@ -175,7 +175,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     fileprivate func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.localizedTitle)", style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.stateTitle ?? experiment.localizedTitle)", style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.sharedInstance().deleteExperiment(experiment)
             }

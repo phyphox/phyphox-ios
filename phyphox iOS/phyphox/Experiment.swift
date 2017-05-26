@@ -18,11 +18,12 @@ struct ExperimentRequiredPermission : OptionSet {
 }
 
 func ==(lhs: Experiment, rhs: Experiment) -> Bool {
-    return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+    return lhs.stateTitle == rhs.stateTitle && lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
 }
 
 final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager, Equatable {
     fileprivate var title: String
+    var stateTitle: String?
     fileprivate var description: String?
     fileprivate var links: [String: String]
     fileprivate var highlightedLinks: [String: String]
@@ -57,6 +58,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     var localizedCategory: String {
+        if stateTitle != nil {
+            return NSLocalizedString("save_state_category", comment: "")
+        }
         return translation?.selectedTranslation?.categoryString ?? category
     }
     
@@ -90,8 +94,9 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     fileprivate(set) var startTimestamp: TimeInterval?
     fileprivate var pauseBegin: TimeInterval = 0.0
     
-    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
+        self.stateTitle = stateTitle
         self.description = description
         self.links = links
         self.highlightedLinks = highlightedLinks
