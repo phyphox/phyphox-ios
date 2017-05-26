@@ -11,6 +11,8 @@
 "action_settings" = "Einstellungen";
 "cancel" = "Abbrechen";
 "clear_data" = "Daten löschen";
+"clear_data_question" = "Aufgenommene Daten löschen?";
+"clear" = "Löschen";
 "close" = "Schließen";
 "confirmDelete" = "Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?";
 "confirmDeleteTitle" = "Löschen bestätigen?";

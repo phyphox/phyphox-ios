@@ -53,6 +53,8 @@
 "stop" = "Stop";
 "start" = "Start";
 "clear_data" = "Clear data";
+"clear_data_question" = "Clear recorded data?";
+"clear" = "Clear";
 "timed_stop" = "Stop timed run";
 "timed_start" = "Start timed run";
 

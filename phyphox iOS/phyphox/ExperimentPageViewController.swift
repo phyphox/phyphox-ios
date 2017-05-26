@@ -182,8 +182,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem.accessibilityLabel = NSLocalizedString("actions", comment: "")
-        actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: 0.0)
-        self.navigationItem.rightBarButtonItems = [actionItem, UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))]
+//        actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: 0.0)
+        let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearData))
+        deleteItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: -25.0)
+        deleteItem.accessibilityLabel = NSLocalizedString("clear_data", comment: "")
+        let playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
+        playItem.imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
+        self.navigationItem.rightBarButtonItems = [
+            actionItem,
+            deleteItem,
+            playItem
+        ]
         
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
@@ -665,10 +674,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("clear_data", comment: ""), style: .destructive, handler: { [unowned self] action in
-            self.clearData()
-            }))
-        
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if experiment.source != nil {
@@ -848,7 +853,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var items = navigationItem.rightBarButtonItems!
         
-        items[1] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
+        items[2] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
+        items[2].imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
         
         navigationItem.rightBarButtonItems = items
     }
@@ -877,7 +883,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             experiment.stop()
             
-            items[1] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
+            items[2] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
+            items[2].imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
             
             navigationItem.rightBarButtonItems = items
         }
@@ -893,17 +900,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func clearData() {
-        self.stopExperiment()
-        self.experiment.clear()
+        let al = UIAlertController(title: NSLocalizedString("clear_data", comment: ""), message: NSLocalizedString("clear_data_question", comment: ""), preferredStyle: .alert)
         
-        self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
-        
-        for section in self.viewModules {
-            for view in section {
-                if let graphView = view as? ExperimentGraphView {
-                    graphView.clearAllDataSets()
+        al.addAction(UIAlertAction(title: NSLocalizedString("clear", comment: ""), style: .default, handler: { [unowned self] action in
+            self.stopExperiment()
+            self.experiment.clear()
+            
+            self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
+            
+            for section in self.viewModules {
+                for view in section {
+                    if let graphView = view as? ExperimentGraphView {
+                        graphView.clearAllDataSets()
+                    }
                 }
             }
-        }
+        }))
+        al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        
+        self.navigationController!.present(al, animated: true, completion: nil)
+
     }
 }
