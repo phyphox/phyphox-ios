@@ -524,6 +524,100 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
+    fileprivate func showSaveState() {
+        self.stopExperiment()
+        
+        let alert = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_message", comment: ""), preferredStyle: .alert)
+        
+        alert.addTextField(configurationHandler: { (textField) in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .short
+            dateFormatter.timeStyle = .short
+            
+            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+            textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
+        })
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_save", comment: ""), style: .default, handler: { [unowned self] action in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+            
+            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+            let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
+            let target = (customExperimentsDirectory as NSString).appendingPathComponent(filename)
+            
+            let HUD = JGProgressHUD(style: .dark)
+            HUD?.interactionType = .blockTouchesOnHUDView
+            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            
+            HUD?.show(in: self.navigationController!.view)
+            
+            
+            do {
+                if !FileManager.default.fileExists(atPath: customExperimentsDirectory) {
+                    try FileManager.default.createDirectory(atPath: customExperimentsDirectory, withIntermediateDirectories: false, attributes: nil)
+                }
+            } catch {
+                return
+            }
+            
+            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: target, experiment: self.experiment, callback: {(error, file) in
+                if (error != nil) {
+                    self.showError(message: error!)
+                    return
+                }
+                
+                HUD?.dismiss()
+                
+                ExperimentManager.sharedInstance().loadCustomExperiments()
+                
+                let confirmation = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_success", comment: ""), preferredStyle: .alert)
+                
+                confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                self.navigationController!.present(confirmation, animated: true, completion: nil)
+            })
+        }))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_share", comment: ""), style: .default, handler: { [unowned self] action in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+            
+            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox")
+            
+            let HUD = JGProgressHUD(style: .dark)
+            HUD?.interactionType = .blockTouchesOnHUDView
+            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            
+            HUD?.show(in: self.navigationController!.view)
+            
+            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
+                if (error != nil) {
+                    self.showError(message: error!)
+                    return
+                }
+                
+                let shareText = NSLocalizedString("save_state_subject", comment: "")
+                
+                let vc = UIActivityViewController(activityItems: [file!, shareText], applicationActivities: nil)
+                
+                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+                
+                self.navigationController!.present(vc, animated: true) {
+                    HUD?.dismiss()
+                }
+                
+                vc.completionWithItemsHandler = { _ in
+                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+                }
+            })
+        }))
+            
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        
+        self.navigationController!.present(alert, animated: true, completion: nil)
+    }
+    
     fileprivate func showTimerOptions() {
         let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .alert)
         
@@ -681,6 +775,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 self.saveLocally()
             }))
         }
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state", comment: ""), style: .default, handler: { [unowned self] action in
+            self.showSaveState()
+        }))
         
         if let popover = alert.popoverPresentationController {
             popover.barButtonItem = item

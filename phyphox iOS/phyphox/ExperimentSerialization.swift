@@ -30,7 +30,10 @@ final class ExperimentSerialization: NSObject {
         let data = try? Data(contentsOf: URL(fileURLWithPath: path))
         
         if (data != nil && data!.count > 0) {
-            return try deserializeExperiment(data!);
+            let experiment = try deserializeExperiment(data!);
+            experiment.source = nil
+            experiment.sourceData = data
+            return experiment
         }
         else {
             throw SerializationError.invalidFilePath

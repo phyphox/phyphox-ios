@@ -96,7 +96,15 @@
 "save_locally_button" = "Save to collection";
 "save_locally_done" = "Experiment successfully added to collection";
 
+"save_state" = "Save experiment state";
 "save_state_category" = "Saved experiment states";
+"save_state_message" = "You can save the state of this experiment including your data to your collection or share it with a third-party app.";
+"save_state_title" = "Title";
+"save_state_save" = "To collection";
+"save_state_share" = "Share";
+"save_state_subject" = "Experiment state for phyphox";
+"save_state_default_title" = "Measurement";
+"save_state_success" = "State has been saved to your collection.";
 
 "timedRun" = "Timed run";
 

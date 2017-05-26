@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4B0869981ED8880000AD2E77 /* StateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0869971ED8880000AD2E77 /* StateSerializer.swift */; };
 		4B09C6C51CD78E79004C7FA1 /* MinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */; };
 		4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */; };
 		4B47B02B1DA6A19000CCBA6E /* AsinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */; };
@@ -409,6 +410,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4B0869971ED8880000AD2E77 /* StateSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateSerializer.swift; sourceTree = "<group>"; };
 		4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MinAnalysis.swift; sourceTree = "<group>"; };
 		4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchAnalysis.swift; sourceTree = "<group>"; };
 		4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsinAnalysis.swift; sourceTree = "<group>"; };
@@ -839,6 +841,7 @@
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
+				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
 				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
 				6BB52BC41C199CB400217CF1 /* Deserializer - Parser */,
 			);
@@ -1614,6 +1617,7 @@
 				6B7BF81D1C147CC2007408FB /* CrosscorrelationAnalysis.swift in Sources */,
 				6B0815461CAC29E300EE2791 /* ExperimentHeaderView.swift in Sources */,
 				6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */,
+				4B0869981ED8880000AD2E77 /* StateSerializer.swift in Sources */,
 				6B7BF7C01C130471007408FB /* ExperimentsCollectionViewController.swift in Sources */,
 				6B7BF7FE1C13963E007408FB /* MultiplicationAnalysis.swift in Sources */,
 				4B55689C1DD7BAC8000C033E /* IfAnalysis.swift in Sources */,

@@ -17,7 +17,7 @@ final class ExperimentExport {
     }
     
     func runExport(_ format: ExportFileFormat, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
-        DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.default).async {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             autoreleasepool {
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"

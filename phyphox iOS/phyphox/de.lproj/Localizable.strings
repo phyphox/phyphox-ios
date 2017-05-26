@@ -51,7 +51,15 @@
 "save_locally_message" = "Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen?";
 "save_locally_button" = "In Sammlung speichern";
 "save_locally_done" = "Das Experiment wurde zur Sammlung hinzugefügt.";
+"save_state" = "Zustand speichern";
 "save_state_category" = "Gespeicherte Zustände";
+"save_state_message" = "Du kannst den Zustand des Experiments mit deinen Messdaten in deiner Sammlung speichern oder über eine Drittanbieter-App teilen.";
+"save_state_title" = "Titel";
+"save_state_save" = "In die Sammlung";
+"save_state_share" = "Teilen";
+"save_state_subject" = "Experiment-Zustand für phyphox";
+"save_state_default_title" = "Messung";
+"save_state_success" = "Der Zustand wurde in deiner Sammlung gespeichert.";
 "sensorAccelerometer" = "Beschleunigungssensor";
 "sensorGyroscope" = "Gyroskop";
 "sensorLight" = "Licht";
