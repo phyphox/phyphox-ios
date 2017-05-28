@@ -125,13 +125,30 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 
+                var mappings: [(min: Double, max: Double, str: String)] = []
+                
+                if let maps = getElementsWithKey(value as NSDictionary, key: "map") {
+                    for map in maps {
+                    
+                        if map is NSDictionary {
+                            let str = (map as! NSDictionary)[XMLDictionaryTextKey] as! String
+                            let mapAttrs = (map as! NSDictionary)[XMLDictionaryAttributesKey] as! [String : AnyObject]
+                            let min = floatTypeFromXML(mapAttrs, key: "min", defaultValue: -Double.infinity)
+                            let max = floatTypeFromXML(mapAttrs, key: "max", defaultValue: +Double.infinity)
+                            mappings.append((min: min, max: max, str: str))
+                        } else {
+                            throw SerializationError.invalidExperimentFile(message: "Malformed map-element.")
+                        }
+                    }
+                }
+                
                 if inputBuffer == nil {
                     throw SerializationError.invalidExperimentFile(message: "No input buffer for value view.")
                 }
                 
                 let requiresAnalysis = inputBuffer!.dataFromAnalysis
                 
-                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!)
+                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!, mappings: mappings)
             }
             
             func handleGraph(_ graph: [String: AnyObject]) throws -> GraphViewDescriptor? {

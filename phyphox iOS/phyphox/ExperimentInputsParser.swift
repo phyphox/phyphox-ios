@@ -97,7 +97,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     throw SerializationError.invalidExperimentFile(message: "Sensor has no output.")
                 }
                 
-                var xBuffer, yBuffer, zBuffer, tBuffer, absBuffer: DataBuffer?
+                var xBuffer, yBuffer, zBuffer, accuracyBuffer, tBuffer, absBuffer: DataBuffer?
                 
                 for output in outputs! {
                     let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
@@ -116,6 +116,9 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     }
                     else if component == "z" {
                         zBuffer = buf
+                    }
+                    else if component == "accuracy" {
+                        accuracyBuffer = buf
                     }
                     else if component == "t" {
                         tBuffer = buf
@@ -137,7 +140,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     throw SerializationError.invalidExperimentFile(message: "Error! Averaging is enabled but rate is 0")
                 }
                 
-                let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer)
+                let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
                 
                 sensorsOut!.append(sensor)
             }

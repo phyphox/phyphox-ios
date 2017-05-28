@@ -58,6 +58,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     fileprivate(set) weak var zBuffer: DataBuffer?
     fileprivate(set) weak var tBuffer: DataBuffer?
     fileprivate(set) weak var absBuffer: DataBuffer?
+    fileprivate(set) weak var accuracyBuffer: DataBuffer?
     
     fileprivate(set) var motionSession: MotionSession
     
@@ -77,6 +78,8 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         var x: Double?
         var y: Double?
         var z: Double?
+        
+        var accuracy: Double?
         
         var numberOfUpdates: UInt = 0
         
@@ -100,7 +103,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?) {
+    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.rate = rate
         self.calibrated = calibrated
@@ -110,6 +113,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         self.zBuffer = zBuffer
         self.tBuffer = tBuffer
         self.absBuffer = absBuffer
+        self.accuracyBuffer = accuracyBuffer
         
         self.motionSession = motionSession
         
@@ -163,6 +167,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         averaging.x = nil
         averaging.y = nil
         averaging.z = nil
+        averaging.accuracy = nil
         
         averaging.numberOfUpdates = 0
     }
@@ -179,7 +184,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         case .accelerometer:
             _ = motionSession.getAccelerometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                 guard let accelerometerData = data else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -193,13 +198,13 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 let t = accelerometerData.timestamp
                 
                 self.ready = true
-                self.dataIn(x, y: y, z: z, t: t, error: error)
+                self.dataIn(x, y: y, z: z, accuracy: nil, t: t, error: error)
                 })
             
         case .gyroscope:
             _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -213,18 +218,27 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 let t = motion.timestamp
                 
                 self.ready = true
-                self.dataIn(x, y: y, z: z, t: t, error: error)
+                self.dataIn(x, y: y, z: z, accuracy: nil, t: t, error: error)
                 })
             
         case .magneticField:
             if calibrated {
                 _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                     guard let motion = deviceMotion else {
-                        self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                        self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                         return
                     }
                     
                     let field = motion.magneticField.field
+                    
+                    let accuracy: Double
+                    switch motion.magneticField.accuracy {
+                    case CMMagneticFieldCalibrationAccuracy.uncalibrated: accuracy = -1.0
+                    case CMMagneticFieldCalibrationAccuracy.low: accuracy = 1.0
+                    case CMMagneticFieldCalibrationAccuracy.medium: accuracy = 2.0
+                    case CMMagneticFieldCalibrationAccuracy.high: accuracy = 3.0
+                    default: accuracy = 0.0
+                    }
                     
                     let x = field.x
                     let y = field.y
@@ -237,12 +251,12 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     let t = motion.timestamp
                     
                     self.ready = true
-                    self.dataIn(x, y: y, z: z, t: t, error: error)
+                    self.dataIn(x, y: y, z: z, accuracy: accuracy, t: t, error: error)
                     })
             } else {
                 _ = motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                     guard let magnetometerData = data else {
-                        self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                        self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                         return
                     }
                     
@@ -255,13 +269,13 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     let t = magnetometerData.timestamp
                     
                     self.ready = true
-                    self.dataIn(x, y: y, z: z, t: t, error: error)
+                    self.dataIn(x, y: y, z: z, accuracy: 0.0, t: t, error: error)
                     })
             }
         case .linearAcceleration:
             _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -275,13 +289,13 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 let t = motion.timestamp
                 
                 self.ready = true
-                self.dataIn(x, y: y, z: z, t: t, error: error)
+                self.dataIn(x, y: y, z: z, accuracy: nil, t: t, error: error)
                 })
             
         case .pressure:
             _ = motionSession.getAltimeterData(self, interval: effectiveRate, handler: { [unowned self] (data, error) -> Void in
                 guard let altimeterData = data else {
-                    self.dataIn(nil, y: nil, z: nil, t: nil, error: error)
+                    self.dataIn(nil, y: nil, z: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -290,7 +304,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 let t = altimeterData.timestamp
                 
                 self.ready = true
-                self.dataIn(pressure, y: nil, z: nil, t: t, error: error)
+                self.dataIn(pressure, y: nil, z: nil, accuracy: nil, t: t, error: error)
                 })
         case .proximity:
             _ = motionSession.getProximityData(self, interval: effectiveRate, handler: { [unowned self] (state) -> Void in
@@ -300,7 +314,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                 let t = CFAbsoluteTimeGetCurrent()
                 
                 self.ready = true
-                self.dataIn(distance, y: nil, z: nil, t: t, error: nil)
+                self.dataIn(distance, y: nil, z: nil, accuracy: nil, t: t, error: nil)
                 })
             
         default:
@@ -339,7 +353,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         self.startTimestamp = nil
     }
     
-    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
+    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval) {
         if x != nil && self.xBuffer != nil {
             self.xBuffer!.append(x)
         }
@@ -348,6 +362,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
         if z != nil && self.zBuffer != nil {
             self.zBuffer!.append(z)
+        }
+        
+        if accuracy != nil && self.accuracyBuffer != nil {
+            self.accuracyBuffer!.append(accuracy)
         }
         
         if self.tBuffer != nil {
@@ -365,9 +383,9 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
+    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
         
-        func dataInSync(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
+        func dataInSync(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
             guard error == nil else {
                 print("Sensor error: \(error!.localizedDescription)")
                 return
@@ -405,17 +423,26 @@ final class ExperimentSensorInput : MotionSessionReceiver {
                     }
                 }
                 
+                if accuracy != nil {
+                    if av.accuracy == nil {
+                        av.accuracy = accuracy!
+                    }
+                    else {
+                        av.accuracy! = min(accuracy!, av.accuracy!)
+                    }
+                }
+                
                 av.numberOfUpdates += 1
             }
             else {
-                writeToBuffers(x, y: y, z: z, t: t!)
+                writeToBuffers(x, y: y, z: z, accuracy: accuracy, t: t!)
             }
             
             if let av = self.averaging {
                 if av.requiresFlushing(t!) && av.numberOfUpdates > 0 {
                     let u = Double(av.numberOfUpdates)
                     
-                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), t: t!)
+                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), accuracy: av.accuracy, t: t!)
                     
                     self.resetValuesForAveraging()
                     av.iterationStartTimestamp = t
@@ -425,7 +452,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         
         queue.async {
             autoreleasepool(invoking: {
-                dataInSync(x, y: y, z: z, t: t, error: error)
+                dataInSync(x, y: y, z: z, accuracy: accuracy, t: t, error: error)
             })
         }
     }

@@ -47,16 +47,30 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
     }
     
     func newValueIn() {
-        let str: String
+        var str: String = ""
+        var mapped = false
         let last = descriptor.buffer.last
         if last != nil && !last!.isNaN {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = (self.descriptor.scientific ? .scientific : .decimal)
-            formatter.maximumFractionDigits = self.descriptor.precision
-            formatter.minimumFractionDigits = self.descriptor.precision
-            formatter.minimumIntegerDigits = 1
+            for mapping in descriptor.mappings {
+                if last! >= mapping.min && last! <= mapping.max {
+                    str = mapping.str
+                    self.unitLabel.text = ""
+                    mapped = true
+                    break;
+                }
+            }
             
-            str = formatter.string(from: NSNumber(value: last!*self.descriptor.factor as Double))! + " "
+            if !mapped {
+                self.unitLabel.text = descriptor.unit
+                
+                let formatter = NumberFormatter()
+                formatter.numberStyle = (self.descriptor.scientific ? .scientific : .decimal)
+                formatter.maximumFractionDigits = self.descriptor.precision
+                formatter.minimumFractionDigits = self.descriptor.precision
+                formatter.minimumIntegerDigits = 1
+                
+                str = formatter.string(from: NSNumber(value: last!*self.descriptor.factor as Double))! + " "
+            }
         }
         else {
             str = "- "
