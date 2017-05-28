@@ -100,6 +100,12 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 else if key == "abs" {
                     analysis = try ABSAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
+                else if key == "round" {
+                    analysis = try RoundAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
+                else if key == "log" {
+                    analysis = try LogAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+                }
                 else if key == "sin" {
                     analysis = try SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
                 }
