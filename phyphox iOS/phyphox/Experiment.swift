@@ -9,12 +9,14 @@
 
 import Foundation
 import AVFoundation
+import CoreLocation
 
 struct ExperimentRequiredPermission : OptionSet {
     let rawValue: Int
     
     static let None = ExperimentRequiredPermission(rawValue: 0)
     static let Microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
+    static let Location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
 func ==(lhs: Experiment, rhs: Experiment) -> Bool {
@@ -77,6 +79,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let translation: ExperimentTranslationCollection?
     let sensorInputs: [ExperimentSensorInput]?
+    let gpsInput: ExperimentGPSInput?
     let audioInput: ExperimentAudioInput?
     let output: ExperimentOutput?
     let analysis: ExperimentAnalysis?
@@ -86,7 +89,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let queue: DispatchQueue
     
-    let requiredPermissions: ExperimentRequiredPermission
+    var requiredPermissions: ExperimentRequiredPermission = .None
     
     fileprivate(set) var running = false
     fileprivate(set) var hasStarted = false
@@ -94,7 +97,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     fileprivate(set) var startTimestamp: TimeInterval?
     fileprivate var pauseBegin: TimeInterval = 0.0
     
-    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         self.description = description
@@ -110,6 +113,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
 
         self.buffers = buffers
         self.sensorInputs = sensorInputs
+        self.gpsInput = gpsInput
         self.audioInput = audioInput
         self.output = output
         self.viewDescriptors = viewDescriptors
@@ -123,10 +127,11 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
         
         if audioInput != nil {
-            self.requiredPermissions = .Microphone
+            self.requiredPermissions.insert(.Microphone)
         }
-        else {
-            self.requiredPermissions = .None
+        
+        if gpsInput != nil {
+            self.requiredPermissions.insert(.Location)
         }
         
         self.analysis?.delegate = self
@@ -162,8 +167,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
      Called when the experiment view controller will be presented.
      */
     func willGetActive(_ dismiss: @escaping () -> ()) {
-        if self.audioInput != nil {
-            checkAndAskForPermissions(dismiss)
+        if self.requiredPermissions != .None {
+            checkAndAskForPermissions(dismiss, locationManager: self.gpsInput?.locationManager)
         }
     }
     
@@ -174,7 +179,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.clear()
     }
     
-    func checkAndAskForPermissions(_ failed: @escaping (Void) -> Void) {
+    func checkAndAskForPermissions(_ failed: @escaping (Void) -> Void, locationManager: CLLocationManager?) {
         if requiredPermissions.contains(.Microphone) {
             
             let status = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeAudio)
@@ -198,6 +203,30 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
                         failed()
                     }
                 })
+                
+            default:
+                break
+            }
+        } else if requiredPermissions.contains(.Location) {
+            
+            let status = CLLocationManager.authorizationStatus()
+            
+            switch status {
+            case .denied:
+                failed()
+                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been denied. Please enable access to the location in Settings->Privacy->Location Services", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .restricted:
+                failed()
+                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been restricted. Please enable access to the location in Settings->General->Restrctions->Location Services", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .notDetermined:
+                locationManager?.requestWhenInUseAuthorization()
+                break
                 
             default:
                 break
@@ -241,6 +270,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             }
         }
         
+        if self.gpsInput != nil {
+            self.gpsInput!.start()
+        }
+        
         analysis?.running = true
         if (analysis != nil && !analysis!.onUserInput) {
             analysis?.setNeedsUpdate()
@@ -260,6 +293,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             for sensor in self.sensorInputs! {
                 sensor.stop()
             }
+        }
+        
+        if self.gpsInput != nil {
+            self.gpsInput!.stop()
         }
         
         stopAudio()
@@ -290,6 +327,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
             for sensor in self.sensorInputs! {
                 sensor.clear()
             }
+        }
+        
+        if self.gpsInput != nil {
+            gpsInput!.clear()
         }
     }
 }

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4B0869981ED8880000AD2E77 /* StateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0869971ED8880000AD2E77 /* StateSerializer.swift */; };
 		4B09C6C51CD78E79004C7FA1 /* MinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */; };
+		4B36E35B1EDF513900F6D1DD /* ExperimentGPSInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */; };
 		4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */; };
 		4B47B02B1DA6A19000CCBA6E /* AsinAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */; };
 		4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */; };
@@ -414,6 +415,7 @@
 /* Begin PBXFileReference section */
 		4B0869971ED8880000AD2E77 /* StateSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateSerializer.swift; sourceTree = "<group>"; };
 		4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MinAnalysis.swift; sourceTree = "<group>"; };
+		4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentGPSInput.swift; sourceTree = "<group>"; };
 		4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchAnalysis.swift; sourceTree = "<group>"; };
 		4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsinAnalysis.swift; sourceTree = "<group>"; };
 		4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AcosAnalysis.swift; sourceTree = "<group>"; };
@@ -816,6 +818,7 @@
 			isa = PBXGroup;
 			children = (
 				6B7BF7F51C132722007408FB /* ExperimentSensorInput.swift */,
+				4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */,
 				6B7BF7F31C132563007408FB /* MotionSession.swift */,
 				6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */,
 				4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */,
@@ -1609,6 +1612,7 @@
 				4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */,
 				4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
+				4B36E35B1EDF513900F6D1DD /* ExperimentGPSInput.swift in Sources */,
 				6BB52BBD1C19883D00217CF1 /* ExperimentTranslationsParser.swift in Sources */,
 				6B7BF7D71C130D0F007408FB /* Queue.swift in Sources */,
 				6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */,

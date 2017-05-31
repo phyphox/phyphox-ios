@@ -11,11 +11,13 @@ import Foundation
 
 final class ExperimentInputsParser: ExperimentMetadataParser {
     let sensors: [NSDictionary]?
+    let gps: [NSDictionary]?
     let audio: [NSDictionary]?
     let bluetooth: [NSDictionary]?
     
     required init(_ inputs: NSDictionary) {
         sensors = getElementsWithKey(inputs, key: "sensor") as! [NSDictionary]?
+        gps = getElementsWithKey(inputs, key: "location") as! [NSDictionary]?
         audio = getElementsWithKey(inputs, key: "audio") as! [NSDictionary]?
         bluetooth = getElementsWithKey(inputs, key: "bluetooth") as! [NSDictionary]?
     }
@@ -66,9 +68,9 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         return sensorType
     }
     
-    func parse(_ buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) throws -> ([ExperimentSensorInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
-        if sensors == nil && audio == nil && bluetooth == nil {
-            return (nil, nil, nil)
+    func parse(_ buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) throws -> ([ExperimentSensorInput]?, [ExperimentGPSInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
+        if sensors == nil && gps == nil && audio == nil && bluetooth == nil {
+            return (nil, nil, nil, nil)
         }
         
         var sensorsOut: [ExperimentSensorInput]?
@@ -143,6 +145,69 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
                 
                 sensorsOut!.append(sensor)
+            }
+        }
+        
+        var gpsOut: [ExperimentGPSInput]?
+        
+        if gps != nil {
+            gpsOut = []
+            
+            for gpsi in gps! {             
+                let outputs = getElementsWithKey(gpsi, key: "output") as? [[String: AnyObject]]
+                
+                guard outputs != nil else {
+                    throw SerializationError.invalidExperimentFile(message: "GPS has no output.")
+                }
+                
+                var latBuffer, lonBuffer, zBuffer, vBuffer, dirBuffer, accuracyBuffer, zAccuracyBuffer, tBuffer: DataBuffer?
+                
+                for output in outputs! {
+                    let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
+                    
+                    let name = output[XMLDictionaryTextKey] as! String
+                    
+                    let component = attributes["component"]
+                    
+                    let buf = buffers[name]
+                    
+                    if component == "lat" {
+                        latBuffer = buf
+                    }
+                    else if component == "lon" {
+                        lonBuffer = buf
+                    }
+                    else if component == "z" {
+                        zBuffer = buf
+                    }
+                    else if component == "v" {
+                        vBuffer = buf
+                    }
+                    else if component == "dir" {
+                        dirBuffer = buf
+                    }
+                    else if component == "accuracy" {
+                        accuracyBuffer = buf
+                    }
+                    else if component == "zAccuracy" {
+                        zAccuracyBuffer = buf
+                    }
+                    else if component == "t" {
+                        tBuffer = buf
+                    }
+                    else {
+                        throw SerializationError.invalidExperimentFile(message: "Error! Invalid GPS parameter: \(String(describing: component))")
+                    }
+                    
+                    //Register for updates
+                    if buf != nil && analysis != nil {
+                        analysis!.registerSensorBuffer(buf!)
+                    }
+                }
+                
+                let sensor = ExperimentGPSInput(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer)
+                
+                gpsOut!.append(sensor)
             }
         }
         
@@ -260,6 +325,6 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
             }
         }
         
-        return ((sensorsOut?.count ?? 0 > 0 ? sensorsOut : nil), (audioOut?.count ?? 0 > 0 ? audioOut : nil), (bluetoothOut?.count ?? 0 > 0 ? bluetoothOut : nil))
+        return ((sensorsOut?.count ?? 0 > 0 ? sensorsOut : nil), (gpsOut?.count ?? 0 > 0 ? gpsOut : nil), (audioOut?.count ?? 0 > 0 ? audioOut : nil), (bluetoothOut?.count ?? 0 > 0 ? bluetoothOut : nil))
     }
 }
