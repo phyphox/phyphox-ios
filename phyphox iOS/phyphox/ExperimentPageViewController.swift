@@ -183,7 +183,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem.accessibilityLabel = NSLocalizedString("actions", comment: "")
 //        actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: 0.0)
-        let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearData))
+        let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
         deleteItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: -25.0)
         deleteItem.accessibilityLabel = NSLocalizedString("clear_data", comment: "")
         let playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
@@ -997,26 +997,30 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func clearData() {
+    func clearDataDialog() {
         let al = UIAlertController(title: NSLocalizedString("clear_data", comment: ""), message: NSLocalizedString("clear_data_question", comment: ""), preferredStyle: .alert)
         
         al.addAction(UIAlertAction(title: NSLocalizedString("clear", comment: ""), style: .default, handler: { [unowned self] action in
-            self.stopExperiment()
-            self.experiment.clear()
-            
-            self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
-            
-            for section in self.viewModules {
-                for view in section {
-                    if let graphView = view as? ExperimentGraphView {
-                        graphView.clearAllDataSets()
-                    }
-                }
-            }
+            self.clearData()
         }))
         al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         self.navigationController!.present(al, animated: true, completion: nil)
+    }
+    
+    func clearData() {
+        self.stopExperiment()
+        self.experiment.clear()
+        
+        self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
+        
+        for section in self.viewModules {
+            for view in section {
+                if let graphView = view as? ExperimentGraphView {
+                    graphView.clearAllDataSets()
+                }
+            }
+        }
 
     }
 }
