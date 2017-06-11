@@ -20,6 +20,7 @@ struct MapSensorType: OptionSet {
     static let Magnetometer = MapSensorType(rawValue: 1 << 3) //8
     static let Barometer = MapSensorType(rawValue: 1 << 4) //16
     static let Proximity = MapSensorType(rawValue: 1 << 5) //32
+    static let GPS = MapSensorType(rawValue: 1 << 6) //64
 }
 
 class CreateExperimentViewController: UITableViewController {
@@ -105,7 +106,7 @@ class CreateExperimentViewController: UITableViewController {
             return 1
         }
         else {
-            return 6
+            return 7
         }
     }
     
@@ -136,15 +137,18 @@ class CreateExperimentViewController: UITableViewController {
                 cell.textLabel!.text = NSLocalizedString("sensorLinearAcceleration", comment: "")
                 cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .checkmark : .none
             case 2:
+                cell.textLabel!.text = NSLocalizedString("location", comment: "")
+                cell.accessoryType = selectedSensors.contains(.GPS) ? .checkmark : .none
+            case 3:
                 cell.textLabel!.text = NSLocalizedString("sensorGyroscope", comment: "")
                 cell.accessoryType = selectedSensors.contains(.Gyroscope) ? .checkmark : .none
-            case 3:
+            case 4:
                 cell.textLabel!.text = NSLocalizedString("sensorMagneticField", comment: "")
                 cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .checkmark : .none
-            case 4:
+            case 5:
                 cell.textLabel!.text = NSLocalizedString("sensorPressure", comment: "")
                 cell.accessoryType = selectedSensors.contains(.Barometer) ? .checkmark : .none
-            case 5:
+            case 6:
                 cell.textLabel!.text = NSLocalizedString("sensorProximity", comment: "")
                 cell.accessoryType = selectedSensors.contains(.Proximity) ? .checkmark : .none
             default:
@@ -207,15 +211,18 @@ class CreateExperimentViewController: UITableViewController {
                 t = .LinearAccelerometer
                 
             case 2:
-                t = .Gyroscope
+                t = .GPS
                 
             case 3:
-                t = .Magnetometer
+                t = .Gyroscope
                 
             case 4:
-                t = .Barometer
+                t = .Magnetometer
                 
             case 5:
+                t = .Barometer
+                
+            case 6:
                 t = .Proximity
                 
             default:

@@ -34,6 +34,8 @@
 "sensorPressure" = "Pressure";
 "sensorProximity" = "Proximity";
 
+"location" = "Location";
+
 "sensorNotAvailableWarningTitle" = "Sensor not available";
 "sensorNotAvailableWarningText1" = "The sensor";
 "sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
