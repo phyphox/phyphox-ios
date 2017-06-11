@@ -24,10 +24,7 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     fileprivate(set) weak var satellitesBuffer: DataBuffer?
     
     private var startTime: TimeInterval = 0.0
-    var startTimestamp: TimeInterval?
-    var pauseBegin: TimeInterval = 0.0
-    var stateTime: TimeInterval = 0.0
-    var lastT: Double = 0.0
+    fileprivate var startTimestamp: TimeInterval?
     
     fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.gpsQueue", attributes: [])
     
@@ -70,16 +67,13 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     }
     
     func clear() {
-        self.startTimestamp = nil
+        
     }
     
     func start() {
         startTime = Date.timeIntervalSinceReferenceDate //This is only used to filter cached data from the location manager
         
-        if pauseBegin > 0 && startTimestamp != nil {
-            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
-            pauseBegin = 0.0
-        }
+        startTimestamp = nil
         
         if CLLocationManager.locationServicesEnabled() {
             locationManager.startUpdatingLocation()
@@ -91,8 +85,6 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     }
     
     func stop() {
-        pauseBegin = CFAbsoluteTimeGetCurrent()
-        
         locationManager.stopUpdatingLocation()
     }
     
@@ -124,11 +116,10 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         
         if t != nil && self.tBuffer != nil {
             if startTimestamp == nil {
-                startTimestamp = t!-stateTime
+                startTimestamp = t! - (self.tBuffer?.last ?? 0.0)
             }
             
             let relativeT = t!-self.startTimestamp!
-            lastT = relativeT
             
             self.tBuffer!.append(relativeT)
         }

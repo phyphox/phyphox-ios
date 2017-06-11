@@ -50,10 +50,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
-    var startTimestamp: TimeInterval?
-    var pauseBegin: TimeInterval = 0.0
-    var stateTime: TimeInterval = 0.0
-    var lastT: Double = 0.0
+    fileprivate(set) var startTimestamp: TimeInterval?
     
     fileprivate(set) weak var xBuffer: DataBuffer?
     fileprivate(set) weak var yBuffer: DataBuffer?
@@ -175,10 +172,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     }
     
     func start() {
-        if pauseBegin > 0 && startTimestamp != nil {
-            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
-            pauseBegin = 0.0
-        }
+        startTimestamp = nil
         
         resetValuesForAveraging()
         
@@ -325,7 +319,6 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     }
     
     func stop() {
-        pauseBegin = CFAbsoluteTimeGetCurrent()
         
         ready = false
         
@@ -352,7 +345,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     }
     
     func clear() {
-        self.startTimestamp = nil
+
     }
     
     fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval) {
@@ -372,11 +365,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         
         if self.tBuffer != nil {
             if startTimestamp == nil {
-                startTimestamp = t - stateTime
+                startTimestamp = t - (self.tBuffer?.last ?? 0.0)
             }
             
             let relativeT = t-self.startTimestamp!
-            lastT = relativeT
             
             self.tBuffer!.append(relativeT)
         }

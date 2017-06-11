@@ -88,9 +88,6 @@ final class ExperimentDeserializer: NSObject {
         d = dictionary["state-title"]
         let stateTitle: String? = (d != nil ? textFromXML(d! as AnyObject) : nil)
         
-        d = dictionary["state-time"]
-        let stateTime: Double? = (d != nil ? Double(textFromXML(d! as AnyObject)) : nil)
-        
         var links: [String: String] = [:]
         var highlightedLinks: [String: String] = [:]
         if (dictionary["link"] != nil) {
@@ -144,15 +141,6 @@ final class ExperimentDeserializer: NSObject {
         
         guard anyTitle != nil && anyCategory != nil else {
             throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
-        }
-        
-        if stateTime != nil {
-            gpsInput?.stateTime = stateTime!
-            if sensorInputs != nil {
-                for sensorInput in sensorInputs! {
-                    sensorInput.stateTime = stateTime!
-                }
-            }
         }
         
         let experiment = Experiment(title: anyTitle!, stateTitle: stateTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)

@@ -92,21 +92,6 @@ final class StateSerializer {
             newBlock += "</container>\n"
         }
         let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
-        
-        var stateTimeVal: Double = 0.0
-        if (experiment.gpsInput != nil && experiment.gpsInput!.pauseBegin != 0 && experiment.gpsInput!.startTimestamp != nil) {
-            stateTimeVal = experiment.gpsInput!.lastT
-        }
-        if experiment.sensorInputs != nil {
-            for sensorInput in experiment.sensorInputs! {
-                if (sensorInput.pauseBegin != 0 && sensorInput.startTimestamp != nil) {
-                    if sensorInput.lastT > stateTimeVal {
-                        stateTimeVal = sensorInput.lastT
-                    }
-                }
-            }
-        }
-        let stateTime = (stateTimeVal > 0) ? "<state-time>\(stateTimeVal)</state-time>\n" : ""
-        return sourceStr!.substring(to: dataContainersBlockStart!.upperBound) + "\n" + newBlock + "\n" + sourceStr!.substring(from: dataContainersBlockStop!.lowerBound).substring(to: endLocation!.lowerBound) + "\n" + customTitle + "\n" + stateTime + "</phyphox>"
+        return sourceStr!.substring(to: dataContainersBlockStart!.upperBound) + "\n" + newBlock + "\n" + sourceStr!.substring(from: dataContainersBlockStop!.lowerBound).substring(to: endLocation!.lowerBound) + "\n" + customTitle + "\n" + "</phyphox>"
     }
 }
