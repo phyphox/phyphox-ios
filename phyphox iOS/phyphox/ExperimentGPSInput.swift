@@ -20,12 +20,15 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     fileprivate(set) weak var zAccuracyBuffer: DataBuffer?
     fileprivate(set) weak var tBuffer: DataBuffer?
     
+    fileprivate(set) weak var statusBuffer: DataBuffer?
+    fileprivate(set) weak var satellitesBuffer: DataBuffer?
+    
     fileprivate(set) var startTimestamp: TimeInterval?
     fileprivate var pauseBegin: TimeInterval = 0.0
     
     fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.gpsQueue", attributes: [])
     
-    init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?) {
+    init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?) {
         self.latBuffer = latBuffer
         self.lonBuffer = lonBuffer
         self.zBuffer = zBuffer
@@ -34,6 +37,9 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         self.accuracyBuffer = accuracyBuffer
         self.zAccuracyBuffer = zAccuracyBuffer
         self.tBuffer = tBuffer
+        
+        self.statusBuffer = statusBuffer
+        self.satellitesBuffer = satellitesBuffer
         
         super.init()
         
@@ -51,7 +57,9 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
             let accuracy = location.horizontalAccuracy
             let zAccuracy = location.horizontalAccuracy
             let t = location.timestamp.timeIntervalSinceReferenceDate
-            self.dataIn(lat, lon: lon, z:z, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t)
+            let status = location.horizontalAccuracy > 0 ? 1.0 : 0.0
+            let satellites = 0.0
+            self.dataIn(lat, lon: lon, z:z, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
         }
     }
     
@@ -65,7 +73,13 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
             pauseBegin = 0.0
         }
         
-        locationManager.startUpdatingLocation()
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.startUpdatingLocation()
+        } else {
+            let status = -1.0
+            self.dataIn(nil, lon: nil, z:nil, v: nil, dir: nil, accuracy: nil, zAccuracy: nil, t: nil, status: status, satellites: nil)
+
+        }
     }
     
     func stop() {
@@ -74,7 +88,7 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         locationManager.stopUpdatingLocation()
     }
     
-    fileprivate func writeToBuffers(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval) {
+    fileprivate func writeToBuffers(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
         if lat != nil && self.latBuffer != nil {
             self.latBuffer!.append(lat)
         }
@@ -100,22 +114,30 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
             self.zAccuracyBuffer!.append(zAccuracy)
         }
         
-        if self.tBuffer != nil {
+        if t != nil && self.tBuffer != nil {
             if startTimestamp == nil {
                 startTimestamp = t
             }
             
-            let relativeT = t-self.startTimestamp!
+            let relativeT = t!-self.startTimestamp!
             
             self.tBuffer!.append(relativeT)
         }
+        
+        if status != nil && self.statusBuffer != nil {
+            self.statusBuffer!.append(status)
+        }
+        
+        if satellites != nil && self.satellitesBuffer != nil {
+            self.satellitesBuffer!.append(satellites)
+        }
     }
     
-    fileprivate func dataIn(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double, t: TimeInterval) {
+    fileprivate func dataIn(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
         
         queue.async {
             autoreleasepool(invoking: {
-                self.writeToBuffers(lat, lon: lon, z: z, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t)
+                self.writeToBuffers(lat, lon: lon, z: z, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
             })
         }
     }

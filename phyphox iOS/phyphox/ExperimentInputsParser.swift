@@ -160,7 +160,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     throw SerializationError.invalidExperimentFile(message: "GPS has no output.")
                 }
                 
-                var latBuffer, lonBuffer, zBuffer, vBuffer, dirBuffer, accuracyBuffer, zAccuracyBuffer, tBuffer: DataBuffer?
+                var latBuffer, lonBuffer, zBuffer, vBuffer, dirBuffer, accuracyBuffer, zAccuracyBuffer, tBuffer, statusBuffer, satellitesBuffer: DataBuffer?
                 
                 for output in outputs! {
                     let attributes = output[XMLDictionaryAttributesKey] as! [String: String]
@@ -195,6 +195,12 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     else if component == "t" {
                         tBuffer = buf
                     }
+                    else if component == "status" {
+                        statusBuffer = buf
+                    }
+                    else if component == "satellites" {
+                        satellitesBuffer = buf
+                    }
                     else {
                         throw SerializationError.invalidExperimentFile(message: "Error! Invalid GPS parameter: \(String(describing: component))")
                     }
@@ -205,7 +211,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     }
                 }
                 
-                let sensor = ExperimentGPSInput(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer)
+                let sensor = ExperimentGPSInput(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
                 
                 gpsOut!.append(sensor)
             }
