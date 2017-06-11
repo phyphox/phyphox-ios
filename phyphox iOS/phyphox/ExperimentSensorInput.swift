@@ -50,8 +50,10 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
-    fileprivate(set) var startTimestamp: TimeInterval?
-    fileprivate var pauseBegin: TimeInterval = 0.0
+    var startTimestamp: TimeInterval?
+    var pauseBegin: TimeInterval = 0.0
+    var stateTime: TimeInterval = 0.0
+    var lastT: Double = 0.0
     
     fileprivate(set) weak var xBuffer: DataBuffer?
     fileprivate(set) weak var yBuffer: DataBuffer?
@@ -370,10 +372,11 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         
         if self.tBuffer != nil {
             if startTimestamp == nil {
-                startTimestamp = t
+                startTimestamp = t - stateTime
             }
             
             let relativeT = t-self.startTimestamp!
+            lastT = relativeT
             
             self.tBuffer!.append(relativeT)
         }

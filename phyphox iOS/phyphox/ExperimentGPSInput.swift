@@ -23,8 +23,11 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     fileprivate(set) weak var statusBuffer: DataBuffer?
     fileprivate(set) weak var satellitesBuffer: DataBuffer?
     
-    fileprivate(set) var startTimestamp: TimeInterval?
-    fileprivate var pauseBegin: TimeInterval = 0.0
+    private var startTime: TimeInterval = 0.0
+    var startTimestamp: TimeInterval?
+    var pauseBegin: TimeInterval = 0.0
+    var stateTime: TimeInterval = 0.0
+    var lastT: Double = 0.0
     
     fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.gpsQueue", attributes: [])
     
@@ -49,6 +52,9 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         for location in locations {
+            if location.timestamp.timeIntervalSinceReferenceDate < startTime {
+                continue //Skip old data points, which have been acquired before the start of the measurement
+            }
             let lat = location.coordinate.latitude
             let lon = location.coordinate.longitude
             let z = location.altitude
@@ -68,6 +74,8 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     }
     
     func start() {
+        startTime = Date.timeIntervalSinceReferenceDate //This is only used to filter cached data from the location manager
+        
         if pauseBegin > 0 && startTimestamp != nil {
             startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
             pauseBegin = 0.0
@@ -116,10 +124,11 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         
         if t != nil && self.tBuffer != nil {
             if startTimestamp == nil {
-                startTimestamp = t
+                startTimestamp = t!-stateTime
             }
             
             let relativeT = t!-self.startTimestamp!
+            lastT = relativeT
             
             self.tBuffer!.append(relativeT)
         }
