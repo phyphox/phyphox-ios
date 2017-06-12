@@ -40,6 +40,13 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
         
         let sleep = floatTypeFromXML(attributes as [String : AnyObject]?, key: "sleep", defaultValue: 0.0)
+        let dsBufferName = attributes?["dynamicSleep"]
+        let dynamicSleep: DataBuffer?
+        if dsBufferName != nil {
+            dynamicSleep = buffers[dsBufferName!]!
+        } else {
+            dynamicSleep = nil
+        }
         let onUserInput = boolFromXML(attributes as [String : AnyObject]?, key: "onUserInput", defaultValue: false)
         
         func getDataFlows(_ dictionaries: [AnyObject]?) throws -> [ExperimentAnalysisDataIO] {
@@ -235,7 +242,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
         
         if processed.count > 0 {
-            return ExperimentAnalysis(analyses: processed as! [ExperimentAnalysisModule], sleep: sleep, onUserInput: onUserInput)
+            return ExperimentAnalysis(analyses: processed as! [ExperimentAnalysisModule], sleep: sleep, dynamicSleep: dynamicSleep, onUserInput: onUserInput)
         }
         
         return nil

@@ -24,6 +24,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     let analyses: [ExperimentAnalysisModule]
     
     let sleep: Double
+    let dynamicSleep: DataBuffer?
     let onUserInput: Bool
     
     var running = false
@@ -35,10 +36,11 @@ final class ExperimentAnalysis : DataBufferObserver {
     
     fileprivate(set) var timestamp: TimeInterval = 0.0
 
-    init(analyses: [ExperimentAnalysisModule], sleep: Double, onUserInput: Bool) {
+    init(analyses: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool) {
         self.analyses = analyses
         
-        self.sleep = max(1/50.0, sleep) //Max analysis rate: 50Hz
+        self.sleep = sleep
+        self.dynamicSleep = dynamicSleep
         self.onUserInput = onUserInput
     }
     
@@ -79,7 +81,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     func setNeedsUpdate() {
         if !busy {
             busy = true
-            after(sleep, closure: {
+            after(max(1/50.0, dynamicSleep?.last ?? sleep), closure: {
                 self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
                 self.delegate?.analysisWillUpdate(self)
