@@ -137,7 +137,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                             let max = floatTypeFromXML(mapAttrs, key: "max", defaultValue: +Double.infinity)
                             mappings.append((min: min, max: max, str: str))
                         } else {
-                            throw SerializationError.invalidExperimentFile(message: "Malformed map-element.")
+                            let str = map as! String
+                            mappings.append((min: -Double.infinity, max: +Double.infinity, str: str))
                         }
                     }
                 }
