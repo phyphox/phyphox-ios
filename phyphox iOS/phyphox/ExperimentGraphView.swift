@@ -156,8 +156,9 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         addSubview(xLabel)
         addSubview(yLabel)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
-        glGraph.addGestureRecognizer(tapGesture)
+        //TODO: Interactive graphs deactivated - For now...
+        //let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        //glGraph.addGestureRecognizer(tapGesture)
         
         descriptor.yInputBuffer.addObserver(self)
     }
