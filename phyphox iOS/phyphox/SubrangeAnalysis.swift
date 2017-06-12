@@ -59,7 +59,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             end = start + Int(v)
         }
         
-        if (start < 0 || start > end) {
+        if (start < 0) {
             start = 0
         }
         
@@ -75,6 +75,9 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             if (outputs.count > i) && outputs[i].buffer != nil {
                 let thisEnd = min(end, arrayIn.buffer!.actualCount)
                 if (thisEnd < start) {
+                    if outputs[i].clear {
+                        outputs[i].buffer!.clear()
+                    }
                     continue
                 }
                 let result = Array(arrayIn.buffer!.toArray()[start..<thisEnd])
