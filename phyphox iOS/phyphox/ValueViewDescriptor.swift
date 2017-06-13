@@ -51,6 +51,8 @@ final class ValueViewDescriptor: ViewDescriptor {
                 mappingCode += "else if (x <= \(mapping.max)) {v = \"\(str)\";}"
             } else if mapping.min.isFinite {
                 mappingCode += "else if (x >= \(mapping.min)) {v = \"\(str)\";}"
+            } else {
+                mappingCode += "else if (true) {v = \"\(str)\";}"
             }
         }
         return "function (x) {" +
