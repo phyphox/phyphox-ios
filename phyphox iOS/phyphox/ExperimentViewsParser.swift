@@ -294,6 +294,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     for input_ in inputs {
                         if let input = input_ as? [String: AnyObject] {
                             inputList.append(try ExperimentAnalysisDataIO(dictionary: input as NSDictionary, buffers: buffers))
+                        } else {
+                            inputList.append(try ExperimentAnalysisDataIO(buffer: buffers[input_ as! String]!))
                         }
                     }
                 }
