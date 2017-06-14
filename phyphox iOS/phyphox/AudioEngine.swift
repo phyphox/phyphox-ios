@@ -80,6 +80,8 @@ final class AudioEngine {
         if (record != nil) {
             self.recordInput = engine!.inputNode
             
+            recordDataBuffer = DataBuffer(name: "", size: recordIn!.outBuffer.size, vInit: [])
+            
             self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(sampleRate/10), format: format!, block: {(buffer, time) in
                 audioInputQueue.async (execute: {
                     autoreleasepool(invoking: {
@@ -90,7 +92,6 @@ final class AudioEngine {
                 })
             })
             
-            recordDataBuffer = DataBuffer(name: "", size: recordIn!.outBuffer.size, vInit: [])
         }
         
         try self.engine!.start()
@@ -143,9 +144,13 @@ final class AudioEngine {
             return
         }
 
-        let data = recordDataBuffer!.toArray()
-        recordDataBuffer!.clear()
-        out.replaceValues(data)
+        audioInputQueue.sync {
+            autoreleasepool {
+                let data = recordDataBuffer!.toArray()
+                recordDataBuffer!.clear()
+                out.replaceValues(data)
+            }
+        }
     }
 
     func stop() {
