@@ -131,7 +131,6 @@ final class AudioEngine {
                 self.playbackPlayer!.play()
                 self.playbackPlayer!.scheduleBuffer(self.playbackBuffer!, at: nil, options: (playbackOut!.loop ? .loops : []), completionHandler: { [unowned self] in
                     if bufferRef == self.playbackBuffer { //bufferRef != self.pcmBuffer <=> pcmBuffer was cancelled and recreated because the data source changed, playback should not be cancelled.
-                        self.playbackPlayer!.stop()
                         self.playing = false
                     }
                 })
