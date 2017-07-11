@@ -82,6 +82,11 @@ final class ExperimentAnalysis : DataBufferObserver {
         if !busy {
             busy = true
             after(max(1/50.0, dynamicSleep?.last ?? sleep), closure: {
+                if !self.running && !self.onUserInput { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
+                    self.busy = false
+                    return
+                }
+                
                 self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
                 
                 self.delegate?.analysisWillUpdate(self)
