@@ -1,0 +1,10 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSLocationWhenInUseUsageDescription" = "phyphox nyní zaznamenává data o vaší pozici. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
+"NSMicrophoneUsageDescription" = "phyphox nyní zaznamenává zvuk z mikrofonu. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
+
