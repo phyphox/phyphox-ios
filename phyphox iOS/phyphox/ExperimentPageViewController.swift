@@ -182,12 +182,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem.accessibilityLabel = NSLocalizedString("actions", comment: "")
-//        actionItem.imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: 0.0)
         let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
-        deleteItem.imageInsets = UIEdgeInsets(top: 0.0, left: -25.0, bottom: 0.0, right: -25.0)
         deleteItem.accessibilityLabel = NSLocalizedString("clear_data", comment: "")
         let playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
-        playItem.imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
         self.navigationItem.rightBarButtonItems = [
             actionItem,
             deleteItem,
@@ -952,7 +949,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         var items = navigationItem.rightBarButtonItems!
         
         items[2] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
-        items[2].imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
         
         navigationItem.rightBarButtonItems = items
     }
@@ -982,7 +978,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             experiment.stop()
             
             items[2] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
-            items[2].imageInsets = UIEdgeInsets(top: 0.0, left: -15.0, bottom: 0.0, right: -25.0)
             
             navigationItem.rightBarButtonItems = items
         }
