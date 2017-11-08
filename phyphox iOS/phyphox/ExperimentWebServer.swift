@@ -274,12 +274,14 @@ final class ExperimentWebServer {
             completionBlock!(response)
             })
         
-        if server!.start() {
+        if server!.start(withPort: 80, bonjourName: nil){
+            print("Webserver running on \(server!.serverURL)")
+            return true
+        } else if server!.start(withPort: 8080, bonjourName: nil){
             print("Webserver running on \(server!.serverURL)")
             return true
         }
         else {
-            server!.stop()
             server = nil
             return false
         }
