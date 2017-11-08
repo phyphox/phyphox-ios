@@ -74,7 +74,7 @@ final class ExperimentDeserializer: NSObject {
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
         
         var d = dictionary["description"]
-        let descriptionRAW: String? = (d != nil ? textFromXML(d! as AnyObject) : nil)
+        let descriptionRAW: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         let description: String?
         if descriptionRAW == nil {
             description = descriptionRAW
@@ -82,11 +82,11 @@ final class ExperimentDeserializer: NSObject {
             description = descriptionRAW!.replacingOccurrences(of: "(?m)((?:^\\s+)|(?:\\s+$))", with: "\n", options: NSString.CompareOptions.regularExpression, range: nil)
         }
         d = dictionary["category"]
-        let category: String? = (d != nil ? textFromXML(d! as AnyObject) : nil)
+        let category: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         d = dictionary["title"]
-        let title: String? = (d != nil ? textFromXML(d! as AnyObject) : nil)
+        let title: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         d = dictionary["state-title"]
-        let stateTitle: String? = (d != nil ? textFromXML(d! as AnyObject) : nil)
+        let stateTitle: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         
         var links: [String: String] = [:]
         var highlightedLinks: [String: String] = [:]

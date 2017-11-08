@@ -98,15 +98,18 @@ func CGFloatFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: CGFl
     return defaultValue
 }
 
-func textFromXML(_ xml: AnyObject) -> String {
+func textFromXML(_ xml: AnyObject) throws -> String {
     if let str = xml as? String {
         return str
     }
     else if let d = xml as? NSDictionary {
         return d[XMLDictionaryTextKey] as! String
     }
+    else if let d = xml as? NSMutableArray {
+        return d.lastObject! as! String
+    }
     else {
-        fatalError("Invalid input for text \(xml)")
+        throw SerializationError.invalidExperimentFile(message: "Invalid input for text \(xml)")
     }
 }
 
