@@ -105,3 +105,5 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq-de";
 "remotePhyphoxOrg" = "Hilfe zum Fernzugriff";
 "remotePhyphoxOrgURL" = "http://phyphox.org/fernsteuerung";
+
+"AudioRateMissmatch" = "Fehler: Falsche Abtastrate. Bitte deaktiviere alle Apps oder Dienste (wie AirPlay), die eine andere Audiorate vorgeben.";

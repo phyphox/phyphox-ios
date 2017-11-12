@@ -127,3 +127,5 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Remote control help";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
+
+"AudioRateMissmatch" = "Error: Sampling rate mismatch. Please disable any apps or services (like AirPlay) which force a different audio sampling rate.";

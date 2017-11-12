@@ -940,8 +940,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func actuallyStartExperiment() {
         do {
             try experiment.start()
+        } catch AudioEngine.AudioEngineError.RateMissmatch {
+            showError(message: NSLocalizedString("AudioRateMissmatch", comment: ""))
+            experiment.stop()
+            return
         } catch {
-            showError(message: "Could not start experiment. Unknown exception.")
+            showError(message: "Could not start experiment \(error).")
             experiment.stop()
             return
         }

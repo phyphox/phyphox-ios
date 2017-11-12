@@ -26,6 +26,10 @@ final class AudioEngine {
     
     private var format: AVAudioFormat? = nil
     
+    enum AudioEngineError: Error {
+        case RateMissmatch
+    }
+    
     init() {
         
     }
@@ -48,10 +52,6 @@ final class AudioEngine {
         self.playbackOut = playback
         self.recordIn = record
         
-        let sampleRate = recordIn?.sampleRate ?? playbackOut?.sampleRate ?? 0
-        var audioDescription = monoFloatFormatWithSampleRate(Double(sampleRate))
-        format = AVAudioFormat(streamDescription: &audioDescription)
-        
         let avSession = AVAudioSession.sharedInstance()
         if playback != nil && record != nil {
             try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker)
@@ -64,7 +64,18 @@ final class AudioEngine {
         if (avSession.isInputGainSettable) {
             try avSession.setInputGain(1.0)
         }
+        
+        let sampleRate = recordIn?.sampleRate ?? playbackOut?.sampleRate ?? 0
         try avSession.setPreferredSampleRate(Double(sampleRate))
+        
+        if Double(sampleRate) != avSession.sampleRate {
+            stopEngine()
+            throw AudioEngineError.RateMissmatch
+        }
+        
+        var audioDescription = monoFloatFormatWithSampleRate(avSession.sampleRate)
+        format = AVAudioFormat(streamDescription: &audioDescription)
+        
         try avSession.setActive(true)
         
         self.engine = AVAudioEngine()
@@ -82,7 +93,7 @@ final class AudioEngine {
             
             recordDataBuffer = DataBuffer(name: "", size: recordIn!.outBuffer.size, vInit: [])
             
-            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(sampleRate/10), format: format!, block: {(buffer, time) in
+            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format!, block: {(buffer, time) in
                 audioInputQueue.async (execute: {
                     autoreleasepool(invoking: {
                         let channels = UnsafeBufferPointer(start: buffer.floatChannelData, count: Int(buffer.format.channelCount))
