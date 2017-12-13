@@ -385,9 +385,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             hud?.dismiss(afterDelay: 3.0)
         }
         else {
-            var url = webServer.server!.serverURL.absoluteString
+            var url = webServer.server!.serverURL?.absoluteString
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
-            if url == "nil" {
+            if url == nil || url == "nil" {
                 print("Fallback to generate URL from IP.")
                 var ip: String? = nil
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
@@ -422,7 +422,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
-            self.serverLabel!.text = NSLocalizedString("remoteServerActive", comment: "")+"\n\(url)"
+            self.serverLabel!.text = NSLocalizedString("remoteServerActive", comment: "")+"\n\(url!)"
             self.view.addSubview(self.serverLabel!)
             
             updateLayout()
