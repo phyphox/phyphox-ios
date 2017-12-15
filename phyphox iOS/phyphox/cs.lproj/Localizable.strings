@@ -5,7 +5,7 @@
 "actions" = "Akce";
 "help" = "Nápověda a informace";
 "newExperimentPhyphoxInfo" = "Na stránce phyphox.org můžete vytvářet další pokročilé experimenty obsahující i analýzu naměřených dat. Takto vytvořené experimenty můžete sdílet se svými kolegy, studenty a přáteli.";
-"loadingText" = "Načítám experimentâ€¦";
+"loadingText" = "Načítám experimentâ…";
 "save_state_success" = "Stav experimentu byl uložen.";
 "save_state" = "Uložit stav experimentu";
 "location" = "Pozice";
@@ -21,7 +21,7 @@
 "save_state_title" = "Nadpis";
 "newExperimentInputBufferSize" = "Velikost vyrovnávací paměti (počet ukládaných hodnot)";
 "sensorLinearAcceleration" = "Lineární Akcelerace";
-"categoryRawSensor" = "Výstup senzorů";
+"categoryRawSensor" = "Senzory";
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "save_locally_button" = "Uložit do sbírky";
 "save_state_message" = "Můžete uložit současný stav experimentu včetně nasbíraných dat do své sbírky nebo jej sdílet s dalšími aplikacemi.";
@@ -79,12 +79,12 @@
 "save_state_category" = "Uložené experimenty";
 "warning" = "Varování";
 "damageWarning" = "Prosím vyvarujte se během experimentování poškození svého mobilního telefonu. Obzvláště se vyhněte upuštění mobilu na tvrdý povrch anebo jeho přiblížení k příliš silnému magnetickému poli. Autoři phyphoxu nejsou zodpovědní za žádné poškození vzniklé na vašem mobilním zařízení.";
-"creditsRWTH" = "phyphox byl vytvořen na Druhém Institutu Fyziky na RWTH Univerzitě v Aachen";
+"creditsRWTH" = "phyphox byl vytvořen na Druhém Institutu Fyziky na RWTH Univerzitě v Aachen.";
 "sensorMagneticField" = "Magnetické pole";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Chcete tento experiment smazat ze své sbírky?";
 "creditsNames" = "iOS implementace:\nJonas Gessner\nVývoj a koncept:\nDr. Sebastian Kuhlen\nKoncept:\nProf. Christoph Stampfer\nVývoj:\nFrank Posthoff (A.NikoPol)";
-"remoteServerWarning" = "Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni na důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitní či firemních sítích povoleno a tedy ani umožněno.\n\Pro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu).\n\Po zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.";
+"remoteServerWarning" = "Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni na důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitní či firemních sítích povoleno a tedy ani umožněno.\nPro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu).\nPo zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.";
 "export_pick_share" = "Vyberte si, jak chcete exportovat";
 "sensorNotAvailableWarningTitle" = "Senzor není dostupný.";
 "sensorNotAvailableWarningMoreInfo" = "Více informací";
@@ -96,4 +96,3 @@
 "loadingTitle" = "Načítám";
 "experimentsPhyphoxOrg" = "Nápady a instrukce k experimentu";
 "save_state_share" = "Sdílet";
-
