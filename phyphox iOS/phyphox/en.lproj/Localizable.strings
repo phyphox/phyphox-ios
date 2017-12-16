@@ -69,7 +69,7 @@
 "disableRemoteServer" = "Disable remote access";
 "remoteServerWarning" = "You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.";
 "remoteServerWarningTitle" = "Security warning!";
-"remoteServerActive" = "Remote access enabled. Access this experiment from te following URL:";
+"remoteServerActive" = "Remote access enabled. Access this experiment from the following URL:";
 "hotspotSettings" = "Hotspot Settings";
 "switchToPhoneLayout" = "View: Narrow";
 "switchColumns1" = "View: 1 column";
