@@ -72,7 +72,9 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                         let url = dict[XMLDictionaryTextKey] as? String ?? ""
                         let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
                         
-                        links[label] = url
+                        if url != "" {
+                            links[label] = url
+                        }
                     }
                 }
                 else if key as! String == XMLDictionaryAttributesKey {
