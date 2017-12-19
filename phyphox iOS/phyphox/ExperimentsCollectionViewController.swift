@@ -51,6 +51,18 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             UIApplication.shared.openURL(URL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
         }))
         
+        alert.addAction(UIAlertAction(title: NSLocalizedString("translationInfo", comment: ""), style: .default, handler:{ _ in
+            let al = UIAlertController(title: NSLocalizedString("translationInfo", comment: ""), message: NSLocalizedString("translationText", comment: ""), preferredStyle: .alert)
+            
+            al.addAction(UIAlertAction(title: NSLocalizedString("translationToWebsite", comment: ""), style: .default, handler: { _ in
+                UIApplication.shared.openURL(URL(string: NSLocalizedString("translationToWebsiteURL", comment: ""))!)
+            }))
+            
+            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+            
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }))
+        
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
