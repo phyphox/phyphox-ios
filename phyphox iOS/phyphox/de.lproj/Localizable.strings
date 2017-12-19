@@ -18,7 +18,6 @@
 "confirmDeleteTitle" = "Löschen bestätigen?";
 "credits" = "Credits";
 "creditsNames" = "iOS Umsetzung:\nJonas Gessner\nEntwicklung und Konzept:\nDr. Sebastian Kuhlen\nKonzept:\nProf. Christoph Stampfer\nDesign:\nFrank Posthoff (A.NikoPol)";
-
 "creditsRWTH" = "Phyphox wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.";
 "damageWarning" = "Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.";
 "delete" = "Löschen";
@@ -105,5 +104,8 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq-de";
 "remotePhyphoxOrg" = "Hilfe zum Fernzugriff";
 "remotePhyphoxOrgURL" = "http://phyphox.org/fernsteuerung";
-
 "AudioRateMissmatch" = "Fehler: Falsche Abtastrate. Bitte deaktiviere alle Apps oder Dienste (wie AirPlay), die eine andere Audiorate vorgeben.";
+"translationInfo" = "Sprachen";
+"translationText" = "Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen in deinen Systemeinstellungen benutzen. Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".";
+"translationToWebsite" = "Zur Webseite";
+"translationToWebsiteURL" = "http://phyphox.org/de/faq-de/#faqTranslation";
