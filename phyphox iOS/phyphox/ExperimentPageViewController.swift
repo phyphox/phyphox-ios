@@ -594,9 +594,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     return
                 }
                 
-                let shareText = NSLocalizedString("save_state_subject", comment: "")
-                
-                let vc = UIActivityViewController(activityItems: [file!, shareText], applicationActivities: nil)
+                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
                 
                 vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
                 
@@ -726,9 +724,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             do { try png.write(to: URL(fileURLWithPath: tmpFile), options: .noFileProtection) } catch {}
             let tmpFileURL = URL(fileURLWithPath: tmpFile)
-            let shareText = NSLocalizedString("share_subject", comment: "")
             
-            let vc = UIActivityViewController(activityItems: [tmpFileURL, shareText], applicationActivities: nil)
+            let vc = UIActivityViewController(activityItems: [tmpFileURL], applicationActivities: nil)
             
             vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
             
