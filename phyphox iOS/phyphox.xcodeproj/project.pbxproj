@@ -436,6 +436,8 @@
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
 		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4B89F5301FE9691500F7A5A8 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4B89F5461FE9691500F7A5A8 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4BA406C11EB618B30046E36A /* AudioEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		4BA9987C1EDB69D200BD1860 /* LogAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogAnalysis.swift; sourceTree = "<group>"; };
 		4BA9987E1EDB6A4100BD1860 /* RoundAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RoundAnalysis.swift; sourceTree = "<group>"; };
@@ -481,7 +483,7 @@
 		6B08150F1CABEE6100EE2791 /* XMLDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XMLDictionary.m; sourceTree = "<group>"; };
 		6B0815111CABEE6700EE2791 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = ../../External/ZipZap/ZipZap.xcodeproj; sourceTree = "<group>"; };
 		6B0815381CABEFAC00EE2791 /* JXLSiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JXLSiOS.xcodeproj; path = ../../External/JXLS/JXLSiOS.xcodeproj; sourceTree = "<group>"; };
-		6B0815431CABF61B00EE2791 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		6B0815431CABF61B00EE2791 /* libc++.tbd */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentHeaderView.swift; sourceTree = "<group>"; };
 		6B0815491CAFD3A900EE2791 /* PeriodicityAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodicityAnalysis.swift; sourceTree = "<group>"; };
 		6B08154E1CB00F4600EE2791 /* TimerAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerAnalysis.swift; sourceTree = "<group>"; };
@@ -1236,6 +1238,7 @@
 				Base,
 				de,
 				cs,
+				pl,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1707,6 +1710,7 @@
 				4B6AE7131CF9AF0B0070A691 /* en */,
 				4B6AE7151CF9AF0D0070A691 /* de */,
 				4BFC518E1F7999B80008DFDC /* cs */,
+				4B89F5461FE9691500F7A5A8 /* pl */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1717,6 +1721,7 @@
 				4BBA0C9B1D8D75A300A9A634 /* en */,
 				4BBA0C9D1D8D75AE00A9A634 /* de */,
 				4BFC518D1F7999B70008DFDC /* cs */,
+				4B89F5301FE9691500F7A5A8 /* pl */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
