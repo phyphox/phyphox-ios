@@ -107,30 +107,28 @@ final class creditsView: UIView {
         var searchIndex = raw.startIndex
         while true {
             let searchString = raw.substring(from: searchIndex)
-            var index = searchString.range(of: "\n")?.lowerBound
-            if index == nil {
-                break
+            let endOfLine = searchString.range(of: "\n")?.lowerBound ?? searchString.endIndex
+            let end = raw.index(searchIndex, offsetBy: raw.distance(from: searchString.startIndex, to: endOfLine))
+            let searchLine = raw.substring(with: searchIndex..<end)
+            if searchLine.range(of: ":") != nil {
+                //This line is a headline
+                if end < raw.endIndex {
+                    searchIndex = raw.index(end, offsetBy: 1)
+                    continue
+                } else {
+                    break
+                }
             }
-            index = raw.index(after: index!)
-            let searchString2 = searchString.substring(from: index!)
-            let index2 = searchString2.range(of: "\n")?.lowerBound
             
-            let range: NSRange
-            let searchStart = raw.distance(from: raw.startIndex, to: searchIndex)
-            let indexOffset = raw.distance(from: searchString.startIndex, to: index!)
-            let length: Int
-            if index2 == nil {
-                length = searchString2.characters.count
-            } else {
-                length = raw.distance(from: searchString2.startIndex, to: index2!)
-            }
-            range = NSMakeRange(searchStart + indexOffset, length)
+            let range = NSMakeRange(raw.distance(from: raw.startIndex, to: searchIndex), raw.distance(from: searchIndex, to: end))
 
             str.setAttributes([NSFontAttributeName: UIFont.boldSystemFont(ofSize: fontSize), NSForegroundColorAttributeName: kRWTHBackgroundColor], range: range)
-            if (index2 == nil) {
+
+            if end < raw.endIndex {
+                searchIndex = raw.index(end, offsetBy: 1)
+            } else {
                 break
             }
-            searchIndex = raw.index(searchIndex, offsetBy: length + indexOffset + 1)
         }
         return str
     }
