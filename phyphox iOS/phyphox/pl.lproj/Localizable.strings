@@ -96,3 +96,6 @@
 "remotePhyphoxOrg" = "Pomoc zdalnego dostępu";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "AudioRateMissmatch" = "Błąd: Niezgodna częstotliwość próbkowania. Wyłącz aplikacje lub serwisy (np. AirPlay), które wymuszają inną częstotliwość próbkowania audio.";
+"translationInfo" = "Języki";
+"translationToWebsite" = "Odwiedź stronę";
+"translationToWebsiteURL" = "http://phyphox.org/faq-pl/#faqTranslation";
