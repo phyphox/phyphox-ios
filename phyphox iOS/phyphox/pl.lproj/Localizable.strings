@@ -3,7 +3,7 @@
 "action_settings" = "Ustawienia";
 "title_activity_experiment" = "phyphox";
 "newExperiment" = "Dodaj eksperyment";
-"newExperimentPhyphoxInfo" = "Aby przygotować zaawansowane doświadczenia zawierające analizę danych oraz by dzielić się doświadczeniami z innymi odwiedź stronę phyphox.org";
+"newExperimentPhyphoxInfo" = "Aby przygotować zaawansowane doświadczenia zawierające analizę danych oraz by dzielić się doświadczeniami z innymi odwiedź stronę phyphox.org.";
 "newExperimentInputTitle" = "Tytuł";
 "newExperimentInputBufferSize" = "Rozmiar bufora (liczba przechowywanych wartości)";
 "newExperimentInputRate" = "Częstotliwość czujnika (w Hz, 0 = maksymalna dozwolona)";
@@ -11,18 +11,18 @@
 "warning" = "Uwaga";
 "donotshowagain" = "Nie pokazuj ponownie";
 "damageWarning" = "Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na znaczne pole magnetyczne. Autorzy phyphox'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.";
-"credits" = "Credits";
+"credits" = "Autorzy";
 "creditsRWTH" = "phyphox powstał w II Instytucie Fizyki Uniwersytetu RWTH w Aachen.";
-"creditsNames" = "Implementacja iOS:\nJonas Gessner\nKoncepcję i rozwój projektu:\nDr. Sebastian Kuhlen\nKoncepcją projektu:\nProf. Christoph Stampfer\nStrona graficzną przedsięwzięcia:\nFrank Posthoff (A.NikoPol)";
+"creditsNames" = "Koncepcję i rozwój projektu:\nDr. Sebastian Kuhlen\nKoncepcją projektu:\nProf. Christoph Stampfer\nStrona graficzną przedsięwzięcia:\nFrank Posthoff (A.NikoPol)\nProgramowanie:\nCamilla Lummerzheim\nJonas Gessner";
 "sensorLinearAcceleration" = "Przyspieszenie liniowe";
-"sensorLight" = "Światło";
+"sensorLight" = "Światła";
 "sensorGyroscope" = "Żyroskop";
 "sensorAccelerometer" = "Akcelerometr (czujnik przyspieszenia)";
 "sensorMagneticField" = "Pole magnetyczne";
 "sensorPressure" = "Ciśnienie";
-"sensorProximity" = "Czujnik zbliżeniowy";
+"sensorProximity" = "Zbliżeniowy";
 "location" = "Położenie";
-"sensorNotAvailableWarningTitle" = "Czujnik niedostępny";
+"sensorNotAvailableWarningTitle" = "Czujnik niedostępny.";
 "sensorNotAvailableWarningText1" = "Czujnik";
 "sensorNotAvailableWarningText2" = "niedostępny. Zazwyczaj oznacza to, że urządzenie nie jest wyposażone w tego typu czujnik.";
 "sensorNotAvailableWarningMoreInfo" = "Więcej informacji";
@@ -34,7 +34,7 @@
 "unknown" = "nieznany";
 "delete" = "Usuń";
 "confirmDelete" = "Czy usunąć eksperyment z twojego zbioru?";
-"confirmDeleteTitle" = "Potwierdź usunięcie";
+"confirmDeleteTitle" = "Akceptujesz usunięcie?";
 "stop" = "Zatrzymaj";
 "start" = "Uruchom";
 "clear_data" = "Usuń dane";
@@ -44,7 +44,7 @@
 "timed_start" = "Rozpocznij sesję pomiarową";
 "loadingTitle" = "Ładowanie";
 "loadingText" = "Ładowanie eksperymentu…";
-"timedRunDialogTitle" = "Czas sesji";
+"timedRunDialogTitle" = "Czas sesji pomiarowej";
 "timedRunStartDelay" = "Opóźnienie uruchomienia";
 "timedRunStopDelay" = "Czas trwania eksperymentu";
 "enableTimedRun" = "Włącz czas sesji";
@@ -59,8 +59,8 @@
 "switch_to_raw_magnetometer" = "Przełącz do niekalibrowanego magnetometru";
 "enableRemoteServer" = "Zezwól na dostęp zdalny";
 "disableRemoteServer" = "Zablokuj dostęp zdalny";
-"remoteServerWarning" = "Zamierzasz zezwolić na dostęp zdalny do danych. Procedura ta winna być uruchamiana tylko w zaufanej sieci! Należy pamiętać, że bezpośrednie połączenie między urządzeniami nie będzie możliwe w większości sieci korporacyjnych i uniwersyteckich.\n\nDla zwiększenia bezpieczeństaw zalecamy połączenie przez opcję tethering'u (punkt dostępowy).\n\nPo naciśnięciu ok, wyniki pomiarów będą dostępne w przeglądarce uruchomionej w tej samej sieci.";
-"remoteServerWarningTitle" = "Ostrzeżenie bezpieczeństwa";
+"remoteServerWarning" = "Zamierzasz zezwolić na dostęp zdalny do danych. Procedura ta winna być uruchamiana tylko w zaufanej sieci! Należy pamiętać, że bezpośrednie połączenie między urządzeniami nie będzie możliwe w większości sieci korporacyjnych i uniwersyteckich. \n \nDla zwiększenia bezpieczeństaw zalecamy połączenie przez opcję tethering'u (punkt dostępowy). \n \nPo naciśnięciu ok, wyniki pomiarów będą dostępne w przeglądarce uruchomionej w tej samej sieci.";
+"remoteServerWarningTitle" = "Ostrzeżenie bezpieczeństwa!";
 "remoteServerActive" = "Zdalny dostęp uruchomiony. Eksperyment dostępny pod adresem URL:";
 "hotspotSettings" = "Ustawienia punktu dostępowego";
 "switchToPhoneLayout" = "Widok: Ograniczony";
@@ -72,7 +72,7 @@
 "save_locally_message" = "Eksperyment otwarty ze zdalnego źrodła. Czy dodać go do twojego zbioru eksperymentów?";
 "save_locally_button" = "Zapisz do zbioru";
 "save_locally_done" = "Eksperyment pomyślnie dodany do zbioru.";
-"save_state" = "Zapisz postęp eksperymentu";
+"save_state" = "Zapisz status eksperymentu";
 "save_state_category" = "Satus eksperymentu zapisany";
 "save_state_message" = "Możesz zapisać status eksperymentu wraz z wynikami w swoim zbiorze lub udostępnić go innej aplikacji.";
 "save_state_title" = "Tytuł";
@@ -85,7 +85,7 @@
 "pick_exportSets" = "Wybierz zakres danym do wyeksportowania.";
 "pick_exportFormat" = "Wybierz format danych.";
 "noDrawableData" = "Brak zaznaczonych danych.";
-"categoryNewExperiment" = "Proste standardowe eksperymenty";
+"categoryNewExperiment" = "Własne eksperymenty";
 "categoryRawSensor" = "Nieskalibrowane czujniki";
 "experimentinfo_hint" = "Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.";
 "help" = "Pomoc i informacje";
@@ -99,3 +99,4 @@
 "translationInfo" = "Języki";
 "translationToWebsite" = "Odwiedź stronę";
 "translationToWebsiteURL" = "http://phyphox.org/faq-pl/#faqTranslation";
+"translationText" = "Phyphox użyje pierwszego języka z listy języków preferowanych w ustawieniach systemu. Aby dowiedzieć się więcej o dostępnych językach oraz możliwościach współpracy wybierz \"odwiedź stronę\".";
