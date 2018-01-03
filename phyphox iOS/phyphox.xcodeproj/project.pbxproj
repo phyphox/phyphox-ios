@@ -436,8 +436,6 @@
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
 		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4B89F5301FE9691500F7A5A8 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		4B89F5461FE9691500F7A5A8 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4BA406C11EB618B30046E36A /* AudioEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		4BA9987C1EDB69D200BD1860 /* LogAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogAnalysis.swift; sourceTree = "<group>"; };
 		4BA9987E1EDB6A4100BD1860 /* RoundAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RoundAnalysis.swift; sourceTree = "<group>"; };
@@ -446,8 +444,6 @@
 		4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubrangeAnalysis.swift; sourceTree = "<group>"; };
 		4BE7CADF1E4CD20F00C31090 /* SeparatorViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeparatorViewDescriptor.swift; sourceTree = "<group>"; };
 		4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSeparatorView.swift; sourceTree = "<group>"; };
-		4BFC518D1F7999B70008DFDC /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		4BFC518E1F7999B80008DFDC /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6B00F0261C40713300971941 /* MainNavigationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationViewController.swift; sourceTree = "<group>"; };
 		6B00F0291C4072B700971941 /* ExperimentViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewController.swift; sourceTree = "<group>"; };
 		6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAnalysisDataIO.swift; sourceTree = "<group>"; };
@@ -1237,8 +1233,6 @@
 				en,
 				Base,
 				de,
-				cs,
-				pl,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1709,8 +1703,6 @@
 			children = (
 				4B6AE7131CF9AF0B0070A691 /* en */,
 				4B6AE7151CF9AF0D0070A691 /* de */,
-				4BFC518E1F7999B80008DFDC /* cs */,
-				4B89F5461FE9691500F7A5A8 /* pl */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1720,8 +1712,6 @@
 			children = (
 				4BBA0C9B1D8D75A300A9A634 /* en */,
 				4BBA0C9D1D8D75AE00A9A634 /* de */,
-				4BFC518D1F7999B70008DFDC /* cs */,
-				4B89F5301FE9691500F7A5A8 /* pl */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

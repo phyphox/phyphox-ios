@@ -126,12 +126,12 @@ final class GraphViewDescriptor: ViewDescriptor {
         return "function () {" +
             "var d = [];" +
             "if (!elementData[\(id)].hasOwnProperty(\"y\"))return;" +
-            "if (!elementData[\(id)].hasOwnProperty(\"x\") || elementData[\(id)][\"x\"].length < elementData[\(id)][\"y\"].length) {" +
+            "if (!elementData[\(id)].hasOwnProperty(\"x\") || elementData[\(id)][\"x\"].length == 0) {" +
             "elementData[\(id)][\"x\"] = [];" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
             "elementData[\(id)][\"x\"][i] = i" +
             "}" +
-            "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
+            "for (i = 0; i < elementData[\(id)][\"y\"].length && i < elementData[\(id)][\"x\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
             "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
     }

@@ -10,7 +10,7 @@
 import UIKit
 
 private let spacing: CGFloat = 10.0
-private let textFieldWidth: CGFloat = 60.0
+private let textFieldWidth: CGFloat = 100.0
 
 final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate, DataBufferObserver {
     let textField: UITextField
@@ -152,7 +152,9 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             height = max(height, s3.height)
         }
         
-        let width = 2.0 * max(left, right)
+        let width = min(2.0 * max(left, right), size.width)
+        
+        print("W: \(width)")
         
         return CGSize(width: width, height: height)
     }
@@ -165,11 +167,17 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         let w = (self.bounds.size.width-spacing)/2.0
         
         label.frame = CGRect(origin: CGPoint(x: 0, y: (self.bounds.size.height-h)/2.0), size: CGSize(width: w, height: h))
-        textField.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0, y: (self.bounds.size.height-h2)/2.0), size: CGSize(width: textFieldWidth, height: h2))
+        
+        var actualTextFieldWidth = textFieldWidth
         
         if unitLabel != nil {
             let s3 = unitLabel!.sizeThatFits(self.bounds.size)
-            unitLabel!.frame = CGRect(origin: CGPoint(x: textField.frame.maxX+spacing, y: (self.bounds.size.height-s3.height)/2.0), size: s3)
+            if actualTextFieldWidth + s3.width + spacing > w {
+               actualTextFieldWidth = w - s3.width - spacing
+            }
+            unitLabel!.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0+actualTextFieldWidth+spacing, y: (self.bounds.size.height-s3.height)/2.0), size: s3)
         }
+        
+        textField.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0, y: (self.bounds.size.height-h2)/2.0), size: CGSize(width: actualTextFieldWidth, height: h2))
     }
 }
