@@ -232,7 +232,10 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 var outBuffers: [DataBuffer] = []
                 outBuffers.reserveCapacity(output.count)
                 
+                var sampleRateInfoBuffer: DataBuffer? = nil
+                
                 for out in output {
+                    let outAttributes = out[XMLDictionaryAttributesKey] as? [String: String]
                     let bufferName = (out as? String ?? (out as! [String: AnyObject])[XMLDictionaryTextKey] as! String)
                     
                     let buffer = buffers[bufferName]!
@@ -241,14 +244,18 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                         analysis!.registerSensorBuffer(buffer)
                     }
                     
-                    outBuffers.append(buffer)
+                    if outAttributes?["component"] == "rate" {
+                        sampleRateInfoBuffer = buffer
+                    } else {
+                        outBuffers.append(buffer)
+                    }
                 }
                 
                 if outBuffers.count < 1 {
                     continue
                 }
                 
-                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: outBuffers[0])
+                let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: outBuffers[0], sampleRateInfoBuffer: sampleRateInfoBuffer)
                 
                 audioOut!.append(input)
             }

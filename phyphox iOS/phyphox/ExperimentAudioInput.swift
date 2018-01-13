@@ -16,14 +16,16 @@ let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioInput", 
 final class ExperimentAudioInput {
     let sampleRate: UInt
     let outBuffer: DataBuffer
+    let sampleRateInfoBuffer: DataBuffer?
     
-    init(sampleRate: UInt, outBuffer: DataBuffer) {
+    init(sampleRate: UInt, outBuffer: DataBuffer, sampleRateInfoBuffer: DataBuffer?) {
         self.sampleRate = sampleRate
         self.outBuffer = outBuffer
+        self.sampleRateInfoBuffer = sampleRateInfoBuffer
     }
     
     func receiveData() {
-        ExperimentManager.sharedInstance().audioEngine.receiveRecording(out: outBuffer)
+        ExperimentManager.sharedInstance().audioEngine.receiveRecording(out: outBuffer, sampleRateInfo: sampleRateInfoBuffer)
     }
     
 }

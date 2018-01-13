@@ -68,15 +68,10 @@ final class AudioEngine {
         let sampleRate = recordIn?.sampleRate ?? playbackOut?.sampleRate ?? 0
         try avSession.setPreferredSampleRate(Double(sampleRate))
         
-        if Double(sampleRate) != avSession.sampleRate {
-            stopEngine()
-            throw AudioEngineError.RateMissmatch
-        }
+        try avSession.setActive(true)
         
         var audioDescription = monoFloatFormatWithSampleRate(avSession.sampleRate)
         format = AVAudioFormat(streamDescription: &audioDescription)
-        
-        try avSession.setActive(true)
         
         self.engine = AVAudioEngine()
         
@@ -149,13 +144,16 @@ final class AudioEngine {
         }
     }
     
-    func receiveRecording(out: DataBuffer) {
+    func receiveRecording(out: DataBuffer, sampleRateInfo: DataBuffer?) {
         if recordDataBuffer == nil {
             return
         }
 
         audioInputQueue.sync {
             autoreleasepool {
+                print(AVAudioSession.sharedInstance().sampleRate)
+                sampleRateInfo?.append(AVAudioSession.sharedInstance().sampleRate)
+                
                 let data = recordDataBuffer!.toArray()
                 recordDataBuffer!.clear()
                 out.replaceValues(data)

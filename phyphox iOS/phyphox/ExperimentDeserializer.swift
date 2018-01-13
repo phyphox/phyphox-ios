@@ -60,7 +60,7 @@ final class ExperimentDeserializer: NSObject {
         
         //Check file version
         let supported_major = 1
-        let supported_minor = 5
+        let supported_minor = 6
         if let version = dictionary.attributes()?["version"] as? String {
             let versionArray = version.characters.split{$0 == "."}.map(String.init)
             let major = Int(versionArray[0]) ?? 1
