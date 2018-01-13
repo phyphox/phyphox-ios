@@ -154,8 +154,6 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         
         let width = min(2.0 * max(left, right), size.width)
         
-        print("W: \(width)")
-        
         return CGSize(width: width, height: height)
     }
     
