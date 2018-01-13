@@ -1,1 +1,2 @@
+"NSMicrophoneUsageDescription" = "phyphox registra l’audio dal microfono come se fosse un sensore e lo analizza secondo l’esperimento selezionato. I dati vengono esportati solo se l’utente selezione la funzione Esporta.";
 
