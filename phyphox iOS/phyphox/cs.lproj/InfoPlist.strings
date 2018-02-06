@@ -7,4 +7,5 @@
 */
 "NSLocationWhenInUseUsageDescription" = "phyphox nyní zaznamenává data o vaší pozici. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
 "NSMicrophoneUsageDescription" = "phyphox nyní zaznamenává zvuk z mikrofonu. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
-
+"NSPhotoLibraryAddUsageDescription" = "phyphox může ukládat screenshoty do vašeho fotoalba pokud použijete možnost \"Sdílet screenshot\" v menu experimentu.";
+"NSMotionUsageDescription" = "phyphox odečítá hodnoty ze senzorů vašeho mobilního zařízení a používá je k fyzikálním experimentům.";
