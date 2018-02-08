@@ -5,7 +5,7 @@
   Created by Sebastian Kuhlen on 17.09.16.
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
-"NSMicrophoneUsageDescription" = "phyphox rejestruje dźwięk za pomocą mikrofonu oraz pozostałych czujników urządzenia i analizuje dane zgodnie z wybranym eksperymentem. Dane zostanę wykesportowane z aplikacji wyłącznie po wybraniu stosownej komendy.";
-"NSLocationWhenInUseUsageDescription" = "phyphox rejestruje dane GPS dotyczące położenia oraz postałe wskazania czujników i analizuje je zgodnie z wybranym eksperymentem. Dane zostanę wykesportowane z aplikacji wyłącznie po wybraniu stosownej komendy.";
+"NSMicrophoneUsageDescription" = "phyphox rejestruje dźwięk za pomocą mikrofonu urządzenia i analizuje dane zgodnie z charakterem eksperymentu. Dane zostaną wyeksportowane z aplikacji wyłącznie po wybraniu stosownej komendy.";
+"NSLocationWhenInUseUsageDescription" = "phyphox rejestruje dane GPS dotyczące położenia i analizuje je zgodnie z charakterem eksperymentu. Dane zostanę wyeksportowane z aplikacji wyłącznie po wybraniu stosownej komendy.";
 "NSPhotoLibraryAddUsageDescription" = "phyphox dodaje pliki zrzutów ekranu jeśli wybrana jest opcja \"Współdziel zrzuty ekranu\" znajdująca się w menu eksperymentu.";
 "NSMotionUsageDescription" = "phyphox odczytuje wartości rejestrowane przez czujniki urządzenia i wykorzystuje je w eksperymentach fizycznych.";
