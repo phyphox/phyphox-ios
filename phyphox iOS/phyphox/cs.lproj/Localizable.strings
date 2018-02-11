@@ -100,4 +100,4 @@
 "translationInfo" = "Volba jazyka";
 "translationText" = "Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému vašeho zařízení. Chcete-li jej změnit, proveďte to tam. Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".";
 "translationToWebsite" = "Navštivte internetovou stránku";
-"translationToWebsiteURL" = "http://phyphox.org/faq/#faqTranslation";
+"translationToWebsiteURL" = "http://phyphox.org/languages#cs";
