@@ -107,4 +107,4 @@
 "translationInfo" = "Languages";
 "translationText" = "Phyphox will use the first language available from your preferred languages list in your system settings. To learn which languages are available and how you can help, select \"visit website\".";
 "translationToWebsite" = "Visit website";
-"translationToWebsiteURL" = "http://phyphox.org/faq/#faqTranslation";
+"translationToWebsiteURL" = "http://phyphox.org/languages#en";
