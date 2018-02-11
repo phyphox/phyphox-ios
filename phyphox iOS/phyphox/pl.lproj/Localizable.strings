@@ -98,5 +98,5 @@
 "AudioRateMissmatch" = "Błąd: Niezgodna częstotliwość próbkowania. Wyłącz aplikacje lub serwisy (np. AirPlay), które wymuszają inną częstotliwość próbkowania audio.";
 "translationInfo" = "Języki";
 "translationToWebsite" = "Odwiedź stronę";
-"translationToWebsiteURL" = "http://phyphox.org/faq-pl/#faqTranslation";
+"translationToWebsiteURL" = "http://phyphox.org/languages#pl";
 "translationText" = "Phyphox użyje pierwszego języka z listy języków preferowanych w ustawieniach systemu. Aby dowiedzieć się więcej o dostępnych językach oraz możliwościach współpracy wybierz \"odwiedź stronę\".";
