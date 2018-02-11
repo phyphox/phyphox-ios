@@ -86,7 +86,7 @@
 "pick_exportFormat" = "Wybierz format danych.";
 "noDrawableData" = "Brak zaznaczonych danych.";
 "categoryNewExperiment" = "Własne eksperymenty";
-"categoryRawSensor" = "Nieskalibrowane czujniki";
+"categoryRawSensor" = "Surowe dane";
 "experimentinfo_hint" = "Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.";
 "help" = "Pomoc i informacje";
 "experimentsPhyphoxOrg" = "Pomysły na eksperyment i instrukcje";
