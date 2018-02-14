@@ -68,22 +68,22 @@ final class ExperimentWebServer {
         server!.addHandler(forMethod: "GET", pathRegex: "/logo", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
             let file = Bundle.main.path(forResource: "phyphox-webinterface/phyphox_orange", ofType: "png")
             let image = UIImage.init(contentsOfFile: file!)
-            let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(image!), contentType: "image/png")
+            let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(image!)!, contentType: "image/png")
             
-            completionBlock!(response)
+            completionBlock(response)
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/export", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)
                 
-                completionBlock!(response)
+                completionBlock(response)
             }
             
             let result: String
             
-            let components = URLComponents(url: (request?.url)!, resolvingAgainstBaseURL: true)!
-            let query = queryDictionary(components.query!)
+            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
+            let query = queryDictionary((components?.query!)!)
             
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
                 var sets = [ExperimentExportSet]()
@@ -92,7 +92,7 @@ final class ExperimentWebServer {
                     if error == nil {
                         self.temporaryFiles.append(URL!.path)
                         let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
-                        completionBlock!(response)
+                        completionBlock(response)
                     }
                     else {
                         returnErrorResponse(["error": error!.localizedDescription] as AnyObject)
@@ -108,18 +108,18 @@ final class ExperimentWebServer {
             func returnErrorResponse() {
                 let response = GCDWebServerDataResponse(jsonObject: ["result": false])
                 
-                completionBlock!(response)
+                completionBlock(response)
             }
             
             func returnSuccessResponse() {
                 let response = GCDWebServerDataResponse(jsonObject: ["result": true])
                 
-                completionBlock!(response)
+                completionBlock(response)
             }
             
             let result: String
             
-            let components = URLComponents(url: (request?.url)!, resolvingAgainstBaseURL: true)!
+            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)!
             let query = queryDictionary(components.query!)
             
             let cmd = query["cmd"]
@@ -178,10 +178,10 @@ final class ExperimentWebServer {
             func returnErrorResponse() {
                 let response = GCDWebServerResponse(statusCode: 400)
                 
-                completionBlock!(response)
+                completionBlock(response)
             }
             
-            guard let queryString = request?.url.query?.removingPercentEncoding else {
+            guard let queryString = request.url.query?.removingPercentEncoding else {
                 returnErrorResponse()
                 return
             }
@@ -221,7 +221,7 @@ final class ExperimentWebServer {
                             guard let extraBuffer = self.experiment.buffers.0?[extra] else {
                                 let response = GCDWebServerResponse(statusCode: 400)
                                 
-                                completionBlock!(response)
+                                completionBlock(response)
                                 return
                             }
                             
@@ -271,7 +271,7 @@ final class ExperimentWebServer {
             
             let response = GCDWebServerDataResponse(jsonObject: mainDict)
             
-            completionBlock!(response)
+            completionBlock(response)
             })
         
         if server!.start(withPort: 80, bonjourName: nil){

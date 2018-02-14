@@ -64,13 +64,13 @@ class CreateExperimentViewController: UITableViewController {
     func save() {
         guard let title = experimentTitle, let rate = Double(rateString!.replacingOccurrences(of: ",", with: ".")) else {
             let hud = JGProgressHUD(style: .dark)
-            hud?.interactionType = .blockTouchesOnHUDView
-            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud.interactionType = .blockTouchesOnHUDView
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
             
-            hud?.textLabel.text = "Invalid input"
+            hud.textLabel.text = "Invalid input"
             
-            hud?.show(in: self.navigationController!.view)
-            hud?.dismiss(afterDelay: 3.0)
+            hud.show(in: self.navigationController!.view)
+            hud.dismiss(afterDelay: 3.0)
             
             return
         }
@@ -78,20 +78,20 @@ class CreateExperimentViewController: UITableViewController {
         let selected = selectedSensors
         
         let hud = JGProgressHUD(style: .dark)
-        hud?.interactionType = .blockTouchesOnHUDView
-        hud?.show(in: self.presentingViewController!.view)
+        hud.interactionType = .blockTouchesOnHUDView
+        hud.show(in: self.presentingViewController!.view)
         
         do {
             try _ = SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
-            hud?.dismiss()
+            hud.dismiss()
         }
         catch let error as NSError {
             
-            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
             
-            hud?.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
+            hud.textLabel.text = "Failed to create Experiment: \(error.localizedDescription)"
             
-            hud?.dismiss(afterDelay: 3.0)
+            hud.dismiss(afterDelay: 3.0)
         }
         
         self.navigationController!.dismiss(animated: true, completion: nil)

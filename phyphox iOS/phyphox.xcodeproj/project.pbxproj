@@ -169,20 +169,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		6B0814D21CABEE2600EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 6BC01873197B2AA500DA4C49;
-			remoteInfo = JGProgressHUD;
-		};
-		6B0814D41CABEE2600EE2791 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 6B60B24019A3B3C500ED1A4E;
-			remoteInfo = "JGProgressHUD Resources";
-		};
 		6B0814D61CABEE2600EE2791 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
@@ -392,6 +378,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = CEE28CEE1AE0051F00F4023C;
 			remoteInfo = "GCDWebServers (iOS)";
+		};
+		C0CB36B12034A98D00D3AD77 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6BABF9A31F7A6133005E783F;
+			remoteInfo = "JGProgressHUD-tvOS";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -715,9 +708,8 @@
 		6B0814CD1CABEE2600EE2791 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6B0814D31CABEE2600EE2791 /* libJGProgressHUD.a */,
-				6B0814D51CABEE2600EE2791 /* JGProgressHUD Resources.bundle */,
 				6B0814D71CABEE2600EE2791 /* JGProgressHUD.framework */,
+				C0CB36B22034A98D00D3AD77 /* JGProgressHUD.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1275,20 +1267,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		6B0814D31CABEE2600EE2791 /* libJGProgressHUD.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libJGProgressHUD.a;
-			remoteRef = 6B0814D21CABEE2600EE2791 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		6B0814D51CABEE2600EE2791 /* JGProgressHUD Resources.bundle */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "JGProgressHUD Resources.bundle";
-			remoteRef = 6B0814D41CABEE2600EE2791 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		6B0814D71CABEE2600EE2791 /* JGProgressHUD.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -1448,6 +1426,13 @@
 			fileType = wrapper.cfbundle;
 			path = Tests.xctest;
 			remoteRef = 6BD026E31CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C0CB36B22034A98D00D3AD77 /* JGProgressHUD.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = JGProgressHUD.framework;
+			remoteRef = C0CB36B12034A98D00D3AD77 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -1781,6 +1766,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1823,6 +1809,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
