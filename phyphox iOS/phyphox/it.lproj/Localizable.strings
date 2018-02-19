@@ -4,7 +4,7 @@
 "timedRunStartDelay" = "Ritardo partenza (s)";
 "actions" = "Azioni";
 "help" = "Help ed info";
-"newExperimentPhyphoxInfo" = "Vai su phyphox.org per creare il tuo esperimento e per condividerlo con colleghi, studenti ed amici";
+"newExperimentPhyphoxInfo" = "Vai su phyphox.org per creare il tuo esperimento e per condividerlo con colleghi, studenti ed amici.";
 "loadingText" = "Carico esperimento…";
 "remoteServer" = "Permetti accesso remoto";
 "switch_to_raw_magnetometer" = "Usa magnetometro non calibrato";
@@ -63,7 +63,7 @@
 "pick_exportFormat" = "Scegli il formato dei dati";
 "share_subject" = "Screenshot da phyphox";
 "title_activity_experiment" = "phyphox";
-"save_locally_done" = "L’esperimento è stato aggiunto alla collezione";
+"save_locally_done" = "L’esperimento è stato aggiunto alla collezione.";
 "delete" = "Cancella";
 "share_pick_share" = "Scegli come distribuire";
 "newExperimentInputRate" = "Frequenza sensore (in Hz, 0 = il più veloce possibile)";
@@ -76,7 +76,7 @@
 "creditsNames" = "";
 "remoteServerWarning" = "Stai per abilitare l’accesso remoto ai dati acquisiti. Quest operazione deve essere effettuata solo su di una rete fidata! Nota inoltre che l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su varie reti aziendali ed universitarie.\n\nPer massimizzare la sicurezza e la performance occorre connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver schiacciato oK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.";
 "export_pick_share" = "Seleziona un metodo per esportare";
-"sensorNotAvailableWarningTitle" = "Sensore non disponibile";
+"sensorNotAvailableWarningTitle" = "Sensore non disponibile.";
 "sensorNotAvailableWarningMoreInfo" = "Più info";
 "export_subject" = "Dati da phyphox";
 "experimentinfo_hint" = "Per sapere come funziona questo esperimento, guarda le info relative.";
