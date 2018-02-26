@@ -481,7 +481,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     HUD?.dismiss()
                 }
                 
-                vc.completionWithItemsHandler = { _ in
+                vc.completionWithItemsHandler = { _, _, _, _ in
                     do { try FileManager.default.removeItem(at: URL!) } catch {}
                 }
             }
@@ -601,8 +601,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 self.navigationController!.present(vc, animated: true) {
                     HUD?.dismiss()
                 }
-                
-                vc.completionWithItemsHandler = { _ in
+
+                vc.completionWithItemsHandler = { _, _, _, _ in
                     do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                 }
             })
@@ -733,7 +733,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 HUD?.dismiss()
             }
             
-            vc.completionWithItemsHandler = { _ in
+            vc.completionWithItemsHandler = { _, _, _, _ in
                 do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             }
             

@@ -26,6 +26,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     var mainNavViewController: ScalableViewController!
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        KeyboardTracker.startTracking()
+        
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor.black
         

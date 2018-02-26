@@ -117,10 +117,10 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         vc.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
         
         let v = creditsView()
-        v.onCloseCallback = { _ in
+        v.onCloseCallback = {
             vc.dismiss(animated: true, completion: nil)
         }
-        v.onLicenceCallback = { _ in
+        v.onLicenceCallback = {
             vc.dismiss(animated: true, completion: nil)
             self.showOpenSourceLicenses()
         }

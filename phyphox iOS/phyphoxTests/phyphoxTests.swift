@@ -23,7 +23,7 @@ class phyphoxTests: XCTestCase {
     }
     
     func testRangefilter1() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(for: type(of: self)).path(forResource: "RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 4.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
         
@@ -35,7 +35,7 @@ class phyphoxTests: XCTestCase {
             if let array = write[key] {
                 buffer.appendFromArray(array, notify: false)
                 
-                expectations.append(expectationWithDescription(key))
+                expectations.append(expectation(description: key))
             }
         }
         
@@ -54,7 +54,7 @@ class phyphoxTests: XCTestCase {
     }
     
     func testRangefilter2() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(for: type(of: self)).path(forResource: "RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 1.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.1, -0.2]]
         
@@ -66,7 +66,7 @@ class phyphoxTests: XCTestCase {
             if let array = write[key] {
                 buffer.appendFromArray(array, notify: false)
                 
-                expectations.append(expectationWithDescription(key))
+                expectations.append(expectation(description: key))
             }
         }
         
@@ -85,7 +85,7 @@ class phyphoxTests: XCTestCase {
     }
     
     func testRangefilter3() {
-        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(forClass: type(of: self)).pathForResource("RangefilterTest", ofType: "phyphox")!)
+        let experiment = try! ExperimentSerialization.readExperimentFromFile(Bundle(for: type(of: self)).path(forResource: "RangefilterTest", ofType: "phyphox")!)
         
         let write = ["buffer1" : [1.0, 2.0, 3.0, 2.0, 5.0], "buffer2" : [-100.0, 1000.0, -500.0, 500.0, 0.0], "buffer3" : [-0.1, -0.1, 0.1, 0.2, -0.2]]
         
@@ -97,7 +97,7 @@ class phyphoxTests: XCTestCase {
             if let array = write[key] {
                 buffer.appendFromArray(array, notify: false)
                 
-                expectations.append(expectationWithDescription(key))
+                expectations.append(expectation(description: key))
             }
         }
         

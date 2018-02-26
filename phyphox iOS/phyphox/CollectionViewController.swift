@@ -9,8 +9,6 @@
 
 import UIKit
 
-public var keyboardFrame = CGRect.zero
-
 class CollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout  {
     
     final var selfView: CollectionContainerView {
@@ -99,8 +97,8 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         
         var bottomInset: CGFloat = 0.0
         
-        if !keyboardFrame.isEmpty {
-            bottomInset = view.frame.size.height-view.convert(keyboardFrame, from: nil).origin.y
+        if !KeyboardTracker.keyboardFrame.isEmpty {
+            bottomInset = view.frame.size.height-view.convert(KeyboardTracker.keyboardFrame, from: nil).origin.y
         }
         
         var contentInset = selfView.collectionView.contentInset
@@ -113,25 +111,6 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
             self.selfView.collectionView.contentInset = contentInset
             self.selfView.collectionView.scrollIndicatorInsets = scrollInset
             }, completion: nil)
-    }
-    
-    override class func initialize() {
-        super.initialize()
-        
-        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
-        
-        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name:NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
-    }
-    
-    @objc dynamic fileprivate class func keyboardFrameWillChange(_ notification: Notification) {
-        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
-        if (keyboardFrame.isEmpty) {
-            keyboardFrame = (notification.userInfo![UIKeyboardFrameBeginUserInfoKey]! as AnyObject).cgRectValue;
-        }
-    }
-    
-    @objc dynamic fileprivate class func keyboardFrameDidChange(_ notification: Notification) {
-        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
     }
     
     //MARK: - Override points
