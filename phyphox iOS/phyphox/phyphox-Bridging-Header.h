@@ -4,7 +4,6 @@
 
 #import "XMLDictionary.h"
 #import "Constants.h"
-#import "VBFPopFlatButton.h"
 #import "UIAlertController+PTExtensions.h"
 #import "BEMCheckbox.h"
 #import <ZipZap/ZipZap.h>

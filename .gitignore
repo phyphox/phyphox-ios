@@ -20,7 +20,7 @@ DerivedData
 *.xcappdata
 Android
 External/*
-!External/checkout.sh
+!External/checkout*
 !External/XMLDictionary
 External/XMLDictionary/*
 !External/XMLDictionary/XMLDictionary
