@@ -9,12 +9,12 @@
 import Foundation
 
 final class BinningAnalysis: ExperimentAnalysisModule {
-    fileprivate var inInput: ExperimentAnalysisDataIO!
-    fileprivate var x0Input: ExperimentAnalysisDataIO?
-    fileprivate var dxInput: ExperimentAnalysisDataIO?
+    private var inInput: ExperimentAnalysisDataIO!
+    private var x0Input: ExperimentAnalysisDataIO?
+    private var dxInput: ExperimentAnalysisDataIO?
     
-    fileprivate var binStartsOutput: ExperimentAnalysisDataIO?
-    fileprivate var binCountsOutput: ExperimentAnalysisDataIO?
+    private var binStartsOutput: ExperimentAnalysisDataIO?
+    private var binCountsOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         if inputs.count == 0 || outputs.count == 0 {

@@ -63,7 +63,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     name = dict[XMLDictionaryTextKey] as! String
                 }
                 
-                if containerType == .buffer && name.characters.count > 0 {
+                if containerType == .buffer && name.count > 0 {
                     let buffer = DataBuffer(name: name, size: bufferSize, vInit: vInit)
                     buffer.staticBuffer = stat
                     

@@ -42,7 +42,7 @@ private final class GraphGridLineLayer: CAShapeLayer {
         }
     }
     
-    fileprivate override func layoutSublayers() {
+    override func layoutSublayers() {
         super.layoutSublayers()
         
         lineWidth = (horizontal ? bounds.size.height : bounds.size.width)
@@ -60,7 +60,7 @@ private final class GraphGridLineLayer: CAShapeLayer {
 }
 
 final class GraphGridLineView: UIView {
-    fileprivate var gridLayer: GraphGridLineLayer {
+    private var gridLayer: GraphGridLineLayer {
         get {
             return self.layer as! GraphGridLineLayer
         }

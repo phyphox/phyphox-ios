@@ -12,9 +12,9 @@ import Foundation
  Thread safe Queue (FIFO).
  */
 final class Queue<Element> {
-    fileprivate let lockQueue = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
+    private let lockQueue = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
     
-    fileprivate var array: [Element]
+    private var array: [Element]
     
     var count: Int {
         get {

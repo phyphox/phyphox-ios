@@ -70,13 +70,13 @@ func nextFFTSize(_ c: Int, minN: Int = 3) -> Int {
 }
 
 final class FFTAnalysis: ExperimentAnalysisModule {
-    fileprivate var realInput: DataBuffer!
-    fileprivate var imagInput: DataBuffer?
+    private var realInput: DataBuffer!
+    private var imagInput: DataBuffer?
     
-    fileprivate let hasImagInBuffer: Bool
+    private let hasImagInBuffer: Bool
     
-    fileprivate var realOutput: ExperimentAnalysisDataIO?
-    fileprivate var imagOutput: ExperimentAnalysisDataIO?
+    private var realOutput: ExperimentAnalysisDataIO?
+    private var imagOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {

@@ -13,8 +13,8 @@ import Foundation
 import Accelerate
 
 final class RoundAnalysis: UpdateValueAnalysis {
-    fileprivate let floor: Bool
-    fileprivate let ceil: Bool
+    private let floor: Bool
+    private let ceil: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         floor = boolFromXML(additionalAttributes, key: "floor", defaultValue: false)

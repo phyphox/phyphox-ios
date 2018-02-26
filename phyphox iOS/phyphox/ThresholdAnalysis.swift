@@ -10,11 +10,11 @@
 import Foundation
 
 final class ThresholdAnalysis: ExperimentAnalysisModule {
-    fileprivate let falling: Bool
+    private let falling: Bool
     
-    fileprivate var xIn: DataBuffer?
-    fileprivate var yIn: DataBuffer!
-    fileprivate var thresholdIn: ExperimentAnalysisDataIO?
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
+    private var thresholdIn: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         falling = boolFromXML(additionalAttributes, key: "falling", defaultValue: false)

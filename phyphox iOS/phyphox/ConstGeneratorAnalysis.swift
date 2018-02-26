@@ -10,8 +10,8 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
-    fileprivate var lengthInput: ExperimentAnalysisDataIO?
-    fileprivate var valueInput: ExperimentAnalysisDataIO?
+    private var lengthInput: ExperimentAnalysisDataIO?
+    private var valueInput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {

@@ -30,7 +30,7 @@ final class WebServerUtilities {
         return UIImagePNGRepresentation(genPlaceHolderImage())!.base64EncodedString(options: [])
     }
     
-    fileprivate class func prepareStyleFile(backgroundColor: UIColor, lightBackgroundColor: UIColor, lightBackgroundHoverColor: UIColor, mainColor: UIColor, highlightColor: UIColor) -> String {
+    private class func prepareStyleFile(backgroundColor: UIColor, lightBackgroundColor: UIColor, lightBackgroundHoverColor: UIColor, mainColor: UIColor, highlightColor: UIColor) -> String {
         let raw = try! NSMutableString(contentsOfFile: Bundle.main.path(forResource: "phyphox-webinterface/style", ofType: "css")!, encoding: String.Encoding.utf8.rawValue)
         
         raw.replaceOccurrences(of: "###background-color###", with: "#" + backgroundColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
@@ -52,7 +52,7 @@ final class WebServerUtilities {
         return raw as String
     }
     
-    fileprivate class func prepareIndexFile(_ experiment: Experiment) -> (String, [ViewDescriptor]) {
+    private class func prepareIndexFile(_ experiment: Experiment) -> (String, [ViewDescriptor]) {
         let raw = try! NSMutableString(contentsOfFile: Bundle.main.path(forResource: "phyphox-webinterface/index", ofType: "html")!, encoding: String.Encoding.utf8.rawValue)
         
         raw.replaceOccurrences(of: "<!-- [[title]] -->", with: experiment.localizedTitle, options: [], range: NSMakeRange(0, raw.length))

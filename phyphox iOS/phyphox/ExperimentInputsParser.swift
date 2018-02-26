@@ -296,7 +296,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     if separator == "" {
                         separator = "\n"
                     }
-                    let sepChar = separator.characters.first!
+                    let sepChar = separator.first!
                     serialProtocol = SimpleSerialProtocol(separator: sepChar)
                 case "csv":
                     if separator == "" {

@@ -23,7 +23,7 @@ class ExperimentAnalysisModule {
      */
     internal var outputs: [ExperimentAnalysisDataIO]
     
-    fileprivate var executed = false
+    private var executed = false
     
     internal var staticAnalysis = false {
         didSet {

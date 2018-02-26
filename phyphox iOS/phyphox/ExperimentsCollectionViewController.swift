@@ -12,8 +12,8 @@ import UIKit
 private let minCellWidth: CGFloat = 320.0
 
 final class ExperimentsCollectionViewController: CollectionViewController {
-    fileprivate var cellsPerRow: Int = 1
-    fileprivate var infoButton: UIButton? = nil
+    private var cellsPerRow: Int = 1
+    private var infoButton: UIButton? = nil
     
     override class var viewClass: CollectionContainerView.Type {
         return MainView.self
@@ -103,7 +103,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         }
     }
     
-    fileprivate func showOpenSourceLicenses() {
+    private func showOpenSourceLicenses() {
         let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!), preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
@@ -184,7 +184,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         return CGSize(width: width, height: h)
     }
     
-    fileprivate func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
+    private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.stateTitle ?? experiment.localizedTitle)", style: .destructive, handler: { [unowned self] action in
@@ -213,7 +213,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    fileprivate func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
+    private func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .destructive, handler: { [unowned self] action in

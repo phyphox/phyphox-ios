@@ -11,14 +11,14 @@ import Foundation
 import Accelerate
 
 final class AutocorrelationAnalysis: ExperimentAnalysisModule {
-    fileprivate var minXIn: ExperimentAnalysisDataIO?
-    fileprivate var maxXIn: ExperimentAnalysisDataIO?
+    private var minXIn: ExperimentAnalysisDataIO?
+    private var maxXIn: ExperimentAnalysisDataIO?
     
-    fileprivate var xIn: DataBuffer?
-    fileprivate var yIn: DataBuffer!
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
     
-    fileprivate var xOut: ExperimentAnalysisDataIO?
-    fileprivate var yOut: ExperimentAnalysisDataIO?
+    private var xOut: ExperimentAnalysisDataIO?
+    private var yOut: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {

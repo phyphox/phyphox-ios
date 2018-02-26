@@ -19,17 +19,13 @@ struct ExperimentRequiredPermission : OptionSet {
     static let Location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
-func ==(lhs: Experiment, rhs: Experiment) -> Bool {
-    return lhs.stateTitle == rhs.stateTitle && lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
-}
-
-final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager, Equatable {
-    fileprivate var title: String
+final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
+    private var title: String
     var stateTitle: String?
-    fileprivate var description: String?
-    fileprivate var links: [String: String]
-    fileprivate var highlightedLinks: [String: String]
-    fileprivate var category: String
+    private var description: String?
+    private var links: [String: String]
+    private var highlightedLinks: [String: String]
+    private var category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
@@ -91,11 +87,11 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     var requiredPermissions: ExperimentRequiredPermission = .None
     
-    fileprivate(set) var running = false
-    fileprivate(set) var hasStarted = false
+    private(set) var running = false
+    private(set) var hasStarted = false
     
-    fileprivate(set) var startTimestamp: TimeInterval?
-    fileprivate var pauseBegin: TimeInterval = 0.0
+    private(set) var startTimestamp: TimeInterval?
+    private var pauseBegin: TimeInterval = 0.0
     
     init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
@@ -234,12 +230,12 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         }
     }
     
-    fileprivate func startAudio() throws {
+    private func startAudio() throws {
         try ExperimentManager.sharedInstance().audioEngine.startEngine(playback: self.output?.audioOutput, record: self.audioInput)
         self.output?.audioOutput?.play()
     }
     
-    fileprivate func stopAudio() {
+    private func stopAudio() {
         ExperimentManager.sharedInstance().audioEngine.stopEngine()
     }
     
@@ -332,5 +328,11 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         if self.gpsInput != nil {
             gpsInput!.clear()
         }
+    }
+}
+
+extension Experiment: Equatable {
+    static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
+        return lhs.stateTitle == rhs.stateTitle && lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
     }
 }

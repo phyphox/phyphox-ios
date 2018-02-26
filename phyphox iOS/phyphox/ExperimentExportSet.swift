@@ -31,8 +31,8 @@ let exportTypes = [("Excel", ExportFileFormat.excel),
                    ("CSV (Semicolon, decimal comma)", ExportFileFormat.csv(separator: ";", decimalPoint: ","))]
 
 final class ExperimentExportSet {
-    fileprivate let name: String
-    fileprivate let data: [(name: String, buffer: DataBuffer)]
+    private let name: String
+    private let data: [(name: String, buffer: DataBuffer)]
     
     weak var translation: ExperimentTranslationCollection?
     
@@ -68,7 +68,7 @@ final class ExperimentExportSet {
         }
     }
     
-    fileprivate func serializeToCSVWithSeparator(_ separator: String, decimalPoint: String) -> Data? {
+    private func serializeToCSVWithSeparator(_ separator: String, decimalPoint: String) -> Data? {
         var string = ""
         
         var index = 0
@@ -130,10 +130,10 @@ final class ExperimentExportSet {
             index += 1
         }
         
-        return string.characters.count > 0 ? string.data(using: String.Encoding.utf8) : nil
+        return string.count > 0 ? string.data(using: .utf8) : nil
     }
     
-    fileprivate func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
+    private func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
         let sheet = workbook.workSheet(withName: localizedName)
         
         var i = 0

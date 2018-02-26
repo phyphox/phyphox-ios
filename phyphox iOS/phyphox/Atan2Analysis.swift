@@ -10,7 +10,7 @@ import Foundation
 import Accelerate
 
 final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
-    fileprivate let deg: Bool
+    private let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)

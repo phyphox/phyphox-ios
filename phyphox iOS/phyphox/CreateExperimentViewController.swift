@@ -24,9 +24,9 @@ struct MapSensorType: OptionSet {
 }
 
 class CreateExperimentViewController: UITableViewController {
-    fileprivate var selectedSensors = MapSensorType.None
-    fileprivate var experimentTitle: String?
-    fileprivate var rateString: String?
+    private var selectedSensors = MapSensorType.None
+    private var experimentTitle: String?
+    private var rateString: String?
     
     func actualInit() {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
@@ -191,8 +191,8 @@ class CreateExperimentViewController: UITableViewController {
     }
     
     func updateSaveButton() {
-        let titleCellCheck = experimentTitle?.characters.count ?? 0 > 0
-        let rateCellCheck = rateString?.characters.count ?? 0 > 0
+        let titleCellCheck = experimentTitle?.count ?? 0 > 0
+        let rateCellCheck = rateString?.count ?? 0 > 0
         
         self.navigationItem.rightBarButtonItem!.isEnabled = titleCellCheck && rateCellCheck && selectedSensors != .None
     }

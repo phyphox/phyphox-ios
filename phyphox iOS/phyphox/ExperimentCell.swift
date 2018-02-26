@@ -10,13 +10,13 @@
 import UIKit
 
 class ExperimentCell: UICollectionViewCell {
-    fileprivate let titleLabel = UILabel()
-    fileprivate let subtitleLabel = UILabel()
-    fileprivate var iconView: UIView?
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+    private var iconView: UIView?
     
-    fileprivate let separator = UIView()
+    private let separator = UIView()
     
-    fileprivate var optionsButton: PTButton?
+    private var optionsButton: PTButton?
     
     var showsOptionsButton = false {
         didSet {

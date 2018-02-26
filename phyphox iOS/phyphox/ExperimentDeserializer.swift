@@ -38,7 +38,7 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
 }
 
 final class ExperimentDeserializer: NSObject {
-    fileprivate let parser: XMLParser
+    private let parser: XMLParser
     
     init(data: Data) {
         parser = XMLParser(data: data)
@@ -62,7 +62,7 @@ final class ExperimentDeserializer: NSObject {
         let supported_major = 1
         let supported_minor = 6
         if let version = dictionary.attributes()?["version"] as? String {
-            let versionArray = version.characters.split{$0 == "."}.map(String.init)
+            let versionArray = version.split{$0 == "."}.map(String.init)
             let major = Int(versionArray[0]) ?? 1
             let minor = Int(versionArray[1]) ?? 0
             if (major > supported_major || (major == supported_major && minor > supported_minor)) {

@@ -34,7 +34,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     /**
      The update frequency of the sensor.
      */
-    fileprivate(set) var rate: TimeInterval //in s
+    private(set) var rate: TimeInterval //in s
     
     var effectiveRate: TimeInterval {
         get {
@@ -50,20 +50,20 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
-    fileprivate(set) var startTimestamp: TimeInterval?
+    private(set) var startTimestamp: TimeInterval?
     
-    fileprivate(set) weak var xBuffer: DataBuffer?
-    fileprivate(set) weak var yBuffer: DataBuffer?
-    fileprivate(set) weak var zBuffer: DataBuffer?
-    fileprivate(set) weak var tBuffer: DataBuffer?
-    fileprivate(set) weak var absBuffer: DataBuffer?
-    fileprivate(set) weak var accuracyBuffer: DataBuffer?
+    private(set) weak var xBuffer: DataBuffer?
+    private(set) weak var yBuffer: DataBuffer?
+    private(set) weak var zBuffer: DataBuffer?
+    private(set) weak var tBuffer: DataBuffer?
+    private(set) weak var absBuffer: DataBuffer?
+    private(set) weak var accuracyBuffer: DataBuffer?
     
-    fileprivate(set) var motionSession: MotionSession
+    private(set) var motionSession: MotionSession
     
-    fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.sensorQueue", attributes: [])
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.sensorQueue", attributes: [])
     
-    fileprivate class Averaging {
+    private class Averaging {
         /**
          The duration of averaging intervals.
          */
@@ -94,7 +94,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
     /**
      Information on averaging. Set to `nil` to disable averaging.
      */
-    fileprivate var averaging: Averaging?
+    private var averaging: Averaging?
     
     var recordingAverages: Bool {
         get {
@@ -156,7 +156,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    fileprivate func resetValuesForAveraging() {
+    private func resetValuesForAveraging() {
         guard let averaging = self.averaging else {
             return
         }
@@ -348,7 +348,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
 
     }
     
-    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval) {
+    private func writeToBuffers(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval) {
         if x != nil && self.xBuffer != nil {
             self.xBuffer!.append(x)
         }
@@ -378,7 +378,7 @@ final class ExperimentSensorInput : MotionSessionReceiver {
         }
     }
     
-    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
+    private func dataIn(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
         
         func dataInSync(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
             guard error == nil else {

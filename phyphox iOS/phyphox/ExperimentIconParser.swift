@@ -18,8 +18,8 @@ final class ExperimentIconParser: ExperimentMetadataParser {
     
     func parse() -> ExperimentIcon? {
         if var title = data as? String {
-            if title.characters.count > 2 {
-                title = title.substring(to: title.characters.index(title.startIndex, offsetBy: 2))
+            if title.count > 2 {
+                title = String(title[..<title.index(title.startIndex, offsetBy: 2)])
             }
         
             return ExperimentIcon(string: title.uppercased(), image: nil)

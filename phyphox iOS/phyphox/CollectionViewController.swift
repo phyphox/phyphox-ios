@@ -15,7 +15,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         return view as! CollectionContainerView
     }
     
-    fileprivate var lastViewSize: CGRect?
+    private var lastViewSize: CGRect?
     
     //MARK: - Initializers
     
@@ -66,7 +66,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         
     }
     
-    fileprivate func attemptInvalidateLayout() {
+    private func attemptInvalidateLayout() {
         if lastViewSize == nil || !lastViewSize!.equalTo(view.frame) {
             selfView.collectionView.collectionViewLayout.invalidateLayout()
         }
@@ -80,7 +80,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     
         //MARK: - Keyboard handler
     
-    @objc dynamic fileprivate func keyboardFrameChanged(_ notification: Notification) {
+    @objc dynamic private func keyboardFrameChanged(_ notification: Notification) {
         func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
             let testOptions = UInt(UIViewAnimationCurve.linear.rawValue << 16);
             

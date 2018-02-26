@@ -22,10 +22,10 @@ enum FileError: Error {
 final class ExperimentManager {
     let audioEngine = AudioEngine()
     
-    fileprivate var readOnlyExperimentCollections = [ExperimentCollection]()
-    fileprivate var customExperimentCollections = [ExperimentCollection]()
+    private var readOnlyExperimentCollections = [ExperimentCollection]()
+    private var customExperimentCollections = [ExperimentCollection]()
     
-    fileprivate var allExperimentCollections: [ExperimentCollection]?
+    private var allExperimentCollections: [ExperimentCollection]?
     
     var experimentCollections: [ExperimentCollection] {
         if allExperimentCollections == nil {
@@ -72,7 +72,7 @@ final class ExperimentManager {
     }
     
     
-    fileprivate static let instance = ExperimentManager() //static => lazy, let => synchronized
+    private static let instance = ExperimentManager() //static => lazy, let => synchronized
     
     class func sharedInstance() -> ExperimentManager {
         return instance
@@ -129,7 +129,7 @@ final class ExperimentManager {
         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
     
-    fileprivate func loadExperiments() {
+    private func loadExperiments() {
         let folders = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseDirectory)
         
         var lookupTable: [String: ExperimentCollection] = [:]

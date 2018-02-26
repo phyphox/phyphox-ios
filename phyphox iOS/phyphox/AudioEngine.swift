@@ -19,7 +19,7 @@ final class AudioEngine {
     private var playing = false
     
     private var playbackOut: ExperimentAudioOutput? = nil
-    fileprivate var playbackStateToken: UUID?
+    private var playbackStateToken: UUID?
     private var recordIn: ExperimentAudioInput? = nil
     
     private var recordDataBuffer: DataBuffer? = nil

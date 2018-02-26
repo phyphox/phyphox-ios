@@ -25,14 +25,14 @@ final class ExperimentWebServer {
         return server != nil
     }
     
-    fileprivate(set) var path: String = ""
+    private(set) var path: String = ""
     
-    fileprivate(set) var server: GCDWebServer?
-    fileprivate var temporaryFiles = [String]()
+    private(set) var server: GCDWebServer?
+    private var temporaryFiles = [String]()
     
     var htmlId2ViewElement: [ViewDescriptor] = []
     
-    fileprivate var sessionID: String = ""
+    private var sessionID: String = ""
     
     weak var delegate: ExperimentWebServerDelegate?
     
@@ -200,7 +200,7 @@ final class ExperimentWebServer {
                 var dict = [String: AnyObject]()
                 dict["size"] = b.size as AnyObject
                 
-                if value.characters.count > 0 {
+                if value.count > 0 {
                     let raw = b.toArray()
                     
                     if value == "full" || (value == "partial" && self.forceFullUpdate == true) {

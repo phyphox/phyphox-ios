@@ -14,7 +14,7 @@ protocol GraphGridDelegate: class {
 }
 
 final class GraphGridView: UIView {
-    fileprivate let borderView = UIView()
+    private let borderView = UIView()
     var delegate: GraphGridDelegate? = nil
     var descriptor: GraphViewDescriptor? = nil
     
@@ -65,10 +65,10 @@ final class GraphGridView: UIView {
         }
     }
     
-    fileprivate var lineViews: [GraphGridLineView] = []
-    fileprivate var labels: [UILabel] = []
+    private var lineViews: [GraphGridLineView] = []
+    private var labels: [UILabel] = []
     
-    fileprivate func updateLineViews() {
+    private func updateLineViews() {
         var neededViews = 0
         
         if grid != nil {

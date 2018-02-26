@@ -11,14 +11,14 @@ import Foundation
 import Accelerate
 
 final class MinAnalysis: ExperimentAnalysisModule {
-    fileprivate var xIn: DataBuffer?
-    fileprivate var yIn: DataBuffer!
-    fileprivate var thresholdIn: ExperimentAnalysisDataIO?
+    private var xIn: DataBuffer?
+    private var yIn: DataBuffer!
+    private var thresholdIn: ExperimentAnalysisDataIO?
     
-    fileprivate var minOut: ExperimentAnalysisDataIO?
-    fileprivate var positionOut: ExperimentAnalysisDataIO?
+    private var minOut: ExperimentAnalysisDataIO?
+    private var positionOut: ExperimentAnalysisDataIO?
     
-    fileprivate var multiple: Bool
+    private var multiple: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         

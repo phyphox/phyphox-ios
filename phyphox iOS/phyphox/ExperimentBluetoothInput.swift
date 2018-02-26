@@ -15,7 +15,7 @@ final class ExperimentBluetoothInput {
     /**
      The update frequency of the sensor.
      */
-    fileprivate(set) var rate: TimeInterval //in s
+    private(set) var rate: TimeInterval //in s
     
     var effectiveRate: TimeInterval {
         get {
@@ -28,13 +28,13 @@ final class ExperimentBluetoothInput {
         }
     }
     
-    fileprivate(set) var startTimestamp: TimeInterval?
+    private(set) var startTimestamp: TimeInterval?
     
-    fileprivate(set) var buffers: [DataBuffer]?
+    private(set) var buffers: [DataBuffer]?
     
-    fileprivate let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothInputQueue", attributes: [])
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothInputQueue", attributes: [])
     
-    fileprivate class Averaging {
+    private class Averaging {
         /**
          The duration of averaging intervals.
          */
@@ -61,7 +61,7 @@ final class ExperimentBluetoothInput {
     /**
      Information on averaging. Set to `nil` to disable averaging.
      */
-    fileprivate var averaging: Averaging?
+    private var averaging: Averaging?
     
     var recordingAverages: Bool {
         get {
@@ -79,7 +79,7 @@ final class ExperimentBluetoothInput {
         }
     }
     
-    fileprivate func resetValuesForAveraging() {
+    private func resetValuesForAveraging() {
         guard let averaging = self.averaging else {
             return
         }
@@ -105,11 +105,11 @@ final class ExperimentBluetoothInput {
         self.startTimestamp = nil
     }
     
-    fileprivate func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
+    private func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
         //TODO
     }
     
-    fileprivate func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
+    private func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
         //TODO
         
         func dataInSync(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {

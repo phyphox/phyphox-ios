@@ -11,7 +11,7 @@ import Foundation
 import Accelerate
 
 final class TanAnalysis: UpdateValueAnalysis {
-    fileprivate let deg: Bool
+    private let deg: Bool
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)

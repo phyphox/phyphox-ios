@@ -10,8 +10,8 @@
 import UIKit
 
 final class ExperimentIcon {
-    fileprivate let string: String?
-    fileprivate let image: UIImage?
+    private let string: String?
+    private let image: UIImage?
     
     init(string: String?, image: UIImage?) {
         self.string = string

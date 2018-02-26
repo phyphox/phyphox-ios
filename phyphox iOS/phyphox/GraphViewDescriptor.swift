@@ -10,8 +10,8 @@
 import Foundation
 
 final class GraphViewDescriptor: ViewDescriptor {
-    fileprivate let xLabel: String
-    fileprivate let yLabel: String
+    private let xLabel: String
+    private let yLabel: String
     
     var localizedXLabel: String {
         return translation?.localize(xLabel) ?? xLabel

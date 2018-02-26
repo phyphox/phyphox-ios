@@ -37,7 +37,7 @@ final class PTFile {
         for component in components {
             let comps = component.components(separatedBy: "::\n")
             
-            if comps.count != 2 || component.characters.count == 0 {
+            if comps.count != 2 || component.count == 0 {
                 continue
             }
             

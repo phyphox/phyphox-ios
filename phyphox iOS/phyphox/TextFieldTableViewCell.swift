@@ -10,15 +10,15 @@
 import UIKit
 
 private final class InsetTextField: UITextField {
-    fileprivate override func editingRect(forBounds bounds: CGRect) -> CGRect {
+    override func editingRect(forBounds bounds: CGRect) -> CGRect {
         return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
     
-    fileprivate override func textRect(forBounds bounds: CGRect) -> CGRect {
+    override func textRect(forBounds bounds: CGRect) -> CGRect {
         return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
     
-    fileprivate override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
         return bounds.insetBy(dx: 10.0, dy: 5.0)
     }
 }

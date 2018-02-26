@@ -10,37 +10,39 @@
 import Foundation
 import CoreMotion
 
-func ==(x: MotionSessionReceiver, y: MotionSessionReceiver) -> Bool {
-    return x === y
-}
-
 class MotionSessionReceiver: Hashable {
     var hashValue: Int {
         return Unmanaged.passUnretained(self).toOpaque().hashValue
     }
 }
 
+extension MotionSessionReceiver: Equatable {
+    static func ==(x: MotionSessionReceiver, y: MotionSessionReceiver) -> Bool {
+        return x === y
+    }
+}
+
 final class MotionSession {
-    fileprivate lazy var motionManager = CMMotionManager()
-    fileprivate lazy var altimeter = CMAltimeter()
+    private lazy var motionManager = CMMotionManager()
+    private lazy var altimeter = CMAltimeter()
     
     var calibratedMagnetometer = true
     
-    fileprivate(set) var altimeterRunning = false
-    fileprivate(set) var accelerometerRunning = false
-    fileprivate(set) var gyroscopeRunning = false
-    fileprivate(set) var magnetometerRunning = false
-    fileprivate(set) var deviceMotionRunning = false
-    fileprivate(set) var proximityRunning = false
+    private(set) var altimeterRunning = false
+    private(set) var accelerometerRunning = false
+    private(set) var gyroscopeRunning = false
+    private(set) var magnetometerRunning = false
+    private(set) var deviceMotionRunning = false
+    private(set) var proximityRunning = false
     
-    fileprivate var altimeterReceivers: [MotionSessionReceiver: (_ data: CMAltitudeData?, _ error: NSError?) -> Void] = [:]
-    fileprivate var accelerometerReceivers: [MotionSessionReceiver: (_ data: CMAccelerometerData?, _ error: NSError?) -> Void] = [:]
-    fileprivate var gyroscopeReceivers: [MotionSessionReceiver: (_ data: CMGyroData?, _ error: NSError?) -> Void] = [:]
-    fileprivate var magnetometerReceivers: [MotionSessionReceiver: (_ data: CMMagnetometerData?, _ error: NSError?) -> Void] = [:]
-    fileprivate var deviceMotionReceivers: [MotionSessionReceiver: (_ deviceMotion: CMDeviceMotion?, _ error: NSError?) -> Void] = [:]
-    fileprivate var proximityReceivers: [MotionSessionReceiver: (_ proximityState: Bool) -> Void] = [:]
+    private var altimeterReceivers: [MotionSessionReceiver: (_ data: CMAltitudeData?, _ error: NSError?) -> Void] = [:]
+    private var accelerometerReceivers: [MotionSessionReceiver: (_ data: CMAccelerometerData?, _ error: NSError?) -> Void] = [:]
+    private var gyroscopeReceivers: [MotionSessionReceiver: (_ data: CMGyroData?, _ error: NSError?) -> Void] = [:]
+    private var magnetometerReceivers: [MotionSessionReceiver: (_ data: CMMagnetometerData?, _ error: NSError?) -> Void] = [:]
+    private var deviceMotionReceivers: [MotionSessionReceiver: (_ deviceMotion: CMDeviceMotion?, _ error: NSError?) -> Void] = [:]
+    private var proximityReceivers: [MotionSessionReceiver: (_ proximityState: Bool) -> Void] = [:]
     
-    fileprivate func makeQueue() -> OperationQueue {
+    private func makeQueue() -> OperationQueue {
         let q = OperationQueue()
         
         q.maxConcurrentOperationCount = 1 //FIFO/serial queue
@@ -49,7 +51,7 @@ final class MotionSession {
         return q
     }
     
-    fileprivate static let instance = MotionSession()
+    private static let instance = MotionSession()
     
     class func sharedSession() -> MotionSession {
         return instance
@@ -291,5 +293,4 @@ final class MotionSession {
             UIDevice.current.isProximityMonitoringEnabled = false
         }
     }
-    
 }

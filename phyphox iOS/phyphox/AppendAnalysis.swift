@@ -10,7 +10,7 @@
 import Foundation
 
 final class AppendAnalysis: ExperimentAnalysisModule {
-    fileprivate let inputElements: [ExperimentAnalysisDataIO]
+    private let inputElements: [ExperimentAnalysisDataIO]
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var inputElements = [ExperimentAnalysisDataIO]()

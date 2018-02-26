@@ -9,10 +9,10 @@
 import Foundation
 
 final class AverageAnalysis: ExperimentAnalysisModule {
-    fileprivate var avgOutput: ExperimentAnalysisDataIO?
-    fileprivate var stdOutput: ExperimentAnalysisDataIO?
+    private var avgOutput: ExperimentAnalysisDataIO?
+    private var stdOutput: ExperimentAnalysisDataIO?
     
-    fileprivate var input: ExperimentAnalysisDataIO!
+    private var input: ExperimentAnalysisDataIO!
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         var avg: ExperimentAnalysisDataIO? = nil

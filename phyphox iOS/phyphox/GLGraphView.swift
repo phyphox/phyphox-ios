@@ -21,13 +21,13 @@ public struct GLcolor {
 }
 
 private final class ShaderProgram {
-    fileprivate let programHandle: GLuint
+    private let programHandle: GLuint
     
-    fileprivate let positionAttributeHandle: GLuint
-    fileprivate let translationUniformHandle: GLint
-    fileprivate let scaleUniformHandle: GLint
-    fileprivate let pointSizeUniformHandle: GLint
-    fileprivate let colorUniformHandle: GLint
+    private let positionAttributeHandle: GLuint
+    private let translationUniformHandle: GLint
+    private let scaleUniformHandle: GLint
+    private let pointSizeUniformHandle: GLint
+    private let colorUniformHandle: GLint
     
     init() {
         let vertexStr = try! String(contentsOfFile: Bundle.main.path(forResource: "VertexShader", ofType: "glsl")!)
@@ -106,15 +106,15 @@ private final class ShaderProgram {
 }
 
 final class GLGraphView: GLKView {
-    fileprivate let shader: ShaderProgram
+    private let shader: ShaderProgram
     
-    fileprivate var vbo: GLuint = 0
+    private var vbo: GLuint = 0
     
-    fileprivate var xScale: GLfloat = 1.0
-    fileprivate var yScale: GLfloat = 1.0
+    private var xScale: GLfloat = 1.0
+    private var yScale: GLfloat = 1.0
     
-    fileprivate var min: GraphPoint<Double>!
-    fileprivate var max: GraphPoint<Double>!
+    private var min: GraphPoint<Double>!
+    private var max: GraphPoint<Double>!
     
     var lineWidth: GLfloat = 2.0 {
         didSet {

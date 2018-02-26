@@ -10,12 +10,12 @@
 import Foundation
 
 final class ExperimentAnalysisDataIO {
-    fileprivate(set) var asString: String?
+    private(set) var asString: String?
     
-    fileprivate(set) var buffer: DataBuffer?
-    fileprivate(set) var value: Double?
+    private(set) var buffer: DataBuffer?
+    private(set) var value: Double?
     
-    fileprivate(set) var clear = true
+    private(set) var clear = true
     
     func getSingleValue() -> Double? {
         return value ?? buffer!.last

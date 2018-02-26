@@ -20,15 +20,15 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     //input6 is the precision in samples (optional, default: 1)
     
     //output1 is the periodicity in units of input1
-    fileprivate var xInput: ExperimentAnalysisDataIO!
-    fileprivate var yInput: ExperimentAnalysisDataIO!
-    fileprivate var dxInput: ExperimentAnalysisDataIO!
-    fileprivate var overlapInput: ExperimentAnalysisDataIO?
-    fileprivate var minInput: ExperimentAnalysisDataIO?
-    fileprivate var maxInput: ExperimentAnalysisDataIO?
+    private var xInput: ExperimentAnalysisDataIO!
+    private var yInput: ExperimentAnalysisDataIO!
+    private var dxInput: ExperimentAnalysisDataIO!
+    private var overlapInput: ExperimentAnalysisDataIO?
+    private var minInput: ExperimentAnalysisDataIO?
+    private var maxInput: ExperimentAnalysisDataIO?
     
-    fileprivate var timeOutput: ExperimentAnalysisDataIO?
-    fileprivate var periodOutput: ExperimentAnalysisDataIO?
+    private var timeOutput: ExperimentAnalysisDataIO?
+    private var periodOutput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {

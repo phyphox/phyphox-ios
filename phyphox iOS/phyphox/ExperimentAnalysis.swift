@@ -32,9 +32,9 @@ final class ExperimentAnalysis : DataBufferObserver {
     weak var timeManager: ExperimentAnalysisTimeManager?
     weak var delegate: ExperimentAnalysisDelegate?
     
-    fileprivate var editBuffers = Set<DataBuffer>()
+    private var editBuffers = Set<DataBuffer>()
     
-    fileprivate(set) var timestamp: TimeInterval = 0.0
+    private(set) var timestamp: TimeInterval = 0.0
 
     init(analyses: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool) {
         self.analyses = analyses
@@ -73,7 +73,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         timestamp = 0.0
     }
     
-    fileprivate var busy = false
+    private var busy = false
     
     /**
      Schedules an update.
@@ -105,7 +105,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         }
     }
     
-    fileprivate func update(_ completion: @escaping () -> Void) {
+    private func update(_ completion: @escaping () -> Void) {
         let c = analyses.count-1
         
         for (i, analysis) in analyses.enumerated() {

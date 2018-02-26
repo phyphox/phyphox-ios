@@ -10,7 +10,7 @@
 import Foundation
 
 final class ExperimentCollection {
-    fileprivate(set) var title: String
+    private(set) var title: String
     var experiments: [(experiment: Experiment, custom: Bool)]?
     
     init(title: String, experiments: [Experiment]?, customExperiments: Bool) {

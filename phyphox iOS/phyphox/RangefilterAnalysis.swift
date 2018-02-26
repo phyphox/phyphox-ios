@@ -10,7 +10,7 @@
 import Foundation
 
 final class RangefilterAnalysis: ExperimentAnalysisModule {
-    fileprivate final class Range: CustomStringConvertible {
+    private final class Range: CustomStringConvertible {
         let min: Double
         let max: Double
         

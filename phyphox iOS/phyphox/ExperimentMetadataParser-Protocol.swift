@@ -119,7 +119,7 @@ func UIColorFromXML(_ xml: [String: AnyObject]?, key: String, defaultValue: UICo
     }
     
     if let str = xml![key] as? String {
-        if str.characters.count != 6 {
+        if str.count != 6 {
             throw SerializationError.invalidExperimentFile(message: "Invalid color: \(str)")
         }
         

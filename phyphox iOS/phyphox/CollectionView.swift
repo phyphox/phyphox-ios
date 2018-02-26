@@ -14,7 +14,7 @@ class CollectionContainerView: UIView {
         return UICollectionView.self
     }
     
-    fileprivate(set) var collectionView: UICollectionView
+    private(set) var collectionView: UICollectionView
     
     override init(frame: CGRect) {
         let layout = UICollectionViewFlowLayout()

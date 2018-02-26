@@ -10,7 +10,7 @@
 import Foundation
 
 final class ExperimentSerializer: NSObject {
-    fileprivate var experiment: Experiment
+    private var experiment: Experiment
     
     init(experiment: Experiment) {
         self.experiment = experiment

@@ -10,11 +10,11 @@
 import Foundation
 
 final class ExperimentTranslationCollection {
-    fileprivate let translations: [String: ExperimentTranslation]?
+    private let translations: [String: ExperimentTranslation]?
     
-    fileprivate var selectedLanguageCode: String?
+    private var selectedLanguageCode: String?
     
-    fileprivate(set) var selectedTranslation: ExperimentTranslation?
+    private(set) var selectedTranslation: ExperimentTranslation?
     
     init(translations: [String: ExperimentTranslation]?, defaultLanguageCode: String) {
         self.translations = translations

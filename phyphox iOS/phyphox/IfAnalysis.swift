@@ -10,14 +10,14 @@ import Foundation
 
 
 final class IfAnalysis: ExperimentAnalysisModule {
-    fileprivate let less: Bool
-    fileprivate let equal: Bool
-    fileprivate let greater: Bool
+    private let less: Bool
+    private let equal: Bool
+    private let greater: Bool
     
-    fileprivate var in1: ExperimentAnalysisDataIO? = nil
-    fileprivate var in2: ExperimentAnalysisDataIO? = nil
-    fileprivate var inTrue: ExperimentAnalysisDataIO? = nil
-    fileprivate var inFalse: ExperimentAnalysisDataIO? = nil
+    private var in1: ExperimentAnalysisDataIO? = nil
+    private var in2: ExperimentAnalysisDataIO? = nil
+    private var inTrue: ExperimentAnalysisDataIO? = nil
+    private var inFalse: ExperimentAnalysisDataIO? = nil
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         less = boolFromXML(additionalAttributes, key: "less", defaultValue: false)

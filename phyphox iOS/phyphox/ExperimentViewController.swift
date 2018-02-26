@@ -14,11 +14,11 @@ protocol ModuleExclusiveViewDelegate {
 }
 
 final class ExperimentViewController: UIViewController, ModuleExclusiveViewDelegate {
-    fileprivate let modules: [UIView]
+    private let modules: [UIView]
     var exclusiveView: UIView? = nil
     
-    fileprivate let scrollView = UIScrollView()
-    fileprivate let linearView = UIView()
+    private let scrollView = UIScrollView()
+    private let linearView = UIView()
     
     let insetTop: CGFloat = 10
     

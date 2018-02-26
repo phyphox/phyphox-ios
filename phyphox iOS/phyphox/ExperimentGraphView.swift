@@ -23,28 +23,28 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     var isExclusiveView = false
     typealias T = GraphViewDescriptor
     
-    fileprivate let xLabel: UILabel
-    fileprivate let yLabel: UILabel
+    private let xLabel: UILabel
+    private let yLabel: UILabel
     
-    fileprivate let glGraph: GLGraphView
-    fileprivate let gridView: GraphGridView
+    private let glGraph: GLGraphView
+    private let gridView: GraphGridView
     
-    fileprivate var maxX: Double
-    fileprivate var minX: Double
-    fileprivate var maxY: Double
-    fileprivate var minY: Double
+    private var maxX: Double
+    private var minX: Double
+    private var maxY: Double
+    private var minY: Double
     
-    fileprivate var zoomMaxX: Double
-    fileprivate var zoomMinX: Double
-    fileprivate var zoomMaxY: Double
-    fileprivate var zoomMinY: Double
+    private var zoomMaxX: Double
+    private var zoomMinX: Double
+    private var zoomMaxY: Double
+    private var zoomMinY: Double
     
     var panGesture: UIPanGestureRecognizer? = nil
     var pinchGesture: UIPinchGestureRecognizer? = nil
     
     var queue: DispatchQueue!
     
-    fileprivate var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+    private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
     
     func addDataSet(_ set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
         if self.dataSets.count >= Int(self.descriptor.history) {
@@ -54,7 +54,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         self.dataSets.append(set)
     }
     
-    fileprivate var max: GraphPoint<Double>? {
+    private var max: GraphPoint<Double>? {
         if dataSets.count > 1 {
             var maxX = -Double.infinity
             var maxY = -Double.infinity
@@ -78,7 +78,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    fileprivate var min: GraphPoint<Double>? {
+    private var min: GraphPoint<Double>? {
         if dataSets.count > 1 {
             var minX = Double.infinity
             var minY = Double.infinity
@@ -102,7 +102,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         }
     }
     
-    fileprivate var points: [[GraphPoint<GLfloat>]] {
+    private var points: [[GraphPoint<GLfloat>]] {
         return dataSets.map{$0.data}
     }
     
@@ -399,12 +399,12 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         return tickLocations
     }
     
-    fileprivate var lastIndexXArray: [Double]?
-    fileprivate var lastCount: Int?
+    private var lastIndexXArray: [Double]?
+    private var lastCount: Int?
     
-    fileprivate var lastCut: Int = 0
+    private var lastCut: Int = 0
     
-    fileprivate var hasUpdateBlockEnqueued = false
+    private var hasUpdateBlockEnqueued = false
     
     override func update() {
         if hasUpdateBlockEnqueued || superview == nil || window == nil {

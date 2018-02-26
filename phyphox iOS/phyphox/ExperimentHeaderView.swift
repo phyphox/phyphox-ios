@@ -10,9 +10,9 @@
 import UIKit
 
 final class ExperimentHeaderView: UICollectionReusableView {
-    fileprivate let label = UILabel()
+    private let label = UILabel()
     
-    fileprivate let background = UIView()
+    private let background = UIView()
 
     var title: String? {
         set {

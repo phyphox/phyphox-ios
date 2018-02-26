@@ -11,10 +11,10 @@ import Foundation
 
 final class SubrangeAnalysis: ExperimentAnalysisModule {
     
-    fileprivate var from: ExperimentAnalysisDataIO? = nil
-    fileprivate var to: ExperimentAnalysisDataIO? = nil
-    fileprivate var length: ExperimentAnalysisDataIO? = nil
-    fileprivate var arrayIns: [ExperimentAnalysisDataIO] = []
+    private var from: ExperimentAnalysisDataIO? = nil
+    private var to: ExperimentAnalysisDataIO? = nil
+    private var length: ExperimentAnalysisDataIO? = nil
+    private var arrayIns: [ExperimentAnalysisDataIO] = []
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         

@@ -11,9 +11,9 @@ import Foundation
 import Accelerate
 
 final class RampGeneratorAnalysis: ExperimentAnalysisModule {
-    fileprivate var startInput: ExperimentAnalysisDataIO!
-    fileprivate var stopInput: ExperimentAnalysisDataIO!
-    fileprivate var lengthInput: ExperimentAnalysisDataIO?
+    private var startInput: ExperimentAnalysisDataIO!
+    private var stopInput: ExperimentAnalysisDataIO!
+    private var lengthInput: ExperimentAnalysisDataIO?
     
     override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
         for input in inputs {

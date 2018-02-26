@@ -48,7 +48,7 @@ open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleP
         
     }
     
-    fileprivate var updateScheduled: Bool = false
+    private var updateScheduled: Bool = false
     
     func setNeedsUpdate() {
         if active && !updateScheduled {

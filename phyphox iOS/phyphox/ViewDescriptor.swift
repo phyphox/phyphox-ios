@@ -10,7 +10,7 @@
 import Foundation
 
 open class ViewDescriptor {
-    fileprivate let label: String
+    private let label: String
     let requiresAnalysis: Bool
     weak var translation: ExperimentTranslationCollection?
     

@@ -23,7 +23,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var experimentViewControllers: [ExperimentViewController] = []
     
     let webServer: ExperimentWebServer
-    fileprivate let viewModules: [[UIView]]
+    private let viewModules: [[UIView]]
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -33,14 +33,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0
     }
     
-    fileprivate var timerDelayString: String?
-    fileprivate var timerDurationString: String?
-    fileprivate var timerEnabled = false
+    private var timerDelayString: String?
+    private var timerDurationString: String?
+    private var timerEnabled = false
     
-    fileprivate var experimentStartTimer: Timer?
-    fileprivate var experimentRunTimer: Timer?
+    private var experimentStartTimer: Timer?
+    private var experimentRunTimer: Timer?
     
-    fileprivate var exportSelectionView: ExperimentExportSetSelectionView?
+    private var exportSelectionView: ExperimentExportSetSelectionView?
     
     var selectedViewCollection: Int {
         didSet {
@@ -372,7 +372,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    fileprivate func launchWebServer() {
+    private func launchWebServer() {
         UIApplication.shared.isIdleTimerDisabled = true
         if !webServer.start() {
             let hud = JGProgressHUD(style: .dark)
@@ -429,7 +429,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    fileprivate func tearDownWebServer() {
+    private func tearDownWebServer() {
         webServer.stop()
         if let label = self.serverLabel {
             label.removeFromSuperview()
@@ -441,7 +441,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    fileprivate func toggleWebServer() {
+    private func toggleWebServer() {
         if webServer.running {
             tearDownWebServer()
         }
@@ -457,7 +457,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    fileprivate func runExportFromActionSheet() {
+    private func runExportFromActionSheet() {
         let format = exportSelectionView!.selectedFormat()
         
         let HUD = JGProgressHUD(style: .dark)
@@ -499,7 +499,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    fileprivate func showExport() {
+    private func showExport() {
         let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: NSLocalizedString("pick_exportFormat", comment: ""), preferredStyle: .alert)
         
         let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .default, handler: { [unowned self] action in
@@ -521,7 +521,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    fileprivate func showSaveState() {
+    private func showSaveState() {
         self.stopExperiment()
         
         let alert = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_message", comment: ""), preferredStyle: .alert)
@@ -613,7 +613,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    fileprivate func showTimerOptions() {
+    private func showTimerOptions() {
         let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .alert)
         
         alert.addTextField { [unowned self] textField in

@@ -14,10 +14,6 @@ protocol DataBufferObserver : AnyObject {
     func analysisComplete()
 }
 
-func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
-    return lhs.name == rhs.name && lhs.size == rhs.size && lhs.toArray() == rhs.toArray()
-}
-
 /**
  Data buffer used for raw or processed data from sensors.
  */
@@ -40,9 +36,9 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
         return name.hash
     }
 
-    fileprivate var stateToken: UUID?
+    private var stateToken: UUID?
     
-    fileprivate var observers = NSMutableOrderedSet()
+    private var observers = NSMutableOrderedSet()
     
     /**
      Notifications are sent in order, first registered, first notified.
@@ -70,7 +66,7 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
         return token != nil && stateToken != nil && stateToken == token
     }
     
-    fileprivate func bufferMutated() {
+    private func bufferMutated() {
         stateToken = nil
     }
     
@@ -95,7 +91,7 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
         }
     }
     
-    fileprivate let queue: Queue<Double>
+    private let queue: Queue<Double>
     
     init(name: String, size: Int, vInit: [Double]) {
         self.name = name
@@ -265,5 +261,11 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
         get {
             return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
         }
+    }
+}
+
+extension DataBuffer: Equatable {
+    static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
+        return lhs.name == rhs.name && lhs.size == rhs.size && lhs.toArray() == rhs.toArray()
     }
 }
