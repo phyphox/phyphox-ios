@@ -34,7 +34,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         self.navigationController?.navigationBar.isTranslucent = true
     }
     
-    func showHelpMenu(_ item: UIBarButtonItem) {
+    @objc func showHelpMenu(_ item: UIBarButtonItem) {
         let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .default, handler: infoPressed))
@@ -129,7 +129,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         navigationController!.present(vc, animated: true, completion: nil)
     }
 
-    func reload() {
+    @objc func reload() {
         selfView.collectionView.reloadData()
     }
     
@@ -139,7 +139,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
-    func createNewExperiment() {
+    @objc func createNewExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         

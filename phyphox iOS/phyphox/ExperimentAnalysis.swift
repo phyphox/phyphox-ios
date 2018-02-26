@@ -105,7 +105,7 @@ final class ExperimentAnalysis : DataBufferObserver {
         }
     }
     
-    fileprivate func update(_ completion: @escaping (Void) -> Void) {
+    fileprivate func update(_ completion: @escaping () -> Void) {
         let c = analyses.count-1
         
         for (i, analysis) in analyses.enumerated() {

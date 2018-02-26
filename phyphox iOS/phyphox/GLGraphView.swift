@@ -141,7 +141,7 @@ final class GLGraphView: GLKView {
     }
     
     override convenience init(frame: CGRect) {
-        self.init(frame: frame, context: EAGLContext(api: .openGLES2))
+        self.init(frame: frame, context: EAGLContext(api: .openGLES2)!)
     }
     
     convenience init() {

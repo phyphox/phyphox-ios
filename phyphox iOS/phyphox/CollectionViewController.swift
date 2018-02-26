@@ -82,7 +82,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     
         //MARK: - Keyboard handler
     
-    dynamic fileprivate func keyboardFrameChanged(_ notification: Notification) {
+    @objc dynamic fileprivate func keyboardFrameChanged(_ notification: Notification) {
         func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
             let testOptions = UInt(UIViewAnimationCurve.linear.rawValue << 16);
             
@@ -123,14 +123,14 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name:NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
     }
     
-    dynamic fileprivate class func keyboardFrameWillChange(_ notification: Notification) {
+    @objc dynamic fileprivate class func keyboardFrameWillChange(_ notification: Notification) {
         keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
         if (keyboardFrame.isEmpty) {
             keyboardFrame = (notification.userInfo![UIKeyboardFrameBeginUserInfoKey]! as AnyObject).cgRectValue;
         }
     }
     
-    dynamic fileprivate class func keyboardFrameDidChange(_ notification: Notification) {
+    @objc dynamic fileprivate class func keyboardFrameDidChange(_ notification: Notification) {
         keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
     }
     

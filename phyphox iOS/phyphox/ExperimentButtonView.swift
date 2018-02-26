@@ -24,7 +24,7 @@ final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
         addSubview(button)
     }
     
-    func buttonPressed() {
+    @objc func buttonPressed() {
         descriptor.onTrigger();
     }
     

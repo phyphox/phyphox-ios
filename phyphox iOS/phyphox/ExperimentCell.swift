@@ -125,7 +125,7 @@ class ExperimentCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func optionsButtonPressed(_ button: UIButton) {
+    @objc func optionsButtonPressed(_ button: UIButton) {
         if optionsButtonCallback != nil {
             optionsButtonCallback!(button)
         }

@@ -57,11 +57,11 @@ class CreateExperimentViewController: UITableViewController {
         actualInit()
     }
     
-    func cancel() {
+    @objc func cancel() {
         self.navigationController!.dismiss(animated: true, completion: nil)
     }
     
-    func save() {
+    @objc func save() {
         guard let title = experimentTitle, let rate = Double(rateString!.replacingOccurrences(of: ",", with: ".")) else {
             let hud = JGProgressHUD(style: .dark)
             hud?.interactionType = .blockTouchesOnHUDView

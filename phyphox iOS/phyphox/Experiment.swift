@@ -138,7 +138,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.analysis?.timeManager = self
     }
     
-    dynamic func endBackgroundSession() {
+    @objc dynamic func endBackgroundSession() {
         stop()
     }
     
@@ -179,10 +179,10 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.clear()
     }
     
-    func checkAndAskForPermissions(_ failed: @escaping (Void) -> Void, locationManager: CLLocationManager?) {
+    func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
         if requiredPermissions.contains(.Microphone) {
             
-            let status = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeAudio)
+            let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
             
             switch status {
             case .denied:
@@ -198,7 +198,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
             case .notDetermined:
-                AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeAudio, completionHandler: { (allowed) in
+                AVCaptureDevice.requestAccess(for: AVMediaType.audio, completionHandler: { (allowed) in
                     if !allowed {
                         failed()
                     }

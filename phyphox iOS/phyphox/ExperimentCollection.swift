@@ -20,7 +20,7 @@ final class ExperimentCollection {
             return
         }
         for experiment in experiments! {
-            self.experiments?.append(experiment: experiment, custom: customExperiments)
+            self.experiments?.append((experiment: experiment, custom: customExperiments))
         }
     }
 

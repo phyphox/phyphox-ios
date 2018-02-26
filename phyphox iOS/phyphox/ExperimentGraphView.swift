@@ -186,7 +186,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     var panStartMinY = Double.nan
     var panStartMaxY = Double.nan
     
-    func panned(_ sender: UIPanGestureRecognizer) {
+    @objc func panned(_ sender: UIPanGestureRecognizer) {
         let offset = sender.translation(in: self)
         
         if sender.state == .began {
@@ -215,7 +215,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
     var pinchTouchScaleX = CGFloat.nan
     var pinchTouchScaleY = CGFloat.nan
     
-    func pinched(_ sender: UIPinchGestureRecognizer) {
+    @objc func pinched(_ sender: UIPinchGestureRecognizer) {
         if sender.numberOfTouches != 2 {
             return
         }

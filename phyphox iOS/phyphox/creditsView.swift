@@ -94,16 +94,16 @@ final class creditsView: UIView {
         fatalError("NSCoding not supported")
     }
     
-    func closeButtonPressed() {
+    @objc func closeButtonPressed() {
         onCloseCallback?()
     }
     
-    func licenceButtonPressed() {
+    @objc func licenceButtonPressed() {
         onLicenceCallback?()
     }
     
     func formatNames(raw: String) -> NSAttributedString {
-        let str = NSMutableAttributedString(string: raw, attributes: [NSFontAttributeName: UIFont.systemFont(ofSize: fontSize), NSForegroundColorAttributeName: kRWTHBackgroundColor])
+        let str = NSMutableAttributedString(string: raw, attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: fontSize), NSAttributedStringKey.foregroundColor: kRWTHBackgroundColor])
         var searchIndex = raw.startIndex
         while true {
             let searchString = raw.substring(from: searchIndex)
@@ -122,7 +122,7 @@ final class creditsView: UIView {
             
             let range = NSMakeRange(raw.distance(from: raw.startIndex, to: searchIndex), raw.distance(from: searchIndex, to: end))
 
-            str.setAttributes([NSFontAttributeName: UIFont.boldSystemFont(ofSize: fontSize), NSForegroundColorAttributeName: kRWTHBackgroundColor], range: range)
+            str.setAttributes([NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: fontSize), NSAttributedStringKey.foregroundColor: kRWTHBackgroundColor], range: range)
 
             if end < raw.endIndex {
                 searchIndex = raw.index(end, offsetBy: 1)

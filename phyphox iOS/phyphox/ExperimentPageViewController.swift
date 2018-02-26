@@ -132,7 +132,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     var webserverWasRunning = false
-    dynamic func onResignActiveNotification() {
+    @objc dynamic func onResignActiveNotification() {
         stopExperiment()
         if (webServer.running) {
             webserverWasRunning = true
@@ -142,7 +142,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    dynamic func onDidBecomeActiveNotification() {
+    @objc dynamic func onDidBecomeActiveNotification() {
         if (webserverWasRunning) {
             launchWebServer()
         }
@@ -300,7 +300,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return .none
     }
     
-    func closeHint(_ sender: UITapGestureRecognizer? = nil) {
+    @objc func closeHint(_ sender: UITapGestureRecognizer? = nil) {
         self.dismiss(animated: true, completion: nil)
     }
     
@@ -329,7 +329,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func switchToCollection(_ sender: UISegmentedControl) {
+    @objc func switchToCollection(_ sender: UISegmentedControl) {
         let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewControllerNavigationDirection.forward : UIPageViewControllerNavigationDirection.reverse
         pageViewControler.setViewControllers([experimentViewControllers[sender.selectedSegmentIndex]], direction: direction, animated: true, completion: nil)
         selectedViewCollection = sender.selectedSegmentIndex
@@ -663,7 +663,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    func action(_ item: UIBarButtonItem) {
+    @objc func action(_ item: UIBarButtonItem) {
         let alert = UIAlertController(title: NSLocalizedString("actions", comment: ""), message: nil, preferredStyle: .actionSheet)
         
         if experiment.export != nil {
@@ -817,11 +817,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(confirmation, animated: true, completion: nil)
     }
 
-    func stopTimerFired() {
+    @objc func stopTimerFired() {
         stopExperiment()
     }
 
-    func startTimerFired() {
+    @objc func startTimerFired() {
         actuallyStartExperiment()
         
         experimentStartTimer!.invalidate()
@@ -984,7 +984,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func toggleExperiment() {
+    @objc func toggleExperiment() {
         if experiment.running {
             stopExperiment()
         }
@@ -993,7 +993,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func clearDataDialog() {
+    @objc func clearDataDialog() {
         let al = UIAlertController(title: NSLocalizedString("clear_data", comment: ""), message: NSLocalizedString("clear_data_question", comment: ""), preferredStyle: .alert)
         
         al.addAction(UIAlertAction(title: NSLocalizedString("clear", comment: ""), style: .default, handler: { [unowned self] action in

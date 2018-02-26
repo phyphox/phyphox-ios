@@ -38,13 +38,13 @@ final class TextFieldTableViewCell: UITableViewCell {
         contentView.addSubview(textField)
     }
     
-    func editingChanged() {
+    @objc func editingChanged() {
         if editingChangedCallback != nil {
             editingChangedCallback!()
         }
     }
     
-    func didEndOnExit() {
+    @objc func didEndOnExit() {
         if editingEndedCallback != nil {
             editingEndedCallback!()
         }
