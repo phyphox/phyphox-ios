@@ -80,7 +80,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     
         //MARK: - Keyboard handler
     
-    @objc dynamic private func keyboardFrameChanged(_ notification: Notification) {
+    @objc private func keyboardFrameChanged(_ notification: Notification) {
         func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
             let testOptions = UInt(UIViewAnimationCurve.linear.rawValue << 16);
             

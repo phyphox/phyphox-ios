@@ -419,8 +419,8 @@
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6B1D6ACD1C5F674100AE33A5 /* RangefilterTest.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = RangefilterTest.phyphox; sourceTree = "<group>"; };
-		6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIAlertController+PTExtensions.h"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UIAlertController+PTExtensions.h"; sourceTree = "<absolute>"; };
-		6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIAlertController+PTExtensions.m"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UIAlertController+PTExtensions.m"; sourceTree = "<absolute>"; };
+		6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIAlertController+PTExtensions.h"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UI/New Group/UIAlertController+PTExtensions.h"; sourceTree = "<absolute>"; };
+		6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIAlertController+PTExtensions.m"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UI/New Group/UIAlertController+PTExtensions.m"; sourceTree = "<absolute>"; };
 		6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSetSelectionView.swift; sourceTree = "<group>"; };
 		6B2F60331CA8401D007A0C98 /* Test.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Test.phyphox; sourceTree = "<group>"; };
 		6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridView.swift; sourceTree = "<group>"; };
@@ -430,8 +430,8 @@
 		6B6319671C48457B0038BE22 /* CollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
 		6B6319691C4849900038BE22 /* CollectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
 		6B6319961C4951C30038BE22 /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
-		6B6319971C4952050038BE22 /* UIColor+Expanded.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIColor+Expanded.h"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UIColor+Expanded.h"; sourceTree = "<absolute>"; };
-		6B6319981C4952050038BE22 /* UIColor+Expanded.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIColor+Expanded.m"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UIColor+Expanded.m"; sourceTree = "<absolute>"; };
+		6B6319971C4952050038BE22 /* UIColor+Expanded.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIColor+Expanded.h"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UI/New Group/UIColor+Expanded.h"; sourceTree = "<absolute>"; };
+		6B6319981C4952050038BE22 /* UIColor+Expanded.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIColor+Expanded.m"; path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox/UI/New Group/UIColor+Expanded.m"; sourceTree = "<absolute>"; };
 		6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainNavigationBar.swift; sourceTree = "<group>"; };
 		6B63C8E31CC14A96007DC09B /* WebServerUtilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebServerUtilities.swift; sourceTree = "<group>"; };
 		6B7BF77A1C130425007408FB /* phyphox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = phyphox.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -550,99 +550,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6B00F0281C4072A100971941 /* ExperimentView */ = {
-			isa = PBXGroup;
-			children = (
-				4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */,
-				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
-				6B06C22E1CC7702A0030BB7D /* Web Server */,
-				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
-				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
-				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
-				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
-				6B00F0D61C47D3DC00971941 /* Graph */,
-				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
-				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
-				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
-				6B00F0A31C457B7200971941 /* ExperimentEditView.swift */,
-				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
-			);
-			name = ExperimentView;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B00F09A1C45237300971941 /* Modules */ = {
-			isa = PBXGroup;
-			children = (
-				6BE65ED91C5EBECB00E5933F /* Abstract */,
-				6BE65EDA1C5EBEE700E5933F /* Complex update value modules */,
-				6BE65EDB1C5EBEFB00E5933F /* Simple update value modules */,
-				6B7BF8101C14761F007408FB /* MaxAnalysis.swift */,
-				4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */,
-				6B7BF8121C14788C007408FB /* AppendAnalysis.swift */,
-				6B7BF8141C1479E8007408FB /* ConstGeneratorAnalysis.swift */,
-				6B7BF8161C147B8F007408FB /* RampGeneratorAnalysis.swift */,
-				6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */,
-				4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */,
-				6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */,
-				6B7BF81C1C147CC2007408FB /* CrosscorrelationAnalysis.swift */,
-				6B7BF8221C147D09007408FB /* FFTAnalysis.swift */,
-				6B7BF8201C147CF3007408FB /* AutocorrelationAnalysis.swift */,
-				6B7BF81E1C147CE0007408FB /* DifferentiationAnalysis.swift */,
-				6B00F0AB1C4680CC00971941 /* IntegrationAnalysis.swift */,
-				6B00F0AD1C46818500971941 /* FirstAnalysis.swift */,
-				6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */,
-				6B0815491CAFD3A900EE2791 /* PeriodicityAnalysis.swift */,
-				6B08154E1CB00F4600EE2791 /* TimerAnalysis.swift */,
-				4B47B0321DA6A87A00CCBA6E /* CountAnalysis.swift */,
-				4B47B0341DA6A93200CCBA6E /* AverageAnalysis.swift */,
-				4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */,
-				4B55689B1DD7BAC8000C033E /* IfAnalysis.swift */,
-				4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */,
-			);
-			name = Modules;
-			sourceTree = "<group>";
-		};
-		6B00F0B31C46CE2C00971941 /* Output */ = {
-			isa = PBXGroup;
-			children = (
-				6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */,
-				6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */,
-			);
-			name = Output;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B00F0B81C46F23600971941 /* Export */ = {
-			isa = PBXGroup;
-			children = (
-				6B00F0B61C46F23000971941 /* ExperimentExport.swift */,
-				6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */,
-			);
-			name = Export;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B00F0D61C47D3DC00971941 /* Graph */ = {
-			isa = PBXGroup;
-			children = (
-				6BD3C6301CA5E96E005F3D4B /* Grid */,
-				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
-				6BE320951CB06F7200DCC1ED /* VertexShader.glsl */,
-				6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */,
-			);
-			name = Graph;
-			sourceTree = "<group>";
-		};
-		6B06C22E1CC7702A0030BB7D /* Web Server */ = {
-			isa = PBXGroup;
-			children = (
-				6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */,
-				6B63C8E31CC14A96007DC09B /* WebServerUtilities.swift */,
-			);
-			name = "Web Server";
-			sourceTree = "<group>";
-		};
 		6B0814CD1CABEE2600EE2791 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -698,46 +605,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6B0C71511C1C701E00500FEE /* View Descriptors */ = {
-			isa = PBXGroup;
-			children = (
-				6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */,
-				6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */,
-				6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */,
-				6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */,
-				6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */,
-				6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */,
-				4BE7CADF1E4CD20F00C31090 /* SeparatorViewDescriptor.swift */,
-				4B5568B61DD7D846000C033E /* ButtonViewDescriptor.swift */,
-			);
-			name = "View Descriptors";
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B0C71521C1C703700500FEE /* Data Containers */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF7D21C13069A007408FB /* DataBuffer.swift */,
-				6B7BF7D61C130D0F007408FB /* Queue.swift */,
-			);
-			name = "Data Containers";
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B0C71531C1C704000500FEE /* Sensors/Data Input */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF7F51C132722007408FB /* ExperimentSensorInput.swift */,
-				4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */,
-				6B7BF7F31C132563007408FB /* MotionSession.swift */,
-				6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */,
-				4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */,
-				4B5770C11D7868A500394B07 /* SerialProtocol.swift */,
-			);
-			name = "Sensors/Data Input";
-			path = ..;
-			sourceTree = "<group>";
-		};
 		6B0C71561C1C708F00500FEE /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
@@ -749,20 +616,6 @@
 				6B08150D1CABEE6100EE2791 /* XMLDictionary */,
 			);
 			name = Dependencies;
-			sourceTree = "<group>";
-		};
-		6B0C71571C1C71C500500FEE /* Serialization */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
-				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
-				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
-				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
-				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
-				6BB52BC41C199CB400217CF1 /* Deserializer - Parser */,
-			);
-			name = Serialization;
-			path = ..;
 			sourceTree = "<group>";
 		};
 		6B7BF7711C130425007408FB = {
@@ -839,62 +692,6 @@
 			name = Assets;
 			sourceTree = "<group>";
 		};
-		6B7BF7C41C1304BA007408FB /* Main-View */ = {
-			isa = PBXGroup;
-			children = (
-				6BD769C31C496AAA006B4A0F /* Navigation Controller */,
-				6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */,
-				6B7BF7B51C130471007408FB /* MainView.swift */,
-				4B486EE01EC4B34D00F1045E /* CreditsView.swift */,
-				6B7BF7AE1C130471007408FB /* ExperimentCell.swift */,
-				6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */,
-				6BE320B01CB3C0DE00DCC1ED /* PTButton.h */,
-				6BE320B11CB3C0DE00DCC1ED /* PTButton.m */,
-			);
-			name = "Main-View";
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6B7BF8011C1396C9007408FB /* Analysis */ = {
-			isa = PBXGroup;
-			children = (
-				6B00F0981C4463A300971941 /* ExperimentAnalysis.swift */,
-				6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */,
-				6B7BF7F71C1374A6007408FB /* ExperimentAnalysisModule.swift */,
-				6B00F09A1C45237300971941 /* Modules */,
-			);
-			name = Analysis;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6BB52BC41C199CB400217CF1 /* Deserializer - Parser */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
-				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
-				6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */,
-				6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */,
-				6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */,
-				6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */,
-				6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */,
-				6BB52BBA1C19882F00217CF1 /* ExperimentExportParser.swift */,
-				6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */,
-			);
-			name = "Deserializer - Parser";
-			sourceTree = "<group>";
-		};
-		6BD026601CB54171005085B1 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */,
-				6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */,
-				6B6319971C4952050038BE22 /* UIColor+Expanded.h */,
-				6B6319981C4952050038BE22 /* UIColor+Expanded.m */,
-			);
-			name = Extensions;
-			path = "/Users/JonasGessner/Developer/AppStore/phyphox/phyphox iOS/phyphox";
-			sourceTree = "<absolute>";
-		};
 		6BD026CD1CB57199005085B1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -909,108 +706,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6BD3C6301CA5E96E005F3D4B /* Grid */ = {
-			isa = PBXGroup;
-			children = (
-				6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */,
-				6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */,
-			);
-			name = Grid;
-			sourceTree = "<group>";
-		};
-		6BD769C31C496AAA006B4A0F /* Navigation Controller */ = {
-			isa = PBXGroup;
-			children = (
-				6B00F0261C40713300971941 /* MainNavigationViewController.swift */,
-				6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */,
-			);
-			name = "Navigation Controller";
-			sourceTree = "<group>";
-		};
-		6BD769F81C496E51006B4A0F /* CollectionView */ = {
-			isa = PBXGroup;
-			children = (
-				6B6319671C48457B0038BE22 /* CollectionViewController.swift */,
-				6B6319691C4849900038BE22 /* CollectionView.swift */,
-			);
-			name = CollectionView;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6BE3209B1CB19A6100DCC1ED /* CreateExperiment */ = {
-			isa = PBXGroup;
-			children = (
-				6BE320A81CB2739F00DCC1ED /* Presentation Controller */,
-				6BE320991CB19A5D00DCC1ED /* CreateExperimentViewController.swift */,
-				6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */,
-			);
-			name = CreateExperiment;
-			path = ..;
-			sourceTree = "<group>";
-		};
-		6BE320A81CB2739F00DCC1ED /* Presentation Controller */ = {
-			isa = PBXGroup;
-			children = (
-				6BE3209C1CB19E0300DCC1ED /* CreatePresentationController.swift */,
-				6BE3209D1CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift */,
-				6BE3209E1CB19E0300DCC1ED /* CreateViewControllerTransition.swift */,
-			);
-			name = "Presentation Controller";
-			sourceTree = "<group>";
-		};
-		6BE65ED91C5EBECB00E5933F /* Abstract */ = {
-			isa = PBXGroup;
-			children = (
-				6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */,
-				6BBA06391C518BC900E4B1B0 /* UpdateValueAnalysis.swift */,
-			);
-			name = Abstract;
-			sourceTree = "<group>";
-		};
-		6BE65EDA1C5EBEE700E5933F /* Complex update value modules */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF7F91C1387A1007408FB /* AdditionAnalysis.swift */,
-				6B7BF7FB1C13954E007408FB /* SubtractionAnalysis.swift */,
-				6B7BF7FD1C13963E007408FB /* MultiplicationAnalysis.swift */,
-				6B7BF7FF1C139649007408FB /* DivisionAnalysis.swift */,
-				6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */,
-				6B7BF8041C146B23007408FB /* GCDAnalysis.swift */,
-				6B7BF8061C146DC2007408FB /* LCMAnalysis.swift */,
-				4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */,
-			);
-			name = "Complex update value modules";
-			sourceTree = "<group>";
-		};
-		6BE65EDB1C5EBEFB00E5933F /* Simple update value modules */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF8081C146FC9007408FB /* ABSAnalysis.swift */,
-				6B7BF80A1C147236007408FB /* SinAnalysis.swift */,
-				6B7BF80C1C14723D007408FB /* CosAnalysis.swift */,
-				6B7BF80E1C147244007408FB /* TanAnalysis.swift */,
-				4B47B0361DA6AF2400CCBA6E /* SinhAnalysis.swift */,
-				4B47B0381DA6AF5200CCBA6E /* CoshAnalysis.swift */,
-				4B47B03A1DA6AF6900CCBA6E /* TanhAnalysis.swift */,
-				4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */,
-				4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */,
-				4B47B02E1DA6A1FC00CCBA6E /* AtanAnalysis.swift */,
-				4BA9987C1EDB69D200BD1860 /* LogAnalysis.swift */,
-				4BA9987E1EDB6A4100BD1860 /* RoundAnalysis.swift */,
-			);
-			name = "Simple update value modules";
-			sourceTree = "<group>";
-		};
 		6BFE374B2044714600301CA3 /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				6BD026601CB54171005085B1 /* Extensions */,
+				6BFE377D20447D5800301CA3 /* Extensions */,
 				6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */,
 				6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */,
-				6BD769F81C496E51006B4A0F /* CollectionView */,
-				6B7BF7C41C1304BA007408FB /* Main-View */,
-				6BE3209B1CB19A6100DCC1ED /* CreateExperiment */,
-				6B00F0281C4072A100971941 /* ExperimentView */,
+				6BFE376D20447B7700301CA3 /* MainView */,
+				6BFE376C20447B6700301CA3 /* CollectionView */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -1034,15 +737,301 @@
 				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
 				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
 				4BA406C11EB618B30046E36A /* AudioEngine.swift */,
-				6B0C71511C1C701E00500FEE /* View Descriptors */,
-				6B0C71571C1C71C500500FEE /* Serialization */,
-				6B0C71521C1C703700500FEE /* Data Containers */,
-				6B00F0B81C46F23600971941 /* Export */,
-				6B00F0B31C46CE2C00971941 /* Output */,
-				6B0C71531C1C704000500FEE /* Sensors/Data Input */,
-				6B7BF8011C1396C9007408FB /* Analysis */,
+				6BFE377820447C6300301CA3 /* Analysis */,
+				6BFE377720447C4D00301CA3 /* Data-Input */,
+				6BFE377620447C4300301CA3 /* Output */,
+				6BFE377520447C3100301CA3 /* Export */,
+				6BFE377420447C2400301CA3 /* DataContainers */,
+				6BFE377220447C0000301CA3 /* Serialization */,
+				6BFE377120447BF200301CA3 /* ViewDescriptors */,
 			);
 			path = Experiments;
+			sourceTree = "<group>";
+		};
+		6BFE375720447AE300301CA3 /* NavigationController */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0261C40713300971941 /* MainNavigationViewController.swift */,
+				6B63199A1C4969DA0038BE22 /* MainNavigationBar.swift */,
+			);
+			path = NavigationController;
+			sourceTree = "<group>";
+		};
+		6BFE376620447B0600301CA3 /* WebServer */ = {
+			isa = PBXGroup;
+			children = (
+				6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */,
+				6B63C8E31CC14A96007DC09B /* WebServerUtilities.swift */,
+			);
+			path = WebServer;
+			sourceTree = "<group>";
+		};
+		6BFE376920447B1E00301CA3 /* Graph */ = {
+			isa = PBXGroup;
+			children = (
+				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
+				6BFE376A20447B3B00301CA3 /* Grid */,
+				6BE320951CB06F7200DCC1ED /* VertexShader.glsl */,
+				6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */,
+			);
+			path = Graph;
+			sourceTree = "<group>";
+		};
+		6BFE376A20447B3B00301CA3 /* Grid */ = {
+			isa = PBXGroup;
+			children = (
+				6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */,
+				6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */,
+			);
+			path = Grid;
+			sourceTree = "<group>";
+		};
+		6BFE376C20447B6700301CA3 /* CollectionView */ = {
+			isa = PBXGroup;
+			children = (
+				6B6319671C48457B0038BE22 /* CollectionViewController.swift */,
+				6B6319691C4849900038BE22 /* CollectionView.swift */,
+			);
+			path = CollectionView;
+			sourceTree = "<group>";
+		};
+		6BFE376D20447B7700301CA3 /* MainView */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */,
+				6B7BF7B51C130471007408FB /* MainView.swift */,
+				6BFE375720447AE300301CA3 /* NavigationController */,
+				4B486EE01EC4B34D00F1045E /* CreditsView.swift */,
+				6B7BF7AE1C130471007408FB /* ExperimentCell.swift */,
+				6B0815451CAC29E300EE2791 /* ExperimentHeaderView.swift */,
+				6BE320B01CB3C0DE00DCC1ED /* PTButton.h */,
+				6BE320B11CB3C0DE00DCC1ED /* PTButton.m */,
+				6BFE377020447BC900301CA3 /* ExperimentView */,
+				6BFE376E20447BA100301CA3 /* CreateExperiment */,
+			);
+			path = MainView;
+			sourceTree = "<group>";
+		};
+		6BFE376E20447BA100301CA3 /* CreateExperiment */ = {
+			isa = PBXGroup;
+			children = (
+				6BFE376F20447BB100301CA3 /* PresentationController */,
+				6BE320991CB19A5D00DCC1ED /* CreateExperimentViewController.swift */,
+				6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */,
+			);
+			path = CreateExperiment;
+			sourceTree = "<group>";
+		};
+		6BFE376F20447BB100301CA3 /* PresentationController */ = {
+			isa = PBXGroup;
+			children = (
+				6BE3209C1CB19E0300DCC1ED /* CreatePresentationController.swift */,
+				6BE3209D1CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift */,
+				6BE3209E1CB19E0300DCC1ED /* CreateViewControllerTransition.swift */,
+			);
+			path = PresentationController;
+			sourceTree = "<group>";
+		};
+		6BFE377020447BC900301CA3 /* ExperimentView */ = {
+			isa = PBXGroup;
+			children = (
+				4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */,
+				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
+				6BFE376620447B0600301CA3 /* WebServer */,
+				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
+				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
+				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
+				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
+				6BFE376920447B1E00301CA3 /* Graph */,
+				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
+				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
+				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
+				6B00F0A31C457B7200971941 /* ExperimentEditView.swift */,
+				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
+			);
+			path = ExperimentView;
+			sourceTree = "<group>";
+		};
+		6BFE377120447BF200301CA3 /* ViewDescriptors */ = {
+			isa = PBXGroup;
+			children = (
+				6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */,
+				6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */,
+				6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */,
+				6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */,
+				6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */,
+				6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */,
+				4BE7CADF1E4CD20F00C31090 /* SeparatorViewDescriptor.swift */,
+				4B5568B61DD7D846000C033E /* ButtonViewDescriptor.swift */,
+			);
+			path = ViewDescriptors;
+			sourceTree = "<group>";
+		};
+		6BFE377220447C0000301CA3 /* Serialization */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
+				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
+				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
+				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
+				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
+				6BFE377320447C0D00301CA3 /* Deserializer-Parser */,
+			);
+			path = Serialization;
+			sourceTree = "<group>";
+		};
+		6BFE377320447C0D00301CA3 /* Deserializer-Parser */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
+				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
+				6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */,
+				6BB52BC21C199A8C00217CF1 /* ExperimentDataContainersParser.swift */,
+				6BB52BBE1C19884800217CF1 /* ExperimentViewsParser.swift */,
+				6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */,
+				6BB52BC01C19885600217CF1 /* ExperimentAnalysisParser.swift */,
+				6BB52BBA1C19882F00217CF1 /* ExperimentExportParser.swift */,
+				6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */,
+			);
+			path = "Deserializer-Parser";
+			sourceTree = "<group>";
+		};
+		6BFE377420447C2400301CA3 /* DataContainers */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7D21C13069A007408FB /* DataBuffer.swift */,
+				6B7BF7D61C130D0F007408FB /* Queue.swift */,
+			);
+			path = DataContainers;
+			sourceTree = "<group>";
+		};
+		6BFE377520447C3100301CA3 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0B61C46F23000971941 /* ExperimentExport.swift */,
+				6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */,
+			);
+			path = Export;
+			sourceTree = "<group>";
+		};
+		6BFE377620447C4300301CA3 /* Output */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */,
+				6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */,
+			);
+			path = Output;
+			sourceTree = "<group>";
+		};
+		6BFE377720447C4D00301CA3 /* Data-Input */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7F51C132722007408FB /* ExperimentSensorInput.swift */,
+				4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */,
+				6B7BF7F31C132563007408FB /* MotionSession.swift */,
+				6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */,
+				4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */,
+				4B5770C11D7868A500394B07 /* SerialProtocol.swift */,
+			);
+			path = "Data-Input";
+			sourceTree = "<group>";
+		};
+		6BFE377820447C6300301CA3 /* Analysis */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0981C4463A300971941 /* ExperimentAnalysis.swift */,
+				6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */,
+				6B7BF7F71C1374A6007408FB /* ExperimentAnalysisModule.swift */,
+				6BFE377920447C6D00301CA3 /* Modules */,
+			);
+			path = Analysis;
+			sourceTree = "<group>";
+		};
+		6BFE377920447C6D00301CA3 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				6BFE377A20447CF000301CA3 /* Abstract */,
+				6BFE377B20447CFA00301CA3 /* Simple-Update-Value */,
+				6BFE377C20447D2200301CA3 /* Complex-Update-Value */,
+				6B7BF8101C14761F007408FB /* MaxAnalysis.swift */,
+				4B09C6C41CD78E79004C7FA1 /* MinAnalysis.swift */,
+				6B7BF8121C14788C007408FB /* AppendAnalysis.swift */,
+				6B7BF8141C1479E8007408FB /* ConstGeneratorAnalysis.swift */,
+				6B7BF8161C147B8F007408FB /* RampGeneratorAnalysis.swift */,
+				6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */,
+				4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */,
+				6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */,
+				6B7BF81C1C147CC2007408FB /* CrosscorrelationAnalysis.swift */,
+				6B7BF8221C147D09007408FB /* FFTAnalysis.swift */,
+				6B7BF8201C147CF3007408FB /* AutocorrelationAnalysis.swift */,
+				6B7BF81E1C147CE0007408FB /* DifferentiationAnalysis.swift */,
+				6B00F0AB1C4680CC00971941 /* IntegrationAnalysis.swift */,
+				6B00F0AD1C46818500971941 /* FirstAnalysis.swift */,
+				6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */,
+				6B0815491CAFD3A900EE2791 /* PeriodicityAnalysis.swift */,
+				6B08154E1CB00F4600EE2791 /* TimerAnalysis.swift */,
+				4B47B0321DA6A87A00CCBA6E /* CountAnalysis.swift */,
+				4B47B0341DA6A93200CCBA6E /* AverageAnalysis.swift */,
+				4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */,
+				4B55689B1DD7BAC8000C033E /* IfAnalysis.swift */,
+				4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */,
+			);
+			path = Modules;
+			sourceTree = "<group>";
+		};
+		6BFE377A20447CF000301CA3 /* Abstract */ = {
+			isa = PBXGroup;
+			children = (
+				6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */,
+				6BBA06391C518BC900E4B1B0 /* UpdateValueAnalysis.swift */,
+			);
+			path = Abstract;
+			sourceTree = "<group>";
+		};
+		6BFE377B20447CFA00301CA3 /* Simple-Update-Value */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF8081C146FC9007408FB /* ABSAnalysis.swift */,
+				6B7BF80A1C147236007408FB /* SinAnalysis.swift */,
+				6B7BF80C1C14723D007408FB /* CosAnalysis.swift */,
+				6B7BF80E1C147244007408FB /* TanAnalysis.swift */,
+				4B47B0361DA6AF2400CCBA6E /* SinhAnalysis.swift */,
+				4B47B0381DA6AF5200CCBA6E /* CoshAnalysis.swift */,
+				4B47B03A1DA6AF6900CCBA6E /* TanhAnalysis.swift */,
+				4B47B02A1DA6A19000CCBA6E /* AsinAnalysis.swift */,
+				4B47B02C1DA6A1E100CCBA6E /* AcosAnalysis.swift */,
+				4B47B02E1DA6A1FC00CCBA6E /* AtanAnalysis.swift */,
+				4BA9987C1EDB69D200BD1860 /* LogAnalysis.swift */,
+				4BA9987E1EDB6A4100BD1860 /* RoundAnalysis.swift */,
+			);
+			path = "Simple-Update-Value";
+			sourceTree = "<group>";
+		};
+		6BFE377C20447D2200301CA3 /* Complex-Update-Value */ = {
+			isa = PBXGroup;
+			children = (
+				6B7BF7F91C1387A1007408FB /* AdditionAnalysis.swift */,
+				6B7BF7FB1C13954E007408FB /* SubtractionAnalysis.swift */,
+				6B7BF7FD1C13963E007408FB /* MultiplicationAnalysis.swift */,
+				6B7BF7FF1C139649007408FB /* DivisionAnalysis.swift */,
+				6B7BF8021C1466DF007408FB /* PowerAnalysis.swift */,
+				6B7BF8041C146B23007408FB /* GCDAnalysis.swift */,
+				6B7BF8061C146DC2007408FB /* LCMAnalysis.swift */,
+				4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */,
+			);
+			path = "Complex-Update-Value";
+			sourceTree = "<group>";
+		};
+		6BFE377D20447D5800301CA3 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				6B26F6F91CAAEBFE00EA9367 /* UIAlertController+PTExtensions.h */,
+				6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */,
+				6B6319971C4952050038BE22 /* UIColor+Expanded.h */,
+				6B6319981C4952050038BE22 /* UIColor+Expanded.m */,
+			);
+			name = Extensions;
+			path = "New Group";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1727,7 +1716,7 @@
 				SKIP_INSTALL = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "phyphox/phyphox-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.0;
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;
@@ -1781,7 +1770,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "phyphox/phyphox-Bridging-Header.h";
-				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.0;
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;

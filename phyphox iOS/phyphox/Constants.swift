@@ -53,7 +53,7 @@ func after(_ delay: TimeInterval, closure: @escaping () -> Void) {
     DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double(Int64(Double(NSEC_PER_SEC)*delay)) / Double(NSEC_PER_SEC), execute: closure)
 }
 
-extension RangeReplaceableCollection where Index : Comparable{
+extension RangeReplaceableCollection {
     mutating func removeAtIndices<S : Sequence>(_ indices: S) where S.Iterator.Element == Index {
         indices.sorted().lazy.reversed().forEach{ remove(at: $0) }
     }

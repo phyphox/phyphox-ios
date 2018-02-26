@@ -27,8 +27,8 @@ class SerialBufferedReader {
     func read(_ data: String) -> [[Double]] {
         buffer += data
         let result = newData(buffer)
-        let index = buffer.characters.index(buffer.startIndex, offsetBy: result.0)
-        buffer = buffer.substring(from: index)
+        let index = buffer.index(buffer.startIndex, offsetBy: result.0)
+        buffer = String(buffer[index...])
         return result.1
     }
 }
@@ -41,12 +41,12 @@ class SimpleSerialProtocol: SerialProtocol {
         reader = SerialBufferedReader(newData: {(buffer: String) -> (Int, [[Double]]) in
             var result: [[Double]] = [[]]
             
-            var elements = buffer.characters.split(separator: separator, omittingEmptySubsequences: false).map(String.init)
+            var elements = buffer.split(separator: separator, omittingEmptySubsequences: false).map(String.init)
             elements.removeLast() //The last element may be incomplete until a separator has been received.
             
             var processed = 0
             for element in elements {
-                processed += element.characters.count + 1
+                processed += element.count + 1
                 if let v = Double(element) {
                     result[0].append(v)
                 }

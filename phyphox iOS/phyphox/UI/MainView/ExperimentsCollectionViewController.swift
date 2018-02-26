@@ -176,9 +176,6 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         cellsPerRow = Int(cells)
         
-        
-        
-        
         let h = ceil(UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1).lineHeight + 12)
         
         return CGSize(width: width, height: h)
@@ -252,28 +249,28 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         return CGSize(width: self.view.frame.size.width, height: 36.0)
     }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: IndexPath) -> UICollectionReusableView {
+
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionElementKindSectionHeader {
             let view = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "Header", for: indexPath) as! ExperimentHeaderView
-            
+
             let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
-            
+
             view.title = collection.title
-            
+
             return view
         }
-        
+
         fatalError("Invalid supplementary view: \(kind)")
     }
     
     //MARK: - UICollectionViewDelegate
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: IndexPath) {
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
         
         if let sensors = experiment.experiment.sensorInputs {

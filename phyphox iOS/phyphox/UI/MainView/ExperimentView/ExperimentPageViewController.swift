@@ -132,7 +132,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     var webserverWasRunning = false
-    @objc dynamic func onResignActiveNotification() {
+    @objc func onResignActiveNotification() {
         stopExperiment()
         if (webServer.running) {
             webserverWasRunning = true
@@ -142,7 +142,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    @objc dynamic func onDidBecomeActiveNotification() {
+    @objc func onDidBecomeActiveNotification() {
         if (webserverWasRunning) {
             launchWebServer()
         }
