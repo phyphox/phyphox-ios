@@ -106,10 +106,10 @@ final class CreditsView: UIView {
         let str = NSMutableAttributedString(string: raw, attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: fontSize), NSAttributedStringKey.foregroundColor: kRWTHBackgroundColor])
         var searchIndex = raw.startIndex
         while true {
-            let searchString = raw.substring(from: searchIndex)
+            let searchString = String(raw[searchIndex...])
             let endOfLine = searchString.range(of: "\n")?.lowerBound ?? searchString.endIndex
             let end = raw.index(searchIndex, offsetBy: raw.distance(from: searchString.startIndex, to: endOfLine))
-            let searchLine = raw.substring(with: searchIndex..<end)
+            let searchLine = String(raw[searchIndex..<end])
             if searchLine.range(of: ":") != nil {
                 //This line is a headline
                 if end < raw.endIndex {

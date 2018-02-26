@@ -102,16 +102,16 @@ class QueueTests: XCTestCase {
         XCTAssertEqual(q.first, Int64.max)
         XCTAssertEqual(q.last, Int64.min)
         
-        q.dequeue()
+        _ = q.dequeue()
         
         XCTAssertEqual(q.first, 0)
         XCTAssertEqual(q.last, Int64.min)
         
-        q.dequeue()
+        _ = q.dequeue()
         
         XCTAssertEqual(q.first, q.last)
         
-        q.dequeue()
+        _ = q.dequeue()
         
         XCTAssertNil(q.first)
         XCTAssertNil(q.last)
@@ -136,7 +136,7 @@ class QueueTests: XCTestCase {
         }
     }
 	
-	func  testAddNil() {
+	func testAddNil() {
 		let sut = Queue<Int?>()
         XCTAssertNil(sut.dequeue())
 		sut.enqueue(nil)
@@ -204,7 +204,7 @@ class QueueTests: XCTestCase {
 		let addingexpectation = expectation(description: "adding completed")
 		let addingqueue = DispatchQueue( label: "adding", attributes: [])
 		addingqueue.async  {
-			for i in  1...numberofiterations {
+			for i in 1...numberofiterations {
 				sut.enqueue(i)
 			}
 			addingexpectation.fulfill()
@@ -219,7 +219,8 @@ class QueueTests: XCTestCase {
                     XCTAssertEqual(result, i)
                     i += 1
                 } else {
-                    print(" pausing deleting for one second")
+                    print(" pausing deleting for 1mus")
+                    usleep(1000 * 1000)
                     sleep(CUnsignedInt(1))
                 }
             }

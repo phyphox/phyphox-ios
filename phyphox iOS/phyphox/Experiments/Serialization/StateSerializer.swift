@@ -69,7 +69,7 @@ final class StateSerializer {
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil {
             throw stateError.SourceError("No valid data containers block found.")
         }
-        let endLocation = sourceStr!.substring(from: dataContainersBlockStop!.lowerBound).range(of: "</phyphox>", options: .caseInsensitive)
+        let endLocation = String(sourceStr![dataContainersBlockStop!.lowerBound...]).range(of: "</phyphox>", options: .caseInsensitive)
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil || endLocation == nil {
             throw stateError.SourceError("No valid data containers block found.")
         }
@@ -92,6 +92,6 @@ final class StateSerializer {
             newBlock += "</container>\n"
         }
         let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
-        return sourceStr!.substring(to: dataContainersBlockStart!.upperBound) + "\n" + newBlock + "\n" + sourceStr!.substring(from: dataContainersBlockStop!.lowerBound).substring(to: endLocation!.lowerBound) + "\n" + customTitle + "\n" + "</phyphox>"
+        return sourceStr![..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr![dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + "</phyphox>"
     }
 }

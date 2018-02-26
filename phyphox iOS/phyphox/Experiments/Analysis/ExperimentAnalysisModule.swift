@@ -14,7 +14,7 @@ import Foundation
  */
 class ExperimentAnalysisModule {
     /**
-     Inouts. Either containing a buffer, or a fixed value.
+     Inputs. Either containing a buffer, or a fixed value.
      */
     internal var inputs: [ExperimentAnalysisDataIO]
     

@@ -92,7 +92,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     func updateTextField(_: UITextField, write: Bool, forceReadFromBuffer: Bool = false) {
         var val: Double
         
-        if forceReadFromBuffer || textField.text?.characters.count == 0 || Double(textField.text!) == nil {
+        if forceReadFromBuffer || textField.text?.count == 0 || Double(textField.text!) == nil {
             val = descriptor.value
             
             textField.text = formattedValue(val*self.descriptor.factor)
