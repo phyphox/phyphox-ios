@@ -193,13 +193,13 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             }
             catch let error as NSError {
                 let hud = JGProgressHUD(style: .dark)
-                hud?.interactionType = .blockTouchesOnHUDView
-                hud?.indicatorView = JGProgressHUDErrorIndicatorView()
-                hud?.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+                hud.interactionType = .blockTouchesOnHUDView
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
                 
-                hud?.show(in: self.view)
+                hud.show(in: self.view)
                 
-                hud?.dismiss(afterDelay: 3.0)
+                hud.dismiss(afterDelay: 3.0)
             }
             }))
         

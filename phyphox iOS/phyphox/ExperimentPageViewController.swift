@@ -376,13 +376,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         UIApplication.shared.isIdleTimerDisabled = true
         if !webServer.start() {
             let hud = JGProgressHUD(style: .dark)
-            hud?.interactionType = .blockTouchesOnHUDView
-            hud?.indicatorView = JGProgressHUDErrorIndicatorView()
-            hud?.textLabel.text = "Failed to initialize HTTP server"
+            hud.interactionType = .blockTouchesOnHUDView
+            hud.indicatorView = JGProgressHUDErrorIndicatorView()
+            hud.textLabel.text = "Failed to initialize HTTP server"
             
-            hud?.show(in: self.view)
+            hud.show(in: self.view)
             
-            hud?.dismiss(afterDelay: 3.0)
+            hud.dismiss(afterDelay: 3.0)
         }
         else {
             var url = webServer.server!.serverURL?.absoluteString
@@ -461,16 +461,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let format = exportSelectionView!.selectedFormat()
         
         let HUD = JGProgressHUD(style: .dark)
-        HUD?.interactionType = .blockTouchesOnHUDView
-        HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        HUD.interactionType = .blockTouchesOnHUDView
+        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         
-        HUD?.show(in: navigationController!.view)
+        HUD.show(in: navigationController!.view)
         
         runExport(format: format) { error, URL in
             if error != nil {
-                HUD?.indicatorView = JGProgressHUDErrorIndicatorView()
-                HUD?.textLabel.text = error!.localizedDescription
-                HUD?.dismiss(afterDelay: 3.0)
+                HUD.indicatorView = JGProgressHUDErrorIndicatorView()
+                HUD.textLabel.text = error!.localizedDescription
+                HUD.dismiss(afterDelay: 3.0)
             }
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
@@ -478,7 +478,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
 
                 self.navigationController!.present(vc, animated: true) {
-                    HUD?.dismiss()
+                    HUD.dismiss()
                 }
                 
                 vc.completionWithItemsHandler = { _, _, _, _ in
@@ -544,10 +544,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let target = (customExperimentsDirectory as NSString).appendingPathComponent(filename)
             
             let HUD = JGProgressHUD(style: .dark)
-            HUD?.interactionType = .blockTouchesOnHUDView
-            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.interactionType = .blockTouchesOnHUDView
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
             
-            HUD?.show(in: self.navigationController!.view)
+            HUD.show(in: self.navigationController!.view)
             
             
             do {
@@ -564,7 +564,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     return
                 }
                 
-                HUD?.dismiss()
+                HUD.dismiss()
                 
                 ExperimentManager.sharedInstance().loadCustomExperiments()
                 
@@ -583,10 +583,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox")
             
             let HUD = JGProgressHUD(style: .dark)
-            HUD?.interactionType = .blockTouchesOnHUDView
-            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.interactionType = .blockTouchesOnHUDView
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
             
-            HUD?.show(in: self.navigationController!.view)
+            HUD.show(in: self.navigationController!.view)
             
             StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
                 if (error != nil) {
@@ -599,7 +599,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
                 
                 self.navigationController!.present(vc, animated: true) {
-                    HUD?.dismiss()
+                    HUD.dismiss()
                 }
 
                 vc.completionWithItemsHandler = { _, _, _, _ in
@@ -712,10 +712,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let png = UIImagePNGRepresentation(img!)!
             
             let HUD = JGProgressHUD(style: .dark)
-            HUD?.interactionType = .blockTouchesOnHUDView
-            HUD?.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.interactionType = .blockTouchesOnHUDView
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
 
-            HUD?.show(in: self.navigationController!.view)
+            HUD.show(in: self.navigationController!.view)
 
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
@@ -730,7 +730,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
             
             self.navigationController!.present(vc, animated: true) {
-                HUD?.dismiss()
+                HUD.dismiss()
             }
             
             vc.completionWithItemsHandler = { _, _, _, _ in
