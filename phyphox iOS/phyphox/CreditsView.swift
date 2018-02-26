@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class creditsView: UIView {
+final class CreditsView: UIView {
     
     var onCloseCallback: (() -> Void)?
     var onLicenceCallback: (() -> Void)?
@@ -74,8 +74,8 @@ final class creditsView: UIView {
         
         self.backgroundColor = kDarkenedColor
         
-        closeButton.addTarget(self, action: #selector(creditsView.closeButtonPressed), for: .touchUpInside)
-        licenceButton.addTarget(self, action: #selector(creditsView.licenceButtonPressed), for: .touchUpInside)
+        closeButton.addTarget(self, action: #selector(CreditsView.closeButtonPressed), for: .touchUpInside)
+        licenceButton.addTarget(self, action: #selector(CreditsView.licenceButtonPressed), for: .touchUpInside)
         
         scrollView.addSubview(rwthLogo)
         scrollView.addSubview(creditsRWTH)

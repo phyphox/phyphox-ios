@@ -116,7 +116,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         vc.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
         vc.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
         
-        let v = creditsView()
+        let v = CreditsView()
         v.onCloseCallback = {
             vc.dismiss(animated: true, completion: nil)
         }
