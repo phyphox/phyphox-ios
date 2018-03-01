@@ -254,17 +254,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         updateSelectedViewCollection()
         
         //Ask to save the experiment locally if it has been loaded from a remote source
-        if experiment.source != nil {
+        if !experiment.local {
             let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .alert)
             
             al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .default, handler: { _ in
-                self.saveLocally()}))
+                try? self.saveLocally()
+            }))
             al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
             
         //Show a hint for the experiment info
         } else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
+            return
             let label = UILabel()
             label.text = NSLocalizedString("experimentinfo_hint", comment: "")
             label.lineBreakMode = .byWordWrapping
@@ -536,43 +538,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         })
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_save", comment: ""), style: .default, handler: { [unowned self] action in
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-            
-            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
-            let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
-            let target = (customExperimentsDirectory as NSString).appendingPathComponent(filename)
-            
-            let HUD = JGProgressHUD(style: .dark)
-            HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
-            
-            HUD.show(in: self.navigationController!.view)
-            
-            
             do {
-                if !FileManager.default.fileExists(atPath: customExperimentsDirectory) {
-                    try FileManager.default.createDirectory(atPath: customExperimentsDirectory, withIntermediateDirectories: false, attributes: nil)
+                if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
+                    try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
                 }
+
+                guard let title = alert.textFields?.first?.text else {
+                    return
+                }
+
+                try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
+
+                try ExperimentManager.sharedInstance().loadSavedExperiments()
             } catch {
                 return
             }
-            
-            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: target, experiment: self.experiment, callback: {(error, file) in
-                if (error != nil) {
-                    self.showError(message: error!)
-                    return
-                }
-                
-                HUD.dismiss()
-                
-                ExperimentManager.sharedInstance().loadCustomExperiments()
-                
-                let confirmation = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_success", comment: ""), preferredStyle: .alert)
-                
-                confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
-                self.navigationController!.present(confirmation, animated: true, completion: nil)
-            })
         }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_share", comment: ""), style: .default, handler: { [unowned self] action in
@@ -588,24 +568,24 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             HUD.show(in: self.navigationController!.view)
             
-            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
-                if (error != nil) {
-                    self.showError(message: error!)
-                    return
-                }
-                
-                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
-                
-                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
-                
-                self.navigationController!.present(vc, animated: true) {
-                    HUD.dismiss()
-                }
-
-                vc.completionWithItemsHandler = { _, _, _, _ in
-                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
-                }
-            })
+//            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
+//                if (error != nil) {
+//                    self.showError(message: error!)
+//                    return
+//                }
+//
+//                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
+//
+//                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+//
+//                self.navigationController!.present(vc, animated: true) {
+//                    HUD.dismiss()
+//                }
+//
+//                vc.completionWithItemsHandler = { _, _, _, _ in
+//                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+//                }
+//            })
         }))
             
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
@@ -764,9 +744,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
-        if experiment.source != nil {
+        if !experiment.local {
             alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .default, handler: { [unowned self] action in
-                self.saveLocally()
+                try? self.saveLocally()
             }))
         }
         
@@ -781,35 +761,29 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
-    func saveLocally() {
-        var i = 1
-        let title = self.experiment.source!.lastPathComponent
-        var t = title
-        
-        var path: String
-        
-        let directory = customExperimentsDirectory
-        
-        do {
-            if !FileManager.default.fileExists(atPath: directory) {
-                try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false, attributes: nil)
-            }
-        } catch {
-            return
+    func saveLocally() throws {
+        guard let source = experiment.source else { throw FileError.genericError }
+
+        let title = experiment.title
+
+        if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
+            try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
         }
-        
-        repeat {
-            path = (directory as NSString).appendingPathComponent("\(t).phyphox")
-            
-            t = "\(title)-\(i)"
+
+        var i = 1
+
+        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(fileExtension)
+
+        while FileManager.default.fileExists(atPath: experimentURL.path) {
+            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(fileExtension)
+
             i += 1
-            
-        } while FileManager.default.fileExists(atPath: path)
-        
-        try? self.experiment.sourceData!.write(to: URL(fileURLWithPath: path), options: [.atomic])
-        self.experiment.source = nil
-        
-        ExperimentManager.sharedInstance().loadCustomExperiments()
+        }
+
+        try FileManager.default.copyItem(at: source, to: experimentURL)
+        self.experiment.source = experimentURL
+
+        try! ExperimentManager.sharedInstance().loadCustomExperiments()
         
         let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
         

@@ -17,7 +17,7 @@ protocol DataBufferObserver : AnyObject {
 /**
  Data buffer used for raw or processed data from sensors.
  */
-final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
+final class DataBuffer: Sequence, CustomStringConvertible {
     let name: String
     var size: Int {
         didSet {
@@ -26,9 +26,7 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
             }
         }
     }
-    
-    var vInit: [Double]
-    
+
     var attachedToTextField = false
     var dataFromAnalysis = false
     
@@ -93,13 +91,10 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
     
     private let queue: Queue<Double>
     
-    init(name: String, size: Int, vInit: [Double]) {
+    init(name: String, size: Int) {
         self.name = name
         self.size = size
-        self.vInit = vInit
         queue = Queue<Double>(capacity: size)
-        
-        self.appendFromArray(vInit, notify: false)
     }
     
     func makeIterator() -> IndexingIterator<[Double]> {
@@ -148,8 +143,6 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
         queue.clear()
         trashedCount = 0
         written = false
-        
-        self.appendFromArray(vInit, notify: false)
         
         bufferMutated()
         
@@ -252,20 +245,21 @@ final class DataBuffer: Sequence, CustomStringConvertible, Hashable {
             }
         }
     }
-    
+
     func toArray() -> [Double] {
         return queue.toArray()
     }
-    
+
     var description: String {
         get {
-            return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
+            return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(queue.toArray())>"
         }
     }
 }
 
-extension DataBuffer: Equatable {
-    static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
-        return lhs.name == rhs.name && lhs.size == rhs.size && lhs.toArray() == rhs.toArray()
-    }
-}
+//extension DataBuffer: Equatable {
+//    static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
+//        return lhs.name == rhs.name && lhs.size == rhs.size && fir lhs.toArray() == rhs.toArray()
+//    }
+//}
+

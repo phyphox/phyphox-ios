@@ -18,7 +18,7 @@ final class SimpleExperimentSerializer {
         
         var path: String
         
-        let directory = customExperimentsDirectory
+        let directory = customExperimentsURL.path
         
         if !FileManager.default.fileExists(atPath: directory) {
             try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false, attributes: nil)
@@ -33,8 +33,8 @@ final class SimpleExperimentSerializer {
         } while FileManager.default.fileExists(atPath: path)
         
         try str.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
-        
-        ExperimentManager.sharedInstance().loadCustomExperiments()
+
+        try! ExperimentManager.sharedInstance().loadCustomExperiments()
         
         return str
     }

@@ -45,8 +45,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 var containerType = ExperimentDataContainerType.buffer //Default
                 var bufferSize = 1 //Default
                 var stat = false //Default
-                var vInit: [Double] = []
-                
+
                 if let str = container as? String {
                     name = str
                 }
@@ -54,8 +53,6 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     if let attributes = dict[XMLDictionaryAttributesKey] as? [String: String] {
                         bufferSize = intTypeFromXML(attributes as [String : AnyObject], key: "size", defaultValue: 1)
                         stat = boolFromXML(attributes as [String : AnyObject], key: "static", defaultValue: false)
-                        let sInit = stringFromXML(attributes as [String : AnyObject], key: "init", defaultValue: "")
-                        vInit = sInit.components(separatedBy: ",").flatMap{Double($0.trimmingCharacters(in: .whitespaces))}
                         
                         containerType = try dataContainerTypeFromXML(attributes as [String : AnyObject], key: "type")
                     }
@@ -64,7 +61,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 }
                 
                 if containerType == .buffer && name.count > 0 {
-                    let buffer = DataBuffer(name: name, size: bufferSize, vInit: vInit)
+                    let buffer = DataBuffer(name: name, size: bufferSize)
                     buffer.staticBuffer = stat
                     
                     buffers[name] = buffer

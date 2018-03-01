@@ -32,7 +32,7 @@ final class ExperimentAnalysis : DataBufferObserver {
     weak var timeManager: ExperimentAnalysisTimeManager?
     weak var delegate: ExperimentAnalysisDelegate?
     
-    private var editBuffers = Set<DataBuffer>()
+    private var editBuffers = [DataBuffer]()
     
     private(set) var timestamp: TimeInterval = 0.0
 
@@ -56,11 +56,11 @@ final class ExperimentAnalysis : DataBufferObserver {
      */
     func registerEditBuffer(_ dataBuffer: DataBuffer) {
         dataBuffer.addObserver(self)
-        editBuffers.insert(dataBuffer)
+        editBuffers.append(dataBuffer)
     }
     
     func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
-        if (!onUserInput || editBuffers.contains(buffer)) && !noData {
+        if (!onUserInput || editBuffers.contains(where: { $0.name == buffer.name })) && !noData {
             setNeedsUpdate()
         }
     }

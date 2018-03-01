@@ -8,8 +8,7 @@
 import XCTest
 @testable import phyphox
 
-class QueueTests: XCTestCase {
-    
+final class QueueTests: XCTestCase {
     func testAdd1ToQueue() {
 		let sut = Queue<String>()
 		sut.enqueue("1")
@@ -138,19 +137,19 @@ class QueueTests: XCTestCase {
 	
 	func testAddNil() {
 		let sut = Queue<Int?>()
-        XCTAssertNil(sut.dequeue())
+        XCTAssert(sut.dequeue() == nil)
 		sut.enqueue(nil)
-        XCTAssert(sut.dequeue()! == (nil as Int?))
-		XCTAssertNil(sut.dequeue())
+        XCTAssert(sut.dequeue()! == nil)
+		XCTAssert(sut.dequeue() == nil)
         
 		sut.enqueue(2)
 		sut.enqueue(nil)
 		sut.enqueue(4)
 		
 		XCTAssertEqual(sut.dequeue()!, 2)
-        XCTAssert(sut.dequeue()! == (nil as Int?))
+        XCTAssert(sut.dequeue()! == nil)
 		XCTAssertEqual(sut.dequeue()!, 4)
-        XCTAssertNil(sut.dequeue())
+        XCTAssert(sut.dequeue() == nil)
 	}
 
 	func testAddAfterEmpty() {
@@ -198,7 +197,7 @@ class QueueTests: XCTestCase {
 	}
 
 	func testConcurrency() {
-		let sut = Queue<Int>()
+        let sut = Queue<Int>()
 		let numberofiterations = 2_000_00
 
 		let addingexpectation = expectation(description: "adding completed")
@@ -220,8 +219,7 @@ class QueueTests: XCTestCase {
                     i += 1
                 } else {
                     print(" pausing deleting for 1mus")
-                    usleep(1000 * 1000)
-                    sleep(CUnsignedInt(1))
+                    usleep(1000)
                 }
             }
 			deletingexpectation.fulfill()

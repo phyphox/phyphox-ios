@@ -60,13 +60,8 @@ class ExperimentCell: UICollectionViewCell {
     weak var experiment: Experiment? {
         didSet {
             if experiment != oldValue || (experiment == nil && oldValue == nil) {
-                if experiment?.stateTitle != nil {
-                    titleLabel.text = experiment?.stateTitle
-                    subtitleLabel.text = experiment?.localizedTitle
-                } else {
-                    titleLabel.text = experiment?.localizedTitle
-                    subtitleLabel.text = experiment?.localizedDescription
-                }
+                titleLabel.text = experiment?.localizedTitle
+                subtitleLabel.text = experiment?.localizedDescription
                 
                 var available = true
                 if let sensors = experiment!.sensorInputs {

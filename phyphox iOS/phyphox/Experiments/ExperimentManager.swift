@@ -10,7 +10,12 @@
 import UIKit
 
 let experimentsBaseDirectory = Bundle.main.path(forResource: "phyphox-experiments", ofType: nil)!
-let customExperimentsDirectory = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as NSString).appendingPathComponent("Experiments")
+
+let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+
+let savedExperimentStatesURL = documentsURL.appendingPathComponent("Saved-States")
+let customExperimentsURL = documentsURL.appendingPathComponent("Experiments")
+
 let fileExtension = "phyphox"
 
 let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
@@ -34,7 +39,7 @@ final class ExperimentManager {
                 var placed = false
                 for (i, targetCollection) in allExperimentCollections!.enumerated() {
                     if (experimentCollection.title == targetCollection.title) {
-                        allExperimentCollections![i].experiments! += experimentCollection.experiments!
+                        allExperimentCollections![i].experiments += experimentCollection.experiments
                         placed = true
                         break;
                     }
@@ -45,7 +50,7 @@ final class ExperimentManager {
             }
             
             for experimentCollection in allExperimentCollections! {
-                experimentCollection.experiments?.sort(by: {($0.experiment.stateTitle ?? $0.experiment.localizedTitle) < ($1.experiment.stateTitle ?? $1.experiment.localizedTitle)})
+                experimentCollection.experiments.sort(by: { $0.experiment.localizedTitle < $1.experiment.localizedTitle})
             }
             
             let sensorCat = NSLocalizedString("categoryRawSensor", comment: "")
@@ -70,65 +75,85 @@ final class ExperimentManager {
         
         return allExperimentCollections!
     }
-    
-    
-    private static let instance = ExperimentManager() //static => lazy, let => synchronized
-    
+
+    private static let instance = ExperimentManager()
+
     class func sharedInstance() -> ExperimentManager {
         return instance
     }
     
     func deleteExperiment(_ experiment: Experiment) throws {
-        if let path = experiment.filePath {
-            try FileManager.default.removeItem(atPath: path)
-            loadCustomExperiments()
-        }
-        else {
-            throw FileError.genericError
-        }
+        guard let source = experiment.source else { return }
+        try FileManager.default.removeItem(at: source)
+        try loadCustomExperiments()
     }
-    
-    func loadCustomExperiments() {
+
+    func loadSavedExperiments() throws {
         var lookupTable: [String: ExperimentCollection] = [:]
-        
-        let customExperiments = try? FileManager.default.contentsOfDirectory(atPath: customExperimentsDirectory)
-        
+
+        guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: savedExperimentStatesURL.path) else {
+            return
+        }
+
         customExperimentCollections.removeAll()
         allExperimentCollections = nil
-        
-        if customExperiments != nil {
-            for custom in customExperiments! {
-                let path = (customExperimentsDirectory as NSString).appendingPathComponent(custom)
-                
-                if (path as NSString).pathExtension != fileExtension {
-                    continue
-                }
-                
-                do {
-                    let experiment = try ExperimentSerialization.readExperimentFromFile(path)
-                    experiment.filePath = path
-                    
-                    let category = experiment.localizedCategory
-                    
-                    if let collection = lookupTable[category] {
-                        collection.experiments!.append((experiment: experiment, custom: true))
-                    }
-                    else {
-                        let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: true)
-                        
-                        lookupTable[category] = collection
-                        customExperimentCollections.append(collection)
-                    }
-                }
-                catch let error {
-                    print("Error reading custom experiment: \(error)")
-                }
+
+        for file in experiments {
+            let url = savedExperimentStatesURL.appendingPathComponent(file)
+
+            guard url.pathExtension == experimentStateFileExtension else { continue }
+
+            let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+
+            let category = experiment.localizedCategory
+
+            if let collection = lookupTable[category] {
+                collection.experiments.append((experiment, true))
+            }
+            else {
+                let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: true)
+
+                lookupTable[category] = collection
+                customExperimentCollections.append(collection)
             }
         }
-        
+
         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
-    
+
+    func loadCustomExperiments() throws {
+        var lookupTable: [String: ExperimentCollection] = [:]
+
+        guard let customExperiments = try? FileManager.default.contentsOfDirectory(atPath: customExperimentsURL.path) else {
+            return
+        }
+
+        customExperimentCollections.removeAll()
+        allExperimentCollections = nil
+
+        for file in customExperiments {
+            let url = customExperimentsURL.appendingPathComponent(file)
+
+            guard url.pathExtension == fileExtension else { continue }
+
+            let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+
+            let category = experiment.localizedCategory
+
+            if let collection = lookupTable[category] {
+                collection.experiments.append((experiment, true))
+            }
+            else {
+                let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: true)
+
+                lookupTable[category] = collection
+                customExperimentCollections.append(collection)
+            }
+        }
+
+        NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+    }
+
     private func loadExperiments() {
         let folders = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseDirectory)
         
@@ -150,7 +175,7 @@ final class ExperimentManager {
                 let category = experiment.localizedCategory
                 
                 if let collection = lookupTable[category] {
-                    collection.experiments!.append((experiment: experiment, custom: false))
+                    collection.experiments.append((experiment: experiment, custom: false))
                 }
                 else {
                     let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: false)
@@ -169,7 +194,8 @@ final class ExperimentManager {
         let timestamp = CFAbsoluteTimeGetCurrent()
         
         loadExperiments()
-        loadCustomExperiments()
+        try? loadCustomExperiments()
+        try? loadSavedExperiments()
         
         #if DEBUG
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")

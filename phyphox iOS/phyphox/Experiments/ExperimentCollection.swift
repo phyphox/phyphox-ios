@@ -11,17 +11,10 @@ import Foundation
 
 final class ExperimentCollection {
     private(set) var title: String
-    var experiments: [(experiment: Experiment, custom: Bool)]?
+    var experiments: [(experiment: Experiment, custom: Bool)]
     
-    init(title: String, experiments: [Experiment]?, customExperiments: Bool) {
+    init(title: String, experiments: [Experiment], customExperiments: Bool) {
         self.title = title
-        self.experiments = []
-        if (experiments == nil) {
-            return
-        }
-        for experiment in experiments! {
-            self.experiments?.append((experiment: experiment, custom: customExperiments))
-        }
+        self.experiments = experiments.map { ($0, customExperiments) }
     }
-
 }

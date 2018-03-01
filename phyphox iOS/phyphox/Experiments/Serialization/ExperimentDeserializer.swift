@@ -37,17 +37,13 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     return nil
 }
 
-final class ExperimentDeserializer: NSObject {
+final class ExperimentDeserializer {
     private let parser: XMLParser
-    
-    init(data: Data) {
+    private let local: Bool
+
+    init(data: Data, local: Bool) {
+        self.local = local
         parser = XMLParser(data: data)
-        super.init()
-    }
-    
-    init(inputStream: InputStream) {
-        parser = XMLParser(stream: inputStream)
-        super.init()
     }
     
     func deserialize() throws -> Experiment {
@@ -85,9 +81,7 @@ final class ExperimentDeserializer: NSObject {
         let category: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         d = dictionary["title"]
         let title: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
-        d = dictionary["state-title"]
-        let stateTitle: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
-        
+
         var links: [String: String] = [:]
         var highlightedLinks: [String: String] = [:]
         if (dictionary["link"] != nil) {
@@ -131,19 +125,17 @@ final class ExperimentDeserializer: NSObject {
         let output = parseOutput(dictionary["output"] as! NSDictionary?, buffers: buffers)
         
         let iconRaw = dictionary["icon"]
-        let icon = parseIcon((iconRaw ?? title ?? "") as AnyObject)
-        guard icon != nil else {
+        guard let icon = parseIcon((iconRaw ?? title ?? "") as AnyObject) else {
             throw SerializationError.invalidExperimentFile(message: "Icon could not be parsed.")
         }
         
-        let anyTitle = title ?? translation?.selectedTranslation?.titleString
-        let anyCategory = category ?? translation?.selectedTranslation?.categoryString
-        
-        guard anyTitle != nil && anyCategory != nil else {
+        guard let anyTitle = title ?? translation?.selectedTranslation?.titleString,
+            let anyCategory = category ?? translation?.selectedTranslation?.categoryString
+            else {
             throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
         }
         
-        let experiment = Experiment(title: anyTitle!, stateTitle: stateTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }

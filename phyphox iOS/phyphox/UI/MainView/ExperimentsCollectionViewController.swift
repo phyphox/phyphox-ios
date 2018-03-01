@@ -161,7 +161,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return ExperimentManager.sharedInstance().experimentCollections[section].experiments!.count
+        return ExperimentManager.sharedInstance().experimentCollections[section].experiments.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -184,7 +184,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + " \(experiment.stateTitle ?? experiment.localizedTitle)", style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + experiment.localizedTitle, style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.sharedInstance().deleteExperiment(experiment)
             }
@@ -231,7 +231,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ExperimentCell", for: indexPath) as! ExperimentCell
         
         let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
-        let experiment = collection.experiments![indexPath.row]
+        let experiment = collection.experiments[indexPath.row]
         
         cell.experiment = experiment.experiment
         
@@ -271,7 +271,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     //MARK: - UICollectionViewDelegate
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
+        let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments[indexPath.row]
         
         if let sensors = experiment.experiment.sensorInputs {
             for sensor in sensors {

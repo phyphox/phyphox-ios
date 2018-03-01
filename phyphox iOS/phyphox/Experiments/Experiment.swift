@@ -19,13 +19,12 @@ struct ExperimentRequiredPermission : OptionSet {
     static let Location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
-final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
-    private var title: String
-    var stateTitle: String?
-    private var description: String?
-    private var links: [String: String]
-    private var highlightedLinks: [String: String]
-    private var category: String
+final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
+    let title: String
+    private let description: String?
+    private let links: [String: String]
+    private let highlightedLinks: [String: String]
+    private let category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
@@ -56,7 +55,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     }
     
     var localizedCategory: String {
-        if stateTitle != nil {
+        if source?.path.hasPrefix(savedExperimentStatesURL.path) == true {
             return NSLocalizedString("save_state_category", comment: "")
         }
         return translation?.selectedTranslation?.categoryString ?? category
@@ -64,12 +63,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     
     let icon: ExperimentIcon
     
-    var filePath: String?
-    
     var local: Bool
-    
-    var source: URL? = nil
-    var sourceData: Data? = nil
+    var source: URL?
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
@@ -93,9 +88,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     private(set) var startTimestamp: TimeInterval?
     private var pauseBegin: TimeInterval = 0.0
     
-    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
-        self.stateTitle = stateTitle
         self.description = description
         self.links = links
         self.highlightedLinks = highlightedLinks
@@ -333,6 +327,6 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
 
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
-        return lhs.stateTitle == rhs.stateTitle && lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+        return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
     }
 }

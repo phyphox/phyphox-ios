@@ -8,90 +8,103 @@
 
 import Foundation
 
-final class StateSerializer {
-    
-    enum stateError: Error {
-        case SourceError(String)
+protocol DataEncodable {
+    func encode() -> Data
+}
+
+protocol DataDecodable {
+    init(data: Data)
+}
+
+typealias DataCodable = DataEncodable & DataDecodable
+
+extension Double: DataCodable {
+    func encode() -> Data {
+        var littleEndianBitPattern = bitPattern.littleEndian
+        let size = MemoryLayout.size(ofValue: littleEndianBitPattern)
+
+        return Data(bytes: &littleEndianBitPattern, count: size)
     }
-    
-    class func writeStateFile(customTitle: String, target: String, experiment: Experiment, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) -> Void {
-        let str: String
-        do {
-            str = try serializeState(customTitle: customTitle, experiment: experiment)
-        } catch stateError.SourceError(let error) {
-            mainThread {
-                callback("State error: \(error).", nil)
-            }
-            return
-        } catch {
-            mainThread {
-                callback("Unknown error.", nil)
-            }
-            return
+
+    init(data: Data) {
+        let littleEndianBitPattern = UInt64(littleEndian: data.withUnsafeBytes { (pointer: UnsafePointer<UInt64>) -> UInt64 in
+            return pointer.pointee
+        })
+
+        self.init(bitPattern: littleEndianBitPattern)
+    }
+}
+
+extension Sequence where Iterator.Element: DataCodable {
+    func enumerateDataEncodedElements(using body: (_ data: Data) -> Void) {
+        forEach { body($0.encode()) }
+    }
+}
+
+extension DataBuffer {
+    func writeState(to url: URL) throws {
+        let atomicFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+
+        FileManager.default.createFile(atPath: atomicFile.path, contents: nil, attributes: nil)
+        let handle = try FileHandle(forWritingTo: atomicFile)
+
+        enumerateDataEncodedElements { data in
+            handle.write(data)
         }
 
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            autoreleasepool {
-                do { try FileManager.default.removeItem(atPath: target) } catch {}
-                
-                let fileURL = URL(fileURLWithPath: target)
-                
-                do {
-                    try str.write(toFile: target, atomically: true, encoding: String.Encoding.utf8)
-                } catch {
-                    mainThread {
-                        callback("Error: Could not write to file.", nil)
-                    }
-                    return
-                }
-                
-                mainThread {
-                    callback(nil, fileURL)
-                }
-            }
-        }
+        handle.closeFile()
+
+        try FileManager.default.moveItem(at: atomicFile, to: url)
     }
-    
-    class func serializeState(customTitle: String, experiment: Experiment) throws -> String {
-        let formatter = NumberFormatter()
-        formatter.maximumSignificantDigits = 10
-        formatter.minimumSignificantDigits = 1
-        formatter.decimalSeparator = "."
-        formatter.numberStyle = .scientific
-        
-        func format(_ n: Double) -> String {
-            return formatter.string(from: NSNumber(value: n as Double))!
+
+    func readState(from url: URL) throws {
+        guard let stream = InputStream(url: url) else {
+            throw FileError.genericError
         }
-        
-        let sourceStr = String(data: experiment.sourceData!, encoding: String.Encoding.utf8)
-        let dataContainersBlockStart = sourceStr?.range(of: "<data-containers>", options: .caseInsensitive)
-        let dataContainersBlockStop = sourceStr?.range(of: "</data-containers>", options: .caseInsensitive)
-        if dataContainersBlockStop == nil || dataContainersBlockStart == nil {
-            throw stateError.SourceError("No valid data containers block found.")
+
+        let bitPatternSize = MemoryLayout<UInt64>.size
+
+        var values = [Double]()
+        var data = Data(capacity: bitPatternSize)
+
+        stream.open()
+
+        while data.withUnsafeMutableBytes({ stream.read($0, maxLength: bitPatternSize) }) == bitPatternSize {
+            let value = Double(data: data)
+            values.append(value)
         }
-        let endLocation = String(sourceStr![dataContainersBlockStop!.lowerBound...]).range(of: "</phyphox>", options: .caseInsensitive)
-        if dataContainersBlockStop == nil || dataContainersBlockStart == nil || endLocation == nil {
-            throw stateError.SourceError("No valid data containers block found.")
+
+        stream.close()
+
+        replaceValues(values)
+    }
+}
+
+extension Experiment {
+    func saveState(to url: URL, with title: String) throws -> URL {
+        let stateFolderURL = url.appendingPathComponent(title).appendingPathExtension(experimentStateFileExtension)
+
+        let fileManager = FileManager.default
+
+        guard !fileManager.fileExists(atPath: stateFolderURL.path) else {
+            throw FileError.genericError
         }
-        
-        var newBlock = ""
-        for buffer in experiment.buffers.1! {
-            newBlock += "<container "
-            newBlock += "size=\"\(buffer.size)\" "
-            newBlock += "static=\"\(buffer.staticBuffer ? "true" : "false")\" "
-            newBlock += "init=\""
-            for (i, v) in buffer.toArray().enumerated() {
-                if i > 0 {
-                    newBlock += ","
-                }
-                newBlock += format(v)
-            }
-            newBlock += "\" "
-            newBlock += ">"
-            newBlock += buffer.name
-            newBlock += "</container>\n"
+
+        try fileManager.createDirectory(at: stateFolderURL, withIntermediateDirectories: false, attributes: nil)
+
+        let experimentURL = stateFolderURL.appendingPathComponent("Experiment.phyphox")
+
+        guard let source = source else {
+            throw FileError.genericError
         }
-        let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
-        return sourceStr![..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr![dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + "</phyphox>"
+
+        try fileManager.copyItem(at: source, to: experimentURL)
+
+        try buffers.0?.forEach { name, buffer in
+            let bufferURL = stateFolderURL.appendingPathComponent(name).appendingPathExtension("buffer")
+            try buffer.writeState(to: bufferURL)
+        }
+
+        return stateFolderURL
     }
 }
