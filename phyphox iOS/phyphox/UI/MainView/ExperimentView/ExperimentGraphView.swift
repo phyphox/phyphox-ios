@@ -418,10 +418,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 var xValues: [Double]
                 
                 let yValues = self.descriptor.yInputBuffer.toArray()
-                let yCount = Swift.min(yValues.count, self.descriptor.yInputBuffer.actualCount)
-                
-                var trashedCount = self.descriptor.yInputBuffer.trashedCount
-                
+                let yCount = Swift.min(yValues.count, self.descriptor.yInputBuffer.size)
+
                 var count = yCount
                 
                 if count <= 1 {
@@ -433,11 +431,9 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 
                 if let xBuf = self.descriptor.xInputBuffer {
                     xValues = xBuf.toArray()
-                    let xCount = Swift.min(xValues.count, xBuf.actualCount)
+                    let xCount = Swift.min(xValues.count, xBuf.size)
                     
                     count = Swift.min(xCount, count)
-                    
-                    trashedCount = Swift.min(xBuf.trashedCount, trashedCount)
                 }
                 else {
                     var xC = 0

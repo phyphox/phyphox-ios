@@ -34,4 +34,43 @@ final class BufferTests: XCTestCase {
 
         NotificationCenter.default.removeObserver(observer)
     }
+
+    func testConcurrency() {
+        let numberOfIterations = 200_000
+
+        let buffer = DataBuffer(name: UUID().uuidString, size: numberOfIterations)
+
+        let addingExpectation = expectation(description: "Adding Completed")
+
+        let addingQueue = DispatchQueue(label: "adding", attributes: [])
+        
+        addingQueue.async {
+            for i in 0..<numberOfIterations {
+                buffer.append(Double(i))
+            }
+            addingExpectation.fulfill()
+        }
+
+        let deletingExpectation = expectation(description: "Deleting Completed")
+        let deletingQueue = DispatchQueue(label: "deleting", attributes: [])
+
+        deletingQueue.async {
+            var i = 0
+            while i < numberOfIterations {
+                if buffer.count > 0 {
+                    XCTAssertEqual(Double(i), buffer.first!)
+                    buffer.removeFirst(1)
+                    i += 1
+                }
+                else {
+                    print("Pausing deletion for 1us")
+                    usleep(1)
+                }
+            }
+
+            deletingExpectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 600, handler: nil)
+    }
 }

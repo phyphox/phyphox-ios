@@ -65,15 +65,15 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
         
         if (end < 0) {
             for arrayIn in arrayIns {
-                if end < arrayIn.buffer!.actualCount {
-                    end = arrayIn.buffer!.actualCount
+                if end < arrayIn.buffer!.count {
+                    end = arrayIn.buffer!.count
                 }
             }
         }
         
         for (i, arrayIn) in arrayIns.enumerated() {
             if (outputs.count > i) && outputs[i].buffer != nil {
-                let thisEnd = min(end, arrayIn.buffer!.actualCount)
+                let thisEnd = min(end, arrayIn.buffer!.count)
                 if (thisEnd < start) {
                     if outputs[i].clear {
                         outputs[i].buffer!.clear()

@@ -21,8 +21,10 @@ final class DataBuffer {
     let name: String
     var size: Int {
         didSet {
-            if actualCount > size {
-                removeFirst(actualCount - size)
+            sync {
+                if size > 0 && queue.count > size {
+                    removeFirst(queue.count - size)
+                }
             }
         }
     }
@@ -67,37 +69,26 @@ final class DataBuffer {
     private func bufferMutated() {
         stateToken = nil
     }
-    
-    var trashedCount: Int = 0
-    
+
     var staticBuffer: Bool = false
     var written: Bool = false
     
     var count: Int {
-        get {
-            if size > 0 {
-                return Swift.min(queue.count, size)
-            } else {
-                return queue.count
-            }
-        }
-    }
-    
-    var actualCount: Int {
-        get {
+        if size > 0 {
+            return Swift.min(queue.count, size)
+        } else {
             return queue.count
         }
     }
-    
-    private let queue: Queue<Double>
+
+    private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
+    private var queue: Queue<Double>
     
     init(name: String, size: Int) {
         self.name = name
         self.size = size
         queue = Queue<Double>(capacity: size)
     }
-    
-
     
     func sendUpdateNotification(_ noData: Bool = false) {
         for observer in observers {
@@ -114,20 +105,28 @@ final class DataBuffer {
             }
         }
     }
-    
 
-    func objectAtIndex(_ index: Int, async: Bool = false) -> Double? {
-        return queue.objectAtIndex(index, async: async)
+    func sync<T>(body: () throws -> T) rethrows -> T {
+        return try queueLock.sync(execute: body)
+    }
+
+    func objectAtIndex(_ index: Int) -> Double? {
+        return sync {
+            return queue.objectAtIndex(index)
+        }
     }
 
     func removeFirst(_ n: Int) {
-        queue.removeFirst(n)
+        sync {
+            queue.removeFirst(n)
+        }
     }
     
     func clear(_ notify: Bool = true, noData: Bool = true) {
-        queue.clear()
-        trashedCount = 0
-        written = false
+        sync {
+            queue.clear()
+            written = false
+        }
         
         bufferMutated()
         
@@ -138,17 +137,18 @@ final class DataBuffer {
     
     func replaceValues(_ values: [Double], notify: Bool = true) {
         if !staticBuffer || !written {
-            written = true
-            trashedCount = 0
-            
-            var vals = values
-            
-            if vals.count > size && size > 0 {
-                vals = Array(vals[vals.count-size..<vals.count])
+            var cutValues = values
+
+            sync {
+                written = true
+
+                if cutValues.count > size && size > 0 {
+                    cutValues = Array(cutValues[cutValues.count-size..<cutValues.count])
+                }
+
+                queue.replaceValues(cutValues)
             }
-            
-            queue.replaceValues(vals)
-            
+
             bufferMutated()
             
             if notify {
@@ -157,32 +157,18 @@ final class DataBuffer {
         }
     }
     
-    func append(_ value: Double?, async: Bool = false, notify: Bool = true) {
-        if !staticBuffer || !written {
-            if (value == nil) {
-                return
-            }
-            
-            written = true
-            
-            let operations = {
-                self.queue.enqueue(value!, async: true)
-                
-                if (self.actualCount > self.size && self.size > 0) {
-                    _ = self.queue.dequeue(true)
-                    self.trashedCount += 1
+    func append(_ value: Double?, notify: Bool = true) {
+        if (!staticBuffer || !written), let value = value {
+            sync {
+                written = true
+
+                self.queue.enqueue(value)
+
+                if size > 0 && queue.count > size {
+                    _ = queue.dequeue()
                 }
             }
-            
-            if async {
-                operations()
-            }
-            else {
-                queue.sync {
-                    autoreleasepool(invoking: operations)
-                }
-            }
-            
+
             bufferMutated()
             
             if notify {
@@ -192,34 +178,29 @@ final class DataBuffer {
     }
     
     func appendFromArray(_ values: [Double], notify: Bool = true) {
-        if values.count == 0 {
-            return
-        }
+        guard !values.isEmpty else { return }
         
         if !staticBuffer || !written {
-            written = true
-            
-            queue.sync {
+            sync {
+                written = true
+
                 autoreleasepool {
-                    var array = self.queue.toArray()
-                    
-                    let afterSize = array.count+values.count
-                    
-                    let cut = afterSize-self.size
-                    
-                    let cutAfter = cut > array.count
-                    
-                    if !cutAfter && cut > 0 && self.size > 0  {
-                        array.removeFirst(cut)
+                    let sizeAfterAppend = count + values.count
+
+                    let cutSize = sizeAfterAppend - size
+                    let shouldCut = size > 0 && cutSize > 0
+
+                    let cutAfterAppend = cutSize > count
+
+                    if shouldCut && !cutAfterAppend {
+                        queue.removeFirst(cutSize)
                     }
-                    
-                    array.append(contentsOf: values)
-                    
-                    if cutAfter && cut > 0 && self.size > 0 {
-                        array.removeFirst(cut)
+
+                    queue.enqueue(values)
+
+                    if shouldCut && cutAfterAppend {
+                        queue.removeFirst(cutSize)
                     }
-                    
-                    self.queue.replaceValues(array, async: true)
                 }
             }
             
@@ -242,21 +223,15 @@ extension DataBuffer: Sequence {
     }
 
     var last: Double? {
-        get {
-            return queue.last
-        }
+        return sync { queue.last }
     }
 
     var first: Double? {
-        get {
-            return queue.first
-        }
+        return sync { queue.first }
     }
-    
+
     subscript(index: Int) -> Double {
-        get {
-            return queue[index]
-        }
+        return sync { queue[index] }
     }
 }
 

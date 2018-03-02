@@ -10,12 +10,12 @@ import XCTest
 
 final class QueueTests: XCTestCase {
     func testAdd1ToQueue() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		sut.enqueue("1")
     }
 
 	func testAddSeveralToQueue() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		XCTAssert(sut.isEmpty)
 		sut.enqueue("1")
 		sut.enqueue("1")
@@ -26,7 +26,7 @@ final class QueueTests: XCTestCase {
 	}
 	
 	func testRemoveOne() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		sut.enqueue("1")
 		sut.enqueue("")
 		sut.enqueue("")
@@ -38,7 +38,7 @@ final class QueueTests: XCTestCase {
 	}
 	
 	func testRemoveAll() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		sut.enqueue("1")
 		sut.enqueue("2")
 		sut.enqueue("3")
@@ -55,7 +55,7 @@ final class QueueTests: XCTestCase {
 	}
 	
 	func testGenerics() {
-		let sut = Queue<Int>()
+		var sut = Queue<Int>()
 		sut.enqueue(1)
 		sut.enqueue(2)
 		sut.enqueue(3)
@@ -68,7 +68,7 @@ final class QueueTests: XCTestCase {
 	}
     
     func testEnumeration() {
-        let q = Queue<Int>()
+        var q = Queue<Int>()
         
         for i in 0...100 {
             q.enqueue(i)
@@ -92,7 +92,7 @@ final class QueueTests: XCTestCase {
     }
     
     func testFirstLast() {
-        let q = Queue<Int64>()
+        var q = Queue<Int64>()
         
         q.enqueue(Int64.max)
         q.enqueue(0)
@@ -117,7 +117,7 @@ final class QueueTests: XCTestCase {
     }
     
     func testRepeatedUse() {
-        let q = Queue<Int>()
+        var q = Queue<Int>()
         
         for i in 0...100 {
             q.enqueue(i)
@@ -136,7 +136,7 @@ final class QueueTests: XCTestCase {
     }
 	
 	func testAddNil() {
-		let sut = Queue<Int?>()
+		var sut = Queue<Int?>()
         XCTAssert(sut.dequeue() == nil)
 		sut.enqueue(nil)
         XCTAssert(sut.dequeue()! == nil)
@@ -153,7 +153,7 @@ final class QueueTests: XCTestCase {
 	}
 
 	func testAddAfterEmpty() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		
 		sut.enqueue("1")
 		XCTAssertEqual(sut.dequeue()!, "1")
@@ -168,7 +168,7 @@ final class QueueTests: XCTestCase {
 	}
 	
 	func testAddAndRemoveChaotically() {
-		let sut = Queue<String>()
+		var sut = Queue<String>()
 		
 		sut.enqueue("1")
 		XCTAssertFalse(sut.isEmpty)
@@ -195,36 +195,4 @@ final class QueueTests: XCTestCase {
 		XCTAssertNil(sut.dequeue())
 		XCTAssertNil(sut.dequeue())
 	}
-
-	func testConcurrency() {
-        let sut = Queue<Int>()
-		let numberofiterations = 2_000_00
-
-		let addingexpectation = expectation(description: "adding completed")
-		let addingqueue = DispatchQueue( label: "adding", attributes: [])
-		addingqueue.async  {
-			for i in 1...numberofiterations {
-				sut.enqueue(i)
-			}
-			addingexpectation.fulfill()
-		}
-		
-		let deletingexpectation = expectation(description: "deleting completed")
-		let deletingqueue = DispatchQueue( label: "deleting", attributes: [])
-		deletingqueue.async  {
-            var i = 1
-            while i <= numberofiterations {
-                if let result = sut.dequeue() {
-                    XCTAssertEqual(result, i)
-                    i += 1
-                } else {
-                    print(" pausing deleting for 1mus")
-                    usleep(1000)
-                }
-            }
-			deletingexpectation.fulfill()
-		}
-		
-		waitForExpectations( timeout: 600, handler:  nil)
-	} 
 }

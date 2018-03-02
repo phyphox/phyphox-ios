@@ -8,30 +8,19 @@
 
 import Foundation
 
-/**
- Thread safe Queue (FIFO).
- */
-final class Queue<Element> {
-    private let lockQueue = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
-    
+struct Queue<Element> {
     private var array: [Element]
     
     var count: Int {
-        get {
-            return array.count
-        }
+        return array.count
     }
     
     var capacity: Int {
-        get {
-            return array.capacity
-        }
+        return array.capacity
     }
     
     var isEmpty: Bool {
-        get {
-            return array.isEmpty
-        }
+        return array.isEmpty
     }
     
     init(capacity: Int = 0) {
@@ -48,120 +37,59 @@ final class Queue<Element> {
     func toArray() -> [Element] {
         return array
     }
-    
-    func sync(_ closure: (() -> Void)) {
-        lockQueue.sync(execute: closure)
-    }
-    
+
     var first: Element? {
-        get {
-            return array.first
-        }
+        return array.first
     }
-    
+
     var last: Element? {
-        get {
-            return array.last
-        }
+        return array.last
     }
-    
-    func objectAtIndex(_ index: Int, async: Bool = false) -> Element? {
+
+    func objectAtIndex(_ index: Int) -> Element? {
         var element: Element? = nil
         
-        let op = {
-            autoreleasepool{
-                if index < self.array.count {
-                    element = self.array[index]
-                }
-            }
-        }
-        
-        if async {
-            op()
-        }
-        else {
-            sync(op)
+        if index < self.array.count {
+            element = self.array[index]
         }
         
         return element
     }
 }
 
-//MARK - Mutating
+//MARK - Mutation
 
 extension Queue {
-    func enqueue(_ value: Element, async: Bool = false) {
-        let op = {
-            self.array.append(value)
-        }
-        
-        if async {
-            op()
-        }
-        else {
-            sync(op)
-        }
+    mutating func enqueue(_ value: Element) {
+        array.append(value)
     }
 
-    func removeFirst(_ n: Int, async: Bool = false) {
-        let op = {
-            autoreleasepool {
-                if self.array.count > 0 {
-                    self.array.removeFirst(n)
-                }
-            }
+    mutating func enqueue(_ values: [Element]) {
+        array.append(contentsOf: values)
+    }
+
+    mutating func removeFirst(_ n: Int) {
+        array.removeFirst(Swift.min(n, count))
+    }
+    
+    mutating func dequeue() -> Element? {
+        if self.array.count > 0 {
+            return array.removeFirst()
         }
 
-        if async {
-            op()
-        }
-        else {
-            sync(op)
-        }
+        return nil
     }
     
-    func dequeue(_ async: Bool = false) -> Element? {
-        var element: Element? = nil
-        
-        let op = {
-            autoreleasepool{
-                if self.array.count > 0 {
-                    element = self.array.removeFirst()
-                }
-            }
-        }
-        
-        if async {
-            op()
-        }
-        else {
-            sync(op)
-        }
-        
-        return element
+    mutating func clear() {
+        array.removeAll()
     }
     
-    func clear() {
-        sync { () -> Void in
-            self.array.removeAll()
-        }
-    }
-    
-    func replaceValues(_ values: [Element], async: Bool = false) {
-        let op = {
-            self.array = values
-        }
-        
-        if async {
-            op()
-        }
-        else {
-            sync(op)
-        }
+    mutating func replaceValues(_ values: [Element]) {
+        array = values
     }
 }
 
-//MARK - Protocols
+//MARK - Protocol Conformance
 
 extension Queue: Sequence {
     typealias Iterator = IndexingIterator<[Element]>
@@ -172,11 +100,10 @@ extension Queue: Sequence {
 }
 
 extension Queue: Collection {
-
     typealias Index = Int
     
     func index(after i: Int) -> Int {
-        return i+1
+        return i + 1
     }
     
     var startIndex: Int {
@@ -188,15 +115,12 @@ extension Queue: Collection {
     }
     
     subscript(i: Int) -> Element {
-        var value: Element!
-        
-        sync {
-            autoreleasepool {
-                value = self.array[i]
-            }
-        }
-        
-        return value
+        return array[i]
     }
-    
+}
+
+extension Queue: CustomStringConvertible {
+    var description: String {
+        return array.description
+    }
 }
