@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import Dispatch
 
 protocol DataBufferObserver : AnyObject {
     func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
@@ -21,7 +22,7 @@ final class DataBuffer {
     let name: String
     var size: Int {
         didSet {
-            sync {
+            syncWrite {
                 if size > 0 && queue.count > size {
                     removeFirst(queue.count - size)
                 }
@@ -81,7 +82,8 @@ final class DataBuffer {
         }
     }
 
-    private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", attributes: [])
+    private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
+
     private var queue: Queue<Double>
     
     init(name: String, size: Int) {
@@ -106,24 +108,28 @@ final class DataBuffer {
         }
     }
 
-    func sync<T>(body: () throws -> T) rethrows -> T {
+    func syncWrite(_ body: () throws -> Void) rethrows {
+        try queueLock.sync(flags: .barrier, execute: body)
+    }
+
+    func syncRead<T>(_ body: () throws -> T) rethrows -> T {
         return try queueLock.sync(execute: body)
     }
 
     func objectAtIndex(_ index: Int) -> Double? {
-        return sync {
+        return syncRead {
             return queue.objectAtIndex(index)
         }
     }
 
     func removeFirst(_ n: Int) {
-        sync {
+        syncWrite {
             queue.removeFirst(n)
         }
     }
     
     func clear(_ notify: Bool = true, noData: Bool = true) {
-        sync {
+        syncWrite {
             queue.clear()
             written = false
         }
@@ -139,7 +145,7 @@ final class DataBuffer {
         if !staticBuffer || !written {
             var cutValues = values
 
-            sync {
+            syncWrite {
                 written = true
 
                 if cutValues.count > size && size > 0 {
@@ -159,7 +165,7 @@ final class DataBuffer {
     
     func append(_ value: Double?, notify: Bool = true) {
         if (!staticBuffer || !written), let value = value {
-            sync {
+            syncWrite {
                 written = true
 
                 self.queue.enqueue(value)
@@ -181,7 +187,7 @@ final class DataBuffer {
         guard !values.isEmpty else { return }
         
         if !staticBuffer || !written {
-            sync {
+            syncWrite {
                 written = true
 
                 autoreleasepool {
@@ -213,7 +219,7 @@ final class DataBuffer {
     }
 
     func toArray() -> [Double] {
-        return queue.toArray()
+        return syncRead { return queue.toArray() }
     }
 }
 
@@ -223,15 +229,15 @@ extension DataBuffer: Sequence {
     }
 
     var last: Double? {
-        return sync { queue.last }
+        return syncRead { queue.last }
     }
 
     var first: Double? {
-        return sync { queue.first }
+        return syncRead { queue.first }
     }
 
     subscript(index: Int) -> Double {
-        return sync { queue[index] }
+        return syncRead { queue[index] }
     }
 }
 

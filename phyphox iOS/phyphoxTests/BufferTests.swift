@@ -43,13 +43,16 @@ final class BufferTests: XCTestCase {
         let addingExpectation = expectation(description: "Adding Completed")
 
         let addingQueue = DispatchQueue(label: "adding", attributes: [])
-        
+
         addingQueue.async {
             for i in 0..<numberOfIterations {
                 buffer.append(Double(i))
             }
+
             addingExpectation.fulfill()
         }
+
+        var deletingDone = false
 
         let deletingExpectation = expectation(description: "Deleting Completed")
         let deletingQueue = DispatchQueue(label: "deleting", attributes: [])
@@ -68,7 +71,29 @@ final class BufferTests: XCTestCase {
                 }
             }
 
+            deletingDone = true
             deletingExpectation.fulfill()
+        }
+
+        let readingQueue = DispatchQueue(label: "reading", attributes: [])
+        let readingExpectation = expectation(description: "Reading Completed")
+
+        readingQueue.async {
+            while !deletingDone {
+                let array = buffer.toArray()
+
+                guard !array.isEmpty else { continue }
+
+                for i in 0..<array.count - 1 {
+                    if array[i] + 1 != array[i + 1] {
+                        readingExpectation.isInverted = true
+                        readingExpectation.fulfill()
+                        return
+                    }
+                }
+            }
+
+            readingExpectation.fulfill()
         }
 
         waitForExpectations(timeout: 600, handler: nil)
