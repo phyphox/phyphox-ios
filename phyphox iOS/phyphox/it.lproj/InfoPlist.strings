@@ -1,2 +1,4 @@
-"NSMicrophoneUsageDescription" = "phyphox registra l’audio dal microfono come se fosse un sensore e lo analizza secondo l’esperimento selezionato. I dati vengono esportati solo se l’utente selezione la funzione Esporta.";
-
+"NSMicrophoneUsageDescription" = "phyphox registra l’audio dal microfono come se fosse un sensore e lo analizza secondo l’esperimento selezionato. I dati vengono esportati solo se l’utente seleziona la funzione \"Esporta\".";
+"NSLocationWhenInUseUsageDescription" = "phyphox registra i dati relativi alla posizione dal GPS come da altri sensori e li analizza secondo l'esperimento selezionato. I data verranno esportati dalla app solo se l'utente seleziona la funzione \"Esporta\".";
+"NSPhotoLibraryAddUsageDescription" = "phyphox può aggiungere screenshots alla tua galleria fotografica selezionando \"Condividi screenshot\" nel menu dell'esperimento.";
+"NSMotionUsageDescription" = "phyphox legge i sensori del tuo telefono per poterli utilizzare in esperimenti di fisica.";
