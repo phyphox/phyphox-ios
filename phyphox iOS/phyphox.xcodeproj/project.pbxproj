@@ -160,6 +160,7 @@
 		6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B11CB3C0DE00DCC1ED /* PTButton.m */; };
 		6BE320B41CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
+		6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE37C02049ABC800301CA3 /* BufferTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -512,6 +513,7 @@
 		6BE320B11CB3C0DE00DCC1ED /* PTButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTButton.m; sourceTree = "<group>"; };
 		6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShrinkingAnimaitonViewController.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		6BFE37C02049ABC800301CA3 /* BufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -654,6 +656,7 @@
 			isa = PBXGroup;
 			children = (
 				6B7BF8241C1645A6007408FB /* QueueTests.swift */,
+				6BFE37C02049ABC800301CA3 /* BufferTests.swift */,
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
@@ -1477,6 +1480,7 @@
 			files = (
 				6B0815481CAD329900EE2791 /* Constants.m in Sources */,
 				6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */,
+				6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */,
 				6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */,
 				6B0815471CAD329900EE2791 /* Constants.swift in Sources */,
 			);

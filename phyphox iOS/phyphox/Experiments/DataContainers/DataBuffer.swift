@@ -17,12 +17,12 @@ protocol DataBufferObserver : AnyObject {
 /**
  Data buffer used for raw or processed data from sensors.
  */
-final class DataBuffer: Sequence, CustomStringConvertible {
+final class DataBuffer {
     let name: String
     var size: Int {
         didSet {
-            while count > size && size > 0 {
-                _ = queue.dequeue()
+            if actualCount > size {
+                removeFirst(actualCount - size)
             }
         }
     }
@@ -97,21 +97,7 @@ final class DataBuffer: Sequence, CustomStringConvertible {
         queue = Queue<Double>(capacity: size)
     }
     
-    func makeIterator() -> IndexingIterator<[Double]> {
-        return queue.makeIterator()
-    }
-    
-    var last: Double? {
-        get {
-            return queue.last
-        }
-    }
-    
-    var first: Double? {
-        get {
-            return queue.first
-        }
-    }
+
     
     func sendUpdateNotification(_ noData: Bool = false) {
         for observer in observers {
@@ -129,14 +115,13 @@ final class DataBuffer: Sequence, CustomStringConvertible {
         }
     }
     
-    subscript(index: Int) -> Double {
-        get {
-            return queue[index]
-        }
-    }
-    
+
     func objectAtIndex(_ index: Int, async: Bool = false) -> Double? {
         return queue.objectAtIndex(index, async: async)
+    }
+
+    func removeFirst(_ n: Int) {
+        queue.removeFirst(n)
     }
     
     func clear(_ notify: Bool = true, noData: Bool = true) {
@@ -249,7 +234,47 @@ final class DataBuffer: Sequence, CustomStringConvertible {
     func toArray() -> [Double] {
         return queue.toArray()
     }
+}
 
+extension DataBuffer: Sequence {
+    func makeIterator() -> IndexingIterator<[Double]> {
+        return queue.makeIterator()
+    }
+
+    var last: Double? {
+        get {
+            return queue.last
+        }
+    }
+
+    var first: Double? {
+        get {
+            return queue.first
+        }
+    }
+    
+    subscript(index: Int) -> Double {
+        get {
+            return queue[index]
+        }
+    }
+}
+
+extension DataBuffer: Collection {
+    func index(after i: Int) -> Int {
+        return i + 1
+    }
+
+    var startIndex: Int {
+        return 0
+    }
+
+    var endIndex: Int {
+        return count
+    }
+}
+
+extension DataBuffer: CustomStringConvertible {
     var description: String {
         get {
             return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(queue.toArray())>"

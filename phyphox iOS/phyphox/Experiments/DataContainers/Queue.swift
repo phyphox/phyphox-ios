@@ -68,7 +68,7 @@ final class Queue<Element> {
     func objectAtIndex(_ index: Int, async: Bool = false) -> Element? {
         var element: Element? = nil
         
-        let op = { [unowned self] in
+        let op = {
             autoreleasepool{
                 if index < self.array.count {
                     element = self.array[index]
@@ -102,11 +102,28 @@ extension Queue {
             sync(op)
         }
     }
+
+    func removeFirst(_ n: Int, async: Bool = false) {
+        let op = {
+            autoreleasepool {
+                if self.array.count > 0 {
+                    self.array.removeFirst(n)
+                }
+            }
+        }
+
+        if async {
+            op()
+        }
+        else {
+            sync(op)
+        }
+    }
     
     func dequeue(_ async: Bool = false) -> Element? {
         var element: Element? = nil
         
-        let op = { [unowned self] in
+        let op = {
             autoreleasepool{
                 if self.array.count > 0 {
                     element = self.array.removeFirst()
@@ -131,7 +148,7 @@ extension Queue {
     }
     
     func replaceValues(_ values: [Element], async: Bool = false) {
-        let op = { [unowned self] in
+        let op = {
             self.array = values
         }
         
@@ -173,8 +190,8 @@ extension Queue: Collection {
     subscript(i: Int) -> Element {
         var value: Element!
         
-        sync { [unowned self] in
-            autoreleasepool{
+        sync {
+            autoreleasepool {
                 value = self.array[i]
             }
         }

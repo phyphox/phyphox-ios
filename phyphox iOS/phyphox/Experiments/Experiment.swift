@@ -23,6 +23,64 @@ protocol ExperimentDelegate: class {
     func experimentWillBecomeActive(_ experiment: Experiment)
 }
 
+extension Collection {
+    func enumerateSlices(size: IndexDistance, until: Index, body: (SubSequence) throws -> Void) rethrows {
+        var currentIndex = startIndex
+        var nextIndex: Index
+
+        repeat {
+            nextIndex = Swift.min(index(currentIndex, offsetBy: size), endIndex)
+
+            try body(self[currentIndex..<nextIndex])
+
+            currentIndex = nextIndex
+        }
+        while nextIndex < endIndex
+    }
+}
+
+extension DataBuffer {
+    func flush(to url: URL) throws {
+        let flushCount = count/2
+
+        let fileURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
+
+        if !FileManager.default.fileExists(atPath: fileURL.path) {
+            FileManager.default.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
+        }
+
+        let littleEndianValues = self[0..<flushCount].map({ $0.bitPattern.littleEndian })
+
+        let pointer = UnsafePointer(littleEndianValues)
+        let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
+
+        let data = Data(buffer: buffer)
+
+        try data.write(to: fileURL)
+
+//        let handle = try FileHandle(forWritingTo: fileURL)
+//        handle.seekToEndOfFile()
+//
+//        var i = 0
+//        enumerateSlices(size: 100000, until: flushCount) { values in
+//            i += values.count
+//            print("write \(100 * Double(i)/Double(flushCount))%")
+//            let littleEndianValues = values.map({ $0.bitPattern.littleEndian })
+//
+//            let pointer = UnsafePointer(littleEndianValues)
+//            let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
+//
+//            let data = Data(buffer: buffer)
+//
+//            handle.write(data)
+//        }
+//
+//        handle.closeFile()
+
+        removeFirst(flushCount)
+    }
+}
+
 final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
     let title: String
     private let description: String?
@@ -93,7 +151,9 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     
     private(set) var startTimestamp: TimeInterval?
     private var pauseBegin: TimeInterval = 0.0
-    
+
+    private var bufferStorageURL: URL?
+
     init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.description = description
@@ -132,9 +192,33 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         self.analysis?.delegate = self
         self.analysis?.timeManager = self
+
+        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveMemoryWarning), name: .UIApplicationDidReceiveMemoryWarning, object: nil)
+    }
+
+    private func createBufferStorage() -> URL {
+        let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
+
+        let storageURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
+
+        try? FileManager.default.createDirectory(at: storageURL, withIntermediateDirectories: false, attributes: nil)
+
+        return storageURL
+    }
+
+    @objc private func didReceiveMemoryWarning() {
+        let outputBuffers = self.outpututBuffers
+
+        guard outpututBuffers.count > 0 else { return }
+
+        let bufferStorage = bufferStorageURL ?? createBufferStorage()
+
+        outpututBuffers.forEach { buffer in
+            try? buffer.flush(to: bufferStorage)
+        }
     }
     
-    @objc dynamic func endBackgroundSession() {
+    @objc func endBackgroundSession() {
         stop()
     }
     
@@ -336,5 +420,13 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
         return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+    }
+}
+
+extension Experiment {
+    var outpututBuffers: [DataBuffer] {
+        guard let inputBufferNames = analysis?.analyses.flatMap({ $0.inputs.flatMap { $0.buffer?.name } }) else { return buffers.1 ?? [] }
+
+        return buffers.1?.filter { !inputBufferNames.contains($0.name) } ?? []
     }
 }
