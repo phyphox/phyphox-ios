@@ -549,7 +549,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
                 try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
 
-                try ExperimentManager.sharedInstance().loadSavedExperiments()
+                try ExperimentManager.shared.loadSavedExperiments()
             } catch {
                 return
             }
@@ -783,7 +783,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         try FileManager.default.copyItem(at: source, to: experimentURL)
         self.experiment.source = experimentURL
 
-        try! ExperimentManager.sharedInstance().loadCustomExperiments()
+        try! ExperimentManager.shared.loadCustomExperiments()
         
         let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
         

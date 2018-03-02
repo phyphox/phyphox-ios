@@ -24,11 +24,11 @@ final class ExperimentAudioOutput {
     }
     
     func play() {
-        ExperimentManager.sharedInstance().audioEngine.play()
+        ExperimentManager.shared.audioEngine.play()
     }
     
     func stop() {
-        ExperimentManager.sharedInstance().audioEngine.stop()
+        ExperimentManager.shared.audioEngine.stop()
     }
     
 }

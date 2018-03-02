@@ -19,6 +19,10 @@ struct ExperimentRequiredPermission : OptionSet {
     static let Location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
+protocol ExperimentDelegate: class {
+    func experimentWillBecomeActive(_ experiment: Experiment)
+}
+
 final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
     let title: String
     private let description: String?
@@ -60,7 +64,9 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         }
         return translation?.selectedTranslation?.categoryString ?? category
     }
-    
+
+    weak var delegate: ExperimentDelegate?
+
     let icon: ExperimentIcon
     
     var local: Bool
@@ -160,13 +166,15 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         if self.requiredPermissions != .None {
             checkAndAskForPermissions(dismiss, locationManager: self.gpsInput?.locationManager)
         }
+
+        delegate?.experimentWillBecomeActive(self)
     }
     
     /**
      Called when the experiment view controller did dismiss.
      */
     func didBecomeInactive() {
-        self.clear()
+        clear()
     }
     
     func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
@@ -225,12 +233,12 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     private func startAudio() throws {
-        try ExperimentManager.sharedInstance().audioEngine.startEngine(playback: self.output?.audioOutput, record: self.audioInput)
+        try ExperimentManager.shared.audioEngine.startEngine(playback: self.output?.audioOutput, record: self.audioInput)
         self.output?.audioOutput?.play()
     }
     
     private func stopAudio() {
-        ExperimentManager.sharedInstance().audioEngine.stopEngine()
+        ExperimentManager.shared.audioEngine.stopEngine()
     }
     
     func start() throws {

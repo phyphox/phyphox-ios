@@ -34,7 +34,7 @@ final class SimpleExperimentSerializer {
         
         try str.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
 
-        try! ExperimentManager.sharedInstance().loadCustomExperiments()
+        try! ExperimentManager.shared.loadCustomExperiments()
         
         return str
     }

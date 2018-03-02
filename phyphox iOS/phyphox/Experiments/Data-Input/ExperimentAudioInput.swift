@@ -25,7 +25,7 @@ final class ExperimentAudioInput {
     }
     
     func receiveData() {
-        ExperimentManager.sharedInstance().audioEngine.receiveRecording(out: outBuffer, sampleRateInfo: sampleRateInfoBuffer)
+        ExperimentManager.shared.audioEngine.receiveRecording(out: outBuffer, sampleRateInfo: sampleRateInfoBuffer)
     }
     
 }

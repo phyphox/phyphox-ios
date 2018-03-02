@@ -14,7 +14,9 @@ private let minCellWidth: CGFloat = 320.0
 final class ExperimentsCollectionViewController: CollectionViewController {
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
-    
+
+    private var collections: [ExperimentCollection] = []
+
     override class var viewClass: CollectionContainerView.Type {
         return MainView.self
     }
@@ -77,9 +79,11 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         super.viewDidLoad()
         
         self.title = "phyphox"
+
+        reload()
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
-        
+
         infoButton = UIButton(type: .infoDark)
         infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), for: .touchUpInside)
         infoButton!.sizeToFit()
@@ -130,6 +134,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     }
 
     @objc func reload() {
+        collections = ExperimentManager.shared.experimentCollections
         selfView.collectionView.reloadData()
     }
     
@@ -157,11 +162,11 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     //MARK: - UICollectionViewDataSource
     
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return ExperimentManager.sharedInstance().experimentCollections.count
+        return collections.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return ExperimentManager.sharedInstance().experimentCollections[section].experiments.count
+        return collections[section].experiments.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -186,7 +191,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + experiment.localizedTitle, style: .destructive, handler: { [unowned self] action in
             do {
-                try ExperimentManager.sharedInstance().deleteExperiment(experiment)
+                try ExperimentManager.shared.deleteExperiment(experiment)
             }
             catch let error as NSError {
                 let hud = JGProgressHUD(style: .dark)
@@ -230,7 +235,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ExperimentCell", for: indexPath) as! ExperimentCell
         
-        let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
+        let collection = collections[indexPath.section]
         let experiment = collection.experiments[indexPath.row]
         
         cell.experiment = experiment.experiment
@@ -258,7 +263,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         if kind == UICollectionElementKindSectionHeader {
             let view = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "Header", for: indexPath) as! ExperimentHeaderView
 
-            let collection = ExperimentManager.sharedInstance().experimentCollections[indexPath.section]
+            let collection = collections[indexPath.section]
 
             view.title = collection.title
 
@@ -271,7 +276,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     //MARK: - UICollectionViewDelegate
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments[indexPath.row]
+        let experiment = collections[indexPath.section].experiments[indexPath.row]
         
         if let sensors = experiment.experiment.sensorInputs {
             for sensor in sensors {
