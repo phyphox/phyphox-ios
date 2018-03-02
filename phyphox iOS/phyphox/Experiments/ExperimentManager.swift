@@ -16,8 +16,6 @@ let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDo
 let savedExperimentStatesURL = documentsURL.appendingPathComponent("Saved-States")
 let customExperimentsURL = documentsURL.appendingPathComponent("Experiments")
 
-let fileExtension = "phyphox"
-
 let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
 
 enum FileError: Error {
@@ -77,7 +75,7 @@ final class ExperimentManager {
         for file in experiments {
             let url = customExperimentsURL.appendingPathComponent(file)
 
-            guard url.pathExtension == fileExtension else { continue }
+            guard url.pathExtension == experimentFileExtension else { continue }
 
             let experiment = try ExperimentSerialization.readExperimentFromURL(url)
 
@@ -93,7 +91,7 @@ final class ExperimentManager {
         for file in experiments {
             let url = experimentsBaseURL.appendingPathComponent(file)
 
-            guard url.pathExtension == fileExtension else { continue }
+            guard url.pathExtension == experimentFileExtension else { continue }
 
             let experiment = try ExperimentSerialization.readExperimentFromURL(url)
 
@@ -124,7 +122,7 @@ extension ExperimentManager: ExperimentDelegate {
         guard let url = experiment.source, url.pathExtension == experimentStateFileExtension else { return }
 
         experiment.buffers.0?.forEach { name, buffer in
-            let bufferURL = url.appendingPathComponent(name).appendingPathExtension("buffer")
+            let bufferURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
             if FileManager.default.fileExists(atPath: bufferURL.path) {
                 try? buffer.readState(from: bufferURL)
             }

@@ -92,7 +92,7 @@ extension Experiment {
 
         try fileManager.createDirectory(at: stateFolderURL, withIntermediateDirectories: false, attributes: nil)
 
-        let experimentURL = stateFolderURL.appendingPathComponent("Experiment.phyphox")
+        let experimentURL = stateFolderURL.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentStateFileExtension)
 
         guard let source = source else {
             throw FileError.genericError
@@ -101,7 +101,7 @@ extension Experiment {
         try fileManager.copyItem(at: source, to: experimentURL)
 
         try buffers.0?.forEach { name, buffer in
-            let bufferURL = stateFolderURL.appendingPathComponent(name).appendingPathExtension("buffer")
+            let bufferURL = stateFolderURL.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
             try buffer.writeState(to: bufferURL)
         }
 

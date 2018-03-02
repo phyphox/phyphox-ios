@@ -21,13 +21,16 @@ enum SerializationError: Error {
 }
 
 let experimentStateFileExtension = "phystate"
+let bufferContentsFileExtension = "buffer"
+let experimentStateExperimentFileName = "Experiment"
+let experimentFileExtension = "phyphox"
 
 let serializationQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.serialization", attributes: DispatchQueue.Attributes.concurrent)
 
 final class ExperimentSerialization {
     class func readExperimentFromURL(_ url: URL) throws -> Experiment {
         if url.pathExtension == experimentStateFileExtension {
-            let data = try Data(contentsOf: url.appendingPathComponent("Experiment").appendingPathExtension(fileExtension))
+            let data = try Data(contentsOf: url.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension))
             let experiment = try deserializeExperiment(data, local: url.isFileURL)
             experiment.source = url
 

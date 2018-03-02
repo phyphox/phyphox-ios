@@ -772,10 +772,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         var i = 1
 
-        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(fileExtension)
+        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(experimentFileExtension)
 
         while FileManager.default.fileExists(atPath: experimentURL.path) {
-            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(fileExtension)
+            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(experimentFileExtension)
 
             i += 1
         }
