@@ -418,7 +418,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 var xValues: [Double]
                 
                 let yValues = self.descriptor.yInputBuffer.toArray()
-                let yCount = Swift.min(yValues.count, self.descriptor.yInputBuffer.size)
+                let yCount = yValues.count
 
                 var count = yCount
                 
@@ -431,7 +431,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
                 
                 if let xBuf = self.descriptor.xInputBuffer {
                     xValues = xBuf.toArray()
-                    let xCount = Swift.min(xValues.count, xBuf.size)
+                    let xCount = xValues.count
                     
                     count = Swift.min(xCount, count)
                 }
