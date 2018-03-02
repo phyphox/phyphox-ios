@@ -1,4 +1,4 @@
-"app_name" = "phyphox";
+"app_name" = "Phyphox";
 "switchColumns1" = "Vista: 1 colonna";
 "switchColumns3" = "Vista: 3 colonne";
 "timedRunStartDelay" = "Ritardo partenza (s)";
@@ -63,13 +63,13 @@
 "pick_exportFormat" = "Scegli il formato dei dati.";
 "share_subject" = "Screenshot da phyphox";
 "title_activity_experiment" = "phyphox";
-"save_locally_done" = "L’esperimento è stato aggiunto alla collezione.";
+"save_locally_done" = "L’esperimento è stato correttamente aggiunto alla collezione.";
 "delete" = "Cancella";
 "share_pick_share" = "Scegli come distribuire";
 "newExperimentInputRate" = "Frequenza sensore (in Hz, 0 = il più veloce possibile)";
-"share" = "Condividi screeshot";
+"share" = "Condividi screenshot";
 "warning" = "Avvertenza";
-"damageWarning" = "Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non fatelo cadere sul duro e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.";
+"damageWarning" = "Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.";
 "sensorMagneticField" = "Campo magnetico";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Vuoi cancellare questo esperimento dalla tua collezione?";
@@ -77,7 +77,7 @@
 "remoteServerWarning" = "Stai per abilitare l’accesso remoto ai dati acquisiti. Quest operazione deve essere effettuata solo su di una rete fidata! Nota inoltre che l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su varie reti aziendali ed universitarie.\n\nPer massimizzare la sicurezza e la performance occorre connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver schiacciato oK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.";
 "export_pick_share" = "Seleziona un metodo per esportare";
 "sensorNotAvailableWarningTitle" = "Sensore non disponibile.";
-"sensorNotAvailableWarningMoreInfo" = "Più info";
+"sensorNotAvailableWarningMoreInfo" = "Più informazioni";
 "export_subject" = "Dati da phyphox";
 "experimentinfo_hint" = "Per sapere come funziona questo esperimento, guarda le info relative.";
 "remotePhyphoxOrg" = "Help controllo remoto";
@@ -96,3 +96,6 @@
 "save_state_success" = "Lo stato è stato salvato nella tua collezione.";
 "translationInfo" = "Lingue";
 "translationToWebsite" = "Vai al sito";
+"creditsRWTH" = "Phyphox è stato realizzato nel secondo Istituto di Fisica alla RWTH Aachen University";
+"location" = "Posizione";
+"translationToWebsiteURL" = "http://phyphox.org/languages#it";
