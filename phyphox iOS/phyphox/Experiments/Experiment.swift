@@ -23,75 +23,6 @@ protocol ExperimentDelegate: class {
     func experimentWillBecomeActive(_ experiment: Experiment)
 }
 
-extension Collection {
-    func enumerateSlices(size: IndexDistance, until: Index, body: (SubSequence) throws -> Void) rethrows {
-        var currentIndex = startIndex
-        var nextIndex: Index
-
-        repeat {
-            nextIndex = Swift.min(index(currentIndex, offsetBy: size), endIndex)
-
-            try body(self[currentIndex..<nextIndex])
-
-            currentIndex = nextIndex
-        }
-        while nextIndex < endIndex
-    }
-}
-
-extension DataBuffer {
-    func flush(to url: URL) throws -> URL {
-        let flushCount = count/2
-
-        let fileURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
-
-        if !FileManager.default.fileExists(atPath: fileURL.path) {
-            FileManager.default.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
-        }
-
-        let values = toArray()
-
-        let pointer = UnsafeMutablePointer(mutating: values)
-        let rawPointer = UnsafeMutableRawPointer(pointer)
-
-        let data = Data(bytesNoCopy: rawPointer, count: flushCount * MemoryLayout<Double>.size, deallocator: .none)
-
-        try data.write(to: fileURL, options: .atomic)
-//
-//        let littleEndianValues = self[0..<flushCount].map({ $0.bitPattern.littleEndian })
-//
-//        let pointer = UnsafePointer(littleEndianValues)
-//        let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
-//
-//        let data = Data(buffer: buffer)
-//
-//        try data.write(to: fileURL)
-
-//        let handle = try FileHandle(forWritingTo: fileURL)
-//        handle.seekToEndOfFile()
-//
-//        var i = 0
-//        enumerateSlices(size: 100000, until: flushCount) { values in
-//            i += values.count
-//            print("write \(100 * Double(i)/Double(flushCount))%")
-//            let littleEndianValues = values.map({ $0.bitPattern.littleEndian })
-//
-//            let pointer = UnsafePointer(littleEndianValues)
-//            let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
-//
-//            let data = Data(buffer: buffer)
-//
-//            handle.write(data)
-//        }
-//
-//        handle.closeFile()
-
-        removeFirst(flushCount)
-
-        return fileURL
-    }
-}
-
 final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
     let title: String
     private let description: String?
@@ -207,32 +138,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         self.analysis?.delegate = self
         self.analysis?.timeManager = self
-
-//        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveMemoryWarning), name: .UIApplicationDidReceiveMemoryWarning, object: nil)
     }
 
-//    private func createBufferStorage() -> URL {
-//        let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
-//
-//        let storageURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
-//
-//        try? FileManager.default.createDirectory(at: storageURL, withIntermediateDirectories: false, attributes: nil)
-//
-//        return storageURL
-//    }
-//
-//    @objc private func didReceiveMemoryWarning() {
-//        let outputBuffers = self.outpututBuffers
-//
-//        guard outpututBuffers.count > 0 else { return }
-//
-//        let bufferStorage = bufferStorageURL ?? createBufferStorage()
-//
-//        outpututBuffers.forEach { buffer in
-//            try? buffer.flush(to: bufferStorage)
-//        }
-//    }
-//
     @objc func endBackgroundSession() {
         stop()
     }
@@ -436,12 +343,3 @@ extension Experiment: Equatable {
         return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
     }
 }
-
-//extension Experiment {
-//    var outpututBuffers: [DataBuffer] {
-//        guard let inputBufferNames = analysis?.modules.flatMap({ $0.inputs.flatMap { $0.buffer?.name } }) else { return buffers.1 }
-//
-//        return buffers.1.filter { !inputBufferNames.contains($0.name) }
-//    }
-//}
-

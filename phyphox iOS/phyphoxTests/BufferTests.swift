@@ -11,46 +11,10 @@ import XCTest
 @testable import phyphox
 
 final class BufferTests: XCTestCase {
-    var hasReceivedMemoryWarning = false
-
-    func testFlushingWhenMemoryFull() throws {
-        let observer = NotificationCenter.default.addObserver(forName: .UIApplicationDidReceiveMemoryWarning, object: nil, queue: nil) { _ in
-            self.hasReceivedMemoryWarning = true
-        }
-
-        let buffer = DataBuffer(name: "test", size: 0)
-
-        var values: [Double] = []
-
-        for i in 0...500_000_000 {
-            if i == 2 {
-                values.append(Double(0))
-            }
-            else {
-                values.append(Double(i))
-            }
-        }
-
-        buffer.appendFromArray(values)
-
-        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
-
-        let file = try buffer.flush(to: tmp)
-
-        let compare = DataBuffer(name: "test", size: 0)
-
-        try compare.readState(from: file)
-
-        for (i, value) in compare.enumerated() {
-            XCTAssertEqual(value, values[i])
-        }
-        NotificationCenter.default.removeObserver(observer)
-    }
-
     func testConcurrency() {
         let numberOfIterations = 200_000
 
-        let buffer = DataBuffer(name: UUID().uuidString, size: numberOfIterations)
+        let buffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: numberOfIterations), baseContents: [])
 
         let addingExpectation = expectation(description: "Adding Completed")
 
