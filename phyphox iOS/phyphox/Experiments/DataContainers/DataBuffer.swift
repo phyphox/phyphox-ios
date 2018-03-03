@@ -11,7 +11,7 @@ import Foundation
 import Dispatch
 
 protocol DataBufferObserver: class {
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
+    func dataBufferUpdated(_ buffer: DataBuffer)
 }
 
 private typealias ObserverCapture = () -> DataBufferObserver?
@@ -59,7 +59,7 @@ final class DataBuffer {
     }
 
     var attachedToTextField = false
-    
+
     var hashValue: Int {
         return name.hash
     }
@@ -67,9 +67,9 @@ final class DataBuffer {
     private let storageType: StorageType
 
     private var stateToken: UUID?
-    
+
     private var observerCaptures: [ObserverCapture] = []
-    
+
     /**
      Notifications are sent in order, first registered, first notified.
      */
@@ -83,15 +83,15 @@ final class DataBuffer {
             observerCaptures.append(capture)
         }
     }
-//    
-//    func removeObserver(_ observer: DataBufferObserver) {
-//        observerCaptures.filter {
-//            let object = $0()
-//
-//            return $0 != nil && $0 != observer
-//        }
-//    }
-    
+    //
+    //    func removeObserver(_ observer: DataBufferObserver) {
+    //        observerCaptures.filter {
+    //            let object = $0()
+    //
+    //            return $0 != nil && $0 != observer
+    //        }
+    //    }
+
     /**
      A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
      */
@@ -99,21 +99,21 @@ final class DataBuffer {
         if stateToken == nil {
             stateToken = UUID()
         }
-        
+
         return stateToken
     }
-    
+
     func stateTokenIsValid(_ token: UUID?) -> Bool {
         return token != nil && stateToken != nil && stateToken == token
     }
-    
+
     private func bufferMutated() {
         stateToken = nil
     }
 
     var staticBuffer: Bool = false
     var written: Bool = false
-    
+
     var count: Int {
         return Swift.min(queue.count, effectiveMemorySize)
     }
@@ -121,7 +121,7 @@ final class DataBuffer {
     private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
 
     private var queue: Queue<Double>
-    
+
     init(name: String, storage: StorageType) {
         self.name = name
         self.storageType = storage
@@ -198,13 +198,13 @@ final class DataBuffer {
             return true
         }
     }
-    
-    private func sendUpdateNotification(_ noData: Bool = false) {
+
+    private func sendUpdateNotification() {
         guard isOpen else { return }
 
         for observer in observerCaptures {
             mainThread {
-                observer()?.dataBufferUpdated(self, noData: noData)
+                observer()?.dataBufferUpdated(self)
             }
         }
     }
@@ -232,8 +232,8 @@ final class DataBuffer {
             queue.removeFirst(n)
         }
     }
-    
-    func clear(_ notify: Bool = true, noData: Bool = true) {
+
+    func clear() {
         syncWrite {
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.truncateFile(atOffset: 0)
@@ -242,15 +242,12 @@ final class DataBuffer {
             queue.clear()
             written = false
         }
-        
+
         bufferMutated()
-        
-        if notify {
-            sendUpdateNotification(noData)
-        }
+        sendUpdateNotification()
     }
-    
-    func replaceValues(_ values: [Double], notify: Bool = true) {
+
+    func replaceValues(_ values: [Double]) {
         if !staticBuffer || !written {
             var cutValues = values
 
@@ -276,14 +273,11 @@ final class DataBuffer {
             }
 
             bufferMutated()
-            
-            if notify {
-                sendUpdateNotification()
-            }
+            sendUpdateNotification()
         }
     }
-    
-    func append(_ value: Double?, notify: Bool = true) {
+
+    func append(_ value: Double?) {
         if (!staticBuffer || !written), let value = value {
             syncWrite {
                 written = true
@@ -300,16 +294,13 @@ final class DataBuffer {
             }
 
             bufferMutated()
-            
-            if notify {
-                sendUpdateNotification()
-            }
+            sendUpdateNotification()
         }
     }
-    
-    func appendFromArray(_ values: [Double], notify: Bool = true) {
+
+    func appendFromArray(_ values: [Double]) {
         guard !values.isEmpty else { return }
-        
+
         if !staticBuffer || !written {
             syncWrite {
                 written = true
@@ -339,12 +330,9 @@ final class DataBuffer {
                     }
                 }
             }
-            
+
             bufferMutated()
-            
-            if notify {
-                sendUpdateNotification()
-            }
+            sendUpdateNotification()
         }
     }
 
@@ -398,4 +386,3 @@ extension DataBuffer: CustomStringConvertible {
 //        return lhs.name == rhs.name && lhs.size == rhs.size && fir lhs.toArray() == rhs.toArray()
 //    }
 //}
-

@@ -72,10 +72,8 @@ final class ExperimentAnalysis: DataBufferObserver {
         }
     }
 
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
-        if !noData {
-            setNeedsUpdate()
-        }
+    func dataBufferUpdated(_ buffer: DataBuffer) {
+        setNeedsUpdate()
     }
     
     func analysisComplete() {

@@ -81,7 +81,7 @@ class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProto
 }
 
 extension ExperimentViewModule: DataBufferObserver {
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
+    func dataBufferUpdated(_ buffer: DataBuffer) {
         setNeedsUpdate()
     }
 }
