@@ -20,18 +20,30 @@ final class BufferTests: XCTestCase {
 
         let buffer = DataBuffer(name: "test", size: 0)
 
-        buffer.append(1.0)
+        var values: [Double] = []
 
-        while buffer.count < 284354550 {
-            buffer.appendFromArray(buffer.toArray())
+        for i in 0...500_000_000 {
+            if i == 2 {
+                values.append(Double(0))
+            }
+            else {
+                values.append(Double(i))
+            }
         }
+
+        buffer.appendFromArray(values)
 
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
 
-        sleep(5)
+        let file = try buffer.flush(to: tmp)
 
-        try buffer.flush(to: tmp)
+        let compare = DataBuffer(name: "test", size: 0)
 
+        try compare.readState(from: file)
+
+        for (i, value) in compare.enumerated() {
+            XCTAssertEqual(value, values[i])
+        }
         NotificationCenter.default.removeObserver(observer)
     }
 

@@ -40,7 +40,7 @@ extension Collection {
 }
 
 extension DataBuffer {
-    func flush(to url: URL) throws {
+    func flush(to url: URL) throws -> URL {
         let flushCount = count/2
 
         let fileURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
@@ -49,14 +49,23 @@ extension DataBuffer {
             FileManager.default.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
         }
 
-        let littleEndianValues = self[0..<flushCount].map({ $0.bitPattern.littleEndian })
+        let values = toArray()
 
-        let pointer = UnsafePointer(littleEndianValues)
-        let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
+        let pointer = UnsafeMutablePointer(mutating: values)
+        let rawPointer = UnsafeMutableRawPointer(pointer)
 
-        let data = Data(buffer: buffer)
+        let data = Data(bytesNoCopy: rawPointer, count: flushCount * MemoryLayout<Double>.size, deallocator: .none)
 
-        try data.write(to: fileURL)
+        try data.write(to: fileURL, options: .atomic)
+//
+//        let littleEndianValues = self[0..<flushCount].map({ $0.bitPattern.littleEndian })
+//
+//        let pointer = UnsafePointer(littleEndianValues)
+//        let buffer = UnsafeBufferPointer(start: pointer, count: littleEndianValues.count)
+//
+//        let data = Data(buffer: buffer)
+//
+//        try data.write(to: fileURL)
 
 //        let handle = try FileHandle(forWritingTo: fileURL)
 //        handle.seekToEndOfFile()
@@ -78,6 +87,8 @@ extension DataBuffer {
 //        handle.closeFile()
 
         removeFirst(flushCount)
+
+        return fileURL
     }
 }
 
@@ -96,7 +107,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         return translation?.selectedTranslation?.descriptionString ?? description
     }
     
-    var localizedLinks: [String:String] {
+    var localizedLinks: [String: String] {
         var allLinks = self.links
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, value) in translatedLinks {
@@ -106,7 +117,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         return allLinks
     }
     
-    var localizedHighlightedLinks: [String:String] {
+    var localizedHighlightedLinks: [String: String] {
         var allLinks = self.highlightedLinks
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, _) in translatedLinks {
@@ -126,7 +137,9 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     weak var delegate: ExperimentDelegate?
 
     let icon: ExperimentIcon
-    
+
+    let persistentStorageURL: URL
+
     var local: Bool
     var source: URL?
     
@@ -140,7 +153,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
-    let buffers: ([String: DataBuffer]?, [DataBuffer]?)
+    let buffers: ([String: DataBuffer], [DataBuffer])
     
     let queue: DispatchQueue
     
@@ -152,9 +165,10 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     private(set) var startTimestamp: TimeInterval?
     private var pauseBegin: TimeInterval = 0.0
 
-    private var bufferStorageURL: URL?
+//    private var bufferStorageURL: URL?
 
-    init(title: String, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer], [DataBuffer]), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+        self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.description = description
         self.links = links
@@ -193,31 +207,31 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         self.analysis?.delegate = self
         self.analysis?.timeManager = self
 
-        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveMemoryWarning), name: .UIApplicationDidReceiveMemoryWarning, object: nil)
+//        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveMemoryWarning), name: .UIApplicationDidReceiveMemoryWarning, object: nil)
     }
 
-    private func createBufferStorage() -> URL {
-        let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
-
-        let storageURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
-
-        try? FileManager.default.createDirectory(at: storageURL, withIntermediateDirectories: false, attributes: nil)
-
-        return storageURL
-    }
-
-    @objc private func didReceiveMemoryWarning() {
-        let outputBuffers = self.outpututBuffers
-
-        guard outpututBuffers.count > 0 else { return }
-
-        let bufferStorage = bufferStorageURL ?? createBufferStorage()
-
-        outpututBuffers.forEach { buffer in
-            try? buffer.flush(to: bufferStorage)
-        }
-    }
-    
+//    private func createBufferStorage() -> URL {
+//        let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
+//
+//        let storageURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
+//
+//        try? FileManager.default.createDirectory(at: storageURL, withIntermediateDirectories: false, attributes: nil)
+//
+//        return storageURL
+//    }
+//
+//    @objc private func didReceiveMemoryWarning() {
+//        let outputBuffers = self.outpututBuffers
+//
+//        guard outpututBuffers.count > 0 else { return }
+//
+//        let bufferStorage = bufferStorageURL ?? createBufferStorage()
+//
+//        outpututBuffers.forEach { buffer in
+//            try? buffer.flush(to: bufferStorage)
+//        }
+//    }
+//
     @objc func endBackgroundSession() {
         stop()
     }
@@ -235,11 +249,12 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
-        for buffer in buffers.1! {
+        for buffer in buffers.1 {
             buffer.sendAnalysisCompleteNotification()
         }
+        
         if running {
-            self.output?.audioOutput?.play()
+            output?.audioOutput?.play()
         }
     }
     
@@ -340,26 +355,29 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         }
         
         running = true
+
+        try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
+
+        for buffer in buffers.1 {
+            buffer.open()
+        }
+
         hasStarted = true
-        
+
         UIApplication.shared.isIdleTimerDisabled = true
         
         try startAudio()
         
-        if self.sensorInputs != nil {
-            for sensor in self.sensorInputs! {
+        if let sensorInputs = sensorInputs {
+            for sensor in sensorInputs {
                 sensor.start()
             }
         }
-        
-        if self.gpsInput != nil {
-            self.gpsInput!.start()
-        }
+
+        self.gpsInput?.start()
         
         analysis?.running = true
-        if (analysis != nil && !analysis!.onUserInput) {
-            analysis?.setNeedsUpdate()
-        }
+        analysis?.setNeedsUpdate()
     }
     
     func stop() {
@@ -371,15 +389,13 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         pauseBegin = CFAbsoluteTimeGetCurrent()
         
-        if self.sensorInputs != nil {
-            for sensor in self.sensorInputs! {
+        if let sensorInputs = sensorInputs {
+            for sensor in sensorInputs {
                 sensor.stop()
             }
         }
         
-        if self.gpsInput != nil {
-            self.gpsInput!.stop()
-        }
+        gpsInput?.stop()
         
         stopAudio()
         
@@ -393,27 +409,26 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         pauseBegin = 0.0
         startTimestamp = nil
         hasStarted = false
-        
-        if buffers.1 != nil {
-            for buffer in buffers.1! {
-                if !buffer.attachedToTextField {
-                    buffer.clear()
-                } else {
-                    //Edit fields are not cleared to retain user input, but we need to mark its content as new, as this now is "new data" for the now empty experiment. (Otherwise analysis with onUserInput=true will not update after clearing the data.) For most of these experiments clearing the data does not make sense anyway, but who know what future experiments with this setting might look like...
-                    buffer.sendUpdateNotification()
-                }
+
+        for buffer in buffers.1 {
+            buffer.close()
+        }
+
+        try? FileManager.default.removeItem(at: persistentStorageURL)
+
+        for buffer in buffers.1 {
+            if !buffer.attachedToTextField {
+                buffer.clear()
             }
         }
         
-        if self.sensorInputs != nil {
-            for sensor in self.sensorInputs! {
+        if let sensorInputs = sensorInputs {
+            for sensor in sensorInputs {
                 sensor.clear()
             }
         }
-        
-        if self.gpsInput != nil {
-            gpsInput!.clear()
-        }
+
+        gpsInput?.clear()
     }
 }
 
@@ -423,10 +438,11 @@ extension Experiment: Equatable {
     }
 }
 
-extension Experiment {
-    var outpututBuffers: [DataBuffer] {
-        guard let inputBufferNames = analysis?.analyses.flatMap({ $0.inputs.flatMap { $0.buffer?.name } }) else { return buffers.1 ?? [] }
+//extension Experiment {
+//    var outpututBuffers: [DataBuffer] {
+//        guard let inputBufferNames = analysis?.modules.flatMap({ $0.inputs.flatMap { $0.buffer?.name } }) else { return buffers.1 }
+//
+//        return buffers.1.filter { !inputBufferNames.contains($0.name) }
+//    }
+//}
 
-        return buffers.1?.filter { !inputBufferNames.contains($0.name) } ?? []
-    }
-}
