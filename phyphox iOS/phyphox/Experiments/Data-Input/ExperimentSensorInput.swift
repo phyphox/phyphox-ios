@@ -28,7 +28,7 @@ enum SensorError : Error {
 
 private let kG = -9.81
 
-final class ExperimentSensorInput : MotionSessionReceiver {
+final class ExperimentSensorInput: MotionSessionReceiver {
     let sensorType: SensorType
     
     /**

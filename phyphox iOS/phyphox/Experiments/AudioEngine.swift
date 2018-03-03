@@ -86,7 +86,7 @@ final class AudioEngine {
         if (record != nil) {
             self.recordInput = engine!.inputNode
             
-            recordDataBuffer = DataBuffer(name: "", size: recordIn!.outBuffer.size)
+            recordDataBuffer = DataBuffer(name: "", storage: .memory(size: recordIn!.outBuffer.size))
             
             self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format!, block: {(buffer, time) in
                 audioInputQueue.async (execute: {

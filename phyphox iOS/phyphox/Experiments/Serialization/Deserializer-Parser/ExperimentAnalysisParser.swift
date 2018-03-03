@@ -33,11 +33,38 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
             analyses = nil
         }
     }
+
+    func getInputBufferNames() -> Set<String> {
+        var names = Set<String>()
+
+        guard let analyses = analyses else { return names }
+
+        for (key, values) in analyses {
+            guard let values = values as? [NSDictionary], key != "__count" && key != "__index" else {
+                continue
+            }
+
+            for value in values {
+                guard let inputs = getElementsWithKey(value, key: "input") else { continue }
+
+                for input in inputs {
+                    if let input = input as? NSDictionary {
+                        if let bufferName = input[XMLDictionaryTextKey] as? String {
+                            names.insert(bufferName)
+                        }
+                    }
+                    else if let input = input as? String {
+                        names.insert(input)
+                    }
+                }
+            }
+        }
+
+        return names
+    }
     
     func parse(_ buffers: [String : DataBuffer]) throws -> ExperimentAnalysis? {
-        if analyses == nil {
-            return nil
-        }
+        guard let analyses = analyses else { return nil }
         
         let sleep = floatTypeFromXML(attributes as [String : AnyObject]?, key: "sleep", defaultValue: 0.0)
         let dsBufferName = attributes?["dynamicSleep"]
@@ -47,19 +74,18 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         } else {
             dynamicSleep = nil
         }
-        let onUserInput = boolFromXML(attributes as [String : AnyObject]?, key: "onUserInput", defaultValue: false)
-        
+
         func getDataFlows(_ dictionaries: [AnyObject]?) throws -> [ExperimentAnalysisDataIO] {
+            guard let dictionaries = dictionaries else { return [] }
+
             var a = [ExperimentAnalysisDataIO]()
-            
-            if dictionaries != nil {
-                for object in dictionaries! {
-                    if object is NSDictionary {
-                        a.append(try ExperimentAnalysisDataIO(dictionary: object as! NSDictionary, buffers: buffers))
-                    }
-                    else {
-                        a.append(ExperimentAnalysisDataIO(buffer: buffers[object as! String]!))
-                    }
+
+            for object in dictionaries {
+                if let object = object as? NSDictionary {
+                    a.append(try ExperimentAnalysisDataIO(dictionary: object, buffers: buffers))
+                }
+                else if let object = object as? String {
+                    a.append(ExperimentAnalysisDataIO(buffer: buffers[object]!))
                 }
             }
             
@@ -68,7 +94,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         
         var processed: [ExperimentAnalysisModule?] = []
         
-        for (key, values) in analyses! {
+        for (key, values) in analyses {
             if key == "__count" || key == "__index" {
                 continue
             }
@@ -228,21 +254,9 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 }
             }
         }
-        
-        var deleteIndices: [Int] = []
-        
-        for (i, v) in processed.enumerated() {
-            if v == nil {
-                deleteIndices.append(i)
-            }
-        }
-        
-        if deleteIndices.count > 0 {
-            processed.removeAtIndices(deleteIndices)
-        }
-        
+
         if processed.count > 0 {
-            return ExperimentAnalysis(analyses: processed as! [ExperimentAnalysisModule], sleep: sleep, dynamicSleep: dynamicSleep, onUserInput: onUserInput)
+            return ExperimentAnalysis(modules: processed.flatMap { $0 }, sleep: sleep, dynamicSleep: dynamicSleep)
         }
         
         return nil

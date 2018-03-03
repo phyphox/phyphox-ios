@@ -68,7 +68,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         return sensorType
     }
     
-    func parse(_ buffers: [String : DataBuffer], analysis: ExperimentAnalysis?) throws -> ([ExperimentSensorInput]?, [ExperimentGPSInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
+    func parse(_ buffers: [String : DataBuffer]) throws -> ([ExperimentSensorInput]?, [ExperimentGPSInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
         if sensors == nil && gps == nil && audio == nil && bluetooth == nil {
             return (nil, nil, nil, nil)
         }
@@ -130,11 +130,6 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     }
                     else {
                         throw SerializationError.invalidExperimentFile(message: "Error! Invalid sensor parameter: \(String(describing: component))")
-                    }
-                    
-                    //Register for updates
-                    if buf != nil && analysis != nil {
-                        analysis!.registerSensorBuffer(buf!)
                     }
                 }
                 
@@ -204,11 +199,6 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     else {
                         throw SerializationError.invalidExperimentFile(message: "Error! Invalid GPS parameter: \(String(describing: component))")
                     }
-                    
-                    //Register for updates
-                    if buf != nil && analysis != nil {
-                        analysis!.registerSensorBuffer(buf!)
-                    }
                 }
                 
                 let sensor = ExperimentGPSInput(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
@@ -239,10 +229,6 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     let bufferName = (out as? String ?? (out as! [String: AnyObject])[XMLDictionaryTextKey] as! String)
                     
                     let buffer = buffers[bufferName]!
-                    
-                    if analysis != nil {
-                        analysis!.registerSensorBuffer(buffer)
-                    }
                     
                     if outAttributes?["component"] == "rate" {
                         sampleRateInfoBuffer = buffer
@@ -321,7 +307,7 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                     let buf = buffers[name]
                     
                     //Register for updates
-                    if buf != nil && analysis != nil {
+                    if buf != nil { //&& analysis != nil { // ??
                         outBuffers.append(buf!)
 //TODO?                        analysis!.registerBluetoothBuffer(buf!)
                     }

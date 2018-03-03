@@ -32,7 +32,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
         return nil
     }
     
-    func parse(_ buffers: [String: DataBuffer], analysis: ExperimentAnalysis?, translation: ExperimentTranslationCollection?) throws -> [ExperimentViewCollectionDescriptor]? {
+    func parse(_ buffers: [String: DataBuffer], translation: ExperimentTranslationCollection?) throws -> [ExperimentViewCollectionDescriptor]? {
         if views == nil {
             return nil
         }
@@ -80,11 +80,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 
                 if outputBuffer == nil {
                     throw SerializationError.invalidExperimentFile(message: "No output buffer for edit view.")
-                }
-                
-                //Register for updates
-                if analysis != nil {
-                    analysis!.registerEditBuffer(outputBuffer!)
                 }
                 
                 outputBuffer!.attachedToTextField = true
@@ -308,9 +303,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                                 throw SerializationError.invalidExperimentFile(message: "Error! Unknown buffer name: \(bufferName)")
                             }
 
-                            if analysis != nil {
-                                analysis!.registerEditBuffer(buffer!)
-                            }
                             outputList.append(buffer!)
                         }
                     }

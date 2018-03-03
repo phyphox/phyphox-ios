@@ -9,6 +9,8 @@
 import Foundation
 import CoreLocation
 
+// TODO: Shouldn't be a separate class: ExperimentSensorInput!
+
 final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     var locationManager = CLLocationManager()
     private(set) weak var latBuffer: DataBuffer?

@@ -57,8 +57,8 @@ final class ExperimentAnalysisDataIO {
             }
         }
         else if !typeIsEmpty {
-            if text != nil {
-                buffer = buffers[text!]
+            if let text = text {
+                buffer = buffers[text]
             } else {
                 throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
             }
