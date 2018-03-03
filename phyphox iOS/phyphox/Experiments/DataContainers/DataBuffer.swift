@@ -14,11 +14,11 @@ protocol DataBufferObserver: class {
     func dataBufferUpdated(_ buffer: DataBuffer)
 }
 
-private typealias ObserverCapture = () -> DataBufferObserver?
+private typealias ObserverCapture = () -> (observer: DataBufferObserver?, alwaysNotify: Bool)
 
-private func weakObserverCapture(_ object: DataBufferObserver) -> ObserverCapture {
+private func weakObserverCapture(_ object: DataBufferObserver, alwaysNotify: Bool) -> ObserverCapture {
     return { [weak object] in
-        return object
+        return (object, alwaysNotify)
     }
 }
 
@@ -32,17 +32,7 @@ final class DataBuffer {
     }
 
     let name: String
-    private(set) var size: Int {
-        didSet {
-            syncWrite {
-                let effectiveSize = effectiveMemorySize
-
-                if queue.count > effectiveSize {
-                    removeFirst(queue.count - effectiveSize)
-                }
-            }
-        }
-    }
+    let size: Int
 
     private var effectiveMemorySize: Int {
         switch storageType {
@@ -73,24 +63,16 @@ final class DataBuffer {
     /**
      Notifications are sent in order, first registered, first notified.
      */
-    func addObserver(_ observer: DataBufferObserver) {
+    func addObserver(_ observer: DataBufferObserver, alwaysNotify: Bool) {
         let alreadyRegistered = observerCaptures.contains(where: { capture in
-            return capture() === observer
+            return capture().observer === observer
         })
 
         if !alreadyRegistered {
-            let capture = weakObserverCapture(observer)
+            let capture = weakObserverCapture(observer, alwaysNotify: alwaysNotify)
             observerCaptures.append(capture)
         }
     }
-    //
-    //    func removeObserver(_ observer: DataBufferObserver) {
-    //        observerCaptures.filter {
-    //            let object = $0()
-    //
-    //            return $0 != nil && $0 != observer
-    //        }
-    //    }
 
     /**
      A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
@@ -141,7 +123,7 @@ final class DataBuffer {
     private var isOpen = false
 
     /**
-     Opening a buffer starts notifying observers. In case of a hybrid buffer the file handle for writing data to the persistent storage is opened and the current contents of the buffer are written to the persistent storage.
+     Opening a buffer starts notifying all observers. In case of a hybrid buffer the file handle for writing data to the persistent storage is opened and the current contents of the buffer are written to the persistent storage.
      */
     func open() {
         guard !isOpen else { return }
@@ -171,7 +153,7 @@ final class DataBuffer {
     }
 
     /**
-     Closing a buffer stops notifying observers, closes the persistent storage file handle in case of a hybrid buffer and deletes the persistent storage file.
+     Closing a buffer stops notifying all observers (observers that explicitly want constant updates excluded), closes the persistent storage file handle in case of a hybrid buffer and deletes the persistent storage file.
      */
     func close() {
         guard isOpen else { return }
@@ -200,11 +182,13 @@ final class DataBuffer {
     }
 
     private func sendUpdateNotification() {
-        guard isOpen else { return }
+        for observerCapture in observerCaptures {
+            let (observer, alwaysNotify) = observerCapture()
 
-        for observer in observerCaptures {
-            mainThread {
-                observer()?.dataBufferUpdated(self)
+            if isOpen || alwaysNotify {
+                mainThread {
+                    observer?.dataBufferUpdated(self)
+                }
             }
         }
     }

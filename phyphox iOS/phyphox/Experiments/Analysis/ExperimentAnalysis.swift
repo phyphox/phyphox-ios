@@ -68,7 +68,7 @@ final class ExperimentAnalysis: DataBufferObserver {
         let pureInputs = inputBuffers.filter { outputBuffers[$0.key] == nil }
 
         pureInputs.forEach {
-            $0.value.addObserver(self)
+            $0.value.addObserver(self, alwaysNotify: false)
         }
     }
 

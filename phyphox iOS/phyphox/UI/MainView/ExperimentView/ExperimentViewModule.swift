@@ -48,7 +48,7 @@ class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProto
     }
 
     func registerInputBuffer(_ buffer: DataBuffer) {
-        buffer.addObserver(self)
+        buffer.addObserver(self, alwaysNotify: true)
     }
     
     private var updateScheduled: Bool = false
