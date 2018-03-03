@@ -12,7 +12,7 @@ import UIKit
 private let spacing: CGFloat = 10.0
 private let textFieldWidth: CGFloat = 100.0
 
-final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate, DataBufferObserver {
+final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
     let textField: UITextField
     let unitLabel: UILabel?
     
@@ -47,27 +47,21 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         }
         
         super.init(descriptor: descriptor)
-        
-        descriptor.buffer.addObserver(self)
-        
+
+        registerInputBuffer(descriptor.buffer)
+
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
-        
-        updateTextField(textField, write: false)
-        
+
         textField.delegate = self
         
         textField.addTarget(self, action: #selector(ExperimentEditView.textFieldChanged), for: .editingChanged)
         
         addSubview(textField)
-        if unitLabel != nil {
-            addSubview(unitLabel!)
+        if let unitLabel = unitLabel {
+            addSubview(unitLabel)
         }
         
         label.textAlignment = NSTextAlignment.right
-    }
-    
-    override func unregisterFromBuffer() {
-        descriptor.buffer.removeObserver(self)
     }
     
     @objc func hideKeyboard(_: UITextField) {
@@ -80,59 +74,49 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
     
     func textFieldDidEndEditing(_: UITextField) {
         if edited {
-            updateTextField(textField, write: true)
             edited = false
-        }
-    }
-    
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
-        updateTextField(textField, write: false, forceReadFromBuffer: true)
-    }
-    
-    func updateTextField(_: UITextField, write: Bool, forceReadFromBuffer: Bool = false) {
-        var val: Double
-        
-        if forceReadFromBuffer || textField.text?.count == 0 || Double(textField.text!) == nil {
-            val = descriptor.value
-            
-            textField.text = formattedValue(val*self.descriptor.factor)
-        }
-        else {
-            let rawVal: Double
-            
+
+            let rawValue: Double
+
             if descriptor.decimal {
                 if descriptor.signed {
-                    rawVal = Double(textField.text!)!
+                    rawValue = Double(textField.text ?? "") ?? 0
                 }
                 else {
-                    rawVal = abs(Double(textField.text!)!)
+                    rawValue = abs(Double(textField.text ?? "") ?? 0)
                 }
             }
             else {
                 if descriptor.signed {
-                    rawVal = floor(Double(textField.text!)!)
+                    rawValue = floor(Double(textField.text ?? "") ?? 0)
                 }
                 else {
-                    rawVal = floor(abs(Double(textField.text!)!))
+                    rawValue = floor(abs(Double(textField.text ?? "") ?? 0))
                 }
             }
-            
-            val = rawVal/self.descriptor.factor
-            
-            if (descriptor.min.isFinite && val < descriptor.min) {
-                val = descriptor.min
+
+            var value = rawValue/descriptor.factor
+
+            if (descriptor.min.isFinite && value < descriptor.min) {
+                value = descriptor.min
             }
-            
-            if (descriptor.max.isFinite && val > descriptor.max) {
-                val = descriptor.max
+            if (descriptor.max.isFinite && value > descriptor.max) {
+                value = descriptor.max
             }
-            
-            textField.text = formattedValue(rawVal)
+
+            textField.text = formattedValue(rawValue)
+
+            descriptor.buffer.replaceValues([value])
         }
-        
-        if write {
-            descriptor.buffer.replaceValues([val])
-        }
+    }
+    
+    override func update() {
+        let value = descriptor.value
+        let rawValue = value * descriptor.factor
+
+        textField.text = formattedValue(rawValue)
+
+        super.update()
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {

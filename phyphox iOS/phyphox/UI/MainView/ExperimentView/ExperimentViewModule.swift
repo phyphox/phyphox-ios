@@ -11,29 +11,32 @@ import UIKit
 
 protocol ExperimentViewModuleProtocol {
     func setNeedsUpdate()
-    func triggerUpdate()
-    func unregisterFromBuffer()
-    var active: Bool { get set}
+    func registerInputBuffer(_ buffer: DataBuffer)
+    var active: Bool { get set }
 }
 
-open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
+typealias ExperimentViewModuleView = ExperimentViewModuleProtocol & UIView
+
+class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
     weak var descriptor: T!
     
     let label: UILabel
-    var active = false
+    var active = false {
+        didSet {
+            if active {
+                setNeedsUpdate()
+            }
+        }
+    }
     
     var delegate: ModuleExclusiveViewDelegate? = nil
-    
-    var requiresAnalysis = false
-    
+
     required public init(descriptor: T) {
         label = UILabel()
         label.numberOfLines = 0
         
         label.text = descriptor.localizedLabel
-        
-        requiresAnalysis = descriptor.requiresAnalysis
-        
+
         label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
         label.textColor = kTextColor
         
@@ -43,9 +46,9 @@ open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleP
         
         addSubview(label)
     }
-    
-    func unregisterFromBuffer() {
-        
+
+    func registerInputBuffer(_ buffer: DataBuffer) {
+        buffer.addObserver(self)
     }
     
     private var updateScheduled: Bool = false
@@ -53,17 +56,11 @@ open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleP
     func setNeedsUpdate() {
         if active && !updateScheduled {
             updateScheduled = true
-            
-            //We do not want to actually update the view just now if the result depends on any analysis. There are two reasons for this:
-            // 1. A buffer may be updated multiple times during analysis if it is used for intermediate results
-            // 2. A view (i.e. graph view) may depend on multiple buffers which are not updated simultaneously, possible leading to multiple, unneccessary updates
-            if !requiresAnalysis {
-                triggerUpdate()
-            }
+            triggerUpdate()
         }
     }
     
-    func triggerUpdate() {
+    private func triggerUpdate() {
         if updateScheduled {
             //60fps max
             after(1.0/60.0, closure: { () -> Void in
@@ -73,11 +70,7 @@ open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleP
         }
     }
     
-    func analysisComplete() {
-        triggerUpdate()
-    }
-    
-    internal func update() {
+    func update() {
         
     }
     
@@ -87,3 +80,8 @@ open class ExperimentViewModule<T:ViewDescriptor>: UIView, ExperimentViewModuleP
     }
 }
 
+extension ExperimentViewModule: DataBufferObserver {
+    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
+        setNeedsUpdate()
+    }
+}

@@ -14,13 +14,12 @@ final class AudioEngine {
     private var engine: AVAudioEngine? = nil
     private var playbackPlayer: AVAudioPlayerNode? = nil
     private var playbackBuffer: AVAudioPCMBuffer? = nil
-    private var recordInput: AVAudioInputNode? = nil
+    private var recordInputNode: AVAudioInputNode? = nil
     
     private var playing = false
     
     private var playbackOut: ExperimentAudioOutput? = nil
     private var playbackStateToken: UUID?
-    private var recordIn: ExperimentAudioInput? = nil
     
     private var recordDataBuffer: DataBuffer? = nil
     
@@ -44,20 +43,19 @@ final class AudioEngine {
         }
     }
     
-    func startEngine(playback: ExperimentAudioOutput?, record: ExperimentAudioInput?) throws {
-        if playback == nil && record == nil {
+    func startEngine(playback: ExperimentAudioOutput?, recordInput: ExperimentAudioInput?) throws {
+        if playback == nil && recordInput == nil {
             return
         }
         
-        self.playbackOut = playback
-        self.recordIn = record
+        playbackOut = playback
         
         let avSession = AVAudioSession.sharedInstance()
-        if playback != nil && record != nil {
+        if playback != nil && recordInput != nil {
             try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker)
         } else if playback != nil {
             try avSession.setCategory(AVAudioSessionCategoryPlayback)
-        } else if record != nil {
+        } else if recordInput != nil {
             try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSessionModeMeasurement)
@@ -65,42 +63,48 @@ final class AudioEngine {
             try avSession.setInputGain(1.0)
         }
         
-        let sampleRate = recordIn?.sampleRate ?? playbackOut?.sampleRate ?? 0
+        let sampleRate = recordInput?.sampleRate ?? playbackOut?.sampleRate ?? 0
         try avSession.setPreferredSampleRate(Double(sampleRate))
         
         try avSession.setActive(true)
         
         var audioDescription = monoFloatFormatWithSampleRate(avSession.sampleRate)
         format = AVAudioFormat(streamDescription: &audioDescription)
-        
-        self.engine = AVAudioEngine()
+
+        let engine = AVAudioEngine()
+
+        self.engine = engine
         
         NotificationCenter.default.addObserver(self, selector: #selector(audioEngineConfigurationChange), name: NSNotification.Name.AVAudioEngineConfigurationChange, object: self.engine)
         
-        if (playback != nil) {
-            self.playbackPlayer = AVAudioPlayerNode()
-            self.engine!.attach(self.playbackPlayer!)
-            self.engine!.connect(self.playbackPlayer!, to: self.engine!.mainMixerNode, format: self.format)
+        if playback != nil {
+            let playbackPlayer = AVAudioPlayerNode()
+            self.playbackPlayer = playbackPlayer
+
+            engine.attach(playbackPlayer)
+            engine.connect(playbackPlayer, to: engine.mainMixerNode, format: format)
         }
         
-        if (record != nil) {
-            self.recordInput = engine!.inputNode
+        if let recordInput = recordInput {
+            let recordInputNode = engine.inputNode
+            self.recordInputNode = recordInputNode
+
+            recordDataBuffer = recordInput.outBuffer
             
-            recordDataBuffer = DataBuffer(name: "", storage: .memory(size: recordIn!.outBuffer.size))
-            
-            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format!, block: {(buffer, time) in
+            recordInputNode.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format!, block: {(buffer, time) in
                 audioInputQueue.async (execute: {
                     autoreleasepool(invoking: {
                         let channels = UnsafeBufferPointer(start: buffer.floatChannelData, count: Int(buffer.format.channelCount))
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
-                        self.recordDataBuffer?.appendFromArray(Array(data).flatMap{Double($0)})
+                        recordInput.sampleRateInfoBuffer?.append(AVAudioSession.sharedInstance().sampleRate)
+                        self.recordDataBuffer?.appendFromArray(Array(data).flatMap{ Double($0 )})
                     })
                 })
             })
             
         }
         
-        try self.engine!.start()
+        try engine.start()
     }
     
     func play() {
@@ -143,23 +147,6 @@ final class AudioEngine {
             }
         }
     }
-    
-    func receiveRecording(out: DataBuffer, sampleRateInfo: DataBuffer?) {
-        if recordDataBuffer == nil {
-            return
-        }
-
-        audioInputQueue.sync {
-            autoreleasepool {
-                print(AVAudioSession.sharedInstance().sampleRate)
-                sampleRateInfo?.append(AVAudioSession.sharedInstance().sampleRate)
-                
-                let data = recordDataBuffer!.toArray()
-                recordDataBuffer!.clear()
-                out.replaceValues(data)
-            }
-        }
-    }
 
     func stop() {
         if playing {
@@ -178,7 +165,6 @@ final class AudioEngine {
         playbackBuffer = nil
         
         playbackOut = nil
-        recordIn = nil
         
         recordDataBuffer = nil
         

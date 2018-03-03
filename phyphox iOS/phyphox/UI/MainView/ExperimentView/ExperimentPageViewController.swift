@@ -23,7 +23,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var experimentViewControllers: [ExperimentViewController] = []
     
     let webServer: ExperimentWebServer
-    private let viewModules: [[UIView]]
+
+    private let viewModules: [[ExperimentViewModuleView]]
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -65,15 +66,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         updateTabScrollPosition(selectedViewCollection)
         
         for (index, collection) in viewModules.enumerated() {
-            for module in collection {
-                if var proto = module as? ExperimentViewModuleProtocol {
-                    if index == selectedViewCollection {
-                        proto.active = true
-                        proto.setNeedsUpdate()
-                        proto.triggerUpdate()
-                    } else {
-                        proto.active = false
-                    }
+            for var module in collection {
+                if index == selectedViewCollection {
+                    module.active = true
+                } else {
+                    module.active = false
                 }
             }
         }
@@ -93,10 +90,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.experiment = experiment
         self.webServer = ExperimentWebServer(experiment: experiment)
         
-        var modules: [[UIView]] = []
+        var modules: [[ExperimentViewModuleView]] = []
         
-        if experiment.viewDescriptors != nil {
-            for collection in experiment.viewDescriptors! {
+        if let descriptors = experiment.viewDescriptors {
+            for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection)
                 
                 for module in m {
@@ -310,14 +307,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.viewDidDisappear(animated)
         
         if (self.isMovingFromParentViewController) {
-            for collection in viewModules {
-                for module in collection {
-                    if let proto = module as? ExperimentViewModuleProtocol {
-                        proto.unregisterFromBuffer()
-                    }
-                }
-            }
-        
             tearDownWebServer()
         
             experimentStartTimer?.invalidate()

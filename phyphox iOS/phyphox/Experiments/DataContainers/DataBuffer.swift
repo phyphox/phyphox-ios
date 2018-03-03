@@ -12,7 +12,14 @@ import Dispatch
 
 protocol DataBufferObserver: class {
     func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) //noData signifies that the buffer has changed, but contains no data (in practice: Update views, but do not attempt calculations on this data)
-    func analysisComplete()
+}
+
+private typealias ObserverCapture = () -> DataBufferObserver?
+
+private func weakObserverCapture(_ object: DataBufferObserver) -> ObserverCapture {
+    return { [weak object] in
+        return object
+    }
 }
 
 /**
@@ -52,7 +59,6 @@ final class DataBuffer {
     }
 
     var attachedToTextField = false
-    var dataFromAnalysis = false
     
     var hashValue: Int {
         return name.hash
@@ -62,18 +68,29 @@ final class DataBuffer {
 
     private var stateToken: UUID?
     
-    private var observers = NSMutableOrderedSet()
+    private var observerCaptures: [ObserverCapture] = []
     
     /**
      Notifications are sent in order, first registered, first notified.
      */
     func addObserver(_ observer: DataBufferObserver) {
-        observers.add(observer)
+        let alreadyRegistered = observerCaptures.contains(where: { capture in
+            return capture() === observer
+        })
+
+        if !alreadyRegistered {
+            let capture = weakObserverCapture(observer)
+            observerCaptures.append(capture)
+        }
     }
-    
-    func removeObserver(_ observer: DataBufferObserver) {
-        observers.remove(observer)
-    }
+//    
+//    func removeObserver(_ observer: DataBufferObserver) {
+//        observerCaptures.filter {
+//            let object = $0()
+//
+//            return $0 != nil && $0 != observer
+//        }
+//    }
     
     /**
      A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
@@ -182,31 +199,21 @@ final class DataBuffer {
         }
     }
     
-    func sendUpdateNotification(_ noData: Bool = false) {
+    private func sendUpdateNotification(_ noData: Bool = false) {
         guard isOpen else { return }
 
-        for observer in observers {
+        for observer in observerCaptures {
             mainThread {
-                (observer as! DataBufferObserver).dataBufferUpdated(self, noData: noData)
-            }
-        }
-    }
-    
-    func sendAnalysisCompleteNotification() {
-        guard isOpen else { return }
-
-        for observer in observers {
-            mainThread {
-                (observer as! DataBufferObserver).analysisComplete()
+                observer()?.dataBufferUpdated(self, noData: noData)
             }
         }
     }
 
-    func syncWrite(_ body: () throws -> Void) rethrows {
+    private func syncWrite(_ body: () throws -> Void) rethrows {
         try queueLock.sync(flags: .barrier, execute: body)
     }
 
-    func syncRead<T>(_ body: () throws -> T) rethrows -> T {
+    private func syncRead<T>(_ body: () throws -> T) rethrows -> T {
         return try queueLock.sync(execute: body)
     }
 

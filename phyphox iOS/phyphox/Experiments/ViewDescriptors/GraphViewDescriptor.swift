@@ -52,7 +52,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let lineWidth: CGFloat
     let color: UIColor
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -83,7 +83,7 @@ final class GraphViewDescriptor: ViewDescriptor {
         self.lineWidth = lineWidth
         self.color = color
         
-        super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
+        super.init(label: label, translation: translation)
     }
     
     override func generateViewHTMLWithID(_ id: Int) -> String {

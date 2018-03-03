@@ -12,7 +12,6 @@ import AVFoundation
 
 let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioInput", attributes: [])
 
-
 final class ExperimentAudioInput {
     let sampleRate: UInt
     let outBuffer: DataBuffer
@@ -23,9 +22,4 @@ final class ExperimentAudioInput {
         self.outBuffer = outBuffer
         self.sampleRateInfoBuffer = sampleRateInfoBuffer
     }
-    
-    func receiveData() {
-        ExperimentManager.shared.audioEngine.receiveRecording(out: outBuffer, sampleRateInfo: sampleRateInfoBuffer)
-    }
-    
 }

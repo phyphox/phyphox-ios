@@ -19,7 +19,7 @@ struct GraphGridLine {
     let relativeValue: CGFloat
 }
 
-final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, DataBufferObserver, GraphGridDelegate {
+final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphGridDelegate {
     var isExclusiveView = false
     typealias T = GraphViewDescriptor
     
@@ -159,8 +159,11 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         //TODO: Interactive graphs deactivated - For now...
         //let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
         //glGraph.addGestureRecognizer(tapGesture)
-        
-        descriptor.yInputBuffer.addObserver(self)
+
+        registerInputBuffer(descriptor.yInputBuffer)
+        if let xBuffer = descriptor.xInputBuffer {
+            registerInputBuffer(xBuffer)
+        }
     }
     
     func tapped(_ sender: UITapGestureRecognizer) {
@@ -272,14 +275,6 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Data
         zoomMinY = zoomMaxY - scaleY
         
         self.update()
-    }
-    
-    override func unregisterFromBuffer() {
-        descriptor.yInputBuffer.removeObserver(self)
-    }
-    
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
-        setNeedsUpdate()
     }
     
     //MARK - Graph

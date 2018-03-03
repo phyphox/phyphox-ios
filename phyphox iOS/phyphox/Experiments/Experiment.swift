@@ -108,7 +108,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     var localizedLinks: [String: String] {
-        var allLinks = self.links
+        var allLinks = links
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, value) in translatedLinks {
                 allLinks[key] = value
@@ -118,7 +118,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     var localizedHighlightedLinks: [String: String] {
-        var allLinks = self.highlightedLinks
+        var allLinks = highlightedLinks
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, _) in translatedLinks {
                 allLinks[key] = translatedLinks[key]
@@ -197,11 +197,11 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         }
         
         if audioInput != nil {
-            self.requiredPermissions.insert(.Microphone)
+            requiredPermissions.insert(.Microphone)
         }
         
         if gpsInput != nil {
-            self.requiredPermissions.insert(.Location)
+            requiredPermissions.insert(.Location)
         }
         
         self.analysis?.delegate = self
@@ -245,14 +245,9 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     func analysisWillUpdate(_: ExperimentAnalysis) {
-        audioInput?.receiveData()
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
-        for buffer in buffers.1 {
-            buffer.sendAnalysisCompleteNotification()
-        }
-        
         if running {
             output?.audioOutput?.play()
         }
@@ -262,8 +257,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
      Called when the experiment view controller will be presented.
      */
     func willGetActive(_ dismiss: @escaping () -> ()) {
-        if self.requiredPermissions != .None {
-            checkAndAskForPermissions(dismiss, locationManager: self.gpsInput?.locationManager)
+        if requiredPermissions != .None {
+            checkAndAskForPermissions(dismiss, locationManager: gpsInput?.locationManager)
         }
 
         delegate?.experimentWillBecomeActive(self)
@@ -332,8 +327,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     private func startAudio() throws {
-        try ExperimentManager.shared.audioEngine.startEngine(playback: self.output?.audioOutput, record: self.audioInput)
-        self.output?.audioOutput?.play()
+        try ExperimentManager.shared.audioEngine.startEngine(playback: output?.audioOutput, recordInput: audioInput)
+        output?.audioOutput?.play()
     }
     
     private func stopAudio() {
@@ -374,7 +369,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
             }
         }
 
-        self.gpsInput?.start()
+        gpsInput?.start()
         
         analysis?.running = true
         analysis?.setNeedsUpdate()

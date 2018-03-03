@@ -9,7 +9,7 @@
 
 import UIKit
 
-final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, DataBufferObserver {
+final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
     let valueLabel: UILabel = UILabel()
     let unitLabel: UILabel = UILabel()
     let spacing = CGFloat(10.0)
@@ -32,21 +32,11 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         addSubview(self.unitLabel)
         
         label.textAlignment = NSTextAlignment.right
-        
-        newValueIn()
-        
-        descriptor.buffer.addObserver(self)
+
+        registerInputBuffer(descriptor.buffer)
     }
-    
-    override func unregisterFromBuffer() {
-        descriptor.buffer.removeObserver(self)
-    }
-    
-    func dataBufferUpdated(_ buffer: DataBuffer, noData: Bool) {
-        newValueIn()
-    }
-    
-    func newValueIn() {
+
+    override func update() {
         var str: String = ""
         var mapped = false
         let last = descriptor.buffer.last
@@ -78,6 +68,8 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         
         valueLabel.text = str
         
+        super.update()
+
         setNeedsLayout()
     }
     

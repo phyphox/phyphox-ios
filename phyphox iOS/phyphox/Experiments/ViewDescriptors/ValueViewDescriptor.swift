@@ -19,7 +19,7 @@ final class ValueViewDescriptor: ViewDescriptor {
     let size: Double
     let mappings: [(min: Double, max: Double, str: String)]
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [(min: Double, max: Double, str: String)]) {
+    init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [(min: Double, max: Double, str: String)]) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -34,7 +34,7 @@ final class ValueViewDescriptor: ViewDescriptor {
         
         self.mappings = translatedMappings
         
-        super.init(label: label, translation: translation, requiresAnalysis: requiresAnalysis)
+        super.init(label: label, translation: translation)
     }
     
     override func generateViewHTMLWithID(_ id: Int) -> String {

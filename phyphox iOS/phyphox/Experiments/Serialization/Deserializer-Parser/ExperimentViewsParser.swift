@@ -142,9 +142,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     throw SerializationError.invalidExperimentFile(message: "No input buffer for value view.")
                 }
                 
-                let requiresAnalysis = inputBuffer!.dataFromAnalysis
-                
-                return ValueViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!, mappings: mappings)
+                return ValueViewDescriptor(label: label, translation: translation, size: size, scientific: scientific, precision: precision, unit: unit, factor: factor, buffer: inputBuffer!, mappings: mappings)
             }
             
             func handleGraph(_ graph: [String: AnyObject]) throws -> GraphViewDescriptor? {
@@ -254,10 +252,8 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 if yInputBuffer == nil {
                     throw SerializationError.invalidExperimentFile(message: "Error! No Y axis input buffer!")
                 }
-                
-                let requiresAnalysis = (yInputBuffer!.dataFromAnalysis || xInputBuffer?.dataFromAnalysis ?? false)
-                
-                return GraphViewDescriptor(label: label, translation: translation, requiresAnalysis: requiresAnalysis, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
+
+                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
             }
             
             func handleInfo(_ info: [String: AnyObject]) -> InfoViewDescriptor? {

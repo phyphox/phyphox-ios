@@ -11,17 +11,15 @@ import Foundation
 
 open class ViewDescriptor {
     private let label: String
-    let requiresAnalysis: Bool
     weak var translation: ExperimentTranslationCollection?
     
     var localizedLabel: String {
         return translation?.localize(label) ?? label
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool = false) {
+    init(label: String, translation: ExperimentTranslationCollection?) {
         self.label = label
         self.translation = translation
-        self.requiresAnalysis = requiresAnalysis
     }
     
     func onTrigger() {
