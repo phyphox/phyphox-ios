@@ -54,6 +54,8 @@ final class DataBuffer {
         return name.hash
     }
 
+    private let baseContents: [Double]
+
     private let storageType: StorageType
 
     private var stateToken: UUID?
@@ -104,9 +106,10 @@ final class DataBuffer {
 
     private var queue: Queue<Double>
 
-    init(name: String, storage: StorageType) {
+    init(name: String, storage: StorageType, baseContents: [Double]) {
         self.name = name
         self.storageType = storage
+        self.baseContents = baseContents
 
         switch storage {
         case .memory(size: let size):
@@ -116,6 +119,7 @@ final class DataBuffer {
         }
 
         queue = Queue<Double>(capacity: size)
+        appendFromArray(baseContents)
     }
 
     private var persistentStorageFileHandle: FileHandle?
@@ -226,6 +230,8 @@ final class DataBuffer {
             queue.clear()
             written = false
         }
+
+        appendFromArray(baseContents)
 
         bufferMutated()
         sendUpdateNotification()
