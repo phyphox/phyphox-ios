@@ -10,8 +10,6 @@
 import Foundation
 import AVFoundation
 
-let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioInput", attributes: [])
-
 final class ExperimentAudioInput {
     let sampleRate: UInt
     let outBuffer: DataBuffer

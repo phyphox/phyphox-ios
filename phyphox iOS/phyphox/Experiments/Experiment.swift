@@ -165,6 +165,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     private(set) var startTimestamp: TimeInterval?
     private var pauseBegin: TimeInterval = 0.0
 
+    private var audioEngine: AudioEngine?
 //    private var bufferStorageURL: URL?
 
     init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer], [DataBuffer]), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
@@ -249,7 +250,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
         if running {
-            output?.audioOutput?.play()
+            audioEngine?.playAudioOutput()
         }
     }
     
@@ -327,12 +328,15 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     private func startAudio() throws {
-        try ExperimentManager.shared.audioEngine.startEngine(playback: output?.audioOutput, recordInput: audioInput)
-        output?.audioOutput?.play()
+        if output?.audioOutput != nil || audioInput != nil {
+            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInput)
+            try audioEngine?.startEngine()
+        }
     }
     
-    private func stopAudio() {
-        ExperimentManager.shared.audioEngine.stopEngine()
+    private func stopAudio() throws {
+        try audioEngine?.stopEngine()
+        audioEngine = nil
     }
     
     func start() throws {
@@ -392,7 +396,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         gpsInput?.stop()
         
-        stopAudio()
+        try? stopAudio()
         
         UIApplication.shared.isIdleTimerDisabled = false
         

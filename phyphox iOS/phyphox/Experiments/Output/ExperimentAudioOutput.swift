@@ -10,8 +10,6 @@
 import Foundation
 import AVFoundation
 
-private let audioOutputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioOutput", attributes: DispatchQueue.Attributes.concurrent)
-
 final class ExperimentAudioOutput {
     let dataSource: DataBuffer
     let loop: Bool
@@ -22,13 +20,4 @@ final class ExperimentAudioOutput {
         self.sampleRate = sampleRate;
         self.loop = loop;
     }
-    
-    func play() {
-        ExperimentManager.shared.audioEngine.play()
-    }
-    
-    func stop() {
-        ExperimentManager.shared.audioEngine.stop()
-    }
-    
 }

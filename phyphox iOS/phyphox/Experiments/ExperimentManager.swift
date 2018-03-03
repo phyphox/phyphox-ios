@@ -23,8 +23,6 @@ enum FileError: Error {
 }
 
 final class ExperimentManager {
-    let audioEngine = AudioEngine()
-
     var experimentCollections: [ExperimentCollection] = []
     static let shared = ExperimentManager()
 
