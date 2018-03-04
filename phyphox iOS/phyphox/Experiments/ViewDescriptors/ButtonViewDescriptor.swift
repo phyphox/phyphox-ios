@@ -6,7 +6,6 @@
 //  Copyright © 2016 RWTH Aachen. All rights reserved.
 //
 
-
 import Foundation
 import CoreGraphics
 
@@ -21,23 +20,7 @@ final class ButtonViewDescriptor: ViewDescriptor {
         super.init(label: label, translation: translation)
     }
     
-    override func onTrigger() {
-        for (i, output) in self.outputs.enumerated() {
-            if self.inputs.count > i {
-                let input = self.inputs[i]
-                if input.value != nil {
-                    output.replaceValues([input.value!])
-                } else if input.buffer != nil {
-                    output.replaceValues(input.buffer!.toArray())
-                } else {
-                    output.clear()
-                }
-            }
-        }
-    }
-    
     override func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size: 105%;\" class=\"buttonElement\" id=\"element\(id)\"><button onclick=\"$.getJSON('control?cmd=trigger&element=\(id)')\">\(localizedLabel)</button></div>"
     }
 }
-

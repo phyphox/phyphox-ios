@@ -11,7 +11,9 @@ import UIKit
 final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
     let button: UIButton
     let spacing = CGFloat(20.0)
-    
+
+    var buttonTappedCallback: (() -> Void)?
+
     required init(descriptor: ButtonViewDescriptor) {
         button = UIButton()
         button.backgroundColor = kLightBackgroundColor
@@ -24,8 +26,8 @@ final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
         addSubview(button)
     }
     
-    @objc func buttonPressed() {
-        descriptor.onTrigger();
+    @objc private func buttonPressed() {
+        buttonTappedCallback?()
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {

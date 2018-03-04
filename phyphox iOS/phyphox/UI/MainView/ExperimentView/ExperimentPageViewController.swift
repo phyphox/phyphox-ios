@@ -96,12 +96,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection)
                 
-                for module in m {
-                    if let graph = module as? ExperimentGraphView {
-                        graph.queue = experiment.queue
-                    }
-                }
-                
                 modules.append(m)
                 
                 experimentViewControllers.append(ExperimentViewController(modules: m))
@@ -113,7 +107,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         selectedViewCollection = 0
         
         super.init(nibName: nil, bundle: nil)
-        
+
+        for module in viewModules.flatMap({ $0 }) {
+            if let graph = module as? ExperimentGraphView {
+                graph.queue = experiment.queue
+            }
+            else if let button = module as? ExperimentButtonView {
+                button.buttonTappedCallback = { [weak self, weak button] in
+                    guard let button = button else { return }
+                    
+                    self?.buttonPressed(viewDescriptor: button.descriptor)
+                }
+            }
+        }
+
         self.navigationItem.title = experiment.localizedTitle
         
         webServer.delegate = self
@@ -292,6 +299,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             popoverHint.view.addGestureRecognizer(tapHandler)
         }
         
+    }
+
+    func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
+        for (i, output) in viewDescriptor.outputs.enumerated() {
+            if viewDescriptor.inputs.count > i {
+                let input = viewDescriptor.inputs[i]
+                if input.value != nil {
+                    output.replaceValues([input.value!])
+                } else if input.buffer != nil {
+                    output.replaceValues(input.buffer!.toArray())
+                } else {
+                    output.clear()
+                }
+            }
+        }
     }
     
     //Force iPad-style popups (for the hint to the menu)

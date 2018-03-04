@@ -22,9 +22,6 @@ open class ViewDescriptor {
         self.translation = translation
     }
     
-    func onTrigger() {
-    }
-    
     func generateViewHTMLWithID(_ id: Int) -> String {
         fatalError("Override this method")
     }

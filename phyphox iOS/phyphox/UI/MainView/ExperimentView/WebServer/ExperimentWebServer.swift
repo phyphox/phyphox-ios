@@ -17,6 +17,7 @@ protocol ExperimentWebServerDelegate: class {
     func startExperiment()
     func stopExperiment()
     func clearData()
+    func buttonPressed(viewDescriptor: ButtonViewDescriptor)
     func runExport(format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
 }
 
@@ -164,7 +165,9 @@ final class ExperimentWebServer {
                 }
                 
                 if (self.htmlId2ViewElement.count > elementIndex) {
-                    self.htmlId2ViewElement[elementIndex].onTrigger()
+                    if let buttonDescriptor = self.htmlId2ViewElement[elementIndex] as? ButtonViewDescriptor {
+                        self.delegate?.buttonPressed(viewDescriptor: buttonDescriptor)
+                    }
                 }
                 
                 returnSuccessResponse()
