@@ -113,35 +113,35 @@ final class ExperimentDeserializer {
         guard !buffers.isEmpty else {
             throw SerializationError.invalidExperimentFile(message: "Could not load data containers.")
         }
-        
-        let translation = try parseTranslations(dictionary["translations"] as? NSDictionary, defaultLanguage: defaultLanguage)
-        
-        let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
-        
-        let inputs = try parseInputs(dictionary["input"] as? NSDictionary, buffers: buffers)
-        
-        let sensorInputs = inputs.0
-        let gpsInputs = inputs.1
-        let gpsInput = gpsInputs?.count ?? 0 > 0 ? gpsInputs![0] : nil
-        let audioInputs = inputs.2
-        let audioInput = audioInputs?.count ?? 0 > 0 ? audioInputs![0] : nil
-        
-        let viewDescriptors = try parseViews(dictionary["views"] as? NSDictionary, buffers: buffers, translation: translation)
-        
-        let export = parseExport(dictionary["export"] as? NSDictionary, buffers: buffers, translation: translation)
-        
-        let output = parseOutput(dictionary["output"] as? NSDictionary, buffers: buffers)
-        
+
         let iconRaw = dictionary["icon"]
         guard let icon = parseIcon((iconRaw ?? title ?? "") as AnyObject) else {
             throw SerializationError.invalidExperimentFile(message: "Icon could not be parsed.")
         }
+
+        let translation = try parseTranslations(dictionary["translations"] as? NSDictionary, defaultLanguage: defaultLanguage)
         
         guard let anyTitle = title ?? translation?.selectedTranslation?.titleString,
             let anyCategory = category ?? translation?.selectedTranslation?.categoryString
             else {
             throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
         }
+
+        let inputs = try parseInputs(dictionary["input"] as? NSDictionary, buffers: buffers)
+
+        let sensorInputs = inputs.0
+        let gpsInputs = inputs.1
+        let gpsInput = gpsInputs?.count ?? 0 > 0 ? gpsInputs![0] : nil
+        let audioInputs = inputs.2
+        let audioInput = audioInputs?.count ?? 0 > 0 ? audioInputs![0] : nil
+
+        let viewDescriptors = try parseViews(dictionary["views"] as? NSDictionary, buffers: buffers, translation: translation)
+
+        let export = parseExport(dictionary["export"] as? NSDictionary, buffers: buffers, translation: translation)
+
+        let output = parseOutput(dictionary["output"] as? NSDictionary, buffers: buffers)
+
+        let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
         
         let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
