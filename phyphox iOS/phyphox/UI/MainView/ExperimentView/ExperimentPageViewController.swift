@@ -262,7 +262,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .alert)
             
             al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .default, handler: { _ in
-                try? self.saveLocally()
+                do {
+                    try self.saveLocally()
+                }
+                catch {
+                    print(error)
+                }
             }))
             al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
             
@@ -791,15 +796,32 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             i += 1
         }
 
-        try FileManager.default.copyItem(at: source, to: experimentURL)
-        self.experiment.source = experimentURL
+        func moveFile(from fileURL: URL) throws {
+            try FileManager.default.copyItem(at: fileURL, to: experimentURL)
 
-        try! ExperimentManager.shared.loadCustomExperiments()
-        
-        let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
-        
-        confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
-        self.navigationController!.present(confirmation, animated: true, completion: nil)
+            self.experiment.source = experimentURL
+            self.experiment.local = true
+            
+            mainThread {
+                try! ExperimentManager.shared.loadCustomExperiments()
+
+                let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
+
+                confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                self.navigationController!.present(confirmation, animated: true, completion: nil)
+            }
+        }
+
+        if source.isFileURL {
+            try moveFile(from: source)
+        }
+        else {
+            URLSession.shared.downloadTask(with: source, completionHandler: { location, _, _ in
+                guard let location = location else { return }
+
+                try? moveFile(from: location)
+            }).resume()
+        }
     }
 
     @objc func stopTimerFired() {
