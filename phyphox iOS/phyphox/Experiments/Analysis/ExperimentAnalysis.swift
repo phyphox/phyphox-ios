@@ -9,18 +9,18 @@
 
 import Foundation
 
-protocol ExperimentAnalysisDelegate : AnyObject {
+protocol ExperimentAnalysisDelegate: class {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis)
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }
 
 private let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-protocol ExperimentAnalysisTimeManager : AnyObject {
+protocol ExperimentAnalysisTimeManager: class {
     func getCurrentTimestamp() -> TimeInterval
 }
 
-final class ExperimentAnalysis: DataBufferObserver {
+final class ExperimentAnalysis {
     private let modules: [ExperimentAnalysisModule]
     
     private let sleep: Double
@@ -33,8 +33,6 @@ final class ExperimentAnalysis: DataBufferObserver {
     
     weak var timeManager: ExperimentAnalysisTimeManager?
     weak var delegate: ExperimentAnalysisDelegate?
-
-    private var timestamp: TimeInterval = 0.0
 
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
         self.modules = modules
@@ -71,18 +69,6 @@ final class ExperimentAnalysis: DataBufferObserver {
             $0.value.addObserver(self, alwaysNotify: false)
         }
     }
-
-    func dataBufferUpdated(_ buffer: DataBuffer) {
-        setNeedsUpdate()
-    }
-    
-    func analysisComplete() {
-        
-    }
-    
-    func reset() {
-        timestamp = 0.0
-    }
     
     private var busy = false
     
@@ -97,9 +83,7 @@ final class ExperimentAnalysis: DataBufferObserver {
                     self.busy = false
                     return
                 }
-                
-                self.timestamp = self.timeManager?.getCurrentTimestamp() ?? 0.0
-                
+
                 self.delegate?.analysisWillUpdate(self)
 
                 self.update {
@@ -112,10 +96,12 @@ final class ExperimentAnalysis: DataBufferObserver {
     
     private func update(_ completion: @escaping () -> Void) {
         let c = modules.count-1
-        
+
+        let timestamp = timeManager?.getCurrentTimestamp() ?? 0.0
+
         for (i, analysis) in modules.enumerated() {
             analysisQueue.async(execute: {
-                analysis.setNeedsUpdate(self.timestamp)
+                analysis.setNeedsUpdate(timestamp)
                 if i == c {
                     mainThread {
                         completion()
@@ -123,5 +109,11 @@ final class ExperimentAnalysis: DataBufferObserver {
                 }
             })
         }
+    }
+}
+
+extension ExperimentAnalysis: DataBufferObserver {
+    func dataBufferUpdated(_ buffer: DataBuffer) {
+        setNeedsUpdate()
     }
 }
