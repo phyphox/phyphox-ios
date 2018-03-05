@@ -91,48 +91,33 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     }
     
     private func writeToBuffers(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
-        if lat != nil && self.latBuffer != nil {
-            self.latBuffer!.append(lat)
+
+        func tryAppend(value: Double?, to buffer: DataBuffer?) {
+            guard let value = value, let buffer = buffer else { return }
+
+            buffer.append(value)
         }
-        if lon != nil && self.lonBuffer != nil {
-            self.lonBuffer!.append(lon)
-        }
-        if z != nil && self.zBuffer != nil {
-            self.zBuffer!.append(z)
-        }
-        
-        if v != nil && self.vBuffer != nil {
-            self.vBuffer!.append(v)
-        }
-        if dir != nil && self.dirBuffer != nil {
-            self.dirBuffer!.append(dir)
-        }
-        
-        if accuracy != nil && self.accuracyBuffer != nil {
-            self.accuracyBuffer!.append(accuracy)
-        }
-        
-        if zAccuracy != nil && self.zAccuracyBuffer != nil {
-            self.zAccuracyBuffer!.append(zAccuracy)
-        }
-        
-        if t != nil && self.tBuffer != nil {
+
+        tryAppend(value: lat, to: latBuffer)
+        tryAppend(value: lon, to: lonBuffer)
+        tryAppend(value: z, to: zBuffer)
+        tryAppend(value: v, to: vBuffer)
+        tryAppend(value: dir, to: dirBuffer)
+        tryAppend(value: accuracy, to: accuracyBuffer)
+        tryAppend(value: zAccuracy, to: zAccuracyBuffer)
+
+        if let t = t, let tBuffer = tBuffer {
             if startTimestamp == nil {
-                startTimestamp = t! - (self.tBuffer?.last ?? 0.0)
+                startTimestamp = t - (self.tBuffer?.last ?? 0.0)
             }
             
-            let relativeT = t!-self.startTimestamp!
+            let relativeT = t - self.startTimestamp!
             
-            self.tBuffer!.append(relativeT)
+            tBuffer.append(relativeT)
         }
-        
-        if status != nil && self.statusBuffer != nil {
-            self.statusBuffer!.append(status)
-        }
-        
-        if satellites != nil && self.satellitesBuffer != nil {
-            self.satellitesBuffer!.append(satellites)
-        }
+
+        tryAppend(value: status, to: statusBuffer)
+        tryAppend(value: satellites, to: satellitesBuffer)
     }
     
     private func dataIn(_ lat: Double?, lon: Double?, z: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {

@@ -50,15 +50,14 @@ final class DataBuffer {
 
     var attachedToTextField = false
 
-    var hashValue: Int {
-        return name.hash
-    }
-
     private let baseContents: [Double]
 
     private let storageType: StorageType
 
-    private var stateToken: UUID?
+    /**
+     A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the state token changes too.
+     */
+    private(set) var stateToken = UUID()
 
     private var observerCaptures: [ObserverCapture] = []
 
@@ -76,27 +75,16 @@ final class DataBuffer {
         }
     }
 
-    /**
-     A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the current state token gets invalidated.
-     */
-    func getStateToken() -> UUID? {
-        if stateToken == nil {
-            stateToken = UUID()
-        }
-
-        return stateToken
-    }
-
-    func stateTokenIsValid(_ token: UUID?) -> Bool {
-        return token != nil && stateToken != nil && stateToken == token
+    func stateTokenIsValid(_ token: UUID) -> Bool {
+        return stateToken == token
     }
 
     private func bufferMutated() {
-        stateToken = nil
+        stateToken = UUID()
     }
 
-    var staticBuffer: Bool = false
-    var written: Bool = false
+    let staticBuffer: Bool
+    private var written: Bool = false
 
     var count: Int {
         return Swift.min(queue.count, effectiveMemorySize)
@@ -106,7 +94,7 @@ final class DataBuffer {
 
     private var queue: Queue<Double>
 
-    init(name: String, storage: StorageType, baseContents: [Double]) {
+    init(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
         self.name = name
         self.storageType = storage
         self.baseContents = baseContents
@@ -119,6 +107,8 @@ final class DataBuffer {
         }
 
         queue = Queue<Double>(capacity: size)
+        self.staticBuffer = staticBuffer
+
         appendFromArray(baseContents)
     }
 
@@ -228,108 +218,105 @@ final class DataBuffer {
     }
 
     func clear() {
+        guard !staticBuffer else { return }
+
         syncWrite {
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.truncateFile(atOffset: 0)
             }
 
-            queue.clear()
-            written = false
+            queue.replaceValues(baseContents)
         }
-
-        appendFromArray(baseContents)
 
         bufferMutated()
         sendUpdateNotification()
     }
 
     func replaceValues(_ values: [Double]) {
-        if !staticBuffer || !written {
-            var cutValues = values
+        guard !staticBuffer || !written else { return }
 
-            syncWrite {
-                written = true
+        syncWrite {
+            written = true
 
-                autoreleasepool {
-                    if isOpen, let handle = persistentStorageFileHandle {
-                        handle.truncateFile(atOffset: 0)
-                        values.enumerateDataEncodedElements { data in
-                            handle.write(data)
-                        }
-                    }
-
-                    let effectiveSize = effectiveMemorySize
-
-                    if cutValues.count > effectiveSize {
-                        cutValues = Array(cutValues[cutValues.count-effectiveSize..<cutValues.count])
-                    }
-
-                    queue.replaceValues(cutValues)
-                }
-            }
-
-            bufferMutated()
-            sendUpdateNotification()
-        }
-    }
-
-    func append(_ value: Double?) {
-        if (!staticBuffer || !written), let value = value {
-            syncWrite {
-                written = true
+            autoreleasepool {
+                var cutValues = values
 
                 if isOpen, let handle = persistentStorageFileHandle {
-                    handle.write(value.encode())
+                    handle.truncateFile(atOffset: 0)
+                    values.enumerateDataEncodedElements { data in
+                        handle.write(data)
+                    }
                 }
 
-                self.queue.enqueue(value)
+                let effectiveSize = effectiveMemorySize
 
-                if queue.count > effectiveMemorySize {
-                    _ = queue.dequeue()
+                if cutValues.count > effectiveSize {
+                    cutValues = Array(cutValues[cutValues.count-effectiveSize..<cutValues.count])
                 }
+
+                queue.replaceValues(cutValues)
+            }
+        }
+
+        bufferMutated()
+        sendUpdateNotification()
+    }
+
+    func append(_ value: Double) {
+        guard !staticBuffer || !written else { return }
+
+        syncWrite {
+            written = true
+
+            if isOpen, let handle = persistentStorageFileHandle {
+                handle.write(value.encode())
             }
 
-            bufferMutated()
-            sendUpdateNotification()
+            self.queue.enqueue(value)
+
+            if queue.count > effectiveMemorySize {
+                _ = queue.dequeue()
+            }
         }
+
+        bufferMutated()
+        sendUpdateNotification()
     }
 
     func appendFromArray(_ values: [Double]) {
-        guard !values.isEmpty else { return }
+        guard !staticBuffer || !written, !values.isEmpty else { return }
 
-        if !staticBuffer || !written {
-            syncWrite {
-                written = true
+        syncWrite {
+            written = true
 
-                autoreleasepool {
-                    if isOpen, let handle = persistentStorageFileHandle {
-                        values.enumerateDataEncodedElements { data in
-                            handle.write(data)
-                        }
-                    }
-
-                    let sizeAfterAppend = count + values.count
-
-                    let cutSize = sizeAfterAppend - effectiveMemorySize
-                    let shouldCut = cutSize > 0 && sizeAfterAppend > 0
-
-                    let cutAfterAppend = cutSize > count
-
-                    if shouldCut && !cutAfterAppend {
-                        queue.removeFirst(cutSize)
-                    }
-
-                    queue.enqueue(values)
-
-                    if shouldCut && cutAfterAppend {
-                        queue.removeFirst(cutSize)
+            autoreleasepool {
+                if isOpen, let handle = persistentStorageFileHandle {
+                    values.enumerateDataEncodedElements { data in
+                        handle.write(data)
                     }
                 }
-            }
 
-            bufferMutated()
-            sendUpdateNotification()
+                let sizeAfterAppend = count + values.count
+
+                let cutSize = sizeAfterAppend - effectiveMemorySize
+                let shouldCut = cutSize > 0 && sizeAfterAppend > 0
+
+                let cutAfterAppend = cutSize > count
+
+                if shouldCut && !cutAfterAppend {
+                    queue.removeFirst(cutSize)
+                }
+
+                queue.enqueue(values)
+
+                if shouldCut && cutAfterAppend {
+                    queue.removeFirst(cutSize)
+                }
+            }
         }
+
+        bufferMutated()
+        sendUpdateNotification()
     }
 
     func toArray() -> [Double] {
@@ -371,14 +358,6 @@ extension DataBuffer: Collection {
 
 extension DataBuffer: CustomStringConvertible {
     var description: String {
-        get {
-            return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(queue.toArray())>"
-        }
+        return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
     }
 }
-
-//extension DataBuffer: Equatable {
-//    static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
-//        return lhs.name == rhs.name && lhs.size == rhs.size && fir lhs.toArray() == rhs.toArray()
-//    }
-//}

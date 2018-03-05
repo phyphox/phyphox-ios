@@ -16,24 +16,14 @@ class ExperimentAnalysisModule {
     /**
      Inputs. Either containing a buffer, or a fixed value.
      */
-    internal var inputs: [ExperimentAnalysisDataIO]
+    var inputs: [ExperimentAnalysisDataIO]
     
     /**
      Output buffers.
      */
-    internal var outputs: [ExperimentAnalysisDataIO]
+    var outputs: [ExperimentAnalysisDataIO]
     
-    private var executed = false
-    
-    internal var staticAnalysis = false {
-        didSet {
-            for out in outputs {
-                out.buffer!.staticBuffer = staticAnalysis
-            }
-        }
-    }
-    
-    internal var timestamp: TimeInterval = 0.0
+    var timestamp: TimeInterval = 0.0
 
     init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) throws {
         self.inputs = inputs
@@ -44,33 +34,30 @@ class ExperimentAnalysisModule {
      Updates immediately.
      */
     func setNeedsUpdate(_ timestamp: TimeInterval) {
-        if !staticAnalysis || !executed {
-            if Thread.isMainThread {
-                print("Analysis should run in the background!")
-            }
-            self.timestamp = timestamp
-            willUpdate()
-            update()
-            didUpdate()
-            executed = true
+        if Thread.isMainThread {
+            print("Analysis should run in the background!")
         }
+        self.timestamp = timestamp
+        willUpdate()
+        update()
+        didUpdate()
     }
     
     #if DEBUG
-    internal func debug_noteInputs(inputs: AnyObject) {
+    func debug_noteInputs(inputs: AnyObject) {
         print("\(type(of: self)) inputs: \(inputs)")
     }
     
-    internal func debug_noteOutputs(outputs: AnyObject) {
+    func debug_noteOutputs(outputs: AnyObject) {
         print("\(type(of: self)) outputs: \(outputs)")
     }
     #endif
     
-    internal func willUpdate() {
+    func willUpdate() {
         
     }
     
-    internal func didUpdate() {
+    func didUpdate() {
         for input in inputs {
             if input.clear && (input.buffer?.staticBuffer == false) && (input.buffer?.attachedToTextField == false) {
                 input.buffer?.clear()
@@ -78,7 +65,7 @@ class ExperimentAnalysisModule {
         }
     }
     
-    internal func update() {
+    func update() {
         
     }
 }

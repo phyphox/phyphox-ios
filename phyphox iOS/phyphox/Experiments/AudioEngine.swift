@@ -21,7 +21,7 @@ final class AudioEngine {
     private var playing = false
 
     private var audioOutput: ExperimentAudioOutput? = nil
-    private var playbackStateToken: UUID?
+    private var playbackStateToken = UUID()
 
     init(audioOutput: ExperimentAudioOutput?, audioInput: ExperimentAudioInput?) throws {
         self.audioOutput = audioOutput
@@ -107,7 +107,7 @@ final class AudioEngine {
             //If a buffer gets played and paused repeatedly (like the sonar) but the content that is played is always the same the buffer doesn't need to be created again.
             if playbackBuffer == nil || !audioOutput.dataSource.stateTokenIsValid(playbackStateToken) {
                 var source = audioOutput.dataSource.toArray().map { Float($0) }
-                playbackStateToken = audioOutput.dataSource.getStateToken()
+                playbackStateToken = audioOutput.dataSource.stateToken
                 
                 if playbackPlayer.isPlaying {
                     playbackBuffer = nil

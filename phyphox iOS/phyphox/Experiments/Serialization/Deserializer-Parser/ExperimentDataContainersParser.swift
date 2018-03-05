@@ -77,8 +77,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     storageType = .memory(size: bufferSize)
                 }
 
-                let buffer = DataBuffer(name: name, storage: storageType, baseContents: baseContents)
-                buffer.staticBuffer = stat
+                let buffer = DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: stat)
 
                 buffers[name] = buffer
                 ordered.append(buffer)

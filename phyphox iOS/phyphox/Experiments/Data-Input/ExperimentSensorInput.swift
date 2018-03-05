@@ -37,14 +37,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     private(set) var rate: TimeInterval //in s
     
     var effectiveRate: TimeInterval {
-        get {
-            if self.averaging != nil {
+            if averaging != nil {
                 return 0.0
             }
             else {
                 return rate
             }
-        }
     }
     
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
@@ -97,9 +95,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     private var averaging: Averaging?
     
     var recordingAverages: Bool {
-        get {
-            return self.averaging != nil
-        }
+            return averaging != nil
     }
     
     init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
@@ -157,7 +153,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     private func resetValuesForAveraging() {
-        guard let averaging = self.averaging else {
+        guard let averaging = averaging else {
             return
         }
         
@@ -349,32 +345,30 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     private func writeToBuffers(_ x: Double?, y: Double?, z: Double?, accuracy: Double?, t: TimeInterval) {
-        if x != nil && self.xBuffer != nil {
-            self.xBuffer!.append(x)
+        func tryAppend(value: Double?, to buffer: DataBuffer?) {
+            guard let value = value, let buffer = buffer else { return }
+
+            buffer.append(value)
         }
-        if y != nil && self.yBuffer != nil {
-            self.yBuffer!.append(y)
-        }
-        if z != nil && self.zBuffer != nil {
-            self.zBuffer!.append(z)
-        }
+
+        tryAppend(value: x, to: xBuffer)
+        tryAppend(value: y, to: yBuffer)
+        tryAppend(value: z, to: zBuffer)
+
+        tryAppend(value: accuracy, to: accuracyBuffer)
         
-        if accuracy != nil && self.accuracyBuffer != nil {
-            self.accuracyBuffer!.append(accuracy)
-        }
-        
-        if self.tBuffer != nil {
+        if let tBuffer = tBuffer {
             if startTimestamp == nil {
-                startTimestamp = t - (self.tBuffer?.last ?? 0.0)
+                startTimestamp = t - (tBuffer.last ?? 0.0)
             }
             
-            let relativeT = t-self.startTimestamp!
+            let relativeT = t-startTimestamp!
             
-            self.tBuffer!.append(relativeT)
+            tBuffer.append(relativeT)
         }
         
-        if x != nil && y != nil && z != nil && self.absBuffer != nil {
-            self.absBuffer!.append(sqrt(x!*x!+y!*y!+z!*z!))
+        if let x = x, let y = y, let z = z, let absBuffer = absBuffer {
+            absBuffer.append(sqrt(x*x + y*y + z*z))
         }
     }
     
@@ -386,7 +380,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 return
             }
             
-            if let av = self.averaging {
+            if let av = averaging {
                 if av.iterationStartTimestamp == nil {
                     av.iterationStartTimestamp = t
                 }
@@ -433,13 +427,13 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 writeToBuffers(x, y: y, z: z, accuracy: accuracy, t: t!)
             }
             
-            if let av = self.averaging {
+            if let av = averaging {
                 if av.requiresFlushing(t!) && av.numberOfUpdates > 0 {
                     let u = Double(av.numberOfUpdates)
                     
                     writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), accuracy: av.accuracy, t: t!)
                     
-                    self.resetValuesForAveraging()
+                    resetValuesForAveraging()
                     av.iterationStartTimestamp = t
                 }
             }
