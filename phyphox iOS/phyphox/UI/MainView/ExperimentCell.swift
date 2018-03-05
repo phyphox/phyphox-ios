@@ -60,12 +60,15 @@ class ExperimentCell: UICollectionViewCell {
     weak var experiment: Experiment? {
         didSet {
             if experiment != oldValue || (experiment == nil && oldValue == nil) {
-                titleLabel.text = experiment?.localizedTitle
-                subtitleLabel.text = experiment?.localizedDescription
-                
                 var available = true
-                if let sensors = experiment!.sensorInputs {
-                    for sensor in sensors {
+
+                iconView?.removeFromSuperview()
+
+                if let experiment = experiment {
+                    titleLabel.text = experiment.localizedTitle
+                    subtitleLabel.text = experiment.localizedDescription
+
+                    for sensor in experiment.sensorInputs {
                         do {
                             try sensor.verifySensorAvailibility()
                         }
@@ -75,22 +78,19 @@ class ExperimentCell: UICollectionViewCell {
                         }
                         catch {}
                     }
+
+                    let iconView = experiment.icon.generateResizableRepresentativeView()
+                    self.iconView = iconView
+
+                    contentView.addSubview(iconView)
                 }
+
                 if (available) {
                     titleLabel.textColor = kTextColor
                     subtitleLabel.textColor = kText2Color
                 } else {
                     titleLabel.textColor = kTextColorDeactivated
                     subtitleLabel.textColor = kTextColorDeactivated
-                }
-                
-                if iconView != nil {
-                    iconView?.removeFromSuperview()
-                }
-                
-                if experiment != nil {
-                    iconView = experiment!.icon.generateResizableRepresentativeView()
-                    contentView.addSubview(iconView!)
                 }
                 
                 setNeedsLayout()

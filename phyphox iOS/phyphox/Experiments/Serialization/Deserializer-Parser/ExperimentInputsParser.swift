@@ -68,17 +68,11 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
         return sensorType
     }
     
-    func parse(_ buffers: [String : DataBuffer]) throws -> ([ExperimentSensorInput]?, [ExperimentGPSInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
-        if sensors == nil && gps == nil && audio == nil && bluetooth == nil {
-            return (nil, nil, nil, nil)
-        }
+    func parse(_ buffers: [String: DataBuffer]) throws -> ([ExperimentSensorInput], [ExperimentGPSInput], [ExperimentAudioInput]) {
+        var sensorsOut: [ExperimentSensorInput] = []
         
-        var sensorsOut: [ExperimentSensorInput]?
-        
-        if sensors != nil {
-            sensorsOut = []
-            
-            for sensor in sensors! {
+        if let sensors = sensors {
+            for sensor in sensors {
                 let attributes = sensor[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let average = boolFromXML(attributes as [String : AnyObject], key: "average", defaultValue: false)
@@ -139,16 +133,14 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let sensor = ExperimentSensorInput(sensorType: sensorType!, calibrated: true, motionSession: MotionSession.sharedSession(), rate: rate, average: average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
                 
-                sensorsOut!.append(sensor)
+                sensorsOut.append(sensor)
             }
         }
         
-        var gpsOut: [ExperimentGPSInput]?
+        var gpsOut: [ExperimentGPSInput] = []
         
-        if gps != nil {
-            gpsOut = []
-            
-            for gpsi in gps! {             
+        if let gps = gps {
+            for gpsi in gps {
                 let outputs = getElementsWithKey(gpsi, key: "output") as? [[String: AnyObject]]
                 
                 guard outputs != nil else {
@@ -203,16 +195,14 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let sensor = ExperimentGPSInput(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
                 
-                gpsOut!.append(sensor)
+                gpsOut.append(sensor)
             }
         }
         
-        var audioOut: [ExperimentAudioInput]?
+        var audioOut: [ExperimentAudioInput] = []
         
-        if audio != nil {
-            audioOut = []
-            
-            for audioIn in audio! {
+        if let audio = audio {
+            for audioIn in audio {
                 let attributes = audioIn[XMLDictionaryAttributesKey] as! [String: String]?
                 
                 let sampleRate = intTypeFromXML(attributes as [String : AnyObject]?, key: "rate", defaultValue: UInt(48000))
@@ -243,11 +233,11 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 let input = ExperimentAudioInput(sampleRate: sampleRate, outBuffer: outBuffers[0], sampleRateInfoBuffer: sampleRateInfoBuffer)
                 
-                audioOut!.append(input)
+                audioOut.append(input)
             }
         }
         
-        var bluetoothOut: [ExperimentBluetoothInput]?
+        /*var bluetoothOut: [ExperimentBluetoothInput]?
         
         if bluetooth != nil {
             
@@ -322,8 +312,8 @@ final class ExperimentInputsParser: ExperimentMetadataParser {
                 
                 bluetoothOut!.append(input)
             }
-        }
+        }*/
         
-        return ((sensorsOut?.count ?? 0 > 0 ? sensorsOut : nil), (gpsOut?.count ?? 0 > 0 ? gpsOut : nil), (audioOut?.count ?? 0 > 0 ? audioOut : nil), (bluetoothOut?.count ?? 0 > 0 ? bluetoothOut : nil))
+        return (sensorsOut, gpsOut, audioOut)
     }
 }

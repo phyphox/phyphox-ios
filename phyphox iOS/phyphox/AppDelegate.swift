@@ -98,38 +98,46 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
-
+    // TODO: Way too many nopes in this method...
     func launchExperimentByURL(_ url: URL) -> Bool {
-        print("Opening \(url)")
-        
         var experiment: Experiment?
         
-        var fatalError: Error?
+        var experimentLoadingError: Error?
         
-        if (url.scheme == "phyphox") {
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-            components?.scheme = "https"
-            do {
-                experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
-            } catch {
-                components?.scheme = "http"
+        if url.scheme == "phyphox" {
+            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                components.scheme = "https"
+
                 do {
-                    experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
-                } catch let error {
-                    fatalError = error
+                    experiment = try ExperimentSerialization.readExperimentFromURL(components.url!)
+                }
+                catch {
+                    components.scheme = "http"
+
+                    do {
+                        experiment = try ExperimentSerialization.readExperimentFromURL(components.url!)
+                    }
+                    catch let error {
+                        experimentLoadingError = error
+                    }
                 }
             }
-        } else {
+            else {
+                experimentLoadingError = SerializationError.invalidFilePath
+            }
+        }
+        else {
             do {
                 experiment = try ExperimentSerialization.readExperimentFromURL(url)
-            } catch let error {
-                fatalError = error
+            }
+            catch let error {
+                experimentLoadingError = error
             }
         }
         
-        if (fatalError != nil) {
+        if experimentLoadingError != nil {
             let message: String
-            if let sError = fatalError as? SerializationError {
+            if let sError = experimentLoadingError as? SerializationError {
                 switch sError {
                 case .emptyData:
                     message = "Empty data."
@@ -145,16 +153,17 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                     message = "Write failed."
                 }
             } else {
-                message = String(describing: fatalError!)
+                message = String(describing: experimentLoadingError!)
             }
             let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
             controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
             main.present(controller, animated: true, completion: nil)
             return false
         }
-        
-        if let sensors = experiment!.sensorInputs {
-            for sensor in sensors {
+
+        guard let loadedExperiment = experiment else { return false }
+
+            for sensor in loadedExperiment.sensorInputs {
                 do {
                     try sensor.verifySensorAvailibility()
                 }
@@ -170,18 +179,15 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                 }
                 catch {}
             }
-        }
         
-        while (main.viewControllers.count > 1) {
-            main.popViewController(animated: true)
-        }
+        main.popToRootViewController(animated: true)
         
-        let controller = ExperimentPageViewController(experiment: experiment!)
+        let controller = ExperimentPageViewController(experiment: loadedExperiment)
         
         var denied = false
         var showing = false
         
-        experiment!.willGetActive {
+        loadedExperiment.willGetActive {
             denied = true
             if showing {
                 self.main.popViewController(animated: true)

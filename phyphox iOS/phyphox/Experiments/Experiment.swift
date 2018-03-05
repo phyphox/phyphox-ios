@@ -77,9 +77,11 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translation: ExperimentTranslationCollection?
-    let sensorInputs: [ExperimentSensorInput]?
-    let gpsInput: ExperimentGPSInput?
-    let audioInput: ExperimentAudioInput?
+
+    let sensorInputs: [ExperimentSensorInput]
+    let gpsInputs: [ExperimentGPSInput]
+    let audioInputs: [ExperimentAudioInput]
+
     let output: ExperimentOutput?
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
@@ -97,9 +99,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     private var pauseBegin: TimeInterval = 0.0
 
     private var audioEngine: AudioEngine?
-//    private var bufferStorageURL: URL?
 
-    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer], [DataBuffer]), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer], [DataBuffer]), sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.description = description
@@ -115,8 +116,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
 
         self.buffers = buffers
         self.sensorInputs = sensorInputs
-        self.gpsInput = gpsInput
-        self.audioInput = audioInput
+        self.gpsInputs = gpsInputs
+        self.audioInputs = audioInputs
         self.output = output
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
@@ -128,11 +129,11 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
             NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
         }
         
-        if audioInput != nil {
+        if !audioInputs.isEmpty {
             requiredPermissions.insert(.Microphone)
         }
         
-        if gpsInput != nil {
+        if !gpsInputs.isEmpty {
             requiredPermissions.insert(.Location)
         }
         
@@ -166,7 +167,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
      */
     func willGetActive(_ dismiss: @escaping () -> ()) {
         if requiredPermissions != .None {
-            checkAndAskForPermissions(dismiss, locationManager: gpsInput?.locationManager)
+            checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
 
         delegate?.experimentWillBecomeActive(self)
@@ -235,8 +236,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     }
     
     private func startAudio() throws {
-        if output?.audioOutput != nil || audioInput != nil {
-            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInput)
+        if output?.audioOutput != nil || !audioInputs.isEmpty {
+            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInputs.first)
             try audioEngine?.startEngine()
         }
     }
@@ -274,13 +275,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         try startAudio()
         
-        if let sensorInputs = sensorInputs {
-            for sensor in sensorInputs {
-                sensor.start()
-            }
-        }
-
-        gpsInput?.start()
+        sensorInputs.forEach { $0.start() }
+        gpsInputs.forEach { $0.start() }
         
         analysis?.running = true
         analysis?.setNeedsUpdate()
@@ -295,13 +291,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         
         pauseBegin = CFAbsoluteTimeGetCurrent()
         
-        if let sensorInputs = sensorInputs {
-            for sensor in sensorInputs {
-                sensor.stop()
-            }
-        }
-        
-        gpsInput?.stop()
+        sensorInputs.forEach { $0.stop() }
+        gpsInputs.forEach { $0.stop() }
         
         try? stopAudio()
         
@@ -327,14 +318,9 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
                 buffer.clear()
             }
         }
-        
-        if let sensorInputs = sensorInputs {
-            for sensor in sensorInputs {
-                sensor.clear()
-            }
-        }
 
-        gpsInput?.clear()
+        sensorInputs.forEach { $0.clear() }
+        gpsInputs.forEach { $0.clear() }
     }
 }
 

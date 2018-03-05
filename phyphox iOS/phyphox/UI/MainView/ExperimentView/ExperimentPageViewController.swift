@@ -274,8 +274,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.navigationController!.present(al, animated: true, completion: nil)
             
         //Show a hint for the experiment info
-        } else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
+        }
+        else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
             return
+            // TODO: This thing seriously shouldn't always appear. It probably shouldn't ever appear in the first place... Bad UX. If your button needs a hint your button is wrong.
             let label = UILabel()
             label.text = NSLocalizedString("experimentinfo_hint", comment: "")
             label.lineBreakMode = .byWordWrapping
@@ -734,30 +736,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             }))
-        
-        var magnetometer: ExperimentSensorInput? = nil
-        if (experiment.sensorInputs != nil) {
-            for sensor in experiment.sensorInputs! {
-                if (sensor.sensorType == SensorType.magneticField) {
-                    magnetometer = sensor
+
+        for sensor in experiment.sensorInputs {
+            if sensor.sensorType == SensorType.magneticField {
+                if sensor.calibrated {
+                    alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
+                        self.stopExperiment()
+                        sensor.calibrated = false
+                    }))
+                } else {
+                    alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
+                        self.stopExperiment()
+                        sensor.calibrated = true
+                    }))
                 }
+
+                break
             }
         }
-        if (magnetometer != nil) {
-            if magnetometer!.calibrated {
-                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
-                    self.stopExperiment()
-                    magnetometer?.calibrated = false
-                    }))
-            } else {
-                alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
-                    self.stopExperiment()
-                    magnetometer?.calibrated = true
-                    }))
-            }
-            
-        }
-        
+
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         
         if !experiment.local {
@@ -774,7 +771,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             popover.barButtonItem = item
         }
         
-        self.navigationController!.present(alert, animated: true, completion: nil)
+        self.navigationController?.present(alert, animated: true, completion: nil)
     }
     
     func saveLocally() throws {

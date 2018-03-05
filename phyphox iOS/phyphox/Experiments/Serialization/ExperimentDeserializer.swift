@@ -11,7 +11,7 @@ import Foundation
 
 func getElemetArrayFromValue(_ value: AnyObject) -> [AnyObject] {
     var values: [AnyObject] = []
-    
+
     if value is NSMutableArray {
         for item in (value as! NSMutableArray) {
             values.append(item as AnyObject)
@@ -23,17 +23,17 @@ func getElemetArrayFromValue(_ value: AnyObject) -> [AnyObject] {
     else {
         values.append(value)
     }
-    
+
     return values
 }
 
 func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     let read = xml[key]
-    
+
     if let v = read {
         return getElemetArrayFromValue(v as AnyObject)
     }
-    
+
     return nil
 }
 
@@ -45,15 +45,15 @@ final class ExperimentDeserializer {
         self.local = local
         parser = XMLParser(data: data)
     }
-    
+
     func deserialize() throws -> Experiment {
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary
-        
+
         let dictionary = XMLDictionaryParser.sharedInstance().dictionary(with: parser)! as NSDictionary
         guard dictionary.nodeName() == "phyphox" else {
             throw SerializationError.invalidExperimentFile(message: "phyphox root node not present.")
         }
-        
+
         //Check file version
         let supported_major = 1
         let supported_minor = 6
@@ -65,10 +65,10 @@ final class ExperimentDeserializer {
                 throw SerializationError.newExperimentFileVersion(phyphoxFormat: "\(supported_major).\(supported_minor)", fileFormat: version)
             }
         }
-        
+
         let attributes = dictionary[XMLDictionaryAttributesKey] as! [String: AnyObject]?
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
-        
+
         var d = dictionary["description"]
         let descriptionRAW: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
         let description: String?
@@ -88,11 +88,11 @@ final class ExperimentDeserializer {
             for dict in getElemetArrayFromValue(dictionary["link"]! as AnyObject) as! [NSDictionary] {
                 let url = dict[XMLDictionaryTextKey] as? String ?? ""
                 let attributes = dict[XMLDictionaryAttributesKey] as! [String: AnyObject]?
-                
+
                 let label = stringFromXML(attributes, key: "label", defaultValue: "Link")
-                
+
                 let highlight = boolFromXML(attributes, key: "highlight", defaultValue: false)
-                
+
                 links[label] = url
                 if (highlight) {
                     highlightedLinks[label] = url
@@ -120,20 +120,14 @@ final class ExperimentDeserializer {
         }
 
         let translation = try parseTranslations(dictionary["translations"] as? NSDictionary, defaultLanguage: defaultLanguage)
-        
+
         guard let anyTitle = title ?? translation?.selectedTranslation?.titleString,
             let anyCategory = category ?? translation?.selectedTranslation?.categoryString
             else {
-            throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
+                throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
         }
 
-        let inputs = try parseInputs(dictionary["input"] as? NSDictionary, buffers: buffers)
-
-        let sensorInputs = inputs.0
-        let gpsInputs = inputs.1
-        let gpsInput = gpsInputs?.count ?? 0 > 0 ? gpsInputs![0] : nil
-        let audioInputs = inputs.2
-        let audioInput = audioInputs?.count ?? 0 > 0 ? audioInputs![0] : nil
+        let (sensorInputs, gpsInputs, audioInputs) = try parseInputs(dictionary["input"] as? NSDictionary, buffers: buffers)
 
         let viewDescriptors = try parseViews(dictionary["views"] as? NSDictionary, buffers: buffers, translation: translation)
 
@@ -142,9 +136,9 @@ final class ExperimentDeserializer {
         let output = parseOutput(dictionary["output"] as? NSDictionary, buffers: buffers)
 
         let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
-        
-        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
-        
+
+        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+
         return experiment
     }
 
@@ -152,7 +146,7 @@ final class ExperimentDeserializer {
         serializationQueue.async { () -> Void in
             do {
                 let experiment = try self.deserialize()
-                
+
                 mainThread({
                     completion(experiment, nil)
                 })
@@ -164,9 +158,9 @@ final class ExperimentDeserializer {
             }
         }
     }
-    
+
     //MARK: - Parsing
-    
+
     func parseDataContainers(_ dataContainers: NSDictionary?, analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> ([String: DataBuffer], [DataBuffer]) {
         guard let dataContainers = dataContainers else { return ([:], []) }
 
@@ -174,43 +168,43 @@ final class ExperimentDeserializer {
 
         return try parser.parse(analysisInputBufferNames: analysisInputBufferNames, experimentPeristentStorageURL: experimentPersistentStorageURL)
     }
-    
+
     func parseIcon(_ icon: AnyObject) -> ExperimentIcon? {
         let parser = ExperimentIconParser(icon)
-        
+
         return parser.parse()
     }
-    
+
     func parseOutput(_ outputs: NSDictionary?,  buffers: [String : DataBuffer]) -> ExperimentOutput? {
         guard let outputs = outputs else { return nil }
 
-            let parser = ExperimentOutputParser(outputs)
-            
-            return parser.parse(buffers)
+        let parser = ExperimentOutputParser(outputs)
+
+        return parser.parse(buffers)
     }
-    
+
     func parseExport(_ exports: NSDictionary?, buffers: [String : DataBuffer], translation: ExperimentTranslationCollection?) -> ExperimentExport? {
         guard let exports = exports else { return nil }
 
-            let parser = ExperimentExportParser(exports)
-            
-            return parser.parse(buffers, translation: translation)
-    }
-    
-    func parseInputs(_ inputs: NSDictionary?, buffers: [String : DataBuffer]) throws -> ([ExperimentSensorInput]?, [ExperimentGPSInput]?, [ExperimentAudioInput]?, [ExperimentBluetoothInput]?) {
-        guard let inputs = inputs else { return (nil, nil, nil, nil) }
+        let parser = ExperimentExportParser(exports)
 
-            let parser = ExperimentInputsParser(inputs)
-            
-            return try parser.parse(buffers)
+        return parser.parse(buffers, translation: translation)
     }
-    
+
+    func parseInputs(_ inputs: NSDictionary?, buffers: [String : DataBuffer]) throws -> ([ExperimentSensorInput], [ExperimentGPSInput], [ExperimentAudioInput]) {
+        guard let inputs = inputs else { return ([], [], []) }
+
+        let parser = ExperimentInputsParser(inputs)
+
+        return try parser.parse(buffers)
+    }
+
     func parseViews(_ views: NSDictionary?, buffers: [String : DataBuffer], translation: ExperimentTranslationCollection?) throws -> [ExperimentViewCollectionDescriptor]? {
         guard let views = views else { return nil }
 
-            let parser = ExperimentViewsParser(views)
-            
-            return try parser.parse(buffers, translation: translation)
+        let parser = ExperimentViewsParser(views)
+
+        return try parser.parse(buffers, translation: translation)
     }
 
     func getInputBufferNames(for analysis: NSDictionary?) -> Set<String> {
@@ -219,19 +213,19 @@ final class ExperimentDeserializer {
         let parser = ExperimentAnalysisParser(analysis)
         return parser.getInputBufferNames()
     }
-    
+
     func parseAnalysis(_ analysis: NSDictionary?, buffers: [String : DataBuffer]) throws -> ExperimentAnalysis? {
         guard let analysis = analysis else { return nil }
 
         let parser = ExperimentAnalysisParser(analysis)
         return try parser.parse(buffers)
     }
-    
+
     func parseTranslations(_ translations: NSDictionary?, defaultLanguage: String) throws -> ExperimentTranslationCollection? {
         guard let translations = translations else { return nil }
 
-            let parser = ExperimentTranslationsParser(translations, defaultLanguage: defaultLanguage)
-            
-            return try parser.parse()
+        let parser = ExperimentTranslationsParser(translations, defaultLanguage: defaultLanguage)
+
+        return try parser.parse()
     }
 }

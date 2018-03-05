@@ -277,9 +277,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = collections[indexPath.section].experiments[indexPath.row]
-        
-        if let sensors = experiment.experiment.sensorInputs {
-            for sensor in sensors {
+
+            for sensor in experiment.experiment.sensorInputs {
                 do {
                     try sensor.verifySensorAvailibility()
                 }
@@ -296,9 +295,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
                     return
                 }
                 catch {}
-            }
         }
-        
+
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
         
         var denied = false
