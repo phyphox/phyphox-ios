@@ -130,28 +130,32 @@ final class DataBuffer {
      Opening a buffer starts notifying all observers. In case of a hybrid buffer the file handle for writing data to the persistent storage is opened and the current contents of the buffer are written to the persistent storage.
      */
     func open() {
-        guard !isOpen else { return }
+        syncWrite {
+            guard !isOpen else { return }
 
-        isOpen = true
+            isOpen = true
 
-        switch storageType {
-        case .hybrid(memorySize: _, persistentStorageLocation: let url):
-            if !FileManager.default.fileExists(atPath: url.path) {
-                FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
+            switch storageType {
+            case .hybrid(memorySize: _, persistentStorageLocation: let url):
+                if !FileManager.default.fileExists(atPath: url.path) {
+                    FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
+                }
+
+                let handle = try? FileHandle(forWritingTo: url)
+                handle?.truncateFile(atOffset: 0)
+
+                persistentStorageFileHandle = handle
+            case .memory(size: _):
+                break
             }
 
-            let handle = try? FileHandle(forWritingTo: url)
-            handle?.truncateFile(atOffset: 0)
-
-            persistentStorageFileHandle = handle
-        case .memory(size: _):
-            break
-        }
-
-        // Write current contents
-        if let handle = persistentStorageFileHandle {
-            enumerateDataEncodedElements { data in
-                handle.write(data)
+            autoreleasepool {
+                // Write current contents
+                if let handle = persistentStorageFileHandle {
+                    enumerateDataEncodedElements { data in
+                        handle.write(data)
+                    }
+                }
             }
         }
     }
@@ -160,19 +164,21 @@ final class DataBuffer {
      Closing a buffer stops notifying all observers (observers that explicitly want constant updates excluded), closes the persistent storage file handle in case of a hybrid buffer and deletes the persistent storage file.
      */
     func close() {
-        guard isOpen else { return }
+        syncWrite {
+            guard isOpen else { return }
 
-        isOpen = false
+            isOpen = false
 
-        switch storageType {
-        case .hybrid(memorySize: _, persistentStorageLocation: let url):
-            persistentStorageFileHandle?.synchronizeFile()
-            persistentStorageFileHandle?.closeFile()
-            persistentStorageFileHandle = nil
+            switch storageType {
+            case .hybrid(memorySize: _, persistentStorageLocation: let url):
+                persistentStorageFileHandle?.synchronizeFile()
+                persistentStorageFileHandle?.closeFile()
+                persistentStorageFileHandle = nil
 
-            try? FileManager.default.removeItem(at: url)
-        case .memory(size: _):
-            break
+                try? FileManager.default.removeItem(at: url)
+            case .memory(size: _):
+                break
+            }
         }
     }
 
@@ -197,8 +203,8 @@ final class DataBuffer {
         }
     }
 
-    private func syncWrite(_ body: () throws -> Void) rethrows {
-        try queueLock.sync(flags: .barrier, execute: body)
+    private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
+        return try queueLock.sync(flags: .barrier, execute: body)
     }
 
     private func syncRead<T>(_ body: () throws -> T) rethrows -> T {
