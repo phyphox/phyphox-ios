@@ -32,13 +32,10 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
         }
     }
 
-    func parse(analysisInputBufferNames: Set<String>, experimentPeristentStorageURL: URL) throws -> ([String: DataBuffer], [DataBuffer]) {
-        guard let cont = containers else { return ([:], []) }
+    func parse(analysisInputBufferNames: Set<String>, experimentPeristentStorageURL: URL) throws -> [String: DataBuffer] {
+        guard let cont = containers else { return [:] }
 
         var buffers: [String: DataBuffer] = [:]
-        var ordered: [DataBuffer] = []
-
-        ordered.reserveCapacity(cont.count)
 
         for container in cont {
             var name: String!
@@ -80,10 +77,9 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                 let buffer = DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: stat)
 
                 buffers[name] = buffer
-                ordered.append(buffer)
             }
         }
 
-        return (buffers, ordered)
+        return buffers
     }
 }

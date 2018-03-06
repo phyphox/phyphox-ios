@@ -11,7 +11,7 @@ import Foundation
 import AVFoundation
 import CoreLocation
 
-struct ExperimentRequiredPermission : OptionSet {
+struct ExperimentRequiredPermission: OptionSet {
     let rawValue: Int
     
     static let None = ExperimentRequiredPermission(rawValue: 0)
@@ -23,7 +23,7 @@ protocol ExperimentDelegate: class {
     func experimentWillBecomeActive(_ experiment: Experiment)
 }
 
-final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
+final class Experiment {
     let title: String
     private let description: String?
     private let links: [String: String]
@@ -86,11 +86,11 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
-    let buffers: ([String: DataBuffer], [DataBuffer])
+    let buffers: [String: DataBuffer]
     
-    let queue: DispatchQueue
+    private(set) lazy var queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: .concurrent)
     
-    var requiredPermissions: ExperimentRequiredPermission = .None
+    private(set) var requiredPermissions: ExperimentRequiredPermission = .None
     
     private(set) var running = false
     private(set) var hasStarted = false
@@ -100,7 +100,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer], [DataBuffer]), sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.description = description
@@ -123,8 +123,6 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         self.analysis = analysis
         self.export = export
         
-        queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: DispatchQueue.Attributes.concurrent)
-        
         defer {
             NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
         }
@@ -137,11 +135,11 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
             requiredPermissions.insert(.Location)
         }
         
-        self.analysis?.delegate = self
-        self.analysis?.timeManager = self
+        analysis?.delegate = self
+        analysis?.timestampSource = self
     }
 
-    @objc func endBackgroundSession() {
+    @objc private func endBackgroundSession() {
         stop()
     }
     
@@ -149,23 +147,10 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         NotificationCenter.default.removeObserver(self)
     }
     
-    func getCurrentTimestamp() -> TimeInterval {
-        return startTimestamp != nil ? CFAbsoluteTimeGetCurrent()-startTimestamp! : 0.0
-    }
-    
-    func analysisWillUpdate(_: ExperimentAnalysis) {
-    }
-    
-    func analysisDidUpdate(_: ExperimentAnalysis) {
-        if running {
-            audioEngine?.playAudioOutput()
-        }
-    }
-    
     /**
      Called when the experiment view controller will be presented.
      */
-    func willGetActive(_ dismiss: @escaping () -> ()) {
+    func willBecomeActive(_ dismiss: @escaping () -> Void) {
         if requiredPermissions != .None {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
@@ -180,9 +165,8 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         clear()
     }
     
-    func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
+    private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
         if requiredPermissions.contains(.Microphone) {
-            
             let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
             
             switch status {
@@ -265,7 +249,7 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
 
         try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
 
-        for buffer in buffers.1 {
+        for buffer in buffers.values {
             buffer.open()
         }
 
@@ -307,13 +291,13 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
         startTimestamp = nil
         hasStarted = false
 
-        for buffer in buffers.1 {
+        for buffer in buffers.values {
             buffer.close()
         }
 
         try? FileManager.default.removeItem(at: persistentStorageURL)
 
-        for buffer in buffers.1 {
+        for buffer in buffers.values {
             if !buffer.attachedToTextField {
                 buffer.clear()
             }
@@ -321,6 +305,25 @@ final class Experiment: ExperimentAnalysisDelegate, ExperimentAnalysisTimeManage
 
         sensorInputs.forEach { $0.clear() }
         gpsInputs.forEach { $0.clear() }
+    }
+}
+
+extension Experiment: ExperimentAnalysisDelegate {
+    func analysisWillUpdate(_: ExperimentAnalysis) {
+    }
+
+    func analysisDidUpdate(_: ExperimentAnalysis) {
+        if running {
+            audioEngine?.playAudioOutput()
+        }
+    }
+}
+
+extension Experiment: ExperimentAnalysisTimestampSource {
+    func getCurrentTimestamp() -> TimeInterval {
+        guard let startTimestamp = startTimestamp else { return 0.0 }
+
+        return CFAbsoluteTimeGetCurrent() - startTimestamp
     }
 }
 

@@ -16,7 +16,7 @@ protocol ExperimentAnalysisDelegate: class {
 
 private let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-protocol ExperimentAnalysisTimeManager: class {
+protocol ExperimentAnalysisTimestampSource: class {
     func getCurrentTimestamp() -> TimeInterval
 }
 
@@ -31,7 +31,7 @@ final class ExperimentAnalysis {
 
     var running = false
     
-    weak var timeManager: ExperimentAnalysisTimeManager?
+    weak var timestampSource: ExperimentAnalysisTimestampSource?
     weak var delegate: ExperimentAnalysisDelegate?
 
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
@@ -71,33 +71,48 @@ final class ExperimentAnalysis {
     }
     
     private var busy = false
-    
+    private var requestedUpdateWhileBusy = false
+
     /**
      Schedules an update.
      */
     func setNeedsUpdate() {
-        if !busy {
-            busy = true
-            after(max(1/50.0, dynamicSleep?.last ?? sleep), closure: {
-                if !self.running { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
-                    self.busy = false
-                    return
-                }
+        guard !busy else {
+            requestedUpdateWhileBusy = true
+            return
+        }
 
-                self.delegate?.analysisWillUpdate(self)
+        busy = true
 
-                self.update {
-                    self.busy = false
-                    self.delegate?.analysisDidUpdate(self)
+        let delay = max(1/50.0, dynamicSleep?.last ?? sleep)
+
+        after(delay) {
+            if !self.running { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
+                self.busy = false
+                return
+            }
+
+            self.delegate?.analysisWillUpdate(self)
+
+            self.update {
+                let didRequestUpdateWhileBusy = self.requestedUpdateWhileBusy
+
+                self.requestedUpdateWhileBusy = false
+                self.busy = false
+
+                self.delegate?.analysisDidUpdate(self)
+
+                if didRequestUpdateWhileBusy {
+                    self.setNeedsUpdate()
                 }
-            })
+            }
         }
     }
     
     private func update(_ completion: @escaping () -> Void) {
-        let c = modules.count-1
+        let c = modules.count - 1
 
-        let timestamp = timeManager?.getCurrentTimestamp() ?? 0.0
+        let timestamp = timestampSource?.getCurrentTimestamp() ?? 0.0
 
         for (i, analysis) in modules.enumerated() {
             analysisQueue.async(execute: {

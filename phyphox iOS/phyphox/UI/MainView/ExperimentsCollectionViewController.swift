@@ -298,20 +298,7 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         }
 
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
-        
-        var denied = false
-        var showing = false
-        
-        experiment.experiment.willGetActive {
-            denied = true
-            if showing {
-                self.navigationController!.popViewController(animated: true)
-            }
-        }
-        
-        if !denied {
-            navigationController!.pushViewController(vc, animated: true)
-            showing = true
-        }
+
+        navigationController?.pushViewController(vc, animated: true)
     }
 }

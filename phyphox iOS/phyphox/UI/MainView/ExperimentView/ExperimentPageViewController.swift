@@ -154,7 +154,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
+        if isMovingToParentViewController {
+            experiment.willBecomeActive {
+                self.navigationController?.popToRootViewController(animated: true)
+            }
+        }
+
         self.navigationController?.navigationBar.barTintColor = kHighlightColor
         self.navigationController?.navigationBar.isTranslucent = false
     }
@@ -335,7 +341,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
-        if (self.isMovingFromParentViewController) {
+        if isMovingFromParentViewController {
             tearDownWebServer()
         
             experimentStartTimer?.invalidate()
@@ -565,15 +571,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     return
                 }
 
-                try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
+                _ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
 
                 try ExperimentManager.shared.loadSavedExperiments()
-            } catch {
+            }
+            catch {
                 return
             }
         }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_share", comment: ""), style: .default, handler: { [unowned self] action in
+            // TODO:
+
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
             
@@ -828,47 +837,47 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     @objc func startTimerFired() {
         actuallyStartExperiment()
         
-        experimentStartTimer!.invalidate()
+        experimentStartTimer?.invalidate()
         experimentStartTimer = nil
         
         let d = Double(timerDurationString ?? "0") ?? 0.0
         let i = Int(d)
         
-        var items = navigationItem.rightBarButtonItems!
+        var items = navigationItem.rightBarButtonItems
         
-        let label = items.last!.customView! as! UILabel
+        guard let label = items?.last?.customView as? UILabel else { return }
         
         label.text = "\(i)s"
         label.sizeToFit()
         
-        items.removeLast()
-        items.append(UIBarButtonItem(customView: label))
+        items?.removeLast()
+        items?.append(UIBarButtonItem(customView: label))
         
         navigationItem.rightBarButtonItems = items
         
         func updateT() {
-            if self.experimentRunTimer != nil {
-                let t = Int(round(self.experimentRunTimer!.fireDate.timeIntervalSinceNow))
-                
-                after(1.0, closure: {
-                    updateT()
-                })
-                
-                label.text = "\(t)s"
-                label.sizeToFit()
-                
-                var items = navigationItem.rightBarButtonItems!
-                
-                items.removeLast()
-                items.append(UIBarButtonItem(customView: label))
-                
-                navigationItem.rightBarButtonItems = items
+            guard let experimentRunTimer = experimentRunTimer else { return }
+
+            let t = Int(round(experimentRunTimer.fireDate.timeIntervalSinceNow))
+
+            after(1.0) {
+                updateT()
             }
+
+            label.text = "\(t)s"
+            label.sizeToFit()
+
+            var items = navigationItem.rightBarButtonItems
+
+            items?.removeLast()
+            items?.append(UIBarButtonItem(customView: label))
+
+            navigationItem.rightBarButtonItems = items
         }
         
-        after(1.0, closure: {
+        after(1.0) {
             updateT()
-        })
+        }
         
         experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
     }
@@ -887,43 +896,42 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if timerEnabled {
                 let d = Double(timerDelayString ?? "0") ?? 0.0
                 let i = Int(d)
-                
-                var items = navigationItem.rightBarButtonItems!
-                
-                let label = items.last!.customView! as! UILabel
-                
+
+                var items = navigationItem.rightBarButtonItems
+
+                guard let label = items?.last?.customView as? UILabel else { return }
+
                 label.text = "\(i)s"
                 label.sizeToFit()
-                
-                items.removeLast()
-                items.append(UIBarButtonItem(customView: label))
-                
+
+                items?.removeLast()
+                items?.append(UIBarButtonItem(customView: label))
+
                 navigationItem.rightBarButtonItems = items
-                
+
                 func updateT() {
-                    if self.experimentStartTimer != nil {
-                        let t = Int(round(self.experimentStartTimer!.fireDate.timeIntervalSinceNow))
-                        
-                        after(1.0, closure: {
-                            updateT()
-                        })
-                        
-                        label.text = "\(t)s"
-                        label.sizeToFit()
-                        
-                        var items = navigationItem.rightBarButtonItems!
-                        
-                        items.removeLast()
-                        items.append(UIBarButtonItem(customView: label))
-                        
-                        navigationItem.rightBarButtonItems = items
+                    guard let experimentStartTimer = experimentStartTimer else { return }
+                    let t = Int(round(experimentStartTimer.fireDate.timeIntervalSinceNow))
+
+                    after(1.0) {
+                        updateT()
                     }
+
+                    label.text = "\(t)s"
+                    label.sizeToFit()
+
+                    var items = navigationItem.rightBarButtonItems
+
+                    items?.removeLast()
+                    items?.append(UIBarButtonItem(customView: label))
+
+                    navigationItem.rightBarButtonItems = items
                 }
-                
-                after(1.0, closure: {
+
+                after(1.0) {
                     updateT()
-                })
-                
+                }
+
                 experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
             }
             else {

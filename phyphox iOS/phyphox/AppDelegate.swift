@@ -183,23 +183,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         main.popToRootViewController(animated: true)
         
         let controller = ExperimentPageViewController(experiment: loadedExperiment)
-        
-        var denied = false
-        var showing = false
-        
-        loadedExperiment.willGetActive {
-            denied = true
-            if showing {
-                self.main.popViewController(animated: true)
-            }
-        }
-        
-        if !denied {
-            main.pushViewController(controller, animated: true)
-            showing = true
-        } else {
-            return false
-        }
+
+        main.pushViewController(controller, animated: true)
         
         return true
     }

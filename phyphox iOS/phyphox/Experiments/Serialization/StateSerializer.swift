@@ -157,7 +157,7 @@ extension Experiment {
 
         try fileManager.copyItem(at: source, to: experimentURL)
 
-        try buffers.0.forEach { name, buffer in
+        try buffers.forEach { name, buffer in
             let bufferURL = stateFolderURL.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
             try buffer.writeState(to: bufferURL)
         }

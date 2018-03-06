@@ -119,7 +119,7 @@ extension ExperimentManager: ExperimentDelegate {
     func experimentWillBecomeActive(_ experiment: Experiment) {
         guard experiment.local, let url = experiment.source, url.pathExtension == experimentStateFileExtension else { return }
 
-        experiment.buffers.0.forEach { name, buffer in
+        experiment.buffers.forEach { name, buffer in
             let bufferURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
             if FileManager.default.fileExists(atPath: bufferURL.path) {
                 try? buffer.readState(from: bufferURL)

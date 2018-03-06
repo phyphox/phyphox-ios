@@ -49,8 +49,8 @@ func mainThread(_ closure: @escaping () -> Void) {
 /**
 The closure is executed after the given delay on the main thread.
 */
-func after(_ delay: TimeInterval, closure: @escaping () -> Void) {
-    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double(Int64(Double(NSEC_PER_SEC)*delay)) / Double(NSEC_PER_SEC), execute: closure)
+func after(_ delay: TimeInterval, body: @escaping () -> Void) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: body)
 }
 
 extension RangeReplaceableCollection {

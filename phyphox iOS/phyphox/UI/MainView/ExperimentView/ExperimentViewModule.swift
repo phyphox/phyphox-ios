@@ -63,16 +63,14 @@ class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProto
     private func triggerUpdate() {
         if updateScheduled {
             //60fps max
-            after(1.0/60.0, closure: { () -> Void in
+            after(1.0/60.0) {
                 self.update()
                 self.updateScheduled = false
-            })
+            }
         }
     }
     
-    func update() {
-        
-    }
+    func update() {}
     
     @available(*, unavailable)
     required public init?(coder aDecoder: NSCoder) {

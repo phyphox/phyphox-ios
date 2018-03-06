@@ -145,7 +145,7 @@ final class ExperimentWebServer {
                 returnSuccessResponse()
             }
             else if cmd == "set" {
-                guard let bufferName = query["buffer"], let valueString = query["value"], let buffer = self.experiment.buffers.0[bufferName], let value = Double(valueString) else {
+                guard let bufferName = query["buffer"], let valueString = query["value"], let buffer = self.experiment.buffers[bufferName], let value = Double(valueString) else {
                     returnErrorResponse()
                     return
                 }
@@ -196,7 +196,7 @@ final class ExperimentWebServer {
             var bufferDict = [String: AnyObject]()
             
             for (bufferName, value) in query {
-                guard let b = self.experiment.buffers.0[bufferName] else {
+                guard let b = self.experiment.buffers[bufferName] else {
                     continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
                 }
                 
@@ -221,7 +221,7 @@ final class ExperimentWebServer {
                         if extraComponents.count > 1 {
                             let extra = extraComponents.last!
 
-                            guard let extraBuffer = self.experiment.buffers.0[extra] else {
+                            guard let extraBuffer = self.experiment.buffers[extra] else {
                                 let response = GCDWebServerResponse(statusCode: 400)
                                 
                                 completionBlock(response)

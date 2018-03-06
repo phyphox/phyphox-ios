@@ -106,9 +106,7 @@ final class ExperimentDeserializer {
 
         let analysisInputBufferNames = getInputBufferNames(for: analysisDictionary)
 
-        let buffersRaw = try parseDataContainers(dictionary["data-containers"] as? NSDictionary, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
-
-        let buffers = buffersRaw.0
+        let buffers = try parseDataContainers(dictionary["data-containers"] as? NSDictionary, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
 
         guard !buffers.isEmpty else {
             throw SerializationError.invalidExperimentFile(message: "Could not load data containers.")
@@ -137,7 +135,7 @@ final class ExperimentDeserializer {
 
         let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
 
-        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         return experiment
     }
@@ -161,8 +159,8 @@ final class ExperimentDeserializer {
 
     //MARK: - Parsing
 
-    func parseDataContainers(_ dataContainers: NSDictionary?, analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> ([String: DataBuffer], [DataBuffer]) {
-        guard let dataContainers = dataContainers else { return ([:], []) }
+    func parseDataContainers(_ dataContainers: NSDictionary?, analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> [String: DataBuffer] {
+        guard let dataContainers = dataContainers else { return [:] }
 
         let parser = ExperimentDataContainersParser(dataContainers)
 
