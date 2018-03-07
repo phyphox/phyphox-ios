@@ -22,6 +22,8 @@ private func weakObserverCapture(_ object: DataBufferObserver, alwaysNotify: Boo
     }
 }
 
+private let isLittleEndian = CFByteOrderGetCurrent() == Int(CFByteOrderLittleEndian.rawValue)
+
 /**
  Data buffer used for raw or processed data from sensors.
  */
@@ -81,6 +83,16 @@ final class DataBuffer {
 
     private func bufferMutated() {
         stateToken = UUID()
+
+        for observerCapture in observerCaptures {
+            let (observer, alwaysNotify) = observerCapture()
+
+            if isOpen || alwaysNotify {
+                mainThread {
+                    observer?.dataBufferUpdated(self)
+                }
+            }
+        }
     }
 
     let staticBuffer: Bool
@@ -181,18 +193,6 @@ final class DataBuffer {
         }
     }
 
-    private func sendUpdateNotification() {
-        for observerCapture in observerCaptures {
-            let (observer, alwaysNotify) = observerCapture()
-
-            if isOpen || alwaysNotify {
-                mainThread {
-                    observer?.dataBufferUpdated(self)
-                }
-            }
-        }
-    }
-
     private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
         return try queueLock.sync(flags: .barrier, execute: body)
     }
@@ -207,6 +207,14 @@ final class DataBuffer {
         }
     }
 
+    private func willWrite() {
+        written = true
+    }
+
+    private func didWrite() {
+        bufferMutated()
+    }
+
     func removeFirst(_ n: Int) {
         if hybrid {
             print("Truncating a hybrid buffer is not supported.")
@@ -218,25 +226,26 @@ final class DataBuffer {
     }
 
     func clear() {
-        guard !staticBuffer else { return }
-
         syncWrite {
+            guard !staticBuffer else { return }
+
+            willWrite()
+
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.truncateFile(atOffset: 0)
             }
 
             queue.replaceValues(baseContents)
-        }
 
-        bufferMutated()
-        sendUpdateNotification()
+            didWrite()
+        }
     }
 
     func replaceValues(_ values: [Double]) {
-        guard !staticBuffer || !written else { return }
-
         syncWrite {
-            written = true
+            guard !staticBuffer || !written else { return }
+
+            willWrite()
 
             autoreleasepool {
                 var cutValues = values
@@ -256,17 +265,16 @@ final class DataBuffer {
 
                 queue.replaceValues(cutValues)
             }
-        }
 
-        bufferMutated()
-        sendUpdateNotification()
+            didWrite()
+        }
     }
 
     func append(_ value: Double) {
-        guard !staticBuffer || !written else { return }
-
         syncWrite {
-            written = true
+            guard !staticBuffer || !written else { return }
+
+            willWrite()
 
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.write(value.encode())
@@ -277,17 +285,18 @@ final class DataBuffer {
             if queue.count > effectiveMemorySize {
                 _ = queue.dequeue()
             }
-        }
 
-        bufferMutated()
-        sendUpdateNotification()
+            didWrite()
+        }
     }
 
     func appendFromArray(_ values: [Double]) {
-        guard !staticBuffer || !written, !values.isEmpty else { return }
+        guard !values.isEmpty else { return }
 
         syncWrite {
-            written = true
+            guard !staticBuffer || !written else { return }
+
+            willWrite()
 
             autoreleasepool {
                 if isOpen, let handle = persistentStorageFileHandle {
@@ -313,10 +322,9 @@ final class DataBuffer {
                     queue.removeFirst(cutSize)
                 }
             }
-        }
 
-        bufferMutated()
-        sendUpdateNotification()
+            didWrite()
+        }
     }
 
     func toArray() -> [Double] {
@@ -359,5 +367,154 @@ extension DataBuffer: Collection {
 extension DataBuffer: CustomStringConvertible {
     var description: String {
         return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
+    }
+}
+
+extension DataBuffer {
+    func writeState(to url: URL) throws {
+        try syncWrite {
+            let atomicFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+
+            switch storageType {
+            case .hybrid(memorySize: _, persistentStorageLocation: let persistentFileLocation):
+                if FileManager.default.fileExists(atPath: persistentFileLocation.path) {
+                    try FileManager.default.copyItem(at: persistentFileLocation, to: url)
+                }
+                else {
+                    FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
+                }
+
+                return
+            case .memory(size: _):
+                FileManager.default.createFile(atPath: atomicFile.path, contents: nil, attributes: nil)
+            }
+
+            let handle = try FileHandle(forWritingTo: atomicFile)
+            handle.seekToEndOfFile()
+
+            if isLittleEndian {
+                let values = queue.toArray()
+
+                let byteSize = MemoryLayout<Double>.size
+
+                let pointer = UnsafePointer(values)
+                let rawPointer = UnsafeMutableRawPointer(mutating: pointer)
+
+                let data = Data(bytesNoCopy: rawPointer, count: values.count * byteSize, deallocator: .none)
+
+                handle.write(data)
+            }
+            else {
+                enumerateDataEncodedElements { data in
+                    handle.write(data)
+                }
+            }
+
+            handle.closeFile()
+
+            try FileManager.default.moveItem(at: atomicFile, to: url)
+        }
+    }
+
+    func readState(from url: URL) throws {
+        var values: [Double]
+
+        let handle = try FileHandle(forReadingFrom: url)
+
+        let singleValueSize = MemoryLayout<Double>.size
+
+        let fileSize = Int(handle.seekToEndOfFile())
+        let readingSize = Swift.min(fileSize, effectiveMemorySize * singleValueSize)
+        let readingStart = UInt64(fileSize - readingSize)
+
+        handle.seek(toFileOffset: readingStart)
+
+        if isLittleEndian {
+            let data = handle.readData(ofLength: readingSize)
+
+            let count = data.count / singleValueSize
+
+            values = data.withUnsafeBytes { (pointer: UnsafePointer<Double>) -> [Double] in
+                let buffer = UnsafeBufferPointer(start: pointer, count: count)
+
+                return Array(buffer)
+            }
+        }
+        else {
+            values = [Double]()
+
+            while true {
+                let data = handle.readData(ofLength: singleValueSize)
+                guard data.count == singleValueSize else { break }
+
+                guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
+                values.append(value)
+            }
+
+            handle.closeFile()
+        }
+
+        try syncWrite {
+            switch storageType {
+            case .hybrid(memorySize: _, persistentStorageLocation: let persistentFileLocation):
+                // Close current file handle, copy buffer file to persistent storage location and reopen file handle at EOF
+                persistentStorageFileHandle?.closeFile()
+                persistentStorageFileHandle = nil
+
+                if FileManager.default.fileExists(atPath: persistentFileLocation.path) {
+                    try FileManager.default.removeItem(at: persistentFileLocation)
+                }
+                try FileManager.default.copyItem(at: url, to: persistentFileLocation)
+
+                let handle = try? FileHandle(forWritingTo: url)
+                handle?.seekToEndOfFile()
+
+                persistentStorageFileHandle = handle
+            case .memory(size: _):
+                break
+            }
+
+            willWrite()
+
+            queue.replaceValues(values)
+
+            didWrite()
+        }
+
+        /*  let handle = try FileHandle(forReadingFrom: url)
+
+         let bitPatternSize = MemoryLayout<UInt64>.size
+
+         var values = [Double]()
+
+         while true {
+         let data = handle.readData(ofLength: bitPatternSize)
+         guard data.count == bitPatternSize else { break }
+
+         guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
+         values.append(value)
+         }
+
+         handle.closeFile()
+         */
+        /*  guard let stream = InputStream(url: url) else {
+         throw FileError.genericError
+         }
+
+         let bitPatternSize = MemoryLayout<UInt64>.size
+
+         var values = [Double]()
+         var data = Data(count: bitPatternSize)
+
+         stream.open()
+
+         while data.withUnsafeMutableBytes({ stream.read($0, maxLength: bitPatternSize) }) == bitPatternSize {
+         guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
+         values.append(value)
+         }
+
+         stream.close()
+
+         replaceValues(values)*/
     }
 }

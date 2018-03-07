@@ -1,0 +1,13 @@
+<phyphox version="1.4" locale="en">
+    <title>Test Experiment With Unbounded Output Buffer</title>
+    <category>Test</category>
+    <description>Test Experiment With Unbounded Output Buffer</description>
+    <data-containers>
+        <container size="0">output</container>
+    </data-containers>
+    <input>
+        <sensor type="linear_acceleration">
+            <output component="t">output</output>
+        </sensor>
+    </input>
+</phyphox>
