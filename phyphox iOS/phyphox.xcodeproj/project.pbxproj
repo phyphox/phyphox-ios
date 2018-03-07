@@ -144,6 +144,7 @@
 		6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7D61C130D0F007408FB /* Queue.swift */; };
 		6BCD494C205005310079E569 /* unbounded_buffer.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6BCD493D205005310079E569 /* unbounded_buffer.phyphox */; };
 		6BCD494E205005E90079E569 /* bounded_buffer.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6BCD494D205005E90079E569 /* bounded_buffer.phyphox */; };
+		6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */; };
 		6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */ = {isa = PBXBuildFile; fileRef = 6BD026CA1CB5707F005085B1 /* phyphox-webinterface */; };
 		6BD026E51CB571A4005085B1 /* GCDWebServers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD026E01CB57199005085B1 /* GCDWebServers.framework */; };
 		6BD026E61CB571A4005085B1 /* GCDWebServers.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD026E01CB57199005085B1 /* GCDWebServers.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -498,6 +499,7 @@
 		6BC011AC1CAA86670053D0DF /* ExperimentTranslationCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslationCollection.swift; sourceTree = "<group>"; };
 		6BCD493D205005310079E569 /* unbounded_buffer.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unbounded_buffer.phyphox; sourceTree = "<group>"; };
 		6BCD494D205005E90079E569 /* bounded_buffer.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bounded_buffer.phyphox; sourceTree = "<group>"; };
+		6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGraphUtilities.swift; sourceTree = "<group>"; };
 		6BD026611CB5423C005085B1 /* checkout.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = checkout.sh; path = ../../External/checkout.sh; sourceTree = "<group>"; };
 		6BD026CA1CB5707F005085B1 /* phyphox-webinterface */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "phyphox-webinterface"; path = "../../phyphox-webinterface"; sourceTree = "<group>"; };
 		6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GCDWebServer.xcodeproj; path = ../../External/GCDWebServer/GCDWebServer.xcodeproj; sourceTree = "<group>"; };
@@ -841,6 +843,7 @@
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
 				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
 				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
+				6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */,
 				6BFE376920447B1E00301CA3 /* Graph */,
 				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
 				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
@@ -1375,6 +1378,7 @@
 				6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */,
 				4BA9987D1EDB69D200BD1860 /* LogAnalysis.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */,
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
 				6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */,

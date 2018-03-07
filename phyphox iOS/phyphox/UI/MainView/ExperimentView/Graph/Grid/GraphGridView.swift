@@ -71,14 +71,9 @@ final class GraphGridView: UIView {
     private func updateLineViews() {
         var neededViews = 0
         
-        if grid != nil {
-            if grid!.xGridLines != nil {
-                neededViews += grid!.xGridLines!.count
-            }
-            
-            if grid!.yGridLines != nil {
-                neededViews += grid!.yGridLines!.count
-            }
+        if let grid = grid {
+            neededViews += grid.xGridLines.count
+            neededViews += grid.yGridLines.count
         }
         
         let delta = lineViews.count-neededViews
@@ -159,90 +154,84 @@ final class GraphGridView: UIView {
         var xSpace = CGFloat(0.0)
         var ySpace = CGFloat(0.0)
         var index = 0
-        if grid != nil {
-            if grid!.xGridLines != nil {
-                for line in grid!.xGridLines! {
-                    let label = labels[index]
-                    label.textColor = kTextColor
-                    
-                    label.text = format(line.absoluteValue, formatter: formatterX)
-                    label.sizeToFit()
-                    
-                    ySpace = max(ySpace, label.frame.size.height)
-                    
-                    index += 1
-                }
+
+        if let grid = grid {
+            for line in grid.xGridLines {
+                let label = labels[index]
+                label.textColor = kTextColor
+
+                label.text = format(line.absoluteValue, formatter: formatterX)
+                label.sizeToFit()
+
+                ySpace = max(ySpace, label.frame.size.height)
+
+                index += 1
             }
-            if grid!.yGridLines != nil {
-                for line in grid!.yGridLines! {
-                    let label = labels[index]
-                    label.textColor = kTextColor
-                    
-                    label.text = format(line.absoluteValue, formatter: formatterY)
-                    label.sizeToFit()
-                    
-                    xSpace = max(xSpace, label.frame.size.width)
-                    
-                    index += 1
-                }
+
+            for line in grid.yGridLines {
+                let label = labels[index]
+                label.textColor = kTextColor
+
+                label.text = format(line.absoluteValue, formatter: formatterY)
+                label.sizeToFit()
+
+                xSpace = max(xSpace, label.frame.size.width)
+
+                index += 1
             }
         }
-        
+
         gridLabelSpace = CGPoint(x: xSpace, y: ySpace)
         
         borderView.frame = insetRect
         
-        if grid != nil {
+        if let grid = grid {
             index = 0
-            
+
             let smallestUnit = 1.0/UIScreen.main.scale
-            
-            if grid!.xGridLines != nil {
-                for line in grid!.xGridLines! {
-                    let view = lineViews[index]
-                    
-                    view.horizontal = false
-                    
-                    let origin = insetRect.size.width*line.relativeValue
-                    
-                    if !origin.isFinite {
-                        view.isHidden = true
-                        continue
-                    }
-                    
-                    view.isHidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
-                    
-                    view.frame = CGRect(x: origin+insetRect.origin.x, y: insetRect.origin.y, width: smallestUnit, height: insetRect.size.height)
-                    
-                    let label = labels[index]
-                    label.frame = CGRect(x: origin+insetRect.origin.x-label.frame.size.width/2.0, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
-                    
-                    index += 1
+
+            for line in grid.xGridLines {
+                let view = lineViews[index]
+
+                view.horizontal = false
+
+                let origin = insetRect.size.width*line.relativeValue
+
+                if !origin.isFinite {
+                    view.isHidden = true
+                    continue
                 }
+
+                view.isHidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+
+                view.frame = CGRect(x: origin+insetRect.origin.x, y: insetRect.origin.y, width: smallestUnit, height: insetRect.size.height)
+
+                let label = labels[index]
+                label.frame = CGRect(x: origin+insetRect.origin.x-label.frame.size.width/2.0, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
+
+                index += 1
             }
-            
-            if grid!.yGridLines != nil {
-                for line in grid!.yGridLines! {
-                    let view = lineViews[index]
-                    
-                    view.horizontal = true
-                    
-                    let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
-                    
-                    if !origin.isFinite {
-                       view.isHidden = true
-                        continue
-                    }
-                    
-                    view.isHidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
-                    
-                    view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
-                    
-                    let label = labels[index]
-                    label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
-                    
-                    index += 1
+
+            for line in grid.yGridLines {
+                let view = lineViews[index]
+
+                view.horizontal = true
+
+                let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
+
+                if !origin.isFinite {
+                    view.isHidden = true
+                    continue
                 }
+
+                view.isHidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
+
+                view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
+
+                let label = labels[index]
+                label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
+
+                index += 1
             }
         }
     }
