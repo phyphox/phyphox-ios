@@ -49,7 +49,7 @@ final class BufferTests: XCTestCase {
     }
 
     func testWritingAndReadingStateHybridBuffer() throws {
-        let size = 1000
+        let size = 100000
 
         let randomContents = generateRandomBufferValues(of: size * 100)
 

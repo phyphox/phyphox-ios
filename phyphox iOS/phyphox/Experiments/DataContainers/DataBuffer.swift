@@ -392,33 +392,42 @@ extension DataBuffer {
             let handle = try FileHandle(forWritingTo: atomicFile)
             handle.seekToEndOfFile()
 
+            let byteSize = MemoryLayout<Double>.size
+
+            func writeDataFromPointer(_ pointer: UnsafeMutableRawPointer) {
+                let data = Data(bytesNoCopy: pointer, count: count * byteSize, deallocator: .none)
+
+                handle.write(data)
+                handle.closeFile()
+            }
+
             if isLittleEndian {
                 let values = queue.toArray()
 
-                let byteSize = MemoryLayout<Double>.size
+                // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
+                withExtendedLifetime(values, { values in
+                    let pointer = UnsafePointer(values)
+                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
 
-                let pointer = UnsafePointer(values)
-                let rawPointer = UnsafeMutableRawPointer(mutating: pointer)
-
-                let data = Data(bytesNoCopy: rawPointer, count: values.count * byteSize, deallocator: .none)
-
-                handle.write(data)
+                    writeDataFromPointer(rawDataPointer)
+                })
             }
             else {
-                enumerateDataEncodedElements { data in
-                    handle.write(data)
-                }
-            }
+                let values = queue.toArray().map { $0.bitPattern.littleEndian }
 
-            handle.closeFile()
+                withExtendedLifetime(values, { values in
+                    let pointer = UnsafePointer(values)
+                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
+
+                    writeDataFromPointer(rawDataPointer)
+                })
+            }
 
             try FileManager.default.moveItem(at: atomicFile, to: url)
         }
     }
 
     func readState(from url: URL) throws {
-        var values: [Double]
-
         let handle = try FileHandle(forReadingFrom: url)
 
         let singleValueSize = MemoryLayout<Double>.size
@@ -429,11 +438,14 @@ extension DataBuffer {
 
         handle.seek(toFileOffset: readingStart)
 
+        let data = handle.readData(ofLength: readingSize)
+        handle.closeFile()
+
+        let count = data.count / singleValueSize
+
+        let values: [Double]
+
         if isLittleEndian {
-            let data = handle.readData(ofLength: readingSize)
-
-            let count = data.count / singleValueSize
-
             values = data.withUnsafeBytes { (pointer: UnsafePointer<Double>) -> [Double] in
                 let buffer = UnsafeBufferPointer(start: pointer, count: count)
 
@@ -441,17 +453,11 @@ extension DataBuffer {
             }
         }
         else {
-            values = [Double]()
+            values = data.withUnsafeBytes { (pointer: UnsafePointer<UInt64>) -> [Double] in
+                let buffer = UnsafeBufferPointer(start: pointer, count: count)
 
-            while true {
-                let data = handle.readData(ofLength: singleValueSize)
-                guard data.count == singleValueSize else { break }
-
-                guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
-                values.append(value)
+                return buffer.map { Double(bitPattern: UInt64(littleEndian: $0)) }
             }
-
-            handle.closeFile()
         }
 
         try syncWrite {
@@ -480,41 +486,5 @@ extension DataBuffer {
 
             didWrite()
         }
-
-        /*  let handle = try FileHandle(forReadingFrom: url)
-
-         let bitPatternSize = MemoryLayout<UInt64>.size
-
-         var values = [Double]()
-
-         while true {
-         let data = handle.readData(ofLength: bitPatternSize)
-         guard data.count == bitPatternSize else { break }
-
-         guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
-         values.append(value)
-         }
-
-         handle.closeFile()
-         */
-        /*  guard let stream = InputStream(url: url) else {
-         throw FileError.genericError
-         }
-
-         let bitPatternSize = MemoryLayout<UInt64>.size
-
-         var values = [Double]()
-         var data = Data(count: bitPatternSize)
-
-         stream.open()
-
-         while data.withUnsafeMutableBytes({ stream.read($0, maxLength: bitPatternSize) }) == bitPatternSize {
-         guard let value = Double(data: data) else { throw FileError.genericError } // TODO: error
-         values.append(value)
-         }
-
-         stream.close()
-
-         replaceValues(values)*/
     }
 }

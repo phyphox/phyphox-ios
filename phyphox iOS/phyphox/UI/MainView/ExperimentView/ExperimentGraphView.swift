@@ -397,8 +397,6 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
     private var lastIndexXArray: [Double]?
     private var lastCount: Int?
     
-    private var lastCut: Int = 0
-    
     private var hasUpdateBlockEnqueued = false
     
     override func update() {
