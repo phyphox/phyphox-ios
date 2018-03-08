@@ -25,7 +25,7 @@ struct RangedGraphPoint<T: Comparable & Numeric> {
 private let maxPoints = 5000
 
 /**
- Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and all values are retained (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
+ Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
  */
 final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphViewModuleProtocol {
     var queue: DispatchQueue?
@@ -57,7 +57,6 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         descriptor.color.getRed(&r, green: &g, blue: &b, alpha: &a)
         glGraph.lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
-       // glGraph.historyLength = 1
 
         gridView = GraphGridView(descriptor: descriptor)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -80,6 +79,8 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
 
         super.init(descriptor: descriptor)
+
+        wantsUpdatesWhenInactive = true
 
         gridView.delegate = self
 
@@ -118,54 +119,53 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         return RangedGraphPoint(xRange: minX...maxX, yRange: minY...maxY)
     }
 
-    private func increaseStride(by factor: Int) {
-        print("Increase stride by \(factor)")
-
+    private func mergePoints(_ points: [RangedGraphPoint<Double>], by factor: Int) -> [RangedGraphPoint<Double>] {
         var mergedPoints = [RangedGraphPoint<Double>]()
         // Merge each group of `factor` points. If the number of points is not divisible by `factor` a number of "dangling" points remain that together form a new incomplete point
-        let danglingPointCount = (currentPoints.count % factor)
+        let danglingPointCount = (points.count % factor)
 
-        mergedPoints.reserveCapacity(currentPoints.count/factor + danglingPointCount)
+        mergedPoints.reserveCapacity(points.count/factor + danglingPointCount)
 
-        for i in stride(from: 0, to: currentPoints.count - danglingPointCount, by: factor) {
-            let currentPoint = currentPoints[i]
+        // Merge every `factor` points, including dangling points
+        for i in stride(from: 0, to: points.count, by: factor) {
+            let currentPoint = points[i]
 
-            let nextPoints = currentPoints[i + 1..<i + factor]
+            let nextPoints = points[i + 1..<Swift.min(i + factor, points.count)]
 
             let mergedPoint = merge(point: currentPoint, with: nextPoints)
 
             mergedPoints.append(mergedPoint)
         }
 
+        return mergedPoints
+    }
+
+    private func increaseStride(by factor: Int) {
+        print("Increase stride by \(factor)")
+
+        let danglingPointCount = (currentPoints.count % factor)
+
+        currentPoints = mergePoints(currentPoints, by: factor)
+
+        currentStride *= factor
+
         // If there is no dangling point and the last point was not complete we have to increase the offset by the current stride times the number of points that were merged with the incomplete last point (factor - 1). The point created by merging the last `factor` points will also not be complete since the previous last point was incomplete.
         if danglingPointCount == 0 && currentOffsetFromLastPoint > 0 {
             currentOffsetFromLastPoint += (factor - 1) * currentStride
         }
 
-        let danglingPoints = Array(currentPoints.suffix(danglingPointCount))
-
-        // If there are dangling points, we merge the dangling points
-        if !danglingPoints.isEmpty {
-            let firstDanglingPoint = danglingPoints[0]
-
-            let merged = merge(point: firstDanglingPoint, with: danglingPoints[1...])
-
-            mergedPoints.append(merged)
-
+        if danglingPointCount > 0 {
             // If the last point was complete the new offset is `number of dangling points * current stride`. If the last point was incomplete the new offset is `oldOffset + currentStride * (number of dangling points - 1)`
             if currentOffsetFromLastPoint == 0 {
-                currentOffsetFromLastPoint = currentStride * danglingPoints.count
+                currentOffsetFromLastPoint = currentStride * danglingPointCount
             }
             else {
-                currentOffsetFromLastPoint += currentStride * (danglingPoints.count - 1)
+                currentOffsetFromLastPoint += currentStride * (danglingPointCount - 1)
             }
         }
-
-        currentPoints = mergedPoints
-        currentStride *= factor
     }
 
-    private func runUpdate() {
+    private func runUpdate(graphWidth: Int) {
         defer {
             hasUpdateBlockEnqueued = false
         }
@@ -180,9 +180,9 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         var count = yCount
 
-        if let xBuf = descriptor.xInputBuffer {
-            xValues = xBuf.toArray()
-            xCount = xBuf.count
+        if let xBuffer = descriptor.xInputBuffer {
+            xValues = xBuffer.toArray()
+            xCount = xBuffer.count
 
             count = Swift.min(xCount, count)
         }
@@ -194,7 +194,18 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         let addedCount = count - previousCount
 
         guard addedCount > 0 else { return }
-        guard addedCount <= maxPoints else { return }
+        guard addedCount <= descriptor.yInputBuffer.memoryCount else {
+            print("Attempted to update unbounded function graph with added count > inout buffer memory size. Stopping plotting.")
+            return
+
+        }
+
+        if let xBuffer = descriptor.xInputBuffer {
+            guard addedCount <= xBuffer.memoryCount else {
+                print("Attempted to update unbounded function graph with added count > inout buffer memory size. Stopping plotting.")
+                return
+            }
+        }
 
         let xStartIndex = xValues.count - addedCount - (xCount - count)
         let addedXValues = xValues[xStartIndex..<(xStartIndex + addedCount)]
@@ -206,25 +217,30 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         func commitPoint(_ point: RangedGraphPoint<Double>) {
             currentPoints.append(point)
+
             maxX = Swift.max(point.xRange.upperBound, maxX)
             minX = Swift.min(point.xRange.lowerBound, minX)
 
             maxY = Swift.max(point.yRange.upperBound, maxY)
             minY = Swift.min(point.yRange.lowerBound, minY)
 
-            currentOffsetFromLastPoint = 0
+            currentPoint = nil
         }
 
-        for (x, y) in zip(addedXValues, addedYValues) {
+        let zipped = Array(zip(addedXValues, addedYValues))
+
+        assert(!zipped.isEmpty)
+        
+        for (x, y) in zipped {
+            if currentOffsetFromLastPoint == currentStride, let point = currentPoint {
+                commitPoint(point)
+                currentOffsetFromLastPoint = 0
+            }
+
             if currentOffsetFromLastPoint == 0 {
                 currentPoint = RangedGraphPoint(xRange: x...x, yRange: y...y)
 
                 currentOffsetFromLastPoint = 1
-
-                if currentOffsetFromLastPoint == currentStride, let point = currentPoint {
-                    commitPoint(point)
-                    currentOffsetFromLastPoint = 0
-                }
             }
             else if let point = currentPoint {
                 let xRange = point.xRange.lowerBound...x
@@ -233,12 +249,12 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
                 currentPoint = RangedGraphPoint(xRange: xRange, yRange: yRange)
 
                 currentOffsetFromLastPoint += 1
-
-                if currentOffsetFromLastPoint == currentStride, let point = currentPoint {
-                    commitPoint(point)
-                    currentOffsetFromLastPoint = 0
-                }
             }
+        }
+
+        if let point = currentPoint {
+            commitPoint(point)
+            currentOffsetFromLastPoint %= currentStride
         }
 
         let strideIncreaseFactor = currentPoints.count / maxPoints
@@ -250,21 +266,33 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         let min = GraphPoint(x: minX, y: minY)
         let max = GraphPoint(x: maxX, y: maxY)
 
+        let pointsPerPixel = currentPoints.count / graphWidth
+
+        let pointsToDraw: [RangedGraphPoint<Double>]
+
+        if pointsPerPixel > 1 {
+            pointsToDraw = mergePoints(currentPoints, by: pointsPerPixel)
+        }
+        else {
+            pointsToDraw = currentPoints
+        }
+
         mainThread {
             if self.superview != nil && self.window != nil {
                 //self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
-                self.glGraph.setPoints(self.currentPoints, min: min, max: max)
+                self.glGraph.setPoints(pointsToDraw, min: min, max: max)
             }
         }
     }
 
-    // TODO: Always update
     override func update() {
         if self.queue == nil {
-            print("Graph queue not set!")
+            print("Graph queue not set")
         }
 
         let queue = self.queue ?? DispatchQueue.global(qos: .utility)
+
+        let graphWidth = Int(ceil(glGraph.frame.width * UIScreen.main.scale))
 
         queue.async { [weak self] in
             guard let strongSelf = self, !strongSelf.hasUpdateBlockEnqueued else { return }
@@ -272,7 +300,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             strongSelf.hasUpdateBlockEnqueued = true
 
             autoreleasepool {
-                strongSelf.runUpdate()
+                strongSelf.runUpdate(graphWidth: graphWidth == 0 ? .max : graphWidth)
             }
         }
     }

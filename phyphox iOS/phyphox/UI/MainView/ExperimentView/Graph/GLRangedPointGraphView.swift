@@ -86,9 +86,8 @@ final class GLRangedPointGraphView: GLKView {
 
     private var points: [GraphPoint<GLfloat>] = []
 
-    private var outlinePoints: [GraphPoint<GLfloat>] = []
-
     private var triangleIndices: [GLuint] = []
+    private var outlineIndices: [GLuint] = []
 
     func setPoints(_ points: [RangedGraphPoint<Double>], min: GraphPoint<Double>, max: GraphPoint<Double>) {
         self.points = points.flatMap { point -> [GraphPoint<GLfloat>] in
@@ -121,29 +120,15 @@ final class GLRangedPointGraphView: GLKView {
             triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
         }
 
-        if drawDots {
-            let upperPoints = points.flatMap {
-                point -> [GraphPoint<GLfloat>] in
-                return [
-                    GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                               y: GLfloat(point.yRange.upperBound)),
-                    GraphPoint(x: GLfloat(point.xRange.upperBound),
-                               y: GLfloat(point.yRange.upperBound)),
-                    ] }
+        if !drawDots {
+            let upperIndices = stride(from: 0, to: GLuint(self.points.count), by: 2)
 
-            let lowerPoints = points.reversed().flatMap {
-                point -> [GraphPoint<GLfloat>] in
-                return [
-                    GraphPoint(x: GLfloat(point.xRange.upperBound),
-                               y: GLfloat(point.yRange.lowerBound)),
-                    GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                               y: GLfloat(point.yRange.lowerBound)),
-                    ] }
+            let lowerIndices = stride(from: 1, to: GLuint(self.points.count), by: 2).reversed()
 
-            outlinePoints = upperPoints + lowerPoints
+            outlineIndices = upperIndices + lowerIndices
         }
         else {
-            outlinePoints.removeAll()
+            outlineIndices.removeAll()
         }
 
         let dataPerPixelX = GLfloat((max.x-min.x)/Double(bounds.size.width))
@@ -174,9 +159,9 @@ final class GLRangedPointGraphView: GLKView {
 
     func render() {
         let length = points.count
-        let indexCount = triangleIndices.count
+        let indexLength = triangleIndices.count
 
-        guard length > 0, indexCount > 0 else {
+        guard length > 0, indexLength > 0 else {
             return
         }
 
@@ -199,25 +184,22 @@ final class GLRangedPointGraphView: GLKView {
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
         shader.setPointSize(lineWidth)
-
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.stride), points, GLenum(GL_STATIC_DRAW))
-
-        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
-        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(indexCount * MemoryLayout<GLuint>.stride), triangleIndices, GLenum(GL_STATIC_DRAW))
-
         shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
 
-        shader.drawTriangles(count: indexCount)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.stride), points, GLenum(GL_DYNAMIC_DRAW))
 
-        // TODO: Use second index buffer
-        if drawDots, !outlinePoints.isEmpty {
-            let outlineLength = outlinePoints.count
+        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
+        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(indexLength * MemoryLayout<GLuint>.stride), triangleIndices, GLenum(GL_DYNAMIC_DRAW))
+        shader.drawElements(mode: GL_TRIANGLES, count: indexLength)
 
-            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(outlineLength * MemoryLayout<GraphPoint<GLfloat>>.size), outlinePoints, GLenum(GL_DYNAMIC_DRAW))
+        if !drawDots, !outlineIndices.isEmpty {
+            let outlineLength = outlineIndices.count
 
-            shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
-            shader.drawPositions(mode: GL_LINE_LOOP, start: 0, count: outlineLength)
+            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
+            glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(outlineLength * MemoryLayout<GLuint>.stride), outlineIndices, GLenum(GL_DYNAMIC_DRAW))
+
+            shader.drawElements(mode: GL_LINE_LOOP, count: outlineLength)
         }
     }
 }

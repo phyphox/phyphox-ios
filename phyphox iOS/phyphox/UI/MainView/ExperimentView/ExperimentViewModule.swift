@@ -26,6 +26,8 @@ class ExperimentViewModule<Descriptor: ViewDescriptor>: UIView, Activatable {
             }
         }
     }
+
+    var wantsUpdatesWhenInactive = false
     
     var delegate: ModuleExclusiveViewDelegate? = nil
 
@@ -52,7 +54,7 @@ class ExperimentViewModule<Descriptor: ViewDescriptor>: UIView, Activatable {
     private var updateScheduled: Bool = false
     
     func setNeedsUpdate() {
-        if active && !updateScheduled {
+        if (active || wantsUpdatesWhenInactive) && !updateScheduled {
             updateScheduled = true
             triggerUpdate()
         }
