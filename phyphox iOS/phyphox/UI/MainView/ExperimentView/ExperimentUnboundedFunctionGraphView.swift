@@ -22,7 +22,7 @@ struct RangedGraphPoint<T: Comparable & Numeric> {
     let yRange: ClosedRange<T>
 }
 
-private let maxPoints = 1000
+private let maxPoints = 5000
 
 /**
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and all values are retained (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
@@ -119,6 +119,8 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     }
 
     private func increaseStride(by factor: Int) {
+        print("Increase stride by \(factor)")
+
         var mergedPoints = [RangedGraphPoint<Double>]()
         // Merge each group of `factor` points. If the number of points is not divisible by `factor` a number of "dangling" points remain that together form a new incomplete point
         let danglingPointCount = (currentPoints.count % factor)

@@ -13,7 +13,8 @@ import OpenGLES
 final class GLRangedPointGraphView: GLKView {
     private let shader: ShaderProgram
 
-    private var vbo: GLuint = 0
+    private var vbo: GLuint
+    private var indexVbo: GLuint
 
     // Values used to transform the input values on the xy Plane into NDCs.
     private var xScale: GLfloat = 1.0
@@ -59,6 +60,15 @@ final class GLRangedPointGraphView: GLKView {
 
         shader = ShaderProgram()
 
+        var dataBuffer: GLuint = 0
+        var indexBuffer: GLuint = 1
+
+        glGenBuffers(1, &dataBuffer)
+        glGenBuffers(1, &indexBuffer)
+
+        self.vbo = dataBuffer
+        self.indexVbo = indexBuffer
+        
         super.init(frame: frame, context: context)
 
         self.drawableColorFormat = .RGBA8888
@@ -72,13 +82,13 @@ final class GLRangedPointGraphView: GLKView {
         self.enableSetNeedsDisplay = true
 
         glClearColor(0.0, 0.0, 0.0, 0.0)
-
-        glGenBuffers(1, &vbo)
     }
 
     private var points: [GraphPoint<GLfloat>] = []
 
     private var outlinePoints: [GraphPoint<GLfloat>] = []
+
+    private var triangleIndices: [GLuint] = []
 
     func setPoints(_ points: [RangedGraphPoint<Double>], min: GraphPoint<Double>, max: GraphPoint<Double>) {
         self.points = points.flatMap { point -> [GraphPoint<GLfloat>] in
@@ -94,27 +104,52 @@ final class GLRangedPointGraphView: GLKView {
             ]
         }
 
-        let upperPoints = points.flatMap {
-            point -> [GraphPoint<GLfloat>] in
-            return [
-                GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                           y: GLfloat(point.yRange.upperBound)),
-                GraphPoint(x: GLfloat(point.xRange.upperBound),
-                           y: GLfloat(point.yRange.upperBound)),
-                ] }
+        if drawDots {
+            let startIndices: [GLuint] = [0, 1, 2,
+                                          1, 2, 3]
 
-        let lowerPoints = points.reversed().flatMap {
-            point -> [GraphPoint<GLfloat>] in
-            return [
-                GraphPoint(x: GLfloat(point.xRange.upperBound),
-                           y: GLfloat(point.yRange.lowerBound)),
-                GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                           y: GLfloat(point.yRange.lowerBound)),
-                ] }
+            let followIndices: [GLuint] = startIndices.map({ $0 + 4 })
 
-        self.outlinePoints = upperPoints + lowerPoints
+            triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
+        }
+        else {
+            let startIndices: [GLuint] = [0, 1, 2,
+                                        1, 2, 3]
 
-        xScale = GLfloat(2.0/(max.x-min.x))
+            let followIndices: [GLuint] = startIndices.map({ $0 + 2 }) + startIndices.map({ $0 + 4 })
+
+            triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
+        }
+
+        if drawDots {
+            let upperPoints = points.flatMap {
+                point -> [GraphPoint<GLfloat>] in
+                return [
+                    GraphPoint(x: GLfloat(point.xRange.lowerBound),
+                               y: GLfloat(point.yRange.upperBound)),
+                    GraphPoint(x: GLfloat(point.xRange.upperBound),
+                               y: GLfloat(point.yRange.upperBound)),
+                    ] }
+
+            let lowerPoints = points.reversed().flatMap {
+                point -> [GraphPoint<GLfloat>] in
+                return [
+                    GraphPoint(x: GLfloat(point.xRange.upperBound),
+                               y: GLfloat(point.yRange.lowerBound)),
+                    GraphPoint(x: GLfloat(point.xRange.lowerBound),
+                               y: GLfloat(point.yRange.lowerBound)),
+                    ] }
+
+            outlinePoints = upperPoints + lowerPoints
+        }
+        else {
+            outlinePoints.removeAll()
+        }
+
+        let dataPerPixelX = GLfloat((max.x-min.x)/Double(bounds.size.width))
+        let biasDataX = lineWidth * dataPerPixelX
+
+        xScale = GLfloat(2.0/(Float(max.x-min.x)+biasDataX))
 
         let dataPerPixelY = GLfloat((max.y-min.y)/Double(bounds.size.height))
         let biasDataY = lineWidth * dataPerPixelY
@@ -139,8 +174,9 @@ final class GLRangedPointGraphView: GLKView {
 
     func render() {
         let length = points.count
+        let indexCount = triangleIndices.count
 
-        if length == 0 {
+        guard length > 0, indexCount > 0 else {
             return
         }
 
@@ -151,8 +187,6 @@ final class GLRangedPointGraphView: GLKView {
         if yScale == 0.0 {
             yScale = 0.1
         }
-
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
 
         shader.use()
 
@@ -165,16 +199,25 @@ final class GLRangedPointGraphView: GLKView {
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
         shader.setPointSize(lineWidth)
-        
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.size), points, GLenum(GL_DYNAMIC_DRAW))
-        shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
-        shader.drawPositions(mode: GL_TRIANGLE_STRIP, start: 0, count: length)
 
-        let outlineLength = outlinePoints.count
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.stride), points, GLenum(GL_STATIC_DRAW))
 
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(outlineLength * MemoryLayout<GraphPoint<GLfloat>>.size), outlinePoints, GLenum(GL_DYNAMIC_DRAW))
+        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
+        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(indexCount * MemoryLayout<GLuint>.stride), triangleIndices, GLenum(GL_STATIC_DRAW))
 
         shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
-        shader.drawPositions(mode: GL_LINE_LOOP, start: 0, count: outlineLength)
+
+        shader.drawTriangles(count: indexCount)
+
+        // TODO: Use second index buffer
+        if drawDots, !outlinePoints.isEmpty {
+            let outlineLength = outlinePoints.count
+
+            glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(outlineLength * MemoryLayout<GraphPoint<GLfloat>>.size), outlinePoints, GLenum(GL_DYNAMIC_DRAW))
+
+            shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
+            shader.drawPositions(mode: GL_LINE_LOOP, start: 0, count: outlineLength)
+        }
     }
 }

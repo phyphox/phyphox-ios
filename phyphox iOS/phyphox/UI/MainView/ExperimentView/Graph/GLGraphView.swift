@@ -105,9 +105,15 @@ final class ShaderProgram {
     }
     
     func drawPositions(mode: Int32, start: Int, count: Int) {
-        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.size), nil)
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
 
         glDrawArrays(GLenum(mode), GLint(start), GLsizei(count))
+    }
+
+    func drawTriangles(count: Int) {
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
+
+        glDrawElements(GLenum(GL_TRIANGLES), GLsizei(count), GLenum(GL_UNSIGNED_INT), nil)
     }
 }
 
