@@ -22,7 +22,7 @@ struct RangedGraphPoint<T: Comparable & Numeric> {
     let yRange: ClosedRange<T>
 }
 
-private let maxPoints = 5000
+private let maxPoints = 3000
 
 /**
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
@@ -227,11 +227,13 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             currentPoint = nil
         }
 
-        let zipped = Array(zip(addedXValues, addedYValues))
+        let logX = descriptor.logX
+        let logY = descriptor.logY
 
-        assert(!zipped.isEmpty)
-        
-        for (x, y) in zipped {
+        for (rawX, rawY) in zip(addedXValues, addedYValues) {
+            let x = logX ? log(rawX) : rawX
+            let y = logY ? log(rawY) : rawY
+
             if currentOffsetFromLastPoint == currentStride, let point = currentPoint {
                 commitPoint(point)
                 currentOffsetFromLastPoint = 0
@@ -277,9 +279,20 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             pointsToDraw = currentPoints
         }
 
+        let xTicks = ExperimentGraphUtilities.getTicks(minX, max: maxX, maxTicks: 6, log: logX)
+        let yTicks = ExperimentGraphUtilities.getTicks(minY, max: maxY, maxTicks: 6, log: logY)
+
+        let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
+            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val)-minX)/(maxX-minX)))
+        })
+
+        let mappedYTicks = yTicks.map({ (val) -> GraphGridLine in
+            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val)-minY)/(maxY-minY)))
+        })
+
         mainThread {
             if self.superview != nil && self.window != nil {
-                //self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
+                self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
                 self.glGraph.setPoints(pointsToDraw, min: min, max: max)
             }
         }
