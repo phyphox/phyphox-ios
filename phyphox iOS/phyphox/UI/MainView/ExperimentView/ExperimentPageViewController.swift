@@ -109,7 +109,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.init(nibName: nil, bundle: nil)
 
         for module in viewModules.flatMap({ $0 }) {
-            if let graph = module as? ExperimentGraphView {
+            if var graph = module as? GraphViewModule {
                 graph.queue = experiment.queue
             }
             else if let button = module as? ExperimentButtonView {
@@ -1024,11 +1024,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         for section in self.viewModules {
             for view in section {
-                if let graphView = view as? ExperimentGraphView {
-                    graphView.clearAllDataSets()
+                if let graphView = view as? GraphViewModule {
+                    graphView.clearData()
                 }
             }
         }
-
     }
 }

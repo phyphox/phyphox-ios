@@ -9,6 +9,7 @@ varying lowp vec4 outColor;
 
 void main(void) {
     outColor = inColor;
+    // Translate points into NDCs
     gl_Position = vec4((scale * (position + translation)), 0.0, 1.0);
     gl_PointSize = pointSize;
 }

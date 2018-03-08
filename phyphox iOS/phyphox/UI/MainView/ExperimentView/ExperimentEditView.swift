@@ -22,7 +22,7 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         return (descriptor.decimal ? String(raw) : String(Int(raw)))
     }
     
-    required init(descriptor: EditViewDescriptor) {
+    required init?(descriptor: EditViewDescriptor) {
         textField = UITextField()
         textField.backgroundColor = kLightBackgroundColor
         textField.textColor = kTextColor

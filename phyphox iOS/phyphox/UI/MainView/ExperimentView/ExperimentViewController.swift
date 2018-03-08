@@ -37,7 +37,7 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
         super.init(nibName: nil, bundle: nil)
         
         for module in modules {
-            if let eMod = module as? ExperimentGraphView {
+            if let eMod = module as? GraphViewModule {
                 eMod.delegate = self
             }
         }
@@ -75,7 +75,7 @@ final class ExperimentViewController: UIViewController, ModuleExclusiveViewDeleg
                 let frame = CGRect(x: (view.bounds.width-s.width)/2.0, y: contentSize.height, width: s.width, height: s.height)
                 
                 if animate {
-                    if let eMod = module as? ExperimentGraphView {
+                    if let eMod = module as? GraphViewModule {
                         eMod.animateFrame(frame)
                     } else {
                         module.frame = frame

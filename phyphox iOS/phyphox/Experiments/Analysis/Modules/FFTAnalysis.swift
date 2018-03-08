@@ -103,8 +103,15 @@ final class FFTAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        let bufferCount = imagInput != nil ? min(realInput.count, imagInput!.count) : realInput.count
-        
+        let bufferCount: Int
+
+        if let imagInput = imagInput {
+            bufferCount = min(realInput.memoryCount, imagInput.memoryCount)
+        }
+        else {
+            bufferCount = realInput.memoryCount
+        }
+
         var realOutputArray: [Double]
         var imagOutputArray: [Double]
         

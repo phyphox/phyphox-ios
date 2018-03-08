@@ -11,16 +11,22 @@ import UIKit
 import GLKit
 import OpenGLES
 
-public struct GraphPoint<T> {
+struct GraphPoint<T: Numeric> {
     var x: T
     var y: T
 }
 
-public struct GLcolor {
+extension GraphPoint {
+    static var zero: GraphPoint {
+        return GraphPoint(x: 0, y: 0)
+    }
+}
+
+struct GLcolor {
     var r, g, b, a: Float
 }
 
-private final class ShaderProgram {
+final class ShaderProgram {
     private let programHandle: GLuint
     
     private let positionAttributeHandle: GLuint
@@ -98,10 +104,10 @@ private final class ShaderProgram {
         glUniform4f(colorUniformHandle, r, g, b, a)
     }
     
-    func drawPositions(_ mode: Int32, _ count: Int) {
+    func drawPositions(mode: Int32, start: Int, count: Int) {
         glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.size), nil)
-        
-        glDrawArrays(GLenum(mode), 0, GLsizei(count))
+
+        glDrawArrays(GLenum(mode), GLint(start), GLsizei(count))
     }
 }
 
@@ -109,12 +115,13 @@ final class GLGraphView: GLKView {
     private let shader: ShaderProgram
     
     private var vbo: GLuint = 0
-    
+
+    // Values used to transform the input values on the xy Plane into NDCs.
     private var xScale: GLfloat = 1.0
     private var yScale: GLfloat = 1.0
     
-    private var min: GraphPoint<Double>!
-    private var max: GraphPoint<Double>!
+    private var min = GraphPoint<Double>.zero
+    private var max = GraphPoint<Double>.zero
     
     var lineWidth: GLfloat = 2.0 {
         didSet {
@@ -164,9 +171,12 @@ final class GLGraphView: GLKView {
         super.init(frame: frame, context: context)
         
         self.drawableColorFormat = .RGBA8888
-        self.drawableDepthFormat = .format24
-        self.drawableStencilFormat = .format8
-        self.drawableMultisample = .multisample4X //Anti aliasing
+
+        // 2D drawing, no depth information needed
+        self.drawableDepthFormat = .formatNone
+        self.drawableStencilFormat = .formatNone
+
+        self.drawableMultisample = .multisample4X
         self.isOpaque = false
         self.enableSetNeedsDisplay = true
         
@@ -175,24 +185,18 @@ final class GLGraphView: GLKView {
         glGenBuffers(1, &vbo)
     }
     
-    var points: [[GraphPoint<GLfloat>]]
+    private var points: [[GraphPoint<GLfloat>]]
     
-    func setPoints(_ psets: [[GraphPoint<GLfloat>]], min: GraphPoint<Double>?, max: GraphPoint<Double>?) {
-        points = psets
-        
-        if max != nil && min != nil {
-            xScale = GLfloat(2.0/(max!.x-min!.x))
-            
-            let dataPerPixelY = GLfloat((max!.y-min!.y)/Double(bounds.size.height))
-            let biasDataY = lineWidth*dataPerPixelY
-            
-            yScale = GLfloat(2.0/(Float(max!.y-min!.y)+biasDataY))
-        }
-        else {
-            xScale = 1.0
-            yScale = 1.0
-        }
-        
+    func setPoints(_ points: [[GraphPoint<GLfloat>]], min: GraphPoint<Double>, max: GraphPoint<Double>) {
+        self.points = points
+
+        xScale = GLfloat(2.0/(max.x-min.x))
+
+        let dataPerPixelY = GLfloat((max.y-min.y)/Double(bounds.size.height))
+        let biasDataY = lineWidth * dataPerPixelY
+
+        yScale = GLfloat(2.0/(Float(max.y-min.y)+biasDataY))
+
         self.max = max
         self.min = min
         
@@ -209,7 +213,7 @@ final class GLGraphView: GLKView {
         setNeedsDisplay()
     }
     
-    internal func render() {
+    func render() {
         EAGLContext.setCurrent(context)
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
@@ -255,8 +259,7 @@ final class GLGraphView: GLKView {
                 shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
             }
             
-            shader.drawPositions((drawDots ? GL_POINTS : GL_LINE_STRIP), length)
-            
+            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length)
         }
     }
 }

@@ -14,7 +14,7 @@ final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
 
     var buttonTappedCallback: (() -> Void)?
 
-    required init(descriptor: ButtonViewDescriptor) {
+    required init?(descriptor: ButtonViewDescriptor) {
         button = UIButton()
         button.backgroundColor = kLightBackgroundColor
         button.setTitle(descriptor.localizedLabel, for: UIControlState())

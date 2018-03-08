@@ -88,7 +88,7 @@ final class Experiment {
     
     let buffers: [String: DataBuffer]
     
-    private(set) lazy var queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: .concurrent)
+    private(set) lazy var queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: [])
     
     private(set) var requiredPermissions: ExperimentRequiredPermission = .None
     

@@ -36,6 +36,9 @@ final class DataBuffer {
     let name: String
     let size: Int
 
+    /**
+     Helper value that returns `size` when `size > 0` and `Int.max` when `size == 0`.
+     */
     private var effectiveMemorySize: Int {
         switch storageType {
         case .memory(size: let size):
@@ -98,19 +101,25 @@ final class DataBuffer {
     let staticBuffer: Bool
     private var written: Bool = false
 
+    /**
+     Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
+     */
+    var memoryCount: Int {
+        return queue.count
+    }
+
+    /**
+     Total number of values stored in buffer. The number of values in memory is always at most equal to this value. Values not stored in memory are not accessible via Collection or Sequence methods.
+     */
     var count: Int {
-        return Swift.min(queue.count, effectiveMemorySize)
+        return Swift.max(persistentStorageSize, memoryCount)
     }
 
     private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
 
     private var queue: Queue<Double>
 
-    init(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
-        self.name = name
-        self.storageType = storage
-        self.baseContents = baseContents
-
+    init?(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
         switch storage {
         case .memory(size: let size):
             self.size = size
@@ -118,13 +127,20 @@ final class DataBuffer {
             self.size = 0
         }
 
+        self.name = name
+        self.storageType = storage
+        self.baseContents = baseContents
+
         queue = Queue<Double>(capacity: size)
         self.staticBuffer = staticBuffer
+
+        guard baseContents.count <= effectiveMemorySize else { return nil }
 
         appendFromArray(baseContents)
     }
 
     private var persistentStorageFileHandle: FileHandle?
+    private(set) var persistentStorageSize = 0
 
     private var isOpen = false
 
@@ -145,6 +161,7 @@ final class DataBuffer {
 
                 let handle = try? FileHandle(forWritingTo: url)
                 handle?.truncateFile(atOffset: 0)
+                persistentStorageSize = 0
 
                 persistentStorageFileHandle = handle
             case .memory(size: _):
@@ -157,6 +174,8 @@ final class DataBuffer {
                     enumerateDataEncodedElements { data in
                         handle.write(data)
                     }
+
+                    persistentStorageSize += memoryCount
                 }
             }
         }
@@ -178,6 +197,8 @@ final class DataBuffer {
                 persistentStorageFileHandle = nil
 
                 try? FileManager.default.removeItem(at: url)
+
+                persistentStorageSize = 0
             case .memory(size: _):
                 break
             }
@@ -233,6 +254,7 @@ final class DataBuffer {
 
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.truncateFile(atOffset: 0)
+                persistentStorageSize = 0
             }
 
             queue.replaceValues(baseContents)
@@ -255,6 +277,8 @@ final class DataBuffer {
                     values.enumerateDataEncodedElements { data in
                         handle.write(data)
                     }
+
+                    persistentStorageSize = values.count
                 }
 
                 let effectiveSize = effectiveMemorySize
@@ -278,11 +302,13 @@ final class DataBuffer {
 
             if isOpen, let handle = persistentStorageFileHandle {
                 handle.write(value.encode())
+
+                persistentStorageSize += 1
             }
 
             self.queue.enqueue(value)
 
-            if queue.count > effectiveMemorySize {
+            if memoryCount > effectiveMemorySize {
                 _ = queue.dequeue()
             }
 
@@ -303,14 +329,16 @@ final class DataBuffer {
                     values.enumerateDataEncodedElements { data in
                         handle.write(data)
                     }
+
+                    persistentStorageSize += values.count
                 }
 
-                let sizeAfterAppend = count + values.count
+                let sizeAfterAppend = memoryCount + values.count
 
                 let cutSize = sizeAfterAppend - effectiveMemorySize
                 let shouldCut = cutSize > 0 && sizeAfterAppend > 0
 
-                let cutAfterAppend = cutSize > count
+                let cutAfterAppend = cutSize > memoryCount
 
                 if shouldCut && !cutAfterAppend {
                     queue.removeFirst(cutSize)
@@ -360,7 +388,7 @@ extension DataBuffer: Collection {
     }
 
     var endIndex: Int {
-        return count
+        return memoryCount
     }
 }
 
@@ -395,7 +423,7 @@ extension DataBuffer {
             let byteSize = MemoryLayout<Double>.size
 
             func writeDataFromPointer(_ pointer: UnsafeMutableRawPointer) {
-                let data = Data(bytesNoCopy: pointer, count: count * byteSize, deallocator: .none)
+                let data = Data(bytesNoCopy: pointer, count: memoryCount * byteSize, deallocator: .none)
 
                 handle.write(data)
                 handle.closeFile()

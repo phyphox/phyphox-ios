@@ -9,16 +9,14 @@
 
 import UIKit
 
-protocol ExperimentViewModuleProtocol {
-    func setNeedsUpdate()
-    func registerInputBuffer(_ buffer: DataBuffer)
+protocol Activatable {
     var active: Bool { get set }
 }
 
-typealias ExperimentViewModuleView = ExperimentViewModuleProtocol & UIView
+typealias ExperimentViewModuleView = Activatable & UIView
 
-class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProtocol {
-    weak var descriptor: T!
+class ExperimentViewModule<Descriptor: ViewDescriptor>: UIView, Activatable {
+    let descriptor: Descriptor
     
     let label: UILabel
     var active = false {
@@ -31,7 +29,7 @@ class ExperimentViewModule<T: ViewDescriptor>: UIView, ExperimentViewModuleProto
     
     var delegate: ModuleExclusiveViewDelegate? = nil
 
-    required public init(descriptor: T) {
+    required init?(descriptor: Descriptor) {
         label = UILabel()
         label.numberOfLines = 0
         

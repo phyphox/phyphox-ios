@@ -65,8 +65,8 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
         
         if (end < 0) {
             for arrayIn in arrayIns {
-                if end < arrayIn.buffer!.count {
-                    end = arrayIn.buffer!.count
+                if end < arrayIn.buffer!.memoryCount {
+                    end = arrayIn.buffer!.memoryCount
                 }
             }
         }

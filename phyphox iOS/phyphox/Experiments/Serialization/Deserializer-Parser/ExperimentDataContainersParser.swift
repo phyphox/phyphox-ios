@@ -74,9 +74,9 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     storageType = .memory(size: bufferSize)
                 }
 
-                let buffer = DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: stat)
-
-                buffers[name] = buffer
+                if let buffer = DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: stat) {
+                    buffers[name] = buffer
+                }
             }
         }
 

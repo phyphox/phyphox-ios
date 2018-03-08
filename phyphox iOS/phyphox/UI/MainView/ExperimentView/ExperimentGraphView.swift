@@ -19,9 +19,7 @@ struct GraphGridLine {
     let relativeValue: CGFloat
 }
 
-final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
-    typealias T = GraphViewDescriptor
-    
+final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphViewModuleProtocol {
     private let xLabel: UILabel
     private let yLabel: UILabel
     
@@ -33,7 +31,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     private var maxY: Double
     private var minY: Double
 
-    var queue: DispatchQueue!
+    var queue: DispatchQueue?
     
     private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
     
@@ -94,10 +92,10 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     }
     
     private var points: [[GraphPoint<GLfloat>]] {
-        return dataSets.map{$0.data}
+        return dataSets.map { $0.data }
     }
     
-    required init(descriptor: GraphViewDescriptor) {
+    required init?(descriptor: GraphViewDescriptor) {
         maxX = -Double.infinity
         minX = Double.infinity
         
@@ -154,201 +152,212 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
     private var lastCount: Int?
     
     private var hasUpdateBlockEnqueued = false
-    
-    override func update() {
-        if hasUpdateBlockEnqueued || superview == nil || window == nil {
+
+    private func runUpdate() {
+        defer {
+            hasUpdateBlockEnqueued = false
+        }
+
+        var xValues: [Double]
+
+        let yValues = descriptor.yInputBuffer.toArray()
+        let yCount = yValues.count
+
+        var count = yCount
+
+        if count <= 1 {
+            mainThread {
+                self.clearGraph()
+            }
             return
         }
 
-        hasUpdateBlockEnqueued = true
+        if let xBuf = descriptor.xInputBuffer {
+            xValues = xBuf.toArray()
+            let xCount = xValues.count
 
-        queue.async { [unowned self] in
-            autoreleasepool(invoking: {
-                var xValues: [Double]
+            count = Swift.min(xCount, count)
+        }
+        else {
+            var xC = 0
 
-                let yValues = self.descriptor.yInputBuffer.toArray()
-                let yCount = yValues.count
+            if lastIndexXArray != nil {
+                xC = lastIndexXArray!.count
+            }
 
-                var count = yCount
+            let delta = count-xC
 
-                if count <= 1 {
-                    mainThread {
-                        self.clearGraph()
-                    }
-                    return
-                }
+            if delta > 0 && lastIndexXArray == nil {
+                lastIndexXArray = []
+            }
 
-                if let xBuf = self.descriptor.xInputBuffer {
-                    xValues = xBuf.toArray()
-                    let xCount = xValues.count
+            for i in xC..<count {
+                lastIndexXArray!.append(Double(i))
+            }
 
-                    count = Swift.min(xCount, count)
-                }
-                else {
-                    var xC = 0
-
-                    if self.lastIndexXArray != nil {
-                        xC = self.lastIndexXArray!.count
-                    }
-
-                    let delta = count-xC
-
-                    if delta > 0 && self.lastIndexXArray == nil {
-                        self.lastIndexXArray = []
-                    }
-
-                    for i in xC..<count {
-                        self.lastIndexXArray!.append(Double(i))
-                    }
-
-                    if self.lastIndexXArray == nil {
-                        mainThread {
-                            self.clearGraph()
-                        }
-                        return
-                    }
-
-                    xValues = self.lastIndexXArray!
-                }
-
-                count = Swift.min(xValues.count, yValues.count)
-
-                if count <= 1 {
-                    mainThread {
-                        self.clearGraph()
-                    }
-                    return
-                }
-
-                var points: [GraphPoint<GLfloat>] = []
-                points.reserveCapacity(count)
-
-                var lastX = -Double.infinity
-
-                let logX = self.descriptor.logX
-                let logY = self.descriptor.logY
-
-                switch self.descriptor.scaleMinX {
-                case .auto:
-                    self.minX = Double.infinity
-                case .extend:
-                    break
-                case .fixed:
-                    self.minX = Double(self.descriptor.minX)
-                }
-
-                switch self.descriptor.scaleMaxX {
-                case .auto:
-                    self.maxX = -Double.infinity
-                case .extend:
-                    break
-                case .fixed:
-                    self.maxX = Double(self.descriptor.maxX)
-                }
-
-                switch self.descriptor.scaleMinY {
-                case .auto:
-                    self.minY = Double.infinity
-                case .extend:
-                    break
-                case .fixed:
-                    self.minY = Double(self.descriptor.minY)
-                }
-
-                switch self.descriptor.scaleMaxY {
-                case .auto:
-                    self.maxY = -Double.infinity
-                case .extend:
-                    break
-                case .fixed:
-                    self.maxY = Double(self.descriptor.maxY)
-                }
-
-                var xOrderOK = true
-                var valuesOK = true
-
-                for i in 0..<count {
-                    let rawX = xValues[i]
-                    let rawY = yValues[i]
-
-                    if rawX < lastX {
-                        xOrderOK = false
-                    }
-
-                    lastX = rawX
-
-                    let x = (logX ? log(rawX) : rawX)
-                    let y = (logY ? log(rawY) : rawY)
-
-                    guard x.isFinite && y.isFinite else {
-                        valuesOK = false
-                        continue
-                    }
-
-                    if x < self.minX && self.descriptor.scaleMinX != .fixed {
-                        self.minX = x
-                    }
-
-                    if x > self.maxX && self.descriptor.scaleMaxX != .fixed {
-                        self.maxX = x
-                    }
-
-                    if y < self.minY && self.descriptor.scaleMinY != .fixed {
-                        self.minY = y
-                    }
-
-                    if y > self.maxY && self.descriptor.scaleMaxY != .fixed {
-                        self.maxY = y
-                    }
-
-                    points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
-                }
-
-                if !xOrderOK {
-                    print("x values are not ordered!")
-                }
-
-                if !valuesOK {
-                    print("Tried drawing NaN or inf")
-                }
-
-                let dataSet = (bounds: (min: GraphPoint(x: self.minX, y: self.minY), max: GraphPoint(x: self.maxX, y: self.maxY)), data: points)
-
-                self.addDataSet(dataSet)
-
-                let min = self.min!
-                let max = self.max!
-
-                self.minX = min.x
-                self.maxX = max.x
-
-                self.minY = min.y
-                self.maxY = max.y
-
-                let xTicks = ExperimentGraphUtilities.getTicks(self.minX, max: self.maxX, maxTicks: 6, log: logX)
-                let yTicks = ExperimentGraphUtilities.getTicks(self.minY, max: self.maxY, maxTicks: 6, log: logY)
-
-                let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
-                return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val)-self.minX)/(self.maxX-self.minX)))
-                })
-
-                let mappedYTicks = yTicks.map({ (val) -> GraphGridLine in
-                    return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val)-self.minY)/(self.maxY-self.minY)))
-                })
-
-                let finalPoints = self.points
-
+            if lastIndexXArray == nil {
                 mainThread {
-                    self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
-                    self.glGraph.setPoints(finalPoints, min: min, max: max)
+                    self.clearGraph()
                 }
-            })
+                return
+            }
 
-            self.hasUpdateBlockEnqueued = false
+            xValues = lastIndexXArray!
+        }
+
+        count = Swift.min(xValues.count, yValues.count)
+
+        if count <= 1 {
+            mainThread {
+                self.clearGraph()
+            }
+            return
+        }
+
+        var points: [GraphPoint<GLfloat>] = []
+        points.reserveCapacity(count)
+
+        var lastX = -Double.infinity
+
+        let logX = descriptor.logX
+        let logY = descriptor.logY
+
+        switch descriptor.scaleMinX {
+        case .auto:
+            minX = Double.infinity
+        case .extend:
+            break
+        case .fixed:
+            minX = Double(descriptor.minX)
+        }
+
+        switch descriptor.scaleMaxX {
+        case .auto:
+            maxX = -Double.infinity
+        case .extend:
+            break
+        case .fixed:
+            maxX = Double(descriptor.maxX)
+        }
+
+        switch descriptor.scaleMinY {
+        case .auto:
+            minY = Double.infinity
+        case .extend:
+            break
+        case .fixed:
+            minY = Double(descriptor.minY)
+        }
+
+        switch descriptor.scaleMaxY {
+        case .auto:
+            maxY = -Double.infinity
+        case .extend:
+            break
+        case .fixed:
+            maxY = Double(descriptor.maxY)
+        }
+
+        var xOrderOK = true
+        var valuesOK = true
+
+        for i in 0..<count {
+            let rawX = xValues[i]
+            let rawY = yValues[i]
+
+            if rawX < lastX {
+                xOrderOK = false
+            }
+
+            lastX = rawX
+
+            let x = (logX ? log(rawX) : rawX)
+            let y = (logY ? log(rawY) : rawY)
+
+            guard x.isFinite && y.isFinite else {
+                valuesOK = false
+                continue
+            }
+
+            if x < minX && descriptor.scaleMinX != .fixed {
+                minX = x
+            }
+
+            if x > maxX && descriptor.scaleMaxX != .fixed {
+                maxX = x
+            }
+
+            if y < minY && descriptor.scaleMinY != .fixed {
+                minY = y
+            }
+
+            if y > maxY && descriptor.scaleMaxY != .fixed {
+                maxY = y
+            }
+
+            points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+        }
+
+        if !xOrderOK {
+            print("x values are not ordered!")
+        }
+
+        if !valuesOK {
+            print("Tried drawing NaN or inf")
+        }
+
+        let dataSet = (bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points)
+
+        addDataSet(dataSet)
+
+        let min = self.min!
+        let max = self.max!
+
+        minX = min.x
+        maxX = max.x
+
+        minY = min.y
+        maxY = max.y
+
+        let xTicks = ExperimentGraphUtilities.getTicks(minX, max: maxX, maxTicks: 6, log: logX)
+        let yTicks = ExperimentGraphUtilities.getTicks(minY, max: maxY, maxTicks: 6, log: logY)
+
+        let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
+            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val)-minX)/(maxX-minX)))
+        })
+
+        let mappedYTicks = yTicks.map({ (val) -> GraphGridLine in
+            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val)-minY)/(maxY-minY)))
+        })
+
+        let finalPoints = self.points
+
+        mainThread {
+            self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
+            self.glGraph.setPoints(finalPoints, min: min, max: max)
+        }
+    }
+
+    override func update() {
+        guard superview != nil && window != nil else { return }
+
+        if self.queue == nil {
+            print("Graph queue not set!")
+        }
+
+        let queue = self.queue ?? DispatchQueue.global(qos: .utility)
+        
+        queue.async { [weak self] in
+            guard let strongSelf = self, !strongSelf.hasUpdateBlockEnqueued else { return }
+            strongSelf.hasUpdateBlockEnqueued = true
+
+            autoreleasepool {
+                strongSelf.runUpdate()
+            }
         }
     }
     
-    func clearAllDataSets() {
+    func clearData() {
         dataSets.removeAll()
         clearGraph()
     }
@@ -364,7 +373,7 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor> {
         
         lastIndexXArray = nil
         
-        glGraph.setPoints([], min: nil, max: nil)
+        glGraph.setPoints([], min: .zero, max: .zero)
     }
     
     //Mark - General UI

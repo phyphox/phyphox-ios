@@ -14,7 +14,7 @@ final class CountAnalysis: ExperimentAnalysisModule {
         var result: [Double] = []
         
         for input in inputs {
-            let val = input.buffer!.count
+            let val = input.buffer!.memoryCount
             result.append(Double(val))
         }
         

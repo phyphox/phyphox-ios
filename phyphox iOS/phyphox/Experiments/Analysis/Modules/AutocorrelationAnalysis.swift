@@ -77,8 +77,8 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         var yValues: [Double] = []
         
         if count > 0 {
-            if xIn != nil {
-                count = min(xIn!.count, count);
+            if let xIn = xIn {
+                count = min(xIn.memoryCount, count);
             }
             
             var x: [Double]!

@@ -12,34 +12,37 @@ import UIKit
 final class ExperimentViewModuleFactory {
     
     class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor) -> [ExperimentViewModuleView] {
-        var m: [ExperimentViewModuleView] = []
+        var views: [ExperimentViewModuleView?] = []
         
         for descriptor in viewDescriptor.views {
-            if let d = descriptor as? InfoViewDescriptor {
-                m.append(ExperimentInfoView(descriptor: d))
+            if let descriptor = descriptor as? InfoViewDescriptor {
+                views.append(ExperimentInfoView(descriptor: descriptor))
             }
-            else if let d = descriptor as? ValueViewDescriptor {
-                m.append(ExperimentValueView(descriptor: d))
+            else if let descriptor = descriptor as? ValueViewDescriptor {
+                views.append(ExperimentValueView(descriptor: descriptor))
             }
-            else if let d = descriptor as? GraphViewDescriptor {
-                m.append(ExperimentGraphView(descriptor: d))
+            else if let descriptor = descriptor as? GraphViewDescriptor {
+                if descriptor.history == 1 && descriptor.partialUpdate && descriptor.yInputBuffer.size == 0 && (descriptor.xInputBuffer?.size ?? 0) == 0 {
+                    views.append(ExperimentUnboundedFunctionGraphView(descriptor: descriptor))
+                }
+                else {
+                    views.append(ExperimentGraphView(descriptor: descriptor))
+                }
             }
-            else if let d = descriptor as? EditViewDescriptor {
-                m.append(ExperimentEditView(descriptor: d))
+            else if let descriptor = descriptor as? EditViewDescriptor {
+                views.append(ExperimentEditView(descriptor: descriptor))
             }
-            else if let d = descriptor as? ButtonViewDescriptor {
-                m.append(ExperimentButtonView(descriptor: d))
+            else if let descriptor = descriptor as? ButtonViewDescriptor {
+                views.append(ExperimentButtonView(descriptor: descriptor))
             }
-            else if let d = descriptor as? SeparatorViewDescriptor {
-                m.append(ExperimentSeparatorView(descriptor: d))
+            else if let descriptor = descriptor as? SeparatorViewDescriptor {
+                views.append(ExperimentSeparatorView(descriptor: descriptor))
             }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }
         }
-        
-        assert(m.count > 0, "No view descriptors")
-        
-        return m
+
+        return views.flatMap { $0 }
     }
 }

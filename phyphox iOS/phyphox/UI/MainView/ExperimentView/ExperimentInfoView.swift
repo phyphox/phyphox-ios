@@ -10,7 +10,7 @@
 import UIKit
 
 final class ExperimentInfoView: ExperimentViewModule<InfoViewDescriptor> {
-    required init(descriptor: InfoViewDescriptor) {
+    required init?(descriptor: InfoViewDescriptor) {
         super.init(descriptor: descriptor)
         label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.footnote)
     }

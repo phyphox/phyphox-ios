@@ -11,7 +11,7 @@ import Foundation
 import UIKit
 
 final class ExperimentSeparatorView: ExperimentViewModule<SeparatorViewDescriptor> {
-    required init(descriptor: SeparatorViewDescriptor) {
+    required init?(descriptor: SeparatorViewDescriptor) {
         super.init(descriptor: descriptor)
         self.backgroundColor = descriptor.color
         label.isHidden = true

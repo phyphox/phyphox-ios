@@ -111,7 +111,7 @@ final class BufferTests: XCTestCase {
         deletingQueue.async {
             var i = 0
             while i < numberOfIterations {
-                if buffer.count > 0 {
+                if buffer.memoryCount > 0 {
                     XCTAssertEqual(Double(i), buffer.first!)
                     buffer.removeFirst(1)
                     i += 1

@@ -14,7 +14,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor> {
     let unitLabel: UILabel = UILabel()
     let spacing = CGFloat(10.0)
     
-    required init(descriptor: ValueViewDescriptor) {
+    required init?(descriptor: ValueViewDescriptor) {
         super.init(descriptor: descriptor)
         
         self.valueLabel.text = "-"
