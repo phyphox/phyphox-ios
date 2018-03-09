@@ -9,10 +9,7 @@
 import UIKit
 
 protocol GraphViewModuleProtocol {
-    var queue: DispatchQueue? { get set }
-
     func clearData()
-    func animateFrame(_ frame: CGRect)
 }
 
 typealias GraphViewModule = ExperimentViewModule<GraphViewDescriptor> & GraphViewModuleProtocol
@@ -28,7 +25,7 @@ private let maxPoints = 3000
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
  */
 final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphViewModuleProtocol {
-    var queue: DispatchQueue?
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
     private let xLabel: UILabel
     private let yLabel: UILabel
@@ -188,6 +185,13 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             xCount = count
         }
 
+        guard count > 0 else {
+            mainThread {
+                self.clearData()
+            }
+            return
+        }
+
         let addedCount = count - previousCount
 
         guard addedCount > 0 else { return }
@@ -298,12 +302,6 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     }
 
     override func update() {
-        if self.queue == nil {
-            print("Graph queue not set")
-        }
-
-        let queue = self.queue ?? DispatchQueue.global(qos: .utility)
-
         let graphWidth = Int(ceil(glGraph.frame.width * UIScreen.main.scale))
 
         queue.async { [weak self] in
@@ -321,10 +319,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         currentStride = 1
         currentOffsetFromLastPoint = 0
         currentPoints = []
-        clearGraph()
-    }
 
-    private func clearGraph() {
         maxX = -Double.infinity
         minX = Double.infinity
 
@@ -345,7 +340,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     }
 
     private var graphFrame: CGRect {
-        return gridView.insetRect.offsetBy(dx: gridView.frame.origin.x, dy: gridView.frame.origin.y)
+        return gridView.insetRect.offsetBy(dx: gridView.frame.origin.x, dy: gridView.frame.origin.y).integral
     }
 
     override func layoutSubviews() {
@@ -364,14 +359,6 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         gridView.frame = CGRect(x: s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - 2*spacing, height: bounds.size.height - s1.height - s2.height - 2*spacing)
 
         yLabel.frame = CGRect(x: spacing, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
-    }
-
-    func animateFrame(_ frame: CGRect) {
-        layoutIfNeeded()
-        UIView.animate(withDuration: 0.15, animations: {
-            self.frame = frame
-            self.layoutIfNeeded()
-        })
     }
 }
 

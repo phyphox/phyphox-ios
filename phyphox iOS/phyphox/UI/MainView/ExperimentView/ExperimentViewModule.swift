@@ -55,19 +55,19 @@ class ExperimentViewModule<Descriptor: ViewDescriptor>: UIView, Activatable {
     private var updateScheduled: Bool = false
     
     func setNeedsUpdate() {
-        if (active || wantsUpdatesWhenInactive) && !updateScheduled {
-            updateScheduled = true
+        if active || wantsUpdatesWhenInactive {
             triggerUpdate()
         }
     }
     
     private func triggerUpdate() {
-        if updateScheduled {
-            //60fps max
-            after(1.0/60.0) {
-                self.update()
-                self.updateScheduled = false
-            }
+        guard !updateScheduled else { return }
+
+        updateScheduled = true
+
+        after(1.0/60.0) {
+            self.update()
+            self.updateScheduled = false
         }
     }
     

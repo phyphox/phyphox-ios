@@ -11,12 +11,12 @@ import Foundation
 import AVFoundation
 import CoreLocation
 
-struct ExperimentRequiredPermission: OptionSet {
+private struct ExperimentRequiredPermission: OptionSet {
     let rawValue: Int
     
-    static let None = ExperimentRequiredPermission(rawValue: 0)
-    static let Microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
-    static let Location = ExperimentRequiredPermission(rawValue: (1 << 1))
+    static let none = ExperimentRequiredPermission(rawValue: 0)
+    static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
+    static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
 protocol ExperimentDelegate: class {
@@ -87,10 +87,8 @@ final class Experiment {
     let export: ExperimentExport?
     
     let buffers: [String: DataBuffer]
-    
-    private(set) lazy var queue = DispatchQueue(label: "de.rwth-aachen.phyphox.experiment.queue", attributes: [])
-    
-    private(set) var requiredPermissions: ExperimentRequiredPermission = .None
+
+    private var requiredPermissions: ExperimentRequiredPermission = .none
     
     private(set) var running = false
     private(set) var hasStarted = false
@@ -128,11 +126,11 @@ final class Experiment {
         }
         
         if !audioInputs.isEmpty {
-            requiredPermissions.insert(.Microphone)
+            requiredPermissions.insert(.microphone)
         }
         
         if !gpsInputs.isEmpty {
-            requiredPermissions.insert(.Location)
+            requiredPermissions.insert(.location)
         }
         
         analysis?.delegate = self
@@ -151,7 +149,7 @@ final class Experiment {
      Called when the experiment view controller will be presented.
      */
     func willBecomeActive(_ dismiss: @escaping () -> Void) {
-        if requiredPermissions != .None {
+        if requiredPermissions != .none {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
 
@@ -166,7 +164,7 @@ final class Experiment {
     }
     
     private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
-        if requiredPermissions.contains(.Microphone) {
+        if requiredPermissions.contains(.microphone) {
             let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
             
             switch status {
@@ -192,7 +190,7 @@ final class Experiment {
             default:
                 break
             }
-        } else if requiredPermissions.contains(.Location) {
+        } else if requiredPermissions.contains(.location) {
             
             let status = CLLocationManager.authorizationStatus()
             
@@ -291,10 +289,6 @@ final class Experiment {
         startTimestamp = nil
         hasStarted = false
 
-        for buffer in buffers.values {
-            buffer.close()
-        }
-
         try? FileManager.default.removeItem(at: persistentStorageURL)
 
         for buffer in buffers.values {
@@ -305,6 +299,10 @@ final class Experiment {
 
         sensorInputs.forEach { $0.clear() }
         gpsInputs.forEach { $0.clear() }
+
+        for buffer in buffers.values {
+            buffer.close()
+        }
     }
 }
 

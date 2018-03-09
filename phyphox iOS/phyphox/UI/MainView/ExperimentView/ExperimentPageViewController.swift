@@ -103,10 +103,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentViewControllers.first?.active = true
 
         for module in viewModules.flatMap({ $0 }) {
-            if var graph = module as? GraphViewModule {
-                graph.queue = experiment.queue
-            }
-            else if let button = module as? ExperimentButtonView {
+            if let button = module as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
                     

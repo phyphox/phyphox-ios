@@ -31,8 +31,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
     private var maxY: Double
     private var minY: Double
 
-    var queue: DispatchQueue?
-    
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
+
     private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
     
     private func addDataSet(_ set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
@@ -341,12 +341,6 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
     override func update() {
         guard superview != nil && window != nil else { return }
 
-        if self.queue == nil {
-            print("Graph queue not set!")
-        }
-
-        let queue = self.queue ?? DispatchQueue.global(qos: .utility)
-        
         queue.async { [weak self] in
             guard let strongSelf = self, !strongSelf.hasUpdateBlockEnqueued else { return }
             strongSelf.hasUpdateBlockEnqueued = true
