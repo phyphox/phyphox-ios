@@ -126,7 +126,7 @@
 		6B7BF8351C1984FC007408FB /* ExperimentInputsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */; };
 		6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */; };
 		6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A6201CA015A4008D9ACF /* GLGraphView.swift */; };
-		6B9E3DA0205296E0008073D5 /* ExperimentViewModuleCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E3D91205296DF008073D5 /* ExperimentViewModuleCollectionViewCell.swift */; };
+		6B9E3DA0205296E0008073D5 /* ExperimentViewModuleTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
 		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
 		6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */; };
@@ -486,7 +486,7 @@
 		6B7BF8341C1984FC007408FB /* ExperimentInputsParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentInputsParser.swift; sourceTree = "<group>"; };
 		6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentComplexUpdateValueAnalysis.swift; sourceTree = "<group>"; };
 		6B94A6201CA015A4008D9ACF /* GLGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GLGraphView.swift; sourceTree = "<group>"; };
-		6B9E3D91205296DF008073D5 /* ExperimentViewModuleCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleCollectionViewCell.swift; sourceTree = "<group>"; };
+		6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleTableViewCell.swift; sourceTree = "<group>"; };
 		6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValueViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditViewDescriptor.swift; sourceTree = "<group>"; };
@@ -845,7 +845,7 @@
 			children = (
 				4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */,
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
-				6B9E3D91205296DF008073D5 /* ExperimentViewModuleCollectionViewCell.swift */,
+				6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */,
 				6BFE376620447B0600301CA3 /* WebServer */,
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
@@ -1401,7 +1401,7 @@
 				6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */,
 				4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */,
 				6B0814E11CABEE3000EE2791 /* BEMPathManager.m in Sources */,
-				6B9E3DA0205296E0008073D5 /* ExperimentViewModuleCollectionViewCell.swift in Sources */,
+				6B9E3DA0205296E0008073D5 /* ExperimentViewModuleTableViewCell.swift in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6BE3209F1CB19E0300DCC1ED /* CreatePresentationController.swift in Sources */,
 				4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */,

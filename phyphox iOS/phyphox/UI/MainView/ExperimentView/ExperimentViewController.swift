@@ -10,14 +10,14 @@ import UIKit
 
 private let moduleCellID = "ModuleCell"
 
-final class ExperimentViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
+final class ExperimentViewController: UITableViewController {
     private let modules: [ExperimentViewModuleView]
-    var exclusiveView: UIView? = nil
-    
+
     private let scrollView = UIScrollView()
     private let linearView = UIView()
     
-    let insetTop: CGFloat = 10
+    private let insetTop: CGFloat = 10
+    private let intercellSpacing: CGFloat = 10
 
     var active = false {
         didSet {
@@ -27,73 +27,87 @@ final class ExperimentViewController: UICollectionViewController, UICollectionVi
         }
     }
 
-    override func numberOfSections(in collectionView: UICollectionView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
 
-    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return modules.count
     }
 
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let s = modules[indexPath.row].sizeThatFits(view.frame.size)
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 0.0
+    }
 
-        let safeAreaSize: CGRect
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 0.0
+    }
 
-        if #available(iOS 11.0, *) {
-            safeAreaSize = UIEdgeInsetsInsetRect(collectionView.frame, collectionView.safeAreaInsets)
-        } else {
-            safeAreaSize = collectionView.frame
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        return nil
+    }
+
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return nil
+    }
+
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        let size = modules[indexPath.row].sizeThatFits(view.frame.size)
+
+        if indexPath.row > 0 {
+            return size.height + intercellSpacing
         }
-
-        return CGSize(width: safeAreaSize.width, height: s.height)
+        else {
+            return size.height + insetTop
+        }
     }
 
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 10.0, left: 0.0, bottom: 0.0, right: 0.0)
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: moduleCellID, for: indexPath) as? ExperimentViewModuleCollectionViewCell else {
-            return UICollectionViewCell()
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: moduleCellID, for: indexPath) as? ExperimentViewModuleTableViewCell else {
+            return UITableViewCell()
         }
 
         let module = modules[indexPath.row]
 
-        cell.module = module
+        if indexPath.row > 0 {
+            cell.topInset = intercellSpacing
+        }
+        else {
+            cell.topInset = insetTop
+        }
 
-        // TODO: Better protocol
-        module.setNeedsUpdate()
+        // Add to new cell
+        cell.module = module
 
         return cell
     }
 
-    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let cell = cell as? ExperimentViewModuleCollectionViewCell else { return  }
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
         cell.module?.active = active
+
+        // TODO: Better protocol
+        cell.module?.setNeedsUpdate()
     }
 
-    override func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let cell = cell as? ExperimentViewModuleCollectionViewCell else { return  }
+    override func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
         cell.module?.active = false
-    }
-
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 5.0
     }
     
     init(modules: [ExperimentViewModuleView]) {
         self.modules = modules
 
-        let layout = UICollectionViewFlowLayout()
+        super.init(style: .grouped)
 
-        super.init(collectionViewLayout: layout)
+        tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
 
-        collectionView?.register(ExperimentViewModuleCollectionViewCell.self, forCellWithReuseIdentifier: moduleCellID)
+        tableView.backgroundColor = kBackgroundColor
+        tableView.separatorStyle = .none
 
-        collectionView?.backgroundColor = kBackgroundColor
+        tableView.alwaysBounceVertical = false
     }
 
     @available(*, unavailable)
