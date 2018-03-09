@@ -61,7 +61,7 @@ final class GLRangedPointGraphView: GLKView {
         shader = ShaderProgram()
 
         var dataBuffer: GLuint = 0
-        var indexBuffer: GLuint = 1
+        var indexBuffer: GLuint = 0
 
         glGenBuffers(1, &dataBuffer)
         glGenBuffers(1, &indexBuffer)
@@ -103,18 +103,16 @@ final class GLRangedPointGraphView: GLKView {
             ]
         }
 
-        if drawDots {
-            let startIndices: [GLuint] = [0, 1, 2,
-                                          1, 2, 3]
+        // Triangulation indices for a quad
+        let startIndices: [GLuint] = [0, 1, 2,
+                                      1, 2, 3]
 
+        if drawDots {
             let followIndices: [GLuint] = startIndices.map({ $0 + 4 })
 
             triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
         }
         else {
-            let startIndices: [GLuint] = [0, 1, 2,
-                                        1, 2, 3]
-
             let followIndices: [GLuint] = startIndices.map({ $0 + 2 }) + startIndices.map({ $0 + 4 })
 
             triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }

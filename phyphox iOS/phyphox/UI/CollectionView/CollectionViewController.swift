@@ -115,19 +115,19 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     
     //MARK: - Override points
     
-    internal class var viewClass: CollectionContainerView.Type {
+    class var viewClass: CollectionContainerView.Type {
         return CollectionContainerView.self
     }
     
-    internal class var customCells: [String: UICollectionViewCell.Type]? {
+    class var customCells: [String: UICollectionViewCell.Type]? {
         return nil
     }
     
-    internal class var customHeaders: [String: UICollectionReusableView.Type]? {
+    class var customHeaders: [String: UICollectionReusableView.Type]? {
         return nil
     }
     
-    internal class var customFooters: [String: UICollectionReusableView.Type]? {
+    class var customFooters: [String: UICollectionReusableView.Type]? {
         return nil
     }
     

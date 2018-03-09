@@ -101,17 +101,14 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
     private var hasUpdateBlockEnqueued = false
 
-    private func merge<C: Collection, T>(point: RangedGraphPoint<T>, with points: C) -> RangedGraphPoint<T> where C.Element == RangedGraphPoint<T> {
-        var minX = point.xRange.lowerBound
-        var maxX = point.xRange.upperBound
+    private func mergeOrdered<C: RandomAccessCollection, T>(point: RangedGraphPoint<T>, with points: C) -> RangedGraphPoint<T> where C.Element == RangedGraphPoint<T> {
+        let minX = point.xRange.lowerBound
+        let maxX = points.last?.xRange.upperBound ??  point.xRange.upperBound
 
         var minY = point.yRange.lowerBound
         var maxY = point.yRange.upperBound
 
         points.forEach {
-            minX = Swift.min(minX, $0.xRange.lowerBound)
-            maxX = Swift.max(maxX, $0.xRange.upperBound)
-
             minY = Swift.min(minY, $0.yRange.lowerBound)
             maxY = Swift.max(maxY, $0.yRange.upperBound)
         }
@@ -132,7 +129,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
             let nextPoints = points[i + 1..<Swift.min(i + factor, points.count)]
 
-            let mergedPoint = merge(point: currentPoint, with: nextPoints)
+            let mergedPoint = mergeOrdered(point: currentPoint, with: nextPoints)
 
             mergedPoints.append(mergedPoint)
         }
@@ -265,6 +262,8 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             increaseStride(by: strideIncreaseFactor)
         }
 
+        guard active else { return }
+
         let min = GraphPoint(x: minX, y: minY)
         let max = GraphPoint(x: maxX, y: maxY)
 
@@ -384,4 +383,3 @@ extension ExperimentUnboundedFunctionGraphView: GraphGridDelegate {
         }
     }
 }
-

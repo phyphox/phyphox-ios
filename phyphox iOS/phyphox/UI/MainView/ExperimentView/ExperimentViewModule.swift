@@ -9,8 +9,11 @@
 
 import UIKit
 
+// FIXME:
 protocol Activatable {
     var active: Bool { get set }
+
+    func setNeedsUpdate()
 }
 
 typealias ExperimentViewModuleView = Activatable & UIView
@@ -29,8 +32,6 @@ class ExperimentViewModule<Descriptor: ViewDescriptor>: UIView, Activatable {
 
     var wantsUpdatesWhenInactive = false
     
-    var delegate: ModuleExclusiveViewDelegate? = nil
-
     required init?(descriptor: Descriptor) {
         label = UILabel()
         label.numberOfLines = 0

@@ -46,6 +46,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var selectedViewCollection: Int {
         didSet {
             if selectedViewCollection != oldValue {
+                experimentViewControllers[oldValue].active = false
+                experimentViewControllers[selectedViewCollection].active = true
                 updateSelectedViewCollection()
             }
         }
@@ -64,16 +66,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func updateSelectedViewCollection() {
         segControl?.selectedSegmentIndex = selectedViewCollection
         updateTabScrollPosition(selectedViewCollection)
-        
-        for (index, collection) in viewModules.enumerated() {
-            for var module in collection {
-                if index == selectedViewCollection {
-                    module.active = true
-                } else {
-                    module.active = false
-                }
-            }
-        }
     }
     
     @available(*, unavailable)
@@ -105,8 +97,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         viewModules = modules
         
         selectedViewCollection = 0
-        
+
         super.init(nibName: nil, bundle: nil)
+
+        experimentViewControllers.first?.active = true
 
         for module in viewModules.flatMap({ $0 }) {
             if var graph = module as? GraphViewModule {
