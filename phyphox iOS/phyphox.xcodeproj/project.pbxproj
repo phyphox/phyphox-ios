@@ -51,7 +51,6 @@
 		6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B61C46F23000971941 /* ExperimentExport.swift */; };
 		6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */; };
 		6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */; };
-		6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6B0814DF1CABEE3000EE2791 /* BEMAnimationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B0814DA1CABEE3000EE2791 /* BEMAnimationManager.m */; };
 		6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B0814DC1CABEE3000EE2791 /* BEMCheckBox.m */; };
 		6B0814E11CABEE3000EE2791 /* BEMPathManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B0814DE1CABEE3000EE2791 /* BEMPathManager.m */; };
@@ -70,6 +69,7 @@
 		6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */; };
 		6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */; };
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
+		6B0D69302055C59B0044A4CE /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6B26F6FB1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F6FA1CAAEBFE00EA9367 /* UIAlertController+PTExtensions.m */; };
 		6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */; };
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
@@ -127,6 +127,7 @@
 		6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */; };
 		6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A6201CA015A4008D9ACF /* GLGraphView.swift */; };
 		6B9E3DA0205296E0008073D5 /* ExperimentViewModuleTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */; };
+		6B9E3DA220530615008073D5 /* GraphCalculationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E3DA120530615008073D5 /* GraphCalculationTests.swift */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
 		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
 		6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */; };
@@ -487,6 +488,7 @@
 		6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentComplexUpdateValueAnalysis.swift; sourceTree = "<group>"; };
 		6B94A6201CA015A4008D9ACF /* GLGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GLGraphView.swift; sourceTree = "<group>"; };
 		6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleTableViewCell.swift; sourceTree = "<group>"; };
+		6B9E3DA120530615008073D5 /* GraphCalculationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphCalculationTests.swift; sourceTree = "<group>"; };
 		6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValueViewDescriptor.swift; sourceTree = "<group>"; };
 		6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditViewDescriptor.swift; sourceTree = "<group>"; };
@@ -670,6 +672,7 @@
 				6BCD493D205005310079E569 /* unbounded_buffer.phyphox */,
 				6B7BF8241C1645A6007408FB /* QueueTests.swift */,
 				6BFE37C02049ABC800301CA3 /* BufferTests.swift */,
+				6B9E3DA120530615008073D5 /* GraphCalculationTests.swift */,
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
@@ -1312,11 +1315,11 @@
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
 				6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */,
 				6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */,
-				6B0814C91CABEE0700EE2791 /* phyphox-experiments in Resources */,
 				4B6AE7121CF9AF0B0070A691 /* Localizable.strings in Resources */,
 				6BE320981CB11A7200DCC1ED /* FragmentShader.glsl in Resources */,
 				4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */,
 				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
+				6B0D69302055C59B0044A4CE /* phyphox-experiments in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1502,6 +1505,7 @@
 			files = (
 				6B0815481CAD329900EE2791 /* Constants.m in Sources */,
 				6BC012171CAAD14A0053D0DF /* Queue.swift in Sources */,
+				6B9E3DA220530615008073D5 /* GraphCalculationTests.swift in Sources */,
 				6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */,
 				6BC012151CAAD1410053D0DF /* QueueTests.swift in Sources */,
 				6B0815471CAD329900EE2791 /* Constants.swift in Sources */,

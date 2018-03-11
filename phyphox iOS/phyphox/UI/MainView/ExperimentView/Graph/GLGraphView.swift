@@ -105,15 +105,24 @@ final class ShaderProgram {
     }
     
     func drawPositions(mode: Int32, start: Int, count: Int) {
+        guard count > 0 else { return }
+
         glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
 
-        glDrawArrays(GLenum(mode), GLint(start), GLsizei(count))
+        glDrawArrays(GLenum(mode), GLint(start * MemoryLayout<GLuint>.stride), GLsizei(count))
     }
 
-    func drawElements(mode: Int32, count: Int) {
+    private func bufferOffset<I: BinaryInteger>(_ i: I) -> UnsafeRawPointer? {
+        return UnsafeRawPointer(bitPattern: Int(i))
+    }
+
+    func drawElements(mode: Int32, start: Int, count: Int) {
+        guard count > 0 else { return }
+
         glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
 
-        glDrawElements(GLenum(mode), GLsizei(count), GLenum(GL_UNSIGNED_INT), nil)
+        let pointer = bufferOffset(start * MemoryLayout<GLuint>.stride)
+        glDrawElements(GLenum(mode), GLsizei(count), GLenum(GL_UNSIGNED_INT), pointer)
     }
 }
 

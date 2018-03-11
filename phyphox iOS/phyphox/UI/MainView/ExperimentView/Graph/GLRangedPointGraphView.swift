@@ -10,66 +10,70 @@ import UIKit
 import GLKit
 import OpenGLES
 
+// TODO: Sharegroup
+
 final class GLRangedPointGraphView: GLKView {
     private let shader: ShaderProgram
 
-    private var vbo: GLuint
-    private var indexVbo: GLuint
+    private let vbo: GLuint
+    private let triangleIndexBuffer: GLuint
+    private let outlineIndexBuffer: GLuint
 
     // Values used to transform the input values on the xy Plane into NDCs.
     private var xScale: GLfloat = 1.0
     private var yScale: GLfloat = 1.0
 
-    private var min = GraphPoint<Double>.zero
-    private var max = GraphPoint<Double>.zero
+    private let drawDots: Bool
+    private let lineWidth: GLfloat
+//    private let lineColor: GLcolor
 
-    var lineWidth: GLfloat = 2.0 {
-        didSet {
-            setNeedsDisplay()
-        }
-    }
-    
-    var drawDots: Bool = false {
-        didSet {
-            setNeedsDisplay()
-        }
-    }
+    let outlineMidIndex: Int
 
-    var lineColor: GLcolor = GLcolor(r: 1.0, g: 1.0, b: 1.0, a: 1.0) {
-        didSet {
-            setNeedsDisplay()
-        }
-    }
-
+    @available(*, unavailable)
     override convenience init(frame: CGRect) {
-        self.init(frame: frame, context: EAGLContext(api: .openGLES2)!)
+        fatalError()
     }
 
-    convenience init() {
-        self.init(frame: .zero)
+    @available(*, unavailable)
+    init() {
+        fatalError()
     }
 
-    required convenience init?(coder aDecoder: NSCoder) {
-        self.init()
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError()
     }
 
-    override init(frame: CGRect, context: EAGLContext) {
+    init(drawDots: Bool, lineWidth: GLfloat, lineColor: GLcolor, maximumPointCount: Int) {
+        let context = EAGLContext(api: .openGLES3)!
+
         context.isMultiThreaded = true
 
         EAGLContext.setCurrent(context)
 
         shader = ShaderProgram()
 
-        var dataBuffer: GLuint = 0
-        var indexBuffer: GLuint = 0
+        self.drawDots = drawDots
+        self.lineWidth = lineWidth
+//        self.lineColor = lineColor
 
-        glGenBuffers(1, &dataBuffer)
-        glGenBuffers(1, &indexBuffer)
+        var vbo: GLuint = 0
+        var triangleIndexBuffer: GLuint = 0
+        var outlineIndexBuffer: GLuint = 0
 
-        self.vbo = dataBuffer
-        self.indexVbo = indexBuffer
-        
-        super.init(frame: frame, context: context)
+        glGenBuffers(1, &vbo)
+        glGenBuffers(1, &triangleIndexBuffer)
+        glGenBuffers(1, &outlineIndexBuffer)
+
+        self.vbo = vbo
+        self.triangleIndexBuffer = triangleIndexBuffer
+        self.outlineIndexBuffer = outlineIndexBuffer
+
+        outlineMidIndex = 2 * maximumPointCount
+
+        super.init(frame: .zero, context: context)
+
+        prepareBuffers(maximumPointCount: maximumPointCount)
 
         self.drawableColorFormat = .RGBA8888
 
@@ -79,90 +83,172 @@ final class GLRangedPointGraphView: GLKView {
 
         self.drawableMultisample = .multisample4X
         self.isOpaque = false
-        self.enableSetNeedsDisplay = true
+        self.enableSetNeedsDisplay = false
 
         glClearColor(0.0, 0.0, 0.0, 0.0)
+
+        shader.use()
+        
+        shader.setPointSize(lineWidth)
+        shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
     }
 
-    private var points: [GraphPoint<GLfloat>] = []
+    private func prepareBuffers(maximumPointCount: Int) {
+        EAGLContext.setCurrent(context)
 
-    private var triangleIndices: [GLuint] = []
-    private var outlineIndices: [GLuint] = []
+        let maximumVertexCount = maximumPointCount * 4
 
-    func setPoints(_ points: [RangedGraphPoint<Double>], min: GraphPoint<Double>, max: GraphPoint<Double>) {
-        self.points = points.flatMap { point -> [GraphPoint<GLfloat>] in
-            return [
-                GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                           y: GLfloat(point.yRange.upperBound)),
-                GraphPoint(x: GLfloat(point.xRange.lowerBound),
-                           y: GLfloat(point.yRange.lowerBound)),
-                GraphPoint(x: GLfloat(point.xRange.upperBound),
-                           y: GLfloat(point.yRange.upperBound)),
-                GraphPoint(x: GLfloat(point.xRange.upperBound),
-                           y: GLfloat(point.yRange.lowerBound))
-            ]
-        }
+        // Allocate buffer for vertex position data
 
-        // Triangulation indices for a quad
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * maximumVertexCount, nil, GLenum(GL_DYNAMIC_DRAW))
+
+        // Allocate and fill coordinate-indipendet buffers for triangulation and outline indices
+
         let startIndices: [GLuint] = [0, 1, 2,
                                       1, 2, 3]
+        let followIndices: [GLuint]
 
         if drawDots {
-            let followIndices: [GLuint] = startIndices.map({ $0 + 4 })
-
-            triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
+            followIndices = startIndices.map({ $0 + 4 })
         }
         else {
-            let followIndices: [GLuint] = startIndices.map({ $0 + 2 }) + startIndices.map({ $0 + 4 })
-
-            triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(self.points.count - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
+            followIndices = startIndices.map({ $0 + 2 }) + startIndices.map({ $0 + 4 })
         }
 
-        if !drawDots {
-            let upperIndices = stride(from: 0, to: GLuint(self.points.count), by: 2)
+        let triangleIndices = startIndices + stride(from: 0, to: GLuint(Swift.max(maximumVertexCount - 4, 0)), by: 4).flatMap { quad in followIndices.map { quad + $0 } }
 
-            let lowerIndices = stride(from: 1, to: GLuint(self.points.count), by: 2).reversed()
+        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
+        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * triangleIndices.count, triangleIndices, GLenum(GL_STATIC_DRAW))
 
-            outlineIndices = upperIndices + lowerIndices
+        let upperIndices = stride(from: 0, to: GLuint(maximumVertexCount), by: 2).reversed()
+        let lowerIndices = stride(from: 1, to: GLuint(maximumVertexCount), by: 2)
+
+        let outlineIndices = upperIndices + lowerIndices
+
+        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), outlineIndexBuffer)
+        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * outlineIndices.count, outlineIndices, GLenum(GL_STATIC_DRAW))
+    }
+
+    private var vertexCount = 0
+    private var drawQuads = true
+
+    //private var points = [GraphPoint<GLfloat>]()
+
+    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>, drawQuads: Bool) where S.Element == RangedGraphPoint<GLfloat> {
+        if drawQuads {
+            let addedVertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
+                return [
+                    GraphPoint(x: point.xRange.lowerBound,
+                               y: point.yRange.upperBound),
+                    GraphPoint(x: point.xRange.lowerBound,
+                               y: point.yRange.lowerBound),
+                    GraphPoint(x: point.xRange.upperBound,
+                               y: point.yRange.upperBound),
+                    GraphPoint(x: point.xRange.upperBound,
+                               y: point.yRange.lowerBound)
+                ]
+            }
+            
+            EAGLContext.setCurrent(context)
+
+            glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+            glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint<GLfloat>>.stride * addedVertices.count, addedVertices)
+
+            vertexCount = vertexCount - replace * 4 + addedVertices.count
+
+            scheduleRedraw(min: min, max: max)
         }
         else {
-            outlineIndices.removeAll()
+//            newPoints = points.map { GraphPoint(x: GLfloat($0.xRange.lowerBound), y: GLfloat($0.yRange.lowerBound)) }
+//            
+//            pointCount = newPoints.count
         }
+    }
 
-        let dataPerPixelX = GLfloat((max.x-min.x)/Double(bounds.size.width))
+    func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>, drawQuads: Bool) where S.Element == RangedGraphPoint<GLfloat> {
+
+//        self.drawQuads = drawQuads
+//
+//        let newPoints: [GraphPoint<GLfloat>]
+//
+//        if drawQuads {
+//            newPoints = points.flatMap { point -> [GraphPoint<GLfloat>] in
+//                return [
+//                    GraphPoint(x: point.xRange.lowerBound,
+//                               y: point.yRange.upperBound),
+//                    GraphPoint(x: point.xRange.lowerBound,
+//                               y: point.yRange.lowerBound),
+//                    GraphPoint(x: point.xRange.upperBound,
+//                               y: point.yRange.upperBound),
+//                    GraphPoint(x: point.xRange.upperBound,
+//                               y: point.yRange.lowerBound)
+//                ]
+//            }
+//
+//            self.points = newPoints
+//
+//            pointCount = newPoints.count
+//        }
+//        else {
+//            triangleIndices.removeAll()
+//            outlineIndices.removeAll()
+//
+//            newPoints = points.map { GraphPoint(x: GLfloat($0.xRange.lowerBound), y: GLfloat($0.yRange.lowerBound)) }
+//            self.points = newPoints
+//            pointCount = newPoints.count
+//        }
+//
+//        shader.use()
+//
+//        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+//        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * newPoints.count, self.points, GLenum(GL_DYNAMIC_DRAW))
+//
+//        scheduleRedraw(min: min, max: max)
+    }
+
+    var xTranslation: GLfloat = 0
+    var yTranslation: GLfloat = 0
+
+    private func scheduleRedraw(min: GraphPoint<Double>, max: GraphPoint<Double>) {
+        let dataPerPixelX = GLfloat((max.x - min.x) / Double(bounds.size.width))
         let biasDataX = lineWidth * dataPerPixelX
 
-        xScale = GLfloat(2.0/(Float(max.x-min.x)+biasDataX))
+        xScale = GLfloat(2.0/(GLfloat(max.x - min.x) + biasDataX))
 
-        let dataPerPixelY = GLfloat((max.y-min.y)/Double(bounds.size.height))
+        let dataPerPixelY = GLfloat((max.y - min.y) / Double(bounds.size.height))
         let biasDataY = lineWidth * dataPerPixelY
 
-        yScale = GLfloat(2.0/(Float(max.y-min.y)+biasDataY))
+        yScale = GLfloat(2.0/(GLfloat(max.y - min.y) + biasDataY))
 
-        self.max = max
-        self.min = min
+        xTranslation = GLfloat(-min.x-(max.x-min.x)/2.0)
+        yTranslation = GLfloat(-min.y-(max.y-min.y)/2.0)
 
-        setNeedsDisplay()
+        display()
     }
 
     override func draw(_ rect: CGRect) {
         render()
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
+    private var triangulationIndexLength: Int {
+        guard vertexCount > 0 else {
+            return 0
+        }
 
-        setNeedsDisplay()
+        if drawDots {
+            return 6 * vertexCount/4
+        }
+        else {
+            return 6 + (vertexCount - 1) * 3
+        }
+    }
+
+    private var outlineIndexLength: Int {
+        return vertexCount
     }
 
     func render() {
-        let length = points.count
-        let indexLength = triangleIndices.count
-
-        guard length > 0, indexLength > 0 else {
-            return
-        }
-
         EAGLContext.setCurrent(context)
 
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
@@ -173,31 +259,22 @@ final class GLRangedPointGraphView: GLKView {
 
         shader.use()
 
-        glEnable(GLenum(GL_BLEND))
-        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
-
-        let xTranslation = GLfloat(-min.x-(max.x-min.x)/2.0)
-        let yTranslation = GLfloat(-min.y-(max.y-min.y)/2.0)
-
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
-        shader.setPointSize(lineWidth)
-        shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
 
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.stride), points, GLenum(GL_DYNAMIC_DRAW))
 
-        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
-        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(indexLength * MemoryLayout<GLuint>.stride), triangleIndices, GLenum(GL_DYNAMIC_DRAW))
-        shader.drawElements(mode: GL_TRIANGLES, count: indexLength)
+        if drawQuads, triangulationIndexLength > 0 {
+            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
+            shader.drawElements(mode: GL_TRIANGLES, start: 0, count: triangulationIndexLength)
 
-        if !drawDots, !outlineIndices.isEmpty {
-            let outlineLength = outlineIndices.count
-
-            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), indexVbo)
-            glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(outlineLength * MemoryLayout<GLuint>.stride), outlineIndices, GLenum(GL_DYNAMIC_DRAW))
-
-            shader.drawElements(mode: GL_LINE_LOOP, count: outlineLength)
+            if !drawDots, outlineIndexLength > 0 {
+                glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), outlineIndexBuffer)
+                shader.drawElements(mode: GL_LINE_LOOP, start: outlineMidIndex - outlineIndexLength/2 , count: outlineIndexLength)
+            }
+        }
+        else {
+            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount)
         }
     }
 }
