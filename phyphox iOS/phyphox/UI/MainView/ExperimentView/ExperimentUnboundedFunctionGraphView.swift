@@ -39,7 +39,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         let lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
 
         glGraph = GLRangedPointGraphView(drawDots: descriptor.drawDots, lineWidth: GLfloat(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0)), lineColor: lineColor, maximumPointCount: maxPoints)
-        glGraph.drawQuads = false
+        glGraph.singlePointMode = true
 
         gridView = GraphGridView(descriptor: descriptor)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -170,7 +170,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             mainPointCollection.factorStride(by: strideIncreaseFactor)
             assert(before == mainPointCollection.representedPointCount)
 
-            self.glGraph.drawQuads = true
+            self.glGraph.singlePointMode = false
         }
         else {
             replacedAll = false

@@ -34,7 +34,11 @@ final class GLRangedPointGraphView: GLKView {
     private let outlineMidIndex: Int
 
     private var vertexCount = 0
-    var drawQuads = true
+
+    /**
+     In single point mode the ranged input points are expected to contain empty ranges, meaning they represent a single point rather than a rectangle. This only copies one vertex per point into the vertex buffer, and only draws dots or a connecting line on the vertices, depending on the `drawDots` value. No quads and no outline is rendered when this is `true`. When toggling this property all vertex data needs to be discarded (`setPoints`) before rendering.
+     */
+    var singlePointMode = false
 
     private var pointSize: CGSize = .zero
 
@@ -167,19 +171,34 @@ final class GLRangedPointGraphView: GLKView {
         glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * outlineIndices.count, outlineIndices, GLenum(GL_STATIC_DRAW))
     }
 
-    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
-        let vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
-            return [
-                GraphPoint(x: point.xRange.lowerBound,
-                           y: point.yRange.upperBound),
-                GraphPoint(x: point.xRange.lowerBound,
-                           y: point.yRange.lowerBound),
-                GraphPoint(x: point.xRange.upperBound,
-                           y: point.yRange.upperBound),
-                GraphPoint(x: point.xRange.upperBound,
-                           y: point.yRange.lowerBound)
-            ]
+    private func createVertices<S: Sequence>(from points: S) -> [GraphPoint<GLfloat>] where S.Element == RangedGraphPoint<GLfloat> {
+        let vertices: [GraphPoint<GLfloat>]
+
+        if singlePointMode {
+            vertices = points.map { point -> GraphPoint<GLfloat> in
+                return GraphPoint(x: point.xRange.lowerBound, y: point.yRange.lowerBound)
+            }
         }
+        else {
+            vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
+                return [
+                    GraphPoint(x: point.xRange.lowerBound,
+                               y: point.yRange.upperBound),
+                    GraphPoint(x: point.xRange.lowerBound,
+                               y: point.yRange.lowerBound),
+                    GraphPoint(x: point.xRange.upperBound,
+                               y: point.yRange.upperBound),
+                    GraphPoint(x: point.xRange.upperBound,
+                               y: point.yRange.lowerBound)
+                ]
+            }
+        }
+
+        return vertices
+    }
+
+    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
+        let vertices = createVertices(from: points)
 
         EAGLContext.setCurrent(context)
 
@@ -192,18 +211,7 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
-        let vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
-            return [
-                GraphPoint(x: point.xRange.lowerBound,
-                           y: point.yRange.upperBound),
-                GraphPoint(x: point.xRange.lowerBound,
-                           y: point.yRange.lowerBound),
-                GraphPoint(x: point.xRange.upperBound,
-                           y: point.yRange.upperBound),
-                GraphPoint(x: point.xRange.upperBound,
-                           y: point.yRange.lowerBound)
-            ]
-        }
+        let vertices = createVertices(from: points)
 
         EAGLContext.setCurrent(context)
 
@@ -256,7 +264,7 @@ final class GLRangedPointGraphView: GLKView {
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
 
-        if drawQuads {
+        if !singlePointMode {
             let triangulationIndexLength = self.triangulationIndexLength
 
             if triangulationIndexLength > 0 {
@@ -278,7 +286,7 @@ final class GLRangedPointGraphView: GLKView {
             }
         }
         else {
-            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount/4, strideFactor: 4)
+            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount, strideFactor: 1)
         }
     }
 
