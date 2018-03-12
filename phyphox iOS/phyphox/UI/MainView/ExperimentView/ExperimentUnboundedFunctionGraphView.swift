@@ -187,13 +187,12 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         guard active else { return }
 
+        self.glGraph.display()
+
         let grid = generateGrid(logX: logX, logY: logY)
 
         mainThread {
-            if self.superview != nil && self.window != nil {
-                self.glGraph.display()
-                self.gridView.grid = grid
-            }
+            self.gridView.grid = grid
         }
     }
 

@@ -249,8 +249,6 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     private func render() {
-        EAGLContext.setCurrent(context)
-
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
 
         guard vertexCount > 0 else { return }

@@ -61,7 +61,7 @@ final class GLGraphShaderProgram {
         scaleUniformHandle = GLint(glGetUniformLocation(programHandle, "scale"))
         pointSizeUniformHandle = GLint(glGetUniformLocation(programHandle, "pointSize"))
         translationUniformHandle = GLint(glGetUniformLocation(programHandle, "translation"))
-        colorUniformHandle = GLint(glGetUniformLocation(programHandle, "inColor"))
+        colorUniformHandle = GLint(glGetUniformLocation(programHandle, "color"))
 
         glEnableVertexAttribArray(positionAttributeHandle)
     }
