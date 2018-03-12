@@ -108,6 +108,8 @@ final class ExperimentViewController: UITableViewController {
         tableView.separatorStyle = .none
 
         tableView.alwaysBounceVertical = false
+
+        // TODO: table view top content inset on iOS < 11.
     }
 
     @available(*, unavailable)

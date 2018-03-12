@@ -12,10 +12,12 @@ import OpenGLES
 
 // TODO: Sharegroup
 
+private let primitiveRestartFlag = GLuint.max
+
 final class GLRangedPointGraphView: GLKView {
     private let shader: GLGraphShaderProgram
 
-    private var vbo: GLuint = 0
+    private var vertexBuffer: GLuint = 0
     private var triangleIndexBuffer: GLuint = 0
     private var outlineIndexBuffer: GLuint = 0
 
@@ -23,14 +25,43 @@ final class GLRangedPointGraphView: GLKView {
     private var xScale: GLfloat = 1.0
     private var yScale: GLfloat = 1.0
 
+    private var xTranslation: GLfloat = 0
+    private var yTranslation: GLfloat = 0
+
     private let drawDots: Bool
     private let lineWidth: GLfloat
-//    private let lineColor: GLcolor
 
-    let outlineMidIndex: Int
+    private let outlineMidIndex: Int
+
+    private var vertexCount = 0
+    var drawQuads = true
+
+    private var pointSize: CGSize = .zero
+
+    private var triangulationIndexLength: Int {
+        guard vertexCount > 0 else {
+            return 0
+        }
+
+        if drawDots {
+            return 6 * vertexCount/4
+        }
+        else {
+            return 6 + (vertexCount - 4) * 3
+        }
+    }
+
+    private var outlineIndexLength: Int {
+        if drawDots {
+            return 5 * vertexCount/4
+        }
+        else {
+            return vertexCount
+        }
+    }
 
     @available(*, unavailable)
-    override convenience init(frame: CGRect) {
+    override init(frame: CGRect) {
         fatalError()
     }
 
@@ -59,9 +90,8 @@ final class GLRangedPointGraphView: GLKView {
 
         self.drawDots = drawDots
         self.lineWidth = lineWidth
-//        self.lineColor = lineColor
 
-        glGenBuffers(1, &vbo)
+        glGenBuffers(1, &vertexBuffer)
         glGenBuffers(1, &triangleIndexBuffer)
         glGenBuffers(1, &outlineIndexBuffer)
 
@@ -83,6 +113,10 @@ final class GLRangedPointGraphView: GLKView {
 
         glClearColor(0.0, 0.0, 0.0, 0.0)
 
+        if drawDots {
+            glEnable(GLenum(GL_PRIMITIVE_RESTART_FIXED_INDEX))
+        }
+
         shader.use()
         
         shader.setPointSize(lineWidth)
@@ -95,12 +129,10 @@ final class GLRangedPointGraphView: GLKView {
         let maximumVertexCount = maximumPointCount * 4
 
         // Allocate buffer for vertex position data
-
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * maximumVertexCount, nil, GLenum(GL_DYNAMIC_DRAW))
 
         // Allocate and fill coordinate-indipendet buffers for triangulation and outline indices
-
         let startIndices: [GLuint] = [0, 1, 2,
                                       1, 2, 3]
         let followIndices: [GLuint]
@@ -117,17 +149,23 @@ final class GLRangedPointGraphView: GLKView {
         glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
         glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * triangleIndices.count, triangleIndices, GLenum(GL_STATIC_DRAW))
 
-        let upperIndices = stride(from: 0, to: GLuint(maximumVertexCount), by: 2).reversed()
-        let lowerIndices = stride(from: 1, to: GLuint(maximumVertexCount), by: 2)
+        let outlineIndices: [GLuint]
 
-        let outlineIndices = upperIndices + lowerIndices
+        if drawDots {
+            let startIndices: [GLuint] = [0, 1, 3, 2]
+
+            outlineIndices = stride(from: 0, to: GLuint(maximumVertexCount), by: 4).flatMap { factor in startIndices.map({ $0 + factor }) + [primitiveRestartFlag] }
+        }
+        else {
+            let upperIndices = stride(from: 0, to: GLuint(maximumVertexCount), by: 2).reversed()
+            let lowerIndices = stride(from: 1, to: GLuint(maximumVertexCount), by: 2)
+
+            outlineIndices = upperIndices + lowerIndices
+        }
 
         glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), outlineIndexBuffer)
         glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * outlineIndices.count, outlineIndices, GLenum(GL_STATIC_DRAW))
     }
-
-    private var vertexCount = 0
-    var drawQuads = true
 
     func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
         let vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
@@ -145,7 +183,7 @@ final class GLRangedPointGraphView: GLKView {
 
         EAGLContext.setCurrent(context)
 
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
 
         vertexCount = vertexCount - replace * 4 + vertices.count
@@ -169,16 +207,13 @@ final class GLRangedPointGraphView: GLKView {
 
         EAGLContext.setCurrent(context)
 
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         glBufferSubData(GLenum(GL_ARRAY_BUFFER), 0, MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
 
         vertexCount = vertices.count
 
         updateTransform(min: min, max: max)
     }
-
-    var xTranslation: GLfloat = 0
-    var yTranslation: GLfloat = 0
 
     private func updateTransform(min: GraphPoint<Double>, max: GraphPoint<Double>) {
         let dataPerPointX = GLfloat((max.x - min.x) / Double(pointSize.width))
@@ -191,11 +226,9 @@ final class GLRangedPointGraphView: GLKView {
 
         yScale = GLfloat(2.0/(GLfloat(max.y - min.y) + biasDataY))
 
-        xTranslation = GLfloat(-min.x-(max.x-min.x)/2.0)
-        yTranslation = GLfloat(-min.y-(max.y-min.y)/2.0)
+        xTranslation = GLfloat(-min.x - (max.x - min.x)/2.0)
+        yTranslation = GLfloat(-min.y - (max.y - min.y)/2.0)
     }
-
-    private var pointSize: CGSize = .zero
 
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -205,23 +238,6 @@ final class GLRangedPointGraphView: GLKView {
 
     override func draw(_ rect: CGRect) {
         render()
-    }
-
-    private var triangulationIndexLength: Int {
-        guard vertexCount > 0 else {
-            return 0
-        }
-
-        if drawDots {
-            return 6 * vertexCount/4
-        }
-        else {
-            return 6 + (vertexCount - 4) * 3
-        }
-    }
-
-    private var outlineIndexLength: Int {
-        return vertexCount
     }
 
     private func render() {
@@ -241,16 +257,24 @@ final class GLRangedPointGraphView: GLKView {
         shader.setTranslation(xTranslation, yTranslation)
 
         if drawQuads {
-            guard triangulationIndexLength > 0 else { return }
+            let triangulationIndexLength = self.triangulationIndexLength
 
-            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
-            shader.drawElements(mode: GL_TRIANGLES, start: 0, count: triangulationIndexLength)
+            if triangulationIndexLength > 0 {
+                glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
+                shader.drawElements(mode: GL_TRIANGLES, start: 0, count: triangulationIndexLength)
+            }
 
-            if !drawDots {
-                guard outlineIndexLength > 0 else { return }
+            let outlineIndexLength = self.outlineIndexLength
 
+            if outlineIndexLength > 0 {
                 glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), outlineIndexBuffer)
-                shader.drawElements(mode: GL_LINE_LOOP, start: outlineMidIndex - outlineIndexLength/2 , count: outlineIndexLength)
+
+                if drawDots {
+                    shader.drawElements(mode: GL_LINE_LOOP, start: 0, count: outlineIndexLength)
+                }
+                else {
+                    shader.drawElements(mode: GL_LINE_LOOP, start: outlineMidIndex - outlineIndexLength/2 , count: outlineIndexLength)
+                }
             }
         }
         else {
@@ -259,7 +283,7 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     deinit {
-        glDeleteBuffers(1, &vbo)
+        glDeleteBuffers(1, &vertexBuffer)
         glDeleteBuffers(1, &outlineIndexBuffer)
         glDeleteBuffers(1, &triangleIndexBuffer)
     }
