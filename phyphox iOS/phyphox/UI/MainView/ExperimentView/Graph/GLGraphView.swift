@@ -164,6 +164,6 @@ final class GLGraphView: GLKView {
     }
 
     deinit {
-        // TODO: Delete VBOs
+        glDeleteBuffers(1, &vbo)
     }
 }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct GLGraphShaderProgram {
+final class GLGraphShaderProgram {
     private let programHandle: GLuint
 
     private let positionAttributeHandle: GLuint
@@ -105,5 +105,9 @@ struct GLGraphShaderProgram {
 
         let pointer = bufferOffset(start * MemoryLayout<GLuint>.stride)
         glDrawElements(GLenum(mode), GLsizei(count), GLenum(GL_UNSIGNED_INT), pointer)
+    }
+
+    deinit {
+        glDeleteProgram(programHandle)
     }
 }

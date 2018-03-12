@@ -13,28 +13,23 @@ struct RangedGraphPoint<T: Comparable & Numeric> {
     let yRange: ClosedRange<T>
 }
 
-protocol GraphPointCollection {
-    var logX: Bool { get }
-    var logY: Bool { get }
+struct PointCollection {
+    private let logX: Bool
+    private let logY: Bool
 
-    var points: [RangedGraphPoint<GLfloat>] { get set }
+    private(set) var points: [RangedGraphPoint<GLfloat>] = []
 
-    var currentStride: Int { get set }
-    var currentOffsetFromLastPoint: Int { get set }
+    private var currentStride = 1
+    private var currentOffsetFromLastPoint = 0
 
-    var count: Int { get }
-    var representedPointCount: Int { get }
+    private(set) var maxX = -GLfloat.infinity
+    private(set) var minX = GLfloat.infinity
 
-    mutating func append<S: Sequence>(_ newPoints: S) -> (replacedPointCount: Int, appendedPointCount: Int) where S.Element == (Double, Double)
+    private(set) var maxY = -GLfloat.infinity
+    private(set) var minY = GLfloat.infinity
 
-    mutating func factorStride(by factor: Int)
+    private(set) var longestStride: GLfloat = 0.0
 
-    mutating func commitPoint(_ point: RangedGraphPoint<GLfloat>)
-
-    mutating func removeAll()
-}
-
-extension GraphPointCollection {
     var count: Int {
         return points.count
     }
@@ -48,17 +43,42 @@ extension GraphPointCollection {
         }
     }
 
+    init(logX: Bool, logY: Bool) {
+        self.logX = logX
+        self.logY = logY
+    }
+
     mutating func removeAll() {
         currentStride = 1
         currentOffsetFromLastPoint = 0
         points.removeAll()
-    }
 
-    mutating func commitPoint(_ point: RangedGraphPoint<GLfloat>) {
-        points.append(point)
+        maxX = -GLfloat.infinity
+        minX = GLfloat.infinity
+        maxY = -GLfloat.infinity
+        minY = GLfloat.infinity
+        
+        longestStride = 0.0
     }
 
     mutating func append<S: Sequence>(_ newPoints: S) -> (replacedPointCount: Int, appendedPointCount: Int) where S.Element == (Double, Double) {
+        func commitPoint(_ point: RangedGraphPoint<GLfloat>) {
+            if let last = points.last {
+                longestStride = Swift.max(longestStride, point.xRange.upperBound - last.xRange.lowerBound)
+            }
+            else {
+                longestStride = Swift.max(longestStride, point.xRange.upperBound-point.yRange.lowerBound)
+            }
+
+            points.append(point)
+
+            maxX = Swift.max(point.xRange.upperBound, maxX)
+            minX = Swift.min(point.xRange.lowerBound, minX)
+
+            maxY = Swift.max(point.yRange.upperBound, maxY)
+            minY = Swift.min(point.yRange.lowerBound, minY)
+        }
+
         var currentPoint = currentOffsetFromLastPoint == 0 ? nil : points.popLast()
 
         let replacedPointCount = currentOffsetFromLastPoint == 0 ? 0 : 1
@@ -172,72 +192,5 @@ extension GraphPointCollection {
         }
 
         return mergedPoints
-    }
-}
-
-struct MainGraphPointCollection: GraphPointCollection {
-    let logX: Bool
-    let logY: Bool
-
-    var points: [RangedGraphPoint<GLfloat>] = []
-
-    var currentStride = 1
-    var currentOffsetFromLastPoint = 0
-
-    private(set) var maxX = -GLfloat.infinity
-    private(set) var minX = GLfloat.infinity
-
-    private(set) var maxY = -GLfloat.infinity
-    private(set) var minY = GLfloat.infinity
-
-    private(set) var longestStride: GLfloat = 0.0
-
-    init(logX: Bool, logY: Bool) {
-        self.logX = logX
-        self.logY = logY
-    }
-
-    mutating func commitPoint(_ point: RangedGraphPoint<GLfloat>) {
-        if let last = points.last {
-            longestStride = Swift.max(longestStride, point.xRange.upperBound - last.xRange.lowerBound)
-        }
-        else {
-            longestStride = Swift.max(longestStride, point.xRange.upperBound-point.yRange.lowerBound)
-        }
-
-        points.append(point)
-
-        maxX = Swift.max(point.xRange.upperBound, maxX)
-        minX = Swift.min(point.xRange.lowerBound, minX)
-
-        maxY = Swift.max(point.yRange.upperBound, maxY)
-        minY = Swift.min(point.yRange.lowerBound, minY)
-    }
-
-    mutating func removeAll() {
-        currentStride = 1
-        currentOffsetFromLastPoint = 0
-        points.removeAll()
-
-        maxX = -GLfloat.infinity
-        minX = GLfloat.infinity
-        maxY = -GLfloat.infinity
-        minY = GLfloat.infinity
-        longestStride = 0.0
-    }
-}
-
-private struct GraphGraphPointCollection: GraphPointCollection {
-    let logX: Bool
-    let logY: Bool
-
-    var points: [RangedGraphPoint<GLfloat>] = []
-
-    var currentStride = 1
-    var currentOffsetFromLastPoint = 0
-
-    init(logX: Bool, logY: Bool) {
-        self.logX = logX
-        self.logY = logY
     }
 }

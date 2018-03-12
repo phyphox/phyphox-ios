@@ -45,6 +45,8 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
         gridView.gridOffset = CGPoint(x: 0.0, y: 0.0)
 
+        mainPointCollection = PointCollection(logX: descriptor.logX, logY: descriptor.logY)
+
         func makeLabel(_ text: String?) -> UILabel {
             let l = UILabel()
             l.text = text
@@ -78,7 +80,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         }
     }
 
-    private var mainPointCollection = MainGraphPointCollection(logX: false, logY: false)
+    private var mainPointCollection: PointCollection
 
     private var hasUpdateBlockEnqueued = false
 

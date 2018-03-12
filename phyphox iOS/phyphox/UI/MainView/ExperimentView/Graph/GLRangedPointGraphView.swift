@@ -15,9 +15,9 @@ import OpenGLES
 final class GLRangedPointGraphView: GLKView {
     private let shader: GLGraphShaderProgram
 
-    private let vbo: GLuint
-    private let triangleIndexBuffer: GLuint
-    private let outlineIndexBuffer: GLuint
+    private var vbo: GLuint = 0
+    private var triangleIndexBuffer: GLuint = 0
+    private var outlineIndexBuffer: GLuint = 0
 
     // Values used to transform the input values on the xy Plane into NDCs.
     private var xScale: GLfloat = 1.0
@@ -61,17 +61,9 @@ final class GLRangedPointGraphView: GLKView {
         self.lineWidth = lineWidth
 //        self.lineColor = lineColor
 
-        var vbo: GLuint = 0
-        var triangleIndexBuffer: GLuint = 0
-        var outlineIndexBuffer: GLuint = 0
-
         glGenBuffers(1, &vbo)
         glGenBuffers(1, &triangleIndexBuffer)
         glGenBuffers(1, &outlineIndexBuffer)
-
-        self.vbo = vbo
-        self.triangleIndexBuffer = triangleIndexBuffer
-        self.outlineIndexBuffer = outlineIndexBuffer
 
         outlineMidIndex = 2 * maximumPointCount
 
@@ -267,6 +259,8 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     deinit {
-        // TODO: Delete VBOs
+        glDeleteBuffers(1, &vbo)
+        glDeleteBuffers(1, &outlineIndexBuffer)
+        glDeleteBuffers(1, &triangleIndexBuffer)
     }
 }
