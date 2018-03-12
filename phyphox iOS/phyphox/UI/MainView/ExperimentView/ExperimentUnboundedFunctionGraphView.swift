@@ -29,6 +29,7 @@ private protocol GraphPointCollection {
     var currentOffsetFromLastPoint: Int { get set }
 
     var count: Int { get }
+    var representedPointCount: Int { get }
 
     mutating func append<S: Sequence>(_ newPoints: S) -> (replacedPointCount: Int, appendedPointCount: Int) where S.Element == (Double, Double)
 
@@ -41,7 +42,16 @@ private protocol GraphPointCollection {
 
 extension GraphPointCollection {
     var count: Int {
-        return points.count * currentStride + currentOffsetFromLastPoint
+        return points.count
+    }
+
+    var representedPointCount: Int {
+        if currentOffsetFromLastPoint > 0 {
+            return (points.count - 1) * currentStride + currentOffsetFromLastPoint
+        }
+        else {
+            return points.count * currentStride
+        }
     }
 
     mutating func removeAll() {
@@ -114,20 +124,22 @@ extension GraphPointCollection {
 
         points = mergePoints(points, by: factor)
 
+        let previousStride = currentStride
+
         currentStride *= factor
 
-        // If there is no dangling point and the last point was not complete we have to increase the offset by the current stride times the number of points that were merged with the incomplete last point (factor - 1). The point created by merging the last `factor` points will also not be complete since the previous last point was incomplete.
+        // If there is no dangling point and the last point was not complete we have to increase the offset by the current stride (before updating it with the new factor), which is equal to the number of single points represented by one completed ranged point, times the number of points that were merged with the incomplete last point (factor - 1). The point created by merging the last `factor` points will also not be complete since the previous last point was incomplete.
         if danglingPointCount == 0 && currentOffsetFromLastPoint > 0 {
-            currentOffsetFromLastPoint += (factor - 1) * currentStride
+            currentOffsetFromLastPoint += (factor - 1) * previousStride
         }
 
         if danglingPointCount > 0 {
-            // If the last point was complete the new offset is `number of dangling points * current stride`. If the last point was incomplete the new offset is `oldOffset + currentStride * (number of dangling points - 1)`
+            // If the last point was complete the new offset is `number of dangling points * current stride (before updating it with the new factor)`. If the last point was incomplete the new offset is `oldOffset + current stride * (number of dangling points - 1)`
             if currentOffsetFromLastPoint == 0 {
-                currentOffsetFromLastPoint = currentStride * danglingPointCount
+                currentOffsetFromLastPoint = previousStride * danglingPointCount
             }
             else {
-                currentOffsetFromLastPoint += currentStride * (danglingPointCount - 1)
+                currentOffsetFromLastPoint += previousStride * (danglingPointCount - 1)
             }
         }
     }
@@ -261,6 +273,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         let lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
 
         glGraph = GLRangedPointGraphView(drawDots: descriptor.drawDots, lineWidth: GLfloat(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0)), lineColor: lineColor, maximumPointCount: maxPoints)
+        glGraph.drawQuads = false
 
         gridView = GraphGridView(descriptor: descriptor)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -304,12 +317,15 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
     private var hasUpdateBlockEnqueued = false
 
+    private var lastxCount = 0
+    private var lastyCount = 0
+
     private func runUpdate(graphWidth: Int) {
         defer {
             hasUpdateBlockEnqueued = false
         }
 
-        let previousCount = mainPointCollection.count
+        let previousCount = mainPointCollection.representedPointCount
 
         var xValues: [Double]
         let yValues = descriptor.yInputBuffer.toArray()
@@ -350,6 +366,9 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             mainPointCollection.removeAll()
         }
 
+        lastxCount = xCount
+        lastyCount = yCount
+
         guard addedCount <= descriptor.yInputBuffer.memoryCount else {
             print("Attempted to update unbounded function graph with added count > inout buffer memory size. Stopping plotting.")
             return
@@ -371,7 +390,9 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         let zipped = zip(addedXValues, addedYValues)
 
+        let before = mainPointCollection.representedPointCount
         let (replacedPointCount, addedPointCount) = mainPointCollection.append(zipped)
+        assert(before + addedCount == mainPointCollection.representedPointCount)
 
         let logX = descriptor.logX
         let logY = descriptor.logY
@@ -382,7 +403,12 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         if strideIncreaseFactor > 1 {
             replacedAll = true
+
+            let before = mainPointCollection.representedPointCount
             mainPointCollection.factorStride(by: strideIncreaseFactor)
+            assert(before == mainPointCollection.representedPointCount)
+
+            self.glGraph.drawQuads = true
         }
         else {
             replacedAll = false
@@ -455,10 +481,10 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
                 self.gridView.grid = GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
 
                 if replacedAll {
-                    self.glGraph.setPoints(self.mainPointCollection.points, min: min, max: max, drawQuads: true)
+                    self.glGraph.setPoints(self.mainPointCollection.points, min: min, max: max)
                 }
                 else {
-                    self.glGraph.appendPoints(self.mainPointCollection.points.suffix(addedPointCount + replacedPointCount), replace: replacedPointCount, min: min, max: max, drawQuads: true)
+                    self.glGraph.appendPoints(self.mainPointCollection.points.suffix(addedPointCount + replacedPointCount), replace: replacedPointCount, min: min, max: max)
                 }
             }
         }
@@ -486,7 +512,7 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
 
         gridView.grid = nil
 
-        glGraph.setPoints([], min: .zero, max: .zero, drawQuads: true)
+        glGraph.setPoints([], min: .zero, max: .zero)
     }
 
     //Mark - General UI

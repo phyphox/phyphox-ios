@@ -104,10 +104,10 @@ final class ShaderProgram {
         glUniform4f(colorUniformHandle, r, g, b, a)
     }
     
-    func drawPositions(mode: Int32, start: Int, count: Int) {
+    func drawPositions(mode: Int32, start: Int, count: Int, strideFactor: Int) {
         guard count > 0 else { return }
 
-        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride * strideFactor), nil)
 
         glDrawArrays(GLenum(mode), GLint(start * MemoryLayout<GLuint>.stride), GLsizei(count))
     }
@@ -274,7 +274,7 @@ final class GLGraphView: GLKView {
                 shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
             }
             
-            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length)
+            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
         }
     }
 }

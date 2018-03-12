@@ -131,80 +131,54 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     private var vertexCount = 0
-    private var drawQuads = true
+    var drawQuads = true
 
-    //private var points = [GraphPoint<GLfloat>]()
-
-    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>, drawQuads: Bool) where S.Element == RangedGraphPoint<GLfloat> {
-        if drawQuads {
-            let addedVertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
-                return [
-                    GraphPoint(x: point.xRange.lowerBound,
-                               y: point.yRange.upperBound),
-                    GraphPoint(x: point.xRange.lowerBound,
-                               y: point.yRange.lowerBound),
-                    GraphPoint(x: point.xRange.upperBound,
-                               y: point.yRange.upperBound),
-                    GraphPoint(x: point.xRange.upperBound,
-                               y: point.yRange.lowerBound)
-                ]
-            }
-            
-            EAGLContext.setCurrent(context)
-
-            glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-            glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint<GLfloat>>.stride * addedVertices.count, addedVertices)
-
-            vertexCount = vertexCount - replace * 4 + addedVertices.count
-
-            scheduleRedraw(min: min, max: max)
+    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
+        let vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
+            return [
+                GraphPoint(x: point.xRange.lowerBound,
+                           y: point.yRange.upperBound),
+                GraphPoint(x: point.xRange.lowerBound,
+                           y: point.yRange.lowerBound),
+                GraphPoint(x: point.xRange.upperBound,
+                           y: point.yRange.upperBound),
+                GraphPoint(x: point.xRange.upperBound,
+                           y: point.yRange.lowerBound)
+            ]
         }
-        else {
-//            newPoints = points.map { GraphPoint(x: GLfloat($0.xRange.lowerBound), y: GLfloat($0.yRange.lowerBound)) }
-//            
-//            pointCount = newPoints.count
-        }
+
+        EAGLContext.setCurrent(context)
+
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
+
+        vertexCount = vertexCount - replace * 4 + vertices.count
+
+        scheduleRedraw(min: min, max: max)
     }
 
-    func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>, drawQuads: Bool) where S.Element == RangedGraphPoint<GLfloat> {
+    func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
+        let vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
+            return [
+                GraphPoint(x: point.xRange.lowerBound,
+                           y: point.yRange.upperBound),
+                GraphPoint(x: point.xRange.lowerBound,
+                           y: point.yRange.lowerBound),
+                GraphPoint(x: point.xRange.upperBound,
+                           y: point.yRange.upperBound),
+                GraphPoint(x: point.xRange.upperBound,
+                           y: point.yRange.lowerBound)
+            ]
+        }
 
-//        self.drawQuads = drawQuads
-//
-//        let newPoints: [GraphPoint<GLfloat>]
-//
-//        if drawQuads {
-//            newPoints = points.flatMap { point -> [GraphPoint<GLfloat>] in
-//                return [
-//                    GraphPoint(x: point.xRange.lowerBound,
-//                               y: point.yRange.upperBound),
-//                    GraphPoint(x: point.xRange.lowerBound,
-//                               y: point.yRange.lowerBound),
-//                    GraphPoint(x: point.xRange.upperBound,
-//                               y: point.yRange.upperBound),
-//                    GraphPoint(x: point.xRange.upperBound,
-//                               y: point.yRange.lowerBound)
-//                ]
-//            }
-//
-//            self.points = newPoints
-//
-//            pointCount = newPoints.count
-//        }
-//        else {
-//            triangleIndices.removeAll()
-//            outlineIndices.removeAll()
-//
-//            newPoints = points.map { GraphPoint(x: GLfloat($0.xRange.lowerBound), y: GLfloat($0.yRange.lowerBound)) }
-//            self.points = newPoints
-//            pointCount = newPoints.count
-//        }
-//
-//        shader.use()
-//
-//        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-//        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * newPoints.count, self.points, GLenum(GL_DYNAMIC_DRAW))
-//
-//        scheduleRedraw(min: min, max: max)
+        EAGLContext.setCurrent(context)
+
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
+        glBufferSubData(GLenum(GL_ARRAY_BUFFER), 0, MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
+
+        vertexCount = vertices.count
+
+        scheduleRedraw(min: min, max: max)
     }
 
     var xTranslation: GLfloat = 0
@@ -240,7 +214,7 @@ final class GLRangedPointGraphView: GLKView {
             return 6 * vertexCount/4
         }
         else {
-            return 6 + (vertexCount - 1) * 3
+            return 6 + (vertexCount - 4) * 3
         }
     }
 
@@ -253,6 +227,8 @@ final class GLRangedPointGraphView: GLKView {
 
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
 
+        guard vertexCount > 0 else { return }
+
         if yScale == 0.0 {
             yScale = 0.1
         }
@@ -264,17 +240,21 @@ final class GLRangedPointGraphView: GLKView {
 
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
 
-        if drawQuads, triangulationIndexLength > 0 {
+        if drawQuads {
+            guard triangulationIndexLength > 0 else { return }
+
             glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), triangleIndexBuffer)
             shader.drawElements(mode: GL_TRIANGLES, start: 0, count: triangulationIndexLength)
 
-            if !drawDots, outlineIndexLength > 0 {
+            if !drawDots {
+                guard outlineIndexLength > 0 else { return }
+
                 glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), outlineIndexBuffer)
                 shader.drawElements(mode: GL_LINE_LOOP, start: outlineMidIndex - outlineIndexLength/2 , count: outlineIndexLength)
             }
         }
         else {
-            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount)
+            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount/4, strideFactor: 4)
         }
     }
 }
