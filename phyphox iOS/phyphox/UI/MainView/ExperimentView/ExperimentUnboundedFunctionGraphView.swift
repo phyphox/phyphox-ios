@@ -28,8 +28,6 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     private let glGraph: GLRangedPointGraphView
     private let gridView: GraphGridView
 
-    private var longestStride = 0.0
-
     required init?(descriptor: GraphViewDescriptor) {
         guard descriptor.partialUpdate && descriptor.history == 1 && descriptor.yInputBuffer.size == 0 && (descriptor.xInputBuffer?.size ?? 0) == 0 else { return nil }
 
@@ -233,12 +231,12 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     }
 
     func clearData() {
-        longestStride = 0.0
         mainPointCollection.removeAll()
 
         gridView.grid = nil
 
         glGraph.setPoints([], min: .zero, max: .zero)
+        glGraph.display()
     }
 
     //Mark - General UI
