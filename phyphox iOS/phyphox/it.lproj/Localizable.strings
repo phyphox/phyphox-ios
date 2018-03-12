@@ -69,7 +69,7 @@
 "newExperimentInputRate" = "Frequenza sensore (in Hz, 0 = il più veloce possibile)";
 "share" = "Condividi screenshot";
 "warning" = "Avvertenza";
-"damageWarning" = "Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.";
+"damageWarning" = "Fate attenzione a non danneggiare il telefono facendo gli esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di eventuali danni al vostro telefono.";
 "sensorMagneticField" = "Campo magnetico";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Vuoi cancellare questo esperimento dalla tua collezione?";
@@ -99,5 +99,5 @@
 "creditsRWTH" = "phyphox è stata creata dal secondo istituto di fisica RWTH Aachen.";
 "location" = "Posizione";
 "translationToWebsiteURL" = "http://phyphox.org/languages#it";
-"AudioRateMissmatch" = "Errore: disallineamento del tasso di campionamento. Per favore disattivare qualsiasi applicazione o servizi(come AirPlay) che obbligano a un suono diverso.";
+"AudioRateMissmatch" = "Errore nel campionamento. Per favore disattivare qualsiasi altra applicazione o servizio (come AirPlay) che utilizza il microfono.";
 "translationText" = "Phyphox userà la prima lingua disponibile che compare come preferita nella tua lista nelle opzioni. Per imparare quali lingue sono disponibili  e come ti possiamo aiutare, seleziona ”visita sito web“.";
