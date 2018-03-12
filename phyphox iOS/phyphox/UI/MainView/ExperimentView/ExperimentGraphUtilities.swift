@@ -8,6 +8,21 @@
 
 import Foundation
 
+struct GraphPoint<T: Numeric> {
+    var x: T
+    var y: T
+}
+
+extension GraphPoint {
+    static var zero: GraphPoint {
+        return GraphPoint(x: 0, y: 0)
+    }
+}
+
+struct GLcolor {
+    var r, g, b, a: Float
+}
+
 struct ExperimentGraphUtilities {
     static func getTicks(_ min: Double, max: Double, maxTicks: Int, log: Bool) -> [Double] {
         guard max > min && min.isFinite && max.isFinite else {

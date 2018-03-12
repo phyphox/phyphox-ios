@@ -13,7 +13,7 @@ import OpenGLES
 // TODO: Sharegroup
 
 final class GLRangedPointGraphView: GLKView {
-    private let shader: ShaderProgram
+    private let shader: GLGraphShaderProgram
 
     private let vbo: GLuint
     private let triangleIndexBuffer: GLuint
@@ -45,13 +45,17 @@ final class GLRangedPointGraphView: GLKView {
     }
 
     init(drawDots: Bool, lineWidth: GLfloat, lineColor: GLcolor, maximumPointCount: Int) {
-        let context = EAGLContext(api: .openGLES3)!
+        var context: EAGLContext! = EAGLContext(api: .openGLES3)
+
+        if context == nil {
+            context = EAGLContext(api: .openGLES2)
+        }
 
         context.isMultiThreaded = true
 
         EAGLContext.setCurrent(context)
 
-        shader = ShaderProgram()
+        shader = GLGraphShaderProgram()
 
         self.drawDots = drawDots
         self.lineWidth = lineWidth
@@ -154,7 +158,7 @@ final class GLRangedPointGraphView: GLKView {
 
         vertexCount = vertexCount - replace * 4 + vertices.count
 
-        scheduleRedraw(min: min, max: max)
+        updateTransform(min: min, max: max)
     }
 
     func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
@@ -178,27 +182,33 @@ final class GLRangedPointGraphView: GLKView {
 
         vertexCount = vertices.count
 
-        scheduleRedraw(min: min, max: max)
+        updateTransform(min: min, max: max)
     }
 
     var xTranslation: GLfloat = 0
     var yTranslation: GLfloat = 0
 
-    private func scheduleRedraw(min: GraphPoint<Double>, max: GraphPoint<Double>) {
-        let dataPerPixelX = GLfloat((max.x - min.x) / Double(bounds.size.width))
-        let biasDataX = lineWidth * dataPerPixelX
+    private func updateTransform(min: GraphPoint<Double>, max: GraphPoint<Double>) {
+        let dataPerPointX = GLfloat((max.x - min.x) / Double(pointSize.width))
+        let biasDataX = lineWidth * dataPerPointX
 
         xScale = GLfloat(2.0/(GLfloat(max.x - min.x) + biasDataX))
 
-        let dataPerPixelY = GLfloat((max.y - min.y) / Double(bounds.size.height))
-        let biasDataY = lineWidth * dataPerPixelY
+        let dataPerPointY = GLfloat((max.y - min.y) / Double(pointSize.height))
+        let biasDataY = lineWidth * dataPerPointY
 
         yScale = GLfloat(2.0/(GLfloat(max.y - min.y) + biasDataY))
 
         xTranslation = GLfloat(-min.x-(max.x-min.x)/2.0)
         yTranslation = GLfloat(-min.y-(max.y-min.y)/2.0)
+    }
 
-        display()
+    private var pointSize: CGSize = .zero
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        pointSize = bounds.size
     }
 
     override func draw(_ rect: CGRect) {
@@ -222,7 +232,7 @@ final class GLRangedPointGraphView: GLKView {
         return vertexCount
     }
 
-    func render() {
+    private func render() {
         EAGLContext.setCurrent(context)
 
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
@@ -237,8 +247,6 @@ final class GLRangedPointGraphView: GLKView {
 
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
-
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
 
         if drawQuads {
             guard triangulationIndexLength > 0 else { return }
@@ -256,5 +264,9 @@ final class GLRangedPointGraphView: GLKView {
         else {
             shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: vertexCount/4, strideFactor: 4)
         }
+    }
+
+    deinit {
+        // TODO: Delete VBOs
     }
 }
