@@ -10,7 +10,7 @@
 import UIKit
 
 final class ExperimentViewModuleTableViewCell: UITableViewCell {
-    var module: ExperimentViewModuleView? {
+    var module: UIView? {
         willSet {
             if newValue !== module, module?.superview === contentView {
                 module?.removeFromSuperview()

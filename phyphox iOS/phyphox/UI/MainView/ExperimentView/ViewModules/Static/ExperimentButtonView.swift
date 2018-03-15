@@ -8,24 +8,34 @@
 
 import UIKit
 
-final class ExperimentButtonView: ExperimentViewModule<ButtonViewDescriptor> {
-    let button: UIButton
-    let spacing = CGFloat(20.0)
+private let spacing: CGFloat = 20.0
+
+final class ExperimentButtonView: UIView, DescriptorBoundViewModule {
+    let descriptor: ButtonViewDescriptor
+
+    private let button: UIButton
 
     var buttonTappedCallback: (() -> Void)?
 
     required init?(descriptor: ButtonViewDescriptor) {
+        self.descriptor = descriptor
+        
         button = UIButton()
         button.backgroundColor = kLightBackgroundColor
         button.setTitle(descriptor.localizedLabel, for: UIControlState())
       
-        super.init(descriptor: descriptor)
+        super.init(frame: .zero)
         
         button.addTarget(self, action: #selector(ExperimentButtonView.buttonPressed), for: .touchUpInside)
         
         addSubview(button)
     }
-    
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     @objc private func buttonPressed() {
         buttonTappedCallback?()
     }

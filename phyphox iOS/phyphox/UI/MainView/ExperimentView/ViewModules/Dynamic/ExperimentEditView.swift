@@ -12,17 +12,33 @@ import UIKit
 private let spacing: CGFloat = 10.0
 private let textFieldWidth: CGFloat = 100.0
 
-final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UITextFieldDelegate {
-    let textField: UITextField
-    let unitLabel: UILabel?
-    
-    var edited = false
-    
-    func formattedValue(_ raw: Double) -> String {
-        return (descriptor.decimal ? String(raw) : String(Int(raw)))
+final class ExperimentEditView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, UITextFieldDelegate {
+    let descriptor: EditViewDescriptor
+
+    var active = false {
+        didSet {
+            linked = active
+            if active {
+                setNeedsUpdate()
+            }
+        }
     }
-    
+
+    private var edited = false
+
+    private let textField: UITextField
+    private let unitLabel: UILabel?
+    private let label = UILabel()
+
     required init?(descriptor: EditViewDescriptor) {
+        self.descriptor = descriptor
+
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body)
+        label.textColor = kTextColor
+        label.textAlignment = .right
+
         textField = UITextField()
         textField.backgroundColor = kLightBackgroundColor
         textField.textColor = kTextColor
@@ -46,22 +62,28 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             unitLabel = nil
         }
         
-        super.init(descriptor: descriptor)
+        super.init(frame: .zero)
 
-        registerInputBuffer(descriptor.buffer)
+        registerForUpdatesFromBuffer(descriptor.buffer)
 
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
 
         textField.delegate = self
         
         textField.addTarget(self, action: #selector(ExperimentEditView.textFieldChanged), for: .editingChanged)
-        
+
+        addSubview(label)
         addSubview(textField)
+        
         if let unitLabel = unitLabel {
             addSubview(unitLabel)
         }
-        
-        label.textAlignment = NSTextAlignment.right
+
+        refreshRate = 5
+    }
+
+    private func formattedValue(_ raw: Double) -> String {
+        return (descriptor.decimal ? String(raw) : String(Int(raw)))
     }
     
     @objc func hideKeyboard(_: UITextField) {
@@ -97,10 +119,10 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
 
             var value = rawValue/descriptor.factor
 
-            if (descriptor.min.isFinite && value < descriptor.min) {
+            if descriptor.min.isFinite && value < descriptor.min {
                 value = descriptor.min
             }
-            if (descriptor.max.isFinite && value > descriptor.max) {
+            if descriptor.max.isFinite && value > descriptor.max {
                 value = descriptor.max
             }
 
@@ -109,14 +131,25 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
             descriptor.buffer.replaceValues([value])
         }
     }
-    
-    override func update() {
+
+    private var wantsUpdate = false
+
+    func setNeedsUpdate() {
+        wantsUpdate = true
+    }
+
+    override func display() {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
+        }
+    }
+
+    private func update() {
         let value = descriptor.value
         let rawValue = value * descriptor.factor
 
         textField.text = formattedValue(rawValue)
-
-        super.update()
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -146,20 +179,22 @@ final class ExperimentEditView: ExperimentViewModule<EditViewDescriptor>, UIText
         
         let h = label.sizeThatFits(self.bounds.size).height
         let h2 = textField.sizeThatFits(self.bounds.size).height
-        let w = (self.bounds.size.width-spacing)/2.0
+        let w = (bounds.width - spacing)/2.0
         
-        label.frame = CGRect(origin: CGPoint(x: 0, y: (self.bounds.size.height-h)/2.0), size: CGSize(width: w, height: h))
+        label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - h)/2.0), size: CGSize(width: w, height: h))
         
         var actualTextFieldWidth = textFieldWidth
         
-        if unitLabel != nil {
-            let s3 = unitLabel!.sizeThatFits(self.bounds.size)
+        if let unitLabel = unitLabel {
+            let s3 = unitLabel.sizeThatFits(self.bounds.size)
+
             if actualTextFieldWidth + s3.width + spacing > w {
                actualTextFieldWidth = w - s3.width - spacing
             }
-            unitLabel!.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0+actualTextFieldWidth+spacing, y: (self.bounds.size.height-s3.height)/2.0), size: s3)
+
+            unitLabel.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0 + actualTextFieldWidth + spacing, y: (bounds.height - s3.height)/2.0), size: s3)
         }
         
-        textField.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width+spacing)/2.0, y: (self.bounds.size.height-h2)/2.0), size: CGSize(width: actualTextFieldWidth, height: h2))
+        textField.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: actualTextFieldWidth, height: h2))
     }
 }

@@ -24,7 +24,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     let webServer: ExperimentWebServer
 
-    private let viewModules: [[ExperimentViewModuleView]]
+    private let viewModules: [[UIView]]
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -82,7 +82,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.experiment = experiment
         self.webServer = ExperimentWebServer(experiment: experiment)
         
-        var modules: [[ExperimentViewModuleView]] = []
+        var modules: [[UIView]] = []
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {

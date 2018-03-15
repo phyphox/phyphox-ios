@@ -11,7 +11,7 @@ import UIKit
 private let moduleCellID = "ModuleCell"
 
 final class ExperimentViewController: UITableViewController {
-    private let modules: [ExperimentViewModuleView]
+    private let modules: [UIView]
 
     private let scrollView = UIScrollView()
     private let linearView = UIView()
@@ -21,8 +21,8 @@ final class ExperimentViewController: UITableViewController {
 
     var active = false {
         didSet {
-            for var module in modules {
-                module.active = active
+            for module in modules {
+                (module as? DynamicViewModule)?.active = active
             }
         }
     }
@@ -85,19 +85,16 @@ final class ExperimentViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
-        cell.module?.active = active
-
-        // TODO: Better protocol
-        cell.module?.setNeedsUpdate()
+        (cell.module as? DynamicViewModule)?.active = active
     }
 
     override func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
-        cell.module?.active = false
+        (cell.module as? DynamicViewModule)?.active = false
     }
     
-    init(modules: [ExperimentViewModuleView]) {
+    init(modules: [UIView]) {
         self.modules = modules
 
         super.init(style: .grouped)

@@ -9,17 +9,19 @@
 
 import UIKit
 
-struct GraphGrid {
-    let xGridLines: [GraphGridLine]
-    let yGridLines: [GraphGridLine]
-}
+final class ExperimentGraphView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+    let descriptor: GraphViewDescriptor
 
-struct GraphGridLine {
-    let absoluteValue: Double
-    let relativeValue: CGFloat
-}
+    var active = false {
+        didSet {
+            linked = active
+            if active {
+                setNeedsUpdate()
+            }
+        }
+    }
 
-final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphViewModuleProtocol {
+    private let label = UILabel()
     private let xLabel: UILabel
     private let yLabel: UILabel
     
@@ -81,6 +83,8 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
     }
     
     required init?(descriptor: GraphViewDescriptor) {
+        self.descriptor = descriptor
+
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
         glGraph.lineWidth = Float(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0))
@@ -110,21 +114,22 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
         yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
         
-        super.init(descriptor: descriptor)
+        super.init(frame: .zero)
         
         gridView.delegate = self
-        
+
+        addSubview(label)
         addSubview(gridView)
         addSubview(glGraph)
         addSubview(xLabel)
         addSubview(yLabel)
 
-        registerInputBuffer(descriptor.yInputBuffer)
+        registerForUpdatesFromBuffer(descriptor.yInputBuffer)
         if let xBuffer = descriptor.xInputBuffer {
-            registerInputBuffer(xBuffer)
+            registerForUpdatesFromBuffer(xBuffer)
         }
     }
-    
+
     //MARK - Graph
     
     private var lastIndexXArray: [Double]?
@@ -337,7 +342,20 @@ final class ExperimentGraphView: ExperimentViewModule<GraphViewDescriptor>, Grap
         return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
     }
 
-    override func update() {
+    private var wantsUpdate = false
+
+    func setNeedsUpdate() {
+        wantsUpdate = true
+    }
+
+    override func display() {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
+        }
+    }
+
+    private func update() {
         guard superview != nil && window != nil else { return }
 
         queue.async { [weak self] in

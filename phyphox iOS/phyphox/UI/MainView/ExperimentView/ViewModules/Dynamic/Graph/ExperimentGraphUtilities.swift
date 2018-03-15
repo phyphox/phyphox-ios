@@ -8,6 +8,10 @@
 
 import Foundation
 
+protocol GraphViewModule {
+    func clearData()
+}
+
 struct GraphPoint<T: Numeric> {
     var x: T
     var y: T
@@ -21,6 +25,16 @@ extension GraphPoint {
 
 struct GLcolor {
     var r, g, b, a: Float
+}
+
+struct GraphGrid {
+    let xGridLines: [GraphGridLine]
+    let yGridLines: [GraphGridLine]
+}
+
+struct GraphGridLine {
+    let absoluteValue: Double
+    let relativeValue: CGFloat
 }
 
 struct ExperimentGraphUtilities {

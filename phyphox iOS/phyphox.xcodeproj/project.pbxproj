@@ -631,6 +631,39 @@
 			name = Dependencies;
 			sourceTree = "<group>";
 		};
+		6B2E0F8E205939DD008FAA91 /* Static */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
+				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
+				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
+			);
+			path = Static;
+			sourceTree = "<group>";
+		};
+		6B2E0F9D205939F3008FAA91 /* Dynamic */ = {
+			isa = PBXGroup;
+			children = (
+				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
+				6B00F0A31C457B7200971941 /* ExperimentEditView.swift */,
+				6BCD496E20507DA30079E569 /* ExperimentUnboundedFunctionGraphView.swift */,
+				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
+				6BFE376920447B1E00301CA3 /* Graph */,
+			);
+			path = Dynamic;
+			sourceTree = "<group>";
+		};
+		6B2E0F9E20593A01008FAA91 /* ViewModules */ = {
+			isa = PBXGroup;
+			children = (
+				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
+				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
+				6B2E0F8E205939DD008FAA91 /* Static */,
+				6B2E0F9D205939F3008FAA91 /* Dynamic */,
+			);
+			path = ViewModules;
+			sourceTree = "<group>";
+		};
 		6B7BF7711C130425007408FB = {
 			isa = PBXGroup;
 			children = (
@@ -783,6 +816,8 @@
 		6BFE376920447B1E00301CA3 /* Graph */ = {
 			isa = PBXGroup;
 			children = (
+				6B6A4C2F2056A48F007586D0 /* PointCollection.swift */,
+				6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */,
 				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
 				6B6A4C1F2056A367007586D0 /* GLGraphShaderProgram.swift */,
 				6B53D82920517E410090F57C /* GLRangedPointGraphView.swift */,
@@ -856,18 +891,7 @@
 				6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */,
 				6BFE376620447B0600301CA3 /* WebServer */,
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
-				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
-				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
-				6BCD496E20507DA30079E569 /* ExperimentUnboundedFunctionGraphView.swift */,
-				6B6A4C2F2056A48F007586D0 /* PointCollection.swift */,
-				6B00F09D1C457B4600971941 /* ExperimentGraphView.swift */,
-				6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */,
-				6BFE376920447B1E00301CA3 /* Graph */,
-				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
-				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
-				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
-				6B00F0A31C457B7200971941 /* ExperimentEditView.swift */,
-				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
+				6B2E0F9E20593A01008FAA91 /* ViewModules */,
 			);
 			path = ExperimentView;
 			sourceTree = "<group>";

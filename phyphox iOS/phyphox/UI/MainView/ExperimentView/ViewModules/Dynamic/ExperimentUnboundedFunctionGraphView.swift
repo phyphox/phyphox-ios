@@ -8,18 +8,22 @@
 
 import UIKit
 
-protocol GraphViewModuleProtocol {
-    func clearData()
-}
-
-typealias GraphViewModule = ExperimentViewModule<GraphViewDescriptor> & GraphViewModuleProtocol
-
 private let maxPoints = 3000
 
 /**
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
  */
-final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphViewDescriptor>, GraphViewModuleProtocol {
+final class ExperimentUnboundedFunctionGraphView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+    let descriptor: GraphViewDescriptor
+
+    var active = false {
+        didSet {
+            if active {
+                setNeedsUpdate()
+            }
+        }
+    }
+
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
     private let xLabel: UILabel
@@ -28,9 +32,13 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
     private let glGraph: GLRangedPointGraphView
     private let gridView: GraphGridView
 
+    private let label = UILabel()
+
     required init?(descriptor: GraphViewDescriptor) {
         guard descriptor.partialUpdate && descriptor.history == 1 && descriptor.yInputBuffer.size == 0 && (descriptor.xInputBuffer?.size ?? 0) == 0 else { return nil }
 
+        self.descriptor = descriptor
+        
         var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
 
         descriptor.color.getRed(&r, green: &g, blue: &b, alpha: &a)
@@ -49,33 +57,44 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
             let l = UILabel()
             l.text = text
 
-            let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            let defaultFont = UIFont.preferredFont(forTextStyle: .body)
             l.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
 
             return l
         }
 
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body)
+        label.textColor = kTextColor
+
         xLabel = makeLabel(descriptor.localizedXLabel)
         yLabel = makeLabel(descriptor.localizedYLabel)
         xLabel.textColor = kTextColor
         yLabel.textColor = kTextColor
-        yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
 
-        super.init(descriptor: descriptor)
+        yLabel.transform = CGAffineTransform(rotationAngle: -.pi/2.0)
 
-        wantsUpdatesWhenInactive = true
+        super.init(frame: .zero)
 
+        linked = true
+        
         gridView.delegate = self
 
+        addSubview(label)
         addSubview(gridView)
         addSubview(glGraph)
         addSubview(xLabel)
         addSubview(yLabel)
 
-        registerInputBuffer(descriptor.yInputBuffer)
+        registerForUpdatesFromBuffer(descriptor.yInputBuffer)
         if let xBuffer = descriptor.xInputBuffer {
-            registerInputBuffer(xBuffer)
+            registerForUpdatesFromBuffer(xBuffer)
         }
+    }
+
+    func registerForUpdatesFromBuffer(_ buffer: DataBuffer) {
+        buffer.addObserver(self, alwaysNotify: true)
     }
 
     private var mainPointCollection: PointCollection
@@ -217,7 +236,20 @@ final class ExperimentUnboundedFunctionGraphView: ExperimentViewModule<GraphView
         return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
     }
 
-    override func update() {
+    private var wantsUpdate = false
+
+    func setNeedsUpdate() {
+        wantsUpdate = true
+    }
+
+    override func display() {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
+        }
+    }
+
+    private func update() {
         queue.async { [weak self] in
             guard let strongSelf = self, !strongSelf.hasUpdateBlockEnqueued else { return }
 
