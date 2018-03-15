@@ -1,0 +1,331 @@
+//
+//  Experiment.swift
+//  phyphox
+//
+//  Created by Jonas Gessner on 04.12.15.
+//  Copyright © 2015 Jonas Gessner. All rights reserved.
+//
+
+import Foundation
+import AVFoundation
+import CoreLocation
+
+private struct ExperimentRequiredPermission: OptionSet {
+    let rawValue: Int
+    
+    static let none = ExperimentRequiredPermission(rawValue: 0)
+    static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
+    static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
+}
+
+protocol ExperimentDelegate: class {
+    func experimentWillBecomeActive(_ experiment: Experiment)
+}
+
+final class Experiment {
+    let title: String
+    private let description: String?
+    private let links: [String: String]
+    private let highlightedLinks: [String: String]
+    private let category: String
+    
+    var localizedTitle: String {
+        return translation?.selectedTranslation?.titleString ?? title
+    }
+    
+    var localizedDescription: String? {
+        return translation?.selectedTranslation?.descriptionString ?? description
+    }
+    
+    var localizedLinks: [String: String] {
+        var allLinks = links
+        if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
+            for (key, value) in translatedLinks {
+                allLinks[key] = value
+            }
+        }
+        return allLinks
+    }
+    
+    var localizedHighlightedLinks: [String: String] {
+        var allLinks = highlightedLinks
+        if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
+            for (key, _) in translatedLinks {
+                allLinks[key] = translatedLinks[key]
+            }
+        }
+        return allLinks
+    }
+    
+    var localizedCategory: String {
+        if source?.path.hasPrefix(savedExperimentStatesURL.path) == true {
+            return NSLocalizedString("save_state_category", comment: "")
+        }
+        return translation?.selectedTranslation?.categoryString ?? category
+    }
+
+    weak var delegate: ExperimentDelegate?
+
+    let icon: ExperimentIcon
+
+    let persistentStorageURL: URL
+
+    var local: Bool
+    var source: URL?
+    
+    let viewDescriptors: [ExperimentViewCollectionDescriptor]?
+    
+    let translation: ExperimentTranslationCollection?
+
+    let sensorInputs: [ExperimentSensorInput]
+    let gpsInputs: [ExperimentGPSInput]
+    let audioInputs: [ExperimentAudioInput]
+
+    let output: ExperimentOutput?
+    let analysis: ExperimentAnalysis?
+    let export: ExperimentExport?
+    
+    let buffers: [String: DataBuffer]
+
+    private var requiredPermissions: ExperimentRequiredPermission = .none
+    
+    private(set) var running = false
+    private(set) var hasStarted = false
+    
+    private(set) var startTimestamp: TimeInterval?
+    private var pauseBegin: TimeInterval = 0.0
+
+    private var audioEngine: AudioEngine?
+
+    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+        self.persistentStorageURL = persistentStorageURL
+        self.title = title
+        self.description = description
+        self.links = links
+        self.highlightedLinks = highlightedLinks
+        self.category = category
+        
+        self.icon = icon
+        
+        self.local = local
+        
+        self.translation = translation
+
+        self.buffers = buffers
+        self.sensorInputs = sensorInputs
+        self.gpsInputs = gpsInputs
+        self.audioInputs = audioInputs
+        self.output = output
+        self.viewDescriptors = viewDescriptors
+        self.analysis = analysis
+        self.export = export
+        
+        defer {
+            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
+        }
+        
+        if !audioInputs.isEmpty {
+            requiredPermissions.insert(.microphone)
+        }
+        
+        if !gpsInputs.isEmpty {
+            requiredPermissions.insert(.location)
+        }
+        
+        analysis?.delegate = self
+        analysis?.timestampSource = self
+    }
+
+    @objc private func endBackgroundSession() {
+        stop()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    /**
+     Called when the experiment view controller will be presented.
+     */
+    func willBecomeActive(_ dismiss: @escaping () -> Void) {
+        if requiredPermissions != .none {
+            checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
+        }
+
+        delegate?.experimentWillBecomeActive(self)
+    }
+    
+    /**
+     Called when the experiment view controller did dismiss.
+     */
+    func didBecomeInactive() {
+        clear()
+    }
+    
+    private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
+        if requiredPermissions.contains(.microphone) {
+            let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
+            
+            switch status {
+            case .denied:
+                failed()
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .restricted:
+                failed()
+                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->General->Restrctions->Microphone", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: AVMediaType.audio, completionHandler: { (allowed) in
+                    if !allowed {
+                        failed()
+                    }
+                })
+                
+            default:
+                break
+            }
+        } else if requiredPermissions.contains(.location) {
+            
+            let status = CLLocationManager.authorizationStatus()
+            
+            switch status {
+            case .denied:
+                failed()
+                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been denied. Please enable access to the location in Settings->Privacy->Location Services", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .restricted:
+                failed()
+                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been restricted. Please enable access to the location in Settings->General->Restrctions->Location Services", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .notDetermined:
+                locationManager?.requestWhenInUseAuthorization()
+                break
+                
+            default:
+                break
+            }
+        }
+    }
+    
+    private func startAudio() throws {
+        if output?.audioOutput != nil || !audioInputs.isEmpty {
+            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInputs.first)
+            try audioEngine?.startEngine()
+        }
+    }
+    
+    private func stopAudio() throws {
+        try audioEngine?.stopEngine()
+        audioEngine = nil
+    }
+    
+    func start() throws {
+        guard !running else {
+            return
+        }
+        
+        if pauseBegin > 0 {
+            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
+            pauseBegin = 0.0
+        }
+        
+        if startTimestamp == nil {
+            startTimestamp = CFAbsoluteTimeGetCurrent()
+        }
+        
+        running = true
+
+        try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
+
+        for buffer in buffers.values {
+            buffer.open()
+        }
+
+        hasStarted = true
+
+        UIApplication.shared.isIdleTimerDisabled = true
+        
+        try startAudio()
+        
+        sensorInputs.forEach { $0.start() }
+        gpsInputs.forEach { $0.start() }
+        
+        analysis?.running = true
+        analysis?.setNeedsUpdate()
+    }
+    
+    func stop() {
+        guard running else {
+            return
+        }
+        
+        analysis?.running = false
+        
+        pauseBegin = CFAbsoluteTimeGetCurrent()
+        
+        sensorInputs.forEach { $0.stop() }
+        gpsInputs.forEach { $0.stop() }
+        
+        try? stopAudio()
+        
+        UIApplication.shared.isIdleTimerDisabled = false
+        
+        running = false
+    }
+    
+    func clear() {
+        stop()
+        pauseBegin = 0.0
+        startTimestamp = nil
+        hasStarted = false
+
+        try? FileManager.default.removeItem(at: persistentStorageURL)
+
+        for buffer in buffers.values {
+            if !buffer.attachedToTextField {
+                buffer.clear()
+            }
+        }
+
+        sensorInputs.forEach { $0.clear() }
+        gpsInputs.forEach { $0.clear() }
+
+        for buffer in buffers.values {
+            buffer.close()
+        }
+    }
+}
+
+extension Experiment: ExperimentAnalysisDelegate {
+    func analysisWillUpdate(_: ExperimentAnalysis) {
+    }
+
+    func analysisDidUpdate(_: ExperimentAnalysis) {
+        if running {
+            audioEngine?.playAudioOutput()
+        }
+    }
+}
+
+extension Experiment: ExperimentAnalysisTimestampSource {
+    func getCurrentTimestamp() -> TimeInterval {
+        guard let startTimestamp = startTimestamp else { return 0.0 }
+
+        return CFAbsoluteTimeGetCurrent() - startTimestamp
+    }
+}
+
+extension Experiment: Equatable {
+    static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
+        return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+    }
+}
