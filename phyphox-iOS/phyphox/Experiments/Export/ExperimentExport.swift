@@ -56,7 +56,7 @@ final class ExperimentExport {
                         let tmpFileURL = URL(fileURLWithPath: tmpFile)
                         
                         do {
-                            let archive = try ZZArchive(url: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(value: true as Bool)])
+                            let archive = try ZZArchive(url: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(value: true)])
                             
                             var entries = [ZZArchiveEntry]()
                             

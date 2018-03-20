@@ -13,8 +13,8 @@ protocol GraphViewModule {
 }
 
 struct GraphPoint<T: Numeric> {
-    var x: T
-    var y: T
+    let x: T
+    let y: T
 }
 
 extension GraphPoint {
@@ -24,7 +24,7 @@ extension GraphPoint {
 }
 
 struct GLcolor {
-    var r, g, b, a: Float
+    let r, g, b, a: Float
 }
 
 struct GraphGrid {
