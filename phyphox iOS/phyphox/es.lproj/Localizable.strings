@@ -1,1 +1,23 @@
-
+"action_settings" = "Opciones";
+"newExperimentPhyphoxInfo" = "Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y para compartirlos con colegas, estudiantes y amigos.";
+"newExperimentInputTitle" = "Título";
+"newExperimentInputBufferSize" = "Tamaño del búfer (cantidad de valores a ser almacenados)";
+"newExperimentInputRate" = "Tasa de muestreo del sensor (en Hz, 0 = lo más rápido posible)";
+"newExperimentInputSensors" = "Sensores Activos";
+"warning" = "Advertencia";
+"donotshowagain" = "No mostrar de nuevo";
+"damageWarning" = "Por favor, tenga cuidado de no dañar su dispositivo durante los experimentos. Por favor, tome las precauciones necesarias para evitar dejarlo caer sobre superficies duras y no lo exponga a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a su dispositivo.";
+"credits" = "Reconocimientos";
+"creditsRWTH" = "phyphox fue creado en el Instituto de Física 2 de la Universidad RWTH Aachen.";
+"sensorLinearAcceleration" = "Aceleración Lineal";
+"sensorLight" = "Luz";
+"sensorGyroscope" = "Giroscopio";
+"sensorAccelerometer" = "Acelerómetro";
+"sensorMagneticField" = "Campo Magnético";
+"sensorPressure" = "Presión";
+"help" = "Ayuda e información";
+"experimentsPhyphoxOrg" = "Ideas para experimentos e instrucciones";
+"faqPhyphoxOrg" = "Preguntas más frecuentes";
+"remotePhyphoxOrgURL" = "http://phyphox.org/controlador-remoto";
+"translationInfo" = "Idiomas";
+"translationToWebsite" = "Visitar sitio web";
