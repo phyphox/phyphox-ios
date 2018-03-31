@@ -76,7 +76,7 @@
 "pick_exportFormat" = "Kies data formaat.";
 "noDrawableData" = "Geen visualiseerbare data.";
 "categoryNewExperiment" = "Simpele aangepaste experimenten";
-"categoryRawSensor" = "Ruwe Sensoren";
+"categoryRawSensor" = "Onbewerkte sensoren";
 "experimentinfo_hint" = "Bekijk de experimenteninfo om te weten hoe u dit experiment moet gebruiken.";
 "help" = "Help en info";
 "experimentsPhyphoxOrg" = "Experiment: ideeën en instructies";
