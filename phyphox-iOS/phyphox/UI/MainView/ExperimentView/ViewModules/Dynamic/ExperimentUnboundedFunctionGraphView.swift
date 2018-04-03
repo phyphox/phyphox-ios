@@ -13,8 +13,10 @@ private let maxPoints = 3000
 /**
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
  */
-final class ExperimentUnboundedFunctionGraphView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
     let descriptor: GraphViewDescriptor
+
+    private let displayLink = DisplayLink(refreshRate: 0)
 
     var active = false {
         didSet {
@@ -77,7 +79,7 @@ final class ExperimentUnboundedFunctionGraphView: DisplayLinkedView, DynamicView
 
         super.init(frame: .zero)
 
-        linked = true
+        displayLink.active = true
         
         gridView.delegate = self
 
@@ -91,6 +93,13 @@ final class ExperimentUnboundedFunctionGraphView: DisplayLinkedView, DynamicView
         if let xBuffer = descriptor.xInputBuffer {
             registerForUpdatesFromBuffer(xBuffer)
         }
+
+        attachDisplayLink(displayLink)
+    }
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     func registerForUpdatesFromBuffer(_ buffer: DataBuffer) {
@@ -237,17 +246,16 @@ final class ExperimentUnboundedFunctionGraphView: DisplayLinkedView, DynamicView
         wantsUpdate = true
     }
 
-    override func display() {
-        if wantsUpdate {
-            wantsUpdate = false
-            update()
-        }
-    }
+    private var busy = false
 
     private func update() {
+        guard !busy else { return }
+        busy = true
+        
         queue.async { [weak self] in
             autoreleasepool {
                 self?.runUpdate()
+                self?.busy = false
             }
         }
     }
@@ -297,6 +305,15 @@ extension ExperimentUnboundedFunctionGraphView: GraphGridDelegate {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
             glGraph.setNeedsLayout()
+        }
+    }
+}
+
+extension ExperimentUnboundedFunctionGraphView: DisplayLinkListener {
+    func display(_ displayLink: DisplayLink) {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
         }
     }
 }

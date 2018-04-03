@@ -10,16 +10,18 @@ import UIKit
 
 private let spacing: CGFloat = 10.0
 
-final class ExperimentValueView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule {
+final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewModule {
     let descriptor: ValueViewDescriptor
 
     private let label = UILabel()
     private let valueLabel = UILabel()
     private let unitLabel = UILabel()
 
+    private let displayLink = DisplayLink(refreshRate: 5)
+
     var active = false {
         didSet {
-            linked = active
+            displayLink.active = active
             if active {
                 setNeedsUpdate()
             }
@@ -53,21 +55,18 @@ final class ExperimentValueView: DisplayLinkedView, DynamicViewModule, Descripto
         addSubview(label)
 
         registerForUpdatesFromBuffer(descriptor.buffer)
+        attachDisplayLink(displayLink)
+    }
 
-        refreshRate = 5
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     private var wantsUpdate = false
 
     func setNeedsUpdate() {
         wantsUpdate = true
-    }
-
-    override func display() {
-        if wantsUpdate {
-            wantsUpdate = false
-            update()
-        }
     }
 
     private func update() {
@@ -123,5 +122,14 @@ final class ExperimentValueView: DisplayLinkedView, DynamicViewModule, Descripto
         valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
 
         unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (bounds.height - s3.height)/2.0, width: s3.width, height: s3.height)
+    }
+}
+
+extension ExperimentValueView: DisplayLinkListener {
+    func display(_ displayLink: DisplayLink) {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
+        }
     }
 }

@@ -17,6 +17,8 @@ protocol DynamicViewModule: DataBufferObserver {
     func setNeedsUpdate()
 
     func registerForUpdatesFromBuffer(_ buffer: DataBuffer)
+
+    func attachDisplayLink(_ displayLink: DisplayLink)
 }
 
 extension DynamicViewModule {
@@ -29,6 +31,12 @@ extension DynamicViewModule {
     }
 }
 
+extension DynamicViewModule where Self: DisplayLinkListener {
+    func attachDisplayLink(_ displayLink: DisplayLink) {
+        displayLink.listener = self
+    }
+}
+
 protocol DescriptorBoundViewModule {
     associatedtype Descriptor: ViewDescriptor
 
@@ -37,50 +45,38 @@ protocol DescriptorBoundViewModule {
     init?(descriptor: Descriptor)
 }
 
-class DisplayLinkedView: UIView {
+protocol DisplayLinkListener: class {
+    func display(_ displayLink: DisplayLink)
+}
+
+final class DisplayLink {
     private lazy var displayLink: CADisplayLink = {
         return CADisplayLink(target: self, selector: #selector(displayRefresh))
     }()
 
-    var refreshRate: Int {
-        get {
-            if #available(iOS 10.0, *) {
-                return displayLink.preferredFramesPerSecond
-            }
-            else {
-                return 60 / displayLink.frameInterval
-            }
-        }
-        set {
-            if #available(iOS 10.0, *) {
-                displayLink.preferredFramesPerSecond = newValue
-            }
-            else {
-                displayLink.frameInterval = 60 / newValue
-            }
-        }
-    }
+    weak var listener: DisplayLinkListener?
 
-    var linked = false {
-        didSet {
-            displayLink.isPaused = !linked
+    init(refreshRate: Int) {
+        if #available(iOS 10.0, *) {
+            displayLink.preferredFramesPerSecond = refreshRate
         }
-    }
+        else {
+            if refreshRate >= 1 {
+                displayLink.frameInterval = 60 / refreshRate
+            }
+        }
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
         displayLink.isPaused = true
         displayLink.add(to: .main, forMode: .commonModes)
     }
 
-    @available(*, unavailable)
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    var active = false {
+        didSet {
+            displayLink.isPaused = !active
+        }
     }
 
     @objc private func displayRefresh() {
-        display()
+        listener?.display(self)
     }
-
-    func display() {}
 }

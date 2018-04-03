@@ -8,12 +8,14 @@
 
 import UIKit
 
-final class ExperimentGraphView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
     let descriptor: GraphViewDescriptor
+
+    private let displayLink = DisplayLink(refreshRate: 0)
 
     var active = false {
         didSet {
-            linked = active
+            displayLink.active = active
             if active {
                 setNeedsUpdate()
             }
@@ -127,6 +129,13 @@ final class ExperimentGraphView: DisplayLinkedView, DynamicViewModule, Descripto
         if let xBuffer = descriptor.xInputBuffer {
             registerForUpdatesFromBuffer(xBuffer)
         }
+
+        attachDisplayLink(displayLink)
+    }
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     //MARK - Graph
@@ -341,19 +350,17 @@ final class ExperimentGraphView: DisplayLinkedView, DynamicViewModule, Descripto
         wantsUpdate = true
     }
 
-    override func display() {
-        if wantsUpdate {
-            wantsUpdate = false
-            update()
-        }
-    }
+    private var busy = false
 
     private func update() {
-        guard superview != nil && window != nil else { return }
+        guard !busy, superview != nil && window != nil else { return }
+
+        busy = true
 
         queue.async { [weak self] in
             autoreleasepool {
                 self?.runUpdate()
+                self?.busy = false
             }
         }
     }
@@ -415,6 +422,15 @@ extension ExperimentGraphView: GraphGridDelegate {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
             glGraph.setNeedsLayout()
+        }
+    }
+}
+
+extension ExperimentGraphView: DisplayLinkListener {
+    func display(_ displayLink: DisplayLink) {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
         }
     }
 }

@@ -11,12 +11,14 @@ import UIKit
 private let spacing: CGFloat = 10.0
 private let textFieldWidth: CGFloat = 100.0
 
-final class ExperimentEditView: DisplayLinkedView, DynamicViewModule, DescriptorBoundViewModule, UITextFieldDelegate {
+final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewModule, UITextFieldDelegate {
     let descriptor: EditViewDescriptor
+
+    private let displayLink = DisplayLink(refreshRate: 5)
 
     var active = false {
         didSet {
-            linked = active
+            displayLink.active = active
             if active {
                 setNeedsUpdate()
             }
@@ -78,7 +80,12 @@ final class ExperimentEditView: DisplayLinkedView, DynamicViewModule, Descriptor
             addSubview(unitLabel)
         }
 
-        refreshRate = 5
+        attachDisplayLink(displayLink)
+    }
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     private func formattedValue(_ raw: Double) -> String {
@@ -137,13 +144,6 @@ final class ExperimentEditView: DisplayLinkedView, DynamicViewModule, Descriptor
         wantsUpdate = true
     }
 
-    override func display() {
-        if wantsUpdate {
-            wantsUpdate = false
-            update()
-        }
-    }
-
     private func update() {
         let value = descriptor.value
         let rawValue = value * descriptor.factor
@@ -195,5 +195,14 @@ final class ExperimentEditView: DisplayLinkedView, DynamicViewModule, Descriptor
         }
         
         textField.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: actualTextFieldWidth, height: h2))
+    }
+}
+
+extension ExperimentEditView: DisplayLinkListener {
+    func display(_ displayLink: DisplayLink) {
+        if wantsUpdate {
+            wantsUpdate = false
+            update()
+        }
     }
 }
