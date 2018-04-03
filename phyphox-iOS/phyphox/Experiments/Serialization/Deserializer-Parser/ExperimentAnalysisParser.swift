@@ -251,7 +251,7 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
         }
 
         if processed.count > 0 {
-            return ExperimentAnalysis(modules: processed.flatMap { $0 }, sleep: sleep, dynamicSleep: dynamicSleep)
+            return ExperimentAnalysis(modules: processed.compactMap { $0 }, sleep: sleep, dynamicSleep: dynamicSleep)
         }
         
         return nil

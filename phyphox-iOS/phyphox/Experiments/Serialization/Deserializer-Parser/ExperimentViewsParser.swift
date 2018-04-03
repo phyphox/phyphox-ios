@@ -42,7 +42,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
             let attributes = view[XMLDictionaryAttributesKey] as! [String: String]
             
             let label = attributes["label"]!
-            var views = [ViewDescriptor!](repeating: nil, count: (view["__count"] as! NSNumber).intValue)
+            var views = [ViewDescriptor?](repeating: nil, count: (view["__count"] as! NSNumber).intValue)
             
             func handleEdit(_ edit: [String: AnyObject]) throws -> EditViewDescriptor? {
                 let attributes = edit[XMLDictionaryAttributesKey] as! [String: String]

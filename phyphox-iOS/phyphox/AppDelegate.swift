@@ -18,7 +18,6 @@ var iOS9: Bool {
 
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-
     var window: UIWindow?
 
     var main: MainNavigationViewController!
@@ -201,7 +200,4 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             
         }
     }
-    
-    
 }
-

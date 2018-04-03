@@ -224,11 +224,10 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     
                     let accuracy: Double
                     switch motion.magneticField.accuracy {
-                    case CMMagneticFieldCalibrationAccuracy.uncalibrated: accuracy = -1.0
-                    case CMMagneticFieldCalibrationAccuracy.low: accuracy = 1.0
-                    case CMMagneticFieldCalibrationAccuracy.medium: accuracy = 2.0
-                    case CMMagneticFieldCalibrationAccuracy.high: accuracy = 3.0
-                    default: accuracy = 0.0
+                    case .uncalibrated: accuracy = -1.0
+                    case .low: accuracy = 1.0
+                    case .medium: accuracy = 2.0
+                    case .high: accuracy = 3.0
                     }
                     
                     let x = field.x

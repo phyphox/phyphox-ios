@@ -53,7 +53,7 @@ final class ExperimentDataContainersParser: ExperimentMetadataParser {
                     bufferSize = intTypeFromXML(attributes as [String : AnyObject], key: "size", defaultValue: 1)
                     stat = boolFromXML(attributes as [String : AnyObject], key: "static", defaultValue: false)
                     let initText = stringFromXML(attributes as [String : AnyObject], key: "init", defaultValue: "")
-                    baseContents = initText.components(separatedBy: ",").flatMap{Double($0.trimmingCharacters(in: .whitespaces))}
+                    baseContents = initText.components(separatedBy: ",").compactMap{Double($0.trimmingCharacters(in: .whitespaces))}
 
                     containerType = try dataContainerTypeFromXML(attributes as [String : AnyObject], key: "type")
                 }

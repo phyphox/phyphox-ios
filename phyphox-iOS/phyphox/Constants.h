@@ -31,7 +31,7 @@ NS_INLINE JGProgressHUD *showErrorHUDWithDescription(NSString *errorDescription)
     
     HUD.indicatorView = [[JGProgressHUDErrorIndicatorView alloc] init];
     
-    [HUD showInView:[UIApplication sharedApplication].keyWindow.rootViewController.view animated:YES];
+    [HUD showInView:(UIView *)[UIApplication sharedApplication].keyWindow.rootViewController.view animated:YES];
     
     [HUD dismissAfterDelay:3.0];
     

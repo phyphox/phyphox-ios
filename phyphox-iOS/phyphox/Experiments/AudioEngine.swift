@@ -71,7 +71,7 @@ final class AudioEngine {
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
 
                         audioInput.sampleRateInfoBuffer?.append(AVAudioSession.sharedInstance().sampleRate)
-                        audioInput.outBuffer.appendFromArray(Array(data).flatMap{ Double($0 )})
+                        audioInput.outBuffer.appendFromArray(Array(data).compactMap{ Double($0 )})
                     })
                 })
             })

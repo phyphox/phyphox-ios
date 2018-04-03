@@ -42,6 +42,6 @@ final class ExperimentViewModuleFactory {
             }
         }
 
-        return views.flatMap { $0 }
+        return views.compactMap { $0 }
     }
 }
