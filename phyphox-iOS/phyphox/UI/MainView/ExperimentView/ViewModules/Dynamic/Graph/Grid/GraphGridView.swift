@@ -14,7 +14,7 @@ protocol GraphGridDelegate: class {
 
 final class GraphGridView: UIView {
     private let borderView = UIView()
-    var delegate: GraphGridDelegate? = nil
+    weak var delegate: GraphGridDelegate?
     var descriptor: GraphViewDescriptor? = nil
     
     override init(frame: CGRect) {
