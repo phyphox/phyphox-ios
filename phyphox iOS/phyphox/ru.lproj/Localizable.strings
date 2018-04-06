@@ -1,7 +1,7 @@
 "app_name" = "phyphox (фифокс)";
 "actions" = "Действия";
 "action_settings" = "Установки";
-"title_activity_experiment" = "phyphox";
+"title_activity_experiment" = "phyphox (фифокс)";
 "newExperiment" = "Добавить эксперимент";
 "newExperimentPhyphoxInfo" = "Посетите phyphox.org, чтобы создать эксперименты более высокого уровня и поделиться ими с коллегами, студентами и друзьями.";
 "newExperimentInputTitle" = "Название";
