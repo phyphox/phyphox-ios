@@ -151,7 +151,6 @@ final class AudioEngine {
 
         audioInputQueue.sync {
             autoreleasepool {
-                print(AVAudioSession.sharedInstance().sampleRate)
                 sampleRateInfo?.append(AVAudioSession.sharedInstance().sampleRate)
                 
                 let data = recordDataBuffer!.toArray()
