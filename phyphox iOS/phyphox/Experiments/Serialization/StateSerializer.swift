@@ -69,7 +69,7 @@ final class StateSerializer {
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil {
             throw stateError.SourceError("No valid data containers block found.")
         }
-        let endLocation = String(sourceStr![dataContainersBlockStop!.lowerBound...]).range(of: "</phyphox>", options: .caseInsensitive)
+        let endLocation = sourceStr?.range(of: "</phyphox>", options: .caseInsensitive)
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil || endLocation == nil {
             throw stateError.SourceError("No valid data containers block found.")
         }
