@@ -131,11 +131,14 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     for map in maps {
                     
                         if map is NSDictionary {
-                            let str = (map as! NSDictionary)[XMLDictionaryTextKey] as! String
+                            let str = (map as! NSDictionary)[XMLDictionaryTextKey] as? String
+                            if str == nil {
+                                continue
+                            }
                             let mapAttrs = (map as! NSDictionary)[XMLDictionaryAttributesKey] as! [String : AnyObject]
                             let min = floatTypeFromXML(mapAttrs, key: "min", defaultValue: -Double.infinity)
                             let max = floatTypeFromXML(mapAttrs, key: "max", defaultValue: +Double.infinity)
-                            mappings.append((min: min, max: max, str: str))
+                            mappings.append((min: min, max: max, str: str!))
                         } else {
                             let str = map as! String
                             mappings.append((min: -Double.infinity, max: +Double.infinity, str: str))
