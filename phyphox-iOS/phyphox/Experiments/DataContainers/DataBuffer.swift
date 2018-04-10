@@ -58,10 +58,21 @@ final class DataBuffer {
 
     private let storageType: StorageType
 
+    private var lazyStateToken: UUID?
+
     /**
      A state token represents a state of the data contained in the buffer. Whenever the data in the buffer changes the state token changes too.
      */
-    private(set) var stateToken = UUID()
+    var stateToken: UUID {
+        if let lazyStateToken = lazyStateToken {
+            return lazyStateToken
+        }
+        else {
+            let token = UUID()
+            lazyStateToken = token
+            return token
+        }
+    }
 
     private var observerCaptures: [ObserverCapture] = []
 
@@ -84,7 +95,7 @@ final class DataBuffer {
     }
 
     private func bufferMutated() {
-        stateToken = UUID()
+        lazyStateToken = nil
 
         for observerCapture in observerCaptures {
             let (observer, alwaysNotify) = observerCapture()
@@ -116,7 +127,7 @@ final class DataBuffer {
 
     private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
 
-    private var queue: Queue<Double>
+    private var queue: [Double]
 
     init?(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
         switch storage {
@@ -130,7 +141,8 @@ final class DataBuffer {
         self.storageType = storage
         self.baseContents = baseContents
 
-        queue = Queue<Double>(capacity: size)
+        queue = []
+        queue.reserveCapacity(size)
         self.staticBuffer = staticBuffer
 
         guard baseContents.count <= effectiveMemorySize else { return nil }
@@ -223,7 +235,11 @@ final class DataBuffer {
 
     func objectAtIndex(_ index: Int) -> Double? {
         return syncRead {
-            return queue.objectAtIndex(index)
+            guard index < queue.count else {
+                return nil
+            }
+
+            return queue[index]
         }
     }
 
@@ -247,7 +263,7 @@ final class DataBuffer {
 
     func clear() {
         syncWrite {
-            guard !staticBuffer else { return }
+            guard !staticBuffer || !written else { return }
 
             willWrite()
 
@@ -256,7 +272,7 @@ final class DataBuffer {
                 persistentStorageSize = 0
             }
 
-            queue.replaceValues(baseContents)
+            queue = baseContents
 
             didWrite()
         }
@@ -286,7 +302,7 @@ final class DataBuffer {
                     cutValues = Array(cutValues[cutValues.count-effectiveSize..<cutValues.count])
                 }
 
-                queue.replaceValues(cutValues)
+                queue = cutValues
             }
 
             didWrite()
@@ -305,10 +321,10 @@ final class DataBuffer {
                 persistentStorageSize += 1
             }
 
-            self.queue.enqueue(value)
+            queue.append(value)
 
             if memoryCount > effectiveMemorySize {
-                _ = queue.dequeue()
+                queue.removeFirst()
             }
 
             didWrite()
@@ -343,7 +359,7 @@ final class DataBuffer {
                     queue.removeFirst(cutSize)
                 }
 
-                queue.enqueue(values)
+                queue.append(contentsOf: values)
 
                 if shouldCut && cutAfterAppend {
                     queue.removeFirst(cutSize)
@@ -355,7 +371,7 @@ final class DataBuffer {
     }
 
     func toArray() -> [Double] {
-        return syncRead { return queue.toArray() }
+        return syncRead { return queue }
     }
 }
 
@@ -429,10 +445,8 @@ extension DataBuffer {
             }
 
             if isLittleEndian {
-                let values = queue.toArray()
-
                 // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
-                withExtendedLifetime(values, { values in
+                withExtendedLifetime(queue, { values in
                     let pointer = UnsafePointer(values)
                     let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
 
@@ -440,7 +454,7 @@ extension DataBuffer {
                 })
             }
             else {
-                let values = queue.toArray().map { $0.bitPattern.littleEndian }
+                let values = queue.map { $0.bitPattern.littleEndian }
 
                 withExtendedLifetime(values, { values in
                     let pointer = UnsafePointer(values)
@@ -509,7 +523,7 @@ extension DataBuffer {
 
             willWrite()
 
-            queue.replaceValues(values)
+            queue = values
 
             didWrite()
         }

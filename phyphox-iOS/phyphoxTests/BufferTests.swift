@@ -9,6 +9,30 @@
 import XCTest
 @testable import phyphox
 
+private enum TestError: Error {
+    case nilOptional
+}
+
+extension TestError: LocalizedError {
+    var localizedDescription: String {
+        switch self {
+        case .nilOptional:
+            return "Found nil when force unwrapping optional"
+        }
+    }
+}
+
+extension Optional {
+    func unwrap() throws -> Wrapped {
+        switch self {
+        case .some(let wrapped):
+            return wrapped
+        case .none:
+            throw TestError.nilOptional
+        }
+    }
+}
+
 final class BufferTests: XCTestCase {
     func generateRandomBufferValues(of length: Int) -> [Double] {
         return repeatElement(Double(arc4random()) + 1, count: length).map { drand48() * $0 }
@@ -84,6 +108,156 @@ final class BufferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: stateFile), try Data(contentsOf: writeBufferFile))
 
         XCTAssertEqual(writeBuffer.toArray(), Array(randomContents.suffix(size)))
+    }
+
+    func testOverfilling() throws {
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false).unwrap()
+
+        var expected: [Double] = []
+
+        for _ in 0..<20 {
+            let d = drand48()
+
+            expected.append(d)
+
+            if expected.count > 10 {
+                expected.removeFirst(1)
+            }
+
+            buffer.append(d)
+
+            XCTAssertEqual(buffer.toArray(), expected)
+        }
+
+        let fitting = (0..<5).map { _ in drand48() }
+
+        expected += fitting
+        expected.removeFirst(fitting.count)
+
+        buffer.appendFromArray(fitting)
+        XCTAssertEqual(buffer.toArray(), expected)
+
+        let oversized1 = (0..<15).map { _ in drand48() }
+        buffer.appendFromArray(oversized1)
+        XCTAssertEqual(buffer.toArray(), Array(oversized1.suffix(10)))
+
+        let oversized2 = (0..<15).map { _ in drand48() }
+        buffer.replaceValues(oversized2)
+        XCTAssertEqual(buffer.toArray(), Array(oversized2.suffix(10)))
+    }
+
+    func testBaseContents() throws {
+        let base = (0..<5).map { _ in drand48() }
+
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: false).unwrap()
+
+        XCTAssertEqual(buffer.toArray(), base)
+
+        buffer.appendFromArray(base)
+        XCTAssertEqual(buffer.toArray(), base + base)
+
+        let oversized = (0..<15).map { _ in drand48() }
+        buffer.appendFromArray(oversized)
+        XCTAssertEqual(buffer.toArray(), Array(oversized.suffix(10)))
+
+        let fitting = (0..<5).map { _ in drand48() }
+        buffer.replaceValues(fitting)
+        XCTAssertEqual(buffer.toArray(), fitting)
+
+        buffer.clear()
+        XCTAssertEqual(buffer.toArray(), base)
+    }
+
+    func testStatic() throws {
+        func testAddingToStaticBuffer(_ buffer: DataBuffer, expectedContent: [Double]) {
+            buffer.append(drand48())
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+
+            buffer.appendFromArray([drand48()])
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+
+            buffer.clear()
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+        }
+
+        let buffer1 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+
+        buffer1.append(10.0)
+        XCTAssertEqual(buffer1.toArray(), [10.0])
+
+        testAddingToStaticBuffer(buffer1, expectedContent: [10.0])
+
+        let buffer2 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+
+        buffer2.appendFromArray([10.0, 20.0])
+        XCTAssertEqual(buffer2.toArray(), [10.0, 20.0])
+
+        testAddingToStaticBuffer(buffer2, expectedContent: [10.0, 20.0])
+
+        let buffer3 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+
+        buffer3.clear()
+        XCTAssertEqual(buffer3.toArray(), [])
+
+        testAddingToStaticBuffer(buffer3, expectedContent: [])
+    }
+
+    func testStaticWithBaseContents() throws {
+        let base = (1..<5).map { _ in drand48() }
+
+        func testAddingToStaticBuffer(_ buffer: DataBuffer, expectedContent: [Double]) {
+            buffer.append(drand48())
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+
+            buffer.appendFromArray([drand48()])
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+
+            buffer.clear()
+            XCTAssertEqual(buffer.toArray(), expectedContent)
+        }
+
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: true).unwrap()
+
+        testAddingToStaticBuffer(buffer, expectedContent: base)
+    }
+
+    func testAddingClearingAndReplacing() throws {
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false).unwrap()
+
+        let d1 = drand48()
+        let d2 = drand48()
+
+        let ds = (0..<5).map { _ in drand48() }
+
+        buffer.append(d1)
+
+        XCTAssertEqual(buffer.toArray(), [d1])
+        XCTAssertEqual(buffer.last, d1)
+        XCTAssertEqual(buffer.first, d1)
+
+        buffer.append(d2)
+
+        XCTAssertEqual(buffer.toArray(), [d1, d2])
+        XCTAssertEqual(buffer.last, d2)
+        XCTAssertEqual(buffer.first, d1)
+
+        buffer.appendFromArray(ds)
+
+        XCTAssertEqual(buffer.toArray(), [d1, d2] + ds)
+        XCTAssertEqual(buffer.last, ds.last)
+        XCTAssertEqual(buffer.first, d1)
+
+        buffer.replaceValues(ds)
+
+        XCTAssertEqual(buffer.toArray(), ds)
+
+        buffer.removeFirst(2)
+
+        XCTAssertEqual(buffer.toArray(), Array(ds.dropFirst(2)))
+
+        buffer.clear()
+
+        XCTAssertEqual(buffer.toArray(), [])
     }
 
     func testConcurrency() {
