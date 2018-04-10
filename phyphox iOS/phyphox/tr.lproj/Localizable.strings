@@ -80,3 +80,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"credits" = "Emeği geçenler";
+"save_state_subject" = "Phyphox için deney durumları";
+"timedRun" = "Zamanlı deneme";
