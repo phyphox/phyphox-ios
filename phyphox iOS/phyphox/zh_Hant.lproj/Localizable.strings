@@ -52,3 +52,5 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationToWebsite" = "拜訪網站";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"export" = "匯出數據";
+"pick_exportFormat" = "選擇數據格式";
