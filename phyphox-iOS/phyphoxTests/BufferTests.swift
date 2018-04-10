@@ -48,7 +48,7 @@ final class BufferTests: XCTestCase {
 
         let randomContents = generateRandomBufferValues(of: size)
 
-        let writeBuffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false)!
+        let writeBuffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false).unwrap()
 
         writeBuffer.open()
 
@@ -58,7 +58,7 @@ final class BufferTests: XCTestCase {
 
         try writeBuffer.writeState(to: stateFile)
 
-        let readBuffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false)!
+        let readBuffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false).unwrap()
 
         readBuffer.open()
 
@@ -80,7 +80,7 @@ final class BufferTests: XCTestCase {
         let baseContents = generateRandomBufferValues(of: Int(arc4random_uniform(UInt32(size))))
 
         let writeBufferFile = generateRandomTemporaryFileURL()
-        let writeBuffer = DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: writeBufferFile), baseContents: baseContents, static: false)!
+        let writeBuffer = DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: writeBufferFile), baseContents: baseContents, static: false).unwrap()
 
         writeBuffer.open()
 
@@ -92,7 +92,7 @@ final class BufferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: stateFile), try Data(contentsOf: writeBufferFile))
 
         let readBufferFile = generateRandomTemporaryFileURL()
-        let readBuffer = DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: readBufferFile), baseContents: baseContents, static: false)!
+        let readBuffer = DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: readBufferFile), baseContents: baseContents, static: false).unwrap()
 
         readBuffer.open()
 
@@ -260,10 +260,10 @@ final class BufferTests: XCTestCase {
         XCTAssertEqual(buffer.toArray(), [])
     }
 
-    func testConcurrency() {
+    func testConcurrency() throws {
         let numberOfIterations = 200_000
 
-        let buffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: numberOfIterations), baseContents: [], static: false)!
+        let buffer = DataBuffer(name: UUID().uuidString, storage: .memory(size: numberOfIterations), baseContents: [], static: false).unwrap()
 
         let addingExpectation = expectation(description: "Adding Completed")
 
