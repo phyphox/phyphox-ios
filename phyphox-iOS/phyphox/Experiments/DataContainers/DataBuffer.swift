@@ -97,11 +97,11 @@ final class DataBuffer {
     private func bufferMutated() {
         lazyStateToken = nil
 
-        for observerCapture in observerCaptures {
-            let (observer, alwaysNotify) = observerCapture()
+        DispatchQueue.main.async {
+            for observerCapture in self.observerCaptures {
+                let (observer, alwaysNotify) = observerCapture()
 
-            if isOpen || alwaysNotify {
-                mainThread {
+                if self.isOpen || alwaysNotify {
                     observer?.dataBufferUpdated(self)
                 }
             }
@@ -115,7 +115,7 @@ final class DataBuffer {
      Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
      */
     var memoryCount: Int {
-        return queue.count
+        return contents.count
     }
 
     /**
@@ -125,9 +125,9 @@ final class DataBuffer {
         return Swift.max(persistentStorageSize, memoryCount)
     }
 
-    private let queueLock = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
+    private let lockingQueue = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .userInteractive, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
 
-    private var queue: [Double]
+    private var contents: [Double]
 
     init?(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
         switch storage {
@@ -141,8 +141,8 @@ final class DataBuffer {
         self.storageType = storage
         self.baseContents = baseContents
 
-        queue = []
-        queue.reserveCapacity(size)
+        contents = []
+        contents.reserveCapacity(size)
         self.staticBuffer = staticBuffer
 
         guard baseContents.count <= effectiveMemorySize else { return nil }
@@ -226,20 +226,20 @@ final class DataBuffer {
     }
 
     private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
-        return try queueLock.sync(flags: .barrier, execute: body)
+        return try lockingQueue.sync(flags: .barrier, execute: body)
     }
 
     private func syncRead<T>(_ body: () throws -> T) rethrows -> T {
-        return try queueLock.sync(execute: body)
+        return try lockingQueue.sync(execute: body)
     }
 
     func objectAtIndex(_ index: Int) -> Double? {
         return syncRead {
-            guard index < queue.count else {
+            guard index < contents.count else {
                 return nil
             }
 
-            return queue[index]
+            return contents[index]
         }
     }
 
@@ -257,7 +257,7 @@ final class DataBuffer {
         }
 
         syncWrite {
-            queue.removeFirst(n)
+            contents.removeFirst(n)
         }
     }
 
@@ -272,7 +272,7 @@ final class DataBuffer {
                 persistentStorageSize = 0
             }
 
-            queue = baseContents
+            contents = baseContents
 
             didWrite()
         }
@@ -302,7 +302,7 @@ final class DataBuffer {
                     cutValues = Array(cutValues[cutValues.count-effectiveSize..<cutValues.count])
                 }
 
-                queue = cutValues
+                contents = cutValues
             }
 
             didWrite()
@@ -321,10 +321,10 @@ final class DataBuffer {
                 persistentStorageSize += 1
             }
 
-            queue.append(value)
+            contents.append(value)
 
             if memoryCount > effectiveMemorySize {
-                queue.removeFirst()
+                contents.removeFirst()
             }
 
             didWrite()
@@ -356,13 +356,13 @@ final class DataBuffer {
                 let cutAfterAppend = cutSize > memoryCount
 
                 if shouldCut && !cutAfterAppend {
-                    queue.removeFirst(cutSize)
+                    contents.removeFirst(cutSize)
                 }
 
-                queue.append(contentsOf: values)
+                contents.append(contentsOf: values)
 
                 if shouldCut && cutAfterAppend {
-                    queue.removeFirst(cutSize)
+                    contents.removeFirst(cutSize)
                 }
             }
 
@@ -371,25 +371,25 @@ final class DataBuffer {
     }
 
     func toArray() -> [Double] {
-        return syncRead { return queue }
+        return syncRead { return contents }
     }
 }
 
 extension DataBuffer: Sequence {
     func makeIterator() -> IndexingIterator<[Double]> {
-        return queue.makeIterator()
+        return contents.makeIterator()
     }
 
     var last: Double? {
-        return syncRead { queue.last }
+        return syncRead { contents.last }
     }
 
     var first: Double? {
-        return syncRead { queue.first }
+        return syncRead { contents.first }
     }
 
     subscript(index: Int) -> Double {
-        return syncRead { queue[index] }
+        return syncRead { contents[index] }
     }
 }
 
@@ -446,7 +446,7 @@ extension DataBuffer {
 
             if isLittleEndian {
                 // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
-                withExtendedLifetime(queue, { values in
+                withExtendedLifetime(contents, { values in
                     let pointer = UnsafePointer(values)
                     let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
 
@@ -454,7 +454,7 @@ extension DataBuffer {
                 })
             }
             else {
-                let values = queue.map { $0.bitPattern.littleEndian }
+                let values = contents.map { $0.bitPattern.littleEndian }
 
                 withExtendedLifetime(values, { values in
                     let pointer = UnsafePointer(values)
@@ -523,7 +523,7 @@ extension DataBuffer {
 
             willWrite()
 
-            queue = values
+            contents = values
 
             didWrite()
         }
