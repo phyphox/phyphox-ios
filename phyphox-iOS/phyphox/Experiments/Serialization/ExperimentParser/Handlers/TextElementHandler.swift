@@ -8,12 +8,12 @@
 
 import Foundation
 
-final class TextElementHandler: AttributeLessResultHandler, ChildLessResultHandler {
+final class TextElementHandler: ResultElementHandler, AttributelessHandler, ChildlessHandler {
     typealias Result = String
 
-    private(set) var results = [Result]()
+    var results = [Result]()
 
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         guard !text.isEmpty else { throw ParseError.missingText }
 
         results.append(text)

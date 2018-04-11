@@ -8,25 +8,18 @@
 
 import Foundation
 
-final class LinkHandler: ResultElementHandler {
+final class LinkHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = (url: URL, label: String)
 
-    private(set) var results = [Result]()
-
-    private var label: String?
+    var results = [Result]()
 
     func beginElement(attributes: [String: String]) throws {
-        label = attributes["label"]
     }
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        throw ParseError.unexpectedElement
-    }
-
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         guard !text.isEmpty else { throw ParseError.missingText }
 
-        guard let label = label, !label.isEmpty else { throw ParseError.missingAttribute("label") }
+        guard let label = attributes["label"], !label.isEmpty else { throw ParseError.missingAttribute("label") }
 
         guard let url = URL(string: label) else { throw ParseError.unreadableData }
 

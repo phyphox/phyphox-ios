@@ -26,19 +26,54 @@ enum ParseError: Error {
 protocol ElementHandler {
     mutating func beginElement(attributes: [String: String]) throws
     func childHandler(for tagName: String) throws -> ElementHandler
-    mutating func endElement(with text: String) throws
+    mutating func endElement(with text: String, attributes: [String: String]) throws
+
+    mutating func clear()
+    mutating func clearChildHandlers()
 }
 
 protocol RootElementHandler: ElementHandler {
     associatedtype Result
 
-    var result: Result? { get }
+    var result: Result? { get set }
+}
+
+extension RootElementHandler {
+    mutating func clear() {
+        result = nil
+        clearChildHandlers()
+    }
+}
+
+protocol LookupElementHandler: ElementHandler {
+    var handlers: [String: ElementHandler] { get set }
+}
+
+extension LookupElementHandler {
+    mutating func clearChildHandlers() {
+        var mutatedHandlers = handlers
+
+        for (key, var handler) in mutatedHandlers {
+            handler.clear()
+            mutatedHandlers[key] = handler
+        }
+
+        handlers = mutatedHandlers
+    }
+
+    func childHandler(for tagName: String) throws -> ElementHandler {
+        guard let handler = handlers[tagName] else {
+            throw ParseError.unexpectedElement
+        }
+
+        return handler
+    }
 }
 
 protocol ResultElementHandler: ElementHandler {
     associatedtype Result
 
-    var results: [Result] { get }
+    var results: [Result] { get set }
 
     func expectOptionalResult() throws -> Result?
     func expectSingleResult() throws -> Result
@@ -46,6 +81,11 @@ protocol ResultElementHandler: ElementHandler {
 }
 
 extension ResultElementHandler {
+    mutating func clear() {
+        results.removeAll()
+        clearChildHandlers()
+    }
+
     func expectOptionalResult() throws -> Result? {
         guard results.count <= 1 else {
             throw ParseError.duplicateElement
@@ -75,23 +115,9 @@ extension ResultElementHandler {
     }
 }
 
-protocol LookupResultElementHandler: ResultElementHandler {
-    var handlers: [String: ElementHandler] { get }
-}
+protocol AttributelessHandler: ElementHandler {}
 
-extension LookupResultElementHandler {
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        guard let handler = handlers[tagName] else {
-            throw ParseError.unexpectedElement
-        }
-
-        return handler
-    }
-}
-
-protocol AttributeLessResultHandler: ResultElementHandler {}
-
-extension AttributeLessResultHandler {
+extension AttributelessHandler {
     func beginElement(attributes: [String: String]) throws {
         guard attributes.isEmpty else {
             throw ParseError.unexpectedAttribute
@@ -99,11 +125,14 @@ extension AttributeLessResultHandler {
     }
 }
 
-protocol ChildLessResultHandler: ResultElementHandler {}
+protocol ChildlessHandler: ElementHandler {}
 
-extension ChildLessResultHandler {
+extension ChildlessHandler {
     func childHandler(for tagName: String) throws -> ElementHandler {
         throw ParseError.unexpectedElement
+    }
+
+    func clearChildHandlers() {
     }
 }
 
@@ -122,6 +151,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
 
     private var handlerStack: [(String, ElementHandler)]
     private var textStack = [""]
+    private var attributesStack = [[String: String]]()
 
     private var parsingError: Error?
 
@@ -154,6 +184,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
 
     func parserDidStartDocument(_ parser: XMLParser) {
         do {
+            rootHandler.clear()
             try rootHandler.beginElement(attributes: [:])
         }
         catch {
@@ -172,8 +203,10 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         do {
             var childHandler = try currentHandler.childHandler(for: elementName)
 
+            childHandler.clearChildHandlers()
             try childHandler.beginElement(attributes: attributes)
 
+            attributesStack.append(attributes)
             handlerStack.append((elementName, childHandler))
             textStack.append("")
         }
@@ -198,6 +231,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         guard let currentText = textStack.popLast(),
             let (currentTagName, elementHandler) = handlerStack.popLast(),
+            let attributes = attributesStack.popLast(),
             elementName == currentTagName
             else {
                 parsingError = ParseError.unbalancedTags
@@ -208,7 +242,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         do {
             var mutableElementHandler = elementHandler
 
-            try mutableElementHandler.endElement(with: currentText)
+            try mutableElementHandler.endElement(with: currentText, attributes: attributes)
         }
         catch {
             parsingError = error
@@ -224,7 +258,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         }
 
         do {
-            try rootHandler.endElement(with: currentText)
+            try rootHandler.endElement(with: currentText, attributes: [:])
         }
         catch {
             parsingError = error

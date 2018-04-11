@@ -8,23 +8,18 @@
 
 import Foundation
 
-final class IconHandler: ResultElementHandler {
+final class IconHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = ExperimentIcon
 
-    private(set) var results = [Result]()
-
-    private var format: String?
+    var results = [Result]()
 
     func beginElement(attributes: [String: String]) throws {
-        format = attributes["format"]
     }
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        throw ParseError.unexpectedElement
-    }
-
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         guard !text.isEmpty else { throw ParseError.missingText }
+
+        let format = attributes["format"]
 
         if format == "base64" {
             guard let data = Data(base64Encoded: text, options: []) else { throw ParseError.unreadableData }

@@ -8,41 +8,29 @@
 
 import Foundation
 
-final class ExperimentFileHandler: RootElementHandler {
+final class ExperimentFileHandler: RootElementHandler, LookupElementHandler {
     typealias Result = Experiment
 
-    private(set) var result: Experiment?
+    var result: Experiment?
 
     private let phyphoxHandler = PhyphoxElementHandler()
 
+    var handlers: [String : ElementHandler]
+
     private(set) var locale = ""
     private(set) var version = "1.0"
+
+    init() {
+        handlers = ["phyphox": phyphoxHandler]
+    }
 
     func beginElement(attributes: [String : String]) throws {
         result = nil
         locale = attributes["locale"] ?? ""
         version = attributes["version"] ?? "1.0"
-
-        phyphoxHandler.clear()
     }
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        guard tagName == "phyphox" else {
-            throw ParseError.unexpectedElement
-        }
-
-        return phyphoxHandler
-    }
-
-    func endElement(with text: String) throws {
-        guard let firstResult = phyphoxHandler.results.first else {
-            throw ParseError.missingElement
-        }
-
-        guard phyphoxHandler.results.count == 1 else {
-            throw ParseError.duplicateElement
-        }
-
-        result = firstResult
+    func endElement(with text: String, attributes: [String: String]) throws {
+        result = try phyphoxHandler.expectSingleResult()
     }
 }

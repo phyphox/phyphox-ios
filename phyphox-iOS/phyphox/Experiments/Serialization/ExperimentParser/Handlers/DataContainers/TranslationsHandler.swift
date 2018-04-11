@@ -8,19 +8,16 @@
 
 import Foundation
 
-private final class StringTranslationHandler: ChildLessResultHandler {
-    private(set) var results = [Result]()
+private final class StringTranslationHandler: ResultElementHandler, ChildlessHandler {
+    var results = [Result]()
 
     typealias Result = (String, String)
 
-    private var original: String?
-
     func beginElement(attributes: [String : String]) throws {
-        original = attributes["original"]
     }
 
-    func endElement(with text: String) throws {
-        guard let original = original else { throw ParseError.missingAttribute("original") }
+    func endElement(with text: String, attributes: [String: String]) throws {
+        guard let original = attributes["original"] else { throw ParseError.missingAttribute("original") }
 
         results.append((original, text))
     }
@@ -30,12 +27,10 @@ private final class StringTranslationHandler: ChildLessResultHandler {
     }
 }
 
-private final class TranslationHandler: LookupResultElementHandler {
-    let handlers: [String : ElementHandler]
-
+private final class TranslationHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = (String, ExperimentTranslation)
 
-    private(set) var results = [Result]()
+    var results = [Result]()
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
@@ -43,7 +38,7 @@ private final class TranslationHandler: LookupResultElementHandler {
 
     private let stringHandler = StringTranslationHandler()
 
-    private var locale: String?
+    var handlers: [String : ElementHandler]
 
     init() {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler]
@@ -51,13 +46,12 @@ private final class TranslationHandler: LookupResultElementHandler {
 
     func beginElement(attributes: [String : String]) throws {
         stringHandler.clear()
-        locale = attributes["locale"]
     }
 
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         guard text.isEmpty else { throw ParseError.unexpectedText }
 
-        guard let locale = locale else { throw ParseError.missingAttribute("locale") }
+        guard let locale = attributes["locale"] else { throw ParseError.missingAttribute("locale") }
 
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
@@ -70,22 +64,20 @@ private final class TranslationHandler: LookupResultElementHandler {
     }
 }
 
-final class TranslationsHandler: AttributeLessResultHandler {
+final class TranslationsHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = ExperimentTranslationCollection
 
-    private(set) var results = [Result]()
+    var results = [Result]()
 
     private let translationHandler = TranslationHandler()
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        guard tagName == "translation" else {
-            throw ParseError.unexpectedElement
-        }
+    var handlers: [String: ElementHandler]
 
-        return translationHandler
+    init() {
+        handlers = ["translation": translationHandler]
     }
 
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         guard text.isEmpty else { throw ParseError.unexpectedText }
 
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })

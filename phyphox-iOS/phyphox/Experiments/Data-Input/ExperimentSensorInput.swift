@@ -9,14 +9,24 @@
 import Foundation
 import CoreMotion
 
-enum SensorType {
+enum SensorType: String {
     case accelerometer
     case gyroscope
-    case linearAcceleration
-    case magneticField
+    case linearAcceleration = "linear_acceleration"
+    case magneticField = "magnetic_field"
     case pressure
     case light
     case proximity
+}
+
+extension SensorType: LosslessStringConvertible {
+    init?(_ description: String) {
+        self.init(rawValue: description)
+    }
+
+    var description: String {
+        return rawValue
+    }
 }
 
 enum SensorError : Error {

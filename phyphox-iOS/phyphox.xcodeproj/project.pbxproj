@@ -86,6 +86,8 @@
 		6B612FEB207E5ACF001DA8D9 /* IconHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FEA207E5ACF001DA8D9 /* IconHandler.swift */; };
 		6B612FEE207E5EA8001DA8D9 /* DataContainersHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FED207E5EA8001DA8D9 /* DataContainersHandler.swift */; };
 		6B612FF0207E6DFF001DA8D9 /* TranslationsHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FEF207E6DFF001DA8D9 /* TranslationsHandler.swift */; };
+		6B612FF2207E791B001DA8D9 /* InputHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF1207E791B001DA8D9 /* InputHandler.swift */; };
+		6B612FF4207EA4E5001DA8D9 /* OutputHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF3207EA4E5001DA8D9 /* OutputHandler.swift */; };
 		6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */; };
 		6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319671C48457B0038BE22 /* CollectionViewController.swift */; };
 		6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319691C4849900038BE22 /* CollectionView.swift */; };
@@ -445,6 +447,8 @@
 		6B612FEA207E5ACF001DA8D9 /* IconHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconHandler.swift; sourceTree = "<group>"; };
 		6B612FED207E5EA8001DA8D9 /* DataContainersHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataContainersHandler.swift; sourceTree = "<group>"; };
 		6B612FEF207E6DFF001DA8D9 /* TranslationsHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsHandler.swift; sourceTree = "<group>"; };
+		6B612FF1207E791B001DA8D9 /* InputHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputHandler.swift; sourceTree = "<group>"; };
+		6B612FF3207EA4E5001DA8D9 /* OutputHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputHandler.swift; sourceTree = "<group>"; };
 		6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleFactory.swift; sourceTree = "<group>"; };
 		6B6319671C48457B0038BE22 /* CollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
 		6B6319691C4849900038BE22 /* CollectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
@@ -721,6 +725,8 @@
 			children = (
 				6B612FED207E5EA8001DA8D9 /* DataContainersHandler.swift */,
 				6B612FEF207E6DFF001DA8D9 /* TranslationsHandler.swift */,
+				6B612FF1207E791B001DA8D9 /* InputHandler.swift */,
+				6B612FF3207EA4E5001DA8D9 /* OutputHandler.swift */,
 			);
 			path = DataContainers;
 			sourceTree = "<group>";
@@ -1476,6 +1482,7 @@
 				6BBD28AE1C20C48D009E3757 /* ExperimentOutputParser.swift in Sources */,
 				4BA9987D1EDB69D200BD1860 /* LogAnalysis.swift in Sources */,
 				6B7BF7BF1C130471007408FB /* MainView.swift in Sources */,
+				6B612FF4207EA4E5001DA8D9 /* OutputHandler.swift in Sources */,
 				6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */,
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
@@ -1535,6 +1542,7 @@
 				6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */,
 				6B00F0A81C46705100971941 /* ExperimentViewModule.swift in Sources */,
 				6B612FF0207E6DFF001DA8D9 /* TranslationsHandler.swift in Sources */,
+				6B612FF2207E791B001DA8D9 /* InputHandler.swift in Sources */,
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,
 				6B08154D1CB005D900EE2791 /* PeriodicityAnalysis.swift in Sources */,
 				4B47B0391DA6AF5200CCBA6E /* CoshAnalysis.swift in Sources */,

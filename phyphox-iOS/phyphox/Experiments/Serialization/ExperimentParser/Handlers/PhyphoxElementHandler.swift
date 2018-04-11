@@ -8,13 +8,12 @@
 
 import Foundation
 
-final class PhyphoxElementHandler: LookupResultElementHandler {
+final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = Experiment
-    typealias Parent = ExperimentFileHandler
+    
+    var results = [Result]()
 
-    private(set) var results = [Result]()
-
-    let handlers: [String: ElementHandler]
+    var handlers: [String: ElementHandler]
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
@@ -23,28 +22,23 @@ final class PhyphoxElementHandler: LookupResultElementHandler {
     private let linkHandler = LinkHandler()
     private let dataContainersHandler = DataContainersHandler()
     private let translationsHandler = TranslationsHandler()
+    private let inputHandler = InputHandler()
+    private let outputHandler = OutputHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
-        guard attributes.isEmpty else {
-            throw ParseError.unexpectedAttribute
-        }
-    }
-
-    func endElement(with text: String) throws {
+    func endElement(with text: String, attributes: [String: String]) throws {
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
         let description = try descriptionHandler.expectSingleResult()
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
         let dataContainers = try dataContainersHandler.results
         let translations = try translationsHandler.expectSingleResult()
-        
-    }
+        let input = try inputHandler.expectOptionalResult()
+        let output = try outputHandler.expectOptionalResult()
 
-    func clear() {
-        results.removeAll()
+        
     }
 }
