@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class PhyphoxElementHandler: LookupResultElementHandler, ChildElementHandler {
+final class PhyphoxElementHandler: LookupResultElementHandler {
     typealias Result = Experiment
     typealias Parent = ExperimentFileHandler
 
@@ -24,13 +24,8 @@ final class PhyphoxElementHandler: LookupResultElementHandler, ChildElementHandl
     private let dataContainersHandler = DataContainersHandler()
     private let translationsHandler = TranslationsHandler()
 
-    let parent: ExperimentFileHandler?
-
-    init(parent: Parent) {
-        self.parent = parent
+    init() {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler]
-
-        translationsHandler.parent = self
     }
 
     func beginElement(attributes: [String: String]) throws {

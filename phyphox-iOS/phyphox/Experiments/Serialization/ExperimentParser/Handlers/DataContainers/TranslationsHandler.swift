@@ -70,11 +70,8 @@ private final class TranslationHandler: LookupResultElementHandler {
     }
 }
 
-final class TranslationsHandler: AttributeLessResultHandler, ChildElementHandler {
+final class TranslationsHandler: AttributeLessResultHandler {
     typealias Result = ExperimentTranslationCollection
-    typealias Parent = PhyphoxElementHandler
-
-    var parent: PhyphoxElementHandler?
 
     private(set) var results = [Result]()
 
@@ -93,8 +90,6 @@ final class TranslationsHandler: AttributeLessResultHandler, ChildElementHandler
 
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
-        guard let defaultLocale = parent?.parent?.locale else { throw ParseError.missingAttribute("locale") }
-        
-        results.append(ExperimentTranslationCollection(translations: translations, defaultLanguageCode: defaultLocale))
+        results.append(ExperimentTranslationCollection(translations: translations, defaultLanguageCode: "en"))
     }
 }

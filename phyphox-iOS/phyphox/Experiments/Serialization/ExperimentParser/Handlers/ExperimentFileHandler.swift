@@ -13,7 +13,7 @@ final class ExperimentFileHandler: RootElementHandler {
 
     private(set) var result: Experiment?
 
-    private lazy var phyphoxHandler = { PhyphoxElementHandler(parent: self) }()
+    private let phyphoxHandler = PhyphoxElementHandler()
 
     private(set) var locale = ""
     private(set) var version = "1.0"
