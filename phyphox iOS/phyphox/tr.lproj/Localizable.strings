@@ -83,3 +83,13 @@
 "credits" = "Emeği geçenler";
 "save_state_subject" = "Phyphox için deney durumları";
 "timedRun" = "Zamanlı deneme";
+"actions" = "Eylemler";
+"newExperiment" = "Deney ekle";
+"enableTimedRun" = "Zamanlı denemeyi etkinleştir";
+"disableTimedRun" = "Zamanlı denemeyi devre dışı bırak";
+"enableRemoteServer" = "Uzaktan erişimi etkinleştir";
+"disableRemoteServer" = "Uzaktan erişimi devre dışı bırak";
+"remoteServerActive" = "Uzaktan erişim etkinleştirildi. Aşağıdaki linkten bu deneye ulaşın:";
+"save_state_message" = "Verilerinizi içeren bu deneyin durumunu koleksiyonunuza kaydedebilir veya farklı bir uygulama kullanarak paylaşabilirsiniz.";
+"categoryNewExperiment" = "Basit özel deneyler";
+"categoryRawSensor" = "Ham sensörler";
