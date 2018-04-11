@@ -24,7 +24,7 @@ private func weakObserverCapture(_ object: DataBufferObserver, alwaysNotify: Boo
 private let isLittleEndian = CFByteOrderGetCurrent() == Int(CFByteOrderLittleEndian.rawValue)
 
 /**
- Data buffer used for raw or processed data from sensors.
+ Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
 final class DataBuffer {
     enum StorageType {
