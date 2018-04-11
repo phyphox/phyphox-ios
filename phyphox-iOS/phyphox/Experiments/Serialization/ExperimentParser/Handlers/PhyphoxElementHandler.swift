@@ -24,9 +24,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler, A
     private let translationsHandler = TranslationsHandler()
     private let inputHandler = InputHandler()
     private let outputHandler = OutputHandler()
+    private let analysisHandler = AnalysisHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler, "analysis": analysisHandler]
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
@@ -35,10 +36,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler, A
         let description = try descriptionHandler.expectSingleResult()
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
         let dataContainers = try dataContainersHandler.results
-        let translations = try translationsHandler.expectSingleResult()
+        
+        let translations = try translationsHandler.expectOptionalResult()
         let input = try inputHandler.expectOptionalResult()
         let output = try outputHandler.expectOptionalResult()
+        let analysis = try analysisHandler.expectOptionalResult()
 
-        
+
     }
 }
