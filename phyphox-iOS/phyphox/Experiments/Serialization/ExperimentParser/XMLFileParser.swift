@@ -35,6 +35,12 @@ protocol RootElementHandler: ElementHandler {
     var result: Result? { get }
 }
 
+protocol ChildElementHandler: ElementHandler {
+    associatedtype Parent: ElementHandler
+
+    var parent: Parent? { get }
+}
+
 protocol ResultElementHandler: ElementHandler {
     associatedtype Result
 

@@ -87,7 +87,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                 }
             }
             
-            let tr = ExperimentTranslation(withLocale: locale, strings: (strings.count > 0 ? strings : nil), titleString: title, descriptionString: description, categoryString: category, links: links)
+            let tr = ExperimentTranslation(withLocale: locale, strings: strings, titleString: title, descriptionString: description, categoryString: category, links: links)
             
             trs[locale] = tr
             

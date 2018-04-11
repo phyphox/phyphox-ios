@@ -9,20 +9,20 @@
 import Foundation
 
 final class ExperimentTranslationCollection {
-    private let translations: [String: ExperimentTranslation]?
+    private let translations: [String: ExperimentTranslation]
     
     private var selectedLanguageCode: String?
     
     private(set) var selectedTranslation: ExperimentTranslation?
     
-    init(translations: [String: ExperimentTranslation]?, defaultLanguageCode: String) {
+    init(translations: [String: ExperimentTranslation], defaultLanguageCode: String) {
         self.translations = translations
         
-        for code in  Locale.preferredLanguages {
+        for code in Locale.preferredLanguages {
             let languageCode = code.components(separatedBy: "-")[0]
             
             //If the preferred language matches a translation block, this always takes precedence and so we select this and are done. Translations will fall back to the default language anyways...
-            if let selected = translations?[languageCode] {
+            if let selected = translations[languageCode] {
                 selectedLanguageCode = languageCode
                 selectedTranslation = selected
                 break
@@ -38,6 +38,6 @@ final class ExperimentTranslationCollection {
     }
     
     func localize(_ string: String) -> String {
-        return selectedTranslation?.translatedStrings?[string] ?? string
+        return selectedTranslation?.translatedStrings[string] ?? string
     }
 }

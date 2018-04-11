@@ -15,10 +15,10 @@ final class ExperimentTranslation {
     let descriptionString: String
     let categoryString: String
     
-    let translatedStrings: [String: String]?
-    let translatedLinks: [String: String]?
+    let translatedStrings: [String: String]
+    let translatedLinks: [String: String]
     
-    init(withLocale locale: String, strings: [String: String]?, titleString: String, descriptionString: String, categoryString: String, links: [String: String]?) {
+    init(withLocale locale: String, strings: [String: String], titleString: String, descriptionString: String, categoryString: String, links: [String: String]) {
         self.locale = locale
         self.descriptionString = descriptionString
         self.categoryString = categoryString

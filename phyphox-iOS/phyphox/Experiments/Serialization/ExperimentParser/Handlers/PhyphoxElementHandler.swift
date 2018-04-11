@@ -8,8 +8,9 @@
 
 import Foundation
 
-final class PhyphoxElementHandler: LookupResultElementHandler {
+final class PhyphoxElementHandler: LookupResultElementHandler, ChildElementHandler {
     typealias Result = Experiment
+    typealias Parent = ExperimentFileHandler
 
     private(set) var results = [Result]()
 
@@ -21,9 +22,15 @@ final class PhyphoxElementHandler: LookupResultElementHandler {
     private let iconHandler = IconHandler()
     private let linkHandler = LinkHandler()
     private let dataContainersHandler = DataContainersHandler()
+    private let translationsHandler = TranslationsHandler()
 
-    init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler]
+    let parent: ExperimentFileHandler?
+
+    init(parent: Parent) {
+        self.parent = parent
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler]
+
+        translationsHandler.parent = self
     }
 
     func beginElement(attributes: [String: String]) throws {
@@ -38,7 +45,7 @@ final class PhyphoxElementHandler: LookupResultElementHandler {
         let description = try descriptionHandler.expectSingleResult()
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
         let dataContainers = try dataContainersHandler.results
-
+        let translations = try translationsHandler.expectSingleResult()
         
     }
 

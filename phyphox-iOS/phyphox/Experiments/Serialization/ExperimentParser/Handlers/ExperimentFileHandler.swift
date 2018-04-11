@@ -13,10 +13,15 @@ final class ExperimentFileHandler: RootElementHandler {
 
     private(set) var result: Experiment?
 
-    private let phyphoxHandler = PhyphoxElementHandler()
+    private lazy var phyphoxHandler = { PhyphoxElementHandler(parent: self) }()
+
+    private(set) var locale = ""
+    private(set) var version = "1.0"
 
     func beginElement(attributes: [String : String]) throws {
         result = nil
+        locale = attributes["locale"] ?? ""
+        version = attributes["version"] ?? "1.0"
 
         phyphoxHandler.clear()
     }
