@@ -43,8 +43,6 @@ final class DataContainersHandler: ResultElementHandler, LookupElementHandler, A
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         results.append(containerHandler.results)
     }
 }

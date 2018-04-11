@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = Experiment
     
     var results = [Result]()
@@ -30,7 +30,15 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler, A
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler, "analysis": analysisHandler]
     }
 
+    func beginElement(attributes: [String : String]) throws {
+    }
+
     func endElement(with text: String, attributes: [String: String]) throws {
+        let locale = attributes["locale"] ?? "en"
+        guard let version = attributes["version"] else {
+            throw ParseError.missingAttribute("version")
+        }
+
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
         let description = try descriptionHandler.expectSingleResult()

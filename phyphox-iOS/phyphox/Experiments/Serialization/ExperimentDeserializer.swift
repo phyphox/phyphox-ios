@@ -43,6 +43,17 @@ final class ExperimentDeserializer {
     init(data: Data, local: Bool) {
         self.local = local
         parser = XMLParser(data: data)
+
+        let rootHandler = ExperimentFileHandler()
+
+        let pars = XMLFileParser(rootHandler: rootHandler)
+
+        do {
+            try pars.parse(data: data)
+        }
+        catch {
+            print(error)
+        }
     }
 
     func deserialize() throws -> Experiment {

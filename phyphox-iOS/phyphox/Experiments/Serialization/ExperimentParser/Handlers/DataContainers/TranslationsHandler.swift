@@ -37,20 +37,18 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
     private let descriptionHandler = TextElementHandler()
 
     private let stringHandler = StringTranslationHandler()
+    private let linkHandler = LinkHandler()
 
     var handlers: [String : ElementHandler]
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
     }
 
     func beginElement(attributes: [String : String]) throws {
-        stringHandler.clear()
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         guard let locale = attributes["locale"] else { throw ParseError.missingAttribute("locale") }
 
         let title = try titleHandler.expectSingleResult()
@@ -59,8 +57,9 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
 
         let strings = Dictionary(stringHandler.results, uniquingKeysWith: { first, _ in first })
 
-        // TODO: Links?
-        results.append((locale, ExperimentTranslation(withLocale: locale, strings: strings, titleString: title, descriptionString: description, categoryString: category, links: [:])))
+        let links = Dictionary(linkHandler.results.map({ ($1, $0.absoluteString) }), uniquingKeysWith: { first, _ in first })
+
+        results.append((locale, ExperimentTranslation(withLocale: locale, strings: strings, titleString: title, descriptionString: description, categoryString: category, links: links)))
     }
 }
 
@@ -78,8 +77,6 @@ final class TranslationsHandler: ResultElementHandler, LookupElementHandler, Att
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
         results.append(ExperimentTranslationCollection(translations: translations, defaultLanguageCode: "en"))

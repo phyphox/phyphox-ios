@@ -54,8 +54,6 @@ private final class LocationHandler: ResultElementHandler, LookupElementHandler 
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         results.append(LocationInputDescriptor(outputs: outputHandler.results))
     }
 }
@@ -85,8 +83,6 @@ private final class SensorHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         guard let sensor: SensorType = attribute("type", from: attributes) else { throw ParseError.unreadableData }
 
         let rate = attribute("rate", from: attributes, defaultValue: 0.0)
@@ -115,8 +111,6 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         let rate = attribute("rate", from: attributes, defaultValue: 48000)
         results.append((rate, outputHandler.results))
     }
@@ -138,8 +132,6 @@ final class InputHandler: ResultElementHandler, LookupElementHandler, Attributel
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         let audio = try audioHandler.expectOptionalResult()
         let location = try locationHandler.expectOptionalResult()
 

@@ -65,8 +65,6 @@ final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler, A
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributes))
     }
 }
@@ -96,8 +94,6 @@ final class AnalysisHandler: ResultElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         let sleep = attribute("sleep", from: attributes, defaultValue: 0.0)
         let dynamicSleep: String? = attribute("dynamicSleep", from: attributes)
 

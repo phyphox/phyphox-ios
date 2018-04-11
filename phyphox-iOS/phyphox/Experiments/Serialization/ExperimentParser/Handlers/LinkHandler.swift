@@ -21,7 +21,7 @@ final class LinkHandler: ResultElementHandler, ChildlessHandler {
 
         guard let label = attributes["label"], !label.isEmpty else { throw ParseError.missingAttribute("label") }
 
-        guard let url = URL(string: label) else { throw ParseError.unreadableData }
+        guard let url = URL(string: text) else { throw ParseError.unreadableData }
 
         results.append((url, label))
     }

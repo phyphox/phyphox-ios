@@ -18,7 +18,6 @@ enum ParseError: Error {
     case missingElement
     case duplicateElement
     case unbalancedTags
-    case unexpectedText
 }
 
 // TODO: localizable error
@@ -145,24 +144,27 @@ func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [St
 }
 
 final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
-    private let parser = XMLParser()
-
     private var rootHandler: RootHandler
 
-    private var handlerStack: [(String, ElementHandler)]
-    private var textStack = [""]
+    private var handlerStack = [(String, ElementHandler)]()
+    private var textStack = [String]()
     private var attributesStack = [[String: String]]()
 
     private var parsingError: Error?
 
     init(rootHandler: RootHandler) {
         self.rootHandler = rootHandler
-        handlerStack = [("", rootHandler)]
         super.init()
-        parser.delegate = self
     }
 
     func parse(data: Data) throws -> Result {
+        handlerStack = [("", rootHandler)]
+        textStack = [""]
+        attributesStack = [[:]]
+
+        let parser = XMLParser(data: data)
+        parser.delegate = self
+
         parsingError = nil
 
         parser.parse()
@@ -251,14 +253,16 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
     }
 
     func parserDidEndDocument(_ parser: XMLParser) {
-        guard let currentText = textStack.popLast() else {
-            parsingError = ParseError.unbalancedTags
-            parser.abortParsing()
-            return
+        guard let currentText = textStack.popLast(),
+            let attributes = attributesStack.popLast()
+            else {
+                parsingError = ParseError.unbalancedTags
+                parser.abortParsing()
+                return
         }
 
         do {
-            try rootHandler.endElement(with: currentText, attributes: [:])
+            try rootHandler.endElement(with: currentText, attributes: attributes)
         }
         catch {
             parsingError = error

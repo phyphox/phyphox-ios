@@ -38,8 +38,6 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         let rate = attribute("rate", from: attributes, defaultValue: 48000)
         let loop = attribute("loop", from: attributes, defaultValue: false)
 
@@ -61,8 +59,6 @@ final class OutputHandler: ResultElementHandler, LookupElementHandler, Attribute
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard text.isEmpty else { throw ParseError.unexpectedText }
-
         results.append(audioHandler.results)
     }
 }
