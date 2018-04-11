@@ -18,14 +18,15 @@ enum ParseError: Error {
     case missingElement
     case duplicateElement
     case unbalancedTags
+    case unexpectedText
 }
 
 // TODO: localizable error
 
 protocol ElementHandler {
-    func beginElement(attributes: [String: String]) throws
+    mutating func beginElement(attributes: [String: String]) throws
     func childHandler(for tagName: String) throws -> ElementHandler
-    func endElement(with text: String) throws
+    mutating func endElement(with text: String) throws
 }
 
 protocol RootElementHandler: ElementHandler {
@@ -38,6 +39,40 @@ protocol ResultElementHandler: ElementHandler {
     associatedtype Result
 
     var results: [Result] { get }
+
+    func expectOptionalResult() throws -> Result?
+    func expectSingleResult() throws -> Result
+    func expectAtLeastOneResult() throws -> [Result]
+}
+
+extension ResultElementHandler {
+    func expectOptionalResult() throws -> Result? {
+        guard results.count <= 1 else {
+            throw ParseError.duplicateElement
+        }
+
+        return results.first
+    }
+
+    func expectSingleResult() throws -> Result {
+        guard let result = results.first else {
+            throw ParseError.missingElement
+        }
+
+        guard results.count == 1 else {
+            throw ParseError.duplicateElement
+        }
+
+        return result
+    }
+
+    func expectAtLeastOneResult() throws -> [Result] {
+        guard !results.isEmpty else {
+            throw ParseError.missingElement
+        }
+
+        return results
+    }
 }
 
 protocol LookupResultElementHandler: ResultElementHandler {
@@ -54,10 +89,36 @@ extension LookupResultElementHandler {
     }
 }
 
+protocol AttributeLessResultHandler: ResultElementHandler {}
+
+extension AttributeLessResultHandler {
+    func beginElement(attributes: [String: String]) throws {
+        guard attributes.isEmpty else {
+            throw ParseError.unexpectedAttribute
+        }
+    }
+}
+
+protocol ChildLessResultHandler: ResultElementHandler {}
+
+extension ChildLessResultHandler {
+    func childHandler(for tagName: String) throws -> ElementHandler {
+        throw ParseError.unexpectedElement
+    }
+}
+
+func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) -> T? {
+    return attributes[key].map({ T.init($0) }) ?? nil
+}
+
+func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String], defaultValue: T) -> T {
+    return attributes[key].map({ T.init($0) ?? defaultValue }) ?? defaultValue
+}
+
 final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
     private let parser = XMLParser()
 
-    private let rootHandler: RootHandler
+    private var rootHandler: RootHandler
 
     private var handlerStack: [(String, ElementHandler)]
     private var textStack = [""]
@@ -109,7 +170,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         }
 
         do {
-            let childHandler = try currentHandler.childHandler(for: elementName)
+            var childHandler = try currentHandler.childHandler(for: elementName)
 
             try childHandler.beginElement(attributes: attributes)
 
@@ -145,7 +206,9 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         }
 
         do {
-            try elementHandler.endElement(with: currentText)
+            var mutableElementHandler = elementHandler
+
+            try mutableElementHandler.endElement(with: currentText)
         }
         catch {
             parsingError = error

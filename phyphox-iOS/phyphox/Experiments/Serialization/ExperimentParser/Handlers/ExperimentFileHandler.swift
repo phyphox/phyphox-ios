@@ -18,7 +18,7 @@ final class ExperimentFileHandler: RootElementHandler {
     func beginElement(attributes: [String : String]) throws {
         result = nil
 
-        phyphoxHandler.beginDocument()
+        phyphoxHandler.clear()
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {

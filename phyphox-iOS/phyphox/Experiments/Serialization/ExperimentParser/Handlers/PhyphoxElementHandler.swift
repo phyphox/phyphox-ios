@@ -20,9 +20,10 @@ final class PhyphoxElementHandler: LookupResultElementHandler {
     private let descriptionHandler = TextElementHandler()
     private let iconHandler = IconHandler()
     private let linkHandler = LinkHandler()
+    private let dataContainersHandler = DataContainersHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler]
     }
 
     func beginElement(attributes: [String: String]) throws {
@@ -32,12 +33,16 @@ final class PhyphoxElementHandler: LookupResultElementHandler {
     }
 
     func endElement(with text: String) throws {
+        let title = try titleHandler.expectSingleResult()
+        let category = try categoryHandler.expectSingleResult()
+        let description = try descriptionHandler.expectSingleResult()
+        let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
+        let dataContainers = try dataContainersHandler.results
 
+        
     }
-}
 
-extension PhyphoxElementHandler {
-    func beginDocument() {
+    func clear() {
         results.removeAll()
     }
 }
