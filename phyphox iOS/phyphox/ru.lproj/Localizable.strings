@@ -13,7 +13,7 @@
 "damageWarning" = "Будьте осторожны, чтобы не повредить телефон во время экспериментов. Не бросайте его на твердые поверхности и не подвергайте его воздействию чрезмерных магнитных полей. Авторы phyphox не несут ответственности за любой ущерб, нанесённый вашему телефону.";
 "credits" = "Авторы";
 "creditsRWTH" = "phyphox был создан во 2-м институте физики Рейнско-Вестфальского Технического Университета Ахена.";
-"creditsNames" = "Разработка и концепция:<br/><b>Dr. Sebastian Staacks</b><br/>Концепция:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>";
+"creditsNames" = "Разработка и концепция:\nDr. Sebastian Staacks\nКонцепция:\nProf. Christoph Stampfer\nДизайн:\nFrank Posthoff (A.NikoPol)\nПрограммное обеспечение:\nCamilla Lummerzheim\nJonas Gessner";
 "sensorLinearAcceleration" = "Линейное ускорение";
 "sensorLight" = "Свет";
 "sensorGyroscope" = "Гироскоп";
