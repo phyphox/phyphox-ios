@@ -9,10 +9,10 @@
 import Foundation
 
 struct AudioOutputDescriptor {
-    let rate: Int
+    let rate: UInt
     let loop: Bool
 
-    let inputBufferNames: [String]
+    let inputBufferName: String
 }
 
 private final class AudioHandler: ResultElementHandler, LookupElementHandler {
@@ -38,15 +38,17 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let rate = attribute("rate", from: attributes, defaultValue: 48000)
+        let rate: UInt = attribute("rate", from: attributes, defaultValue: 48000)
         let loop = attribute("loop", from: attributes, defaultValue: false)
 
-        results.append(AudioOutputDescriptor(rate: rate, loop: loop, inputBufferNames: inputHandler.results))
+        let inputBufferName = try inputHandler.expectSingleResult()
+        
+        results.append(AudioOutputDescriptor(rate: rate, loop: loop, inputBufferName: inputBufferName))
     }
 }
 
 final class OutputHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
-    typealias Result = [AudioOutputDescriptor]
+    typealias Result = AudioOutputDescriptor
 
     var results = [Result]()
 
@@ -59,6 +61,6 @@ final class OutputHandler: ResultElementHandler, LookupElementHandler, Attribute
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        results.append(audioHandler.results)
+        results.append(try audioHandler.expectSingleResult())
     }
 }

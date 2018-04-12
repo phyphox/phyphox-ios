@@ -73,9 +73,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let inputHandler = InputHandler()
     private let outputHandler = OutputHandler()
     private let analysisHandler = AnalysisHandler()
+    private let viewsHandler = ViewsHandler()
+    private let exportHandler = ExportHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler, "analysis": analysisHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     func beginElement(attributes: [String : String]) throws {
@@ -111,11 +113,44 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
+        let output = try makeOutput(from: outputDescriptor, buffers: buffers)
+
         let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) }
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) }
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) }
 
+        let exportDescriptor = try exportHandler.expectSingleResult()
+        let export = try makeExport(from: exportDescriptor, buffers: buffers, translations: translations)
+
         
+    }
+
+    private func makeOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentOutput {
+        guard let descriptor = descriptor else {
+            return ExperimentOutput(audioOutput: nil)
+        }
+
+        guard let buffer = buffers[descriptor.inputBufferName] else {
+            throw ParseError.missingElement
+        }
+
+        return ExperimentOutput(audioOutput: ExperimentAudioOutput(sampleRate: descriptor.rate, loop: descriptor.loop, dataSource: buffer))
+    }
+
+    private func makeExport(from descriptors: [ExportSetDescriptor], buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ExperimentExport {
+        let sets = try descriptors.map { descriptor -> ExperimentExportSet in
+            let dataSets = try descriptor.dataSets.map { set -> (String, DataBuffer) in
+                guard let buffer = buffers[set.bufferName] else {
+                    throw ParseError.missingElement
+                }
+
+                return (descriptor.name, buffer)
+            }
+
+            return ExperimentExportSet(name: descriptor.name, data: dataSets, translation: translations)
+        }
+
+        return ExperimentExport(sets: sets)
     }
 
     private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> [String: DataBuffer] {
