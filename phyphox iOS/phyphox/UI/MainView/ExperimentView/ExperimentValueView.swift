@@ -23,7 +23,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
         self.valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size)*defaultFont.pointSize)
         self.valueLabel.textAlignment = NSTextAlignment.left
         
-        self.unitLabel.text = descriptor.unit
+        self.unitLabel.text = descriptor.localizedUnit
         self.unitLabel.textColor = kTextColor
         self.unitLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         self.unitLabel.textAlignment = NSTextAlignment.left

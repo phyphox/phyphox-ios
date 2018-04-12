@@ -19,6 +19,13 @@ final class ValueViewDescriptor: ViewDescriptor {
     let size: Double
     let mappings: [(min: Double, max: Double, str: String)]
     
+    var localizedUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localize(unit!) ?? unit!
+    }
+    
     init(label: String, translation: ExperimentTranslationCollection?, requiresAnalysis: Bool, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [(min: Double, max: Double, str: String)]) {
         self.scientific = scientific
         self.precision = precision

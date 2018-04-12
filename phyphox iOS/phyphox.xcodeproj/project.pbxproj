@@ -508,6 +508,8 @@
 		6BE320B11CB3C0DE00DCC1ED /* PTButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTButton.m; sourceTree = "<group>"; };
 		6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShrinkingAnimaitonViewController.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		C0CED0B0207E12DB0026A326 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C0CED0BF207E12DB0026A326 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0F28F3720791F19004CF95A /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIAlertController+PTExtensions.m"; sourceTree = "<group>"; };
 		C0F28F3820791F19004CF95A /* UIAlertController+PTExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIAlertController+PTExtensions.h"; sourceTree = "<group>"; };
 		C0F28F3920791F19004CF95A /* UIColor+Expanded.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Expanded.h"; sourceTree = "<group>"; };
@@ -1132,6 +1134,7 @@
 				pl,
 				cs,
 				nl,
+				ru,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1536,6 +1539,7 @@
 				4B6EFB5C1FFD61070019511C /* pl */,
 				4B6EFB5E1FFD61120019511C /* cs */,
 				C0F28F3D207923CC004CF95A /* nl */,
+				C0CED0BF207E12DB0026A326 /* ru */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1548,6 +1552,7 @@
 				4B6EFB461FFD61070019511C /* pl */,
 				4B6EFB5D1FFD61120019511C /* cs */,
 				C0F28F3E207923CC004CF95A /* nl */,
+				C0CED0B0207E12DB0026A326 /* ru */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
