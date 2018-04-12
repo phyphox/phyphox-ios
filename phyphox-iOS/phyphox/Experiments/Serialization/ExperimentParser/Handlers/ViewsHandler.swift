@@ -8,22 +8,87 @@
 
 import Foundation
 
-final class ViewsHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = Void
+protocol ViewElementDescriptor {
+}
+
+protocol ViewComponentHandler: ElementHandler {
+    func result() throws -> ViewElementDescriptor
+}
+
+struct ViewCollectionDescriptor {
+    let views: [ViewElementDescriptor]
+}
+
+private final class ViewHandler: ResultElementHandler {
+    typealias Result = ViewCollectionDescriptor
+
+    var results = [ViewCollectionDescriptor]()
+
+    private var handlers = [ViewComponentHandler]()
+
+    func beginElement(attributes: [String : String]) throws {
+    }
+
+    func childHandler(for tagName: String) throws -> ElementHandler {
+        let handler: ViewComponentHandler
+
+        if tagName == "info" {
+            handler = InfoViewHandler()
+        }
+        else if tagName == "separator" {
+            handler = SeparatorViewHandler()
+        }
+        else if tagName == "value" {
+            handler = ValueViewHandler()
+        }
+        else if tagName == "edit" {
+            handler = EditViewHandler()
+        }
+        else if tagName == "button" {
+            handler = ButtonViewHandler()
+        }
+        else {
+            throw ParseError.unexpectedElement
+        }
+
+        handlers.append(handler)
+
+        return handler
+    }
+
+    func endElement(with text: String, attributes: [String : String]) throws {
+        guard let name = attributes["name"], !name.isEmpty else {
+            throw ParseError.missingAttribute("name")
+        }
+
+        let views = try handlers.map { try $0.result() }
+
+        guard !views.isEmpty else {
+            throw ParseError.missingElement
+        }
+
+        results.append(ViewCollectionDescriptor(views: views))
+    }
+
+    func clearChildHandlers() {
+        handlers.removeAll()
+    }
+}
+
+final class ViewsHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+    typealias Result = [ViewCollectionDescriptor]
 
     var results = [Result]()
 
     var handlers: [String: ElementHandler]
 
+    private let viewHandler = ViewHandler()
+
     init() {
-        handlers = [:]
-    }
-
-    func beginElement(attributes: [String : String]) throws {
-
+        handlers = ["view": viewHandler]
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-
+        results.append(viewHandler.results)
     }
 }

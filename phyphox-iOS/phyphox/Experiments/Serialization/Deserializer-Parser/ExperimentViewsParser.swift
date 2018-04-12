@@ -279,15 +279,24 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 let attributes = button[XMLDictionaryAttributesKey] as! [String: String]
                 
                 let label = attributes["label"]!
-                var inputList : [ExperimentAnalysisDataIO] = []
+                var inputList : [ButtonViewInput] = []
                 var outputList : [DataBuffer] = []
                 
                 if let inputs = getElementsWithKey(button as NSDictionary, key: "input") {
                     for input_ in inputs {
-                        if let input = input_ as? [String: AnyObject] {
-                            inputList.append(try ExperimentAnalysisDataIO(dictionary: input as NSDictionary, buffers: buffers))
-                        } else {
-                            inputList.append(ExperimentAnalysisDataIO(buffer: buffers[input_ as! String]!))
+                        if let input = input_ as? String {
+                            inputList.append(.buffer(buffers[input]!))
+                        }
+                        else if let input = input_ as? [String: AnyObject], let dataIO = try? ExperimentAnalysisDataIO(dictionary: input as NSDictionary, buffers: buffers) {
+                            switch dataIO {
+                            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                                inputList.append(.buffer(buffer))
+                            case .value(value: let value, usedAs: _):
+                                inputList.append(.value(value))
+                            }
+                        }
+                        else {
+                            inputList.append(.clear)
                         }
                     }
                 }
@@ -304,8 +313,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                         }
                     }
                 }
+
+                let dataFlow = Array(zip(inputList, outputList))
                 
-                return ButtonViewDescriptor(label: label, translation: translation, inputs: inputList, outputs: outputList)
+                return ButtonViewDescriptor(label: label, translation: translation, dataFlow: dataFlow)
             }
             
             var deleteIndices: [Int] = []

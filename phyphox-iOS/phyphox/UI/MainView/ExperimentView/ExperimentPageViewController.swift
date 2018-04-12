@@ -306,15 +306,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
-        for (i, output) in viewDescriptor.outputs.enumerated() {
-            if viewDescriptor.inputs.count > i {
-                let input = viewDescriptor.inputs[i]
-                switch input {
-                case .value(value: let value, usedAs: _):
-                    output.replaceValues([value])
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    output.replaceValues(buffer.toArray())
-                }
+        for (input, output) in viewDescriptor.dataFlow {
+            switch input {
+            case .buffer(let buffer):
+                output.replaceValues(buffer.toArray())
+            case .value(let value):
+                output.replaceValues([value])
+            case .clear:
+                output.clear()
             }
         }
     }

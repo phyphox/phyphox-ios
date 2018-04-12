@@ -9,13 +9,17 @@
 import Foundation
 import CoreGraphics
 
+enum ButtonViewInput {
+    case buffer(DataBuffer)
+    case value(Double)
+    case clear
+}
+
 final class ButtonViewDescriptor: ViewDescriptor {
-    let inputs: [ExperimentAnalysisDataIO]
-    let outputs: [DataBuffer]
+    let dataFlow: [(input: ButtonViewInput, output: DataBuffer)]
     
-    init(label: String, translation: ExperimentTranslationCollection?, inputs: [ExperimentAnalysisDataIO], outputs: [DataBuffer]) {
-        self.inputs = inputs
-        self.outputs = outputs
+    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ButtonViewInput, output: DataBuffer)]) {
+        self.dataFlow = dataFlow
         
         super.init(label: label, translation: translation)
     }
