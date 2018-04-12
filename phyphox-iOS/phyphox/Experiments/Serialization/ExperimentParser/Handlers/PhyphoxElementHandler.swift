@@ -77,7 +77,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let exportHandler = ExportHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "outputHandler": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     func beginElement(attributes: [String : String]) throws {
@@ -94,6 +94,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let description = try descriptionHandler.expectSingleResult()
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
         let translations = try translationsHandler.expectOptionalResult()
+
+        let links = Dictionary(linkHandler.results.filter({ !$0.highlighted }).map({ url, label, _ in (label, url) }), uniquingKeysWith: { first, _ in first })
+        let highlightedLinks = Dictionary(linkHandler.results.filter({ $0.highlighted }).map({ url, label, _ in (label, url) }), uniquingKeysWith: { first, _ in first })
 
         let dataContainersDescriptor = try dataContainersHandler.expectSingleResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult()
@@ -115,14 +118,102 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let output = try makeOutput(from: outputDescriptor, buffers: buffers)
 
-        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) }
-        let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) }
-        let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) }
+        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) } ?? []
+        let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
+        let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
 
         let exportDescriptor = try exportHandler.expectSingleResult()
         let export = try makeExport(from: exportDescriptor, buffers: buffers, translations: translations)
 
-        
+        let viewCollectionDescriptors = try viewsHandler.expectOptionalResult()
+
+        let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
+
+        let experiment = Experiment(title: title, description: description, links: links, highlightedLinks: highlightedLinks, category: category, icon: icon, local: true, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+
+        results.append(experiment)
+    }
+
+    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
+        if let descriptor = descriptor as? SeparatorViewElementDescriptor {
+            let color = try descriptor.color.map({ string -> UIColor in
+                guard let color = UIColor(hexString: string) else {
+                    throw ParseError.unreadableData
+                }
+
+                return color
+            }) ?? kBackgroundColor
+
+            return SeparatorViewDescriptor(height: descriptor.height, color: color)
+        }
+        else if let descriptor = descriptor as? InfoViewElementDescriptor {
+            return InfoViewDescriptor(label: descriptor.label, translation: translations)
+        }
+        else if let descriptor = descriptor as? ValueViewElementDescriptor {
+            guard let buffer = buffers[descriptor.inputBufferName] else {
+                throw ParseError.missingElement
+            }
+
+            return ValueViewDescriptor(label: descriptor.label, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
+        }
+        else if let descriptor = descriptor as? EditViewElementDescriptor {
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ParseError.missingElement
+            }
+
+            return EditViewDescriptor(label: descriptor.label, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
+        }
+        else if let descriptor = descriptor as? ButtonViewElementDescriptor {
+            let dataFlow = try descriptor.dataFlow.map { flow -> (ButtonViewInput, DataBuffer) in
+                guard let outputBuffer = buffers[flow.outputBufferName] else {
+                    throw ParseError.missingElement
+                }
+
+                let input: ButtonViewInput
+
+                switch flow.input {
+                case .buffer(let bufferName):
+                    guard let buffer = buffers[bufferName] else {
+                        throw ParseError.missingElement
+                    }
+
+                    input = .buffer(buffer)
+                case .value(let value):
+                    input = .value(value)
+                case .clear:
+                    input = .clear
+                }
+
+                return (input, outputBuffer)
+            }
+
+            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow)
+        }
+        else if let descriptor = descriptor as? GraphViewElementDescriptor {
+            let xBuffer = try descriptor.xInputBufferName.map({ name -> DataBuffer in
+                guard let buffer = buffers[name] else {
+                    throw ParseError.missingElement
+                }
+                return buffer
+            })
+
+            guard let yBuffer = buffers[descriptor.yInputBufferName] else {
+                throw ParseError.missingElement
+            }
+
+            let color = try descriptor.color.map({ string -> UIColor in
+                guard let color = UIColor(hexString: string) else {
+                    throw ParseError.unreadableData
+                }
+
+                return color
+            }) ?? kHighlightColor
+
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xInputBuffer: xBuffer, yInputBuffer: yBuffer, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, drawDots: descriptor.drawDots, partialUpdate: descriptor.partialUpdate, history: descriptor.history, lineWidth: descriptor.lineWidth, color: color)
+        }
+        else {
+            throw ParseError.unexpectedElement
+        }
     }
 
     private func makeOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentOutput {
@@ -188,6 +279,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             case .buffer(name: let name, usedAs: _, clear: _):
                 return name
             case .value(value: _, usedAs: _):
+                return nil
+            case .empty:
                 return nil
             }
         })

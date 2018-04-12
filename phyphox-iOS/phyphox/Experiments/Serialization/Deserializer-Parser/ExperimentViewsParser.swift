@@ -119,7 +119,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     }
                 }
                 
-                var mappings: [(min: Double, max: Double, str: String)] = []
+                var mappings: [ValueViewMap] = []
                 
                 if let maps = getElementsWithKey(value as NSDictionary, key: "map") {
                     for map in maps {
@@ -131,10 +131,10 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                             let min = floatTypeFromXML(mapAttrs, key: "min", defaultValue: -Double.infinity)
                             let max = floatTypeFromXML(mapAttrs, key: "max", defaultValue: +Double.infinity)
 
-                            mappings.append((min: min, max: max, str: str))
+                            mappings.append(ValueViewMap(range: min...max, replacement: str))
                         }
                         else if let str = map as? String {
-                            mappings.append((min: -Double.infinity, max: +Double.infinity, str: str))
+                            mappings.append(ValueViewMap(range: -Double.infinity...Double.infinity, replacement: str))
                         }
                     }
                 }
@@ -154,7 +154,6 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 let aspectRatio = CGFloatFromXML(attributes as [String : AnyObject], key: "aspectRatio", defaultValue: 2.5)
                 let dots = stringFromXML(attributes as [String : AnyObject], key: "style", defaultValue: "line") == "dots"
                 let partialUpdate = boolFromXML(attributes as [String : AnyObject], key: "partialUpdate", defaultValue: false)
-                let forceFullDataset = boolFromXML(attributes as [String : AnyObject], key: "forceFullDataset", defaultValue: false)
                 let history = intTypeFromXML(attributes as [String : AnyObject], key: "history", defaultValue: UInt(1))
                 let lineWidth = CGFloatFromXML(attributes as [String : AnyObject], key: "lineWidth", defaultValue: 1.0)
                 let color = try UIColorFromXML(attributes as [String : AnyObject], key: "color", defaultValue: kHighlightColor)
@@ -164,40 +163,40 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                 let xPrecision = UInt(intTypeFromXML(attributes as [String : AnyObject], key: "xPrecision", defaultValue: 3))
                 let yPrecision = UInt(intTypeFromXML(attributes as [String : AnyObject], key: "yPrecision", defaultValue: 3))
                 
-                let scaleMinX: GraphViewDescriptor.scaleMode
+                let scaleMinX: GraphViewDescriptor.ScaleMode
                 switch stringFromXML(attributes as [String : AnyObject], key: "scaleMinX", defaultValue: "auto") {
-                    case "auto": scaleMinX = GraphViewDescriptor.scaleMode.auto
-                    case "extend": scaleMinX = GraphViewDescriptor.scaleMode.extend
-                    case "fixed": scaleMinX = GraphViewDescriptor.scaleMode.fixed
+                    case "auto": scaleMinX = GraphViewDescriptor.ScaleMode.auto
+                    case "extend": scaleMinX = GraphViewDescriptor.ScaleMode.extend
+                    case "fixed": scaleMinX = GraphViewDescriptor.ScaleMode.fixed
                     default:
-                        scaleMinX = GraphViewDescriptor.scaleMode.auto
+                        scaleMinX = GraphViewDescriptor.ScaleMode.auto
                         throw SerializationError.invalidExperimentFile(message: "Unknown value for scaleMinX.")
                 }
-                let scaleMaxX: GraphViewDescriptor.scaleMode
+                let scaleMaxX: GraphViewDescriptor.ScaleMode
                 switch stringFromXML(attributes as [String : AnyObject], key: "scaleMaxX", defaultValue: "auto") {
-                    case "auto": scaleMaxX = GraphViewDescriptor.scaleMode.auto
-                    case "extend": scaleMaxX = GraphViewDescriptor.scaleMode.extend
-                    case "fixed": scaleMaxX = GraphViewDescriptor.scaleMode.fixed
+                    case "auto": scaleMaxX = GraphViewDescriptor.ScaleMode.auto
+                    case "extend": scaleMaxX = GraphViewDescriptor.ScaleMode.extend
+                    case "fixed": scaleMaxX = GraphViewDescriptor.ScaleMode.fixed
                     default:
-                        scaleMaxX = GraphViewDescriptor.scaleMode.auto
+                        scaleMaxX = GraphViewDescriptor.ScaleMode.auto
                         throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMaxX.")
                 }
-                let scaleMinY: GraphViewDescriptor.scaleMode
+                let scaleMinY: GraphViewDescriptor.ScaleMode
                 switch stringFromXML(attributes as [String : AnyObject], key: "scaleMinY", defaultValue: "auto") {
-                    case "auto": scaleMinY = GraphViewDescriptor.scaleMode.auto
-                    case "extend": scaleMinY = GraphViewDescriptor.scaleMode.extend
-                    case "fixed": scaleMinY = GraphViewDescriptor.scaleMode.fixed
+                    case "auto": scaleMinY = GraphViewDescriptor.ScaleMode.auto
+                    case "extend": scaleMinY = GraphViewDescriptor.ScaleMode.extend
+                    case "fixed": scaleMinY = GraphViewDescriptor.ScaleMode.fixed
                     default:
-                        scaleMinY = GraphViewDescriptor.scaleMode.auto
+                        scaleMinY = GraphViewDescriptor.ScaleMode.auto
                         throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMinY.")
                 }
-                let scaleMaxY: GraphViewDescriptor.scaleMode
+                let scaleMaxY: GraphViewDescriptor.ScaleMode
                 switch stringFromXML(attributes as [String : AnyObject], key: "scaleMaxY", defaultValue: "auto") {
-                    case "auto": scaleMaxY = GraphViewDescriptor.scaleMode.auto
-                    case "extend": scaleMaxY = GraphViewDescriptor.scaleMode.extend
-                    case "fixed": scaleMaxY = GraphViewDescriptor.scaleMode.fixed
+                    case "auto": scaleMaxY = GraphViewDescriptor.ScaleMode.auto
+                    case "extend": scaleMaxY = GraphViewDescriptor.ScaleMode.extend
+                    case "fixed": scaleMaxY = GraphViewDescriptor.ScaleMode.fixed
                     default:
-                        scaleMaxY = GraphViewDescriptor.scaleMode.auto
+                        scaleMaxY = GraphViewDescriptor.ScaleMode.auto
                         throw SerializationError.invalidExperimentFile(message: "Error! Unknown value for scaleMaxY.")
                 }
                 
@@ -254,7 +253,7 @@ final class ExperimentViewsParser: ExperimentMetadataParser {
                     throw SerializationError.invalidExperimentFile(message: "Error! No Y axis input buffer!")
                 }
 
-                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, forceFullDataset: forceFullDataset, history: history, lineWidth: lineWidth, color: color)
+                return GraphViewDescriptor(label: label, translation: translation, xLabel: xLabel, yLabel: yLabel, xInputBuffer: xInputBuffer, yInputBuffer: yInputBuffer!, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, minX: minX, maxX: maxX, minY: minY, maxY: maxY, aspectRatio: aspectRatio, drawDots: dots, partialUpdate: partialUpdate, history: history, lineWidth: lineWidth, color: color)
             }
             
             func handleInfo(_ info: [String: AnyObject]) -> InfoViewDescriptor? {

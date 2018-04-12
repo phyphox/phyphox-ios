@@ -38,7 +38,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         }
     }
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         sigma = 1.0
         guard let firstInput = inputs.first else { throw SerializationError.genericError(message: "Input must be a buffer") }
 

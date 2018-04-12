@@ -12,7 +12,7 @@ import Accelerate
 final class AtanAnalysis: UpdateValueAnalysis {
     private let deg: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         deg = attribute("deg", from: additionalAttributes, defaultValue: false)
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

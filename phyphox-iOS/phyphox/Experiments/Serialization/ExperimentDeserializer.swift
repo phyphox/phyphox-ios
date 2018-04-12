@@ -36,27 +36,22 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     return nil
 }
 
+let pars = XMLFileParser(rootHandler: ExperimentFileHandler())
+
 final class ExperimentDeserializer {
     private let parser: XMLParser
     private let local: Bool
 
+    private let data: Data
     init(data: Data, local: Bool) {
         self.local = local
         parser = XMLParser(data: data)
-
-        let rootHandler = ExperimentFileHandler()
-
-        let pars = XMLFileParser(rootHandler: rootHandler)
-
-        do {
-            try pars.parse(data: data)
-        }
-        catch {
-            print(error)
-        }
+        self.data = data
     }
 
     func deserialize() throws -> Experiment {
+        // return try pars.parse(data: data)
+        
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary
 
         let dictionary = XMLDictionaryParser.sharedInstance().dictionary(with: parser)! as NSDictionary
@@ -92,11 +87,12 @@ final class ExperimentDeserializer {
         d = dictionary["title"]
         let title: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
 
-        var links: [String: String] = [:]
-        var highlightedLinks: [String: String] = [:]
+        var links: [String: URL] = [:]
+        var highlightedLinks: [String: URL] = [:]
         if (dictionary["link"] != nil) {
             for dict in getElemetArrayFromValue(dictionary["link"]! as AnyObject) as! [NSDictionary] {
-                let url = dict[XMLDictionaryTextKey] as? String ?? ""
+                guard let url = URL(string: dict[XMLDictionaryTextKey] as? String ?? "") else { continue }
+                
                 let attributes = dict[XMLDictionaryAttributesKey] as! [String: AnyObject]?
 
                 let label = stringFromXML(attributes, key: "label", defaultValue: "Link")

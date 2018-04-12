@@ -11,6 +11,7 @@ import Foundation
 enum ExperimentAnalysisDataIODescriptor {
     case value(value: Double, usedAs: String)
     case buffer(name: String, usedAs: String, clear: Bool)
+    case empty(usedAs: String)
 }
 
 final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
@@ -22,22 +23,27 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        guard !text.isEmpty else { throw ParseError.missingText }
-
         let type = attribute("type", from: attributes, defaultValue: "buffer")
         let usedAs = attribute("as", from: attributes, defaultValue: "")
 
         if type == "buffer" {
+            guard !text.isEmpty else { throw ParseError.missingText }
+
             let clear = attribute("clear", from: attributes, defaultValue: false)
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
         else if type == "value" {
+            guard !text.isEmpty else { throw ParseError.missingText }
+
             guard let value = Double(text) else {
                 throw ParseError.unreadableData
             }
 
             results.append(.value(value: value, usedAs: usedAs))
+        }
+        else if type == "empty" {
+            results.append(.empty(usedAs: usedAs))
         }
         else {
             throw ParseError.unexpectedAttribute
@@ -52,7 +58,7 @@ struct AnalysisModuleDescriptor {
     let attributes: [String: String]
 }
 
-final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = AnalysisModuleDescriptor
 
     var results = [Result]()
@@ -66,6 +72,9 @@ final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler, A
         handlers = ["input": inputsHandler, "output": outputsHandler]
     }
 
+    func beginElement(attributes: [String : String]) throws {
+    }
+    
     func endElement(with text: String, attributes: [String : String]) throws {
         results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributes))
     }

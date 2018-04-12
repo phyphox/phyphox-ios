@@ -57,7 +57,7 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
 
         let strings = Dictionary(stringHandler.results, uniquingKeysWith: { first, _ in first })
 
-        let links = Dictionary(linkHandler.results.map({ ($1, $0.absoluteString) }), uniquingKeysWith: { first, _ in first })
+        let links = Dictionary(linkHandler.results.map({ url, label, _ in (label, url) }), uniquingKeysWith: { first, _ in first })
 
         results.append((locale, ExperimentTranslation(withLocale: locale, strings: strings, titleString: title, descriptionString: description, categoryString: category, links: links)))
     }

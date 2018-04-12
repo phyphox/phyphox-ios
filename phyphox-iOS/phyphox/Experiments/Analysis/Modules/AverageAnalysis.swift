@@ -14,7 +14,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
     
     private let input: DataBuffer
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         var avg: ExperimentAnalysisDataIO? = nil
         var std: ExperimentAnalysisDataIO? = nil
         for output in outputs {

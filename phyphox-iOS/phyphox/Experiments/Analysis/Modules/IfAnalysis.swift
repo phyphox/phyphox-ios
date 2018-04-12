@@ -19,7 +19,7 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private var inTrue: ExperimentAnalysisDataIO? = nil
     private var inFalse: ExperimentAnalysisDataIO? = nil
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         less = attribute("less", from: additionalAttributes, defaultValue: false)
         equal = attribute("equal", from: additionalAttributes, defaultValue: false)
         greater = attribute("greater", from: additionalAttributes, defaultValue: false)

@@ -679,10 +679,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .alert)
             
-            let links: [String:String] = self.experiment.localizedLinks
+            let links  = self.experiment.localizedLinks
             for (key, value) in links {
                 al.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
-                    UIApplication.shared.openURL(URL(string: value)!)
+                    UIApplication.shared.openURL(value)
                 }))
             }
             
@@ -691,10 +691,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.navigationController!.present(al, animated: true, completion: nil)
             }))
         
-        let links: [String:String] = self.experiment.localizedHighlightedLinks
+        let links = self.experiment.localizedHighlightedLinks
         for (key, value) in links {
             alert.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
-                UIApplication.shared.openURL(URL(string: value)!)
+                UIApplication.shared.openURL(value)
             }))
         }
         

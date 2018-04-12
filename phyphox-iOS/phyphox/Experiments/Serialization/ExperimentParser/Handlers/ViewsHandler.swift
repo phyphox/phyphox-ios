@@ -16,6 +16,8 @@ protocol ViewComponentHandler: ElementHandler {
 }
 
 struct ViewCollectionDescriptor {
+    let label: String
+    
     let views: [ViewElementDescriptor]
 }
 
@@ -47,6 +49,9 @@ private final class ViewHandler: ResultElementHandler {
         else if tagName == "button" {
             handler = ButtonViewHandler()
         }
+        else if tagName == "graph" {
+            handler = GraphViewHandler()
+        }
         else {
             throw ParseError.unexpectedElement
         }
@@ -57,8 +62,8 @@ private final class ViewHandler: ResultElementHandler {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        guard let name = attributes["name"], !name.isEmpty else {
-            throw ParseError.missingAttribute("name")
+        guard let label = attributes["label"], !label.isEmpty else {
+            throw ParseError.missingAttribute("label")
         }
 
         let views = try handlers.map { try $0.result() }
@@ -67,7 +72,7 @@ private final class ViewHandler: ResultElementHandler {
             throw ParseError.missingElement
         }
 
-        results.append(ViewCollectionDescriptor(views: views))
+        results.append(ViewCollectionDescriptor(label: label, views: views))
     }
 
     func clearChildHandlers() {

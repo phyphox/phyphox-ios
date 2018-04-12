@@ -19,6 +19,8 @@ private extension ExperimentAnalysisDataIO {
             self = .buffer(buffer: buffer, usedAs: usedAs, clear: clear)
         case .value(value: let value, usedAs: let usedAs):
             self = .value(value: value, usedAs: usedAs)
+        case .empty(let asString):
+            self = .buffer(buffer: emptyBuffer, usedAs: asString, clear: false)
         }
     }
 }
@@ -29,138 +31,138 @@ struct ExperimentAnalysisFactory {
         let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
         let attributes = descriptor.attributes
 
-        let analysis: ExperimentAnalysisModule
+        let analysisClass: ExperimentAnalysisModule.Type
 
         if key == "add" {
-            analysis = try AdditionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AdditionAnalysis.self
         }
         else if key == "subtract" {
-            analysis = try SubtractionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = SubtractionAnalysis.self
         }
         else if key == "multiply" {
-            analysis = try MultiplicationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = MultiplicationAnalysis.self
         }
         else if key == "divide" {
-            analysis = try DivisionAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = DivisionAnalysis.self
         }
         else if key == "power" {
-            analysis = try PowerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = PowerAnalysis.self
         }
         else if key == "gcd" {
-            analysis = try GCDAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = GCDAnalysis.self
         }
         else if key == "lcm" {
-            analysis = try LCMAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = LCMAnalysis.self
         }
         else if key == "abs" {
-            analysis = try ABSAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = ABSAnalysis.self
         }
         else if key == "round" {
-            analysis = try RoundAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = RoundAnalysis.self
         }
         else if key == "log" {
-            analysis = try LogAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = LogAnalysis.self
         }
         else if key == "sin" {
-            analysis = try SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = SinAnalysis.self
         }
         else if key == "cos" {
-            analysis = try CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = CosAnalysis.self
         }
         else if key == "tan" {
-            analysis = try TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = TanAnalysis.self
         }
         else if key == "sinh" {
-            analysis = try SinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = SinAnalysis.self
         }
         else if key == "cosh" {
-            analysis = try CosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = CosAnalysis.self
         }
         else if key == "tanh" {
-            analysis = try TanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = TanAnalysis.self
         }
         else if key == "asin" {
-            analysis = try AsinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AsinAnalysis.self
         }
         else if key == "acos" {
-            analysis = try AcosAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AcosAnalysis.self
         }
         else if key == "atan" {
-            analysis = try AtanAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AtanAnalysis.self
         }
         else if key == "atan2" {
-            analysis = try Atan2Analysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = Atan2Analysis.self
         }
         else if key == "first" {
-            analysis = try FirstAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = FirstAnalysis.self
         }
         else if key == "max" {
-            analysis = try MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = MaxAnalysis.self
         }
         else if key == "min" {
-            analysis = try MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = MinAnalysis.self
         }
         else if key == "threshold" {
-            analysis = try ThresholdAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = ThresholdAnalysis.self
         }
         else if key == "append" {
-            analysis = try AppendAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AppendAnalysis.self
         }
         else if key == "fft" {
-            analysis = try FFTAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = FFTAnalysis.self
         }
         else if key == "autocorrelation" {
-            analysis = try AutocorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AutocorrelationAnalysis.self
         }
         else if key == "differentiate" {
-            analysis = try DifferentiationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = DifferentiationAnalysis.self
         }
         else if key == "integrate" {
-            analysis = try IntegrationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = IntegrationAnalysis.self
         }
         else if key == "crosscorrelation" {
-            analysis = try CrosscorrelationAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = CrosscorrelationAnalysis.self
         }
         else if key == "gausssmooth" {
-            analysis = try GaussSmoothAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = GaussSmoothAnalysis.self
         }
         else if key == "match" {
-            analysis = try MatchAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = MatchAnalysis.self
         }
         else if key == "rangefilter" {
-            analysis = try RangefilterAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = RangefilterAnalysis.self
         }
         else if key == "subrange" {
-            analysis = try SubrangeAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = SubrangeAnalysis.self
         }
         else if key == "ramp" {
-            analysis = try RampGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = RampGeneratorAnalysis.self
         }
         else if key == "const" {
-            analysis = try ConstGeneratorAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = ConstGeneratorAnalysis.self
         }
         else if key == "periodicity" {
-            analysis = try PeriodicityAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = PeriodicityAnalysis.self
         }
         else if key == "timer" {
-            analysis = try TimerAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = TimerAnalysis.self
         }
         else if key == "count" {
-            analysis = try CountAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = CountAnalysis.self
         }
         else if key == "average" {
-            analysis = try AverageAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = AverageAnalysis.self
         }
         else if key == "binning" {
-            analysis = try BinningAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = BinningAnalysis.self
         }
         else if key == "if" {
-            analysis = try IfAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+            analysisClass = IfAnalysis.self
         }
         else {
             throw SerializationError.invalidExperimentFile(message: "Error! Invalid analysis type: \(key)")
         }
 
-        return analysis
+        return try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
     }
 }

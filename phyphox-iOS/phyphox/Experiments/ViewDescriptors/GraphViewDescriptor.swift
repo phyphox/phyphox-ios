@@ -26,7 +26,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let xPrecision: UInt
     let yPrecision: UInt
     
-    enum scaleMode {
+    enum ScaleMode: String {
         case auto, extend, fixed
     }
     
@@ -35,10 +35,10 @@ final class GraphViewDescriptor: ViewDescriptor {
     let minY: CGFloat
     let maxY: CGFloat
     
-    let scaleMinX: scaleMode
-    let scaleMaxX: scaleMode
-    let scaleMinY: scaleMode
-    let scaleMaxY: scaleMode
+    let scaleMinX: ScaleMode
+    let scaleMaxX: ScaleMode
+    let scaleMinY: ScaleMode
+    let scaleMaxY: ScaleMode
     
     var xInputBuffer: DataBuffer?
     var yInputBuffer: DataBuffer
@@ -51,7 +51,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let lineWidth: CGFloat
     let color: UIColor
     
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: scaleMode, scaleMaxX: scaleMode, scaleMinY: scaleMode, scaleMaxY: scaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, forceFullDataset: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         
@@ -108,17 +108,17 @@ final class GraphViewDescriptor: ViewDescriptor {
         }
         
         var scaleX: String = ""
-        if scaleMinX == GraphViewDescriptor.scaleMode.fixed && minX.isFinite {
+        if scaleMinX == GraphViewDescriptor.ScaleMode.fixed && minX.isFinite {
             scaleX += "\"min\": " + String(describing: minX) + ", "
         }
-        if scaleMaxX == GraphViewDescriptor.scaleMode.fixed && maxX.isFinite {
+        if scaleMaxX == GraphViewDescriptor.ScaleMode.fixed && maxX.isFinite {
             scaleX += "\"max\": " + String(describing: maxX) + ", "
         }
         var scaleY: String = ""
-        if scaleMinY == GraphViewDescriptor.scaleMode.fixed && minY.isFinite {
+        if scaleMinY == GraphViewDescriptor.ScaleMode.fixed && minY.isFinite {
             scaleY += "\"min\": " + String(describing: minY) + ", "
         }
-        if scaleMaxY == GraphViewDescriptor.scaleMode.fixed && maxY.isFinite {
+        if scaleMaxY == GraphViewDescriptor.ScaleMode.fixed && maxY.isFinite {
             scaleY += "\"max\": " + String(describing: maxY) + ", "
         }
         

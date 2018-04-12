@@ -117,6 +117,22 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         textStack.append(currentText)
     }
 
+    private func cleanText(_ textToClean: String) -> String {
+        var text = textToClean
+
+        let cuttingCharacters = CharacterSet.whitespacesAndNewlines
+
+        while let first = text.unicodeScalars.first, cuttingCharacters.contains(first) {
+            text = String(text.unicodeScalars.dropFirst())
+        }
+
+        while let last = text.unicodeScalars.last, cuttingCharacters.contains(last) {
+            text = String(text.unicodeScalars.dropLast())
+        }
+
+        return text
+    }
+
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         guard let currentText = textStack.popLast(),
             let (currentTagName, elementHandler) = handlerStack.popLast(),
@@ -131,7 +147,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         do {
             var mutableElementHandler = elementHandler
 
-            try mutableElementHandler.endElement(with: currentText, attributes: attributes)
+            try mutableElementHandler.endElement(with: cleanText(currentText), attributes: attributes)
         }
         catch {
             parsingError = error
@@ -147,9 +163,9 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
                 parser.abortParsing()
                 return
         }
-
+        
         do {
-            try rootHandler.endElement(with: currentText, attributes: attributes)
+            try rootHandler.endElement(with: cleanText(currentText), attributes: attributes)
         }
         catch {
             parsingError = error

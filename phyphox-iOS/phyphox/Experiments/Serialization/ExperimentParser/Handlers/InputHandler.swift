@@ -28,7 +28,7 @@ private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler 
     func endElement(with text: String, attributes: [String: String]) throws {
         guard !text.isEmpty else { throw ParseError.missingText }
 
-        let component = attributes["components"]
+        let component = attributes["component"] ?? "output"
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
 
@@ -124,7 +124,7 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
 }
 
 final class InputHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
-    typealias Result = (sensors: [SensorInputDescriptor], audio: AudioInputDescriptor?, location: LocationInputDescriptor?)
+    typealias Result = (sensors: [SensorInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor])
 
     var results = [Result]()
 
@@ -139,9 +139,8 @@ final class InputHandler: ResultElementHandler, LookupElementHandler, Attributel
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let audio = try audioHandler.expectOptionalResult()
-        let location = try locationHandler.expectOptionalResult()
-
+        let audio = audioHandler.results
+        let location = locationHandler.results
         let sensors = sensorHandler.results
 
         results.append((sensors, audio, location))

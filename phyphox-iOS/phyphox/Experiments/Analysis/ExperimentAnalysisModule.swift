@@ -24,7 +24,7 @@ class ExperimentAnalysisModule {
     
     var timestamp: TimeInterval = 0.0
 
-    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: String]) throws {
         self.inputs = inputs
         self.outputs = outputs
     }

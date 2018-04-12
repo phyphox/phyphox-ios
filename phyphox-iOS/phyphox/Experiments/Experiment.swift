@@ -25,8 +25,8 @@ protocol ExperimentDelegate: class {
 final class Experiment {
     let title: String
     private let description: String?
-    private let links: [String: String]
-    private let highlightedLinks: [String: String]
+    private let links: [String: URL]
+    private let highlightedLinks: [String: URL]
     private let category: String
     
     var localizedTitle: String {
@@ -37,7 +37,7 @@ final class Experiment {
         return translation?.selectedTranslation?.descriptionString ?? description
     }
     
-    var localizedLinks: [String: String] {
+    var localizedLinks: [String: URL] {
         var allLinks = links
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
             for (key, value) in translatedLinks {
@@ -47,11 +47,12 @@ final class Experiment {
         return allLinks
     }
     
-    var localizedHighlightedLinks: [String: String] {
+    var localizedHighlightedLinks: [String: URL] {
         var allLinks = highlightedLinks
+        
         if let translatedLinks = translation?.selectedTranslation?.translatedLinks {
-            for (key, _) in translatedLinks {
-                allLinks[key] = translatedLinks[key]
+            for (key, value) in translatedLinks {
+                allLinks[key] = value
             }
         }
         return allLinks
@@ -97,7 +98,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, description: String?, links: [String: String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [String: URL], highlightedLinks: [String: URL], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.description = description

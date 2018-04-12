@@ -74,8 +74,8 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
             var mapped = false
 
             for mapping in descriptor.mappings {
-                if last >= mapping.min && last <= mapping.max {
-                    valueLabel.text = mapping.str
+                if mapping.range.contains(last) {
+                    valueLabel.text = mapping.replacement
                     unitLabel.text = ""
                     mapped = true
                     break

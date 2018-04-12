@@ -80,16 +80,16 @@ extension ExperimentAnalysisDataIO {
                 throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
             }
         }
-        else if !typeIsEmpty {
+        else if typeIsEmpty {
+            self = .buffer(buffer: emptyBuffer, usedAs: asString, clear: false)
+        }
+        else {
             if let text = text, let buffer = buffers[text] {
                 self = .buffer(buffer: buffer, usedAs: asString, clear: clear)
             }
             else {
                 throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
             }
-        }
-        else {
-            throw SerializationError.invalidExperimentFile(message: "Error! Input or output tag missing reference.")
         }
     }
 }

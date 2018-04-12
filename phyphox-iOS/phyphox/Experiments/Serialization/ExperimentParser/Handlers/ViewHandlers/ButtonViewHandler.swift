@@ -49,8 +49,11 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
 
             results.append(.value(value))
         }
-        else if type == "clear" {
+        else if type == "empty" {
             results.append(.clear)
+        }
+        else {
+            throw ParseError.unexpectedAttribute
         }
     }
 }

@@ -16,7 +16,7 @@ final class RoundAnalysis: UpdateValueAnalysis {
     private let floor: Bool
     private let ceil: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         floor = attribute("floor", from: additionalAttributes, defaultValue: false)
         ceil = attribute("ceil", from: additionalAttributes, defaultValue: false)
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)

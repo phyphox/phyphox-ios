@@ -19,7 +19,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     private var xOut: ExperimentAnalysisDataIO?
     private var yOut: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "x" {
                 switch input {

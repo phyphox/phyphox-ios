@@ -1,0 +1,150 @@
+//
+//  GraphViewHandler.swift
+//  phyphox
+//
+//  Created by Jonas Gessner on 12.04.18.
+//  Copyright © 2018 RWTH Aachen. All rights reserved.
+//
+
+import Foundation
+
+private enum GraphAxis: String {
+    case x
+    case y
+}
+
+private struct GraphInputDescriptor {
+    let axis: GraphAxis
+    let bufferName: String
+}
+
+extension CGFloat: LosslessStringConvertible {
+    public init?(_ description: String) {
+        guard let double = Double(description) else { return nil }
+
+        self.init(double)
+    }
+}
+
+private final class GraphInputHandler: ResultElementHandler, ChildlessHandler {
+    typealias Result = GraphInputDescriptor
+
+    var results = [GraphInputDescriptor]()
+
+    func beginElement(attributes: [String : String]) throws {
+    }
+
+    func endElement(with text: String, attributes: [String : String]) throws {
+        guard !text.isEmpty else {
+            throw ParseError.missingText
+        }
+
+        guard let axis = (attributes["axis"].map({ GraphAxis(rawValue: $0) }) ?? nil) else {
+            throw ParseError.missingAttribute("axis")
+        }
+
+        results.append(GraphInputDescriptor(axis: axis, bufferName: text))
+    }
+}
+
+struct GraphViewElementDescriptor: ViewElementDescriptor {
+    let label: String
+    
+    let xLabel: String
+    let yLabel: String
+
+    let logX: Bool
+    let logY: Bool
+
+    let xPrecision: UInt
+    let yPrecision: UInt
+
+    let minX: CGFloat
+    let maxX: CGFloat
+    let minY: CGFloat
+    let maxY: CGFloat
+
+    let scaleMinX: GraphViewDescriptor.ScaleMode
+    let scaleMaxX: GraphViewDescriptor.ScaleMode
+    let scaleMinY: GraphViewDescriptor.ScaleMode
+    let scaleMaxY: GraphViewDescriptor.ScaleMode
+
+    var xInputBufferName: String?
+    var yInputBufferName: String
+
+    let aspectRatio: CGFloat
+    let partialUpdate: Bool
+    let drawDots: Bool
+    let history: UInt
+
+    let lineWidth: CGFloat
+    let color: String?
+}
+
+final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
+    typealias Result = GraphViewElementDescriptor
+
+    var results = [Result]()
+
+    var handlers: [String : ElementHandler]
+
+    private let inputHandler = GraphInputHandler()
+
+    init() {
+        handlers = ["input": inputHandler]
+    }
+
+    func beginElement(attributes: [String : String]) throws {
+    }
+
+    func endElement(with text: String, attributes: [String : String]) throws {
+        guard let label = attributes["label"], !label.isEmpty else {
+            throw ParseError.missingAttribute("label")
+        }
+
+        guard let xLabel = attributes["labelX"], !xLabel.isEmpty else {
+            throw ParseError.missingAttribute("labelX")
+        }
+
+        guard let yLabel = attributes["labelY"], !yLabel.isEmpty else {
+            throw ParseError.missingAttribute("labelY")
+        }
+
+        guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
+            throw ParseError.missingElement
+        }
+
+        let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
+
+        let aspectRatio: CGFloat = attribute("aspectRatio", from: attributes, defaultValue: 2.5)
+        let dots = attribute("style", from: attributes, defaultValue: "line") == "dots"
+        let partialUpdate = attribute("partialUpdate", from: attributes, defaultValue: false)
+        let history: UInt = attribute("history", from: attributes, defaultValue: 1)
+        let lineWidth: CGFloat = attribute("lineWidth", from: attributes, defaultValue: 1.0)
+        let color: String? = attribute("color", from: attributes)
+
+        let logX = attribute("logX", from: attributes, defaultValue: false)
+        let logY = attribute("logY", from: attributes, defaultValue: false)
+        let xPrecision: UInt = attribute("xPrecision", from: attributes, defaultValue: 3)
+        let yPrecision: UInt = attribute("yPrecision", from: attributes, defaultValue: 3)
+
+        guard let scaleMinX = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinX", from: attributes, defaultValue: "auto")),
+            let scaleMaxX = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxX", from: attributes, defaultValue: "auto")),
+            let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinY", from: attributes, defaultValue: "auto")),
+            let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
+            else {
+                throw ParseError.unreadableData
+        }
+
+        let minX: CGFloat = attribute("minX", from: attributes, defaultValue: 0)
+        let maxX: CGFloat = attribute("maxX", from: attributes, defaultValue: 0)
+        let minY: CGFloat = attribute("minY", from: attributes, defaultValue: 0)
+        let maxY: CGFloat = attribute("maxY", from: attributes, defaultValue: 0)
+
+        results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
+    }
+
+    func result() throws -> ViewElementDescriptor {
+        return try expectSingleResult()
+    }
+}

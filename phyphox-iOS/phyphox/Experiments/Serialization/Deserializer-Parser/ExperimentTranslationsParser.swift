@@ -39,7 +39,7 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
             var category: String = ""
             
             var strings: [String: String] = [:]
-            var links: [String: String] = [:]
+            var links: [String: URL] = [:]
             
             for (key, value) in translation {
                 if let translated = value as? String {
@@ -68,12 +68,9 @@ final class ExperimentTranslationsParser: ExperimentMetadataParser {
                 }
                 else if key as! String == "link" {
                     for dict in getElemetArrayFromValue(value as AnyObject) as! [NSDictionary] {
-                        let url = dict[XMLDictionaryTextKey] as? String ?? ""
+                        guard let url = URL(string: dict[XMLDictionaryTextKey] as? String ?? "") else { continue }
                         let label = (dict[XMLDictionaryAttributesKey] as! [String: String])["label"]!
-                        
-                        if url != "" {
-                            links[label] = url
-                        }
+                        links[label] = url
                     }
                 }
                 else if key as! String == XMLDictionaryAttributesKey {

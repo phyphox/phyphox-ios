@@ -19,7 +19,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     
     private var multiple: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         multiple = attribute("multiple", from: additionalAttributes, defaultValue: false)
         
         for input in inputs {

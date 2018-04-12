@@ -9,6 +9,12 @@
 import Foundation
 import CoreGraphics
 
+struct ValueViewMap {
+    let range: ClosedRange<Double>
+
+    let replacement: String
+}
+
 final class ValueViewDescriptor: ViewDescriptor {
     let scientific: Bool
     let precision: Int
@@ -16,22 +22,19 @@ final class ValueViewDescriptor: ViewDescriptor {
     let factor: Double
     let buffer: DataBuffer
     let size: Double
-    let mappings: [(min: Double, max: Double, str: String)]
+    let mappings: [ValueViewMap]
     
-    init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [(min: Double, max: Double, str: String)]) {
+    init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
         self.factor = factor
         self.buffer = buffer
         self.size = size
+
+        let translatedMappings = mappings.compactMap { map in (translation?.localize(map.replacement)).map { ValueViewMap(range: map.range, replacement: $0) } }
         
-        var translatedMappings: [(min: Double, max: Double, str: String)] = []
-        for mapping in mappings {
-            translatedMappings.append((min: mapping.min, max: mapping.max, str: translation?.localize(mapping.str) ?? mapping.str))
-        }
-        
-        self.mappings = translatedMappings
+        self.mappings = mappings + translatedMappings
         
         super.init(label: label, translation: translation)
     }
@@ -43,14 +46,18 @@ final class ValueViewDescriptor: ViewDescriptor {
     override func setValueHTMLWithID(_ id: Int) -> String {
         var mappingCode = "if (isNaN(x) || x == null) { v = \"-\" }"
         for mapping in mappings {
-            let str = mapping.str.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;")
-            if mapping.max.isFinite && mapping.min.isFinite {
-                mappingCode += "else if (x >= \(mapping.min) && x <= \(mapping.max)) {v = \"\(str)\";}"
-            } else if mapping.max.isFinite {
-                mappingCode += "else if (x <= \(mapping.max)) {v = \"\(str)\";}"
-            } else if mapping.min.isFinite {
-                mappingCode += "else if (x >= \(mapping.min)) {v = \"\(str)\";}"
-            } else {
+            let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;") // addingPercentEncoding() !???
+
+            if mapping.range.upperBound.isFinite && mapping.range.lowerBound.isFinite {
+                mappingCode += "else if (x >= \(mapping.range.lowerBound) && x <= \(mapping.range.upperBound)) {v = \"\(str)\";}"
+            }
+            else if mapping.range.upperBound.isFinite {
+                mappingCode += "else if (x <= \(mapping.range.upperBound)) {v = \"\(str)\";}"
+            }
+            else if mapping.range.lowerBound.isFinite {
+                mappingCode += "else if (x >= \(mapping.range.lowerBound)) {v = \"\(str)\";}"
+            }
+            else {
                 mappingCode += "else if (true) {v = \"\(str)\";}"
             }
         }

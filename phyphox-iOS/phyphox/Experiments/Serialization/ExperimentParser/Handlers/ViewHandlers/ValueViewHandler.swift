@@ -8,12 +8,6 @@
 
 import Foundation
 
-struct ValueViewMap {
-    let range: ClosedRange<Double>
-
-    let replacement: String
-}
-
 final class ValueViewMapHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = ValueViewMap
 
