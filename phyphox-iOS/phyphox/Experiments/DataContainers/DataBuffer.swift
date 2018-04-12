@@ -23,6 +23,19 @@ private func weakObserverCapture(_ object: DataBufferObserver, alwaysNotify: Boo
 
 private let isLittleEndian = CFByteOrderGetCurrent() == Int(CFByteOrderLittleEndian.rawValue)
 
+enum DataBufferError: Error {
+    case baseContentsTooLarge
+}
+
+extension DataBufferError: LocalizedError {
+    var localizedDescription: String {
+        switch self {
+        case .baseContentsTooLarge:
+            return "Data Buffer base contents exceed memory capacity"
+        }
+    }
+}
+
 /**
  Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
@@ -129,7 +142,7 @@ final class DataBuffer {
 
     private var contents: [Double]
 
-    init?(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) {
+    init(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) throws {
         switch storage {
         case .memory(size: let size):
             self.size = size
@@ -145,7 +158,9 @@ final class DataBuffer {
         contents.reserveCapacity(size)
         self.staticBuffer = staticBuffer
 
-        guard baseContents.count <= effectiveMemorySize else { return nil }
+        guard baseContents.count <= effectiveMemorySize else {
+            throw DataBufferError.baseContentsTooLarge
+        }
 
         appendFromArray(baseContents)
     }

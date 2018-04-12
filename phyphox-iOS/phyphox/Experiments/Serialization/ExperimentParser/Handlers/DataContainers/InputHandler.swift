@@ -13,6 +13,10 @@ struct SensorOutputDescriptor {
     let bufferName: String
 }
 
+protocol SensorDescriptor {
+    var outputs: [SensorOutputDescriptor] { get }
+}
+
 private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = SensorOutputDescriptor
 
@@ -33,7 +37,7 @@ private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler 
     }
 }
 
-struct LocationInputDescriptor {
+struct LocationInputDescriptor: SensorDescriptor {
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -58,7 +62,7 @@ private final class LocationHandler: ResultElementHandler, LookupElementHandler 
     }
 }
 
-struct SensorInputDescriptor {
+struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
     let average: Bool
@@ -92,7 +96,10 @@ private final class SensorHandler: ResultElementHandler, LookupElementHandler {
     }
 }
 
-typealias AudioInputDescriptor = (rate: Int, outputs: [SensorOutputDescriptor])
+struct AudioInputDescriptor: SensorDescriptor {
+    let rate: UInt
+    let outputs: [SensorOutputDescriptor]
+}
 
 private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = AudioInputDescriptor
@@ -111,8 +118,8 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let rate = attribute("rate", from: attributes, defaultValue: 48000)
-        results.append((rate, outputHandler.results))
+        let rate: UInt = attribute("rate", from: attributes, defaultValue: 48000)
+        results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
     }
 }
 

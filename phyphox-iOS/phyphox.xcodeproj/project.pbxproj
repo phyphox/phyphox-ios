@@ -89,6 +89,7 @@
 		6B612FF2207E791B001DA8D9 /* InputHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF1207E791B001DA8D9 /* InputHandler.swift */; };
 		6B612FF4207EA4E5001DA8D9 /* OutputHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF3207EA4E5001DA8D9 /* OutputHandler.swift */; };
 		6B612FF6207EB052001DA8D9 /* AnalysisHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF5207EB052001DA8D9 /* AnalysisHandler.swift */; };
+		6B612FF9207EBCF3001DA8D9 /* XMLFileParserHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612FF8207EBCF3001DA8D9 /* XMLFileParserHelpers.swift */; };
 		6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */; };
 		6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319671C48457B0038BE22 /* CollectionViewController.swift */; };
 		6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6319691C4849900038BE22 /* CollectionView.swift */; };
@@ -451,6 +452,7 @@
 		6B612FF1207E791B001DA8D9 /* InputHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputHandler.swift; sourceTree = "<group>"; };
 		6B612FF3207EA4E5001DA8D9 /* OutputHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputHandler.swift; sourceTree = "<group>"; };
 		6B612FF5207EB052001DA8D9 /* AnalysisHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisHandler.swift; sourceTree = "<group>"; };
+		6B612FF8207EBCF3001DA8D9 /* XMLFileParserHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLFileParserHelpers.swift; sourceTree = "<group>"; };
 		6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentViewModuleFactory.swift; sourceTree = "<group>"; };
 		6B6319671C48457B0038BE22 /* CollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
 		6B6319691C4849900038BE22 /* CollectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
@@ -704,6 +706,7 @@
 			isa = PBXGroup;
 			children = (
 				6B612FDE207E1648001DA8D9 /* XMLFileParser.swift */,
+				6B612FF8207EBCF3001DA8D9 /* XMLFileParserHelpers.swift */,
 				6B612FE7207E5A9B001DA8D9 /* Handlers */,
 			);
 			path = ExperimentParser;
@@ -1549,6 +1552,7 @@
 				6B612FF2207E791B001DA8D9 /* InputHandler.swift in Sources */,
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,
 				6B08154D1CB005D900EE2791 /* PeriodicityAnalysis.swift in Sources */,
+				6B612FF9207EBCF3001DA8D9 /* XMLFileParserHelpers.swift in Sources */,
 				4B47B0391DA6AF5200CCBA6E /* CoshAnalysis.swift in Sources */,
 				6B612FE4207E5A6D001DA8D9 /* TextElementHandler.swift in Sources */,
 				6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */,
