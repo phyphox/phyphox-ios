@@ -12,7 +12,9 @@ import Accelerate
 final class GaussSmoothAnalysis: ExperimentAnalysisModule {
     private var calcWidth: Int = 0
     private var kernel: [Float] = []
-    
+
+    private let inputBuffer: DataBuffer
+
     private var sigma: Double = 0.0 {
         didSet {
             calcWidth = Int(round(sigma*3.0))
@@ -36,11 +38,20 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         }
     }
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         sigma = 1.0
+        guard let firstInput = inputs.first else { throw SerializationError.genericError(message: "Input must be a buffer") }
+
+        switch firstInput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            inputBuffer = buffer
+        case .value(value: _, usedAs: _):
+            throw SerializationError.genericError(message: "Input must be a buffer")
+        }
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
         defer {
-            sigma = floatTypeFromXML(additionalAttributes, key: "sigma", defaultValue: 3.0)
+            sigma = attribute("sigma", from: additionalAttributes, defaultValue: 3.0)
         }
     }
     
@@ -49,7 +60,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(["sigma" : sigma, "calcWidth" : calcWidth, "kernel" : kernel])
         #endif
         
-        var input = self.inputs.first!.buffer!.toArray().map { Float($0) }
+        var input = inputBuffer.toArray().map { Float($0) }
         
         let count = input.count
         
@@ -70,11 +81,16 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         #endif
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

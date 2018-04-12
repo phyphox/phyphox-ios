@@ -24,7 +24,7 @@ class ExperimentAnalysisModule {
     
     var timestamp: TimeInterval = 0.0
 
-    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: AnyObject]?) throws {
+    init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: String]) throws {
         self.inputs = inputs
         self.outputs = outputs
     }
@@ -58,8 +58,13 @@ class ExperimentAnalysisModule {
     
     func didUpdate() {
         for input in inputs {
-            if input.clear && (input.buffer?.staticBuffer == false) && (input.buffer?.attachedToTextField == false) {
-                input.buffer?.clear()
+            switch input {
+            case .value(value: _, usedAs: _):
+                break
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear && !buffer.staticBuffer && !buffer.attachedToTextField {
+                    buffer.clear()
+                }
             }
         }
     }

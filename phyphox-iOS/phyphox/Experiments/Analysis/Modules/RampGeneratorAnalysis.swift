@@ -14,7 +14,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     private var stopInput: ExperimentAnalysisDataIO!
     private var lengthInput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "start" {
                 startInput = input
@@ -34,6 +34,8 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
+        guard let firstOutput = outputs.first else { return }
+
         var start = 0.0
         var stop = 0.0
         var length = 0
@@ -51,7 +53,12 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         }
 
         if length == 0 {
-            length = outputs.first!.buffer!.size
+            switch firstOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                length = buffer.size
+            case .value(value: _, usedAs: _):
+                break
+            }
         }
         
         var result = [Double](repeating: 0.0, count: length)
@@ -69,11 +76,16 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         #endif
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

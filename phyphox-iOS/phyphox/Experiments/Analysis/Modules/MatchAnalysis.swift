@@ -19,15 +19,20 @@ final class MatchAnalysis: ExperimentAnalysisModule {
             var allOK = true
             var values = [Double]()
             for input in inputs {
-                if let value = input.buffer?.objectAtIndex(i) {
-                    if !value.isFinite {
-                        allOK = false
-                        break
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    if let value = buffer.objectAtIndex(i) {
+                        if !value.isFinite {
+                            allOK = false
+                            break
+                        } else {
+                            values.append(value)
+                        }
                     } else {
-                        values.append(value)
+                        allInputs = false
+                        break
                     }
-                } else {
-                    allInputs = false
+                case .value(value: _, usedAs: _):
                     break
                 }
             }
@@ -40,11 +45,16 @@ final class MatchAnalysis: ExperimentAnalysisModule {
         }
         
         for (i, output) in outputs.enumerated() {
-            if output.clear {
-                output.buffer!.replaceValues(out[i])
-            }
-            else {
-                output.buffer!.appendFromArray(out[i])
+            switch output {
+            case .value(value: _, usedAs: _):
+                break
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(out[i])
+                }
+                else {
+                    buffer.appendFromArray(out[i])
+                }
             }
         }
     }

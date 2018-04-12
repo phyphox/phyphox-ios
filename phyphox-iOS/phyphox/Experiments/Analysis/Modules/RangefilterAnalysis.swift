@@ -47,14 +47,19 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     currentMax = v
                 }
             }
-            else if let b = input.buffer { //in
-                if currentIn != nil {
-                    iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
+            else {
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    if let currentInput = currentIn {
+                        iterators.append((Range(min: currentMin, max: currentMax), currentInput))
+                    }
+
+                    currentIn = buffer
+                    currentMax = Double.infinity
+                    currentMin = -Double.infinity
+                case .value(value: _, usedAs: _):
+                    break
                 }
-                
-                currentIn = b
-                currentMax = Double.infinity
-                currentMin = -Double.infinity
             }
         }
         
@@ -118,11 +123,16 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         #endif
         
         for (i, output) in outputs.enumerated() {
-            if output.clear {
-                output.buffer!.replaceValues(out[i])
-            }
-            else {
-                output.buffer!.appendFromArray(out[i])
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(out[i])
+                }
+                else {
+                    buffer.appendFromArray(out[i])
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

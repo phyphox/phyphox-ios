@@ -11,7 +11,7 @@ import Foundation
 final class AppendAnalysis: ExperimentAnalysisModule {
     private let inputElements: [ExperimentAnalysisDataIO]
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         var inputElements = [ExperimentAnalysisDataIO]()
         
         for input in inputs {
@@ -30,10 +30,11 @@ final class AppendAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(inputs)
         #endif
         for input in inputElements {
-            if let b = input.buffer {
-                result.append(contentsOf: b.toArray())
-            } else if input.value != nil {
-                result.append(input.getSingleValue()!)
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                result.append(contentsOf: buffer.toArray())
+            case .value(value: let value, usedAs: _):
+                result.append(value)
             }
         }
         
@@ -42,11 +43,16 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         #endif
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

@@ -12,18 +12,27 @@ import Accelerate
 final class DifferentiationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        let array = inputs.first!.buffer!.toArray()
-        
+        guard let firstInput = inputs.first else { return }
+
+        let inputValues: [Double]
+
+        switch firstInput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            inputValues = buffer.toArray()
+        case .value(value: _, usedAs: _):
+            return
+        }
+
         var result: [Double]
         
         //Only use accelerate for long arrays
-        if array.count > 260 {
-            var subtract = array
+        if inputValues.count > 260 {
+            var subtract = inputValues
             subtract.insert(0.0, at: 0)
             
-            result = array
+            result = inputValues
             
-            vDSP_vsubD(subtract, 1, array, 1, &result, 1, vDSP_Length(array.count))
+            vDSP_vsubD(subtract, 1, inputValues, 1, &result, 1, vDSP_Length(inputValues.count))
             
             result.removeFirst()
         }
@@ -32,7 +41,7 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
             var first = true
             var last: Double!
             
-            for value in inputs.first!.buffer! {
+            for value in inputValues {
                 if first {
                     last = value
                     first = false
@@ -48,11 +57,16 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

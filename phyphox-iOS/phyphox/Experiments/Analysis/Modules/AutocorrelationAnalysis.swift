@@ -19,13 +19,23 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
     private var xOut: ExperimentAnalysisDataIO?
     private var yOut: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "x" {
-                xIn = input.buffer!
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    xIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else if input.asString == "y" {
-                yIn = input.buffer!
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    yIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else if input.asString == "minX" {
                 minXIn = input
@@ -172,21 +182,31 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             yValues = minimizedY
         }
         
-        if yOut != nil {
-            if yOut!.clear {
-                yOut!.buffer!.replaceValues(yValues)
-            }
-            else {
-                yOut!.buffer!.appendFromArray(yValues)
+        if let yOut = yOut {
+            switch yOut {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(yValues)
+                }
+                else {
+                    buffer.appendFromArray(yValues)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
-        if xOut != nil {
-            if xOut!.clear {
-                xOut!.buffer!.replaceValues(xValues)
-            }
-            else {
-                xOut!.buffer!.appendFromArray(xValues)
+        if let xOut = xOut {
+            switch xOut {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(xValues)
+                }
+                else {
+                    buffer.appendFromArray(xValues)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

@@ -9,22 +9,31 @@
 import Foundation
 
 final class FirstAnalysis: ExperimentAnalysisModule {
-
     override func update() {
         var result: [Double] = []
         
         for input in inputs {
-            if let val = input.buffer!.first {
-                result.append(val)
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                if let val = buffer.first {
+                    result.append(val)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

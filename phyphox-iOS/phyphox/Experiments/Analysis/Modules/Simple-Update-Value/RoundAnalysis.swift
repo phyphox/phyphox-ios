@@ -16,21 +16,24 @@ final class RoundAnalysis: UpdateValueAnalysis {
     private let floor: Bool
     private let ceil: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        floor = boolFromXML(additionalAttributes, key: "floor", defaultValue: false)
-        ceil = boolFromXML(additionalAttributes, key: "ceil", defaultValue: false)
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        floor = attribute("floor", from: additionalAttributes, defaultValue: false)
+        ceil = attribute("ceil", from: additionalAttributes, defaultValue: false)
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
         updateAllWithMethod { array -> [Double] in
             var results = array
-            if !(self.floor || self.ceil) {
-                vvnint(&results, results, [Int32(results.count)])
-            } else if (self.floor) {
+
+            if floor {
                 vvfloor(&results, results, [Int32(results.count)])
-            } else {
+            }
+            else if ceil {
                 vvceil(&results, results, [Int32(results.count)])
+            }
+            else {
+                vvnint(&results, results, [Int32(results.count)])
             }
             
             return results

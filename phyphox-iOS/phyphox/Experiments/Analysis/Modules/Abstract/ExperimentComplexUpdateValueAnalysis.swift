@@ -8,14 +8,13 @@
 
 import Foundation
 
-internal final class ValueSource : CustomStringConvertible {
+// TODO: Should be an enum
+final class ValueSource: CustomStringConvertible {
     var vector: [Double]? {
         didSet {
-            if let v = vector {
-                if v.count == 1 {
-                    scalar = v.first!
-                    vector = nil
-                }
+            if vector?.count == 1, let first = vector?.first {
+                scalar = first
+                vector = nil
             }
         }
     }
@@ -41,39 +40,38 @@ internal final class ValueSource : CustomStringConvertible {
 }
 
 class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
-    
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
         var maxNonScalarCount = 0 //Scalar and an empty vector should give an empty result
         
         for input in inputs {
-            if let fixed = input.value {
-                let src = ValueSource(scalar: fixed)
-                
-                if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(src, at: 0)
-                }
-                else {
-                    values.append(src)
-                }
-                
-                maxCount = Swift.max(maxCount, 1)
-            }
-            else {
-                let array = input.buffer!.toArray()
-                
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                let array = buffer.toArray()
+
                 let src = ValueSource(vector: array)
-                
+
                 if priorityInputKey != nil && input.asString == priorityInputKey! {
                     values.insert(src, at: 0)
                 }
                 else {
                     values.append(src)
                 }
-                
+
                 maxNonScalarCount = Swift.max(maxNonScalarCount, array.count)
                 maxCount = Swift.max(maxCount, array.count)
+            case .value(value: let fixed, usedAs: _):
+                let src = ValueSource(scalar: fixed)
+
+                if priorityInputKey != nil && input.asString == priorityInputKey! {
+                    values.insert(src, at: 0)
+                }
+                else {
+                    values.append(src)
+                }
+
+                maxCount = Swift.max(maxCount, 1)
             }
         }
         
@@ -108,13 +106,17 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }
-    
 }

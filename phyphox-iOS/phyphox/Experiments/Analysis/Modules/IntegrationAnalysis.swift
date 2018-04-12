@@ -12,9 +12,18 @@ import Accelerate
 final class IntegrationAnalysis: ExperimentAnalysisModule {
     
     override func update() {
-        let buffer = inputs.first!.buffer!
-        
-        var inArray = buffer.toArray()
+        guard let firstInput = inputs.first else { return }
+
+        let inputBuffer: DataBuffer
+
+        switch firstInput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            inputBuffer = buffer
+        case .value(value: _, usedAs: _):
+            return
+        }
+
+        var inArray = inputBuffer.toArray()
         let count = inArray.count
         
         var result: [Double]
@@ -36,11 +45,16 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

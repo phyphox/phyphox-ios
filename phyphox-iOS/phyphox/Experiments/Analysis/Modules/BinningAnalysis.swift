@@ -9,29 +9,32 @@
 import Foundation
 
 final class BinningAnalysis: ExperimentAnalysisModule {
-    private var inInput: ExperimentAnalysisDataIO!
-    private var x0Input: ExperimentAnalysisDataIO?
-    private var dxInput: ExperimentAnalysisDataIO?
+    private let inputBuffer: DataBuffer
+    private let x0Input: ExperimentAnalysisDataIO?
+    private let dxInput: ExperimentAnalysisDataIO?
     
-    private var binStartsOutput: ExperimentAnalysisDataIO?
-    private var binCountsOutput: ExperimentAnalysisDataIO?
+    private let binStartsOutput: ExperimentAnalysisDataIO?
+    private let binCountsOutput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        if inputs.count == 0 || outputs.count == 0 {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        guard !inputs.isEmpty && !outputs.isEmpty else {
             throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
-        var tIn: ExperimentAnalysisDataIO? = nil
-        var tX0: ExperimentAnalysisDataIO? = nil
-        var tDx: ExperimentAnalysisDataIO? = nil
-        var tBinStarts: ExperimentAnalysisDataIO? = nil
-        var tBinCounts: ExperimentAnalysisDataIO? = nil
+
+        var tIn: ExperimentAnalysisDataIO?
+        var tX0: ExperimentAnalysisDataIO?
+        var tDx: ExperimentAnalysisDataIO?
+        var tBinStarts: ExperimentAnalysisDataIO?
+        var tBinCounts: ExperimentAnalysisDataIO?
         
         for input in inputs {
             if input.asString == "x0" {
                 tX0 = input
-            } else if input.asString == "dx" {
+            }
+            else if input.asString == "dx" {
                 tDx = input
-            } else if tIn == nil {
+            }
+            else if tIn == nil {
                 tIn = input
             }
         }
@@ -45,15 +48,17 @@ final class BinningAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        if tIn == nil {
+        guard let tInput = tIn else {
             throw SerializationError.genericError(message: "Binning analysis needs a valid input designated as \"in\".")
         }
-        
-        if tIn?.buffer == nil {
+
+        switch tInput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            inputBuffer = buffer
+        case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
         }
-        
-        inInput = tIn
+
         x0Input = tX0
         dxInput = tDx
         binStartsOutput = tBinStarts
@@ -63,7 +68,6 @@ final class BinningAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-
         let x0 = x0Input?.getSingleValue() ?? 0.0
         var dx = dxInput?.getSingleValue() ?? 1.0
         if dx == 0.0 {
@@ -73,7 +77,7 @@ final class BinningAnalysis: ExperimentAnalysisModule {
         var binStarts = [Double]()
         var binCounts = [Double]()
         
-        for v in inInput.buffer! {
+        for v in inputBuffer {
             if !v.isFinite {
                 continue
             }
@@ -82,9 +86,10 @@ final class BinningAnalysis: ExperimentAnalysisModule {
             if binStarts.count == 0 {
                 binStarts.append(x0+Double(binIndex)*dx)
                 binCounts.append(1)
-            } else {
+            }
+            else {
                 var firstBinIndex = Int(round((binStarts[0]-x0)/dx))
-                while (binIndex > firstBinIndex + binStarts.count - 1) {
+                while binIndex > firstBinIndex + binStarts.count - 1 {
                     binStarts.append(x0 + Double(firstBinIndex+binStarts.count)*dx)
                     binCounts.append(0)
                 }
@@ -97,23 +102,32 @@ final class BinningAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        if binStartsOutput != nil {
-            if binStartsOutput!.clear {
-                binStartsOutput!.buffer!.replaceValues(binStarts)
-            }
-            else {
-                binStartsOutput!.buffer!.appendFromArray(binStarts)
-            }
-        }
-        if binCountsOutput != nil {
-            if binCountsOutput!.clear {
-                binCountsOutput!.buffer!.replaceValues(binCounts)
-            }
-            else {
-                binCountsOutput!.buffer!.appendFromArray(binCounts)
+        if let binStartsOutput = binStartsOutput {
+            switch binStartsOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(binStarts)
+                }
+                else {
+                    buffer.appendFromArray(binStarts)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
-
+        if let binCountsOutput = binCountsOutput {
+            switch binCountsOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(binCounts)
+                }
+                else {
+                    buffer.appendFromArray(binCounts)
+                }
+            case .value(value: _, usedAs: _):
+                break
+            }
+        }
     }
 }

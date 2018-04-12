@@ -19,8 +19,8 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     //input6 is the precision in samples (optional, default: 1)
     
     //output1 is the periodicity in units of input1
-    private var xInput: ExperimentAnalysisDataIO!
-    private var yInput: ExperimentAnalysisDataIO!
+    private var xInput: DataBuffer!
+    private var yInput: DataBuffer!
     private var dxInput: ExperimentAnalysisDataIO!
     private var overlapInput: ExperimentAnalysisDataIO?
     private var minInput: ExperimentAnalysisDataIO?
@@ -29,13 +29,23 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     private var timeOutput: ExperimentAnalysisDataIO?
     private var periodOutput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "x" {
-                xInput = input
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    xInput = buffer
+                case .value(value: _, usedAs: _):
+                    throw SerializationError.genericError(message: "x input can only be a buffer")
+                }
             }
             else if input.asString == "y" {
-                yInput = input
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    yInput = buffer
+                case .value(value: _, usedAs: _):
+                    throw SerializationError.genericError(message: "y input can only be a buffer")
+                }
             }
             else if input.asString == "dx" {
                 dxInput = input
@@ -70,9 +80,9 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        let x = xInput.buffer!.toArray()
-        let y = yInput.buffer!.toArray()
-        
+        let x: [Double] = xInput.toArray()
+        let y: [Double] = yInput.toArray()
+
         let n = y.count
         
         var dx = Int(dxInput.getSingleValue()!)
@@ -140,24 +150,24 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
                 
                 sum /= Double(x2-x1-i) //Normalize to the number of values at this displacement
                 
-                if (!userSelectedRange && firstNegative < 0) {
+                if !userSelectedRange && firstNegative < 0 {
                     if (sum < 0) { //So, this is the first negative one... We can now skip ahead to 3 times this position and work more precisely from there.
                         firstNegative = i
                         i = 3*firstNegative+1
                         step = 1
                     }
                 }
-                else if (!userSelectedRange && i > 5 * firstNegative) { //We have passed the first period. Further maxima can only be found on the next period and we are not interested in this...
+                else if !userSelectedRange && i > 5 * firstNegative { //We have passed the first period. Further maxima can only be found on the next period and we are not interested in this...
                     break
                 }
-                else if (userSelectedRange || i > 3 * firstNegative) {
-                    if (sum > maxValue) {
+                else if userSelectedRange || i > 3 * firstNegative {
+                    if sum > maxValue {
                         maxValue = sum
                         maxPosition = i
                         maxValueLeft = lastSum
                         maxValueRight = -Double.infinity
                     }
-                    else if (i == maxPosition + 1) {
+                    else if i == maxPosition + 1 {
                         maxValueRight = sum
                     }
                 }
@@ -169,7 +179,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             
             var xMax = Double.nan
             
-            if (maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0) {
+            if maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0 {
                 let dy = 0.5 * (maxValueRight - maxValueLeft)
                 let d2y = 2*maxValue - maxValueLeft - maxValueRight
                 let m = dy / d2y
@@ -180,21 +190,31 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             periodOut.append(xMax)
         }
         
-        if timeOutput != nil {
-            if timeOutput!.clear {
-                timeOutput!.buffer!.replaceValues(timeOut)
-            }
-            else {
-                timeOutput!.buffer!.appendFromArray(timeOut)
+        if let timeOutput = timeOutput {
+            switch timeOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(timeOut)
+                }
+                else {
+                    buffer.appendFromArray(timeOut)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
-        if periodOutput != nil {
-            if periodOutput!.clear {
-                periodOutput!.buffer!.replaceValues(periodOut)
-            }
-            else {
-                periodOutput!.buffer!.appendFromArray(periodOut)
+        if let periodOutput = periodOutput {
+            switch periodOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(periodOut)
+                }
+                else {
+                    buffer.appendFromArray(periodOut)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

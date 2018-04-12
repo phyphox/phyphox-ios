@@ -9,8 +9,8 @@
 import Foundation
 
 enum ExperimentAnalysisDataIODescriptor {
-    case value(value: Double, usedAs: String?)
-    case buffer(name: String, usedAs: String?)
+    case value(value: Double, usedAs: String)
+    case buffer(name: String, usedAs: String, clear: Bool)
 }
 
 final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
@@ -24,11 +24,13 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
     func endElement(with text: String, attributes: [String : String]) throws {
         guard !text.isEmpty else { throw ParseError.missingText }
 
-        let type: String = attribute("type", from: attributes, defaultValue: "buffer")
-        let usedAs: String? = attribute("as", from: attributes)
+        let type = attribute("type", from: attributes, defaultValue: "buffer")
+        let usedAs = attribute("as", from: attributes, defaultValue: "")
 
         if type == "buffer" {
-            results.append(.buffer(name: text, usedAs: usedAs))
+            let clear = attribute("clear", from: attributes, defaultValue: false)
+
+            results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
         else if type == "value" {
             guard let value = Double(text) else {

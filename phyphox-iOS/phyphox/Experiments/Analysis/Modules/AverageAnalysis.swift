@@ -12,9 +12,9 @@ final class AverageAnalysis: ExperimentAnalysisModule {
     private var avgOutput: ExperimentAnalysisDataIO?
     private var stdOutput: ExperimentAnalysisDataIO?
     
-    private var input: ExperimentAnalysisDataIO!
+    private let input: DataBuffer
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         var avg: ExperimentAnalysisDataIO? = nil
         var std: ExperimentAnalysisDataIO? = nil
         for output in outputs {
@@ -27,11 +27,16 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         }
         avgOutput = avg
         stdOutput = std
-        
-        if inputs.count == 0 || inputs[0].buffer == nil {
+
+        guard let firstInput = inputs.first else {
             throw SerializationError.genericError(message: "Average needs a buffer as input.")
-        } else {
-            input = inputs[0]
+        }
+
+        switch firstInput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            input = buffer
+        case .value(value: _, usedAs: _):
+            throw SerializationError.genericError(message: "Average needs a buffer as input.")
         }
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
@@ -42,7 +47,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         var sum = 0.0
         var count = 0
         
-        let x = input.buffer!.toArray()
+        let x = input.toArray()
         
         for v in x {
             if v.isFinite {
@@ -56,16 +61,21 @@ final class AverageAnalysis: ExperimentAnalysisModule {
 
         let avg = sum/Double(count)
         
-        if avgOutput != nil {
-            if avgOutput!.clear {
-                avgOutput!.buffer!.replaceValues([avg])
-            }
-            else {
-                avgOutput!.buffer!.appendFromArray([avg])
+        if let avgOutput = avgOutput {
+            switch avgOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues([avg])
+                }
+                else {
+                    buffer.appendFromArray([avg])
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
-        if stdOutput != nil {
+        if let stdOutput = stdOutput {
             let std: Double
             if (count < 2) {
                 std = Double.nan
@@ -80,13 +90,18 @@ final class AverageAnalysis: ExperimentAnalysisModule {
                 }
                 std = sqrt(sum/(Double(count-1)))
             }
-            if stdOutput!.clear {
-                stdOutput!.buffer!.replaceValues([std])
-            }
-            else {
-                stdOutput!.buffer!.appendFromArray([std])
+
+            switch stdOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues([std])
+                }
+                else {
+                    buffer.appendFromArray([std])
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
-        
     }
 }

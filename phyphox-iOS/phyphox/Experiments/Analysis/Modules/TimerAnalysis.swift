@@ -12,11 +12,16 @@ final class TimerAnalysis: ExperimentAnalysisModule {
     
     override func update() {
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues([timestamp])
-            }
-            else {
-                output.buffer!.append(timestamp)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues([timestamp])
+                }
+                else {
+                    buffer.append(timestamp)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

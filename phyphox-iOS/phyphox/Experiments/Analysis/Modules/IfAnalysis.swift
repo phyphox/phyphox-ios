@@ -19,11 +19,11 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private var inTrue: ExperimentAnalysisDataIO? = nil
     private var inFalse: ExperimentAnalysisDataIO? = nil
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        less = boolFromXML(additionalAttributes, key: "less", defaultValue: false)
-        equal = boolFromXML(additionalAttributes, key: "equal", defaultValue: false)
-        greater = boolFromXML(additionalAttributes, key: "greater", defaultValue: false)
-        
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        less = attribute("less", from: additionalAttributes, defaultValue: false)
+        equal = attribute("equal", from: additionalAttributes, defaultValue: false)
+        greater = attribute("greater", from: additionalAttributes, defaultValue: false)
+
         for input in inputs {
             if input.asString == "a" {
                 in1 = input
@@ -73,6 +73,8 @@ final class IfAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
+        guard let firstOutput = outputs.first else { return }
+
         let v1 = in1!.getSingleValue()
         let v2 = in2!.getSingleValue()
 
@@ -88,25 +90,27 @@ final class IfAnalysis: ExperimentAnalysisModule {
             out = inFalse
         }
         
-        if out == nil {
-            return
+        guard let output = out else { return }
+
+        let outputValues: [Double]
+
+        switch output {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            outputValues = buffer.toArray()
+        case .value(value: let value, usedAs: _):
+            outputValues = [value]
         }
-        
-        if outputs[0].clear {
-            if (out!.value != nil) {
-                outputs[0].buffer!.replaceValues([out!.value!])
-            } else if (out!.buffer != nil) {
-                outputs[0].buffer!.replaceValues(out!.buffer!.toArray())
-            } else {
-                outputs[0].buffer!.clear()
+
+        switch firstOutput {
+        case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+            if clear {
+                buffer.replaceValues(outputValues)
             }
-        }
-        else {
-            if (out!.value != nil) {
-                outputs[0].buffer!.append(out!.value!)
-            } else if (out!.buffer != nil) {
-                outputs[0].buffer!.appendFromArray(out!.buffer!.toArray())
+            else {
+                buffer.appendFromArray(outputValues)
             }
+        case .value(value: _, usedAs: _):
+            break
         }
     }
 }

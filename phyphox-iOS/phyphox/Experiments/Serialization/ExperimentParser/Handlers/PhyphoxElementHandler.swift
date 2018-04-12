@@ -102,12 +102,20 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
 
+        let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
+            let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
+
+            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil)
+        }
+
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
         let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) }
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) }
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) }
+
+        
     }
 
     private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> [String: DataBuffer] {
@@ -142,7 +150,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private func getInputBufferNames(from analysis: AnalysisDescriptor) -> Set<String> {
         let inputBufferNames = analysis.modules.flatMap({ $0.descriptor.inputs }).compactMap({ descriptor -> String? in
             switch descriptor {
-            case .buffer(name: let name, usedAs: _):
+            case .buffer(name: let name, usedAs: _, clear: _):
                 return name
             case .value(value: _, usedAs: _):
                 return nil

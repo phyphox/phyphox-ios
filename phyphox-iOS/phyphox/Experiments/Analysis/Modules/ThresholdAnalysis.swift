@@ -15,18 +15,28 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
     private var yIn: DataBuffer!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        falling = boolFromXML(additionalAttributes, key: "falling", defaultValue: false)
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        falling = attribute("falling", from: additionalAttributes, defaultValue: false)
 
         for input in inputs {
             if input.asString == "threshold" {
                 thresholdIn = input
             }
             else if input.asString == "y" {
-                yIn = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    yIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else if input.asString == "x" {
-                xIn = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    xIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else {
                 print("Error: Invalid analysis input: \(String(describing: input.asString))")
@@ -62,10 +72,15 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        guard x != nil else {
+        guard let xValue = x else {
             for output in outputs {
-                if output.clear {
-                    output.buffer!.replaceValues([])
+                switch output {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.clear()
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
             
@@ -73,11 +88,16 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues([x!])
-            }
-            else {
-                output.buffer!.append(x!)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues([xValue])
+                }
+                else {
+                    buffer.append(xValue)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

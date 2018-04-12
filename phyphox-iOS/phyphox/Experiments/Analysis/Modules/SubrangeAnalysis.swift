@@ -16,7 +16,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
     private var length: ExperimentAnalysisDataIO? = nil
     private var arrayIns: [ExperimentAnalysisDataIO] = []
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         
         for input in inputs {
             if input.asString == "from" {
@@ -29,7 +29,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
                 length = input
             }
             else {
-                if (input.buffer == nil) {
+                if !input.isBuffer {
                     throw SerializationError.genericError(message: "Error: Regular inputs of the subrange module besides from, to or length must be buffers.")
                 }
                 arrayIns.append(input)
@@ -59,36 +59,55 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             end = start + Int(v)
         }
         
-        if (start < 0) {
+        if start < 0 {
             start = 0
         }
         
-        if (end < 0) {
+        if end < 0 {
             for arrayIn in arrayIns {
-                if end < arrayIn.buffer!.memoryCount {
-                    end = arrayIn.buffer!.memoryCount
+                switch arrayIn {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    end = max(end, buffer.memoryCount)
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
         }
         
         for (i, arrayIn) in arrayIns.enumerated() {
-            if (outputs.count > i) && outputs[i].buffer != nil {
-                let thisEnd = min(end, arrayIn.buffer!.count)
-                if (thisEnd < start) {
-                    if outputs[i].clear {
-                        outputs[i].buffer!.clear()
+            let inBuffer: DataBuffer
+
+            switch arrayIn {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                inBuffer = buffer
+            case .value(value: _, usedAs: _):
+                continue
+            }
+
+            guard i < outputs.count else { break }
+
+            let output = outputs[i]
+
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                let thisEnd = min(end, inBuffer.count)
+                if thisEnd < start {
+                    if clear {
+                        buffer.clear()
                     }
                     continue
                 }
-                let result = Array(arrayIn.buffer!.toArray()[start..<thisEnd])
-                if outputs[i].clear {
-                    outputs[i].buffer!.replaceValues(result)
+
+                let result = Array(inBuffer.toArray()[start..<thisEnd])
+                if clear {
+                    buffer.replaceValues(result)
                 }
                 else {
-                    outputs[i].buffer!.appendFromArray(result)
+                    buffer.appendFromArray(result)
                 }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
-        
     }
 }

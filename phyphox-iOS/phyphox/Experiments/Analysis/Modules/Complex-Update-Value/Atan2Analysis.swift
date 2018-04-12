@@ -12,8 +12,8 @@ import Accelerate
 final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
     private let deg: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        deg = boolFromXML(additionalAttributes, key: "deg", defaultValue: false)
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        deg = attribute("deg", from: additionalAttributes, defaultValue: false)
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

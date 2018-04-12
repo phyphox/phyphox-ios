@@ -20,16 +20,25 @@ final class MinAnalysis: ExperimentAnalysisModule {
     
     private var multiple: Bool
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
-        
-        multiple = boolFromXML(additionalAttributes, key: "multiple", defaultValue: false)
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+        multiple = attribute("multiple", from: additionalAttributes, defaultValue: false)
         
         for input in inputs {
             if input.asString == "x" {
-                xIn = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    xIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else if input.asString == "y" {
-                yIn = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    yIn = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else if input.asString == "threshold" {
                 thresholdIn = input
@@ -73,15 +82,25 @@ final class MinAnalysis: ExperimentAnalysisModule {
         let inArray = yIn.toArray()
         
         if inArray.count == 0 {
-            if minOut != nil {
-                if minOut!.clear {
-                    minOut!.buffer!.replaceValues([])
+            if let minOut = minOut {
+                switch minOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.clear()
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
-            
-            if positionOut != nil {
-                if positionOut!.clear {
-                    positionOut!.buffer!.replaceValues([])
+
+            if let positionOut = positionOut {
+                switch positionOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.clear()
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
             
@@ -93,15 +112,19 @@ final class MinAnalysis: ExperimentAnalysisModule {
             
             vDSP_minvD(inArray, 1, &min, vDSP_Length(inArray.count))
             
-            if minOut != nil {
-                if minOut!.clear {
-                    minOut!.buffer!.replaceValues([min])
-                }
-                else {
-                    minOut!.buffer!.append(min)
+            if let minOut = minOut {
+                switch minOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.replaceValues([min])
+                    }
+                    else {
+                        buffer.append(min)
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
-            
             #if DEBUG_ANALYSIS
                 debug_noteOutputs(min)
             #endif
@@ -128,21 +151,31 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 }
             }
             
-            if minOut != nil {
-                if minOut!.clear {
-                    minOut!.buffer!.replaceValues(min)
-                }
-                else {
-                    minOut!.buffer!.appendFromArray(min)
+            if let minOut = minOut {
+                switch minOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.replaceValues(min)
+                    }
+                    else {
+                        buffer.appendFromArray(min)
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
-            
-            if positionOut != nil {
-                if positionOut!.clear {
-                    positionOut!.buffer!.replaceValues(x)
-                }
-                else {
-                    positionOut!.buffer!.appendFromArray(x)
+
+            if let positionOut = positionOut {
+                switch positionOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.replaceValues(x)
+                    }
+                    else {
+                        buffer.appendFromArray(x)
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
         }
@@ -166,24 +199,34 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 x = Double(index)
             }
             
-            if minOut != nil {
-                if minOut!.clear {
-                    minOut!.buffer!.replaceValues([min])
-                }
-                else {
-                    minOut!.buffer!.append(min)
-                }
-            }
-            
-            if positionOut != nil {
-                if positionOut!.clear {
-                    positionOut!.buffer!.replaceValues([x])
-                }
-                else {
-                    positionOut!.buffer!.append(x)
+            if let minOut = minOut {
+                switch minOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.replaceValues([min])
+                    }
+                    else {
+                        buffer.append(min)
+                    }
+                case .value(value: _, usedAs: _):
+                    break
                 }
             }
             
+            if let positionOut = positionOut {
+                switch positionOut {
+                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                    if clear {
+                        buffer.replaceValues([x])
+                    }
+                    else {
+                        buffer.append(x)
+                    }
+                case .value(value: _, usedAs: _):
+                    break
+                }
+            }
+
             #if DEBUG_ANALYSIS
                 debug_noteOutputs(["min" : min, "pos" : x])
             #endif

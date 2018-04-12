@@ -77,13 +77,23 @@ final class FFTAnalysis: ExperimentAnalysisModule {
     private var realOutput: ExperimentAnalysisDataIO?
     private var imagOutput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "im" {
-                imagInput = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    imagInput = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
             else {
-                realInput = input.buffer
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    realInput = buffer
+                case .value(value: _, usedAs: _):
+                    break
+                }
             }
         }
         
@@ -156,21 +166,31 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        if realOutput != nil {
-            if realOutput!.clear {
-                realOutput!.buffer!.replaceValues(realOutputArray)
-            }
-            else {
-                realOutput!.buffer!.appendFromArray(realOutputArray)
+        if let realOutput = realOutput {
+            switch realOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(realOutputArray)
+                }
+                else {
+                    buffer.appendFromArray(realOutputArray)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
         
-        if imagOutput != nil {
-            if imagOutput!.clear {
-                imagOutput!.buffer!.replaceValues(imagOutputArray)
-            }
-            else {
-                imagOutput!.buffer!.appendFromArray(imagOutputArray)
+        if let imagOutput = imagOutput {
+            switch imagOutput {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(imagOutputArray)
+                }
+                else {
+                    buffer.appendFromArray(imagOutputArray)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

@@ -10,16 +10,31 @@ import Foundation
 import Accelerate
 
 final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
-    
     override func update() {
         var a: [Double]
         var b: [Double]
         
-        let firstBuffer = inputs.first!.buffer!
-        let secondBuffer = inputs[1].buffer!
+        let firstBuffer: DataBuffer
+        let secondBuffer: DataBuffer
+
+        guard inputs.count == 2 else { return }
+
+        switch inputs[0] {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            firstBuffer = buffer
+        case .value(value: _, usedAs: _):
+            return
+        }
+
+        switch inputs[1] {
+        case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            secondBuffer = buffer
+        case .value(value: _, usedAs: _):
+            return
+        }
         
         //Put the larger input in a and the smaller one in b
-        if (firstBuffer.count > secondBuffer.count) {
+        if firstBuffer.count > secondBuffer.count {
             a = firstBuffer.toArray()
             b = secondBuffer.toArray()
         }
@@ -48,11 +63,16 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
         #endif
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

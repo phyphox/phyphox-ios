@@ -309,12 +309,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for (i, output) in viewDescriptor.outputs.enumerated() {
             if viewDescriptor.inputs.count > i {
                 let input = viewDescriptor.inputs[i]
-                if input.value != nil {
-                    output.replaceValues([input.value!])
-                } else if input.buffer != nil {
-                    output.replaceValues(input.buffer!.toArray())
-                } else {
-                    output.clear()
+                switch input {
+                case .value(value: let value, usedAs: _):
+                    output.replaceValues([value])
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    output.replaceValues(buffer.toArray())
                 }
             }
         }

@@ -36,10 +36,10 @@ final class ExperimentAnalysis {
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
         self.modules = modules
         let inputBufferTuples = modules.flatMap({ $0.inputs.compactMap { input -> (String, DataBuffer)? in
-            if let buffer = input.buffer {
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
                 return (buffer.name, buffer)
-            }
-            else {
+            case .value(value: _, usedAs: _):
                 return nil
             }
             }
@@ -48,10 +48,10 @@ final class ExperimentAnalysis {
         inputBuffers = Dictionary(inputBufferTuples, uniquingKeysWith: { first, _ in first })
 
         let outputBufferTuples = modules.flatMap({ $0.outputs.compactMap { output -> (String, DataBuffer)? in
-            if let buffer = output.buffer {
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
                 return (buffer.name, buffer)
-            }
-            else {
+            case .value(value: _, usedAs: _):
                 return nil
             }
             }

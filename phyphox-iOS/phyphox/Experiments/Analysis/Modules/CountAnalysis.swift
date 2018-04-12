@@ -9,21 +9,30 @@
 import Foundation
 
 final class CountAnalysis: ExperimentAnalysisModule {
-    
     override func update() {
         var result: [Double] = []
         
         for input in inputs {
-            let val = input.buffer!.memoryCount
-            result.append(Double(val))
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                let val = buffer.memoryCount
+                result.append(Double(val))
+            case .value(value: _, usedAs: _):
+                result.append(1.0)
+            }
         }
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
+            case .value(value: _, usedAs: _):
+                break
             }
         }
     }

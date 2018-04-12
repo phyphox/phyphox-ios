@@ -12,7 +12,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
     private var lengthInput: ExperimentAnalysisDataIO?
     private var valueInput: ExperimentAnalysisDataIO?
     
-    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : AnyObject]?) throws {
+    override init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
         for input in inputs {
             if input.asString == "value" {
                 valueInput = input
@@ -41,7 +41,14 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         }
         
         if length == 0 {
-            length = outputs.first!.buffer!.size
+            outputs.first.map {
+                switch $0 {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    length = buffer.size
+                case .value(value: _, usedAs: _):
+                    break
+                }
+            }
         }
         
         #if DEBUG_ANALYSIS
@@ -55,11 +62,16 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         #endif
         
         for output in outputs {
-            if output.clear {
-                output.buffer!.replaceValues(result)
-            }
-            else {
-                output.buffer!.appendFromArray(result)
+            switch output {
+            case .value(value: _, usedAs: _):
+                break
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result)
+                }
+                else {
+                    buffer.appendFromArray(result)
+                }
             }
         }
     }
