@@ -96,9 +96,15 @@ final class ExperimentManager {
 
             guard url.pathExtension == experimentFileExtension else { continue }
 
-            let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromURL(url)
 
-            registerExperiment(experiment, custom: false)
+                registerExperiment(experiment, custom: false)
+            }
+            catch {
+                print("Error \(error.localizedDescription)")
+                // TODO report error
+            }
         }
     }
     

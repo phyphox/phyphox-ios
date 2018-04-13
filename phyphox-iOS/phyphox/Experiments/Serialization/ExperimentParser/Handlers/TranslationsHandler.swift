@@ -13,7 +13,7 @@ private final class StringTranslationHandler: ResultElementHandler, ChildlessHan
 
     typealias Result = (String, String)
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
@@ -45,7 +45,7 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
@@ -64,7 +64,7 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
 }
 
 final class TranslationsHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
-    typealias Result = ExperimentTranslationCollection
+    typealias Result = [String: ExperimentTranslation]
 
     var results = [Result]()
 
@@ -79,6 +79,6 @@ final class TranslationsHandler: ResultElementHandler, LookupElementHandler, Att
     func endElement(with text: String, attributes: [String: String]) throws {
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
-        results.append(ExperimentTranslationCollection(translations: translations, defaultLanguageCode: "en"))
+        results.append(translations)
     }
 }

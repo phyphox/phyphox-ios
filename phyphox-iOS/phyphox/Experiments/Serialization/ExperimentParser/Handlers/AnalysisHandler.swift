@@ -19,7 +19,7 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
 
     typealias Result = ExperimentAnalysisDataIODescriptor
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -37,7 +37,7 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
             guard !text.isEmpty else { throw ParseError.missingText }
 
             guard let value = Double(text) else {
-                throw ParseError.unreadableData
+                throw ParseError.unexpectedValue("value")
             }
 
             results.append(.value(value: value, usedAs: usedAs))
@@ -46,7 +46,7 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
             results.append(.empty(usedAs: usedAs))
         }
         else {
-            throw ParseError.unexpectedAttribute
+            throw ParseError.unexpectedValue("type")
         }
     }
 }
@@ -72,7 +72,7 @@ final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["input": inputsHandler, "output": outputsHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
     
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -94,7 +94,7 @@ final class AnalysisHandler: ResultElementHandler {
 
     private var handlers = [(String, AnalysisModuleHandler)]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {

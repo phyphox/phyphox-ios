@@ -12,13 +12,13 @@ protocol ViewElementDescriptor {
 }
 
 protocol ViewComponentHandler: ElementHandler {
-    func result() throws -> ViewElementDescriptor
+    func getResult() throws -> ViewElementDescriptor
 }
 
 struct ViewCollectionDescriptor {
     let label: String
     
-    let views: [ViewElementDescriptor]
+    let views: [(tagName: String, descriptor: ViewElementDescriptor)]
 }
 
 private final class ViewHandler: ResultElementHandler {
@@ -26,9 +26,9 @@ private final class ViewHandler: ResultElementHandler {
 
     var results = [ViewCollectionDescriptor]()
 
-    private var handlers = [ViewComponentHandler]()
+    private var handlers = [(tagName: String, handler: ViewComponentHandler)]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -53,10 +53,10 @@ private final class ViewHandler: ResultElementHandler {
             handler = GraphViewHandler()
         }
         else {
-            throw ParseError.unexpectedElement
+            throw ParseError.unexpectedChildElement(tagName)
         }
 
-        handlers.append(handler)
+        handlers.append((tagName, handler))
 
         return handler
     }
@@ -66,10 +66,10 @@ private final class ViewHandler: ResultElementHandler {
             throw ParseError.missingAttribute("label")
         }
 
-        let views = try handlers.map { try $0.result() }
+        let views = try handlers.map { ($0.tagName, try $0.handler.getResult()) }
 
         guard !views.isEmpty else {
-            throw ParseError.missingElement
+            throw ParseError.missingChildElement("view-element")
         }
 
         results.append(ViewCollectionDescriptor(label: label, views: views))

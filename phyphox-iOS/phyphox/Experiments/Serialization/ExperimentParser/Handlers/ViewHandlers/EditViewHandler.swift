@@ -34,7 +34,7 @@ final class EditViewHandler: ResultElementHandler, LookupElementHandler, ViewCom
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -55,7 +55,7 @@ final class EditViewHandler: ResultElementHandler, LookupElementHandler, ViewCom
         results.append(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName))
     }
 
-    func result() throws -> ViewElementDescriptor {
+    func getResult() throws -> ViewElementDescriptor {
         return try expectSingleResult()
     }
 }

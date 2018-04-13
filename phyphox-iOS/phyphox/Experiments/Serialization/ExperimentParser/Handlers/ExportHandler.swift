@@ -18,7 +18,7 @@ private final class ExportSetDataHandler: ResultElementHandler, ChildlessHandler
 
     var results = [Result]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -53,7 +53,7 @@ private final class ExportSetHandler: ResultElementHandler, LookupElementHandler
         handlers = ["data": dataHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {

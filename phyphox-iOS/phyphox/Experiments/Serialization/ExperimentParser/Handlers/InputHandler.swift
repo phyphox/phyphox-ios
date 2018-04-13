@@ -22,7 +22,7 @@ private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler 
 
     var results = [Result]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
@@ -54,7 +54,7 @@ private final class LocationHandler: ResultElementHandler, LookupElementHandler 
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
@@ -83,11 +83,11 @@ private final class SensorHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard let sensor: SensorType = attribute("type", from: attributes) else { throw ParseError.unreadableData }
+        guard let sensor: SensorType = attribute("type", from: attributes) else { throw ParseError.unexpectedValue("type") }
 
         let frequency = attribute("rate", from: attributes, defaultValue: 0.0)
         let average = attribute("average", from: attributes, defaultValue: false)
@@ -116,7 +116,7 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {

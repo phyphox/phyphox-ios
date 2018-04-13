@@ -15,7 +15,7 @@ private final class DataContainerHandler: ResultElementHandler, ChildlessHandler
 
     var results = [Result]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {

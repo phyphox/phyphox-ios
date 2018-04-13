@@ -17,7 +17,7 @@ final class InfoViewHandler: ResultElementHandler, ChildlessHandler, ViewCompone
 
     var results = [Result]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -28,7 +28,7 @@ final class InfoViewHandler: ResultElementHandler, ChildlessHandler, ViewCompone
         results.append(InfoViewElementDescriptor(label: label))
     }
 
-    func result() throws -> ViewElementDescriptor {
+    func getResult() throws -> ViewElementDescriptor {
         return try expectSingleResult()
     }
 }

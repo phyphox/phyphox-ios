@@ -31,7 +31,7 @@ private final class GraphInputHandler: ResultElementHandler, ChildlessHandler {
 
     var results = [GraphInputDescriptor]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -78,7 +78,7 @@ struct GraphViewElementDescriptor: ViewElementDescriptor {
     let history: UInt
 
     let lineWidth: CGFloat
-    let color: String?
+    let color: UIColor
 }
 
 final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
@@ -94,7 +94,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         handlers = ["input": inputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -111,7 +111,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         }
 
         guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
-            throw ParseError.missingElement
+            throw ParseError.missingElement("data-container")
         }
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
@@ -121,7 +121,15 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         let partialUpdate = attribute("partialUpdate", from: attributes, defaultValue: false)
         let history: UInt = attribute("history", from: attributes, defaultValue: 1)
         let lineWidth: CGFloat = attribute("lineWidth", from: attributes, defaultValue: 1.0)
-        let color: String? = attribute("color", from: attributes)
+        let colorString: String? = attribute("color", from: attributes)
+
+        let color = try colorString.map({ string -> UIColor in
+            guard let color = UIColor(hexString: string) else {
+                throw ParseError.unexpectedValue("color")
+            }
+
+            return color
+        }) ?? kHighlightColor
 
         let logX = attribute("logX", from: attributes, defaultValue: false)
         let logY = attribute("logY", from: attributes, defaultValue: false)
@@ -133,7 +141,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
             let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinY", from: attributes, defaultValue: "auto")),
             let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
             else {
-                throw ParseError.unreadableData
+                throw ParseError.unexpectedValue("scale")
         }
 
         let minX: CGFloat = attribute("minX", from: attributes, defaultValue: 0)
@@ -144,7 +152,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
     }
 
-    func result() throws -> ViewElementDescriptor {
+    func getResult() throws -> ViewElementDescriptor {
         return try expectSingleResult()
     }
 }

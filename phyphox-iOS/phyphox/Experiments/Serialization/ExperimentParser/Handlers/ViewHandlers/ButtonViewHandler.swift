@@ -25,7 +25,7 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
 
     typealias Result = ButtonInputDescriptor
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -44,7 +44,7 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
             }
 
             guard let value = Double(text) else {
-                throw ParseError.unreadableData
+                throw ParseError.unexpectedValue("value")
             }
 
             results.append(.value(value))
@@ -53,7 +53,7 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
             results.append(.clear)
         }
         else {
-            throw ParseError.unexpectedAttribute
+            throw ParseError.unexpectedValue("type")
         }
     }
 }
@@ -72,7 +72,7 @@ final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewC
         handlers = ["output": outputHandler, "input": inputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -81,7 +81,7 @@ final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewC
         }
 
         guard inputHandler.results.count == outputHandler.results.count else {
-            throw ParseError.missingElement
+            throw ParseError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
         }
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))
@@ -89,7 +89,7 @@ final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewC
         results.append(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow))
     }
 
-    func result() throws -> ViewElementDescriptor {
+    func getResult() throws -> ViewElementDescriptor {
         return try expectSingleResult()
     }
 }

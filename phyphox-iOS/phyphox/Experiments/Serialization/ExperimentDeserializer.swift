@@ -36,7 +36,7 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     return nil
 }
 
-let pars = XMLFileParser(rootHandler: ExperimentFileHandler())
+let pars = XMLElementParser(rootHandler: ExperimentFileHandler())
 
 final class ExperimentDeserializer {
     private let parser: XMLParser
@@ -50,6 +50,7 @@ final class ExperimentDeserializer {
     }
 
     func deserialize() throws -> Experiment {
+        // TODO set local
         let newExperiment = try pars.parse(data: data)
 
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary

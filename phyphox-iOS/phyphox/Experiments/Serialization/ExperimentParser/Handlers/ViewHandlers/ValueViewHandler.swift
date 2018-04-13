@@ -13,7 +13,7 @@ final class ValueViewMapHandler: ResultElementHandler, ChildlessHandler {
 
     var results = [Result]()
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -54,7 +54,7 @@ final class ValueViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         handlers = ["input": inputHandler, "map": mapHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
@@ -74,7 +74,7 @@ final class ValueViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
     }
 
-    func result() throws -> ViewElementDescriptor {
+    func getResult() throws -> ViewElementDescriptor {
         return try expectSingleResult()
     }
 }

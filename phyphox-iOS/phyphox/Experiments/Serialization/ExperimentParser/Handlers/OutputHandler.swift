@@ -28,11 +28,11 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["input": inputHandler]
     }
 
-    func beginElement(attributes: [String : String]) throws {
+    func beginElement(attributes: [String: String]) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
-        guard tagName == "input" else { throw ParseError.unexpectedElement }
+        guard tagName == "input" else { throw ParseError.unexpectedChildElement(tagName) }
 
         return inputHandler
     }

@@ -1,5 +1,5 @@
 //
-//  XMLFileParser.swift
+//  XMLElementParser.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -30,7 +30,23 @@ extension RootElementHandler {
     }
 }
 
-final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
+private enum XMLElementParserError: Error {
+    case parsingError(backtrace: String, encounteredError: Error)
+    case missingRootElement
+}
+
+extension XMLElementParserError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .parsingError(backtrace: let backtrace, encounteredError: let error):
+            return "Parser encountered error parsing element \"\(backtrace)\": \(error.localizedDescription)"
+        case .missingRootElement:
+            return "The root element handler returned no result"
+        }
+    }
+}
+
+final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
     private var rootHandler: RootHandler
 
     private var handlerStack = [(String, ElementHandler)]()
@@ -44,28 +60,33 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         super.init()
     }
 
+    private var currentElementBacktrace: String {
+        return handlerStack.reduce("") { result, handler -> String in
+            if result.isEmpty {
+                return handler.0
+            }
+            else {
+                return result + " > " + handler.0
+            }
+        }
+    }
+
     func parse(data: Data) throws -> Result {
         handlerStack = [("", rootHandler)]
         textStack = [""]
         attributesStack = [[:]]
+        parsingError = nil
 
         let parser = XMLParser(data: data)
         parser.delegate = self
-
-        parsingError = nil
-
         parser.parse()
 
-        if let parseError = parser.parserError {
-            throw parseError
-        }
-
-        if let parseError = parsingError {
-            throw parseError
+        if let parseError = parsingError ?? parser.parserError {
+            throw XMLElementParserError.parsingError(backtrace: currentElementBacktrace, encounteredError: parseError)
         }
 
         guard let result = rootHandler.result else {
-            throw ParseError.missingElement
+            throw XMLElementParserError.missingRootElement
         }
 
         return result
@@ -84,7 +105,6 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
 
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes: [String: String]) {
         guard let (_, currentHandler) = handlerStack.last else {
-            parsingError = ParseError.unbalancedTags
             parser.abortParsing()
             return
         }
@@ -107,7 +127,6 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
         guard var currentText = textStack.popLast() else {
-            parsingError = ParseError.unbalancedTags
             parser.abortParsing()
             return
         }
@@ -127,7 +146,6 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
             let attributes = attributesStack.popLast(),
             elementName == currentTagName
             else {
-                parsingError = ParseError.unbalancedTags
                 parser.abortParsing()
                 return
         }
@@ -147,7 +165,6 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
         guard let currentText = textStack.popLast(),
             let attributes = attributesStack.popLast()
             else {
-                parsingError = ParseError.unbalancedTags
                 parser.abortParsing()
                 return
         }
