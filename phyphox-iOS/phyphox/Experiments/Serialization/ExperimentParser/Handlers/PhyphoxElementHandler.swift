@@ -65,7 +65,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
-    private let descriptionHandler = TextElementHandler()
+    private let descriptionHandler = MultilineTextHandler()
     private let iconHandler = IconHandler()
     private let linkHandler = LinkHandler()
     private let dataContainersHandler = DataContainersHandler()
@@ -92,11 +92,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
         let description = try descriptionHandler.expectSingleResult()
+
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
         let translations = try translationsHandler.expectOptionalResult()
 
-        let links = Dictionary(linkHandler.results.filter({ !$0.highlighted }).map({ url, label, _ in (label, url) }), uniquingKeysWith: { first, _ in first })
-        let highlightedLinks = Dictionary(linkHandler.results.filter({ $0.highlighted }).map({ url, label, _ in (label, url) }), uniquingKeysWith: { first, _ in first })
+        let links = linkHandler.results
 
         let dataContainersDescriptor = try dataContainersHandler.expectSingleResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult()
@@ -129,7 +129,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, description: description, links: links, highlightedLinks: highlightedLinks, category: category, icon: icon, local: true, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, description: description, links: links, category: category, icon: icon, local: true, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -161,15 +161,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ParseError.missingElement
             }
 
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
+            }
+
             return EditViewDescriptor(label: descriptor.label, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
         }
         else if let descriptor = descriptor as? ButtonViewElementDescriptor {
-            let dataFlow = try descriptor.dataFlow.map { flow -> (ButtonViewInput, DataBuffer) in
+            let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataIO, DataBuffer) in
                 guard let outputBuffer = buffers[flow.outputBufferName] else {
                     throw ParseError.missingElement
                 }
 
-                let input: ButtonViewInput
+                let input: ExperimentAnalysisDataIO
 
                 switch flow.input {
                 case .buffer(let bufferName):
@@ -177,11 +181,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         throw ParseError.missingElement
                     }
 
-                    input = .buffer(buffer)
+                    input = .buffer(buffer: buffer, usedAs: "", clear: true)
                 case .value(let value):
-                    input = .value(value)
+                    input = .value(value: value, usedAs: "")
                 case .clear:
-                    input = .clear
+                    input = .buffer(buffer: emptyBuffer, usedAs: "", clear: true)
                 }
 
                 return (input, outputBuffer)
@@ -216,9 +220,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
     }
 
-    private func makeOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentOutput {
+    private func makeOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentOutput? {
         guard let descriptor = descriptor else {
-            return ExperimentOutput(audioOutput: nil)
+            return nil
         }
 
         guard let buffer = buffers[descriptor.inputBufferName] else {
@@ -286,5 +290,248 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         })
 
         return Set(inputBufferNames)
+    }
+}
+
+infix operator =-=: ComparisonPrecedence
+
+protocol DebugComparison {
+    static func =-= (lhs: Self, rhs: Self) -> Bool
+}
+
+extension Dictionary: DebugComparison where Value: DebugComparison {
+    static func =-= (lhs: Dictionary<Key, Value>, rhs: Dictionary<Key, Value>) -> Bool {
+        for (key, value) in lhs {
+            guard let other = rhs[key], value =-= other else { return false }
+        }
+
+        return true
+    }
+}
+
+extension Array: DebugComparison where Element: DebugComparison {
+    static func =-= (lhs: Array, rhs: Array) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+        return !zip(lhs, rhs).contains(where: { !($0 =-= $1) })
+    }
+}
+
+extension Optional: DebugComparison where Wrapped: DebugComparison {
+    static func =-= (lhs: Optional<Wrapped>, rhs: Optional<Wrapped>) -> Bool {
+        if let left = lhs {
+            if let right = rhs {
+                return left =-= right
+            }
+            else {
+                return false
+            }
+        }
+        else {
+            return rhs == nil
+        }
+    }
+}
+
+extension ExperimentIcon: DebugComparison {
+    static func =-=(lhs: ExperimentIcon, rhs: ExperimentIcon) -> Bool {
+        return lhs.string == rhs.string &&
+            lhs.image.map({ UIImagePNGRepresentation($0) }) == rhs.image.map({ UIImagePNGRepresentation($0) })
+    }
+}
+
+extension ExperimentTranslation: DebugComparison {
+    static func =-=(lhs: ExperimentTranslation, rhs: ExperimentTranslation) -> Bool {
+        return lhs.locale == rhs.locale &&
+        lhs.titleString == rhs.titleString &&
+        lhs.descriptionString == rhs.descriptionString &&
+        lhs.categoryString == rhs.categoryString &&
+        lhs.translatedLinks == rhs.translatedLinks &&
+        lhs.translatedStrings == rhs.translatedStrings
+    }
+}
+
+extension ExperimentTranslationCollection: DebugComparison {
+    static func =-=(lhs: ExperimentTranslationCollection, rhs: ExperimentTranslationCollection) -> Bool {
+        return lhs.translations =-= rhs.translations &&
+            lhs.selectedTranslation =-= rhs.selectedTranslation
+    }
+}
+
+extension DataBuffer.StorageType: DebugComparison {
+    static func =-=(lhs: DataBuffer.StorageType, rhs: DataBuffer.StorageType) -> Bool {
+        switch lhs {
+        case .memory(size: let l):
+            switch rhs {
+            case .memory(size: let r):
+                return l == r
+            default:
+                return false
+            }
+        case .hybrid(memorySize: let l, persistentStorageLocation: _):
+            switch rhs {
+            case .hybrid(memorySize: let r, persistentStorageLocation: _):
+                return l == r
+            default:
+                return false
+            }
+        }
+    }
+}
+
+extension DataBuffer: DebugComparison {
+    static func =-=(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
+        return lhs.storageType =-= rhs.storageType &&
+        lhs.toArray() == rhs.toArray()
+    }
+}
+
+extension ExperimentSensorInput: DebugComparison {
+    static func =-= (lhs: ExperimentSensorInput, rhs: ExperimentSensorInput) -> Bool {
+        return lhs.sensorType == rhs.sensorType &&
+            lhs.rate == rhs.rate &&
+            lhs.recordingAverages == rhs.recordingAverages &&
+            lhs.xBuffer =-= rhs.xBuffer &&
+            lhs.yBuffer =-= rhs.yBuffer &&
+            lhs.zBuffer =-= rhs.zBuffer &&
+            lhs.tBuffer =-= rhs.tBuffer &&
+            lhs.absBuffer =-= rhs.absBuffer &&
+            lhs.accuracyBuffer =-= rhs.accuracyBuffer &&
+            lhs.calibrated == rhs.calibrated
+    }
+}
+
+extension ExperimentGPSInput: DebugComparison {
+    static func =-= (lhs: ExperimentGPSInput, rhs: ExperimentGPSInput) -> Bool {
+        return lhs.latBuffer =-= rhs.latBuffer &&
+            lhs.lonBuffer =-= rhs.lonBuffer &&
+            lhs.zBuffer =-= rhs.zBuffer &&
+            lhs.vBuffer =-= rhs.vBuffer &&
+            lhs.dirBuffer =-= rhs.dirBuffer &&
+            lhs.accuracyBuffer =-= rhs.accuracyBuffer &&
+            lhs.zAccuracyBuffer =-= rhs.zAccuracyBuffer &&
+            lhs.tBuffer =-= rhs.tBuffer &&
+            lhs.statusBuffer =-= rhs.statusBuffer &&
+            lhs.satellitesBuffer =-= rhs.satellitesBuffer
+    }
+}
+
+extension ExperimentAudioInput: DebugComparison {
+    static func =-=(lhs: ExperimentAudioInput, rhs: ExperimentAudioInput) -> Bool {
+        return lhs.sampleRate == rhs.sampleRate &&
+            lhs.outBuffer =-= rhs.outBuffer &&
+            lhs.sampleRateInfoBuffer =-= rhs.sampleRateInfoBuffer
+    }
+}
+
+extension ExperimentAudioOutput: DebugComparison {
+    static func =-=(lhs: ExperimentAudioOutput, rhs: ExperimentAudioOutput) -> Bool {
+        return lhs.sampleRate == rhs.sampleRate &&
+            lhs.loop == rhs.loop &&
+            lhs.dataSource =-= rhs.dataSource
+    }
+}
+
+extension ExperimentOutput: DebugComparison {
+    static func =-=(lhs: ExperimentOutput, rhs: ExperimentOutput) -> Bool {
+        return lhs.audioOutput =-= rhs.audioOutput
+    }
+}
+
+extension ExperimentAnalysisDataIO: DebugComparison {
+    static func =-=(lhs: ExperimentAnalysisDataIO, rhs: ExperimentAnalysisDataIO) -> Bool {
+        switch lhs {
+        case .buffer(buffer: let la, usedAs: let lb, clear: let lc):
+            switch rhs {
+            case .buffer(buffer: let ra, usedAs: let rb, clear: let rc):
+                return la =-= ra &&
+                    lb == rb &&
+                    lc == rc
+            default:
+                return false
+            }
+        case .value(value: let la, usedAs: let lb):
+            switch rhs {
+            case .value(value: let ra, usedAs: let rb):
+                return la == ra &&
+                    lb == rb
+            default:
+                return false
+            }
+        }
+    }
+}
+
+extension Collection where Element: DebugComparison {
+    func contentsEqual<Other: RangeReplaceableCollection>(_ other: Other) -> Bool where Other.Element == Element  {
+        guard count == other.count else { return false }
+
+        var lookup = other
+
+        for element in self {
+            guard let index = lookup.index(where: { element =-= $0 }) else {
+                return false
+            }
+            lookup.remove(at: index)
+        }
+
+        return true
+    }
+}
+
+extension ExperimentAnalysisModule: DebugComparison {
+    static func =-=(lhs: ExperimentAnalysisModule, rhs: ExperimentAnalysisModule) -> Bool {
+        return lhs.attributes == rhs.attributes &&
+        lhs.inputs.contentsEqual(rhs.inputs) &&
+        lhs.outputs.contentsEqual(rhs.outputs)
+    }
+}
+
+extension ExperimentAnalysis: DebugComparison {
+    static func =-=(lhs: ExperimentAnalysis, rhs: ExperimentAnalysis) -> Bool {
+        return lhs.sleep == rhs.sleep &&
+        lhs.dynamicSleep =-= rhs.dynamicSleep &&
+        lhs.modules =-= rhs.modules
+    }
+}
+
+extension ExperimentLink: DebugComparison {
+    static func =-=(lhs: ExperimentLink, rhs: ExperimentLink) -> Bool {
+        return lhs.label == rhs.label &&
+            lhs.url == rhs.url &&
+            lhs.highlighted == rhs.highlighted
+    }
+}
+
+extension Experiment: DebugComparison {
+    static func =-=(lhs: Experiment, rhs: Experiment) -> Bool {
+        print(lhs.title == rhs.title)
+        print(lhs.localizedDescription == rhs.localizedDescription)
+        print(lhs.localizedLinks =-= rhs.localizedLinks)
+        print(lhs.localizedCategory == rhs.localizedCategory)
+        print(lhs.icon =-= rhs.icon)
+        print(lhs.local == rhs.local)
+        print(lhs.translation =-= rhs.translation)
+        print(lhs.buffers =-= rhs.buffers)
+        print(lhs.sensorInputs =-= rhs.sensorInputs)
+        print(lhs.gpsInputs =-= rhs.gpsInputs)
+        print(lhs.audioInputs =-= rhs.audioInputs)
+        print(lhs.output =-= rhs.output)
+        print(lhs.analysis =-= rhs.analysis)
+        
+        return lhs.title == rhs.title &&
+            lhs.localizedDescription == rhs.localizedDescription &&
+            lhs.localizedLinks =-= rhs.localizedLinks &&
+            lhs.localizedCategory == rhs.localizedCategory &&
+            lhs.icon =-= rhs.icon &&
+            lhs.local == rhs.local &&
+            lhs.translation =-= rhs.translation &&
+            lhs.buffers =-= rhs.buffers &&
+            lhs.sensorInputs =-= rhs.sensorInputs &&
+            lhs.gpsInputs =-= rhs.gpsInputs &&
+            lhs.audioInputs =-= rhs.audioInputs &&
+            lhs.output =-= rhs.output &&
+            //lhs.viewDescriptors == rhs.viewDescriptors &&
+            lhs.analysis =-= rhs.analysis //&&
+            //lhs.export == rhs.export
     }
 }

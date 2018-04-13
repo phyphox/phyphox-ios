@@ -308,12 +308,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
-            case .buffer(let buffer):
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
                 output.replaceValues(buffer.toArray())
-            case .value(let value):
+            case .value(let value, usedAs: _):
                 output.replaceValues([value])
-            case .clear:
-                output.clear()
             }
         }
     }
@@ -678,11 +676,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .alert)
-            
-            let links  = self.experiment.localizedLinks
-            for (key, value) in links {
-                al.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
-                    UIApplication.shared.openURL(value)
+
+            for link in self.experiment.localizedLinks {
+                al.addAction(UIAlertAction(title: NSLocalizedString(link.label, comment: ""), style: .default, handler: { _ in
+                    UIApplication.shared.openURL(link.url)
                 }))
             }
             
@@ -690,11 +687,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             self.navigationController!.present(al, animated: true, completion: nil)
             }))
-        
-        let links = self.experiment.localizedHighlightedLinks
-        for (key, value) in links {
-            alert.addAction(UIAlertAction(title: NSLocalizedString(key, comment: ""), style: .default, handler: { _ in
-                UIApplication.shared.openURL(value)
+
+        for link in experiment.localizedLinks where link.highlighted {
+            alert.addAction(UIAlertAction(title: NSLocalizedString(link.label, comment: ""), style: .default, handler: { _ in
+                UIApplication.shared.openURL(link.url)
             }))
         }
         

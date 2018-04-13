@@ -43,7 +43,7 @@ enum ExperimentAnalysisDataIO {
 // TODO: Remove legacy code
 extension ExperimentAnalysisDataIO {
     init(buffer: DataBuffer) {
-        self = .buffer(buffer: buffer, usedAs: "", clear: false)
+        self = .buffer(buffer: buffer, usedAs: "", clear: true)
     }
 
     init(dictionary: NSDictionary, buffers: [String: DataBuffer]) throws {

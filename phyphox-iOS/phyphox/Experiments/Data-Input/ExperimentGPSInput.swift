@@ -9,21 +9,19 @@
 import Foundation
 import CoreLocation
 
-// TODO: Shouldn't be a separate class: ExperimentSensorInput!
-
 final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
     var locationManager = CLLocationManager()
-    private(set) weak var latBuffer: DataBuffer?
-    private(set) weak var lonBuffer: DataBuffer?
-    private(set) weak var zBuffer: DataBuffer?
-    private(set) weak var vBuffer: DataBuffer?
-    private(set) weak var dirBuffer: DataBuffer?
-    private(set) weak var accuracyBuffer: DataBuffer?
-    private(set) weak var zAccuracyBuffer: DataBuffer?
-    private(set) weak var tBuffer: DataBuffer?
+    private(set) var latBuffer: DataBuffer?
+    private(set) var lonBuffer: DataBuffer?
+    private(set) var zBuffer: DataBuffer?
+    private(set) var vBuffer: DataBuffer?
+    private(set) var dirBuffer: DataBuffer?
+    private(set) var accuracyBuffer: DataBuffer?
+    private(set) var zAccuracyBuffer: DataBuffer?
+    private(set) var tBuffer: DataBuffer?
     
-    private(set) weak var statusBuffer: DataBuffer?
-    private(set) weak var satellitesBuffer: DataBuffer?
+    private(set) var statusBuffer: DataBuffer?
+    private(set) var satellitesBuffer: DataBuffer?
     
     private var startTime: TimeInterval = 0.0
     private var startTimestamp: TimeInterval?
@@ -46,7 +44,7 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         super.init()
         
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

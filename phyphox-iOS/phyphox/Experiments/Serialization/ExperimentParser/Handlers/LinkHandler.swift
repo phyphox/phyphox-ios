@@ -9,7 +9,7 @@
 import Foundation
 
 final class LinkHandler: ResultElementHandler, ChildlessHandler {
-    typealias Result = (url: URL, label: String, highlighted: Bool)
+    typealias Result = ExperimentLink
 
     var results = [Result]()
 
@@ -23,8 +23,8 @@ final class LinkHandler: ResultElementHandler, ChildlessHandler {
 
         guard let url = URL(string: text) else { throw ParseError.unreadableData }
 
-        let highlighted = attribute("highlighted", from: attributes, defaultValue: false)
+        let highlighted = attribute("highlight", from: attributes, defaultValue: false)
 
-        results.append((url, label, highlighted))
+        results.append(ExperimentLink(label: label, url: url, highlighted: highlighted))
     }
 }

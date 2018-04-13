@@ -69,7 +69,8 @@ final class DataBuffer {
 
     private let baseContents: [Double]
 
-    private let storageType: StorageType
+    // TODO FIXME
+    /*private */let storageType: StorageType
 
     private var lazyStateToken: UUID?
 
@@ -424,7 +425,7 @@ extension DataBuffer: Collection {
 
 extension DataBuffer: CustomStringConvertible {
     var description: String {
-        return "<\(type(of: self)): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
+        return "<\(type(of: self)) \(name): \(Unmanaged.passUnretained(self).toOpaque()): \(toArray())>"
     }
 }
 

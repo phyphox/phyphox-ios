@@ -50,8 +50,8 @@ final class ExperimentDeserializer {
     }
 
     func deserialize() throws -> Experiment {
-        // return try pars.parse(data: data)
-        
+        let newExperiment = try pars.parse(data: data)
+
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary
 
         let dictionary = XMLDictionaryParser.sharedInstance().dictionary(with: parser)! as NSDictionary
@@ -87,8 +87,8 @@ final class ExperimentDeserializer {
         d = dictionary["title"]
         let title: String? = (d != nil ? try textFromXML(d! as AnyObject) : nil)
 
-        var links: [String: URL] = [:]
-        var highlightedLinks: [String: URL] = [:]
+        var links: [ExperimentLink] = []
+
         if (dictionary["link"] != nil) {
             for dict in getElemetArrayFromValue(dictionary["link"]! as AnyObject) as! [NSDictionary] {
                 guard let url = URL(string: dict[XMLDictionaryTextKey] as? String ?? "") else { continue }
@@ -99,10 +99,7 @@ final class ExperimentDeserializer {
 
                 let highlight = boolFromXML(attributes, key: "highlight", defaultValue: false)
 
-                links[label] = url
-                if (highlight) {
-                    highlightedLinks[label] = url
-                }
+                links.append(ExperimentLink(label: label, url: url, highlighted: highlight))
             }
         }
 
@@ -141,9 +138,11 @@ final class ExperimentDeserializer {
 
         let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
 
-        let experiment = Experiment(title: anyTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle, description: description, links: links, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
-        return experiment
+        assert(experiment =-= newExperiment)
+
+        return newExperiment
     }
 
     func deserializeAsynchronous(_ completion: @escaping (_ experiment: Experiment?, _ error: SerializationError?) -> Void) {

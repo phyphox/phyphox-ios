@@ -118,19 +118,7 @@ final class XMLFileParser<Result, RootHandler: RootElementHandler>: NSObject, XM
     }
 
     private func cleanText(_ textToClean: String) -> String {
-        var text = textToClean
-
-        let cuttingCharacters = CharacterSet.whitespacesAndNewlines
-
-        while let first = text.unicodeScalars.first, cuttingCharacters.contains(first) {
-            text = String(text.unicodeScalars.dropFirst())
-        }
-
-        while let last = text.unicodeScalars.last, cuttingCharacters.contains(last) {
-            text = String(text.unicodeScalars.dropLast())
-        }
-
-        return text
+        return textToClean.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {

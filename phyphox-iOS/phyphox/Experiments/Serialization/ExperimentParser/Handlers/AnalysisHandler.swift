@@ -29,7 +29,7 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
         if type == "buffer" {
             guard !text.isEmpty else { throw ParseError.missingText }
 
-            let clear = attribute("clear", from: attributes, defaultValue: false)
+            let clear = attribute("clear", from: attributes, defaultValue: true)
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }

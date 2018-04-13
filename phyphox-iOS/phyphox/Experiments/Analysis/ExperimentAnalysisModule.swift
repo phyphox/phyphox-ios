@@ -12,19 +12,16 @@ import Foundation
  Abstract class providing an Analysis module for Experiments
  */
 class ExperimentAnalysisModule {
-    /**
-     Inputs. Either containing a buffer, or a fixed value.
-     */
-    var inputs: [ExperimentAnalysisDataIO]
-    
-    /**
-     Output buffers.
-     */
-    var outputs: [ExperimentAnalysisDataIO]
-    
+    let inputs: [ExperimentAnalysisDataIO]
+    let outputs: [ExperimentAnalysisDataIO]
+
+    // TODO FIXME
+    let attributes: [String: String]
+
     var timestamp: TimeInterval = 0.0
 
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: String]) throws {
+        self.attributes = additionalAttributes
         self.inputs = inputs
         self.outputs = outputs
     }

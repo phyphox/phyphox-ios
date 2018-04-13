@@ -89,8 +89,10 @@ private final class SensorHandler: ResultElementHandler, LookupElementHandler {
     func endElement(with text: String, attributes: [String: String]) throws {
         guard let sensor: SensorType = attribute("type", from: attributes) else { throw ParseError.unreadableData }
 
-        let rate = attribute("rate", from: attributes, defaultValue: 0.0)
+        let frequency = attribute("rate", from: attributes, defaultValue: 0.0)
         let average = attribute("average", from: attributes, defaultValue: false)
+
+        let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, average: average, outputs: outputHandler.results))
     }
