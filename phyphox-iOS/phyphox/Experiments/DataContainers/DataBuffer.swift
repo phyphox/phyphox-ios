@@ -69,8 +69,7 @@ final class DataBuffer {
 
     private let baseContents: [Double]
 
-    // TODO FIXME
-    /*private */let storageType: StorageType
+    private let storageType: StorageType
 
     private var lazyStateToken: UUID?
 

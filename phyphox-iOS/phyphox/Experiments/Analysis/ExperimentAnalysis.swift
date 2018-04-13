@@ -20,11 +20,10 @@ protocol ExperimentAnalysisTimestampSource: class {
 }
 
 final class ExperimentAnalysis {
-    /*private */let modules: [ExperimentAnalysisModule]
+    private let modules: [ExperimentAnalysisModule]
 
-    // TODO FIXME
-    /*private */let sleep: Double
-    /*private */let dynamicSleep: DataBuffer?
+    private let sleep: Double
+    private let dynamicSleep: DataBuffer?
 
     let inputBuffers: [String: DataBuffer]
     let outputBuffers: [String: DataBuffer]

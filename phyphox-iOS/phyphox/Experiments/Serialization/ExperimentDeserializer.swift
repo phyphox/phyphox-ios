@@ -140,8 +140,6 @@ final class ExperimentDeserializer {
 
         let experiment = Experiment(title: anyTitle, description: description, links: links, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
-        assert(experiment =-= newExperiment)
-
         return newExperiment
     }
 

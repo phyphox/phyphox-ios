@@ -8,10 +8,9 @@
 
 import UIKit
 
-// TODO FIXME
 final class ExperimentIcon {
-    /*private */let string: String?
-    /*private */let image: UIImage?
+    private let string: String?
+    private let image: UIImage?
     
     init(string: String?, image: UIImage?) {
         self.string = string

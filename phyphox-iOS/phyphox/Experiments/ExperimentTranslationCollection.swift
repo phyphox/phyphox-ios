@@ -8,9 +8,8 @@
 
 import Foundation
 
-// TODO FIXME
 final class ExperimentTranslationCollection {
-    /*private */let translations: [String: ExperimentTranslation]
+    private let translations: [String: ExperimentTranslation]
     
     private var selectedLanguageCode: String?
     
