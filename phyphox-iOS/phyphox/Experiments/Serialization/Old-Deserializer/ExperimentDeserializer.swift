@@ -91,11 +91,9 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
 
 final class ExperimentDeserializer {
     private let parser: XMLParser
-    private let local: Bool
 
-    init(data: Data, local: Bool) {
-        self.local = local
-        parser = XMLParser(data: data)
+    init(stream: InputStream) {
+        parser = XMLParser(stream: stream)
     }
 
     func deserialize() throws -> Experiment {
@@ -186,7 +184,6 @@ final class ExperimentDeserializer {
         let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
 
         let experiment = Experiment(title: anyTitle, description: description, links: links, category: anyCategory, icon: icon, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
-        experiment.local = local
 
         return experiment
     }

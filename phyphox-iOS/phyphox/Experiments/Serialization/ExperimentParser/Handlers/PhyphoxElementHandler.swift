@@ -89,7 +89,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ParseError.missingAttribute("version")
         }
 
-        print("File Version \(version)")
+//        print("File Version \(version)")
 
         let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) }
 
