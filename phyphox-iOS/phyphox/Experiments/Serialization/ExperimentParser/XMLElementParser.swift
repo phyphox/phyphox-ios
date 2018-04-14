@@ -71,13 +71,13 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         }
     }
 
-    func parse(data: Data) throws -> Result {
+    func parse(stream: InputStream) throws -> Result {
         handlerStack = [("", rootHandler)]
         textStack = [""]
         attributesStack = [[:]]
         parsingError = nil
 
-        let parser = XMLParser(data: data)
+        let parser = XMLParser(stream: stream)
         parser.delegate = self
         parser.parse()
 
@@ -90,6 +90,10 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         }
 
         return result
+    }
+
+    func parse(data: Data) throws -> Result {
+        return try parse(stream: InputStream(data: data))
     }
 
     func parserDidStartDocument(_ parser: XMLParser) {

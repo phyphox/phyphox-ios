@@ -28,24 +28,23 @@ final class ExperimentSerialization {
     static let parser = XMLElementParser(rootHandler: ExperimentFileHandler())
 
     static func readExperimentFromURL(_ url: URL) throws -> Experiment {
-        if url.pathExtension == experimentStateFileExtension {
-            let data = try Data(contentsOf: url.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension))
-            let experiment = try deserializeExperiment(data)
-            experiment.local = url.isFileURL
-            experiment.source = url
+        let readURL: URL
 
-            return experiment
+        if url.pathExtension == experimentStateFileExtension {
+            readURL = url.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension)
+        }
+        else {
+            readURL = url
         }
 
-        let data = try Data(contentsOf: url)
-        let experiment = try deserializeExperiment(data)
+        guard let stream = InputStream(url: readURL) else {
+            throw SerializationError.invalidFilePath
+        }
+
+        let experiment = try parser.parse(stream: stream)
         experiment.local = url.isFileURL
         experiment.source = url
 
         return experiment
-    }
-
-    private static func deserializeExperiment(_ data: Data) throws -> Experiment {
-        return try parser.parse(data: data)
     }
 }
