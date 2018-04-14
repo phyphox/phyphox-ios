@@ -10,8 +10,6 @@ import UIKit
 import GLKit
 import OpenGLES
 
-// TODO: Sharegroup
-
 private let primitiveRestartFlag = GLuint.max
 
 final class GLRangedPointGraphView: GLKView {
