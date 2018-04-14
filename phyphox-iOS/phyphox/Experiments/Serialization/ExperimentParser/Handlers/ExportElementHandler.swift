@@ -13,7 +13,7 @@ struct ExportSetDataDescriptor {
     let bufferName: String
 }
 
-private final class ExportSetDataElementHandler: ResultElementHandler, ChildlessHandler {
+private final class ExportSetDataElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ExportSetDataDescriptor
 
     var results = [Result]()
@@ -65,7 +65,7 @@ private final class ExportSetElementHandler: ResultElementHandler, LookupElement
     }
 }
 
-final class ExportElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class ExportElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = [ExportSetDescriptor]
 
     var results = [Result]()

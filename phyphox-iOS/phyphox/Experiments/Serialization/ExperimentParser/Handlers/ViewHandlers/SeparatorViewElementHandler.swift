@@ -13,7 +13,7 @@ struct SeparatorViewElementDescriptor: ViewElementDescriptor {
     let color: UIColor
 }
 
-final class SeparatorViewElementHandler: ResultElementHandler, ChildlessHandler, ViewComponentElementHandler {
+final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
     typealias Result = SeparatorViewElementDescriptor
 
     var results = [Result]()

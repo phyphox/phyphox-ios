@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class LinkElementHandler: ResultElementHandler, ChildlessHandler {
+final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ExperimentLink
 
     var results = [Result]()

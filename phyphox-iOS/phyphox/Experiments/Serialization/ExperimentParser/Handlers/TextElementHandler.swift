@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class TextElementHandler: ResultElementHandler, AttributelessHandler, ChildlessHandler {
+final class TextElementHandler: ResultElementHandler, AttributelessElementHandler, ChildlessElementHandler {
     typealias Result = String
 
     var results = [Result]()

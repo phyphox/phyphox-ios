@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ValueViewMapElementHandler: ResultElementHandler, ChildlessHandler {
+final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ValueViewMap
 
     var results = [Result]()

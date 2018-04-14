@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MultilineTextElementHandler: ResultElementHandler, AttributelessHandler, ChildlessHandler {
+final class MultilineTextElementHandler: ResultElementHandler, AttributelessElementHandler, ChildlessElementHandler {
     typealias Result = String
 
     var results = [Result]()

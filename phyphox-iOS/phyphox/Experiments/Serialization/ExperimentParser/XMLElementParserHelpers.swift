@@ -136,9 +136,9 @@ extension ResultElementHandler {
     }
 }
 
-protocol AttributelessHandler: ElementHandler {}
+protocol AttributelessElementHandler: ElementHandler {}
 
-extension AttributelessHandler {
+extension AttributelessElementHandler {
     func beginElement(attributes: [String: String]) throws {
         guard attributes.isEmpty else {
             throw XMLElementParserError.unexpectedAttribute(attributes.keys.first ?? "")
@@ -146,9 +146,9 @@ extension AttributelessHandler {
     }
 }
 
-protocol ChildlessHandler: ElementHandler {}
+protocol ChildlessElementHandler: ElementHandler {}
 
-extension ChildlessHandler {
+extension ChildlessElementHandler {
     func childHandler(for tagName: String) throws -> ElementHandler {
         throw XMLElementParserError.unexpectedChildElement(tagName)
     }

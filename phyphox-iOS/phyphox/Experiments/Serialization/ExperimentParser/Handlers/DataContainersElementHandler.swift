@@ -10,7 +10,7 @@ import Foundation
 
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
 
-private final class DataContainerElementHandler: ResultElementHandler, ChildlessHandler {
+private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = BufferDescriptor
 
     var results = [Result]()
@@ -29,7 +29,7 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
     }
 }
 
-final class DataContainersElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class DataContainersElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = [BufferDescriptor]
 
     var handlers: [String: ElementHandler]

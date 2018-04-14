@@ -80,7 +80,7 @@ private final class ViewElementHandler: ResultElementHandler {
     }
 }
 
-final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = [ViewCollectionDescriptor]
 
     var results = [Result]()

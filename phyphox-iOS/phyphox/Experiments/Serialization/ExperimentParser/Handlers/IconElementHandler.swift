@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class IconElementHandler: ResultElementHandler, ChildlessHandler {
+final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ExperimentIcon
 
     var results = [Result]()

@@ -8,7 +8,7 @@
 
 import Foundation
 
-private final class StringTranslationElementHandler: ResultElementHandler, ChildlessHandler {
+private final class StringTranslationElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [Result]()
 
     typealias Result = (String, String)
@@ -63,7 +63,7 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
     }
 }
 
-final class TranslationsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class TranslationsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = [String: ExperimentTranslation]
 
     var results = [Result]()

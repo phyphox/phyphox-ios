@@ -17,7 +17,7 @@ protocol SensorDescriptor {
     var outputs: [SensorOutputDescriptor] { get }
 }
 
-private final class SensorOutputElementHandler: ResultElementHandler, ChildlessHandler {
+private final class SensorOutputElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = SensorOutputDescriptor
 
     var results = [Result]()
@@ -125,7 +125,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
-final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = (sensors: [SensorInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor])
 
     var results = [Result]()

@@ -20,7 +20,7 @@ struct ButtonViewElementDescriptor: ViewElementDescriptor {
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
 }
 
-private final class ButtonInputElementHandler: ResultElementHandler, ChildlessHandler {
+private final class ButtonInputElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ButtonInputDescriptor]()
 
     typealias Result = ButtonInputDescriptor

@@ -47,7 +47,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
-final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = AudioOutputDescriptor
 
     var results = [Result]()

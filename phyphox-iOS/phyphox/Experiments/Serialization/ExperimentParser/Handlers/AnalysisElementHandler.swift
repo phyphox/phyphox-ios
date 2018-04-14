@@ -14,7 +14,7 @@ enum ExperimentAnalysisDataIODescriptor {
     case empty(usedAs: String)
 }
 
-final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessHandler {
+final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentAnalysisDataIODescriptor]()
 
     typealias Result = ExperimentAnalysisDataIODescriptor

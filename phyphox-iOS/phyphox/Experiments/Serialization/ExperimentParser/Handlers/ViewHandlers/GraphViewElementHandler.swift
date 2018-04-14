@@ -26,7 +26,7 @@ extension CGFloat: LosslessStringConvertible {
     }
 }
 
-private final class GraphInputElementHandler: ResultElementHandler, ChildlessHandler {
+private final class GraphInputElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = GraphInputDescriptor
 
     var results = [GraphInputDescriptor]()

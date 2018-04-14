@@ -12,7 +12,7 @@ struct InfoViewElementDescriptor: ViewElementDescriptor {
     let label: String
 }
 
-final class InfoViewElementHandler: ResultElementHandler, ChildlessHandler, ViewComponentElementHandler {
+final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
     typealias Result = InfoViewElementDescriptor
 
     var results = [Result]()
