@@ -30,7 +30,7 @@ extension RootElementHandler {
     }
 }
 
-final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
+final class XMLElementParser<RootHandler: RootElementHandler>: NSObject, XMLParserDelegate {
     private var rootHandler: RootHandler
 
     private var handlerStack = [(String, ElementHandler)]()
@@ -55,7 +55,7 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         }
     }
 
-    func parse(stream: InputStream) throws -> Result {
+    func parse(stream: InputStream) throws -> RootHandler.Result {
         handlerStack = [("", rootHandler)]
         textStack = [""]
         attributesStack = [[:]]
@@ -74,10 +74,6 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         }
 
         return result
-    }
-
-    func parse(data: Data) throws -> Result {
-        return try parse(stream: InputStream(data: data))
     }
 
     func parserDidStartDocument(_ parser: XMLParser) {
@@ -167,8 +163,8 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
     }
 }
 
-extension XMLElementParser {
-    fileprivate enum ParsingError: LocalizedError {
+fileprivate extension XMLElementParser {
+    enum ParsingError: LocalizedError {
         case parsingError(backtrace: String, encounteredError: Error)
         case missingRootElement
 
