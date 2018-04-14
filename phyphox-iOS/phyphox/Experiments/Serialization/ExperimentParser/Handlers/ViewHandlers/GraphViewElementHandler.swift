@@ -116,38 +116,38 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
 
-        let aspectRatio: CGFloat = attribute("aspectRatio", from: attributes, defaultValue: 2.5)
-        let dots = attribute("style", from: attributes, defaultValue: "line") == "dots"
-        let partialUpdate = attribute("partialUpdate", from: attributes, defaultValue: false)
-        let history: UInt = attribute("history", from: attributes, defaultValue: 1)
-        let lineWidth: CGFloat = attribute("lineWidth", from: attributes, defaultValue: 1.0)
-        let colorString: String? = attribute("color", from: attributes)
+        let aspectRatio: CGFloat = try attribute("aspectRatio", from: attributes, defaultValue: 2.5)
+        let dots = try attribute("style", from: attributes, defaultValue: "line") == "dots"
+        let partialUpdate = try attribute("partialUpdate", from: attributes, defaultValue: false)
+        let history: UInt = try attribute("history", from: attributes, defaultValue: 1)
+        let lineWidth: CGFloat = try attribute("lineWidth", from: attributes, defaultValue: 1.0)
+        let colorString: String? = try attribute("color", from: attributes)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw XMLElementParserError.unexpectedValue("color")
+                throw XMLElementParserError.unexpectedAttributeValue("color")
             }
 
             return color
         }) ?? kHighlightColor
 
-        let logX = attribute("logX", from: attributes, defaultValue: false)
-        let logY = attribute("logY", from: attributes, defaultValue: false)
-        let xPrecision: UInt = attribute("xPrecision", from: attributes, defaultValue: 3)
-        let yPrecision: UInt = attribute("yPrecision", from: attributes, defaultValue: 3)
+        let logX = try attribute("logX", from: attributes, defaultValue: false)
+        let logY = try attribute("logY", from: attributes, defaultValue: false)
+        let xPrecision: UInt = try attribute("xPrecision", from: attributes, defaultValue: 3)
+        let yPrecision: UInt = try attribute("yPrecision", from: attributes, defaultValue: 3)
 
-        guard let scaleMinX = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinX", from: attributes, defaultValue: "auto")),
-            let scaleMaxX = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxX", from: attributes, defaultValue: "auto")),
-            let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinY", from: attributes, defaultValue: "auto")),
-            let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
+        guard let scaleMinX = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMinX", from: attributes, defaultValue: "auto")),
+            let scaleMaxX = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMaxX", from: attributes, defaultValue: "auto")),
+            let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMinY", from: attributes, defaultValue: "auto")),
+            let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
             else {
-                throw XMLElementParserError.unexpectedValue("scale")
+                throw XMLElementParserError.unexpectedAttributeValue("scale")
         }
 
-        let minX: CGFloat = attribute("minX", from: attributes, defaultValue: 0)
-        let maxX: CGFloat = attribute("maxX", from: attributes, defaultValue: 0)
-        let minY: CGFloat = attribute("minY", from: attributes, defaultValue: 0)
-        let maxY: CGFloat = attribute("maxY", from: attributes, defaultValue: 0)
+        let minX: CGFloat = try attribute("minX", from: attributes, defaultValue: 0)
+        let maxX: CGFloat = try attribute("maxX", from: attributes, defaultValue: 0)
+        let minY: CGFloat = try attribute("minY", from: attributes, defaultValue: 0)
+        let maxY: CGFloat = try attribute("maxY", from: attributes, defaultValue: 0)
 
         results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
     }

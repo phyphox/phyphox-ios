@@ -29,7 +29,7 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        let type = attribute("type", from: attributes, defaultValue: "buffer")
+        let type = try attribute("type", from: attributes, defaultValue: "buffer")
 
         if type == "buffer" {
             guard !text.isEmpty else {
@@ -44,7 +44,7 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
             }
 
             guard let value = Double(text) else {
-                throw XMLElementParserError.unexpectedValue("value")
+                throw XMLElementParserError.unexpectedAttributeValue("value")
             }
 
             results.append(.value(value))
@@ -53,7 +53,7 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
             results.append(.clear)
         }
         else {
-            throw XMLElementParserError.unexpectedValue("type")
+            throw XMLElementParserError.unexpectedAttributeValue("type")
         }
     }
 }

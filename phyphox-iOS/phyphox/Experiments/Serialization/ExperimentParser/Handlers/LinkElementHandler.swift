@@ -21,9 +21,9 @@ final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
 
         guard let label = attributes["label"], !label.isEmpty else { throw XMLElementParserError.missingAttribute("label") }
 
-        guard let url = URL(string: text) else { throw XMLElementParserError.unexpectedValue("url") }
+        guard let url = URL(string: text) else { throw XMLElementParserError.unexpectedAttributeValue("url") }
 
-        let highlighted = attribute("highlight", from: attributes, defaultValue: false)
+        let highlighted = try attribute("highlight", from: attributes, defaultValue: false)
 
         results.append(ExperimentLink(label: label, url: url, highlighted: highlighted))
     }

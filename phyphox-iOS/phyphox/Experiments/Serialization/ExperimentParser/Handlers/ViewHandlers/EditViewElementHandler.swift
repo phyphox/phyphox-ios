@@ -44,13 +44,13 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
 
         let outputBufferName = try outputHandler.expectSingleResult()
 
-        let signed = attribute("signed", from: attributes, defaultValue: true)
-        let decimal = attribute("decimal", from: attributes, defaultValue: true)
-        let min = attribute("min", from: attributes, defaultValue: -Double.infinity)
-        let max = attribute("max", from: attributes, defaultValue: Double.infinity)
-        let unit = attribute("unit", from: attributes, defaultValue: "")
-        let factor = attribute("factor", from: attributes, defaultValue: 1.0)
-        let defaultValue = attribute("default", from: attributes, defaultValue: 0.0)
+        let signed = try attribute("signed", from: attributes, defaultValue: true)
+        let decimal = try attribute("decimal", from: attributes, defaultValue: true)
+        let min = try attribute("min", from: attributes, defaultValue: -Double.infinity)
+        let max = try attribute("max", from: attributes, defaultValue: Double.infinity)
+        let unit = try attribute("unit", from: attributes, defaultValue: "")
+        let factor = try attribute("factor", from: attributes, defaultValue: 1.0)
+        let defaultValue = try attribute("default", from: attributes, defaultValue: 0.0)
 
         results.append(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName))
     }

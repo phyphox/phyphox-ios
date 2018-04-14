@@ -107,6 +107,30 @@ final class ExperimentManager {
             }
         }
     }
+
+    private func benchmark(repititions: Int) -> TimeInterval {
+        let experiments = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
+
+        let urls = experiments.map { experimentsBaseURL.appendingPathComponent($0) }
+
+        var totalTime = 0.0
+
+        for _ in 0..<repititions {
+            let start = CFAbsoluteTimeGetCurrent()
+
+            for url in urls {
+                _ = try! ExperimentSerialization.readExperimentFromURL(url)
+            }
+
+            let duration = CFAbsoluteTimeGetCurrent() -  start
+
+            totalTime += duration
+        }
+
+        let average = totalTime / Double(repititions)
+
+        return average
+    }
     
     init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
@@ -123,6 +147,8 @@ final class ExperimentManager {
         #if DEBUG
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         #endif
+
+        print("Benchmark time: \(benchmark(repititions: 100))")
     }
 }
 

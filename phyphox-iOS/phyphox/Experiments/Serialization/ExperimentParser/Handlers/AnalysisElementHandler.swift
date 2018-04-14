@@ -23,13 +23,13 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        let type = attribute("type", from: attributes, defaultValue: "buffer")
-        let usedAs = attribute("as", from: attributes, defaultValue: "")
+        let type = try attribute("type", from: attributes, defaultValue: "buffer")
+        let usedAs = try attribute("as", from: attributes, defaultValue: "")
 
         if type == "buffer" {
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-            let clear = attribute("clear", from: attributes, defaultValue: true)
+            let clear = try attribute("clear", from: attributes, defaultValue: true)
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
@@ -37,7 +37,7 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
             guard let value = Double(text) else {
-                throw XMLElementParserError.unexpectedValue("value")
+                throw XMLElementParserError.unexpectedAttributeValue("value")
             }
 
             results.append(.value(value: value, usedAs: usedAs))
@@ -46,7 +46,7 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
             results.append(.empty(usedAs: usedAs))
         }
         else {
-            throw XMLElementParserError.unexpectedValue("type")
+            throw XMLElementParserError.unexpectedAttributeValue("type")
         }
     }
 }
@@ -105,8 +105,8 @@ final class AnalysisElementHandler: ResultElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let sleep = attribute("sleep", from: attributes, defaultValue: 0.0)
-        let dynamicSleep: String? = attribute("dynamicSleep", from: attributes)
+        let sleep = try attribute("sleep", from: attributes, defaultValue: 0.0)
+        let dynamicSleep: String? = try attribute("dynamicSleep", from: attributes)
 
         let modules = try handlers.map({ ($0.0, try $0.1.expectSingleResult()) })
 

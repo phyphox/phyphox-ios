@@ -21,7 +21,7 @@ enum XMLElementParserError: Error {
     case missingAttribute(String)
 
     /// Signals an unexpected, unreadable value for an attribute name
-    case unexpectedValue(String)
+    case unexpectedAttributeValue(String)
 
     /// To be used by an element when a child element is missing.
     case missingChildElement(String)
@@ -60,7 +60,7 @@ extension XMLElementParserError: LocalizedError {
             return "Unexpected child element \"\(element)\""
         case .unreadableData:
             return "Unreadable data"
-        case .unexpectedValue(let attribute):
+        case .unexpectedAttributeValue(let attribute):
             return "Unexpected value for \"\(attribute)\""
         }
     }
@@ -157,10 +157,20 @@ extension ChildlessElementHandler {
     }
 }
 
-func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) -> T? {
-    return attributes[key].map({ T.init($0) }) ?? nil
+func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) throws -> T? {
+    return try attributes[key].map({
+        guard let value = T.init($0) else {
+            throw XMLElementParserError.unexpectedAttributeValue(key)
+        }
+        return value
+    })
 }
 
-func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String], defaultValue: T) -> T {
-    return attributes[key].map({ T.init($0) ?? defaultValue }) ?? defaultValue
+func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String], defaultValue: T) throws -> T {
+    return try attributes[key].map({
+        guard let value = T.init($0) else {
+            throw XMLElementParserError.unexpectedAttributeValue(key)
+        }
+        return value
+    }) ?? defaultValue
 }

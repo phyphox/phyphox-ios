@@ -87,10 +87,10 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard let sensor: SensorType = attribute("type", from: attributes) else { throw XMLElementParserError.unexpectedValue("type") }
+        guard let sensor: SensorType = try attribute("type", from: attributes) else { throw XMLElementParserError.unexpectedAttributeValue("type") }
 
-        let frequency = attribute("rate", from: attributes, defaultValue: 0.0)
-        let average = attribute("average", from: attributes, defaultValue: false)
+        let frequency = try attribute("rate", from: attributes, defaultValue: 0.0)
+        let average = try attribute("average", from: attributes, defaultValue: false)
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
@@ -120,7 +120,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let rate: UInt = attribute("rate", from: attributes, defaultValue: 48000)
+        let rate: UInt = try attribute("rate", from: attributes, defaultValue: 48000)
         results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
     }
 }

@@ -32,7 +32,7 @@ final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
             results.append(ExperimentIcon(string: text, image: nil))
         }
         else {
-            throw XMLElementParserError.unexpectedValue("format")
+            throw XMLElementParserError.unexpectedAttributeValue("format")
         }
     }
 }

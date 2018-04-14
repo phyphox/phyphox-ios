@@ -20,7 +20,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     private var multiple: Bool
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        multiple = attribute("multiple", from: additionalAttributes, defaultValue: false)
+        multiple = try attribute("multiple", from: additionalAttributes, defaultValue: false)
         
         for input in inputs {
             if input.asString == "x" {

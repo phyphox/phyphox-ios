@@ -21,8 +21,8 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
             throw XMLElementParserError.missingText
         }
 
-        let min = attribute("min", from: attributes, defaultValue: -Double.infinity)
-        let max = attribute("max", from: attributes, defaultValue: Double.infinity)
+        let min = try attribute("min", from: attributes, defaultValue: -Double.infinity)
+        let max = try attribute("max", from: attributes, defaultValue: Double.infinity)
 
         results.append(ValueViewMap(range: min...max, replacement: text))
     }
@@ -65,11 +65,11 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
 
-        let size = attribute("size", from: attributes, defaultValue: 1.0)
-        let precision = attribute("precision", from: attributes, defaultValue: 2)
-        let scientific = attribute("scientific", from: attributes, defaultValue: false)
-        let unit = attribute("unit", from: attributes, defaultValue: "")
-        let factor = attribute("factor", from: attributes, defaultValue: 1.0)
+        let size = try attribute("size", from: attributes, defaultValue: 1.0)
+        let precision = try attribute("precision", from: attributes, defaultValue: 2)
+        let scientific = try attribute("scientific", from: attributes, defaultValue: false)
+        let unit = try attribute("unit", from: attributes, defaultValue: "")
+        let factor = try attribute("factor", from: attributes, defaultValue: 1.0)
 
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
     }

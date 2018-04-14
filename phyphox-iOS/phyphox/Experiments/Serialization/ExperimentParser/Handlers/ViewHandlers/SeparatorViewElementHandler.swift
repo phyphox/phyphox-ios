@@ -22,12 +22,12 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
     }
 
     func endElement(with text: String, attributes: [String : String]) throws {
-        let height: CGFloat = attribute("height", from: attributes, defaultValue: 0.1)
-        let colorString: String? = attribute("color", from: attributes)
+        let height: CGFloat = try attribute("height", from: attributes, defaultValue: 0.1)
+        let colorString: String? = try attribute("color", from: attributes)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw XMLElementParserError.unexpectedValue("color")
+                throw XMLElementParserError.unexpectedAttributeValue("color")
             }
 
             return color

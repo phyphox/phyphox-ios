@@ -38,8 +38,8 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        let rate: UInt = attribute("rate", from: attributes, defaultValue: 48000)
-        let loop = attribute("loop", from: attributes, defaultValue: false)
+        let rate: UInt = try attribute("rate", from: attributes, defaultValue: 48000)
+        let loop = try attribute("loop", from: attributes, defaultValue: false)
 
         let inputBufferName = try inputHandler.expectSingleResult()
         

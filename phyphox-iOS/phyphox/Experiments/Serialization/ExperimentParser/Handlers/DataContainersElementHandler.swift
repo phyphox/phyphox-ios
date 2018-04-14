@@ -21,9 +21,9 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
     func endElement(with text: String, attributes: [String: String]) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        let size = attribute("size", from: attributes, defaultValue: 1)
+        let size = try attribute("size", from: attributes, defaultValue: 1)
         let baseContents = attributes["init"].map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
-        let staticBuffer = attribute("static", from: attributes, defaultValue: false)
+        let staticBuffer = try attribute("static", from: attributes, defaultValue: false)
 
         results.append((text, size, baseContents, staticBuffer))
     }
