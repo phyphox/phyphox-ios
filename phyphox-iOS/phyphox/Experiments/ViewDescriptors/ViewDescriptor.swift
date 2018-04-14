@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class ViewDescriptor {
+class ViewDescriptor {
     private let label: String
     weak var translation: ExperimentTranslationCollection?
     
