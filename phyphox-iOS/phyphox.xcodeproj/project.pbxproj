@@ -1016,16 +1016,16 @@
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
 				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
-				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
 				6B612FE0207E5A09001DA8D9 /* ExperimentParser */,
-				6BFE377320447C0D00301CA3 /* Deserializer-Parser */,
+				6BFE377320447C0D00301CA3 /* Old-Deserializer */,
 			);
 			path = Serialization;
 			sourceTree = "<group>";
 		};
-		6BFE377320447C0D00301CA3 /* Deserializer-Parser */ = {
+		6BFE377320447C0D00301CA3 /* Old-Deserializer */ = {
 			isa = PBXGroup;
 			children = (
+				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
 				6B7BF8321C198407007408FB /* ExperimentMetadataParser-Protocol.swift */,
 				6BB52BBC1C19883D00217CF1 /* ExperimentTranslationsParser.swift */,
 				6BBD28AF1C20C5CE009E3757 /* ExperimentIconParser.swift */,
@@ -1036,7 +1036,7 @@
 				6BB52BBA1C19882F00217CF1 /* ExperimentExportParser.swift */,
 				6BBD28AD1C20C48D009E3757 /* ExperimentOutputParser.swift */,
 			);
-			path = "Deserializer-Parser";
+			path = "Old-Deserializer";
 			sourceTree = "<group>";
 		};
 		6BFE377420447C2400301CA3 /* DataContainers */ = {
