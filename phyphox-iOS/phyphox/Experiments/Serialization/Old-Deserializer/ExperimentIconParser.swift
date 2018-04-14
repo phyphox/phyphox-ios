@@ -20,8 +20,8 @@ final class ExperimentIconParser: ExperimentMetadataParser {
             if title.count > 2 {
                 title = String(title[..<title.index(title.startIndex, offsetBy: 2)])
             }
-        
-            return ExperimentIcon(string: title.uppercased(), image: nil)
+
+            return .string(title.uppercased())
         }
         else if let icon = data as? NSDictionary {
             let attributes = icon[XMLDictionaryAttributesKey] as! [String: AnyObject]?
@@ -30,12 +30,12 @@ final class ExperimentIconParser: ExperimentMetadataParser {
             
             if stringFromXML(attributes, key: "format", defaultValue: "string") == "base64" {
                 let data = Data(base64Encoded: string, options: [])!
-                let image = UIImage(data: data)
-                
-                return ExperimentIcon(string: nil, image: image)
+                if let image = UIImage(data: data) {
+                    return .image(image)
+                }
             }
             else {
-                return ExperimentIcon(string: string, image: nil)
+                return .string(string)
             }
         }
         

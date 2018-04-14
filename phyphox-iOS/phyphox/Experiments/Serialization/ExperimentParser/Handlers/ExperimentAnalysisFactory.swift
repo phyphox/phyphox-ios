@@ -25,8 +25,8 @@ private extension ExperimentAnalysisDataIO {
     }
 }
 
-struct ExperimentAnalysisFactory {
-    static let classMap = [
+final class ExperimentAnalysisFactory {
+    private static let classMap = [
         "add": AdditionAnalysis.self,
         "subtract": SubtractionAnalysis.self,
         "multiply": MultiplicationAnalysis.self,
@@ -71,13 +71,13 @@ struct ExperimentAnalysisFactory {
         "if": IfAnalysis.self]
 
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {
-        let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
-        let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
-        let attributes = descriptor.attributes
-
         guard let analysisClass = classMap[key] else {
             throw XMLElementParserError.unexpectedChildElement(key)
         }
+
+        let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
+        let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
+        let attributes = descriptor.attributes
 
         return try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
     }

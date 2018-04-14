@@ -108,7 +108,7 @@ final class ExperimentManager {
         }
     }
 
-    private func benchmark(repititions: Int) -> TimeInterval {
+    private func benchmark(repititions: Int, legacy: Bool) -> TimeInterval {
         let experiments = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
 
         let urls = experiments.map { experimentsBaseURL.appendingPathComponent($0) }
@@ -119,7 +119,7 @@ final class ExperimentManager {
             let start = CFAbsoluteTimeGetCurrent()
 
             for url in urls {
-                _ = try! ExperimentSerialization.readExperimentFromURL(url)
+                _ = try! ExperimentSerialization.readExperimentFromURL(url, legacy: legacy)
             }
 
             let duration = CFAbsoluteTimeGetCurrent() -  start
@@ -148,7 +148,12 @@ final class ExperimentManager {
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         #endif
 
-        print("Benchmark time: \(benchmark(repititions: 100))")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            print("New benchmark time: \(self.benchmark(repititions: 100, legacy: false))")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                print("Legacy benchmark time: \(self.benchmark(repititions: 100, legacy: true))")
+            }
+        }
     }
 }
 

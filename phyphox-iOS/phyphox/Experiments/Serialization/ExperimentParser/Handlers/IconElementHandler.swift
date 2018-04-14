@@ -24,12 +24,12 @@ final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
         if format == "base64" {
             guard let data = Data(base64Encoded: text, options: []) else { throw XMLElementParserError.unreadableData }
 
-            let image = UIImage(data: data)
-
-            results.append(ExperimentIcon(string: nil, image: image))
+            if let image = UIImage(data: data) {
+                results.append(.image(image))
+            }
         }
         else if format == nil || format == "string" {
-            results.append(ExperimentIcon(string: text, image: nil))
+            results.append(.string(text))
         }
         else {
             throw XMLElementParserError.unexpectedAttributeValue("format")

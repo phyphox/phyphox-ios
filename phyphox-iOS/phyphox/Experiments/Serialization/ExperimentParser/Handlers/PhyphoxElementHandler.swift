@@ -105,7 +105,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw XMLElementParserError.missingElement("description")
         }
 
-        let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
+        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
 
         let links = linkHandler.results
 

@@ -8,32 +8,27 @@
 
 import UIKit
 
-final class ExperimentIcon {
-    private let string: String?
-    private let image: UIImage?
-    
-    init(string: String?, image: UIImage?) {
-        self.string = string
-        self.image = image
-    }
+enum ExperimentIcon {
+    case string(String)
+    case image(UIImage)
     
     func generateResizableRepresentativeView() -> UIView {
-        if image != nil {
-            let imageView = UIImageView(image: image!)
+        switch self {
+        case .image(let image):
+            let imageView = UIImageView(image: image)
             imageView.backgroundColor = kHighlightColor
             return imageView
-        }
-        else {
+        case .string(let string):
             let label = UILabel()
-            
+
             label.text = string
             label.textAlignment = .center
             label.adjustsFontSizeToFitWidth = true
-            label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
-            
+            label.font = UIFont.preferredFont(forTextStyle: .headline)
+
             label.textColor = kTextColor
             label.backgroundColor = kHighlightColor
-            
+
             return label
         }
     }
