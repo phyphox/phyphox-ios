@@ -1,5 +1,5 @@
 //
-//  InfoViewHandler.swift
+//  InfoViewElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -12,7 +12,7 @@ struct InfoViewElementDescriptor: ViewElementDescriptor {
     let label: String
 }
 
-final class InfoViewHandler: ResultElementHandler, ChildlessHandler, ViewComponentHandler {
+final class InfoViewElementHandler: ResultElementHandler, ChildlessHandler, ViewComponentElementHandler {
     typealias Result = InfoViewElementDescriptor
 
     var results = [Result]()
@@ -22,7 +22,7 @@ final class InfoViewHandler: ResultElementHandler, ChildlessHandler, ViewCompone
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         results.append(InfoViewElementDescriptor(label: label))

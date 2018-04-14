@@ -1,5 +1,5 @@
 //
-//  SeparatorHandler.swift
+//  SeparatorElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -13,7 +13,7 @@ struct SeparatorViewElementDescriptor: ViewElementDescriptor {
     let color: UIColor
 }
 
-final class SeparatorViewHandler: ResultElementHandler, ChildlessHandler, ViewComponentHandler {
+final class SeparatorViewElementHandler: ResultElementHandler, ChildlessHandler, ViewComponentElementHandler {
     typealias Result = SeparatorViewElementDescriptor
 
     var results = [Result]()
@@ -27,7 +27,7 @@ final class SeparatorViewHandler: ResultElementHandler, ChildlessHandler, ViewCo
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw ParseError.unexpectedValue("color")
+                throw XMLElementParserError.unexpectedValue("color")
             }
 
             return color

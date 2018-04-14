@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum ParseError: Error {
+enum XMLElementParserError: Error {
     /// To be used when a child element that cannot be handled is encountered
     case unexpectedChildElement(String)
 
@@ -39,29 +39,29 @@ enum ParseError: Error {
     case unreadableData
 }
 
-extension ParseError: LocalizedError {
+extension XMLElementParserError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .duplicateElement:
             return "Duplicate element"
         case .missingAttribute(let attribute):
-            return "Attribute \(attribute) is missing"
+            return "Attribute \"\(attribute)\" is missing"
         case .missingChildElement(let element):
-            return "Child element \(element) is missing"
+            return "Child element \"\(element)\" is missing"
         case .missingElement(let element):
-            return "Element \(element) is missing"
+            return "Element \"\(element)\" is missing"
         case .missingSelf:
             return "Element is missing"
         case .missingText:
             return "Text value is missing"
         case .unexpectedAttribute(let attribute):
-            return "Unexpected attribute \(attribute)"
+            return "Unexpected attribute \"\(attribute)\""
         case .unexpectedChildElement(let element):
-            return "Unexpected child element \(element)"
+            return "Unexpected child element \"\(element)\""
         case .unreadableData:
             return "Unreadable data"
         case .unexpectedValue(let attribute):
-            return "Unexpected value for \(attribute)"
+            return "Unexpected value for \"\(attribute)\""
         }
     }
 }
@@ -84,7 +84,7 @@ extension LookupElementHandler {
 
     func childHandler(for tagName: String) throws -> ElementHandler {
         guard let handler = handlers[tagName] else {
-            throw ParseError.unexpectedChildElement(tagName)
+            throw XMLElementParserError.unexpectedChildElement(tagName)
         }
 
         return handler
@@ -109,7 +109,7 @@ extension ResultElementHandler {
 
     func expectOptionalResult() throws -> Result? {
         guard results.count <= 1 else {
-            throw ParseError.duplicateElement
+            throw XMLElementParserError.duplicateElement
         }
 
         return results.first
@@ -117,11 +117,11 @@ extension ResultElementHandler {
 
     func expectSingleResult() throws -> Result {
         guard let result = results.first else {
-            throw ParseError.missingSelf
+            throw XMLElementParserError.missingSelf
         }
 
         guard results.count == 1 else {
-            throw ParseError.duplicateElement
+            throw XMLElementParserError.duplicateElement
         }
 
         return result
@@ -129,7 +129,7 @@ extension ResultElementHandler {
 
     func expectAtLeastOneResult() throws -> [Result] {
         guard !results.isEmpty else {
-            throw ParseError.missingSelf
+            throw XMLElementParserError.missingSelf
         }
 
         return results
@@ -141,7 +141,7 @@ protocol AttributelessHandler: ElementHandler {}
 extension AttributelessHandler {
     func beginElement(attributes: [String: String]) throws {
         guard attributes.isEmpty else {
-            throw ParseError.unexpectedAttribute(attributes.keys.first ?? "")
+            throw XMLElementParserError.unexpectedAttribute(attributes.keys.first ?? "")
         }
     }
 }
@@ -150,7 +150,7 @@ protocol ChildlessHandler: ElementHandler {}
 
 extension ChildlessHandler {
     func childHandler(for tagName: String) throws -> ElementHandler {
-        throw ParseError.unexpectedChildElement(tagName)
+        throw XMLElementParserError.unexpectedChildElement(tagName)
     }
 
     func clearChildHandlers() {

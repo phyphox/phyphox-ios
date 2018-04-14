@@ -47,7 +47,7 @@ private extension ExperimentGPSInput {
 private extension ExperimentAudioInput {
     convenience init(descriptor: AudioInputDescriptor, buffers: [String: DataBuffer]) throws {
         guard let outBuffer = descriptor.buffer(for: "output", from: buffers) else {
-            throw ParseError.missingAttribute("output")
+            throw XMLElementParserError.missingAttribute("output")
         }
 
         let sampleRateBuffer = descriptor.buffer(for: "rate", from: buffers)
@@ -65,16 +65,16 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
-    private let descriptionHandler = MultilineTextHandler()
-    private let iconHandler = IconHandler()
-    private let linkHandler = LinkHandler()
-    private let dataContainersHandler = DataContainersHandler()
-    private let translationsHandler = TranslationsHandler()
-    private let inputHandler = InputHandler()
-    private let outputHandler = OutputHandler()
-    private let analysisHandler = AnalysisHandler()
-    private let viewsHandler = ViewsHandler()
-    private let exportHandler = ExportHandler()
+    private let descriptionHandler = MultilineTextElementHandler()
+    private let iconHandler = IconElementHandler()
+    private let linkHandler = LinkElementHandler()
+    private let dataContainersHandler = DataContainersElementHandler()
+    private let translationsHandler = TranslationsElementHandler()
+    private let inputHandler = InputElementHandler()
+    private let outputHandler = OutputElementHandler()
+    private let analysisHandler = AnalysisElementHandler()
+    private let viewsHandler = ViewsElementHandler()
+    private let exportHandler = ExportElementHandler()
 
     init() {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
@@ -86,7 +86,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     func endElement(with text: String, attributes: [String: String]) throws {
         let locale = attributes["locale"] ?? "en"
         guard let version = attributes["version"] else {
-            throw ParseError.missingAttribute("version")
+            throw XMLElementParserError.missingAttribute("version")
         }
 
 //        print("File Version \(version)")
@@ -94,15 +94,15 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) }
 
         guard let title = try titleHandler.expectOptionalResult() ?? translations?.selectedTranslation?.titleString else {
-            throw ParseError.missingElement("title")
+            throw XMLElementParserError.missingElement("title")
         }
 
         guard let category = try categoryHandler.expectOptionalResult() ?? translations?.selectedTranslation?.categoryString else {
-            throw ParseError.missingElement("category")
+            throw XMLElementParserError.missingElement("category")
         }
 
         guard let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString else {
-            throw ParseError.missingElement("description")
+            throw XMLElementParserError.missingElement("description")
         }
 
         let icon = try iconHandler.expectOptionalResult() ?? ExperimentIcon(string: title, image: nil)
@@ -156,14 +156,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
         else if let descriptor = descriptor as? ValueViewElementDescriptor {
             guard let buffer = buffers[descriptor.inputBufferName] else {
-                throw ParseError.missingElement("data-container")
+                throw XMLElementParserError.missingElement("data-container")
             }
 
             return ValueViewDescriptor(label: descriptor.label, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
         }
         else if let descriptor = descriptor as? EditViewElementDescriptor {
             guard let buffer = buffers[descriptor.outputBufferName] else {
-                throw ParseError.missingElement("data-container")
+                throw XMLElementParserError.missingElement("data-container")
             }
 
             if buffer.isEmpty {
@@ -175,7 +175,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         else if let descriptor = descriptor as? ButtonViewElementDescriptor {
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataIO, DataBuffer) in
                 guard let outputBuffer = buffers[flow.outputBufferName] else {
-                    throw ParseError.missingElement("data-container")
+                    throw XMLElementParserError.missingElement("data-container")
                 }
 
                 let input: ExperimentAnalysisDataIO
@@ -183,7 +183,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 switch flow.input {
                 case .buffer(let bufferName):
                     guard let buffer = buffers[bufferName] else {
-                        throw ParseError.missingElement("data-container")
+                        throw XMLElementParserError.missingElement("data-container")
                     }
 
                     input = .buffer(buffer: buffer, usedAs: "", clear: true)
@@ -201,19 +201,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         else if let descriptor = descriptor as? GraphViewElementDescriptor {
             let xBuffer = try descriptor.xInputBufferName.map({ name -> DataBuffer in
                 guard let buffer = buffers[name] else {
-                    throw ParseError.missingElement("data-container")
+                    throw XMLElementParserError.missingElement("data-container")
                 }
                 return buffer
             })
 
             guard let yBuffer = buffers[descriptor.yInputBufferName] else {
-                throw ParseError.missingElement("data-container")
+                throw XMLElementParserError.missingElement("data-container")
             }
 
             return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xInputBuffer: xBuffer, yInputBuffer: yBuffer, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, drawDots: descriptor.drawDots, partialUpdate: descriptor.partialUpdate, history: descriptor.history, lineWidth: descriptor.lineWidth, color: descriptor.color)
         }
         else {
-            throw ParseError.unexpectedChildElement(viewElementResult.tagName)
+            throw XMLElementParserError.unexpectedChildElement(viewElementResult.tagName)
         }
     }
 
@@ -223,7 +223,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
 
         guard let buffer = buffers[descriptor.inputBufferName] else {
-            throw ParseError.missingElement("data-container")
+            throw XMLElementParserError.missingElement("data-container")
         }
 
         return ExperimentOutput(audioOutput: ExperimentAudioOutput(sampleRate: descriptor.rate, loop: descriptor.loop, dataSource: buffer))
@@ -233,7 +233,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let sets = try descriptors.map { descriptor -> ExperimentExportSet in
             let dataSets = try descriptor.dataSets.map { set -> (String, DataBuffer) in
                 guard let buffer = buffers[set.bufferName] else {
-                    throw ParseError.missingElement("data-container")
+                    throw XMLElementParserError.missingElement("data-container")
                 }
 
                 return (descriptor.name, buffer)

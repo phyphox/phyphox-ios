@@ -1,5 +1,5 @@
 //
-//  ExperimentFileHandler.swift
+//  PhyphoxExperimentFileRootElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ExperimentFileHandler: RootElementHandler, LookupElementHandler, AttributelessHandler {
+final class PhyphoxExperimentFileRootElementHandler: RootElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = Experiment
 
     var result: Experiment?

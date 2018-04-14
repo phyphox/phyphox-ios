@@ -1,5 +1,5 @@
 //
-//  GraphViewHandler.swift
+//  GraphViewElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -26,7 +26,7 @@ extension CGFloat: LosslessStringConvertible {
     }
 }
 
-private final class GraphInputHandler: ResultElementHandler, ChildlessHandler {
+private final class GraphInputElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = GraphInputDescriptor
 
     var results = [GraphInputDescriptor]()
@@ -36,11 +36,11 @@ private final class GraphInputHandler: ResultElementHandler, ChildlessHandler {
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard !text.isEmpty else {
-            throw ParseError.missingText
+            throw XMLElementParserError.missingText
         }
 
         guard let axis = (attributes["axis"].map({ GraphAxis(rawValue: $0) }) ?? nil) else {
-            throw ParseError.missingAttribute("axis")
+            throw XMLElementParserError.missingAttribute("axis")
         }
 
         results.append(GraphInputDescriptor(axis: axis, bufferName: text))
@@ -81,14 +81,14 @@ struct GraphViewElementDescriptor: ViewElementDescriptor {
     let color: UIColor
 }
 
-final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
+final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     typealias Result = GraphViewElementDescriptor
 
     var results = [Result]()
 
     var handlers: [String : ElementHandler]
 
-    private let inputHandler = GraphInputHandler()
+    private let inputHandler = GraphInputElementHandler()
 
     init() {
         handlers = ["input": inputHandler]
@@ -99,19 +99,19 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         guard let xLabel = attributes["labelX"], !xLabel.isEmpty else {
-            throw ParseError.missingAttribute("labelX")
+            throw XMLElementParserError.missingAttribute("labelX")
         }
 
         guard let yLabel = attributes["labelY"], !yLabel.isEmpty else {
-            throw ParseError.missingAttribute("labelY")
+            throw XMLElementParserError.missingAttribute("labelY")
         }
 
         guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
-            throw ParseError.missingElement("data-container")
+            throw XMLElementParserError.missingElement("data-container")
         }
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
@@ -125,7 +125,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw ParseError.unexpectedValue("color")
+                throw XMLElementParserError.unexpectedValue("color")
             }
 
             return color
@@ -141,7 +141,7 @@ final class GraphViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
             let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMinY", from: attributes, defaultValue: "auto")),
             let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
             else {
-                throw ParseError.unexpectedValue("scale")
+                throw XMLElementParserError.unexpectedValue("scale")
         }
 
         let minX: CGFloat = attribute("minX", from: attributes, defaultValue: 0)

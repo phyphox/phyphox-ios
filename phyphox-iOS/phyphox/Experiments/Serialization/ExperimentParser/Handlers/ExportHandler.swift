@@ -1,5 +1,5 @@
 //
-//  ExportHandler.swift
+//  ExportElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -13,7 +13,7 @@ struct ExportSetDataDescriptor {
     let bufferName: String
 }
 
-private final class ExportSetDataHandler: ResultElementHandler, ChildlessHandler {
+private final class ExportSetDataElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = ExportSetDataDescriptor
 
     var results = [Result]()
@@ -23,11 +23,11 @@ private final class ExportSetDataHandler: ResultElementHandler, ChildlessHandler
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let name = attributes["name"], !name.isEmpty else {
-            throw ParseError.missingAttribute("name")
+            throw XMLElementParserError.missingAttribute("name")
         }
 
         guard !text.isEmpty else {
-            throw ParseError.missingText
+            throw XMLElementParserError.missingText
         }
 
         results.append(ExportSetDataDescriptor(name: name, bufferName: text))
@@ -40,14 +40,14 @@ struct ExportSetDescriptor {
     let dataSets: [ExportSetDataDescriptor]
 }
 
-private final class ExportSetHandler: ResultElementHandler, LookupElementHandler {
+private final class ExportSetElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = ExportSetDescriptor
 
     var results = [Result]()
 
     var handlers: [String : ElementHandler]
 
-    private let dataHandler = ExportSetDataHandler()
+    private let dataHandler = ExportSetDataElementHandler()
 
     init() {
         handlers = ["data": dataHandler]
@@ -58,21 +58,21 @@ private final class ExportSetHandler: ResultElementHandler, LookupElementHandler
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let name = attributes["name"], !name.isEmpty else {
-            throw ParseError.missingAttribute("name")
+            throw XMLElementParserError.missingAttribute("name")
         }
 
         results.append(ExportSetDescriptor(name: name, dataSets: dataHandler.results))
     }
 }
 
-final class ExportHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class ExportElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = [ExportSetDescriptor]
 
     var results = [Result]()
 
     var handlers: [String: ElementHandler]
 
-    private let setHandler = ExportSetHandler()
+    private let setHandler = ExportSetElementHandler()
 
     init() {
         handlers = ["set": setHandler]

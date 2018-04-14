@@ -1,5 +1,5 @@
 //
-//  ButtonViewHandler.swift
+//  ButtonViewElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -20,7 +20,7 @@ struct ButtonViewElementDescriptor: ViewElementDescriptor {
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
 }
 
-private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
+private final class ButtonInputElementHandler: ResultElementHandler, ChildlessHandler {
     var results = [ButtonInputDescriptor]()
 
     typealias Result = ButtonInputDescriptor
@@ -33,18 +33,18 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
 
         if type == "buffer" {
             guard !text.isEmpty else {
-                throw ParseError.missingText
+                throw XMLElementParserError.missingText
             }
 
             results.append(.buffer(text))
         }
         else if type == "value" {
             guard !text.isEmpty else {
-                throw ParseError.missingText
+                throw XMLElementParserError.missingText
             }
 
             guard let value = Double(text) else {
-                throw ParseError.unexpectedValue("value")
+                throw XMLElementParserError.unexpectedValue("value")
             }
 
             results.append(.value(value))
@@ -53,12 +53,12 @@ private final class ButtonInputHandler: ResultElementHandler, ChildlessHandler {
             results.append(.clear)
         }
         else {
-            throw ParseError.unexpectedValue("type")
+            throw XMLElementParserError.unexpectedValue("type")
         }
     }
 }
 
-final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
+final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     typealias Result = ButtonViewElementDescriptor
 
     var results = [Result]()
@@ -66,7 +66,7 @@ final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewC
     var handlers: [String : ElementHandler]
 
     private let outputHandler = TextElementHandler()
-    private let inputHandler = ButtonInputHandler()
+    private let inputHandler = ButtonInputElementHandler()
 
     init() {
         handlers = ["output": outputHandler, "input": inputHandler]
@@ -77,11 +77,11 @@ final class ButtonViewHandler: ResultElementHandler, LookupElementHandler, ViewC
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         guard inputHandler.results.count == outputHandler.results.count else {
-            throw ParseError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
+            throw XMLElementParserError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
         }
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))

@@ -1,5 +1,5 @@
 //
-//  ViewsHandler.swift
+//  ViewsElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -11,7 +11,7 @@ import Foundation
 protocol ViewElementDescriptor {
 }
 
-protocol ViewComponentHandler: ElementHandler {
+protocol ViewComponentElementHandler: ElementHandler {
     func getResult() throws -> ViewElementDescriptor
 }
 
@@ -21,39 +21,39 @@ struct ViewCollectionDescriptor {
     let views: [(tagName: String, descriptor: ViewElementDescriptor)]
 }
 
-private final class ViewHandler: ResultElementHandler {
+private final class ViewElementHandler: ResultElementHandler {
     typealias Result = ViewCollectionDescriptor
 
     var results = [ViewCollectionDescriptor]()
 
-    private var handlers = [(tagName: String, handler: ViewComponentHandler)]()
+    private var handlers = [(tagName: String, handler: ViewComponentElementHandler)]()
 
     func beginElement(attributes: [String: String]) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
-        let handler: ViewComponentHandler
+        let handler: ViewComponentElementHandler
 
         if tagName == "info" {
-            handler = InfoViewHandler()
+            handler = InfoViewElementHandler()
         }
         else if tagName == "separator" {
-            handler = SeparatorViewHandler()
+            handler = SeparatorViewElementHandler()
         }
         else if tagName == "value" {
-            handler = ValueViewHandler()
+            handler = ValueViewElementHandler()
         }
         else if tagName == "edit" {
-            handler = EditViewHandler()
+            handler = EditViewElementHandler()
         }
         else if tagName == "button" {
-            handler = ButtonViewHandler()
+            handler = ButtonViewElementHandler()
         }
         else if tagName == "graph" {
-            handler = GraphViewHandler()
+            handler = GraphViewElementHandler()
         }
         else {
-            throw ParseError.unexpectedChildElement(tagName)
+            throw XMLElementParserError.unexpectedChildElement(tagName)
         }
 
         handlers.append((tagName, handler))
@@ -63,13 +63,13 @@ private final class ViewHandler: ResultElementHandler {
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         let views = try handlers.map { ($0.tagName, try $0.handler.getResult()) }
 
         guard !views.isEmpty else {
-            throw ParseError.missingChildElement("view-element")
+            throw XMLElementParserError.missingChildElement("view-element")
         }
 
         results.append(ViewCollectionDescriptor(label: label, views: views))
@@ -80,14 +80,14 @@ private final class ViewHandler: ResultElementHandler {
     }
 }
 
-final class ViewsHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = [ViewCollectionDescriptor]
 
     var results = [Result]()
 
     var handlers: [String: ElementHandler]
 
-    private let viewHandler = ViewHandler()
+    private let viewHandler = ViewElementHandler()
 
     init() {
         handlers = ["view": viewHandler]

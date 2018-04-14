@@ -1,5 +1,5 @@
 //
-//  InputHandler.swift
+//  InputElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -17,7 +17,7 @@ protocol SensorDescriptor {
     var outputs: [SensorOutputDescriptor] { get }
 }
 
-private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler {
+private final class SensorOutputElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = SensorOutputDescriptor
 
     var results = [Result]()
@@ -26,7 +26,7 @@ private final class SensorOutputHandler: ResultElementHandler, ChildlessHandler 
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard !text.isEmpty else { throw ParseError.missingText }
+        guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
         let component = attributes["component"] ?? "output"
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
@@ -41,12 +41,12 @@ struct LocationInputDescriptor: SensorDescriptor {
     let outputs: [SensorOutputDescriptor]
 }
 
-private final class LocationHandler: ResultElementHandler, LookupElementHandler {
+private final class LocationElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = LocationInputDescriptor
 
     var results = [Result]()
 
-    private let outputHandler = SensorOutputHandler()
+    private let outputHandler = SensorOutputElementHandler()
 
     var handlers: [String : ElementHandler]
 
@@ -70,12 +70,12 @@ struct SensorInputDescriptor: SensorDescriptor {
     let outputs: [SensorOutputDescriptor]
 }
 
-private final class SensorHandler: ResultElementHandler, LookupElementHandler {
+private final class SensorElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = SensorInputDescriptor
 
     var results = [Result]()
 
-    private let outputHandler = SensorOutputHandler()
+    private let outputHandler = SensorOutputElementHandler()
 
     var handlers: [String : ElementHandler]
 
@@ -87,7 +87,7 @@ private final class SensorHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard let sensor: SensorType = attribute("type", from: attributes) else { throw ParseError.unexpectedValue("type") }
+        guard let sensor: SensorType = attribute("type", from: attributes) else { throw XMLElementParserError.unexpectedValue("type") }
 
         let frequency = attribute("rate", from: attributes, defaultValue: 0.0)
         let average = attribute("average", from: attributes, defaultValue: false)
@@ -103,12 +103,12 @@ struct AudioInputDescriptor: SensorDescriptor {
     let outputs: [SensorOutputDescriptor]
 }
 
-private final class AudioHandler: ResultElementHandler, LookupElementHandler {
+private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = AudioInputDescriptor
 
     var results = [Result]()
 
-    private let outputHandler = SensorOutputHandler()
+    private let outputHandler = SensorOutputElementHandler()
 
     var handlers: [String : ElementHandler]
 
@@ -125,14 +125,14 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 }
 
-final class InputHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = (sensors: [SensorInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor])
 
     var results = [Result]()
 
-    private let sensorHandler = SensorHandler()
-    private let audioHandler = AudioHandler()
-    private let locationHandler = LocationHandler()
+    private let sensorHandler = SensorElementHandler()
+    private let audioHandler = AudioElementHandler()
+    private let locationHandler = LocationElementHandler()
 
     var handlers: [String: ElementHandler]
 

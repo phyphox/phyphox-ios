@@ -1,5 +1,5 @@
 //
-//  DataContainersHandler.swift
+//  DataContainersElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -10,7 +10,7 @@ import Foundation
 
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
 
-private final class DataContainerHandler: ResultElementHandler, ChildlessHandler {
+private final class DataContainerElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = BufferDescriptor
 
     var results = [Result]()
@@ -19,7 +19,7 @@ private final class DataContainerHandler: ResultElementHandler, ChildlessHandler
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard !text.isEmpty else { throw ParseError.missingText }
+        guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
         let size = attribute("size", from: attributes, defaultValue: 1)
         let baseContents = attributes["init"].map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
@@ -29,14 +29,14 @@ private final class DataContainerHandler: ResultElementHandler, ChildlessHandler
     }
 }
 
-final class DataContainersHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class DataContainersElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = [BufferDescriptor]
 
     var handlers: [String: ElementHandler]
 
     var results = [Result]()
 
-    private let containerHandler = DataContainerHandler()
+    private let containerHandler = DataContainerElementHandler()
 
     init() {
         handlers = ["container": containerHandler]

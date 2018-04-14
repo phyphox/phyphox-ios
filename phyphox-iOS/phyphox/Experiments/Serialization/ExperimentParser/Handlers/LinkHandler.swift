@@ -1,5 +1,5 @@
 //
-//  LinkHandler.swift
+//  LinkElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class LinkHandler: ResultElementHandler, ChildlessHandler {
+final class LinkElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = ExperimentLink
 
     var results = [Result]()
@@ -17,11 +17,11 @@ final class LinkHandler: ResultElementHandler, ChildlessHandler {
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard !text.isEmpty else { throw ParseError.missingText }
+        guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        guard let label = attributes["label"], !label.isEmpty else { throw ParseError.missingAttribute("label") }
+        guard let label = attributes["label"], !label.isEmpty else { throw XMLElementParserError.missingAttribute("label") }
 
-        guard let url = URL(string: text) else { throw ParseError.unexpectedValue("url") }
+        guard let url = URL(string: text) else { throw XMLElementParserError.unexpectedValue("url") }
 
         let highlighted = attribute("highlight", from: attributes, defaultValue: false)
 

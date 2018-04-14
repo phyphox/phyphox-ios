@@ -1,5 +1,5 @@
 //
-//  EditViewHandler.swift
+//  EditViewElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -21,7 +21,7 @@ struct EditViewElementDescriptor: ViewElementDescriptor {
     let outputBufferName: String
 }
 
-final class EditViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
+final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     typealias Result = EditViewElementDescriptor
 
     var results = [Result]()
@@ -39,7 +39,7 @@ final class EditViewHandler: ResultElementHandler, LookupElementHandler, ViewCom
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         let outputBufferName = try outputHandler.expectSingleResult()

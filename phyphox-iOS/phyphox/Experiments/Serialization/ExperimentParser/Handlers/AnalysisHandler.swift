@@ -1,5 +1,5 @@
 //
-//  AnalysisHandler.swift
+//  AnalysisElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -14,7 +14,7 @@ enum ExperimentAnalysisDataIODescriptor {
     case empty(usedAs: String)
 }
 
-final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
+final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessHandler {
     var results = [ExperimentAnalysisDataIODescriptor]()
 
     typealias Result = ExperimentAnalysisDataIODescriptor
@@ -27,17 +27,17 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
         let usedAs = attribute("as", from: attributes, defaultValue: "")
 
         if type == "buffer" {
-            guard !text.isEmpty else { throw ParseError.missingText }
+            guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
             let clear = attribute("clear", from: attributes, defaultValue: true)
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
         else if type == "value" {
-            guard !text.isEmpty else { throw ParseError.missingText }
+            guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
             guard let value = Double(text) else {
-                throw ParseError.unexpectedValue("value")
+                throw XMLElementParserError.unexpectedValue("value")
             }
 
             results.append(.value(value: value, usedAs: usedAs))
@@ -46,7 +46,7 @@ final class AnalysisDataFlowHandler: ResultElementHandler, ChildlessHandler {
             results.append(.empty(usedAs: usedAs))
         }
         else {
-            throw ParseError.unexpectedValue("type")
+            throw XMLElementParserError.unexpectedValue("type")
         }
     }
 }
@@ -58,15 +58,15 @@ struct AnalysisModuleDescriptor {
     let attributes: [String: String]
 }
 
-final class AnalysisModuleHandler: ResultElementHandler, LookupElementHandler {
+final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = AnalysisModuleDescriptor
 
     var results = [Result]()
 
     var handlers: [String : ElementHandler]
 
-    private let inputsHandler = AnalysisDataFlowHandler()
-    private let outputsHandler = AnalysisDataFlowHandler()
+    private let inputsHandler = AnalysisDataFlowElementHandler()
+    private let outputsHandler = AnalysisDataFlowElementHandler()
 
     init() {
         handlers = ["input": inputsHandler, "output": outputsHandler]
@@ -87,18 +87,18 @@ struct AnalysisDescriptor {
     let modules: [(name: String, descriptor: AnalysisModuleDescriptor)]
 }
 
-final class AnalysisHandler: ResultElementHandler {
+final class AnalysisElementHandler: ResultElementHandler {
     typealias Result = AnalysisDescriptor
 
     var results = [Result]()
 
-    private var handlers = [(String, AnalysisModuleHandler)]()
+    private var handlers = [(String, AnalysisModuleElementHandler)]()
 
     func beginElement(attributes: [String: String]) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
-        let handler = AnalysisModuleHandler()
+        let handler = AnalysisModuleElementHandler()
         handlers.append((tagName, handler))
 
         return handler

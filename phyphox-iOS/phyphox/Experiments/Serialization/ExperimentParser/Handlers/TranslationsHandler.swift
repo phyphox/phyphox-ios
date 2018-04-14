@@ -1,5 +1,5 @@
 //
-//  TranslationsHandler.swift
+//  TranslationsElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-private final class StringTranslationHandler: ResultElementHandler, ChildlessHandler {
+private final class StringTranslationElementHandler: ResultElementHandler, ChildlessHandler {
     var results = [Result]()
 
     typealias Result = (String, String)
@@ -17,7 +17,7 @@ private final class StringTranslationHandler: ResultElementHandler, ChildlessHan
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard let original = attributes["original"] else { throw ParseError.missingAttribute("original") }
+        guard let original = attributes["original"] else { throw XMLElementParserError.missingAttribute("original") }
 
         results.append((original, text))
     }
@@ -27,17 +27,17 @@ private final class StringTranslationHandler: ResultElementHandler, ChildlessHan
     }
 }
 
-private final class TranslationHandler: ResultElementHandler, LookupElementHandler {
+private final class TranslationElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = (String, ExperimentTranslation)
 
     var results = [Result]()
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
-    private let descriptionHandler = MultilineTextHandler()
+    private let descriptionHandler = MultilineTextElementHandler()
 
-    private let stringHandler = StringTranslationHandler()
-    private let linkHandler = LinkHandler()
+    private let stringHandler = StringTranslationElementHandler()
+    private let linkHandler = LinkElementHandler()
 
     var handlers: [String : ElementHandler]
 
@@ -49,7 +49,7 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
     }
 
     func endElement(with text: String, attributes: [String: String]) throws {
-        guard let locale = attributes["locale"] else { throw ParseError.missingAttribute("locale") }
+        guard let locale = attributes["locale"] else { throw XMLElementParserError.missingAttribute("locale") }
 
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
@@ -63,12 +63,12 @@ private final class TranslationHandler: ResultElementHandler, LookupElementHandl
     }
 }
 
-final class TranslationsHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class TranslationsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = [String: ExperimentTranslation]
 
     var results = [Result]()
 
-    private let translationHandler = TranslationHandler()
+    private let translationHandler = TranslationElementHandler()
 
     var handlers: [String: ElementHandler]
 

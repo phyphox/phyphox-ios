@@ -1,5 +1,5 @@
 //
-//  OutputHandler.swift
+//  OutputElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
@@ -15,7 +15,7 @@ struct AudioOutputDescriptor {
     let inputBufferName: String
 }
 
-private final class AudioHandler: ResultElementHandler, LookupElementHandler {
+private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
     typealias Result = AudioOutputDescriptor
 
     var results = [Result]()
@@ -32,7 +32,7 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
-        guard tagName == "input" else { throw ParseError.unexpectedChildElement(tagName) }
+        guard tagName == "input" else { throw XMLElementParserError.unexpectedChildElement(tagName) }
 
         return inputHandler
     }
@@ -47,12 +47,12 @@ private final class AudioHandler: ResultElementHandler, LookupElementHandler {
     }
 }
 
-final class OutputHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
+final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessHandler {
     typealias Result = AudioOutputDescriptor
 
     var results = [Result]()
 
-    private let audioHandler = AudioHandler()
+    private let audioHandler = AudioElementHandler()
 
     var handlers: [String : ElementHandler]
 

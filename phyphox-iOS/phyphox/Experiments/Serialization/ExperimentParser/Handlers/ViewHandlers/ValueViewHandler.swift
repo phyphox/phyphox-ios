@@ -1,5 +1,5 @@
 //
-//  ValueViewHandler.swift
+//  ValueViewElementHandler.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ValueViewMapHandler: ResultElementHandler, ChildlessHandler {
+final class ValueViewMapElementHandler: ResultElementHandler, ChildlessHandler {
     typealias Result = ValueViewMap
 
     var results = [Result]()
@@ -18,7 +18,7 @@ final class ValueViewMapHandler: ResultElementHandler, ChildlessHandler {
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard !text.isEmpty else {
-            throw ParseError.missingText
+            throw XMLElementParserError.missingText
         }
 
         let min = attribute("min", from: attributes, defaultValue: -Double.infinity)
@@ -40,7 +40,7 @@ struct ValueViewElementDescriptor: ViewElementDescriptor {
     let mappings: [ValueViewMap]
 }
 
-final class ValueViewHandler: ResultElementHandler, LookupElementHandler, ViewComponentHandler {
+final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     typealias Result = ValueViewElementDescriptor
 
     var results = [Result]()
@@ -48,7 +48,7 @@ final class ValueViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
     var handlers: [String : ElementHandler]
 
     private let inputHandler = TextElementHandler()
-    private let mapHandler = ValueViewMapHandler()
+    private let mapHandler = ValueViewMapElementHandler()
 
     init() {
         handlers = ["input": inputHandler, "map": mapHandler]
@@ -59,7 +59,7 @@ final class ValueViewHandler: ResultElementHandler, LookupElementHandler, ViewCo
 
     func endElement(with text: String, attributes: [String : String]) throws {
         guard let label = attributes["label"], !label.isEmpty else {
-            throw ParseError.missingAttribute("label")
+            throw XMLElementParserError.missingAttribute("label")
         }
 
         let mappings = mapHandler.results

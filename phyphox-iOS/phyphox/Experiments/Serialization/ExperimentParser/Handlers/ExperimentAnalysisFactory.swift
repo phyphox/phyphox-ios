@@ -13,7 +13,7 @@ private extension ExperimentAnalysisDataIO {
         switch descriptor {
         case .buffer(name: let bufferName, usedAs: let usedAs, clear: let clear):
             guard let buffer = buffers[bufferName] else {
-                throw ParseError.missingElement("data-container")
+                throw XMLElementParserError.missingElement("data-container")
             }
 
             self = .buffer(buffer: buffer, usedAs: usedAs, clear: clear)

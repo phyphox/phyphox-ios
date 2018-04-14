@@ -30,22 +30,6 @@ extension RootElementHandler {
     }
 }
 
-private enum XMLElementParserError: Error {
-    case parsingError(backtrace: String, encounteredError: Error)
-    case missingRootElement
-}
-
-extension XMLElementParserError: LocalizedError {
-    var errorDescription: String? {
-        switch self {
-        case .parsingError(backtrace: let backtrace, encounteredError: let error):
-            return "Parser encountered error parsing element \"\(backtrace)\": \(error.localizedDescription)"
-        case .missingRootElement:
-            return "The root element handler returned no result"
-        }
-    }
-}
-
 final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject, XMLParserDelegate where RootHandler.Result == Result {
     private var rootHandler: RootHandler
 
@@ -82,11 +66,11 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         parser.parse()
 
         if let parseError = parsingError ?? parser.parserError {
-            throw XMLElementParserError.parsingError(backtrace: currentElementBacktrace, encounteredError: parseError)
+            throw ParsingError.parsingError(backtrace: currentElementBacktrace, encounteredError: parseError)
         }
 
         guard let result = rootHandler.result else {
-            throw XMLElementParserError.missingRootElement
+            throw ParsingError.missingRootElement
         }
 
         return result
@@ -179,6 +163,22 @@ final class XMLElementParser<Result, RootHandler: RootElementHandler>: NSObject,
         catch {
             parsingError = error
             parser.abortParsing()
+        }
+    }
+}
+
+extension XMLElementParser {
+    fileprivate enum ParsingError: LocalizedError {
+        case parsingError(backtrace: String, encounteredError: Error)
+        case missingRootElement
+
+        var errorDescription: String? {
+            switch self {
+            case .parsingError(backtrace: let backtrace, encounteredError: let error):
+                return "Parser encountered error on element \"\(backtrace)\": \(error.localizedDescription)"
+            case .missingRootElement:
+                return "The root element handler returned no result"
+            }
         }
     }
 }
