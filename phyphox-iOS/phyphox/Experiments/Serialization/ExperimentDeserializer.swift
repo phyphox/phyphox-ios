@@ -36,23 +36,16 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     return nil
 }
 
-let pars = XMLElementParser(rootHandler: ExperimentFileHandler())
-
 final class ExperimentDeserializer {
     private let parser: XMLParser
     private let local: Bool
 
-    private let data: Data
     init(data: Data, local: Bool) {
         self.local = local
         parser = XMLParser(data: data)
-        self.data = data
     }
 
     func deserialize() throws -> Experiment {
-        // TODO set local
-        let newExperiment = try pars.parse(data: data)
-
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary
 
         let dictionary = XMLDictionaryParser.sharedInstance().dictionary(with: parser)! as NSDictionary
@@ -139,26 +132,10 @@ final class ExperimentDeserializer {
 
         let analysis = try parseAnalysis(analysisDictionary, buffers: buffers)
 
-        let experiment = Experiment(title: anyTitle, description: description, links: links, category: anyCategory, icon: icon, local: local, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle, description: description, links: links, category: anyCategory, icon: icon, persistentStorageURL: experimentPersistentStorageURL, translation: translation, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        experiment.local = local
 
-        return newExperiment
-    }
-
-    func deserializeAsynchronous(_ completion: @escaping (_ experiment: Experiment?, _ error: SerializationError?) -> Void) {
-        serializationQueue.async { () -> Void in
-            do {
-                let experiment = try self.deserialize()
-
-                mainThread({
-                    completion(experiment, nil)
-                })
-            }
-            catch {
-                mainThread({
-                    completion(nil, error as? SerializationError)
-                })
-            }
-        }
+        return experiment
     }
 
     //MARK: - Parsing

@@ -57,7 +57,7 @@ final class Experiment {
 
     let persistentStorageURL: URL
 
-    var local: Bool
+    var local: Bool = true
     var source: URL?
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
@@ -84,7 +84,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, local: Bool, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.description = description
@@ -95,8 +95,6 @@ final class Experiment {
         self.category = category
         
         self.icon = icon
-        
-        self.local = local
         
         self.translation = translation
 

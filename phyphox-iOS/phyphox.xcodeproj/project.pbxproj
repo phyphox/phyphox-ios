@@ -108,7 +108,6 @@
 		6B7BF7BA1C130471007408FB /* ExperimentDeserializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */; };
 		6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B11C130471007408FB /* ExperimentManager.swift */; };
 		6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */; };
-		6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */; };
 		6B7BF7BF1C130471007408FB /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B51C130471007408FB /* MainView.swift */; };
 		6B7BF7C01C130471007408FB /* ExperimentsCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */; };
 		6B7BF7C21C13048B007408FB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7C11C13048B007408FB /* AppDelegate.swift */; };
@@ -488,7 +487,6 @@
 		6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentDeserializer.swift; sourceTree = "<group>"; };
 		6B7BF7B11C130471007408FB /* ExperimentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentManager.swift; sourceTree = "<group>"; };
 		6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerialization.swift; sourceTree = "<group>"; };
-		6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentSerializer.swift; sourceTree = "<group>"; };
 		6B7BF7B51C130471007408FB /* MainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		6B7BF7B61C130471007408FB /* ExperimentsCollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentsCollectionViewController.swift; sourceTree = "<group>"; };
 		6B7BF7C11C13048B007408FB /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -1016,7 +1014,6 @@
 			isa = PBXGroup;
 			children = (
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
-				6B7BF7B41C130471007408FB /* ExperimentSerializer.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
 				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
 				6B7BF7B01C130471007408FB /* ExperimentDeserializer.swift */,
@@ -1488,7 +1485,6 @@
 			files = (
 				6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */,
 				4B47B02F1DA6A1FC00CCBA6E /* AtanAnalysis.swift in Sources */,
-				6B7BF7BE1C130471007408FB /* ExperimentSerializer.swift in Sources */,
 				6B612FE2207E5A24001DA8D9 /* PhyphoxElementHandler.swift in Sources */,
 				4B53E8491CFC65EE004E6164 /* ExperimentPageViewController.swift in Sources */,
 				6B612FEB207E5ACF001DA8D9 /* IconHandler.swift in Sources */,
