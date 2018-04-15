@@ -17,23 +17,23 @@ protocol ElementHandler {
     mutating func clearChildHandlers()
 }
 
-protocol RootElementHandler: ElementHandler {
+protocol DocumentElementHandler: ElementHandler {
     associatedtype Result
 
     var result: Result? { get set }
 }
 
-extension RootElementHandler {
+extension DocumentElementHandler {
     mutating func clear() {
         result = nil
         clearChildHandlers()
     }
 }
 
-final class XMLElementParser<RootHandler: RootElementHandler>: NSObject, XMLParserDelegate {
+final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XMLParserDelegate {
     private var rootHandler: RootHandler
 
-    private var handlerStack = [(String, ElementHandler)]()
+    private var handlerStack = [(tagName: String, elementHandler: ElementHandler)]()
     private var textStack = [String]()
     private var attributesStack = [[String: String]]()
 
@@ -45,14 +45,7 @@ final class XMLElementParser<RootHandler: RootElementHandler>: NSObject, XMLPars
     }
 
     private var currentElementBacktrace: String {
-        return handlerStack.reduce("") { result, handler -> String in
-            if result.isEmpty {
-                return handler.0
-            }
-            else {
-                return result + " > " + handler.0
-            }
-        }
+        return handlerStack.map({ $0.tagName }).joined(separator: " > ")
     }
 
     func parse(stream: InputStream) throws -> RootHandler.Result {

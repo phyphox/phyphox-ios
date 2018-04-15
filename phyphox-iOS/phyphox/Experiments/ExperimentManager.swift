@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import JGProgressHUD
 
 let emptyBuffer: DataBuffer = {
     let buffer = try! DataBuffer(name: "empty", storage: .memory(size: 0), baseContents: [], static: true)
@@ -34,7 +35,7 @@ final class ExperimentManager {
     func deleteExperiment(_ experiment: Experiment) throws {
         guard let source = experiment.source else { return }
         try FileManager.default.removeItem(at: source)
-        try loadCustomExperiments()
+        loadCustomExperiments()
     }
 
     private func registerExperiment(_ experiment: Experiment, custom: Bool) {
@@ -56,7 +57,20 @@ final class ExperimentManager {
         }
     }
 
-    func loadSavedExperiments() throws {
+    private func showLoadingError(for name: String, error: Error) {
+        let hud = JGProgressHUD(style: .dark)
+        hud.indicatorView = JGProgressHUDErrorIndicatorView()
+        hud.indicatorView?.tintColor = .white
+        hud.textLabel.text = "Failed Loading Experiment \(name)"
+        hud.detailTextLabel.text = error.localizedDescription
+
+        (UIApplication.shared.keyWindow?.rootViewController?.view).map {
+            hud.show(in: $0)
+            hud.dismiss(afterDelay: 3.0)
+        }
+    }
+
+    func loadSavedExperiments() {
         guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: savedExperimentStatesURL.path) else { return }
 
         for file in experiments {
@@ -64,15 +78,20 @@ final class ExperimentManager {
 
             guard url.pathExtension == experimentStateFileExtension else { continue }
 
-            let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromURL(url)
 
-            registerExperiment(experiment, custom: true)
+                registerExperiment(experiment, custom: true)
+            }
+            catch {
+                showLoadingError(for: file, error: error)
+            }
         }
 
         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
 
-    func loadCustomExperiments() throws {
+    func loadCustomExperiments() {
         guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: customExperimentsURL.path) else { return }
 
         for file in experiments {
@@ -80,16 +99,21 @@ final class ExperimentManager {
 
             guard url.pathExtension == experimentFileExtension else { continue }
 
-            let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromURL(url)
 
-            registerExperiment(experiment, custom: true)
+                registerExperiment(experiment, custom: true)
+            }
+            catch {
+                showLoadingError(for: file, error: error)
+            }
         }
 
         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
 
-    private func loadExperiments() throws {
-        let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
+    private func loadExperiments() {
+        guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path) else { return }
 
         for file in experiments {
             let url = experimentsBaseURL.appendingPathComponent(file)
@@ -102,8 +126,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: false)
             }
             catch {
-                print("Error \(error.localizedDescription)")
-                // TODO: report error
+                showLoadingError(for: file, error: error)
             }
         }
     }
@@ -135,14 +158,9 @@ final class ExperimentManager {
     init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
 
-        do {
-            try loadExperiments()
-            try loadCustomExperiments()
-            try loadSavedExperiments()
-        }
-        catch {
-            print(error)
-        }
+       loadExperiments()
+       loadCustomExperiments()
+       loadSavedExperiments()
 
         #if DEBUG
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")

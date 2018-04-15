@@ -33,7 +33,7 @@ final class SimpleExperimentSerializer {
         
         try str.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
 
-        try! ExperimentManager.shared.loadCustomExperiments()
+        ExperimentManager.shared.loadCustomExperiments()
         
         return str
     }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class PhyphoxExperimentFileRootElementHandler: RootElementHandler, LookupElementHandler, AttributelessElementHandler {
+final class PhyphoxExperimentFileRootElementHandler: DocumentElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = Experiment
 
     var result: Experiment?
