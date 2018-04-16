@@ -12,10 +12,6 @@ let EndBackgroundMotionSessionNotification = "EndBackgroundMotionSessionNotifica
 let ResignActiveNotification = "ResignActiveNotification"
 let DidBecomeActiveNotification = "DidBecomeActiveNotification"
 
-var iOS9: Bool {
-    return ptHelperFunctionIsIOS9()
-}
-
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
@@ -50,7 +46,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         cleanInbox(url.lastPathComponent)
         return launchExperimentByURL(url)
     }
-    
 
     func applicationWillResignActive(_ application: UIApplication) {
         

@@ -37,6 +37,9 @@ enum XMLElementParserError: Error {
 
     /// Unreadable (binary) data
     case unreadableData
+
+    /// Custom error message
+    case message(String)
 }
 
 extension XMLElementParserError: LocalizedError {
@@ -62,6 +65,8 @@ extension XMLElementParserError: LocalizedError {
             return "Unreadable data"
         case .unexpectedAttributeValue(let attribute):
             return "Unexpected value for \"\(attribute)\""
+        case .message(let message):
+            return message
         }
     }
 }

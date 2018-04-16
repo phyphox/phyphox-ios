@@ -51,7 +51,7 @@ final class AudioEngine {
         var audioDescription = monoFloatFormatWithSampleRate(avSession.sampleRate)
         format = AVAudioFormat(streamDescription: &audioDescription)!
 
-        NotificationCenter.default.addObserver(self, selector: #selector(audioEngineConfigurationChange), name: NSNotification.Name.AVAudioEngineConfigurationChange, object: self.engine)
+        NotificationCenter.default.addObserver(self, selector: #selector(audioEngineConfigurationChange), name: .AVAudioEngineConfigurationChange, object: engine)
 
         if audioOutput != nil {
             let playbackPlayer = AVAudioPlayerNode()
@@ -64,22 +64,18 @@ final class AudioEngine {
         if let audioInput = audioInput {
             let recordInputNode = engine.inputNode
 
-            recordInputNode.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format, block: {(buffer, time) in
-                audioInputQueue.async (execute: {
-                    autoreleasepool(invoking: {
+            recordInputNode.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format, block: { buffer, time in
+                audioInputQueue.async {
+                    autoreleasepool {
                         let channels = UnsafeBufferPointer(start: buffer.floatChannelData, count: Int(buffer.format.channelCount))
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
 
                         audioInput.sampleRateInfoBuffer?.append(AVAudioSession.sharedInstance().sampleRate)
-                        audioInput.outBuffer.appendFromArray(Array(data).compactMap{ Double($0 )})
-                    })
-                })
+                        audioInput.outBuffer.appendFromArray(data.map { Double($0) })
+                    }
+                }
             })
         }
-    }
-
-    enum AudioEngineError: Error {
-        case RateMissmatch
     }
     
     @objc private func audioEngineConfigurationChange(_ notification: Notification) -> Void {
