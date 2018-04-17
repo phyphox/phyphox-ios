@@ -62,7 +62,7 @@
 "timed_start" = "Começar medida temporizada";
 "timedRunDialogTitle" = "Medida temporizada";
 "remoteServerWarning" = "Você está para iniciar o acesso remoto dos dados adquiridos. Faça isso apenas numa rede confiável! Algumas redes de empresas ou universidades podem não permitir o acesso entre os dispositivos.\n\nPara uma melhor performance e segurança, conecte o dispositivo através de uma opcão de vínculo (ponto de acesso).\n\nDepois de pressionar ok, você pode acessar suas medidas a partir de qualquer navegador na mesma rede.";
-"remoteServerWarningTitle" = "Aviso de segurança";
+"remoteServerWarningTitle" = "Aviso de segurança!";
 "show_description" = "Informacões sobre o experimento";
 "save_locally" = "Adicionar a coleção de experimentos";
 "save_locally_message" = "Este experimento foi acessado remotamente. Você deseja adicionar ele a sua coleção?";
@@ -78,7 +78,7 @@
 "save_state_default_title" = "Medidas";
 "save_state_success" = "Medidas foram salvas na colecão.";
 "timedRun" = "Medidas temporizadas";
-"pick_exportSets" = "Escolha o conjunto de dados para exportar";
+"pick_exportSets" = "Escolha o conjunto de dados para exportar.";
 "pick_exportFormat" = "Escolha o formato dos dados.";
 "noDrawableData" = "Dados não disponíveis para visualização.";
 "categoryNewExperiment" = "Experimentos personalizados simples";
