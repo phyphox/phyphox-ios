@@ -1,1 +1,20 @@
-
+"app_name" = "手机物理工坊";
+"action_settings" = "设置";
+"title_activity_experiment" = "手机物理工坊";
+"newExperimentPhyphoxInfo" = "参考phyphox.org网站信息，创设更好的手机实验，并包括数据分析，可与同事，学生和朋友们分享。";
+"newExperimentInputTitle" = "标题";
+"newExperimentInputBufferSize" = "缓冲区大小（需存储数值的数目）";
+"newExperimentInputRate" = "传感器速率（单位Hz，数值0表示最快）";
+"newExperimentInputSensors" = "可选传感器";
+"warning" = "警告";
+"donotshowagain" = "不再显示";
+"help" = "帮助信息";
+"experimentsPhyphoxOrg" = "实验设计与说明";
+"experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
+"faqPhyphoxOrg" = "常见问题库";
+"faqPhyphoxOrgURL" = "http://phyphox.org/faq";
+"remotePhyphoxOrg" = "远程控制帮助";
+"remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
+"translationInfo" = "语言";
+"translationToWebsite" = "访问网站";
+"translationToWebsiteURL" = "http://phyphox.org/languages#en";
