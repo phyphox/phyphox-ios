@@ -45,7 +45,7 @@ final class ValueViewDescriptor: ViewDescriptor {
     }
     
     override func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(unit ?? "")</span></span></div>"
+        return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
     }
     
     override func setValueHTMLWithID(_ id: Int) -> String {
@@ -67,7 +67,7 @@ final class ValueViewDescriptor: ViewDescriptor {
                mappingCode +
                "    if (v == null) {" +
                "        v = (x*\(factor)).to\(scientific ? "Exponential" : "Fixed")(\(precision));" +
-               "        $(\"#element\(id) .value .valueUnit\").text(\"\(unit ?? "")\");" +
+               "        $(\"#element\(id) .value .valueUnit\").text(\"\(localizedUnit ?? "")\");" +
                "    } else { " +
                "        $(\"#element\(id) .value .valueUnit\").text(\"\");" +
                "    } " +

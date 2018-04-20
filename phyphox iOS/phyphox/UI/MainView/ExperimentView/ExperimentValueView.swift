@@ -61,7 +61,7 @@ final class ExperimentValueView: ExperimentViewModule<ValueViewDescriptor>, Data
             }
             
             if !mapped {
-                self.unitLabel.text = descriptor.unit
+                self.unitLabel.text = descriptor.localizedUnit
                 
                 let formatter = NumberFormatter()
                 formatter.numberStyle = (self.descriptor.scientific ? .scientific : .decimal)
