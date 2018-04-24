@@ -18,3 +18,5 @@
 "translationInfo" = "语言";
 "translationToWebsite" = "访问网站";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"credits" = "创建团队";
+"creditsRWTH" = "Phyphox是由亚琛工业大学第二物理研究所开发。";
