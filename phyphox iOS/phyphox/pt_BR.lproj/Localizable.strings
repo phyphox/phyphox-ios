@@ -83,3 +83,7 @@
 "noDrawableData" = "Dados não disponíveis para visualização.";
 "categoryNewExperiment" = "Experimentos personalizados simples";
 "categoryRawSensor" = "Sensores";
+"confirmDeleteTitle" = "Confirmar a eliminação? ";
+"switchColumns1" = "Visualização: 1 coluna";
+"switchColumns2" = "Visualização: 2 colunas";
+"switchColumns3" = "Visualização: 3 colunas";
