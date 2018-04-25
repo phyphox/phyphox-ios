@@ -93,3 +93,5 @@
 "save_state_message" = "Verilerinizi içeren bu deneyin durumunu koleksiyonunuza kaydedebilir veya farklı bir uygulama kullanarak paylaşabilirsiniz.";
 "categoryNewExperiment" = "Basit özel deneyler";
 "categoryRawSensor" = "Ham sensörler";
+"remoteServerWarning" = "Elde edilen verilere uzaktan erişimi etkinleştirmek üzeresiniz. Bunu sadece güvenli bir ağda yapmanız tavsiye edilir. Ayrıca, birçok şirket veya üniversite ağında cihazlar arasında doğrudan erişim mümkün olmayabilir.\n\n En iyi güvenlik ve performans için bu cihaza bir bağlantı seçeneği olan mobil erişim noktası ile bağlanmalısınız.\n\nTamam düğmesine bastıktan sonra, aynı ağdaki herhangi bir web tarayıcısından ölçümlerinize erişebilirsiniz.";
+"pick_exportSets" = "Dışa aktarmak istediğiniz veri gruplarını seçin.";
