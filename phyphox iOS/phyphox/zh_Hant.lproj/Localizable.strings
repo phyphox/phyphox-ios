@@ -5,7 +5,7 @@
 "newExperimentPhyphoxInfo" = "參考phyphox.org網站資訊，創設更好的手機實作，並包括數據分析，可與同事，學生和朋友分享。";
 "newExperimentInputTitle" = "標題";
 "newExperimentInputBufferSize" = "緩衝區大小(以數字表示取樣數)";
-"newExperimentInputRate" = "感應器感應速率(用赫為單位，0代表最快)";
+"newExperimentInputRate" = "感應器感應速率(用赫茲為單位，0代表最快)";
 "newExperimentInputSensors" = "選擇感應器";
 "warning" = "警示";
 "donotshowagain" = "不要再顯示";
@@ -80,7 +80,7 @@
 "save_locally_done" = "實驗已成功加入珍藏集";
 "save_state" = "儲存實驗狀態";
 "save_state_category" = "已儲存的實驗狀態";
-"save_state_message" = "你可以儲存這個實驗狀態(含數據)到你的珍藏集，或是經由第三方app分享出去。";
+"save_state_message" = "你可以儲存這個實驗狀態(含數據)到你的珍藏集，或經由第三方app分享出去。";
 "save_state_title" = "標題";
 "save_state_save" = "收藏";
 "save_state_share" = "分享";
