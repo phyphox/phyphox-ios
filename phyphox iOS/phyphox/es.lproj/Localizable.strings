@@ -1,4 +1,4 @@
-"action_settings" = "Opciones";
+"action_settings" = "Ajustes";
 "newExperimentPhyphoxInfo" = "Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y para compartirlos con colegas, estudiantes y amigos.";
 "newExperimentInputTitle" = "Título";
 "newExperimentInputBufferSize" = "Tamaño del búfer (cantidad de valores a ser almacenados)";
@@ -21,3 +21,17 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/controlador-remoto";
 "translationInfo" = "Idiomas";
 "translationToWebsite" = "Visitar sitio web";
+"app_name" = "phyphox";
+"title_activity_experiment" = "phyphox";
+"sensorProximity" = "Proximidad";
+"location" = "Posición";
+"sensorNotAvailableWarningTitle" = "Sensor no disponible.";
+"sensorNotAvailableWarningText1" = "El sensor";
+"sensorNotAvailableWarningText2" = "no está disponible. Normalmente esto significa que tu dispositivo no dispone de un sensor de este tipo.";
+"sensorNotAvailableWarningMoreInfo" = "Más información";
+"close" = "Cerrar";
+"next" = "Siguiente";
+"cancel" = "Cancelar";
+"unknown" = "desconocido";
+"delete" = "Borrar";
+"confirmDelete" = "¿Deseas borrar este experimento de tu colección?";
