@@ -93,7 +93,7 @@
 "pick_exportSets" = "Pick the data sets to export.";
 "pick_exportFormat" = "Choose the data format.";
 "noDrawableData" = "No drawable data.";
-"categoryNewExperiment" = "Simple custom experiments";
+"categoryNewExperiment" = "Απλά πειράματα χρήστη";
 "categoryRawSensor" = "Raw Sensors";
 "experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";
 "help" = "Help and info";
