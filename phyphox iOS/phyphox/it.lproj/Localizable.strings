@@ -3,8 +3,8 @@
 "switchColumns3" = "Vista: 3 colonne";
 "timedRunStartDelay" = "Ritardo partenza (s)";
 "actions" = "Azioni";
-"help" = "Help ed info";
-"newExperimentPhyphoxInfo" = "Vai su phyphox.org per creare esperimenti di livello avanzato, compresa l'analisi dei dati, e per condividerli con colleghi, studenti ed amici.";
+"help" = "Help e info";
+"newExperimentPhyphoxInfo" = "Vai su phyphox.org per creare esperimenti di livello piú avanzato, che comprendano l'analisi dei dati, e per condividerli con colleghi, studenti ed amici.";
 "loadingText" = "Carico esperimento…";
 "remoteServer" = "Permetti accesso remoto";
 "switch_to_raw_magnetometer" = "Usa magnetometro non calibrato";
@@ -31,7 +31,7 @@
 "show_description" = "Info esperimento";
 "action_settings" = "Impostazioni";
 "newExperiment" = "Aggiungi esperimento";
-"donotshowagain" = "Non mostrare ancora";
+"donotshowagain" = "Non mostrare più";
 "credits" = "Crediti";
 "sensorPressure" = "Pressione";
 "sensorLight" = "Luce";
@@ -66,10 +66,10 @@
 "save_locally_done" = "L’esperimento è stato correttamente aggiunto alla collezione.";
 "delete" = "Cancella";
 "share_pick_share" = "Scegli come distribuire";
-"newExperimentInputRate" = "Frequenza sensore (in Hz, 0 = il più veloce possibile)";
+"newExperimentInputRate" = "Frequenza di acquisizione in Hz (0=massima velocità)";
 "share" = "Condividi screenshot";
 "warning" = "Avvertenza";
-"damageWarning" = "Fate attenzione a non danneggiare il telefono facendo gli esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di eventuali danni al vostro telefono.";
+"damageWarning" = "Fai attenzione a non danneggiare il telefono facendo gli esperimenti. Abbi cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di eventuali danni al tuo telefono.";
 "sensorMagneticField" = "Campo magnetico";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Vuoi cancellare questo esperimento dalla tua collezione?";
@@ -82,7 +82,7 @@
 "experimentinfo_hint" = "Per sapere come funziona questo esperimento, guarda le info relative.";
 "remotePhyphoxOrg" = "Help controllo remoto";
 "loadingTitle" = "Caricamento";
-"experimentsPhyphoxOrg" = "Idee ed istruzioni per gli esperimenti";
+"experimentsPhyphoxOrg" = "Idee e istruzioni per gli esperimenti";
 "clear_data_question" = "Cancellare i dati salvati?";
 "clear" = "Cancella";
 "save_state" = "Salva stato dell'esperimento";
@@ -96,7 +96,7 @@
 "save_state_success" = "Lo stato è stato salvato nella tua collezione.";
 "translationInfo" = "Lingue";
 "translationToWebsite" = "Vai al sito";
-"creditsRWTH" = "phyphox è stata creata dal secondo istituto di fisica RWTH Aachen.";
+"creditsRWTH" = "phyphox è un'app del II istituto di fisica del Politecnico di Aachen.";
 "location" = "Posizione";
 "translationToWebsiteURL" = "http://phyphox.org/languages#it";
 "AudioRateMissmatch" = "Errore nel campionamento. Per favore disattivare qualsiasi altra applicazione o servizio (come AirPlay) che utilizza il microfono.";
