@@ -91,3 +91,8 @@
 "AudioRateMissmatch" = "錯誤：取樣率不合。請停用會強行使用不同音頻取樣率的任何app或其它服務(如 AirPlay)。";
 "translationText" = "Phyphox 將使用系統設定中語言偏好裡的第一選項。要知悉哪種語言可用及如何協助，請選擇\"拜訪網頁\"。";
 "save_state_subject" = "phyphox的實驗狀態";
+"timedRunDialogTitle" = "時程設定";
+"timedRunStartDelay" = "延遲啟動(秒)";
+"enableTimedRun" = "啟用時程設定";
+"disableTimedRun" = "取消時程設定";
+"timedRun" = "時程設定";
