@@ -1,1 +1,9 @@
-
+"app_name" = "phyphox";
+"action_settings" = "設定";
+"title_activity_experiment" = "phyphox";
+"newExperimentPhyphoxInfo" = "データ分析や同僚，学生，友人との共有等の高度の実験を行うには phyphox.org のリンクを参照ください．";
+"newExperimentInputTitle" = "タイトル";
+"newExperimentInputBufferSize" = "バッファーサイズ(格納する値の数)";
+"newExperimentInputRate" = "センサーレート (Hz，0は最速処理を意味する)";
+"newExperimentInputSensors" = "アクティブなセンサー";
+"help" = "ヘルプ＆インフォ";
