@@ -20,7 +20,7 @@
 "sensorPressure" = "壓力計";
 "sensorProximity" = "距離檢測計";
 "location" = "GPS偵測器";
-"sensorNotAvailableWarningTitle" = "感應裝置不可用";
+"sensorNotAvailableWarningTitle" = "本機的感應器不支援";
 "sensorNotAvailableWarningText1" = "感應裝置";
 "sensorNotAvailableWarningText2" = "不可用。 表示您的設備沒有這種類型的感應器。";
 "sensorNotAvailableWarningMoreInfo" = "更多資訊";
@@ -41,7 +41,7 @@
 "timed_stop" = "停止定時計時";
 "timed_start" = "開始定時計時";
 "loadingTitle" = "載入";
-"loadingText" = "載入實驗";
+"loadingText" = "載入實驗中";
 "experimentinfo_hint" = "查看與此手機實作相關資訊，以了解該如何使用。";
 "help" = "協助訊息";
 "experimentsPhyphoxOrg" = "實驗設計與說明";
@@ -51,7 +51,7 @@
 "remotePhyphoxOrg" = "遠程控制協助說明";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationToWebsite" = "拜訪網站";
-"translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"translationToWebsiteURL" = "網址：http://phyphox.org/languages#en";
 "export" = "匯出數據";
 "pick_exportFormat" = "選擇數據格式";
 "newExperiment" = "新增實驗";
@@ -86,7 +86,7 @@
 "save_state_share" = "分享";
 "save_state_default_title" = "測量";
 "save_state_success" = "狀態已存入珍藏集";
-"pick_exportSets" = "輸出挑選的數據組";
+"pick_exportSets" = "匯出挑選的數據組";
 "noDrawableData" = "無繪製的數據";
 "AudioRateMissmatch" = "錯誤：取樣率不合。請停用會強行使用不同音頻取樣率的任何app或其它服務(如 AirPlay)。";
 "translationText" = "Phyphox 將使用系統設定中語言偏好裡的第一選項。要知悉哪種語言可用及如何協助，請選擇\"拜訪網頁\"。";
@@ -96,3 +96,6 @@
 "enableTimedRun" = "啟用時程設定";
 "disableTimedRun" = "取消時程設定";
 "timedRun" = "時程設定";
+"remoteServerWarning" = "你即將啟用遠端存取到已取得的數據。你應該在信任的網路中做這個動作!另外，在許多公司或大學的網路中，裝置間的直接存取可能無法執行。\n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。\n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。";
+"categoryNewExperiment" = "自訂實驗";
+"categoryRawSensor" = "內建感應器";
