@@ -88,3 +88,15 @@
 "translationInfo" = "言語";
 "translationToWebsite" = "ウェブサイトへ移行";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"actions" = "実行";
+"newExperiment" = "実験の追加";
+"creditsNames" = "開発とコンセプト: \nDr. Sebastian Staacks\nコンセプト: \nProf. Christoph Stampfer\nデザイン:\nFrank Posthoff (A.NikoPol)\nプログラミング:\nCamilla Lummerzheim\nJonas Gessner";
+"enableTimedRun" = "タイムランを有効にする";
+"disableTimedRun" = "タイムランを無効にする";
+"switch_to_calibrated_magnetometer" = "補正磁力計に切り替える";
+"switch_to_raw_magnetometer" = "時系列磁力計に切り替える";
+"enableRemoteServer" = "リモートアクセスを有効にする";
+"disableRemoteServer" = "リモートアクセスを無効にする";
+"remoteServerActive" = "リモートアクセスは有効です．下記のURLから本実験にアクセスしてください．URL：";
+"AudioRateMissmatch" = "エラー: サンプリングレートが一致しません．異なる音声サンプリングレートにするその他のアプリやサービス (Airplayなど) を無効にしてください．";
+"translationText" = "phyphoxはあなたのシステム設定の優先言語リストから第一可能言語を使用します．どの言語が使用可能か，どのように解決するかを知るためには \"ウェブサイトへ\" を選択してください．";
