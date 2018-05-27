@@ -24,6 +24,8 @@
 "sensorNotAvailableWarningText2" = "is niet beschikbaar. Meestal betekent dit dat uw apparaat niet over dit type sensor beschikt.";
 "sensorNotAvailableWarningMoreInfo" = "Meer informatie";
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
+"appleBanWarningMoreInfo" = "Meer informatie";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "ok" = "OKE";
 "close" = "Sluiten";
 "next" = "Volgende";

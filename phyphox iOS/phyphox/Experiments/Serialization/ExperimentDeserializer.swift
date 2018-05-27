@@ -71,6 +71,7 @@ final class ExperimentDeserializer: NSObject {
         }
         
         let attributes = dictionary[XMLDictionaryAttributesKey] as! [String: AnyObject]?
+        let appleBan = boolFromXML(attributes, key: "appleBan", defaultValue: false)
         let defaultLanguage = stringFromXML(attributes, key: "locale", defaultValue: "")
         
         var d = dictionary["description"]
@@ -143,7 +144,7 @@ final class ExperimentDeserializer: NSObject {
             throw SerializationError.invalidExperimentFile(message: "Experiment must define a title and a category.")
         }
         
-        let experiment = Experiment(title: anyTitle!, stateTitle: stateTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory!, icon: icon!, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: anyTitle!, stateTitle: stateTitle, description: description, links: links, highlightedLinks: highlightedLinks, category: anyCategory!, icon: icon!, appleBan: appleBan, local: true, translation: translation, buffers: buffersRaw, sensorInputs: sensorInputs, gpsInput: gpsInput, audioInput: audioInput, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
         
         return experiment
     }

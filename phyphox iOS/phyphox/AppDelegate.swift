@@ -153,6 +153,19 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             return false
         }
         
+        if experiment!.appleBan {
+            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            
+            controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+            }))
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            
+            main.present(controller, animated: true, completion: nil)
+            
+            return false
+        }
+        
         if let sensors = experiment!.sensorInputs {
             for sensor in sensors {
                 do {

@@ -88,6 +88,8 @@
 "export_pick_share" = "Vyberte si způsob exportu";
 "sensorNotAvailableWarningTitle" = "Senzor není dostupný.";
 "sensorNotAvailableWarningMoreInfo" = "Více informací";
+"appleBanWarningMoreInfo" = "Více informací";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "clear" = "Vymazat";
 "save_state_default_title" = "Měření";
 "export_subject" = "Data z phyphoxu";

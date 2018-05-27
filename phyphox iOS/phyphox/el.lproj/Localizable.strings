@@ -26,6 +26,8 @@
 "sensorNotAvailableWarningText2" = "δεν είναι διαθέσιμος. Συνήθως αυτό σημαίνει ότι η συσκευή σας  δε διαθέτει αισθητήρα αυτού του τύπου.";
 "sensorNotAvailableWarningMoreInfo" = "Περισσότερες πληροφορίες";
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
+"appleBanWarningMoreInfo" = "Περισσότερες πληροφορίες";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "ok" = "OK";
 "close" = "Κλείσιμο";
 "next" = "Επόμενο";
