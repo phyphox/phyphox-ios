@@ -27,6 +27,8 @@
 "sensorNotAvailableWarningText2" = "niedostępny. Zazwyczaj oznacza to, że urządzenie nie jest wyposażone w tego typu czujnik.";
 "sensorNotAvailableWarningMoreInfo" = "Więcej informacji";
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
+"appleBanWarningMoreInfo" = "Więcej informacji";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "ok" = "OK";
 "close" = "Zamknij";
 "next" = "Następny";

@@ -273,6 +273,19 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = ExperimentManager.sharedInstance().experimentCollections[indexPath.section].experiments![indexPath.row]
         
+        if experiment.experiment.appleBan {
+            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            
+            controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+            }))
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            
+            present(controller, animated: true, completion: nil)
+            
+            return
+        }
+        
         if let sensors = experiment.experiment.sensorInputs {
             for sensor in sensors {
                 do {

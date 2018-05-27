@@ -27,6 +27,8 @@
 "sensorNotAvailableWarningText2" = "недоступен. Обычно это означает, что на вашем устройстве нет такого типа датчиков.";
 "sensorNotAvailableWarningMoreInfo" = "Больше информации";
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
+"appleBanWarningMoreInfo" = "Больше информации";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "ok" = "OK";
 "close" = "Закрыть";
 "next" = "Следующий";

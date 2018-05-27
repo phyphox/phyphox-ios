@@ -6,6 +6,7 @@
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
 
+"apple_ban" = "Dieses Experiment wurde von Apple gesperrt und ist auf iOS nicht mehr verfügbar.";
 "app_name" = "phyphox";
 "actions" = "Aktionen";
 "action_settings" = "Einstellungen";
@@ -70,6 +71,8 @@
 "sensorNotAvailableWarningMoreInfo" = "Weitere Infos";
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/de/faq-de/#faqMissingSensor";
 "sensorNotAvailableWarningTitle" = "Sensor nicht verfügbar.";
+"appleBanWarningMoreInfo" = "Weitere Infos";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/de/faq-de/#faqAppleBan";
 "sensorPressure" = "Druck";
 "sensorProximity" = "Annäherung";
 "share" = "Screenshot teilen";
