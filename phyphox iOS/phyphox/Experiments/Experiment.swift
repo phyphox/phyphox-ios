@@ -20,6 +20,7 @@ struct ExperimentRequiredPermission : OptionSet {
 }
 
 final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManager {
+    var appleBan: Bool
     private var title: String
     var stateTitle: String?
     private var description: String?
@@ -93,7 +94,7 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
     private(set) var startTimestamp: TimeInterval?
     private var pauseBegin: TimeInterval = 0.0
     
-    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [String:String], highlightedLinks: [String:String], category: String, icon: ExperimentIcon, appleBan: Bool, local: Bool, translation: ExperimentTranslationCollection?, buffers: ([String: DataBuffer]?, [DataBuffer]?), sensorInputs: [ExperimentSensorInput]?, gpsInput: ExperimentGPSInput?, audioInput: ExperimentAudioInput?, output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         self.description = description
@@ -102,6 +103,8 @@ final class Experiment : ExperimentAnalysisDelegate, ExperimentAnalysisTimeManag
         self.category = category
         
         self.icon = icon
+        
+        self.appleBan = appleBan
         
         self.local = local
         

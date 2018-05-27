@@ -78,6 +78,8 @@
 "export_pick_share" = "Seleziona un metodo per esportare";
 "sensorNotAvailableWarningTitle" = "Sensore non disponibile.";
 "sensorNotAvailableWarningMoreInfo" = "Più info";
+"appleBanWarningMoreInfo" = "Più info";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "export_subject" = "Dati_phyphox";
 "experimentinfo_hint" = "Per sapere come funziona quest'esperimento, guarda le info relative.";
 "remotePhyphoxOrg" = "Help controllo remoto";

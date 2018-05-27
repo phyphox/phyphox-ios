@@ -68,7 +68,7 @@ class ExperimentCell: UICollectionViewCell {
                     subtitleLabel.text = experiment?.localizedDescription
                 }
                 
-                var available = true
+                var available = !experiment!.appleBan
                 if let sensors = experiment!.sensorInputs {
                     for sensor in sensors {
                         do {
