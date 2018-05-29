@@ -100,3 +100,6 @@
 "remoteServerActive" = "リモートアクセスは有効です．下記のURLから本実験にアクセスしてください．URL：";
 "AudioRateMissmatch" = "エラー: サンプリングレートが一致しません．異なる音声サンプリングレートにするその他のアプリやサービス (Airplayなど) を無効にしてください．";
 "translationText" = "phyphoxはあなたのシステム設定の優先言語リストから第一可能言語を使用します．どの言語が使用可能か，どのように解決するかを知るためには \"ウェブサイトへ\" を選択してください．";
+"apple_ban" = "本実験はAppleにより禁止され，iOSでは利用できません．";
+"appleBanWarningMoreInfo" = "より詳細な情報";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
