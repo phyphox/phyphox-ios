@@ -6,7 +6,7 @@
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
 
-"apple_ban" = "Dieses Experiment wurde von Apple gesperrt und ist auf iOS nicht mehr verfügbar.";
+"apple_ban" = "Dieses Experiment ist nicht mehr verfügbar.";
 "app_name" = "phyphox";
 "actions" = "Aktionen";
 "action_settings" = "Einstellungen";
