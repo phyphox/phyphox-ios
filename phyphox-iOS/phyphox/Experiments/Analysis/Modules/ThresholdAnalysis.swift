@@ -15,8 +15,8 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
     private var yIn: DataBuffer!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        falling = try attribute("falling", from: additionalAttributes) ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
+        falling = try additionalAttributes.attribute(for: "falling") ?? false
 
         for input in inputs {
             if input.asString == "threshold" {

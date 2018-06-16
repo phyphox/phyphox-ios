@@ -16,7 +16,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
     private var length: ExperimentAnalysisDataIO? = nil
     private var arrayIns: [ExperimentAnalysisDataIO] = []
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
         
         for input in inputs {
             if input.asString == "from" {

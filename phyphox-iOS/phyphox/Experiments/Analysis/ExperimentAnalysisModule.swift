@@ -17,7 +17,7 @@ class ExperimentAnalysisModule {
     
     var timestamp: TimeInterval = 0.0
 
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String: String]) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
         self.inputs = inputs
         self.outputs = outputs
     }

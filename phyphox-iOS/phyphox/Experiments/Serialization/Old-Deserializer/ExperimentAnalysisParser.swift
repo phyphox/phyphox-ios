@@ -102,7 +102,8 @@ final class ExperimentAnalysisParser: ExperimentMetadataParser {
                 let inputs = try getDataFlows(getElementsWithKey(value, key: "input"))
                 let outputs = try getDataFlows(getElementsWithKey(value, key: "output"))
                 
-                let attributes = value[XMLDictionaryAttributesKey] as? [String: String] ?? [:]
+                let attributesDict = value[XMLDictionaryAttributesKey] as? [String: String] ?? [:]
+                let attributes = XMLElementAttributes(attributes: attributesDict)
                 
                 var analysis: ExperimentAnalysisModule! = nil
                 

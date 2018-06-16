@@ -15,7 +15,7 @@ struct XMLElementAttributes {
         return XMLElementAttributes(attributes: [:])
     }
 
-    fileprivate init(attributes: [String: String]) {
+    /*fileprivate*/ init(attributes: [String: String]) {
         self.attributes = attributes
     }
 

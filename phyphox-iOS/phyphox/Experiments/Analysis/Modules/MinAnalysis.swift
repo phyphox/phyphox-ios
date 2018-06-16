@@ -20,8 +20,8 @@ final class MinAnalysis: ExperimentAnalysisModule {
     
     private var multiple: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        multiple = try attribute("multiple", from: additionalAttributes) ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
+        multiple = try additionalAttributes.attribute(for: "multiple") ?? false
         
         for input in inputs {
             if input.asString == "x" {
