@@ -28,7 +28,7 @@ private final class ViewElementHandler: ResultElementHandler {
 
     private var handlers = [(tagName: String, handler: ViewComponentElementHandler)]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -61,7 +61,7 @@ private final class ViewElementHandler: ResultElementHandler {
         return handler
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let label = attributes["label"], !label.isEmpty else {
             throw XMLElementParserError.missingAttribute("label")
         }
@@ -93,7 +93,7 @@ final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, Att
         handlers = ["view": viewHandler]
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         results.append(viewHandler.results)
     }
 }

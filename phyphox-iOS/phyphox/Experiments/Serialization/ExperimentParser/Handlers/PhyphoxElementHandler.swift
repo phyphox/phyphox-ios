@@ -128,10 +128,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         let locale = attributes["locale"] ?? "en"
 
         guard let versionString = attributes["version"] else {

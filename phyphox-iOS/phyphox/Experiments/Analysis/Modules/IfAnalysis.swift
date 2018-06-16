@@ -20,9 +20,9 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private var inFalse: ExperimentAnalysisDataIO? = nil
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        less = try attribute("less", from: additionalAttributes, defaultValue: false)
-        equal = try attribute("equal", from: additionalAttributes, defaultValue: false)
-        greater = try attribute("greater", from: additionalAttributes, defaultValue: false)
+        less = try attribute("less", from: additionalAttributes) ?? false
+        equal = try attribute("equal", from: additionalAttributes) ?? false
+        greater = try attribute("greater", from: additionalAttributes) ?? false
 
         for input in inputs {
             if input.asString == "a" {

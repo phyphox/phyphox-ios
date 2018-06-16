@@ -49,7 +49,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Input must be a buffer")
         }
 
-        let sigmaValue = try attribute("sigma", from: additionalAttributes, defaultValue: 3.0)
+        let sigmaValue = try attribute("sigma", from: additionalAttributes) ?? 3.0
 
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
 

@@ -76,15 +76,8 @@ protocol LookupElementHandler: ElementHandler {
 }
 
 extension LookupElementHandler {
-    mutating func clearChildHandlers() {
-        var mutatedHandlers = handlers
-
-        for (key, var handler) in mutatedHandlers {
-            handler.clear()
-            mutatedHandlers[key] = handler
-        }
-
-        handlers = mutatedHandlers
+    func clearChildHandlers() {
+        handlers.values.forEach { $0.clear() }
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -96,18 +89,8 @@ extension LookupElementHandler {
     }
 }
 
-protocol ResultElementHandler: ElementHandler {
-    associatedtype Result
-
-    var results: [Result] { get set }
-
-    func expectOptionalResult() throws -> Result?
-    func expectSingleResult() throws -> Result
-    func expectAtLeastOneResult() throws -> [Result]
-}
-
 extension ResultElementHandler {
-    mutating func clear() {
+    func clear() {
         results.removeAll()
         clearChildHandlers()
     }
@@ -141,16 +124,6 @@ extension ResultElementHandler {
     }
 }
 
-protocol AttributelessElementHandler: ElementHandler {}
-
-extension AttributelessElementHandler {
-    func beginElement(attributes: [String: String]) throws {
-        guard attributes.isEmpty else {
-            throw XMLElementParserError.unexpectedAttribute(attributes.keys.first ?? "")
-        }
-    }
-}
-
 protocol ChildlessElementHandler: ElementHandler {}
 
 extension ChildlessElementHandler {
@@ -158,8 +131,7 @@ extension ChildlessElementHandler {
         throw XMLElementParserError.unexpectedChildElement(tagName)
     }
 
-    func clearChildHandlers() {
-    }
+    func clearChildHandlers() {}
 }
 
 func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) throws -> T? {
@@ -169,13 +141,4 @@ func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [St
         }
         return value
     })
-}
-
-func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String], defaultValue: T) throws -> T {
-    return try attributes[key].map({
-        guard let value = T.init($0) else {
-            throw XMLElementParserError.unexpectedAttributeValue(key)
-        }
-        return value
-    }) ?? defaultValue
 }

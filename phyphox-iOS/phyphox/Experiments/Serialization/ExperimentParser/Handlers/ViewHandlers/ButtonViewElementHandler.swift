@@ -25,11 +25,11 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
 
     typealias Result = ButtonInputDescriptor
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
-        let type = try attribute("type", from: attributes, defaultValue: "buffer")
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        let type = try attributes.attribute(for: "type") ?? "buffer"
 
         if type == "buffer" {
             guard !text.isEmpty else {
@@ -72,10 +72,10 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         handlers = ["output": outputHandler, "input": inputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let label = attributes["label"], !label.isEmpty else {
             throw XMLElementParserError.missingAttribute("label")
         }

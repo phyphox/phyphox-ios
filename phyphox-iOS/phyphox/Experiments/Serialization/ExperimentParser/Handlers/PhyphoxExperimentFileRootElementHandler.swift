@@ -8,10 +8,10 @@
 
 import Foundation
 
-final class PhyphoxExperimentFileRootElementHandler: DocumentElementHandler, LookupElementHandler, AttributelessElementHandler {
+final class PhyphoxExperimentFileRootElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
     typealias Result = Experiment
 
-    var result: Experiment?
+    var results: [Experiment] = []
 
     private let phyphoxHandler = PhyphoxElementHandler()
 
@@ -21,7 +21,7 @@ final class PhyphoxExperimentFileRootElementHandler: DocumentElementHandler, Loo
         handlers = ["phyphox": phyphoxHandler]
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
-        result = try phyphoxHandler.expectSingleResult()
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        results.append(try phyphoxHandler.expectSingleResult())
     }
 }

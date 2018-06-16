@@ -40,7 +40,6 @@ final class BufferTests: XCTestCase {
 
     func generateRandomTemporaryFileURL() -> URL {
         return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
-
     }
 
     func testWritingAndReadingStateMemoryBuffer() throws {
@@ -48,7 +47,7 @@ final class BufferTests: XCTestCase {
 
         let randomContents = generateRandomBufferValues(of: size)
 
-        let writeBuffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false).unwrap()
+        let writeBuffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false)
 
         writeBuffer.open()
 
@@ -58,7 +57,7 @@ final class BufferTests: XCTestCase {
 
         try writeBuffer.writeState(to: stateFile)
 
-        let readBuffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false).unwrap()
+        let readBuffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: size), baseContents: generateRandomBufferValues(of: size), static: false)
 
         readBuffer.open()
 
@@ -80,7 +79,7 @@ final class BufferTests: XCTestCase {
         let baseContents = generateRandomBufferValues(of: Int(arc4random_uniform(UInt32(size))))
 
         let writeBufferFile = generateRandomTemporaryFileURL()
-        let writeBuffer = try DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: writeBufferFile), baseContents: baseContents, static: false).unwrap()
+        let writeBuffer = try DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: writeBufferFile), baseContents: baseContents, static: false)
 
         writeBuffer.open()
 
@@ -92,7 +91,7 @@ final class BufferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: stateFile), try Data(contentsOf: writeBufferFile))
 
         let readBufferFile = generateRandomTemporaryFileURL()
-        let readBuffer = try DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: readBufferFile), baseContents: baseContents, static: false).unwrap()
+        let readBuffer = try DataBuffer(name: UUID().uuidString, storage: .hybrid(memorySize: size, persistentStorageLocation: readBufferFile), baseContents: baseContents, static: false)
 
         readBuffer.open()
 
@@ -111,7 +110,7 @@ final class BufferTests: XCTestCase {
     }
 
     func testOverfilling() throws {
-        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false).unwrap()
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false)
 
         var expected: [Double] = []
 
@@ -149,7 +148,7 @@ final class BufferTests: XCTestCase {
     func testBaseContents() throws {
         let base = (0..<5).map { _ in drand48() }
 
-        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: false).unwrap()
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: false)
 
         XCTAssertEqual(buffer.toArray(), base)
 
@@ -180,21 +179,21 @@ final class BufferTests: XCTestCase {
             XCTAssertEqual(buffer.toArray(), expectedContent)
         }
 
-        let buffer1 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+        let buffer1 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true)
 
         buffer1.append(10.0)
         XCTAssertEqual(buffer1.toArray(), [10.0])
 
         testAddingToStaticBuffer(buffer1, expectedContent: [10.0])
 
-        let buffer2 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+        let buffer2 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true)
 
         buffer2.appendFromArray([10.0, 20.0])
         XCTAssertEqual(buffer2.toArray(), [10.0, 20.0])
 
         testAddingToStaticBuffer(buffer2, expectedContent: [10.0, 20.0])
 
-        let buffer3 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true).unwrap()
+        let buffer3 = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: true)
 
         buffer3.clear()
         XCTAssertEqual(buffer3.toArray(), [])
@@ -216,13 +215,13 @@ final class BufferTests: XCTestCase {
             XCTAssertEqual(buffer.toArray(), expectedContent)
         }
 
-        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: true).unwrap()
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: base, static: true)
 
         testAddingToStaticBuffer(buffer, expectedContent: base)
     }
 
     func testAddingClearingAndReplacing() throws {
-        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false).unwrap()
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: 10), baseContents: [], static: false)
 
         let d1 = drand48()
         let d2 = drand48()
@@ -265,7 +264,7 @@ final class BufferTests: XCTestCase {
 
         let numberOfIterations = 200_000
 
-        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: numberOfIterations), baseContents: [], static: false).unwrap()
+        let buffer = try DataBuffer(name: UUID().uuidString, storage: .memory(size: numberOfIterations), baseContents: [], static: false)
 
         let addingExpectation = expectation(description: "Adding Completed")
 
@@ -288,8 +287,8 @@ final class BufferTests: XCTestCase {
             var i = 0
             while i < numberOfIterations {
                 if buffer.memoryCount > 0 {
-                    XCTAssertEqual(Double(i), buffer.first!)
-                    XCTAssertEqual(buffer[0], buffer.first!)
+                    XCTAssertEqual(Double(i), try? buffer.first.unwrap())
+                    XCTAssertEqual(buffer[0], try? buffer.first.unwrap())
                     buffer.removeFirst(1)
                     i += 1
                 }

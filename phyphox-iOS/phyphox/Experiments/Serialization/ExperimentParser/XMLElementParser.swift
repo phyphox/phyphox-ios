@@ -8,34 +8,64 @@
 
 import Foundation
 
-protocol ElementHandler {
-    mutating func beginElement(attributes: [String: String]) throws
-    func childHandler(for tagName: String) throws -> ElementHandler
-    mutating func endElement(with text: String, attributes: [String: String]) throws
+struct XMLElementAttributes {
+    fileprivate let attributes: [String: String]
 
-    mutating func clear()
-    mutating func clearChildHandlers()
-}
+    fileprivate static var empty: XMLElementAttributes {
+        return XMLElementAttributes(attributes: [:])
+    }
 
-protocol DocumentElementHandler: ElementHandler {
-    associatedtype Result
+    fileprivate init(attributes: [String: String]) {
+        self.attributes = attributes
+    }
 
-    var result: Result? { get set }
-}
+    func attribute<T: LosslessStringConvertible>(for key: String) throws -> T? {
+        return try attributes[key].map({
+            guard let value = T.init($0) else {
+                throw XMLElementParserError.unexpectedAttributeValue(key)
+            }
+            return value
+        })
+    }
 
-extension DocumentElementHandler {
-    mutating func clear() {
-        result = nil
-        clearChildHandlers()
+    subscript(key: String) -> String? {
+        get {
+            return attributes[key]
+        }
     }
 }
 
-final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XMLParserDelegate {
-    private var rootHandler: RootHandler
+protocol AttributelessElementHandler: ElementHandler {}
+
+extension AttributelessElementHandler {
+    func beginElement(attributes: XMLElementAttributes) throws {
+        guard attributes.attributes.isEmpty else {
+            throw XMLElementParserError.unexpectedAttribute(attributes.attributes.keys.first ?? "")
+        }
+    }
+}
+
+protocol ElementHandler: class {
+    func beginElement(attributes: XMLElementAttributes) throws
+    func childHandler(for tagName: String) throws -> ElementHandler
+    func endElement(with text: String, attributes: XMLElementAttributes) throws
+
+    func clear()
+    func clearChildHandlers()
+}
+
+protocol ResultElementHandler: ElementHandler {
+    associatedtype Result
+
+    var results: [Result] { get set }
+}
+
+final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
+    private let rootHandler: RootHandler
 
     private var handlerStack = [(tagName: String, elementHandler: ElementHandler)]()
     private var textStack = [String]()
-    private var attributesStack = [[String: String]]()
+    private var attributesStack = [XMLElementAttributes]()
 
     private var parsingError: Error?
 
@@ -51,7 +81,7 @@ final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XML
     func parse(stream: InputStream) throws -> RootHandler.Result {
         handlerStack = [("", rootHandler)]
         textStack = [""]
-        attributesStack = [[:]]
+        attributesStack = [.empty]
         parsingError = nil
 
         let parser = XMLParser(stream: stream)
@@ -62,17 +92,28 @@ final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XML
             throw ParsingError.parsingError(backtrace: currentElementBacktrace, encounteredError: parseError)
         }
 
-        guard let result = rootHandler.result else {
+        guard let result = rootHandler.results.first else {
             throw ParsingError.missingRootElement
         }
 
         return result
     }
 
+    private func cleanText(_ textToClean: String) -> String {
+        return textToClean.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - XMLParserDelegate
+
     func parserDidStartDocument(_ parser: XMLParser) {
+        guard let attributes = attributesStack.last else {
+            parser.abortParsing()
+            return
+        }
+
         do {
             rootHandler.clear()
-            try rootHandler.beginElement(attributes: [:])
+            try rootHandler.beginElement(attributes: attributes)
         }
         catch {
             parsingError = error
@@ -87,12 +128,13 @@ final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XML
         }
 
         do {
-            var childHandler = try currentHandler.childHandler(for: elementName)
+            let childHandler = try currentHandler.childHandler(for: elementName)
 
             childHandler.clearChildHandlers()
-            try childHandler.beginElement(attributes: attributes)
+            let elementAttributes = XMLElementAttributes(attributes: attributes)
+            try childHandler.beginElement(attributes: elementAttributes)
 
-            attributesStack.append(attributes)
+            attributesStack.append(elementAttributes)
             handlerStack.append((elementName, childHandler))
             textStack.append("")
         }
@@ -113,10 +155,6 @@ final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XML
         textStack.append(currentText)
     }
 
-    private func cleanText(_ textToClean: String) -> String {
-        return textToClean.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         guard let currentText = textStack.popLast(),
             let (currentTagName, elementHandler) = handlerStack.popLast(),
@@ -128,9 +166,7 @@ final class XMLElementParser<RootHandler: DocumentElementHandler>: NSObject, XML
         }
 
         do {
-            var mutableElementHandler = elementHandler
-
-            try mutableElementHandler.endElement(with: cleanText(currentText), attributes: attributes)
+            try elementHandler.endElement(with: cleanText(currentText), attributes: attributes)
         }
         catch {
             parsingError = error

@@ -156,7 +156,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             //Jonas noted before, that to fast calling of the DFT leads to crashes when reusing the setup, but I (Sebastian) was not able to reproduce this
             //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
             //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
-            let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, vDSP_DFT_Direction.FORWARD)
+            let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, .FORWARD)
             vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
             vDSP_DFT_DestroySetupD(dftSetup)
             

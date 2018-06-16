@@ -13,7 +13,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
     private let deg: Bool
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        deg = try attribute("deg", from: additionalAttributes, defaultValue: false)
+        deg = try attribute("deg", from: additionalAttributes) ?? false
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

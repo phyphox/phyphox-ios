@@ -31,10 +31,10 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
 
     var results = [GraphInputDescriptor]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard !text.isEmpty else {
             throw XMLElementParserError.missingText
         }
@@ -94,10 +94,10 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         handlers = ["input": inputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let label = attributes["label"], !label.isEmpty else {
             throw XMLElementParserError.missingAttribute("label")
         }
@@ -116,12 +116,12 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
 
-        let aspectRatio: CGFloat = try attribute("aspectRatio", from: attributes, defaultValue: 2.5)
-        let dots = try attribute("style", from: attributes, defaultValue: "line") == "dots"
-        let partialUpdate = try attribute("partialUpdate", from: attributes, defaultValue: false)
-        let history: UInt = try attribute("history", from: attributes, defaultValue: 1)
-        let lineWidth: CGFloat = try attribute("lineWidth", from: attributes, defaultValue: 1.0)
-        let colorString: String? = try attribute("color", from: attributes)
+        let aspectRatio: CGFloat = try attributes.attribute(for: "aspectRatio") ?? 2.5
+        let dots = try attributes.attribute(for: "style") ?? "line" == "dots"
+        let partialUpdate = try attributes.attribute(for: "partialUpdate") ?? false
+        let history: UInt = try attributes.attribute(for: "history") ?? 1
+        let lineWidth: CGFloat = try attributes.attribute(for: "lineWidth") ?? 1.0
+        let colorString: String? = try attributes.attribute(for: "color")
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
@@ -131,23 +131,23 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             return color
         }) ?? kHighlightColor
 
-        let logX = try attribute("logX", from: attributes, defaultValue: false)
-        let logY = try attribute("logY", from: attributes, defaultValue: false)
-        let xPrecision: UInt = try attribute("xPrecision", from: attributes, defaultValue: 3)
-        let yPrecision: UInt = try attribute("yPrecision", from: attributes, defaultValue: 3)
+        let logX = try attributes.attribute(for: "logX") ?? false
+        let logY = try attributes.attribute(for: "logY") ?? false
+        let xPrecision: UInt = try attributes.attribute(for: "xPrecision") ?? 3
+        let yPrecision: UInt = try attributes.attribute(for: "yPrecision") ?? 3
 
-        guard let scaleMinX = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMinX", from: attributes, defaultValue: "auto")),
-            let scaleMaxX = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMaxX", from: attributes, defaultValue: "auto")),
-            let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMinY", from: attributes, defaultValue: "auto")),
-            let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: try attribute("scaleMaxY", from: attributes, defaultValue: "auto"))
+        guard let scaleMinX = GraphViewDescriptor.ScaleMode(rawValue: try attributes.attribute(for: "scaleMinX") ?? "auto"),
+            let scaleMaxX = GraphViewDescriptor.ScaleMode(rawValue: try attributes.attribute(for: "scaleMaxX") ?? "auto"),
+            let scaleMinY = GraphViewDescriptor.ScaleMode(rawValue: try attributes.attribute(for: "scaleMinY") ?? "auto"),
+            let scaleMaxY = GraphViewDescriptor.ScaleMode(rawValue: try attributes.attribute(for: "scaleMaxY") ?? "auto")
             else {
                 throw XMLElementParserError.unexpectedAttributeValue("scale")
         }
 
-        let minX: CGFloat = try attribute("minX", from: attributes, defaultValue: 0)
-        let maxX: CGFloat = try attribute("maxX", from: attributes, defaultValue: 0)
-        let minY: CGFloat = try attribute("minY", from: attributes, defaultValue: 0)
-        let maxY: CGFloat = try attribute("maxY", from: attributes, defaultValue: 0)
+        let minX: CGFloat = try attributes.attribute(for: "minX") ?? 0
+        let maxX: CGFloat = try attributes.attribute(for: "maxX") ?? 0
+        let minY: CGFloat = try attributes.attribute(for: "minY") ?? 0
+        let maxY: CGFloat = try attributes.attribute(for: "maxY") ?? 0
 
         results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
     }

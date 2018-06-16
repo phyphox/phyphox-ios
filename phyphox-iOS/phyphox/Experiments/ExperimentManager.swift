@@ -166,12 +166,12 @@ final class ExperimentManager {
             print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
         #endif
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            print("New benchmark time: \(self.benchmark(repititions: 100, legacy: false))")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                print("Legacy benchmark time: \(self.benchmark(repititions: 100, legacy: true))")
-            }
-        }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//            print("New benchmark time: \(self.benchmark(repititions: 100, legacy: false))")
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//                print("Legacy benchmark time: \(self.benchmark(repititions: 100, legacy: true))")
+//            }
+//        }
     }
 }
 

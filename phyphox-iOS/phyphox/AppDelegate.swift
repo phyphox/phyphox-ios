@@ -21,7 +21,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         KeyboardTracker.startTracking()
-        
+
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor.black
         

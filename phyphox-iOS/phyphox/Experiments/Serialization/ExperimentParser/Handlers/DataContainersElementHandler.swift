@@ -15,15 +15,15 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        let size = try attribute("size", from: attributes, defaultValue: 1)
+        let size = try attributes.attribute(for: "size") ?? 1
         let baseContents = attributes["init"].map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
-        let staticBuffer = try attribute("static", from: attributes, defaultValue: false)
+        let staticBuffer = try attributes.attribute(for: "static") ?? false
 
         results.append((text, size, baseContents, staticBuffer))
     }
@@ -42,7 +42,7 @@ final class DataContainersElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["container": containerHandler]
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         results.append(containerHandler.results)
     }
 }

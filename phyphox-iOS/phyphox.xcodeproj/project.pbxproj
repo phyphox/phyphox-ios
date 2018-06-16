@@ -164,6 +164,7 @@
 		6BD026E61CB571A4005085B1 /* GCDWebServers.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD026E01CB57199005085B1 /* GCDWebServers.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD026E91CB5C047005085B1 /* PTFile.swift */; };
 		6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */ = {isa = PBXBuildFile; fileRef = 6BD026EB1CB5C13E005085B1 /* Licenses.ptf */; };
+		6BD06B7020D4150D0062829B /* XMLParserText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD06B6F20D4150D0062829B /* XMLParserText.swift */; };
 		6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6BE320951CB06F7200DCC1ED /* VertexShader.glsl */; };
 		6BE320981CB11A7200DCC1ED /* FragmentShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */; };
 		6BE3209A1CB19A5D00DCC1ED /* CreateExperimentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320991CB19A5D00DCC1ED /* CreateExperimentViewController.swift */; };
@@ -541,6 +542,7 @@
 		6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GCDWebServer.xcodeproj; path = ../../External/GCDWebServer/GCDWebServer.xcodeproj; sourceTree = "<group>"; };
 		6BD026E91CB5C047005085B1 /* PTFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PTFile.swift; sourceTree = "<group>"; };
 		6BD026EB1CB5C13E005085B1 /* Licenses.ptf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.ptf; sourceTree = "<group>"; };
+		6BD06B6F20D4150D0062829B /* XMLParserText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLParserText.swift; sourceTree = "<group>"; };
 		6BE320951CB06F7200DCC1ED /* VertexShader.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = VertexShader.glsl; sourceTree = "<group>"; };
 		6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = FragmentShader.glsl; sourceTree = "<group>"; };
 		6BE320991CB19A5D00DCC1ED /* CreateExperimentViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateExperimentViewController.swift; sourceTree = "<group>"; };
@@ -790,6 +792,7 @@
 				6BCD494D205005E90079E569 /* bounded_buffer.phyphox */,
 				6BCD493D205005310079E569 /* unbounded_buffer.phyphox */,
 				6BFE37C02049ABC800301CA3 /* BufferTests.swift */,
+				6BD06B6F20D4150D0062829B /* XMLParserText.swift */,
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
@@ -1641,6 +1644,7 @@
 			files = (
 				6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */,
 				6B0815471CAD329900EE2791 /* Constants.swift in Sources */,
+				6BD06B7020D4150D0062829B /* XMLParserText.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

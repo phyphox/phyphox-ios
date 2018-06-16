@@ -13,10 +13,10 @@ final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
         let format = attributes["format"]

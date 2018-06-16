@@ -13,16 +13,16 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard !text.isEmpty else {
             throw XMLElementParserError.missingText
         }
 
-        let min = try attribute("min", from: attributes, defaultValue: -Double.infinity)
-        let max = try attribute("max", from: attributes, defaultValue: Double.infinity)
+        let min = try attributes.attribute(for: "min") ?? -Double.infinity
+        let max = try attributes.attribute(for: "max") ?? Double.infinity
 
         results.append(ValueViewMap(range: min...max, replacement: text))
     }
@@ -54,10 +54,10 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         handlers = ["input": inputHandler, "map": mapHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let label = attributes["label"], !label.isEmpty else {
             throw XMLElementParserError.missingAttribute("label")
         }
@@ -65,11 +65,11 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
 
-        let size = try attribute("size", from: attributes, defaultValue: 1.0)
-        let precision = try attribute("precision", from: attributes, defaultValue: 2)
-        let scientific = try attribute("scientific", from: attributes, defaultValue: false)
-        let unit = try attribute("unit", from: attributes, defaultValue: "")
-        let factor = try attribute("factor", from: attributes, defaultValue: 1.0)
+        let size = try attributes.attribute(for: "size") ?? 1.0
+        let precision = try attributes.attribute(for: "precision") ?? 2
+        let scientific = try attributes.attribute(for: "scientific") ?? false
+        let unit = try attributes.attribute(for: "unit") ?? ""
+        let factor = try attributes.attribute(for: "factor") ?? 1.0
 
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
     }

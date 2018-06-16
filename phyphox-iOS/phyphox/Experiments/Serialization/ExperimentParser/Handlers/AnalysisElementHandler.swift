@@ -19,17 +19,17 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
 
     typealias Result = ExperimentAnalysisDataIODescriptor
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
-        let type = try attribute("type", from: attributes, defaultValue: "buffer")
-        let usedAs = try attribute("as", from: attributes, defaultValue: "")
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        let type = try attributes.attribute(for: "type") ?? "buffer"
+        let usedAs = try attributes.attribute(for: "as") ?? ""
 
         if type == "buffer" {
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-            let clear = try attribute("clear", from: attributes, defaultValue: true)
+            let clear = try attributes.attribute(for: "clear") ?? true
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
@@ -55,7 +55,7 @@ struct AnalysisModuleDescriptor {
     let inputs: [ExperimentAnalysisDataIODescriptor]
     let outputs: [ExperimentAnalysisDataIODescriptor]
 
-    let attributes: [String: String]
+    let attributes: XMLElementAttributes
 }
 
 final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHandler {
@@ -72,10 +72,10 @@ final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["input": inputsHandler, "output": outputsHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
     
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributes))
     }
 }
@@ -94,7 +94,7 @@ final class AnalysisElementHandler: ResultElementHandler {
 
     private var handlers = [(String, AnalysisModuleElementHandler)]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -104,9 +104,9 @@ final class AnalysisElementHandler: ResultElementHandler {
         return handler
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
-        let sleep = try attribute("sleep", from: attributes, defaultValue: 0.0)
-        let dynamicSleep: String? = try attribute("dynamicSleep", from: attributes)
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        let sleep = try attributes.attribute(for: "sleep") ?? 0.0
+        let dynamicSleep: String? = try attributes.attribute(for: "dynamicSleep")
 
         let modules = try handlers.map({ ($0.0, try $0.1.expectSingleResult()) })
 

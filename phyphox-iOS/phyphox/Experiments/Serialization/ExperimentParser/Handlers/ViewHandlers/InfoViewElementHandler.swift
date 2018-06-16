@@ -17,10 +17,10 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let label = attributes["label"], !label.isEmpty else {
             throw XMLElementParserError.missingAttribute("label")
         }

@@ -13,10 +13,10 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
 
     typealias Result = (String, String)
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let original = attributes["original"] else { throw XMLElementParserError.missingAttribute("original") }
 
         results.append((original, text))
@@ -45,10 +45,10 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let locale = attributes["locale"] else { throw XMLElementParserError.missingAttribute("locale") }
 
         let title = try titleHandler.expectSingleResult()
@@ -76,7 +76,7 @@ final class TranslationsElementHandler: ResultElementHandler, LookupElementHandl
         handlers = ["translation": translationHandler]
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
         results.append(translations)

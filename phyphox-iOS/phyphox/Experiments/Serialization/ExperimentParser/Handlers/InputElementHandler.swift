@@ -22,10 +22,10 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
         let component = attributes["component"] ?? "output"
@@ -54,10 +54,10 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         results.append(LocationInputDescriptor(outputs: outputHandler.results))
     }
 }
@@ -83,14 +83,14 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
-        guard let sensor: SensorType = try attribute("type", from: attributes) else { throw XMLElementParserError.unexpectedAttributeValue("type") }
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        guard let sensor: SensorType = try attributes.attribute(for: "type") else { throw XMLElementParserError.unexpectedAttributeValue("type") }
 
-        let frequency = try attribute("rate", from: attributes, defaultValue: 0.0)
-        let average = try attribute("average", from: attributes, defaultValue: false)
+        let frequency = try attributes.attribute(for: "rate") ?? 0.0
+        let average = try attributes.attribute(for: "average") ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
@@ -116,11 +116,11 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
-        let rate: UInt = try attribute("rate", from: attributes, defaultValue: 48000)
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        let rate: UInt = try attributes.attribute(for: "rate") ?? 48000
         results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
     }
 }
@@ -140,7 +140,7 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
         handlers = ["sensor": sensorHandler, "audio": audioHandler, "location": locationHandler]
     }
 
-    func endElement(with text: String, attributes: [String: String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         let audio = audioHandler.results
         let location = locationHandler.results
         let sensors = sensorHandler.results

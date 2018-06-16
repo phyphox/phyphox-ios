@@ -18,12 +18,12 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
-        let height: CGFloat = try attribute("height", from: attributes, defaultValue: 0.1)
-        let colorString: String? = try attribute("color", from: attributes)
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+        let height: CGFloat = try attributes.attribute(for: "height") ?? 0.1
+        let colorString: String? = try attributes.attribute(for: "color")
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {

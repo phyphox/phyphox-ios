@@ -18,10 +18,10 @@ private final class ExportSetDataElementHandler: ResultElementHandler, Childless
 
     var results = [Result]()
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let name = attributes["name"], !name.isEmpty else {
             throw XMLElementParserError.missingAttribute("name")
         }
@@ -53,10 +53,10 @@ private final class ExportSetElementHandler: ResultElementHandler, LookupElement
         handlers = ["data": dataHandler]
     }
 
-    func beginElement(attributes: [String: String]) throws {
+    func beginElement(attributes: XMLElementAttributes) throws {
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         guard let name = attributes["name"], !name.isEmpty else {
             throw XMLElementParserError.missingAttribute("name")
         }
@@ -78,7 +78,7 @@ final class ExportElementHandler: ResultElementHandler, LookupElementHandler, At
         handlers = ["set": setHandler]
     }
 
-    func endElement(with text: String, attributes: [String : String]) throws {
+    func endElement(with text: String, attributes: XMLElementAttributes) throws {
         results.append(setHandler.results)
     }
 }

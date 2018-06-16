@@ -21,7 +21,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
     private var multiple: Bool
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        multiple = try attribute("multiple", from: additionalAttributes, defaultValue: false)
+        multiple = try attribute("multiple", from: additionalAttributes) ?? false
         
         for input in inputs {
             if input.asString == "x" {

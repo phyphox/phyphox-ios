@@ -17,8 +17,8 @@ final class RoundAnalysis: UpdateValueAnalysis {
     private let ceil: Bool
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: [String : String]) throws {
-        floor = try attribute("floor", from: additionalAttributes, defaultValue: false)
-        ceil = try attribute("ceil", from: additionalAttributes, defaultValue: false)
+        floor = try attribute("floor", from: additionalAttributes) ?? false
+        ceil = try attribute("ceil", from: additionalAttributes) ?? false
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
