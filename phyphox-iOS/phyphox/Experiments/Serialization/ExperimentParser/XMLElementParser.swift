@@ -60,9 +60,11 @@ protocol ResultElementHandler: ElementHandler {
     var results: [Result] { get set }
 }
 
+/// Elemeht handler based XML parser
 final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
     private let rootHandler: RootHandler
 
+    /// Arrays used as stacks containing element name, element handler, text and attributes from parent elements relative to the current location within the XML file. At the root level, these contain an empty string, empty attributes, empty tag name and the root element handler.
     private var handlerStack = [(tagName: String, elementHandler: ElementHandler)]()
     private var textStack = [String]()
     private var attributesStack = [XMLElementAttributes]()
@@ -74,10 +76,12 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
         super.init()
     }
 
+    /// Helper property that returns a backtrace to the current position within the XML file. Used for error reporting.
     private var currentElementBacktrace: String {
         return handlerStack.map({ $0.tagName }).joined(separator: " > ")
     }
 
+    /// Synchronously parses an XML file provided by an `InputStream` using the root handler of the parser.
     func parse(stream: InputStream) throws -> RootHandler.Result {
         handlerStack = [("", rootHandler)]
         textStack = [""]
@@ -99,6 +103,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
         return result
     }
 
+    /// Helper method that trims leading and trailing whitespaces, used to sanitize text found within XML tags.
     private func cleanText(_ textToClean: String) -> String {
         return textToClean.trimmingCharacters(in: .whitespacesAndNewlines)
     }
