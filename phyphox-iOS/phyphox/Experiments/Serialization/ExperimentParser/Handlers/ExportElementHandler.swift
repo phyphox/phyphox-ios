@@ -28,7 +28,7 @@ private final class ExportSetDataElementHandler: ResultElementHandler, Childless
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let name = try attributes.nonEmptyAttribute(for: .name)
+        let name = try attributes.nonEmptyString(for: .name)
 
         guard !text.isEmpty else {
             throw XMLElementParserError.missingText
@@ -68,7 +68,7 @@ private final class ExportSetElementHandler: ResultElementHandler, LookupElement
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let name = try attributes.nonEmptyAttribute(for: .name)
+        let name = try attributes.nonEmptyString(for: .name)
 
         results.append(ExportSetDescriptor(name: name, dataSets: dataHandler.results))
     }

@@ -23,7 +23,7 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let original = try attributes.attribute(for: .original)
+        let original = try attributes.string(for: .original)
 
         results.append((original, text))
     }
@@ -61,7 +61,7 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let locale = try attributes.attribute(for: .locale)
+        let locale = try attributes.string(for: .locale)
 
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()

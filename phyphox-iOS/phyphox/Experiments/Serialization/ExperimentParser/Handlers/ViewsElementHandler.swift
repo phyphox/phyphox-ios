@@ -69,7 +69,7 @@ private final class ViewElementHandler: ResultElementHandler {
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
+        let label = try attributes.nonEmptyString(for: .label)
 
         let views = try handlers.map { ($0.tagName, try $0.handler.getResult()) }
 

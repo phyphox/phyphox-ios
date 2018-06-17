@@ -28,7 +28,7 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
+        let label = try attributes.nonEmptyString(for: .label)
 
         results.append(InfoViewElementDescriptor(label: label))
     }

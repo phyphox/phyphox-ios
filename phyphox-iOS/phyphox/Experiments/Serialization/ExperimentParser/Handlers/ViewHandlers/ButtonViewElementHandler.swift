@@ -91,7 +91,7 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
+        let label = try attributes.nonEmptyString(for: .label)
 
         guard inputHandler.results.count == outputHandler.results.count else {
             throw XMLElementParserError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")

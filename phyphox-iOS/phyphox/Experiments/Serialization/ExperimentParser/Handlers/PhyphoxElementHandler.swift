@@ -140,9 +140,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
         
-        let locale = attributes.optionalAttribute(for: .locale) ?? "en"
+        let locale = attributes.optionalString(for: .locale) ?? "en"
 
-        let versionString = try attributes.attribute(for: .version)
+        let versionString = try attributes.string(for: .version)
 
         guard let version = SemanticVersion(string: versionString) else {
             throw XMLElementParserError.unexpectedAttributeValue("version")

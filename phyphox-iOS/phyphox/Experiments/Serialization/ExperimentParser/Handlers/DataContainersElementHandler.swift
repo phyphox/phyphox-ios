@@ -32,7 +32,7 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
         let size = try attributes.optionalAttribute(for: .size) ?? 1
 
-        let baseContents = (attributes.optionalAttribute(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
+        let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
         let staticBuffer = try attributes.optionalAttribute(for: .staticKey) ?? false
 
         results.append((text, size, baseContents, staticBuffer))

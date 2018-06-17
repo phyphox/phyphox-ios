@@ -34,7 +34,7 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let component = attributes.optionalAttribute(for: .component) ?? "output"
+        let component = attributes.optionalString(for: .component) ?? "output"
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
 

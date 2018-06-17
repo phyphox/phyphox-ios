@@ -30,7 +30,7 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
         let height: CGFloat = try attributes.optionalAttribute(for: .height) ?? 0.1
-        let colorString: String? = try attributes.optionalAttribute(for: .color)
+        let colorString: String? = try attributes.optionalString(for: .color)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {

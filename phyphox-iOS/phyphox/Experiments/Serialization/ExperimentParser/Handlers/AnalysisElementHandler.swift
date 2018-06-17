@@ -32,8 +32,8 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let type = attributes.optionalAttribute(for: .type) ?? "buffer"
-        let usedAs = attributes.optionalAttribute(for: .usedAs) ?? ""
+        let type = attributes.optionalString(for: .type) ?? "buffer"
+        let usedAs = attributes.optionalString(for: .usedAs) ?? ""
 
         if type == "buffer" {
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
@@ -123,7 +123,7 @@ final class AnalysisElementHandler: ResultElementHandler {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
         let sleep = try attributes.optionalAttribute(for: .sleep) ?? 0.0
-        let dynamicSleep: String? = attributes.optionalAttribute(for: .dynamicSleep)
+        let dynamicSleep: String? = attributes.optionalString(for: .dynamicSleep)
 
         let modules = try handlers.map({ ($0.0, try $0.1.expectSingleResult()) })
 

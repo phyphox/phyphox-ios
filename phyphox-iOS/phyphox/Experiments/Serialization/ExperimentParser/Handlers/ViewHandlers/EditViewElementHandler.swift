@@ -52,7 +52,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
+        let label = try attributes.nonEmptyString(for: .label)
 
         let outputBufferName = try outputHandler.expectSingleResult()
 
@@ -60,7 +60,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         let decimal = try attributes.optionalAttribute(for: .decimal) ?? true
         let min = try attributes.optionalAttribute(for: .min) ?? -Double.infinity
         let max = try attributes.optionalAttribute(for: .max) ?? Double.infinity
-        let unit = attributes.optionalAttribute(for: .unit) ?? ""
+        let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
         let defaultValue = try attributes.optionalAttribute(for: .defaultValue) ?? 0.0
 

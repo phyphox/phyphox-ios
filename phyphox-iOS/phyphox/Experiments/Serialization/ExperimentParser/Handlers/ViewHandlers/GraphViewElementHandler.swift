@@ -129,9 +129,9 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
-        let xLabel = try attributes.nonEmptyAttribute(for: .labelX)
-        let yLabel = try attributes.nonEmptyAttribute(for: .labelY)
+        let label = try attributes.nonEmptyString(for: .label)
+        let xLabel = try attributes.nonEmptyString(for: .labelX)
+        let yLabel = try attributes.nonEmptyString(for: .labelY)
 
         guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
             throw XMLElementParserError.missingElement("data-container")
@@ -140,11 +140,11 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
 
         let aspectRatio: CGFloat = try attributes.optionalAttribute(for: .aspectRatio) ?? 2.5
-        let dots = attributes.optionalAttribute(for: .style) ?? "line" == "dots"
+        let dots = attributes.optionalString(for: .style) ?? "line" == "dots"
         let partialUpdate = try attributes.optionalAttribute(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalAttribute(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalAttribute(for: .lineWidth) ?? 1.0
-        let colorString: String? = attributes.optionalAttribute(for: .color)
+        let colorString: String? = attributes.optionalString(for: .color)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {

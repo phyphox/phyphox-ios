@@ -76,7 +76,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyAttribute(for: .label)
+        let label = try attributes.nonEmptyString(for: .label)
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
@@ -84,7 +84,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let size = try attributes.optionalAttribute(for: .size) ?? 1.0
         let precision = try attributes.optionalAttribute(for: .precision) ?? 2
         let scientific = try attributes.optionalAttribute(for: .scientific) ?? false
-        let unit = attributes.optionalAttribute(for: .unit) ?? ""
+        let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
 
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))

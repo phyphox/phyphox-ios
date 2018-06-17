@@ -30,13 +30,13 @@ struct XMLElementAttributes<Key: XMLAttributeKey> {
         throw XMLElementParserError.unexpectedAttribute(illegalKey)
     }
 
-    func optionalAttribute(for key: Key) -> String? {
+    func optionalString(for key: Key) -> String? {
         let keyString = key.rawValue
 
         return attributes[keyString]
     }
 
-    func attribute(for key: Key) throws -> String {
+    func string(for key: Key) throws -> String {
         let keyString = key.rawValue
 
         guard let stringValue = attributes[keyString] else {
@@ -46,7 +46,7 @@ struct XMLElementAttributes<Key: XMLAttributeKey> {
         return stringValue
     }
 
-    func nonEmptyAttribute(for key: Key) throws -> String {
+    func nonEmptyString(for key: Key) throws -> String {
         let keyString = key.rawValue
 
         guard let stringValue = attributes[keyString], !stringValue.isEmpty else {
@@ -107,6 +107,7 @@ struct XMLElementAttributes<Key: XMLAttributeKey> {
     }
 }
 
+/// Contains immutable attributes. Makes attributes accessible through a specific key
 struct XMLElementAttributeContainer {
     private let attributes: [String: String]
 
@@ -120,12 +121,6 @@ struct XMLElementAttributeContainer {
 
     func attributes<Key: XMLAttributeKey>(keyedBy key: Key.Type) -> XMLElementAttributes<Key> {
         return XMLElementAttributes(attributes: attributes)
-    }
-
-    subscript(key: String) -> String? {
-        get {
-            return attributes[key]
-        }
     }
 }
 
