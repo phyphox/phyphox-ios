@@ -21,7 +21,7 @@ final class PhyphoxExperimentFileRootElementHandler: ResultElementHandler, Looku
         handlers = ["phyphox": phyphoxHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(try phyphoxHandler.expectSingleResult())
     }
 }

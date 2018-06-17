@@ -14,7 +14,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
     
     private let input: DataBuffer
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
         var avg: ExperimentAnalysisDataIO? = nil
         var std: ExperimentAnalysisDataIO? = nil
         for output in outputs {

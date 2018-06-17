@@ -20,25 +20,37 @@ struct ButtonViewElementDescriptor: ViewElementDescriptor {
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
 }
 
+enum DataTypeAttribute: String {
+    case buffer
+    case value
+    case empty
+}
+
 private final class ButtonInputElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ButtonInputDescriptor]()
 
     typealias Result = ButtonInputDescriptor
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case type
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let type = try attributes.attribute(for: "type") ?? "buffer"
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        if type == "buffer" {
+        let type = try attributes.optionalAttribute(for: .type) ?? DataTypeAttribute.buffer
+
+        switch type {
+        case .buffer:
             guard !text.isEmpty else {
                 throw XMLElementParserError.missingText
             }
 
             results.append(.buffer(text))
-        }
-        else if type == "value" {
+        case .value:
             guard !text.isEmpty else {
                 throw XMLElementParserError.missingText
             }
@@ -48,12 +60,8 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
             }
 
             results.append(.value(value))
-        }
-        else if type == "empty" {
+        case .empty:
             results.append(.clear)
-        }
-        else {
-            throw XMLElementParserError.unexpectedAttributeValue("type")
         }
     }
 }
@@ -72,13 +80,18 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         handlers = ["output": outputHandler, "input": inputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let label = attributes["label"], !label.isEmpty else {
-            throw XMLElementParserError.missingAttribute("label")
-        }
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case label
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let label = try attributes.nonEmptyAttribute(for: .label)
 
         guard inputHandler.results.count == outputHandler.results.count else {
             throw XMLElementParserError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")

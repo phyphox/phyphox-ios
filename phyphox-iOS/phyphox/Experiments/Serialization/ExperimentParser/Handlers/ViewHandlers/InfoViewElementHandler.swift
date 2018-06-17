@@ -17,13 +17,18 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let label = attributes["label"], !label.isEmpty else {
-            throw XMLElementParserError.missingAttribute("label")
-        }
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case label
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let label = try attributes.nonEmptyAttribute(for: .label)
 
         results.append(InfoViewElementDescriptor(label: label))
     }

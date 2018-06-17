@@ -13,7 +13,7 @@ final class TextElementHandler: ResultElementHandler, AttributelessElementHandle
 
     var results = [Result]()
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
         results.append(text)

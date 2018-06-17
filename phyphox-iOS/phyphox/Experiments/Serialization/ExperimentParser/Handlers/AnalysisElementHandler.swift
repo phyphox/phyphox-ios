@@ -19,17 +19,26 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
 
     typealias Result = ExperimentAnalysisDataIODescriptor
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let type = try attributes.attribute(for: "type") ?? "buffer"
-        let usedAs = try attributes.attribute(for: "as") ?? ""
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case type
+        case clear
+        case usedAs = "as"
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let type = attributes.optionalAttribute(for: .type) ?? "buffer"
+        let usedAs = attributes.optionalAttribute(for: .usedAs) ?? ""
 
         if type == "buffer" {
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-            let clear = try attributes.attribute(for: "clear") ?? true
+            let clear = try attributes.optionalAttribute(for: .clear) ?? true
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
         }
@@ -37,7 +46,7 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
             guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
             guard let value = Double(text) else {
-                throw XMLElementParserError.unexpectedAttributeValue("value")
+                throw XMLElementParserError.unreadableData
             }
 
             results.append(.value(value: value, usedAs: usedAs))
@@ -55,7 +64,7 @@ struct AnalysisModuleDescriptor {
     let inputs: [ExperimentAnalysisDataIODescriptor]
     let outputs: [ExperimentAnalysisDataIODescriptor]
 
-    let attributes: XMLElementAttributes
+    let attributes: XMLElementAttributeContainer
 }
 
 final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHandler {
@@ -72,11 +81,11 @@ final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["input": inputsHandler, "output": outputsHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
     
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributes))
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributeContainer))
     }
 }
 
@@ -94,7 +103,7 @@ final class AnalysisElementHandler: ResultElementHandler {
 
     private var handlers = [(String, AnalysisModuleElementHandler)]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -104,9 +113,17 @@ final class AnalysisElementHandler: ResultElementHandler {
         return handler
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let sleep = try attributes.attribute(for: "sleep") ?? 0.0
-        let dynamicSleep: String? = try attributes.attribute(for: "dynamicSleep")
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case sleep
+        case dynamicSleep
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let sleep = try attributes.optionalAttribute(for: .sleep) ?? 0.0
+        let dynamicSleep: String? = attributes.optionalAttribute(for: .dynamicSleep)
 
         let modules = try handlers.map({ ($0.0, try $0.1.expectSingleResult()) })
 

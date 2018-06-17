@@ -8,31 +8,46 @@
 
 import Foundation
 
+extension RawRepresentable where RawValue == String, Self: LosslessStringConvertible {
+    var description: String {
+        return rawValue
+    }
+}
+
 final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ExperimentIcon
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case format
+    }
+
+    private enum Format: String {
+        case base64
+        case string
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        let format = attributes["format"]
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        if format == "base64" {
+        let format: Format = try attributes.optionalAttribute(for: .format) ?? .string
+
+        switch format {
+        case .base64:
             guard let data = Data(base64Encoded: text, options: []) else { throw XMLElementParserError.unreadableData }
 
             if let image = UIImage(data: data) {
                 results.append(.image(image))
             }
-        }
-        else if format == nil || format == "string" {
+        case .string:
             results.append(.string(text))
-        }
-        else {
-            throw XMLElementParserError.unexpectedAttributeValue("format")
         }
     }
 }

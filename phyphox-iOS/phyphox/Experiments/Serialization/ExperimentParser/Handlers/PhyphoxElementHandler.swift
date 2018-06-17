@@ -128,15 +128,21 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case locale
+        case version
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let locale = attributes["locale"] ?? "en"
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
+    }
 
-        guard let versionString = attributes["version"] else {
-            throw XMLElementParserError.missingAttribute("version")
-        }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        
+        let locale = attributes.optionalAttribute(for: .locale) ?? "en"
+
+        let versionString = try attributes.attribute(for: .version)
 
         guard let version = SemanticVersion(string: versionString) else {
             throw XMLElementParserError.unexpectedAttributeValue("version")

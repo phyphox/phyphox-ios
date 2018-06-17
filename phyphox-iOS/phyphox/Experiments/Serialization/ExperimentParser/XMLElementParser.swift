@@ -8,24 +8,118 @@
 
 import Foundation
 
-struct XMLElementAttributes {
-    fileprivate let attributes: [String: String]
+protocol XMLAttributeKey {
+    var rawValue: String { get }
+}
 
-    fileprivate static var empty: XMLElementAttributes {
-        return XMLElementAttributes(attributes: [:])
-    }
+struct XMLElementAttributes<Key: XMLAttributeKey> {
+    private let attributes: [String: String]
 
     /*fileprivate*/ init(attributes: [String: String]) {
         self.attributes = attributes
     }
 
-    func attribute<T: LosslessStringConvertible>(for key: String) throws -> T? {
-        return try attributes[key].map({
+    func constrain(to keys: [Key]) throws {
+        let allowedKeys = Set(keys.map { $0.rawValue })
+        let availableKeys = Set(attributes.keys)
+
+        let illegalKeys = availableKeys.subtracting(allowedKeys)
+
+        guard let illegalKey = illegalKeys.first else { return }
+
+        throw XMLElementParserError.unexpectedAttribute(illegalKey)
+    }
+
+    func optionalAttribute(for key: Key) -> String? {
+        let keyString = key.rawValue
+
+        return attributes[keyString]
+    }
+
+    func attribute(for key: Key) throws -> String {
+        let keyString = key.rawValue
+
+        guard let stringValue = attributes[keyString] else {
+            throw XMLElementParserError.missingAttribute(keyString)
+        }
+
+        return stringValue
+    }
+
+    func nonEmptyAttribute(for key: Key) throws -> String {
+        let keyString = key.rawValue
+
+        guard let stringValue = attributes[keyString], !stringValue.isEmpty else {
+            throw XMLElementParserError.missingAttribute(keyString)
+        }
+
+        return stringValue
+    }
+
+    func optionalAttribute<T: LosslessStringConvertible>(for key: Key) throws -> T? {
+        let keyString = key.rawValue
+
+        return try attributes[keyString].map({
             guard let value = T.init($0) else {
-                throw XMLElementParserError.unexpectedAttributeValue(key)
+                throw XMLElementParserError.unexpectedAttributeValue(keyString)
             }
             return value
         })
+    }
+
+    func attribute<T: LosslessStringConvertible>(for key: Key) throws -> T {
+        let keyString = key.rawValue
+
+        guard let stringValue = attributes[keyString] else {
+            throw XMLElementParserError.missingAttribute(keyString)
+        }
+
+        guard let value = T.init(stringValue) else {
+            throw XMLElementParserError.unexpectedAttributeValue(keyString)
+        }
+
+        return value
+    }
+
+    func optionalAttribute<T: RawRepresentable>(for key: Key) throws -> T? where T.RawValue == String {
+        let keyString = key.rawValue
+
+        return try attributes[keyString].map({
+            guard let value = T.init(rawValue: $0) else {
+                throw XMLElementParserError.unexpectedAttributeValue(keyString)
+            }
+            return value
+        })
+    }
+
+    func attribute<T: RawRepresentable>(for key: Key) throws -> T where T.RawValue == String {
+        let keyString = key.rawValue
+
+        guard let stringValue = attributes[keyString] else {
+            throw XMLElementParserError.missingAttribute(keyString)
+        }
+
+        guard let value = T.init(rawValue: stringValue) else {
+            throw XMLElementParserError.unexpectedAttributeValue(keyString)
+        }
+
+        return value
+    }
+}
+
+struct XMLElementAttributeContainer {
+    private let attributes: [String: String]
+
+    fileprivate static var empty: XMLElementAttributeContainer {
+        return XMLElementAttributeContainer(attributes: [:])
+    }
+
+    fileprivate init(attributes: [String: String]) {
+        self.attributes = attributes
+    }
+
+    func attributes<Key: XMLAttributeKey>(keyedBy key: Key.Type) -> XMLElementAttributes<Key> {
+        return XMLElementAttributes(attributes: attributes)
     }
 
     subscript(key: String) -> String? {
@@ -35,20 +129,10 @@ struct XMLElementAttributes {
     }
 }
 
-protocol AttributelessElementHandler: ElementHandler {}
-
-extension AttributelessElementHandler {
-    func beginElement(attributes: XMLElementAttributes) throws {
-        guard attributes.attributes.isEmpty else {
-            throw XMLElementParserError.unexpectedAttribute(attributes.attributes.keys.first ?? "")
-        }
-    }
-}
-
 protocol ElementHandler: class {
-    func beginElement(attributes: XMLElementAttributes) throws
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws
     func childHandler(for tagName: String) throws -> ElementHandler
-    func endElement(with text: String, attributes: XMLElementAttributes) throws
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws
 
     func clear()
     func clearChildHandlers()
@@ -67,7 +151,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
     /// Arrays used as stacks containing element name, element handler, text and attributes from parent elements relative to the current location within the XML file. At the root level, these contain an empty string, empty attributes, empty tag name and the root element handler.
     private var handlerStack = [(tagName: String, elementHandler: ElementHandler)]()
     private var textStack = [String]()
-    private var attributesStack = [XMLElementAttributes]()
+    private var attributesStack = [XMLElementAttributeContainer]()
 
     private var parsingError: Error?
 
@@ -118,7 +202,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
 
         do {
             rootHandler.clear()
-            try rootHandler.beginElement(attributes: attributes)
+            try rootHandler.beginElement(attributeContainer: attributes)
         }
         catch {
             parsingError = error
@@ -136,8 +220,8 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
             let childHandler = try currentHandler.childHandler(for: elementName)
 
             childHandler.clearChildHandlers()
-            let elementAttributes = XMLElementAttributes(attributes: attributes)
-            try childHandler.beginElement(attributes: elementAttributes)
+            let elementAttributes = XMLElementAttributeContainer(attributes: attributes)
+            try childHandler.beginElement(attributeContainer: elementAttributes)
 
             attributesStack.append(elementAttributes)
             handlerStack.append((elementName, childHandler))
@@ -171,7 +255,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
         }
 
         do {
-            try elementHandler.endElement(with: cleanText(currentText), attributes: attributes)
+            try elementHandler.endElement(with: cleanText(currentText), attributeContainer: attributes)
         }
         catch {
             parsingError = error
@@ -188,7 +272,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
         }
         
         do {
-            try rootHandler.endElement(with: cleanText(currentText), attributes: attributes)
+            try rootHandler.endElement(with: cleanText(currentText), attributeContainer: attributes)
         }
         catch {
             parsingError = error

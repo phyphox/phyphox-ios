@@ -28,7 +28,7 @@ private final class ViewElementHandler: ResultElementHandler {
 
     private var handlers = [(tagName: String, handler: ViewComponentElementHandler)]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
     func childHandler(for tagName: String) throws -> ElementHandler {
@@ -61,10 +61,15 @@ private final class ViewElementHandler: ResultElementHandler {
         return handler
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let label = attributes["label"], !label.isEmpty else {
-            throw XMLElementParserError.missingAttribute("label")
-        }
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case label
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let label = try attributes.nonEmptyAttribute(for: .label)
 
         let views = try handlers.map { ($0.tagName, try $0.handler.getResult()) }
 
@@ -93,7 +98,7 @@ final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, Att
         handlers = ["view": viewHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(viewHandler.results)
     }
 }

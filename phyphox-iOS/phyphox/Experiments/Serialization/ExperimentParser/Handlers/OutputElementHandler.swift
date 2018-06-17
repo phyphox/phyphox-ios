@@ -28,18 +28,18 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
         handlers = ["input": inputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    enum Attribute: String, XMLAttributeKey {
+        case rate
+        case loop
     }
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        guard tagName == "input" else { throw XMLElementParserError.unexpectedChildElement(tagName) }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        return inputHandler
-    }
-
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let rate: UInt = try attributes.attribute(for: "rate") ?? 48000
-        let loop = try attributes.attribute(for: "loop") ?? false
+        let rate: UInt = try attributes.optionalAttribute(for: .rate) ?? 48000
+        let loop = try attributes.optionalAttribute(for: .loop) ?? false
 
         let inputBufferName = try inputHandler.expectSingleResult()
         
@@ -60,7 +60,7 @@ final class OutputElementHandler: ResultElementHandler, LookupElementHandler, At
         handlers = ["audio": audioHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(try audioHandler.expectSingleResult())
     }
 }

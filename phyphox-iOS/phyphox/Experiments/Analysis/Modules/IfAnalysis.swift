@@ -19,10 +19,10 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private var inTrue: ExperimentAnalysisDataIO? = nil
     private var inFalse: ExperimentAnalysisDataIO? = nil
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
-        less = try additionalAttributes.attribute(for: "less") ?? false
-        equal = try additionalAttributes.attribute(for: "equal") ?? false
-        greater = try additionalAttributes.attribute(for: "greater") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
+        less = try additionalAttributes.optionalAttribute(for: "less") ?? false
+        equal = try additionalAttributes.optionalAttribute(for: "equal") ?? false
+        greater = try additionalAttributes.optionalAttribute(for: "greater") ?? false
 
         for input in inputs {
             if input.asString == "a" {

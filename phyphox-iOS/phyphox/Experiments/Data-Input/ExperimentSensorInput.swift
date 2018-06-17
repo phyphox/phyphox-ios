@@ -19,16 +19,6 @@ enum SensorType: String {
     case proximity
 }
 
-extension SensorType: LosslessStringConvertible {
-    init?(_ description: String) {
-        self.init(rawValue: description)
-    }
-
-    var description: String {
-        return rawValue
-    }
-}
-
 enum SensorError : Error {
     case invalidSensorType
     case motionSessionAbsent

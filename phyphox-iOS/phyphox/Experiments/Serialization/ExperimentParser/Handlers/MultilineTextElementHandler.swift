@@ -13,7 +13,7 @@ final class MultilineTextElementHandler: ResultElementHandler, AttributelessElem
 
     var results = [Result]()
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let cleanText = text.replacingOccurrences(of: "(?m)((?:^\\s+)|(?:\\s+$))", with: "\n", options: .regularExpression, range: nil)
 
         guard !cleanText.isEmpty else { throw XMLElementParserError.missingText }

@@ -13,11 +13,17 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
 
     typealias Result = (String, String)
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case original
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let original = attributes["original"] else { throw XMLElementParserError.missingAttribute("original") }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let original = try attributes.attribute(for: .original)
 
         results.append((original, text))
     }
@@ -45,11 +51,17 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case locale
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let locale = attributes["locale"] else { throw XMLElementParserError.missingAttribute("locale") }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let locale = try attributes.attribute(for: .locale)
 
         let title = try titleHandler.expectSingleResult()
         let category = try categoryHandler.expectSingleResult()
@@ -76,7 +88,7 @@ final class TranslationsElementHandler: ResultElementHandler, LookupElementHandl
         handlers = ["translation": translationHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
         results.append(translations)

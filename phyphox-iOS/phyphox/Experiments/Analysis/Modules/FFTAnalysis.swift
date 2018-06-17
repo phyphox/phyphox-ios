@@ -77,7 +77,7 @@ final class FFTAnalysis: ExperimentAnalysisModule {
     private var realOutput: ExperimentAnalysisDataIO?
     private var imagOutput: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
         for input in inputs {
             if input.asString == "im" {
                 switch input {

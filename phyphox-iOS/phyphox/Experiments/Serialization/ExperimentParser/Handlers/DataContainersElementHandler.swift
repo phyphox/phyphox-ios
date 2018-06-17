@@ -15,15 +15,25 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case size
+        case staticKey = "static"
+        case initKey = "init"
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        let size = try attributes.attribute(for: "size") ?? 1
-        let baseContents = attributes["init"].map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
-        let staticBuffer = try attributes.attribute(for: "static") ?? false
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let size = try attributes.optionalAttribute(for: .size) ?? 1
+
+        let baseContents = (attributes.optionalAttribute(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
+        let staticBuffer = try attributes.optionalAttribute(for: .staticKey) ?? false
 
         results.append((text, size, baseContents, staticBuffer))
     }
@@ -42,7 +52,7 @@ final class DataContainersElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["container": containerHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(containerHandler.results)
     }
 }

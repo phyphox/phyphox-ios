@@ -22,13 +22,19 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case component
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         guard !text.isEmpty else { throw XMLElementParserError.missingText }
 
-        let component = attributes["component"] ?? "output"
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let component = attributes.optionalAttribute(for: .component) ?? "output"
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
 
@@ -54,10 +60,10 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(LocationInputDescriptor(outputs: outputHandler.results))
     }
 }
@@ -83,14 +89,22 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case type
+        case rate
+        case average
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let sensor: SensorType = try attributes.attribute(for: "type") else { throw XMLElementParserError.unexpectedAttributeValue("type") }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
 
-        let frequency = try attributes.attribute(for: "rate") ?? 0.0
-        let average = try attributes.attribute(for: "average") ?? false
+        let sensor: SensorType = try attributes.attribute(for: .type)
+
+        let frequency = try attributes.optionalAttribute(for: .rate) ?? 0.0
+        let average = try attributes.optionalAttribute(for: .average) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
@@ -116,11 +130,18 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case rate
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let rate: UInt = try attributes.attribute(for: "rate") ?? 48000
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let rate: UInt = try attributes.optionalAttribute(for: .rate) ?? 48000
+
         results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
     }
 }
@@ -140,7 +161,7 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
         handlers = ["sensor": sensorHandler, "audio": audioHandler, "location": locationHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let audio = audioHandler.results
         let location = locationHandler.results
         let sensors = sensorHandler.results

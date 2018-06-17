@@ -18,13 +18,17 @@ private final class ExportSetDataElementHandler: ResultElementHandler, Childless
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case name
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let name = attributes["name"], !name.isEmpty else {
-            throw XMLElementParserError.missingAttribute("name")
-        }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let name = try attributes.nonEmptyAttribute(for: .name)
 
         guard !text.isEmpty else {
             throw XMLElementParserError.missingText
@@ -53,13 +57,18 @@ private final class ExportSetElementHandler: ResultElementHandler, LookupElement
         handlers = ["data": dataHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let name = attributes["name"], !name.isEmpty else {
-            throw XMLElementParserError.missingAttribute("name")
-        }
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case name
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let name = try attributes.nonEmptyAttribute(for: .name)
 
         results.append(ExportSetDescriptor(name: name, dataSets: dataHandler.results))
     }
@@ -78,7 +87,7 @@ final class ExportElementHandler: ResultElementHandler, LookupElementHandler, At
         handlers = ["set": setHandler]
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         results.append(setHandler.results)
     }
 }

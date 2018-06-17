@@ -100,7 +100,6 @@
 		6B6A4C302056A48F007586D0 /* PointCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6A4C2F2056A48F007586D0 /* PointCollection.swift */; };
 		6B7BF7851C130425007408FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7841C130425007408FB /* Assets.xcassets */; };
 		6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B7BF7861C130425007408FB /* LaunchScreen.storyboard */; };
-		6B7BF79E1C130425007408FB /* phyphoxUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF79D1C130425007408FB /* phyphoxUITests.swift */; };
 		6B7BF7B71C130471007408FB /* Experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AD1C130471007408FB /* Experiment.swift */; };
 		6B7BF7B81C130471007408FB /* ExperimentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AE1C130471007408FB /* ExperimentCell.swift */; };
 		6B7BF7B91C130471007408FB /* ExperimentCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */; };
@@ -273,13 +272,6 @@
 			remoteInfo = JXLS;
 		};
 		6B7BF78F1C130425007408FB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 6B7BF7791C130425007408FB;
-			remoteInfo = phyphox;
-		};
-		6B7BF79A1C130425007408FB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
 			proxyType = 1;
@@ -476,9 +468,6 @@
 		6B7BF7891C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B7BF78E1C130425007408FB /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B7BF7941C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6B7BF7991C130425007408FB /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		6B7BF79D1C130425007408FB /* phyphoxUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxUITests.swift; sourceTree = "<group>"; };
-		6B7BF79F1C130425007408FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B7BF7AD1C130471007408FB /* Experiment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
 		6B7BF7AE1C130471007408FB /* ExperimentCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCell.swift; sourceTree = "<group>"; };
 		6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCollection.swift; sourceTree = "<group>"; };
@@ -590,13 +579,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		6B7BF78B1C130425007408FB /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6B7BF7961C130425007408FB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -755,7 +737,6 @@
 			children = (
 				6B7BF77C1C130425007408FB /* phyphox */,
 				6B7BF7911C130425007408FB /* phyphoxTests */,
-				6B7BF79C1C130425007408FB /* phyphoxUITests */,
 				6B7BF77B1C130425007408FB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -765,7 +746,6 @@
 			children = (
 				6B7BF77A1C130425007408FB /* phyphox.app */,
 				6B7BF78E1C130425007408FB /* phyphoxTests.xctest */,
-				6B7BF7991C130425007408FB /* phyphoxUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -796,15 +776,6 @@
 				6B7BF7941C130425007408FB /* Info.plist */,
 			);
 			path = phyphoxTests;
-			sourceTree = "<group>";
-		};
-		6B7BF79C1C130425007408FB /* phyphoxUITests */ = {
-			isa = PBXGroup;
-			children = (
-				6B7BF79D1C130425007408FB /* phyphoxUITests.swift */,
-				6B7BF79F1C130425007408FB /* Info.plist */,
-			);
-			path = phyphoxUITests;
 			sourceTree = "<group>";
 		};
 		6B7BF7AC1C130457007408FB /* Assets */ = {
@@ -1205,24 +1176,6 @@
 			productReference = 6B7BF78E1C130425007408FB /* phyphoxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		6B7BF7981C130425007408FB /* phyphoxUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6B7BF7A81C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxUITests" */;
-			buildPhases = (
-				6B7BF7951C130425007408FB /* Sources */,
-				6B7BF7961C130425007408FB /* Frameworks */,
-				6B7BF7971C130425007408FB /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				6B7BF79B1C130425007408FB /* PBXTargetDependency */,
-			);
-			name = phyphoxUITests;
-			productName = phyphoxUITests;
-			productReference = 6B7BF7991C130425007408FB /* phyphoxUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1245,11 +1198,6 @@
 						};
 					};
 					6B7BF78D1C130425007408FB = {
-						CreatedOnToolsVersion = 7.1.1;
-						LastSwiftMigration = 0920;
-						TestTargetID = 6B7BF7791C130425007408FB;
-					};
-					6B7BF7981C130425007408FB = {
 						CreatedOnToolsVersion = 7.1.1;
 						LastSwiftMigration = 0920;
 						TestTargetID = 6B7BF7791C130425007408FB;
@@ -1297,7 +1245,6 @@
 			targets = (
 				6B7BF7791C130425007408FB /* phyphox */,
 				6B7BF78D1C130425007408FB /* phyphoxTests */,
-				6B7BF7981C130425007408FB /* phyphoxUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1447,13 +1394,6 @@
 			files = (
 				6BCD494C205005310079E569 /* unbounded_buffer.phyphox in Resources */,
 				6BCD494E205005E90079E569 /* bounded_buffer.phyphox in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6B7BF7971C130425007408FB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1648,14 +1588,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6B7BF7951C130425007408FB /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6B7BF79E1C130425007408FB /* phyphoxUITests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1678,11 +1610,6 @@
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = 6B7BF78F1C130425007408FB /* PBXContainerItemProxy */;
-		};
-		6B7BF79B1C130425007408FB /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 6B7BF7791C130425007408FB /* phyphox */;
-			targetProxy = 6B7BF79A1C130425007408FB /* PBXContainerItemProxy */;
 		};
 		6BD026E81CB571A4005085B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1985,34 +1912,6 @@
 			};
 			name = Release;
 		};
-		6B7BF7A91C130425007408FB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = phyphoxUITests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
-				TEST_TARGET_NAME = phyphox;
-				USES_XCTRUNNER = YES;
-			};
-			name = Debug;
-		};
-		6B7BF7AA1C130425007408FB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = phyphoxUITests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.phyphoxUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
-				TEST_TARGET_NAME = phyphox;
-				USES_XCTRUNNER = YES;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2039,15 +1938,6 @@
 			buildConfigurations = (
 				6B7BF7A61C130425007408FB /* Debug */,
 				6B7BF7A71C130425007408FB /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6B7BF7A81C130425007408FB /* Build configuration list for PBXNativeTarget "phyphoxUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6B7BF7A91C130425007408FB /* Debug */,
-				6B7BF7AA1C130425007408FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

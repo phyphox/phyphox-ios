@@ -18,12 +18,19 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case height
+        case color
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        let height: CGFloat = try attributes.attribute(for: "height") ?? 0.1
-        let colorString: String? = try attributes.attribute(for: "color")
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let height: CGFloat = try attributes.optionalAttribute(for: .height) ?? 0.1
+        let colorString: String? = try attributes.optionalAttribute(for: .color)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {

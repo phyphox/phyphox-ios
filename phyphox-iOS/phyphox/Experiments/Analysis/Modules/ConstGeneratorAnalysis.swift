@@ -12,7 +12,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
     private var lengthInput: ExperimentAnalysisDataIO?
     private var valueInput: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
         for input in inputs {
             if input.asString == "value" {
                 valueInput = input

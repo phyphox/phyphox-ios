@@ -35,7 +35,7 @@ enum XMLElementParserError: Error {
     /// To be called by an element handler that expects only one result but has produced several.
     case duplicateElement
 
-    /// Unreadable (binary) data
+    /// Unreadable (i.e. corrupted) data
     case unreadableData
 
     /// Custom error message
@@ -132,6 +132,28 @@ extension ChildlessElementHandler {
     }
 
     func clearChildHandlers() {}
+}
+
+protocol AttributelessElementHandler: ElementHandler {}
+
+private struct EmptyAttribute: XMLAttributeKey {
+    var rawValue: String {
+        return ""
+    }
+}
+
+extension AttributelessElementHandler {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: EmptyAttribute.self)
+
+        try attributes.constrain(to: [])
+    }
+}
+
+extension String: XMLAttributeKey {
+    var rawValue: String {
+        return self
+    }
 }
 
 func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) throws -> T? {

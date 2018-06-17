@@ -34,23 +34,35 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         handlers = ["output": outputHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let label = attributes["label"], !label.isEmpty else {
-            throw XMLElementParserError.missingAttribute("label")
-        }
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case label
+        case signed
+        case decimal
+        case max
+        case min
+        case unit
+        case factor
+        case defaultValue = "default"
+    }
+
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let label = try attributes.nonEmptyAttribute(for: .label)
 
         let outputBufferName = try outputHandler.expectSingleResult()
 
-        let signed = try attributes.attribute(for: "signed") ?? true
-        let decimal = try attributes.attribute(for: "decimal") ?? true
-        let min = try attributes.attribute(for: "min") ?? -Double.infinity
-        let max = try attributes.attribute(for: "max") ?? Double.infinity
-        let unit = try attributes.attribute(for: "unit") ?? ""
-        let factor = try attributes.attribute(for: "factor") ?? 1.0
-        let defaultValue = try attributes.attribute(for: "default") ?? 0.0
+        let signed = try attributes.optionalAttribute(for: .signed) ?? true
+        let decimal = try attributes.optionalAttribute(for: .decimal) ?? true
+        let min = try attributes.optionalAttribute(for: .min) ?? -Double.infinity
+        let max = try attributes.optionalAttribute(for: .max) ?? Double.infinity
+        let unit = attributes.optionalAttribute(for: .unit) ?? ""
+        let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
+        let defaultValue = try attributes.optionalAttribute(for: .defaultValue) ?? 0.0
 
         results.append(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName))
     }

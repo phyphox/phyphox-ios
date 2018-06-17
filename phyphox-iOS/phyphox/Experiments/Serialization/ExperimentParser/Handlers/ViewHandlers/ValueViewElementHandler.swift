@@ -13,16 +13,23 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
 
     var results = [Result]()
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case min
+        case max
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         guard !text.isEmpty else {
             throw XMLElementParserError.missingText
         }
 
-        let min = try attributes.attribute(for: "min") ?? -Double.infinity
-        let max = try attributes.attribute(for: "max") ?? Double.infinity
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let min = try attributes.optionalAttribute(for: .min) ?? -Double.infinity
+        let max = try attributes.optionalAttribute(for: .max) ?? Double.infinity
 
         results.append(ValueViewMap(range: min...max, replacement: text))
     }
@@ -54,22 +61,31 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         handlers = ["input": inputHandler, "map": mapHandler]
     }
 
-    func beginElement(attributes: XMLElementAttributes) throws {
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+
+    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
+    /*private*/ enum Attribute: String, XMLAttributeKey {
+        case label
+        case size
+        case precision
+        case scientific
+        case unit
+        case factor
     }
 
-    func endElement(with text: String, attributes: XMLElementAttributes) throws {
-        guard let label = attributes["label"], !label.isEmpty else {
-            throw XMLElementParserError.missingAttribute("label")
-        }
+    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+
+        let label = try attributes.nonEmptyAttribute(for: .label)
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
 
-        let size = try attributes.attribute(for: "size") ?? 1.0
-        let precision = try attributes.attribute(for: "precision") ?? 2
-        let scientific = try attributes.attribute(for: "scientific") ?? false
-        let unit = try attributes.attribute(for: "unit") ?? ""
-        let factor = try attributes.attribute(for: "factor") ?? 1.0
+        let size = try attributes.optionalAttribute(for: .size) ?? 1.0
+        let precision = try attributes.optionalAttribute(for: .precision) ?? 2
+        let scientific = try attributes.optionalAttribute(for: .scientific) ?? false
+        let unit = attributes.optionalAttribute(for: .unit) ?? ""
+        let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
 
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
     }
