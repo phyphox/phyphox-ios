@@ -136,15 +136,9 @@ extension ChildlessElementHandler {
 
 protocol AttributelessElementHandler: ElementHandler {}
 
-private struct EmptyAttribute: XMLAttributeKey {
-    var rawValue: String {
-        return ""
-    }
-}
-
 extension AttributelessElementHandler {
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: EmptyAttribute.self)
+        let attributes = attributeContainer.attributes(keyedBy: String.self)
 
         try attributes.constrain(to: [])
     }
