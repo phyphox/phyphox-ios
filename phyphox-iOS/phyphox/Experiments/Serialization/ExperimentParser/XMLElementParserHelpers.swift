@@ -134,13 +134,20 @@ extension ChildlessElementHandler {
     func clearChildHandlers() {}
 }
 
+private struct EmptyKey: ClosedAttributeKey {
+    var rawValue: String { fatalError() }
+    private init() {}
+
+    static var allCases: [EmptyKey] {
+        return []
+    }
+}
+
 protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: String.self)
-
-        try attributes.constrain(to: [])
+        _ = try attributeContainer.strictAttributes(keyedBy: EmptyKey.self)
     }
 }
 
@@ -148,13 +155,4 @@ extension String: XMLAttributeKey {
     var rawValue: String {
         return self
     }
-}
-
-func attribute<T: LosslessStringConvertible>(_ key: String, from attributes: [String: String]) throws -> T? {
-    return try attributes[key].map({
-        guard let value = T.init($0) else {
-            throw XMLElementParserError.unexpectedAttributeValue(key)
-        }
-        return value
-    })
 }

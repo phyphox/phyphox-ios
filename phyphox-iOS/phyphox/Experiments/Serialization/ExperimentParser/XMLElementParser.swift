@@ -12,22 +12,13 @@ protocol XMLAttributeKey {
     var rawValue: String { get }
 }
 
+protocol ClosedAttributeKey: XMLAttributeKey, CaseIterable {}
+
 struct XMLElementAttributes<Key: XMLAttributeKey> {
     private let attributes: [String: String]
 
     /*fileprivate*/ init(attributes: [String: String]) {
         self.attributes = attributes
-    }
-
-    func constrain(to keys: [Key]) throws {
-        let allowedKeys = Set(keys.map { $0.rawValue })
-        let availableKeys = Set(attributes.keys)
-
-        let illegalKeys = availableKeys.subtracting(allowedKeys)
-
-        guard let illegalKey = illegalKeys.first else { return }
-
-        throw XMLElementParserError.unexpectedAttribute(illegalKey)
     }
 
     func optionalString(for key: Key) -> String? {
@@ -121,6 +112,20 @@ struct XMLElementAttributeContainer {
 
     func attributes<Key: XMLAttributeKey>(keyedBy key: Key.Type) -> XMLElementAttributes<Key> {
         return XMLElementAttributes(attributes: attributes)
+    }
+
+    func strictAttributes<Key: ClosedAttributeKey>(keyedBy key: Key.Type) throws -> XMLElementAttributes<Key> {
+        let allowedKeys = Set(Key.allCases.map { $0.rawValue })
+        let availableKeys = Set(attributes.keys)
+
+        let illegalKeys = availableKeys.subtracting(allowedKeys)
+
+        if let illegalKey = illegalKeys.first {
+            throw XMLElementParserError.unexpectedAttribute(illegalKey)
+        }
+        else {
+            return XMLElementAttributes(attributes: attributes)
+        }
     }
 }
 

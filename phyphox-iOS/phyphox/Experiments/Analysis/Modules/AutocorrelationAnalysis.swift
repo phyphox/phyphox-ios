@@ -108,13 +108,21 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                         x = xRaw
                     }
                     else {
-                        vDSP_vsaddD(xRaw, 1, [-first!], &x!, 1, vDSP_Length(count))
+                        x!.withUnsafeMutableBufferPointer { buffer in
+                            guard let pointer = buffer.baseAddress else { return }
+
+                            vDSP_vsaddD(xRaw, 1, [-first!], pointer, 1, vDSP_Length(count))
+                        }
                     }
                 }
                 else {
                     x = [Double](repeating: 0.0, count: count)
-                    
-                    vDSP_vrampD([0.0], [1.0], &x!, 1, vDSP_Length(count))
+
+                    x!.withUnsafeMutableBufferPointer { buffer in
+                        guard let pointer = buffer.baseAddress else { return }
+
+                        vDSP_vrampD([0.0], [1.0], pointer, 1, vDSP_Length(count))
+                    }
                 }
             }
             
