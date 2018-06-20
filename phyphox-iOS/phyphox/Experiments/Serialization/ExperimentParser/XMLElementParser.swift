@@ -114,8 +114,8 @@ struct XMLElementAttributeContainer {
         return XMLElementAttributes(attributes: attributes)
     }
 
-    func strictAttributes<Key: ClosedAttributeKey>(keyedBy key: Key.Type) throws -> XMLElementAttributes<Key> {
-        let allowedKeys = Set(Key.allCases.map { $0.rawValue })
+    func attributes<Key: ClosedAttributeKey>(constrainedBy key: Key.Type) throws -> XMLElementAttributes<Key> {
+        let allowedKeys = Set(key.allCases.map { $0.rawValue })
         let availableKeys = Set(attributes.keys)
 
         let illegalKeys = availableKeys.subtracting(allowedKeys)

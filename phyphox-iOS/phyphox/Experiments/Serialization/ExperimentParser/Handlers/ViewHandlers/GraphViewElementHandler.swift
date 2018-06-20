@@ -34,8 +34,7 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
     }
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case axis
     }
 
@@ -101,8 +100,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case label
         case labelX
         case labelY

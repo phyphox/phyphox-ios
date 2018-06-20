@@ -15,8 +15,7 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case original
     }
 
@@ -53,8 +52,7 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case locale
     }
 

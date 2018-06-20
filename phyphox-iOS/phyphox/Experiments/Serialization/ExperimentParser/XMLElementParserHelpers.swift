@@ -147,7 +147,7 @@ protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-        _ = try attributeContainer.strictAttributes(keyedBy: EmptyKey.self)
+        _ = try attributeContainer.attributes(constrainedBy: EmptyKey.self)
     }
 }
 

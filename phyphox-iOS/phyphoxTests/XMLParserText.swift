@@ -16,21 +16,16 @@ final class XMLParserTest: XCTestCase {
         case result(Result)
     }
 
-    private func expectParserResult<Handler: ResultElementHandler>(expectedResult: XMLParseResult<Handler.Result>, handler: Handler, input: String) throws {
-        guard let data = input.data(using: .utf8) else {
-            XCTFail()
-            return
-        }
-
+    private func expectParserResult<Handler: ResultElementHandler>(expectedResult: XMLParseResult<Handler.Result>, handler: Handler, inputStream: InputStream) throws {
         switch expectedResult {
         case .failure:
             do {
-               _ = try XMLElementParser(rootHandler: handler).parse(stream: InputStream(data:data))
+               _ = try XMLElementParser(rootHandler: handler).parse(stream: inputStream)
                 XCTFail()
             }
             catch {}
         case .result(let expectedResultValue):
-            let result = try XMLElementParser(rootHandler: handler).parse(stream: InputStream(data:data))
+            let result = try XMLElementParser(rootHandler: handler).parse(stream: inputStream)
             XCTAssertEqual(expectedResultValue, result)
         }
     }

@@ -24,8 +24,7 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case component
     }
 
@@ -91,8 +90,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case type
         case rate
         case average
@@ -132,8 +130,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
 
     func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, XMLAttributeKey {
         case rate
     }
 

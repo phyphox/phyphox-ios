@@ -128,14 +128,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
-    // Bug in Swift 4.1 compiler (https://bugs.swift.org/browse/SR-7153). Make private again when compiling with Swift 4.2
-    /*private*/ enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, ClosedAttributeKey {
         case locale
         case version
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
     func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
         let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
