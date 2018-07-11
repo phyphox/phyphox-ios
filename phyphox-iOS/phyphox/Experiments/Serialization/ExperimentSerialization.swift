@@ -27,7 +27,7 @@ let experimentFileExtension = "phyphox"
 final class ExperimentSerialization {
     static let parser = XMLElementParser(rootHandler: PhyphoxExperimentFileRootElementHandler())
 
-    static func readExperimentFromURL(_ url: URL, legacy: Bool = false) throws -> Experiment {
+    static func readExperimentFromURL(_ url: URL, legacy: Bool = true) throws -> Experiment {
         let readURL: URL
 
         if url.pathExtension == experimentStateFileExtension {

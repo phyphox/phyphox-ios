@@ -177,7 +177,7 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
         parser.parse()
 
         if let parseError = parsingError ?? parser.parserError {
-            throw ParsingError.parsingError(backtrace: currentElementBacktrace, encounteredError: parseError)
+            throw ParsingError.parsingError(backtrace: currentElementBacktrace, line: parser.lineNumber, encounteredError: parseError)
         }
 
         guard let result = rootHandler.results.first else {
@@ -283,13 +283,13 @@ final class XMLElementParser<RootHandler: ResultElementHandler>: NSObject, XMLPa
 
 fileprivate extension XMLElementParser {
     enum ParsingError: LocalizedError {
-        case parsingError(backtrace: String, encounteredError: Error)
+        case parsingError(backtrace: String, line: Int, encounteredError: Error)
         case missingRootElement
 
         var errorDescription: String? {
             switch self {
-            case .parsingError(backtrace: let backtrace, encounteredError: let error):
-                return "Parser encountered error on element \"\(backtrace)\": \(error.localizedDescription)"
+            case .parsingError(backtrace: let backtrace, line: let line, encounteredError: let error):
+                return "Parser encountered error on element \"\(backtrace)\" at line \(line): \(error.localizedDescription)"
             case .missingRootElement:
                 return "The root element handler returned no result"
             }

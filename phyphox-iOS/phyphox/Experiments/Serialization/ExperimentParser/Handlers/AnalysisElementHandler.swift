@@ -100,10 +100,9 @@ final class AnalysisElementHandler: ResultElementHandler {
 
     var results = [Result]()
 
-    private var handlers = [(String, AnalysisModuleElementHandler)]()
+    private var handlers = [(name: String, handler: AnalysisModuleElementHandler)]()
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
 
     func childHandler(for tagName: String) throws -> ElementHandler {
         let handler = AnalysisModuleElementHandler()
@@ -123,7 +122,7 @@ final class AnalysisElementHandler: ResultElementHandler {
         let sleep = try attributes.optionalAttribute(for: .sleep) ?? 0.0
         let dynamicSleep: String? = attributes.optionalString(for: .dynamicSleep)
 
-        let modules = try handlers.map({ ($0.0, try $0.1.expectSingleResult()) })
+        let modules = try handlers.map({ ($0.name, try $0.handler.expectSingleResult()) })
 
         results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, modules: modules))
     }

@@ -8,12 +8,6 @@
 
 import Foundation
 
-extension RawRepresentable where RawValue == String, Self: LosslessStringConvertible {
-    var description: String {
-        return rawValue
-    }
-}
-
 final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
     typealias Result = ExperimentIcon
 
