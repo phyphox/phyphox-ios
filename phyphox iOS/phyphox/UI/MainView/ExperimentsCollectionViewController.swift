@@ -276,9 +276,11 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         if experiment.experiment.appleBan {
             let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
             
+            /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
                 UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
             }))
+            */
             controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
             
             present(controller, animated: true, completion: nil)
