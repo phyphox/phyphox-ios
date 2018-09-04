@@ -103,3 +103,4 @@
 "translationToWebsite" = "Посетить веб-сайт";
 "translationToWebsiteURL" = "http://phyphox.org/languages#ru";
 "apple_ban" = "Этот эксперимент больше не доступен.";
+"newExperimentSimple" = "Добавить простой эксперимент";
