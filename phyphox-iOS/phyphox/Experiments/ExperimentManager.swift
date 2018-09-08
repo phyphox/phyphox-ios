@@ -130,42 +130,6 @@ final class ExperimentManager {
             }
         }
     }
-
-    private func benchmark(repititions: Int, legacy: Bool, completion: @escaping (TimeInterval) -> Void) {
-        let experiments = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
-
-        let urls = experiments.map { experimentsBaseURL.appendingPathComponent($0) }
-
-        var totalTime = 0.0
-
-        var left = repititions
-
-        func go() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                let start = CFAbsoluteTimeGetCurrent()
-
-                for url in urls {
-                    _ = try! ExperimentSerialization.readExperimentFromURL(url, legacy: legacy)
-                }
-
-                let duration = CFAbsoluteTimeGetCurrent() -  start
-
-                totalTime += duration
-
-                left -= 1
-                if left > 0 {
-                    go()
-                }
-                else {
-                    let average = totalTime / Double(repititions)
-
-                    completion(average)
-                }
-            }
-        }
-
-        go()
-    }
     
     init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
@@ -178,18 +142,6 @@ final class ExperimentManager {
         let time = CFAbsoluteTimeGetCurrent() - timestamp
         print("Load took \(time * 1000) ms")
         #endif
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-            self.benchmark(repititions: 20, legacy: true) { duration in
-                 print("Legacy benchmark time: \(duration)")
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                    self.benchmark(repititions: 20, legacy: false) { duration in
-                        print("New benchmark time: \(duration)")
-                    }
-                }
-            }
-        }
     }
 }
 

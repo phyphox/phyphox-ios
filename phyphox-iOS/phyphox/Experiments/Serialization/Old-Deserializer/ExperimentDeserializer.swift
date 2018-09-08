@@ -89,8 +89,6 @@ func getElementsWithKey(_ xml: NSDictionary, key: String) -> [AnyObject]? {
     return nil
 }
 
-var t = 0.0
-
 final class ExperimentDeserializer {
     private let parser: XMLParser
 
@@ -101,11 +99,8 @@ final class ExperimentDeserializer {
     func deserialize() throws -> Experiment {
         XMLDictionaryParser.sharedInstance().attributesMode = XMLDictionaryAttributesMode.dictionary
 
-        let start = CFAbsoluteTimeGetCurrent()
         let dictionary = XMLDictionaryParser.sharedInstance().dictionary(with: parser)! as NSDictionary
-        let time = CFAbsoluteTimeGetCurrent() - start
-        t += time
-        print("XMLDictionary sum \(t * 1000)ms")
+
         guard dictionary.nodeName() == "phyphox" else {
             throw SerializationError.invalidExperimentFile(message: "phyphox root node not present.")
         }
