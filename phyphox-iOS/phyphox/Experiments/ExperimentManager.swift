@@ -131,28 +131,40 @@ final class ExperimentManager {
         }
     }
 
-    private func benchmark(repititions: Int, legacy: Bool) -> TimeInterval {
+    private func benchmark(repititions: Int, legacy: Bool, completion: @escaping (TimeInterval) -> Void) {
         let experiments = try! FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
 
         let urls = experiments.map { experimentsBaseURL.appendingPathComponent($0) }
 
         var totalTime = 0.0
 
-        for _ in 0..<repititions {
-            let start = CFAbsoluteTimeGetCurrent()
+        var left = repititions
 
-            for url in urls {
-                _ = try! ExperimentSerialization.readExperimentFromURL(url, legacy: legacy)
+        func go() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                let start = CFAbsoluteTimeGetCurrent()
+
+                for url in urls {
+                    _ = try! ExperimentSerialization.readExperimentFromURL(url, legacy: legacy)
+                }
+
+                let duration = CFAbsoluteTimeGetCurrent() -  start
+
+                totalTime += duration
+
+                left -= 1
+                if left > 0 {
+                    go()
+                }
+                else {
+                    let average = totalTime / Double(repititions)
+
+                    completion(average)
+                }
             }
-
-            let duration = CFAbsoluteTimeGetCurrent() -  start
-
-            totalTime += duration
         }
 
-        let average = totalTime / Double(repititions)
-
-        return average
+        go()
     }
     
     init() {
@@ -163,15 +175,21 @@ final class ExperimentManager {
        loadSavedExperiments()
 
         #if DEBUG
-            print("Load took \(String(format: "%.2f", (CFAbsoluteTimeGetCurrent()-timestamp)*1000)) ms")
+        let time = CFAbsoluteTimeGetCurrent() - timestamp
+        print("Load took \(time * 1000) ms")
         #endif
 
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-//            print("New benchmark time: \(self.benchmark(repititions: 100, legacy: false))")
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-//                print("Legacy benchmark time: \(self.benchmark(repititions: 100, legacy: true))")
-//            }
-//        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+            self.benchmark(repititions: 20, legacy: true) { duration in
+                 print("Legacy benchmark time: \(duration)")
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    self.benchmark(repititions: 20, legacy: false) { duration in
+                        print("New benchmark time: \(duration)")
+                    }
+                }
+            }
+        }
     }
 }
 

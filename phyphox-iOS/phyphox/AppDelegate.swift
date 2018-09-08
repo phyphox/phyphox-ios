@@ -18,21 +18,21 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var main: MainNavigationViewController!
     var mainNavViewController: ScalableViewController!
-    
+
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         KeyboardTracker.startTracking()
 
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor.black
-        
+
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(ExperimentsCollectionViewController(), animated: false)
-        
+
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
-        
         window!.makeKeyAndVisible()
-        
+
         return true
     }
     

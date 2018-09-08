@@ -13,7 +13,7 @@ private extension ExperimentAnalysisDataIO {
         switch descriptor {
         case .buffer(name: let bufferName, usedAs: let usedAs, clear: let clear):
             guard let buffer = buffers[bufferName] else {
-                throw XMLElementParserError.missingElement("data-container")
+                throw ElementHandlerError.missingElement("data-container")
             }
 
             self = .buffer(buffer: buffer, usedAs: usedAs, clear: clear)
@@ -72,7 +72,7 @@ final class ExperimentAnalysisFactory {
 
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {
         guard let analysisClass = classMap[key] else {
-            throw XMLElementParserError.unexpectedChildElement(key)
+            throw ElementHandlerError.unexpectedChildElement(key)
         }
 
         let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }

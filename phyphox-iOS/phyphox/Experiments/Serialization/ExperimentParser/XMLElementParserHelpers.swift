@@ -8,7 +8,18 @@
 
 import Foundation
 
-enum XMLElementParserError: Error {
+/// Allows types conforming to the `RawRepresentable` protocol with a `RawValue` of type `String` to conform to `LosslessStringConvertible` without implementing any methods. Example: Enumerations with `String` raw values.
+extension LosslessStringConvertible where Self: RawRepresentable, Self.RawValue == String {
+    init?(_ description: String) {
+        self.init(rawValue: description)
+    }
+
+    var description: String {
+        return rawValue
+    }
+}
+
+enum ElementHandlerError: Error {
     /// To be used when a child element that cannot be handled is encountered
     case unexpectedChildElement(String)
 
@@ -26,11 +37,8 @@ enum XMLElementParserError: Error {
     /// To be used by an element when a child element is missing.
     case missingChildElement(String)
 
-    /// To be used by any element when another element is missing.
+    /// To be used when an element is missing. An empty string signalizes that element handler has no results but expects one, hene the element handler itself is missing a parsed element.
     case missingElement(String)
-
-    /// To be used by an element handler when it has no results but expects one.
-    case missingSelf
 
     /// To be called by an element handler that expects only one result but has produced several.
     case duplicateElement
@@ -42,7 +50,7 @@ enum XMLElementParserError: Error {
     case message(String)
 }
 
-extension XMLElementParserError: LocalizedError {
+extension ElementHandlerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .duplicateElement:
@@ -52,9 +60,7 @@ extension XMLElementParserError: LocalizedError {
         case .missingChildElement(let element):
             return "Child element \"\(element)\" is missing"
         case .missingElement(let element):
-            return "Element \"\(element)\" is missing"
-        case .missingSelf:
-            return "Element is missing"
+            return element.isEmpty ? "Element is missing" : "Element \"\(element)\" is missing"
         case .missingText:
             return "Text value is missing"
         case .unexpectedAttribute(let attribute):
@@ -72,17 +78,17 @@ extension XMLElementParserError: LocalizedError {
 }
 
 protocol LookupElementHandler: ElementHandler {
-    var handlers: [String: ElementHandler] { get set }
+    var childHandlers: [String: ElementHandler] { get set }
 }
 
 extension LookupElementHandler {
     func clearChildHandlers() {
-        handlers.values.forEach { $0.clear() }
+        childHandlers.values.forEach { $0.clear() }
     }
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        guard let handler = handlers[tagName] else {
-            throw XMLElementParserError.unexpectedChildElement(tagName)
+    func childHandler(for elementName: String) throws -> ElementHandler {
+        guard let handler = childHandlers[elementName] else {
+            throw ElementHandlerError.unexpectedChildElement(elementName)
         }
 
         return handler
@@ -92,24 +98,19 @@ extension LookupElementHandler {
 extension ResultElementHandler {
     func clear() {
         results.removeAll()
-        clearChildHandlers()
     }
 
     func expectOptionalResult() throws -> Result? {
         guard results.count <= 1 else {
-            throw XMLElementParserError.duplicateElement
+            throw ElementHandlerError.duplicateElement
         }
 
         return results.first
     }
 
     func expectSingleResult() throws -> Result {
-        guard let result = results.first else {
-            throw XMLElementParserError.missingSelf
-        }
-
-        guard results.count == 1 else {
-            throw XMLElementParserError.duplicateElement
+        guard let result = try expectOptionalResult() else {
+            throw ElementHandlerError.missingElement("")
         }
 
         return result
@@ -117,7 +118,7 @@ extension ResultElementHandler {
 
     func expectAtLeastOneResult() throws -> [Result] {
         guard !results.isEmpty else {
-            throw XMLElementParserError.missingSelf
+            throw ElementHandlerError.missingElement("")
         }
 
         return results
@@ -127,8 +128,8 @@ extension ResultElementHandler {
 protocol ChildlessElementHandler: ElementHandler {}
 
 extension ChildlessElementHandler {
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        throw XMLElementParserError.unexpectedChildElement(tagName)
+    func childHandler(for elementName: String) throws -> ElementHandler {
+        throw ElementHandlerError.unexpectedChildElement(elementName)
     }
 
     func clearChildHandlers() {}
@@ -146,12 +147,12 @@ private struct EmptyKey: ClosedAttributeKey {
 protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-        _ = try attributeContainer.attributes(constrainedBy: EmptyKey.self)
+    func startElement(attributes: AttributeContainer) throws {
+        _ = try attributes.attributes(constrainedBy: EmptyKey.self)
     }
 }
 
-extension String: XMLAttributeKey {
+extension String: AttributeKey {
     var rawValue: String {
         return self
     }

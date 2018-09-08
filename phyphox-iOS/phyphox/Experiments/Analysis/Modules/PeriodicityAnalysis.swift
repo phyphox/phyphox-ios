@@ -29,7 +29,7 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     private var timeOutput: ExperimentAnalysisDataIO?
     private var periodOutput: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
         for input in inputs {
             if input.asString == "x" {
                 switch input {

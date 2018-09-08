@@ -9,26 +9,24 @@
 import Foundation
 
 final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = ValueViewMap
+    var results = [ValueViewMap]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case min
         case max
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         guard !text.isEmpty else {
-            throw XMLElementParserError.missingText
+            throw ElementHandlerError.missingText
         }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let min = try attributes.optionalAttribute(for: .min) ?? -Double.infinity
-        let max = try attributes.optionalAttribute(for: .max) ?? Double.infinity
+        let min = try attributes.optionalValue(for: .min) ?? -Double.infinity
+        let max = try attributes.optionalValue(for: .max) ?? Double.infinity
 
         results.append(ValueViewMap(range: min...max, replacement: text))
     }
@@ -47,22 +45,20 @@ struct ValueViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    typealias Result = ValueViewElementDescriptor
+    var results = [ValueViewElementDescriptor]()
 
-    var results = [Result]()
-
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     private let inputHandler = TextElementHandler()
     private let mapHandler = ValueViewMapElementHandler()
 
     init() {
-        handlers = ["input": inputHandler, "map": mapHandler]
+        childHandlers = ["input": inputHandler, "map": mapHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
         case size
         case precision
@@ -71,24 +67,25 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         case factor
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
 
-        let size = try attributes.optionalAttribute(for: .size) ?? 1.0
-        let precision = try attributes.optionalAttribute(for: .precision) ?? 2
-        let scientific = try attributes.optionalAttribute(for: .scientific) ?? false
+        let size = try attributes.optionalValue(for: .size) ?? 1.0
+        let precision = try attributes.optionalValue(for: .precision) ?? 2
+        let scientific = try attributes.optionalValue(for: .scientific) ?? false
         let unit = attributes.optionalString(for: .unit) ?? ""
-        let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
+        let factor = try attributes.optionalValue(for: .factor) ?? 1.0
 
         results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

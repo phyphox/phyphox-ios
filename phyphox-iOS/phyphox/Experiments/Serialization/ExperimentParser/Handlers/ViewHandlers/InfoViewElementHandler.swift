@@ -13,26 +13,24 @@ struct InfoViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
-    typealias Result = InfoViewElementDescriptor
+    var results = [InfoViewElementDescriptor]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
         results.append(InfoViewElementDescriptor(label: label))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

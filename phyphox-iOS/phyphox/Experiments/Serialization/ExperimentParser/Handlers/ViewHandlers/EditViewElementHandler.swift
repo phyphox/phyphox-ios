@@ -22,22 +22,19 @@ struct EditViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    typealias Result = EditViewElementDescriptor
+    var results = [EditViewElementDescriptor]()
 
-    var results = [Result]()
-
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     private let outputHandler = TextElementHandler()
 
     init() {
-        handlers = ["output": outputHandler]
+        childHandlers = ["output": outputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
         case signed
         case decimal
@@ -48,25 +45,26 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         case defaultValue = "default"
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
         let outputBufferName = try outputHandler.expectSingleResult()
 
-        let signed = try attributes.optionalAttribute(for: .signed) ?? true
-        let decimal = try attributes.optionalAttribute(for: .decimal) ?? true
-        let min = try attributes.optionalAttribute(for: .min) ?? -Double.infinity
-        let max = try attributes.optionalAttribute(for: .max) ?? Double.infinity
+        let signed = try attributes.optionalValue(for: .signed) ?? true
+        let decimal = try attributes.optionalValue(for: .decimal) ?? true
+        let min = try attributes.optionalValue(for: .min) ?? -Double.infinity
+        let max = try attributes.optionalValue(for: .max) ?? Double.infinity
         let unit = attributes.optionalString(for: .unit) ?? ""
-        let factor = try attributes.optionalAttribute(for: .factor) ?? 1.0
-        let defaultValue = try attributes.optionalAttribute(for: .defaultValue) ?? 0.0
+        let factor = try attributes.optionalValue(for: .factor) ?? 1.0
+        let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
 
         results.append(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

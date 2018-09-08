@@ -11,47 +11,42 @@ import Foundation
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
 
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = BufferDescriptor
+    var results = [BufferDescriptor]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case size
         case staticKey = "static"
         case initKey = "init"
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        guard !text.isEmpty else { throw XMLElementParserError.missingText }
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let size = try attributes.optionalAttribute(for: .size) ?? 1
+        let size = try attributes.optionalValue(for: .size) ?? 1
 
         let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
-        let staticBuffer = try attributes.optionalAttribute(for: .staticKey) ?? false
+        let staticBuffer = try attributes.optionalValue(for: .staticKey) ?? false
 
         results.append((text, size, baseContents, staticBuffer))
     }
 }
 
 final class DataContainersElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = [BufferDescriptor]
+    var results = [[BufferDescriptor]]()
 
-    var handlers: [String: ElementHandler]
-
-    var results = [Result]()
+    var childHandlers: [String: ElementHandler]
 
     private let containerHandler = DataContainerElementHandler()
 
     init() {
-        handlers = ["container": containerHandler]
+        childHandlers = ["container": containerHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         results.append(containerHandler.results)
     }
 }

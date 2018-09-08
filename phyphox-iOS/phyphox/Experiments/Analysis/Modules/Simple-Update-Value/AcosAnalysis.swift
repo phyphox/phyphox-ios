@@ -12,8 +12,8 @@ import Accelerate
 final class AcosAnalysis: UpdateValueAnalysis {
     private let deg: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: XMLElementAttributes<String>) throws {
-        deg = try additionalAttributes.optionalAttribute(for: "deg") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+        deg = try additionalAttributes.optionalValue(for: "deg") ?? false
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

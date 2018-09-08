@@ -14,26 +14,24 @@ struct SeparatorViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
-    typealias Result = SeparatorViewElementDescriptor
+    var results = [SeparatorViewElementDescriptor]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case height
         case color
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let height: CGFloat = try attributes.optionalAttribute(for: .height) ?? 0.1
-        let colorString: String? = try attributes.optionalString(for: .color)
+        let height: CGFloat = try attributes.optionalValue(for: .height) ?? 0.1
+        let colorString: String? = attributes.optionalString(for: .color)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw XMLElementParserError.unexpectedAttributeValue("color")
+                throw ElementHandlerError.unexpectedAttributeValue("color")
             }
 
             return color
@@ -42,7 +40,8 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
         results.append(SeparatorViewElementDescriptor(height: height, color: color))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

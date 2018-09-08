@@ -26,7 +26,7 @@ final class GraphViewDescriptor: ViewDescriptor {
     let xPrecision: UInt
     let yPrecision: UInt
     
-    enum ScaleMode: String {
+    enum ScaleMode: String, LosslessStringConvertible {
         case auto, extend, fixed
     }
     

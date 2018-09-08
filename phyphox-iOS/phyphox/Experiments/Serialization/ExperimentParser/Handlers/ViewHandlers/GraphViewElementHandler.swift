@@ -8,7 +8,7 @@
 
 import Foundation
 
-private enum GraphAxis: String {
+private enum GraphAxis: String, LosslessStringConvertible {
     case x
     case y
 }
@@ -27,25 +27,22 @@ extension CGFloat: LosslessStringConvertible {
 }
 
 private final class GraphInputElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = GraphInputDescriptor
-
     var results = [GraphInputDescriptor]()
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case axis
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         guard !text.isEmpty else {
-            throw XMLElementParserError.missingText
+            throw ElementHandlerError.missingText
         }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let axis: GraphAxis = try attributes.attribute(for: .axis)
+        let axis: GraphAxis = try attributes.value(for: .axis)
 
         results.append(GraphInputDescriptor(axis: axis, bufferName: text))
     }
@@ -86,21 +83,19 @@ struct GraphViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    typealias Result = GraphViewElementDescriptor
+    var results = [GraphViewElementDescriptor]()
 
-    var results = [Result]()
-
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     private let inputHandler = GraphInputElementHandler()
 
     init() {
-        handlers = ["input": inputHandler]
+        childHandlers = ["input": inputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
         case labelX
         case labelY
@@ -124,53 +119,54 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case maxY
     }
     
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
         let xLabel = try attributes.nonEmptyString(for: .labelX)
         let yLabel = try attributes.nonEmptyString(for: .labelY)
 
         guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
-            throw XMLElementParserError.missingElement("data-container")
+            throw ElementHandlerError.missingElement("data-container")
         }
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
 
-        let aspectRatio: CGFloat = try attributes.optionalAttribute(for: .aspectRatio) ?? 2.5
+        let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         let dots = attributes.optionalString(for: .style) ?? "line" == "dots"
-        let partialUpdate = try attributes.optionalAttribute(for: .partialUpdate) ?? false
-        let history: UInt = try attributes.optionalAttribute(for: .history) ?? 1
-        let lineWidth: CGFloat = try attributes.optionalAttribute(for: .lineWidth) ?? 1.0
+        let partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
+        let history: UInt = try attributes.optionalValue(for: .history) ?? 1
+        let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
         let colorString: String? = attributes.optionalString(for: .color)
 
         let color = try colorString.map({ string -> UIColor in
             guard let color = UIColor(hexString: string) else {
-                throw XMLElementParserError.unexpectedAttributeValue("color")
+                throw ElementHandlerError.unexpectedAttributeValue("color")
             }
 
             return color
         }) ?? kHighlightColor
 
-        let logX = try attributes.optionalAttribute(for: .logX) ?? false
-        let logY = try attributes.optionalAttribute(for: .logY) ?? false
-        let xPrecision: UInt = try attributes.optionalAttribute(for: .xPrecision) ?? 3
-        let yPrecision: UInt = try attributes.optionalAttribute(for: .yPrecision) ?? 3
+        let logX = try attributes.optionalValue(for: .logX) ?? false
+        let logY = try attributes.optionalValue(for: .logY) ?? false
+        let xPrecision: UInt = try attributes.optionalValue(for: .xPrecision) ?? 3
+        let yPrecision: UInt = try attributes.optionalValue(for: .yPrecision) ?? 3
 
-        let scaleMinX: GraphViewDescriptor.ScaleMode = try attributes.optionalAttribute(for: .scaleMinX) ?? .auto
-        let scaleMaxX: GraphViewDescriptor.ScaleMode = try attributes.optionalAttribute(for: .scaleMaxX) ?? .auto
-        let scaleMinY: GraphViewDescriptor.ScaleMode = try attributes.optionalAttribute(for: .scaleMinY) ?? .auto
-        let scaleMaxY: GraphViewDescriptor.ScaleMode = try attributes.optionalAttribute(for: .scaleMaxY) ?? .auto
+        let scaleMinX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinX) ?? .auto
+        let scaleMaxX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxX) ?? .auto
+        let scaleMinY: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinY) ?? .auto
+        let scaleMaxY: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxY) ?? .auto
 
-        let minX: CGFloat = try attributes.optionalAttribute(for: .minX) ?? 0
-        let maxX: CGFloat = try attributes.optionalAttribute(for: .maxX) ?? 0
-        let minY: CGFloat = try attributes.optionalAttribute(for: .minY) ?? 0
-        let maxY: CGFloat = try attributes.optionalAttribute(for: .maxY) ?? 0
+        let minX: CGFloat = try attributes.optionalValue(for: .minX) ?? 0
+        let maxX: CGFloat = try attributes.optionalValue(for: .maxX) ?? 0
+        let minY: CGFloat = try attributes.optionalValue(for: .minY) ?? 0
+        let maxY: CGFloat = try attributes.optionalValue(for: .maxY) ?? 0
 
         results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

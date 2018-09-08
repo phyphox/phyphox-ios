@@ -9,14 +9,12 @@
 import Foundation
 
 final class MultilineTextElementHandler: ResultElementHandler, AttributelessElementHandler, ChildlessElementHandler {
-    typealias Result = String
+    var results = [String]()
 
-    var results = [Result]()
-
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         let cleanText = text.replacingOccurrences(of: "(?m)((?:^\\s+)|(?:\\s+$))", with: "\n", options: .regularExpression, range: nil)
 
-        guard !cleanText.isEmpty else { throw XMLElementParserError.missingText }
+        guard !cleanText.isEmpty else { throw ElementHandlerError.missingText }
 
         results.append(cleanText)
     }

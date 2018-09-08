@@ -9,27 +9,25 @@
 import Foundation
 
 final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = ExperimentLink
+    var results = [ExperimentLink]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
         case highlight
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        guard !text.isEmpty else { throw XMLElementParserError.missingText }
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
-        guard let url = URL(string: text) else { throw XMLElementParserError.unexpectedAttributeValue("url") }
+        guard let url = URL(string: text) else { throw ElementHandlerError.unexpectedAttributeValue("url") }
 
-        let highlighted = try attributes.optionalAttribute(for: .highlight) ?? false
+        let highlighted = try attributes.optionalValue(for: .highlight) ?? false
 
         results.append(ExperimentLink(label: label, url: url, highlighted: highlighted))
     }

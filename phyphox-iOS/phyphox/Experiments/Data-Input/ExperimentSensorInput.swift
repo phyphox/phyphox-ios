@@ -9,7 +9,7 @@
 import Foundation
 import CoreMotion
 
-enum SensorType: String {
+enum SensorType: String, LosslessStringConvertible {
     case accelerometer
     case gyroscope
     case linearAcceleration = "linear_acceleration"

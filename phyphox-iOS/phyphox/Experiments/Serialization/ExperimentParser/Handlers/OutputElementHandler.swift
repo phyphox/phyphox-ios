@@ -16,30 +16,28 @@ struct AudioOutputDescriptor {
 }
 
 private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = AudioOutputDescriptor
-
-    var results = [Result]()
+    var results = [AudioOutputDescriptor]()
 
     private let inputHandler = TextElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["input": inputHandler]
+        childHandlers = ["input": inputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case rate
         case loop
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let rate: UInt = try attributes.optionalAttribute(for: .rate) ?? 48000
-        let loop = try attributes.optionalAttribute(for: .loop) ?? false
+        let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
+        let loop = try attributes.optionalValue(for: .loop) ?? false
 
         let inputBufferName = try inputHandler.expectSingleResult()
         
@@ -47,20 +45,24 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
+struct OutputDescriptor {
+    let audioOutput: AudioOutputDescriptor?
+}
+
 final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = AudioOutputDescriptor
+    typealias Result = OutputDescriptor
 
     var results = [Result]()
 
     private let audioHandler = AudioElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["audio": audioHandler]
+        childHandlers = ["audio": audioHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        results.append(try audioHandler.expectSingleResult())
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult()))
     }
 }

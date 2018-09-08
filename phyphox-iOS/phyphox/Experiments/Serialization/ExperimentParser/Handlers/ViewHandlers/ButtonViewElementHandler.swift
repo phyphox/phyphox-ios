@@ -20,7 +20,7 @@ struct ButtonViewElementDescriptor: ViewElementDescriptor {
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
 }
 
-enum DataTypeAttribute: String {
+enum DataInputTypeAttribute: String, LosslessStringConvertible {
     case buffer
     case value
     case empty
@@ -29,33 +29,31 @@ enum DataTypeAttribute: String {
 private final class ButtonInputElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ButtonInputDescriptor]()
 
-    typealias Result = ButtonInputDescriptor
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case type
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let type = try attributes.optionalAttribute(for: .type) ?? DataTypeAttribute.buffer
+        let type = try attributes.optionalValue(for: .type) ?? DataInputTypeAttribute.buffer
 
         switch type {
         case .buffer:
             guard !text.isEmpty else {
-                throw XMLElementParserError.missingText
+                throw ElementHandlerError.missingText
             }
 
             results.append(.buffer(text))
         case .value:
             guard !text.isEmpty else {
-                throw XMLElementParserError.missingText
+                throw ElementHandlerError.missingText
             }
 
             guard let value = Double(text) else {
-                throw XMLElementParserError.unexpectedAttributeValue("value")
+                throw ElementHandlerError.unexpectedAttributeValue("value")
             }
 
             results.append(.value(value))
@@ -66,33 +64,30 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
 }
 
 final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    typealias Result = ButtonViewElementDescriptor
+    var results = [ButtonViewElementDescriptor]()
 
-    var results = [Result]()
-
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     private let outputHandler = TextElementHandler()
     private let inputHandler = ButtonInputElementHandler()
 
     init() {
-        handlers = ["output": outputHandler, "input": inputHandler]
+        childHandlers = ["output": outputHandler, "input": inputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
         guard inputHandler.results.count == outputHandler.results.count else {
-            throw XMLElementParserError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
+            throw ElementHandlerError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
         }
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))
@@ -100,7 +95,8 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         results.append(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow))
     }
 
-    func getResult() throws -> ViewElementDescriptor {
-        return try expectSingleResult()
+    func nextResult() throws -> ViewElementDescriptor {
+        guard !results.isEmpty else { throw ElementHandlerError.missingElement("") }
+        return results.removeFirst()
     }
 }

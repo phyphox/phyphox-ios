@@ -14,23 +14,21 @@ struct ExportSetDataDescriptor {
 }
 
 private final class ExportSetDataElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = ExportSetDataDescriptor
+    var results = [ExportSetDataDescriptor]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case name
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let name = try attributes.nonEmptyString(for: .name)
 
         guard !text.isEmpty else {
-            throw XMLElementParserError.missingText
+            throw ElementHandlerError.missingText
         }
 
         results.append(ExportSetDataDescriptor(name: name, bufferName: text))
@@ -44,27 +42,24 @@ struct ExportSetDescriptor {
 }
 
 private final class ExportSetElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = ExportSetDescriptor
+    var results = [ExportSetDescriptor]()
 
-    var results = [Result]()
-
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     private let dataHandler = ExportSetDataElementHandler()
 
     init() {
-        handlers = ["data": dataHandler]
+        childHandlers = ["data": dataHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case name
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let name = try attributes.nonEmptyString(for: .name)
 
@@ -73,19 +68,17 @@ private final class ExportSetElementHandler: ResultElementHandler, LookupElement
 }
 
 final class ExportElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = [ExportSetDescriptor]
+    var results = [[ExportSetDescriptor]]()
 
-    var results = [Result]()
-
-    var handlers: [String: ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     private let setHandler = ExportSetElementHandler()
 
     init() {
-        handlers = ["set": setHandler]
+        childHandlers = ["set": setHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         results.append(setHandler.results)
     }
 }

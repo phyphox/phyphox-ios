@@ -9,18 +9,16 @@
 import Foundation
 
 private final class StringTranslationElementHandler: ResultElementHandler, ChildlessElementHandler {
-    var results = [Result]()
+    var results = [(String, String)]()
 
-    typealias Result = (String, String)
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case original
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let original = try attributes.string(for: .original)
 
@@ -33,9 +31,7 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
 }
 
 private final class TranslationElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = (String, ExperimentTranslation)
-
-    var results = [Result]()
+    var results = [(String, ExperimentTranslation)]()
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
@@ -44,20 +40,20 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
     private let stringHandler = StringTranslationElementHandler()
     private let linkHandler = LinkElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
+        childHandlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "string": stringHandler, "link": linkHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case locale
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let locale = try attributes.string(for: .locale)
 
@@ -74,19 +70,17 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
 }
 
 final class TranslationsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = [String: ExperimentTranslation]
-
-    var results = [Result]()
+    var results = [[String: ExperimentTranslation]]()
 
     private let translationHandler = TranslationElementHandler()
 
-    var handlers: [String: ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     init() {
-        handlers = ["translation": translationHandler]
+        childHandlers = ["translation": translationHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         let translations = Dictionary(translationHandler.results, uniquingKeysWith: { first, _ in first })
 
         results.append(translations)

@@ -47,7 +47,7 @@ private extension ExperimentGPSInput {
 private extension ExperimentAudioInput {
     convenience init(descriptor: AudioInputDescriptor, buffers: [String: DataBuffer]) throws {
         guard let outBuffer = descriptor.buffer(for: "output", from: buffers) else {
-            throw XMLElementParserError.missingAttribute("output")
+            throw ElementHandlerError.missingAttribute("output")
         }
 
         let sampleRateBuffer = descriptor.buffer(for: "rate", from: buffers)
@@ -105,11 +105,9 @@ struct SemanticVersion: Comparable {
 private let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 6, patch: 0)
 
 final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = Experiment
-    
-    var results = [Result]()
+    var results = [Experiment]()
 
-    var handlers: [String: ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     private let titleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
@@ -125,7 +123,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let exportHandler = ExportElementHandler()
 
     init() {
-        handlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        childHandlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     private enum Attribute: String, ClosedAttributeKey {
@@ -133,35 +131,35 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         case version
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
         
         let locale = attributes.optionalString(for: .locale) ?? "en"
 
         let versionString = try attributes.string(for: .version)
 
         guard let version = SemanticVersion(string: versionString) else {
-            throw XMLElementParserError.unexpectedAttributeValue("version")
+            throw ElementHandlerError.unexpectedAttributeValue("version")
         }
 
         guard version <= latestSupportedFileVersion else {
-            throw XMLElementParserError.message("File version \(versionString) is not supported")
+            throw ElementHandlerError.message("File version \(versionString) is not supported")
         }
 
         let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) }
 
         guard let title = try titleHandler.expectOptionalResult() ?? translations?.selectedTranslation?.titleString else {
-            throw XMLElementParserError.missingElement("title")
+            throw ElementHandlerError.missingElement("title")
         }
 
         guard let category = try categoryHandler.expectOptionalResult() ?? translations?.selectedTranslation?.categoryString else {
-            throw XMLElementParserError.missingElement("category")
+            throw ElementHandlerError.missingElement("category")
         }
 
         guard let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString else {
-            throw XMLElementParserError.missingElement("description")
+            throw ElementHandlerError.missingElement("description")
         }
 
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
@@ -186,7 +184,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
-        let output = try makeOutput(from: outputDescriptor, buffers: buffers)
+        let output = try outputDescriptor.map { try makeOutput(from: $0, buffers: buffers) }
 
         let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) } ?? []
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
@@ -204,9 +202,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         results.append(experiment)
     }
 
-    private func makeViewDescriptor(from viewElementResult: (tagName: String, descriptor: ViewElementDescriptor), buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
-        let descriptor = viewElementResult.descriptor
-
+    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
         if let descriptor = descriptor as? SeparatorViewElementDescriptor {
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
         }
@@ -215,14 +211,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
         else if let descriptor = descriptor as? ValueViewElementDescriptor {
             guard let buffer = buffers[descriptor.inputBufferName] else {
-                throw XMLElementParserError.missingElement("data-container")
+                throw ElementHandlerError.missingElement("data-container")
             }
 
             return ValueViewDescriptor(label: descriptor.label, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
         }
         else if let descriptor = descriptor as? EditViewElementDescriptor {
             guard let buffer = buffers[descriptor.outputBufferName] else {
-                throw XMLElementParserError.missingElement("data-container")
+                throw ElementHandlerError.missingElement("data-container")
             }
 
             if buffer.isEmpty {
@@ -234,7 +230,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         else if let descriptor = descriptor as? ButtonViewElementDescriptor {
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataIO, DataBuffer) in
                 guard let outputBuffer = buffers[flow.outputBufferName] else {
-                    throw XMLElementParserError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container")
                 }
 
                 let input: ExperimentAnalysisDataIO
@@ -242,7 +238,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 switch flow.input {
                 case .buffer(let bufferName):
                     guard let buffer = buffers[bufferName] else {
-                        throw XMLElementParserError.missingElement("data-container")
+                        throw ElementHandlerError.missingElement("data-container")
                     }
 
                     input = .buffer(buffer: buffer, usedAs: "", clear: true)
@@ -260,39 +256,39 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         else if let descriptor = descriptor as? GraphViewElementDescriptor {
             let xBuffer = try descriptor.xInputBufferName.map({ name -> DataBuffer in
                 guard let buffer = buffers[name] else {
-                    throw XMLElementParserError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container")
                 }
                 return buffer
             })
 
             guard let yBuffer = buffers[descriptor.yInputBufferName] else {
-                throw XMLElementParserError.missingElement("data-container")
+                throw ElementHandlerError.missingElement("data-container")
             }
 
             return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xInputBuffer: xBuffer, yInputBuffer: yBuffer, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, drawDots: descriptor.drawDots, partialUpdate: descriptor.partialUpdate, history: descriptor.history, lineWidth: descriptor.lineWidth, color: descriptor.color)
         }
         else {
-            throw XMLElementParserError.unexpectedChildElement(viewElementResult.tagName)
+            throw ElementHandlerError.message("Unknown View Descriptor: \(descriptor)")
         }
     }
 
-    private func makeOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentOutput? {
-        guard let descriptor = descriptor else {
-            return nil
-        }
+    private func makeOutput(from descriptor: OutputDescriptor, buffers: [String: DataBuffer]) throws -> ExperimentOutput {
+        let audioOutput = descriptor.audioOutput
 
-        guard let buffer = buffers[descriptor.inputBufferName] else {
-            throw XMLElementParserError.missingElement("data-container")
-        }
+        return ExperimentOutput(audioOutput: try audioOutput.map {
+            guard let buffer = buffers[$0.inputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
 
-        return ExperimentOutput(audioOutput: ExperimentAudioOutput(sampleRate: descriptor.rate, loop: descriptor.loop, dataSource: buffer))
+            return ExperimentAudioOutput(sampleRate: $0.rate, loop: $0.loop, dataSource: buffer)
+        })
     }
 
     private func makeExport(from descriptors: [ExportSetDescriptor], buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ExperimentExport {
         let sets = try descriptors.map { descriptor -> ExperimentExportSet in
             let dataSets = try descriptor.dataSets.map { set -> (String, DataBuffer) in
                 guard let buffer = buffers[set.bufferName] else {
-                    throw XMLElementParserError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container")
                 }
 
                 return (descriptor.name, buffer)

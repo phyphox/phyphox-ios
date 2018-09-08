@@ -8,96 +8,94 @@
 
 import Foundation
 
-protocol ViewElementDescriptor {
-}
+protocol ViewElementDescriptor {}
 
 protocol ViewComponentElementHandler: ElementHandler {
-    func getResult() throws -> ViewElementDescriptor
+    func nextResult() throws -> ViewElementDescriptor
 }
 
 struct ViewCollectionDescriptor {
     let label: String
-    
-    let views: [(tagName: String, descriptor: ViewElementDescriptor)]
+    let views: [ViewElementDescriptor]
 }
 
 private final class ViewElementHandler: ResultElementHandler {
-    typealias Result = ViewCollectionDescriptor
-
     var results = [ViewCollectionDescriptor]()
 
-    private var handlers = [(tagName: String, handler: ViewComponentElementHandler)]()
+    private let infoHandler = InfoViewElementHandler()
+    private let separatorHandler = SeparatorViewElementHandler()
+    private let valueHandler = ValueViewElementHandler()
+    private let editHandler = EditViewElementHandler()
+    private let buttonhandler = ButtonViewElementHandler()
+    private let graphHandler = GraphViewElementHandler()
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    private var elementOrder = [ViewComponentElementHandler]()
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
+    func startElement(attributes: AttributeContainer) throws {}
+
+    func childHandler(for elementName: String) throws -> ElementHandler {
         let handler: ViewComponentElementHandler
 
-        if tagName == "info" {
-            handler = InfoViewElementHandler()
+        switch elementName {
+        case "info":
+            handler = infoHandler
+        case "separator":
+            handler = separatorHandler
+        case "value":
+            handler = valueHandler
+        case "edit":
+            handler = editHandler
+        case "button":
+            handler = buttonhandler
+        case "graph":
+            handler = graphHandler
+        default:
+            throw ElementHandlerError.unexpectedChildElement(elementName)
         }
-        else if tagName == "separator" {
-            handler = SeparatorViewElementHandler()
-        }
-        else if tagName == "value" {
-            handler = ValueViewElementHandler()
-        }
-        else if tagName == "edit" {
-            handler = EditViewElementHandler()
-        }
-        else if tagName == "button" {
-            handler = ButtonViewElementHandler()
-        }
-        else if tagName == "graph" {
-            handler = GraphViewElementHandler()
-        }
-        else {
-            throw XMLElementParserError.unexpectedChildElement(tagName)
-        }
-
-        handlers.append((tagName, handler))
+        elementOrder.append(handler)
 
         return handler
     }
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case label
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
 
-        let views = try handlers.map { ($0.tagName, try $0.handler.getResult()) }
+        let views = try elementOrder.map { try $0.nextResult()  }
 
-        guard !views.isEmpty else {
-            throw XMLElementParserError.missingChildElement("view-element")
-        }
+        guard !views.isEmpty else { throw ElementHandlerError.missingChildElement("view-element") }
 
         results.append(ViewCollectionDescriptor(label: label, views: views))
     }
 
     func clearChildHandlers() {
-        handlers.removeAll()
+        elementOrder.removeAll()
+        infoHandler.clear()
+        separatorHandler.clear()
+        valueHandler.clear()
+        editHandler.clear()
+        buttonhandler.clear()
+        graphHandler.clear()
     }
 }
 
 final class ViewsElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = [ViewCollectionDescriptor]
+    var results = [[ViewCollectionDescriptor]]()
 
-    var results = [Result]()
-
-    var handlers: [String: ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     private let viewHandler = ViewElementHandler()
 
     init() {
-        handlers = ["view": viewHandler]
+        childHandlers = ["view": viewHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         results.append(viewHandler.results)
     }
 }

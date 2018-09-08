@@ -18,20 +18,18 @@ protocol SensorDescriptor {
 }
 
 private final class SensorOutputElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = SensorOutputDescriptor
+    var results = [SensorOutputDescriptor]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case component
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        guard !text.isEmpty else { throw XMLElementParserError.missingText }
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let component = attributes.optionalString(for: .component) ?? "output"
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
@@ -47,22 +45,19 @@ struct LocationInputDescriptor: SensorDescriptor {
 }
 
 private final class LocationElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = LocationInputDescriptor
-
-    var results = [Result]()
+    var results = [LocationInputDescriptor]()
 
     private let outputHandler = SensorOutputElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["output": outputHandler]
+        childHandlers = ["output": outputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         results.append(LocationInputDescriptor(outputs: outputHandler.results))
     }
 }
@@ -76,38 +71,36 @@ struct SensorInputDescriptor: SensorDescriptor {
 }
 
 private final class SensorElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = SensorInputDescriptor
-
-    var results = [Result]()
+    var results = [SensorInputDescriptor]()
 
     private let outputHandler = SensorOutputElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["output": outputHandler]
+        childHandlers = ["output": outputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case type
         case rate
         case average
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let sensor: SensorType = try attributes.attribute(for: .type)
+        let sensor: SensorType = try attributes.value(for: .type)
 
-        let frequency = try attributes.optionalAttribute(for: .rate) ?? 0.0
-        let average = try attributes.optionalAttribute(for: .average) ?? false
+        let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
+        let average = try attributes.optionalValue(for: .average) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
         if average && rate == 0.0 {
-            throw XMLElementParserError.message("Averaging is enabled but rate is 0")
+            throw ElementHandlerError.message("Averaging is enabled but rate is 0")
         }
 
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, average: average, outputs: outputHandler.results))
@@ -120,28 +113,26 @@ struct AudioInputDescriptor: SensorDescriptor {
 }
 
 private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
-    typealias Result = AudioInputDescriptor
-
-    var results = [Result]()
+    var results = [AudioInputDescriptor]()
 
     private let outputHandler = SensorOutputElementHandler()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     init() {
-        handlers = ["output": outputHandler]
+        childHandlers = ["output": outputHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case rate
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let rate: UInt = try attributes.optionalAttribute(for: .rate) ?? 48000
+        let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
 
         results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
     }
@@ -156,13 +147,13 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
     private let audioHandler = AudioElementHandler()
     private let locationHandler = LocationElementHandler()
 
-    var handlers: [String: ElementHandler]
+    var childHandlers: [String: ElementHandler]
 
     init() {
-        handlers = ["sensor": sensorHandler, "audio": audioHandler, "location": locationHandler]
+        childHandlers = ["sensor": sensorHandler, "audio": audioHandler, "location": locationHandler]
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
+    func endElement(text: String, attributes: AttributeContainer) throws {
         let audio = audioHandler.results
         let location = locationHandler.results
         let sensors = sensorHandler.results

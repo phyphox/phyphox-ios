@@ -17,44 +17,37 @@ enum ExperimentAnalysisDataIODescriptor {
 final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentAnalysisDataIODescriptor]()
 
-    typealias Result = ExperimentAnalysisDataIODescriptor
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case type
         case clear
         case usedAs = "as"
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let type = attributes.optionalString(for: .type) ?? "buffer"
+        let type = try attributes.optionalValue(for: .type) ?? DataInputTypeAttribute.buffer
         let usedAs = attributes.optionalString(for: .usedAs) ?? ""
 
-        if type == "buffer" {
-            guard !text.isEmpty else { throw XMLElementParserError.missingText }
+        switch type {
+        case .buffer:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-            let clear = try attributes.optionalAttribute(for: .clear) ?? true
+            let clear = try attributes.optionalValue(for: .clear) ?? true
 
             results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
-        }
-        else if type == "value" {
-            guard !text.isEmpty else { throw XMLElementParserError.missingText }
+        case .value:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
             guard let value = Double(text) else {
-                throw XMLElementParserError.unreadableData
+                throw ElementHandlerError.unreadableData
             }
 
             results.append(.value(value: value, usedAs: usedAs))
-        }
-        else if type == "empty" {
+        case .empty:
             results.append(.empty(usedAs: usedAs))
-        }
-        else {
-            throw XMLElementParserError.unexpectedAttributeValue("type")
         }
     }
 }
@@ -63,7 +56,7 @@ struct AnalysisModuleDescriptor {
     let inputs: [ExperimentAnalysisDataIODescriptor]
     let outputs: [ExperimentAnalysisDataIODescriptor]
 
-    let attributes: XMLElementAttributeContainer
+    let attributes: AttributeContainer
 }
 
 final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHandler {
@@ -71,20 +64,19 @@ final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHan
 
     var results = [Result]()
 
-    var handlers: [String : ElementHandler]
+    var childHandlers: [String : ElementHandler]
 
     private let inputsHandler = AnalysisDataFlowElementHandler()
     private let outputsHandler = AnalysisDataFlowElementHandler()
 
     init() {
-        handlers = ["input": inputsHandler, "output": outputsHandler]
+        childHandlers = ["input": inputsHandler, "output": outputsHandler]
     }
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
+    func startElement(attributes: AttributeContainer) throws {}
     
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributeContainer))
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        results.append(AnalysisModuleDescriptor(inputs: inputsHandler.results, outputs: outputsHandler.results, attributes: attributes))
     }
 }
 
@@ -100,34 +92,38 @@ final class AnalysisElementHandler: ResultElementHandler {
 
     var results = [Result]()
 
-    private var handlers = [(name: String, handler: AnalysisModuleElementHandler)]()
+    private var moduleNames = [String]()
+    private let moduleHandler = AnalysisModuleElementHandler()
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {}
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func childHandler(for tagName: String) throws -> ElementHandler {
-        let handler = AnalysisModuleElementHandler()
-        handlers.append((tagName, handler))
-
-        return handler
+    func childHandler(for elementName: String) throws -> ElementHandler {
+        moduleNames.append(elementName)
+        return moduleHandler
     }
 
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case sleep
         case dynamicSleep
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let sleep = try attributes.optionalAttribute(for: .sleep) ?? 0.0
+        let sleep = try attributes.optionalValue(for: .sleep) ?? 0.0
         let dynamicSleep: String? = attributes.optionalString(for: .dynamicSleep)
 
-        let modules = try handlers.map({ ($0.name, try $0.handler.expectSingleResult()) })
+        guard moduleNames.count == moduleHandler.results.count else {
+            throw ElementHandlerError.message("Unparsed Analysis Module")
+        }
+
+        let modules = Array(zip(moduleNames, moduleHandler.results))
 
         results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, modules: modules))
     }
 
     func clearChildHandlers() {
-        handlers.removeAll()
+        moduleNames.removeAll()
+        moduleHandler.clear()
     }
 }

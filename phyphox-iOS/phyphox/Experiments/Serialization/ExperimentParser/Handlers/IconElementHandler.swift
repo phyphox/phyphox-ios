@@ -9,32 +9,29 @@
 import Foundation
 
 final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
-    typealias Result = ExperimentIcon
+    var results = [ExperimentIcon]()
 
-    var results = [Result]()
+    func startElement(attributes: AttributeContainer) throws {}
 
-    func beginElement(attributeContainer: XMLElementAttributeContainer) throws {
-    }
-
-    private enum Attribute: String, XMLAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case format
     }
 
-    private enum Format: String {
+    private enum Format: String, LosslessStringConvertible {
         case base64
         case string
     }
 
-    func endElement(with text: String, attributeContainer: XMLElementAttributeContainer) throws {
-        guard !text.isEmpty else { throw XMLElementParserError.missingText }
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-        let attributes = attributeContainer.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let format: Format = try attributes.optionalAttribute(for: .format) ?? .string
+        let format: Format = try attributes.optionalValue(for: .format) ?? .string
 
         switch format {
         case .base64:
-            guard let data = Data(base64Encoded: text, options: []) else { throw XMLElementParserError.unreadableData }
+            guard let data = Data(base64Encoded: text, options: []) else { throw ElementHandlerError.unreadableData }
 
             if let image = UIImage(data: data) {
                 results.append(.image(image))
