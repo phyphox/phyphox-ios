@@ -25,9 +25,9 @@ let experimentStateExperimentFileName = "Experiment"
 let experimentFileExtension = "phyphox"
 
 final class ExperimentSerialization {
-    static let parser = XMLDocumentParser(documentHandler: PhyphoxDocumentHandler())
+    static let parser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
 
-    static func readExperimentFromURL(_ url: URL, legacy: Bool = false) throws -> Experiment {
+    static func readExperimentFromURL(_ url: URL) throws -> Experiment {
         let readURL: URL
 
         if url.pathExtension == experimentStateFileExtension {
@@ -41,7 +41,7 @@ final class ExperimentSerialization {
             throw SerializationError.invalidFilePath
         }
 
-        let experiment = legacy ? try ExperimentDeserializer(stream: stream).deserialize() : try parser.parse(stream: stream)
+        let experiment = try parser.parse(stream: stream)
         experiment.local = url.isFileURL
         experiment.source = url
 

@@ -1,9 +1,9 @@
 //
-//  XMLElementParserHelpers.swift
+//  DocumentParser+Extensions.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 12.04.18.
-//  Copyright © 2018 RWTH Aachen. All rights reserved.
+//  Copyright © 2018 Jonas Gessner. All rights reserved.
 //
 
 import Foundation
@@ -135,21 +135,10 @@ extension ChildlessElementHandler {
     func clearChildHandlers() {}
 }
 
-private struct EmptyKey: ClosedAttributeKey {
-    var rawValue: String { fatalError() }
-    private init() {}
-
-    static var allCases: [EmptyKey] {
-        return []
-    }
-}
-
 protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
-    func startElement(attributes: AttributeContainer) throws {
-        _ = try attributes.attributes(constrainedBy: EmptyKey.self)
-    }
+    func startElement(attributes: AttributeContainer) throws {}
 }
 
 extension String: AttributeKey {

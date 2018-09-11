@@ -1,23 +1,23 @@
 //
-//  XMLDocumentParser.swift
+//  DocumentParser.swift
 //  phyphox
 //
 //  Created by Jonas Gessner on 11.04.18.
-//  Copyright © 2018 RWTH Aachen. All rights reserved.
+//  Copyright © 2018 Jonas Gessner. All rights reserved.
 //
 
 import Foundation
 
+/// Used as key for `KeyedAttributeContainer`. To be used by enumerations with `String` raw values, which by default provide the `rawValue` getter.
 protocol AttributeKey {
     var rawValue: String { get }
 }
 
-protocol ClosedAttributeKey: AttributeKey, CaseIterable {}
-
+/// This tructure provides readonly access to attribute values for a specific `AttributeKey` key type.
 struct KeyedAttributeContainer<Key: AttributeKey> {
     private let attributes: [String: String]
 
-    /*fileprivate*/ init(attributes: [String: String]) {
+    fileprivate init(attributes: [String: String]) {
         self.attributes = attributes
     }
 
@@ -73,7 +73,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
     }
 }
 
-/// Contains immutable attributes. Makes attributes accessible through a specific key
+/// Contiains attributes. Provides `KeyedAttributeContainer` for specific `AttributeKey` key types, which allows reading values.
 struct AttributeContainer {
     private let attributes: [String: String]
 
@@ -88,23 +88,11 @@ struct AttributeContainer {
     func attributes<Key: AttributeKey>(keyedBy key: Key.Type) -> KeyedAttributeContainer<Key> {
         return KeyedAttributeContainer(attributes: attributes)
     }
-
-    func attributes<Key: ClosedAttributeKey>(constrainedBy key: Key.Type) throws -> KeyedAttributeContainer<Key> {
-        let allowedKeys = Set(key.allCases.map { $0.rawValue })
-        let availableKeys = Set(attributes.keys)
-
-        let illegalKeys = availableKeys.subtracting(allowedKeys)
-
-        if let illegalKey = illegalKeys.first {
-            throw ElementHandlerError.unexpectedAttribute(illegalKey)
-        }
-        else {
-            return KeyedAttributeContainer(attributes: attributes)
-        }
-    }
 }
 
+/// Every element handler needs to coform to this protocol. This protocol is class-bound because `DocumentHandler` required element handlers to have reference semantics.
 protocol ElementHandler: AnyObject {
+    /// Called when the start tag for the element was encountered.
     func startElement(attributes: AttributeContainer) throws
     func childHandler(for elementName: String) throws -> ElementHandler
     func endElement(text: String, attributes: AttributeContainer) throws
@@ -113,14 +101,15 @@ protocol ElementHandler: AnyObject {
     func clearChildHandlers()
 }
 
+/// Extends `ElementHandler` with a `Result` associated type and `results` array to represent results created by element handlers.
 protocol ResultElementHandler: ElementHandler {
     associatedtype Result
 
     var results: [Result] { get set }
 }
 
-/// Elemeht handler based XML parser
-final class XMLDocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
+/// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes the specific logic. This class synchronously parses an input document and returns the result produced by the document handler. Depending on what result the document handler produces, this class acts as a deserializer.
+final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
     private let documentHandler: DocumentHandler
 
     /// Arrays used as stacks containing element name, element handler, text and attributes from parent elements relative to the current location within the XML file. At the root level, these contain an empty string, empty attributes, empty tag name and the root element handler.
@@ -249,7 +238,8 @@ final class XMLDocumentParser<DocumentHandler: ResultElementHandler>: NSObject, 
     }
 }
 
-fileprivate extension XMLDocumentParser {
+fileprivate extension DocumentParser {
+    /// Error describing possible errors encountered by DocumentParser
     enum ParserError: LocalizedError {
         case parsingError(backtrace: String, line: Int, encounteredError: Error)
         case noResult

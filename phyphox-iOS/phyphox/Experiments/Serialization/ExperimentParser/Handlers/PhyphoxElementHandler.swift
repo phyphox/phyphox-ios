@@ -8,6 +8,7 @@
 
 import Foundation
 
+// MARK: - Extensions required for the initialization of an Experiment instance.
 private extension SensorDescriptor {
     func buffer(for component: String, from buffers: [String: DataBuffer]) -> DataBuffer? {
         return (outputs.first(where: { $0.component == component })?.bufferName).map { buffers[$0] } ?? nil
@@ -56,54 +57,12 @@ private extension ExperimentAudioInput {
     }
 }
 
-struct SemanticVersion: Comparable {
-    let major: UInt
-    let minor: UInt
-    let patch: UInt
-
-    init(major: UInt, minor: UInt, patch: UInt) {
-        self.major = major
-        self.minor = minor
-        self.patch = patch
-    }
-
-    init?(string: String) {
-        let components = string.components(separatedBy: ".")
-
-        guard components.count >= 2 else { return nil }
-
-        guard let major = UInt(components[0]) else { return nil }
-        guard let minor = UInt(components[1]) else { return nil }
-
-        self.major = major
-        self.minor = minor
-
-        if components.count >= 3 {
-            guard let patch = UInt(components[2]) else { return nil }
-
-            self.patch = patch
-        }
-        else {
-            self.patch = 0
-        }
-    }
-
-    static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        guard lhs.major <= rhs.major else { return false }
-        guard lhs.major == rhs.major else { return true }
-
-        guard lhs.minor <= rhs.minor else { return false }
-        guard lhs.minor == rhs.minor else { return true }
-
-        guard lhs.patch <= rhs.patch else { return false }
-        guard lhs.patch == rhs.patch else { return true }
-
-        return false
-    }
-}
-
+// Mark: - Constants
 private let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 6, patch: 0)
 
+// Mark: - Phyphox Element Handler
+
+/// Element handler for the phyphox root element. Produces Instances of `Experiment`.
 final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     var results = [Experiment]()
 
@@ -126,7 +85,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         childHandlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
-    private enum Attribute: String, ClosedAttributeKey {
+    private enum Attribute: String, AttributeKey {
         case locale
         case version
     }
