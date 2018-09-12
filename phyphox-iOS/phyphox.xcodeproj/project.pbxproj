@@ -147,8 +147,6 @@
 		6BBD28AC1C20BF29009E3757 /* InfoViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */; };
 		6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */; };
 		6BC011AD1CAA86670053D0DF /* ExperimentTranslationCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC011AC1CAA86670053D0DF /* ExperimentTranslationCollection.swift */; };
-		6BCD494C205005310079E569 /* unbounded_buffer.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6BCD493D205005310079E569 /* unbounded_buffer.phyphox */; };
-		6BCD494E205005E90079E569 /* bounded_buffer.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6BCD494D205005E90079E569 /* bounded_buffer.phyphox */; };
 		6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */; };
 		6BCD497D20507DA30079E569 /* ExperimentUnboundedFunctionGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCD496E20507DA30079E569 /* ExperimentUnboundedFunctionGraphView.swift */; };
 		6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */ = {isa = PBXBuildFile; fileRef = 6BD026CA1CB5707F005085B1 /* phyphox-webinterface */; };
@@ -508,8 +506,6 @@
 		6BBD28AB1C20BF29009E3757 /* InfoViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfoViewDescriptor.swift; sourceTree = "<group>"; };
 		6BBD28B11C20C696009E3757 /* ExperimentIcon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentIcon.swift; sourceTree = "<group>"; };
 		6BC011AC1CAA86670053D0DF /* ExperimentTranslationCollection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentTranslationCollection.swift; sourceTree = "<group>"; };
-		6BCD493D205005310079E569 /* unbounded_buffer.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unbounded_buffer.phyphox; sourceTree = "<group>"; };
-		6BCD494D205005E90079E569 /* bounded_buffer.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bounded_buffer.phyphox; sourceTree = "<group>"; };
 		6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGraphUtilities.swift; sourceTree = "<group>"; };
 		6BCD496E20507DA30079E569 /* ExperimentUnboundedFunctionGraphView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentUnboundedFunctionGraphView.swift; sourceTree = "<group>"; };
 		6BD026611CB5423C005085B1 /* checkout.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = checkout.sh; path = ../../External/checkout.sh; sourceTree = "<group>"; };
@@ -756,10 +752,8 @@
 		6B7BF7911C130425007408FB /* phyphoxTests */ = {
 			isa = PBXGroup;
 			children = (
-				6BCD494D205005E90079E569 /* bounded_buffer.phyphox */,
 				6B40FE0B21493AB90051E2C7 /* full-skeleton.phyphox */,
 				6B40FE1B2149976C0051E2C7 /* incorrect-files */,
-				6BCD493D205005310079E569 /* unbounded_buffer.phyphox */,
 				6BFE37C02049ABC800301CA3 /* BufferTests.swift */,
 				6BD06B6F20D4150D0062829B /* DeserializerTests.swift */,
 				6B7BF7941C130425007408FB /* Info.plist */,
@@ -1366,8 +1360,6 @@
 			files = (
 				6BA14161214998940068AE5A /* phyphox-experiments in Resources */,
 				6B40FE1A21493AB90051E2C7 /* full-skeleton.phyphox in Resources */,
-				6BCD494C205005310079E569 /* unbounded_buffer.phyphox in Resources */,
-				6BCD494E205005E90079E569 /* bounded_buffer.phyphox in Resources */,
 				6B40FE1C2149976C0051E2C7 /* incorrect-files in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -21,7 +21,7 @@ var testBundle: Bundle {
     return Bundle(for: DeserializerTests.self)
 }
 
-/// Tests for the experiment deserializer. Tests that correct experiment files are deserialized properly and that incorrect files are properly detected as incorrect.
+/// Tests for the experiment deserializer. These tests ensure that both `DocumentParser` and the phyphox-specific element handlers (`PhyphoxDocumentHandler` & co) work properly. This class tests whether correct experiment files are deserialized properly and whether incorrect files are properly detected as incorrect.
 final class DeserializerTests: XCTestCase {
     private let experimentsBaseURL = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!
 
@@ -59,7 +59,7 @@ final class DeserializerTests: XCTestCase {
         }
     }
 
-    /// This test case deserializes an experiment from a file, which uses all features of experiments (sensor input, gps input, audio input, audio output, different view elements, export, different analysis modules). The experiment defined by the file is created hard-coded and the deserialized experiment is then compared to the hard-coded experiment for equality. This tests whether the deserializer properly deserializes the experiment.
+    /// This test case deserializes an experiment from a file, which uses all features of experiments (sensor input, gps input, audio input, audio output, different view elements, export, different analysis modules). The experiment defined by the file is created hard-coded and the deserialized experiment is then compared to the hard-coded experiment for equality. This tests whether the deserializer properly deserializes the experiment. This test case allows finding errors in `DocumentParser`, in case it incorrectly manages element handlers, and errors in the phyphox specific element handlers (`PhyphoxDocumentHandler` & co), in case they incorrectly handle specific parts of an experiment file.
     func testValueAccuracy() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
 
