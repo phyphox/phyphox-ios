@@ -69,3 +69,11 @@ class ExperimentAnalysisModule {
         
     }
 }
+
+extension ExperimentAnalysisModule: Equatable {
+    static func ==(lhs: ExperimentAnalysisModule, rhs: ExperimentAnalysisModule) -> Bool {
+        return lhs.attributeContainer == rhs.attributeContainer &&
+            lhs.inputs == rhs.inputs &&
+            lhs.outputs == rhs.outputs
+    }
+}

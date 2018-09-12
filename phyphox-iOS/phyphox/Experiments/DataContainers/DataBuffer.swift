@@ -69,7 +69,7 @@ final class DataBuffer {
 
     private let baseContents: [Double]
 
-    private let storageType: StorageType
+    let storageType: StorageType
 
     private var lazyStateToken: UUID?
 

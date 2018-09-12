@@ -3,7 +3,7 @@
     <category>category</category>
     <icon>icon</icon>
     <description>description</description>
-    <link label="Wiki">http://test.test</link>
+    <link label="l0">http://test.test</link>
     <data-containers>
         <container>buffer</container>
     </data-containers>
@@ -58,9 +58,6 @@
             </button>
             <separator height="1"/>
             <info label="l4"/>
-            <value label="l5">
-                <input>buffer</input>
-            </value>
             <graph label="l6" labelX="l7" labelY="l8">
                 <input axis="x">buffer</input>
                 <input axis="y">buffer</input>

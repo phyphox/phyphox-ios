@@ -250,7 +250,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     throw ElementHandlerError.missingElement("data-container")
                 }
 
-                return (descriptor.name, buffer)
+                return (set.name, buffer)
             }
 
             return ExperimentExportSet(name: descriptor.name, data: dataSets, translation: translations)

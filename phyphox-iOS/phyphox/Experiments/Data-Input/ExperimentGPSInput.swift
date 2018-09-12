@@ -126,5 +126,21 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             })
         }
     }
-}
 
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let rhs = object as? ExperimentGPSInput else { return false }
+
+        let lhs = self
+
+        return lhs.latBuffer == rhs.latBuffer &&
+            lhs.lonBuffer == rhs.lonBuffer &&
+            lhs.zBuffer == rhs.zBuffer &&
+            lhs.vBuffer == rhs.vBuffer &&
+            lhs.dirBuffer == rhs.dirBuffer &&
+            lhs.accuracyBuffer == rhs.accuracyBuffer &&
+            lhs.zAccuracyBuffer == rhs.zAccuracyBuffer &&
+            lhs.tBuffer == rhs.tBuffer &&
+            lhs.statusBuffer == rhs.statusBuffer &&
+            lhs.satellitesBuffer == rhs.satellitesBuffer
+    }
+}

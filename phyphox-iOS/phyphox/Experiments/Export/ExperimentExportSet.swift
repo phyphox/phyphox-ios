@@ -174,7 +174,7 @@ extension Collection {
 
         let zipped = zip(self, other)
 
-        return zipped.contains(where: { !comparator($0.0, $0.1) })
+        return !zipped.contains(where: { !comparator($0.0, $0.1) })
     }
 }
 
@@ -182,6 +182,8 @@ extension ExperimentExportSet: Equatable {
     static func == (lhs: ExperimentExportSet, rhs: ExperimentExportSet) -> Bool {
         return lhs.data.contentsEqual(rhs.data, using: { (l, r) -> Bool in
             return l.buffer == r.buffer && l.name == r.name
-        }) && lhs.name == rhs.name && lhs.translation == rhs.translation
+        }) &&
+            lhs.name == rhs.name &&
+            lhs.translation == rhs.translation
     }
 }

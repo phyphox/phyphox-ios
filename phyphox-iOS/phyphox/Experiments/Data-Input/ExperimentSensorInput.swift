@@ -9,7 +9,7 @@
 import Foundation
 import CoreMotion
 
-enum SensorType: String, LosslessStringConvertible {
+enum SensorType: String, LosslessStringConvertible, Equatable {
     case accelerometer
     case gyroscope
     case linearAcceleration = "linear_acceleration"
@@ -442,5 +442,18 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 dataInSync(x, y: y, z: z, accuracy: accuracy, t: t, error: error)
             })
         }
+    }
+}
+
+extension ExperimentSensorInput {
+    static func valueEqual(lhs: ExperimentSensorInput, rhs: ExperimentSensorInput) -> Bool {
+        return lhs.sensorType == rhs.sensorType &&
+            lhs.rate == rhs.rate &&
+            lhs.xBuffer == rhs.xBuffer &&
+            lhs.yBuffer == rhs.yBuffer &&
+            lhs.zBuffer == rhs.zBuffer &&
+            lhs.tBuffer == rhs.tBuffer &&
+            lhs.absBuffer == rhs.absBuffer &&
+            lhs.accuracyBuffer == rhs.accuracyBuffer
     }
 }

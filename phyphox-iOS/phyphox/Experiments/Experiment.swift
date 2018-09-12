@@ -318,14 +318,6 @@ extension Experiment {
     }
 }
 
-extension ExperimentAnalysisModule: Equatable {
-    static func ==(lhs: ExperimentAnalysisModule, rhs: ExperimentAnalysisModule) -> Bool {
-        return lhs.attributeContainer == rhs.attributeContainer &&
-            lhs.inputs == rhs.inputs &&
-            lhs.outputs == rhs.outputs
-    }
-}
-
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
         print(lhs.title == rhs.title)
@@ -335,13 +327,19 @@ extension Experiment: Equatable {
         print(lhs.icon == rhs.icon)
         print(lhs.local == rhs.local)
         print(lhs.translation == rhs.translation)
+        
         print(lhs.buffers == rhs.buffers)
-        print(lhs.sensorInputs == rhs.sensorInputs)
+        print(lhs.sensorInputs.contentsEqual(rhs.sensorInputs, using: { (l, r) -> Bool in
+            ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
+        }))
         print(lhs.gpsInputs == rhs.gpsInputs)
         print(lhs.audioInputs == rhs.audioInputs)
         print(lhs.output == rhs.output)
         print(lhs.analysis == rhs.analysis)
+        print(lhs.viewDescriptors == rhs.viewDescriptors)
+        print(lhs.export == rhs.export)
 
+        
         return lhs.title == rhs.title &&
             lhs.localizedDescription == rhs.localizedDescription &&
             lhs.localizedLinks == rhs.localizedLinks &&
@@ -350,7 +348,9 @@ extension Experiment: Equatable {
             lhs.local == rhs.local &&
             lhs.translation == rhs.translation &&
             lhs.buffers == rhs.buffers &&
-            lhs.sensorInputs == rhs.sensorInputs &&
+            lhs.sensorInputs.contentsEqual(rhs.sensorInputs, using: { (l, r) -> Bool in
+                ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
+            }) &&
             lhs.gpsInputs == rhs.gpsInputs &&
             lhs.audioInputs == rhs.audioInputs &&
             lhs.output == rhs.output &&

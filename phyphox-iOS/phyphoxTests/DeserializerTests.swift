@@ -10,7 +10,6 @@ import Foundation
 import XCTest
 @testable import phyphox
 
-
 private enum XMLParseResult {
     case failure
     case success
@@ -61,6 +60,54 @@ final class DeserializerTests: XCTestCase {
         let handler = PhyphoxDocumentHandler()
 
         let fileExperiment = try expectParserResult(expectedResult: .success, handler: handler, inputStream: InputStream(fileAtPath: skeleton).unwrap())
+
+        let links = [ExperimentLink(label: "l0", url: try URL(string: "http://test.test").unwrap(), highlighted: false)]
+
+        let translation = ExperimentTranslationCollection(translations: ["de": ExperimentTranslation(withLocale: "de", strings: [:], titleString: "titlede", descriptionString: "descriptionde", categoryString: "categoryde", links: [:])], defaultLanguageCode: "en")
+
+        let buffer = try DataBuffer(name: "buffer", storage: .memory(size: 1), baseContents: [0.0], static: false)
+
+        let sensors = [ExperimentSensorInput(sensorType: .linearAcceleration, calibrated: false, motionSession: MotionSession.sharedSession(), rate: 0.0, average: false, xBuffer: buffer, yBuffer: buffer, zBuffer: buffer, tBuffer: buffer, absBuffer: buffer, accuracyBuffer: nil)]
+
+        let gps = [ExperimentGPSInput(latBuffer: buffer, lonBuffer: buffer, zBuffer: buffer, vBuffer: buffer, dirBuffer: buffer, accuracyBuffer: buffer, zAccuracyBuffer: buffer, tBuffer: buffer, statusBuffer: buffer, satellitesBuffer: buffer)]
+
+        let audioIn = [ExperimentAudioInput(sampleRate: 48000, outBuffer: buffer, sampleRateInfoBuffer: buffer)]
+
+        let output = ExperimentOutput(audioOutput: ExperimentAudioOutput(sampleRate: 48000, loop: false, dataSource: buffer))
+
+        let edit = EditViewDescriptor(label: "l1", translation: translation, signed: true, decimal: true, unit: "", factor: 1.0, min: -Double.infinity, max: Double.infinity, defaultValue: 0.0, buffer: buffer)
+
+        let value = ValueViewDescriptor(label: "l2", translation: translation, size: 1.0, scientific: false, precision: 2, unit: "", factor: 1.0, buffer: buffer, mappings: [])
+
+        let button = ButtonViewDescriptor(label: "l3", translation: translation, dataFlow: [(input: .value(value: 0.0, usedAs: ""), output: buffer)])
+
+        let separator = SeparatorViewDescriptor(height: 1.0, color: kBackgroundColor)
+
+        let info = InfoViewDescriptor(label: "l4", translation: translation)
+
+        let graph = GraphViewDescriptor(label: "l6", translation: translation, xLabel: "l7", yLabel: "l8", xInputBuffer: nil, yInputBuffer: buffer, logX: false, logY: false, xPrecision: 3, yPrecision: 3, scaleMinX: .auto, scaleMaxX: .auto, scaleMinY: .auto, scaleMaxY: .auto, minX: 0.0, maxX: 0.0, minY: 0.0, maxY: 0.0, aspectRatio: 3.0, drawDots: false, partialUpdate: false, history: 1, lineWidth: 1.0, color: kBackgroundColor)
+
+        let viewCollection = ExperimentViewCollectionDescriptor(label: "v1", translation: translation, views: [edit, value, button, separator, info, graph])
+
+        let io = ExperimentAnalysisDataIO.buffer(buffer: buffer, usedAs: "", clear: true)
+
+        let append = try AppendAnalysis(inputs: [io], outputs: [io], additionalAttributes: .empty)
+
+        let add = try AdditionAnalysis(inputs: [io], outputs: [io], additionalAttributes: .empty)
+
+        let subtract = try SubtractionAnalysis(inputs: [io], outputs: [io], additionalAttributes: .empty)
+
+        let multiply = try MultiplicationAnalysis(inputs: [io], outputs: [io], additionalAttributes: .empty)
+
+        let ifModule = try IfAnalysis(inputs: [.buffer(buffer: buffer, usedAs: "", clear: false), .value(value: 0.0, usedAs: ""), .buffer(buffer: buffer, usedAs: "", clear: false), .buffer(buffer: buffer, usedAs: "", clear: false)], outputs: [io], additionalAttributes: .empty)
+
+        let analysis = ExperimentAnalysis(modules: [append, add, subtract, multiply, ifModule], sleep: 0.0, dynamicSleep: nil)
+
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: "n1", data: [(name: "n2", buffer: buffer)], translation: translation)])
+
+        let experiment = Experiment(title: "title", description: "description", links: links, category: "category", icon: .string("icon"), persistentStorageURL: try URL(string: NSTemporaryDirectory()).unwrap(), translation: translation, buffers: ["buffer" : buffer], sensorInputs: sensors, gpsInputs: gps, audioInputs: audioIn, output: output, viewDescriptors: [viewCollection], analysis: analysis, export: export)
+
+        XCTAssertEqual(fileExperiment, experiment)
     }
 
 }

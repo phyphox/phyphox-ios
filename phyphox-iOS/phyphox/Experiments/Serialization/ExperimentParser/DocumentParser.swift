@@ -77,7 +77,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
 struct AttributeContainer: Equatable {
     private let attributes: [String: String]
 
-    fileprivate static var empty: AttributeContainer {
+    static var empty: AttributeContainer {
         return AttributeContainer(attributes: [:])
     }
 
