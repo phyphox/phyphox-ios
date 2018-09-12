@@ -10,18 +10,21 @@ import Foundation
 import XCTest
 @testable import phyphox
 
+/// Enum modeling deserialization results
 private enum XMLParseResult {
     case failure
     case success
 }
 
+/// Returns the test bundle
 var testBundle: Bundle {
     return Bundle(for: DeserializerTests.self)
 }
 
 final class DeserializerTests: XCTestCase {
     private let experimentsBaseURL = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!
-    
+
+    /// Helper method that deserializes an experiment from an input stream using a `ResultElementHandler` and verifies that the result is the expected result (success or failure). In the case of success, the deserialized experiment is returned.
     @discardableResult private func expectParserResult<Handler: ResultElementHandler>(expectedResult: XMLParseResult, handler: Handler, inputStream: InputStream) throws -> Handler.Result? {
         let parser = DocumentParser(documentHandler: handler)
 
@@ -40,6 +43,7 @@ final class DeserializerTests: XCTestCase {
         }
     }
 
+    /// This test case deserializes all default experiment, ensuring that the deserializer successfully deserializes them without throwing an error.
     func testDefaultExperiments() throws {
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
 
@@ -54,6 +58,7 @@ final class DeserializerTests: XCTestCase {
         }
     }
 
+    /// This test case deserializes an experiment from a file, which uses all features of experiments (sensor input, gps input, audio input, audio output, different view elements, export, different analysis modules). The experiment defined by the file is created hard-coded and the deserialized experiment is then compared to the hard-coded experiment for equality. This tests whether the deserializer properly deserializes the experiment.
     func testValueAccuracy() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
 
