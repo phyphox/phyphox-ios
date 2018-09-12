@@ -21,6 +21,7 @@ var testBundle: Bundle {
     return Bundle(for: DeserializerTests.self)
 }
 
+/// Tests for the experiment deserializer. Tests that correct experiment files are deserialized properly and that incorrect files are properly detected as incorrect.
 final class DeserializerTests: XCTestCase {
     private let experimentsBaseURL = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!
 
