@@ -22,7 +22,7 @@ protocol ExperimentDelegate: class {
     func experimentWillBecomeActive(_ experiment: Experiment)
 }
 
-struct ExperimentLink {
+struct ExperimentLink: Equatable {
     let label: String
     let url: URL
     let highlighted: Bool
@@ -311,8 +311,51 @@ extension Experiment: ExperimentAnalysisTimestampSource {
     }
 }
 
+extension Experiment {
+    func metadataEqual(to rhs: Experiment?) -> Bool {
+        guard let rhs = rhs else { return false }
+        return title == rhs.title && category == rhs.category && description == rhs.description
+    }
+}
+
+extension ExperimentAnalysisModule: Equatable {
+    static func ==(lhs: ExperimentAnalysisModule, rhs: ExperimentAnalysisModule) -> Bool {
+        return lhs.attributeContainer == rhs.attributeContainer &&
+            lhs.inputs == rhs.inputs &&
+            lhs.outputs == rhs.outputs
+    }
+}
+
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
-        return lhs.title == rhs.title && lhs.category == rhs.category && lhs.description == rhs.description
+        print(lhs.title == rhs.title)
+        print(lhs.localizedDescription == rhs.localizedDescription)
+        print(lhs.localizedLinks == rhs.localizedLinks)
+        print(lhs.localizedCategory == rhs.localizedCategory)
+        print(lhs.icon == rhs.icon)
+        print(lhs.local == rhs.local)
+        print(lhs.translation == rhs.translation)
+        print(lhs.buffers == rhs.buffers)
+        print(lhs.sensorInputs == rhs.sensorInputs)
+        print(lhs.gpsInputs == rhs.gpsInputs)
+        print(lhs.audioInputs == rhs.audioInputs)
+        print(lhs.output == rhs.output)
+        print(lhs.analysis == rhs.analysis)
+
+        return lhs.title == rhs.title &&
+            lhs.localizedDescription == rhs.localizedDescription &&
+            lhs.localizedLinks == rhs.localizedLinks &&
+            lhs.localizedCategory == rhs.localizedCategory &&
+            lhs.icon == rhs.icon &&
+            lhs.local == rhs.local &&
+            lhs.translation == rhs.translation &&
+            lhs.buffers == rhs.buffers &&
+            lhs.sensorInputs == rhs.sensorInputs &&
+            lhs.gpsInputs == rhs.gpsInputs &&
+            lhs.audioInputs == rhs.audioInputs &&
+            lhs.output == rhs.output &&
+            lhs.viewDescriptors == rhs.viewDescriptors &&
+            lhs.analysis == rhs.analysis &&
+            lhs.export == rhs.export
     }
 }

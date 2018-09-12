@@ -131,3 +131,11 @@ extension ExperimentAnalysis: DataBufferObserver {
         setNeedsUpdate()
     }
 }
+
+extension ExperimentAnalysis: Equatable {
+    static func ==(lhs: ExperimentAnalysis, rhs: ExperimentAnalysis) -> Bool {
+        return lhs.sleep == rhs.sleep &&
+            lhs.dynamicSleep == rhs.dynamicSleep &&
+            lhs.modules == rhs.modules
+    }
+}

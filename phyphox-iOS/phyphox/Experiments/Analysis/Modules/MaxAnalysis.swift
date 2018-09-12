@@ -19,8 +19,10 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     
     private var multiple: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
-        multiple = try additionalAttributes.optionalValue(for: "multiple") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
+        multiple = try attributes.optionalValue(for: "multiple") ?? false
         
         for input in inputs {
             if input.asString == "x" {

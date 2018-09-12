@@ -9,7 +9,7 @@
 import Foundation
 import AVFoundation
 
-final class ExperimentAudioInput {
+struct ExperimentAudioInput: Equatable {
     let sampleRate: UInt
     let outBuffer: DataBuffer
     let sampleRateInfoBuffer: DataBuffer?

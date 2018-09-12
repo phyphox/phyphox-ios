@@ -17,9 +17,12 @@ class ExperimentAnalysisModule {
     
     var timestamp: TimeInterval = 0.0
 
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    let attributeContainer: AttributeContainer
+
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         self.inputs = inputs
         self.outputs = outputs
+        self.attributeContainer = additionalAttributes
     }
     
     /**

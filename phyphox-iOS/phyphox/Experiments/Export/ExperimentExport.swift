@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ExperimentExport {
+struct ExperimentExport: Equatable {
     let sets: [ExperimentExportSet]
     
     init(sets: [ExperimentExportSet]) {

@@ -12,8 +12,10 @@ import Accelerate
 final class CosAnalysis: UpdateValueAnalysis {
     private let deg: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
-        deg = try additionalAttributes.optionalValue(for: "deg") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
+        deg = try attributes.optionalValue(for: "deg") ?? false
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

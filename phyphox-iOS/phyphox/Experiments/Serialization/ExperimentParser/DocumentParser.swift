@@ -74,7 +74,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
 }
 
 /// Contiains attributes. Provides `KeyedAttributeContainer` for specific `AttributeKey` key types, which allows reading values.
-struct AttributeContainer {
+struct AttributeContainer: Equatable {
     private let attributes: [String: String]
 
     fileprivate static var empty: AttributeContainer {

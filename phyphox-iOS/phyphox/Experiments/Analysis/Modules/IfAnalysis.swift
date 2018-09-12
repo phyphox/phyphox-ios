@@ -19,10 +19,12 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private var inTrue: ExperimentAnalysisDataIO? = nil
     private var inFalse: ExperimentAnalysisDataIO? = nil
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
-        less = try additionalAttributes.optionalValue(for: "less") ?? false
-        equal = try additionalAttributes.optionalValue(for: "equal") ?? false
-        greater = try additionalAttributes.optionalValue(for: "greater") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
+        less = try attributes.optionalValue(for: "less") ?? false
+        equal = try attributes.optionalValue(for: "equal") ?? false
+        greater = try attributes.optionalValue(for: "greater") ?? false
 
         for input in inputs {
             if input.asString == "a" {

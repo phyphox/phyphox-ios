@@ -11,7 +11,7 @@ import Foundation
 final class AppendAnalysis: ExperimentAnalysisModule {
     private let inputElements: [ExperimentAnalysisDataIO]
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         var inputElements = [ExperimentAnalysisDataIO]()
         
         for input in inputs {

@@ -9,7 +9,7 @@
 import Foundation
 import CoreLocation
 
-final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
+final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     var locationManager = CLLocationManager()
     private(set) var latBuffer: DataBuffer?
     private(set) var lonBuffer: DataBuffer?
@@ -127,3 +127,4 @@ final class ExperimentGPSInput : NSObject, CLLocationManagerDelegate {
         }
     }
 }
+

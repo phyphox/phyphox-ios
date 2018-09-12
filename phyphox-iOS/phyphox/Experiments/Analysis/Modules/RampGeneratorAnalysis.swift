@@ -14,7 +14,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
     private var stopInput: ExperimentAnalysisDataIO!
     private var lengthInput: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "start" {
                 startInput = input

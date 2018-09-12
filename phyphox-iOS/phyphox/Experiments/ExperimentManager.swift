@@ -44,7 +44,7 @@ final class ExperimentManager {
         let category = experiment.localizedCategory
 
         if let collection = experimentCollections.first(where: { $0.title == category }) {
-            let insertIndex = collection.experiments.index(where: { $0.experiment == experiment }) ?? collection.experiments.endIndex
+            let insertIndex = collection.experiments.index(where: { $0.experiment.metadataEqual(to: experiment) }) ?? collection.experiments.endIndex
 
             collection.experiments.insert((experiment, custom), at: insertIndex)
         }

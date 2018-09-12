@@ -8,7 +8,7 @@
 
 import UIKit
 
-enum ExperimentIcon {
+enum ExperimentIcon: Equatable {
     case string(String)
     case image(UIImage)
     

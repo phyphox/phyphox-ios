@@ -38,7 +38,9 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         }
     }
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
         sigma = 1.0
         guard let firstInput = inputs.first else { throw SerializationError.genericError(message: "Input must be a buffer") }
 
@@ -49,7 +51,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Input must be a buffer")
         }
 
-        let sigmaValue = try additionalAttributes.optionalValue(for: "sigma") ?? 3.0
+        let sigmaValue = try attributes.optionalValue(for: "sigma") ?? 3.0
 
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
 

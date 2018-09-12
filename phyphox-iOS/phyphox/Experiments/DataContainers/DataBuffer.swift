@@ -40,7 +40,7 @@ extension DataBufferError: LocalizedError {
  Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
 final class DataBuffer {
-    enum StorageType {
+    enum StorageType: Equatable {
         case memory(size: Int)
         case hybrid(memorySize: Int, persistentStorageLocation: URL)
     }
@@ -542,5 +542,12 @@ extension DataBuffer {
 
             didWrite()
         }
+    }
+}
+
+extension DataBuffer: Equatable {
+    static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
+        return lhs.storageType == rhs.storageType &&
+            lhs.toArray() == rhs.toArray()
     }
 }

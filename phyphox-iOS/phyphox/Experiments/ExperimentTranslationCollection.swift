@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ExperimentTranslationCollection {
+struct ExperimentTranslationCollection: Equatable {
     private let translations: [String: ExperimentTranslation]
     let selectedTranslation: ExperimentTranslation?
     

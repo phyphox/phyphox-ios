@@ -79,6 +79,6 @@ final class ExperimentAnalysisFactory {
         let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
         let attributes = descriptor.attributes
 
-        return try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes.attributes(keyedBy: String.self))
+        return try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
     }
 }

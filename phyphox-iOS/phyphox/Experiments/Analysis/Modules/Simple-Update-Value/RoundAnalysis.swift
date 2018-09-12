@@ -16,9 +16,11 @@ final class RoundAnalysis: UpdateValueAnalysis {
     private let floor: Bool
     private let ceil: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
-        floor = try additionalAttributes.optionalValue(for: "floor") ?? false
-        ceil = try additionalAttributes.optionalValue(for: "ceil") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
+        floor = try attributes.optionalValue(for: "floor") ?? false
+        ceil = try attributes.optionalValue(for: "ceil") ?? false
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

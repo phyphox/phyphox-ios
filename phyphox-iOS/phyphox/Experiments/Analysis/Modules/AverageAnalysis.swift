@@ -14,7 +14,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
     
     private let input: DataBuffer
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         var avg: ExperimentAnalysisDataIO? = nil
         var std: ExperimentAnalysisDataIO? = nil
         for output in outputs {

@@ -21,3 +21,9 @@ final class ExperimentViewCollectionDescriptor: ViewDescriptor {
         super.init(label: label, translation: translation)
     }
 }
+
+extension ExperimentViewCollectionDescriptor {
+    static func == (lhs: ExperimentViewCollectionDescriptor, rhs: ExperimentViewCollectionDescriptor) -> Bool {
+        return lhs.views == rhs.views
+    }
+}

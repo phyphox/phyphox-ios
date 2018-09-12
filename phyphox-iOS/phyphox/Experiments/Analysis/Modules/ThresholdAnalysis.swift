@@ -15,8 +15,10 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
     private var yIn: DataBuffer!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
-        falling = try additionalAttributes.optionalValue(for: "falling") ?? false
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        let attributes = additionalAttributes.attributes(keyedBy: String.self)
+
+        falling = try attributes.optionalValue(for: "falling") ?? false
 
         for input in inputs {
             if input.asString == "threshold" {

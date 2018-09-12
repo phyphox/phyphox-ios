@@ -10,7 +10,7 @@ import Foundation
 
 class ViewDescriptor {
     private let label: String
-    weak var translation: ExperimentTranslationCollection?
+    let translation: ExperimentTranslationCollection?
     
     var localizedLabel: String {
         return translation?.localize(label) ?? label
@@ -39,5 +39,11 @@ class ViewDescriptor {
     
     func setDataYHTMLWithID(_ id: Int) -> String {
         return "function(y) {}"
+    }
+}
+
+extension ViewDescriptor: Equatable {
+    static func == (lhs: ViewDescriptor, rhs: ViewDescriptor) -> Bool {
+        return lhs.label == rhs.label && lhs.translation == rhs.translation
     }
 }

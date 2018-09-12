@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ExperimentTranslation {
+struct ExperimentTranslation: Equatable {
     let locale: String
     
     let titleString: String

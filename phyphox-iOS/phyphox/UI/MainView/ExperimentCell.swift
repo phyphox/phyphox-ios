@@ -58,7 +58,7 @@ class ExperimentCell: UICollectionViewCell {
     
     weak var experiment: Experiment? {
         didSet {
-            if experiment != oldValue || (experiment == nil && oldValue == nil) {
+            if experiment?.metadataEqual(to: oldValue) != true || (experiment == nil && oldValue == nil) {
                 var available = true
 
                 iconView?.removeFromSuperview()

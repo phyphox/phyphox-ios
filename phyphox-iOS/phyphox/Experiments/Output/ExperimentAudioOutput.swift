@@ -9,7 +9,7 @@
 import Foundation
 import AVFoundation
 
-final class ExperimentAudioOutput {
+struct ExperimentAudioOutput: Equatable {
     let dataSource: DataBuffer
     let loop: Bool
     let sampleRate: UInt

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ExperimentOutput {
+struct ExperimentOutput: Equatable {
     /**
      The only available output is audio at the moment
      */

@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum ExperimentAnalysisDataIO {
+enum ExperimentAnalysisDataIO: Equatable {
     case buffer(buffer: DataBuffer, usedAs: String, clear: Bool)
     case value(value: Double, usedAs: String)
 

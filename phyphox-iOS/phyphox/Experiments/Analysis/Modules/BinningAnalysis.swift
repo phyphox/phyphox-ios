@@ -16,7 +16,7 @@ final class BinningAnalysis: ExperimentAnalysisModule {
     private let binStartsOutput: ExperimentAnalysisDataIO?
     private let binCountsOutput: ExperimentAnalysisDataIO?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: KeyedAttributeContainer<String>) throws {
+    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         guard !inputs.isEmpty && !outputs.isEmpty else {
             throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
