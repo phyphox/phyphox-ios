@@ -8,9 +8,16 @@
 
 import Foundation
 
-final class InfoViewDescriptor: ViewDescriptor {
-    
-    override func generateViewHTMLWithID(_ id: Int) -> String {
+struct InfoViewDescriptor: ViewDescriptor, Equatable {
+    let label: String
+    let translation: ExperimentTranslationCollection?
+
+    init(label: String, translation: ExperimentTranslationCollection?) {
+        self.label = label
+        self.translation = translation
+    }
+
+    func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:90%;\" class=\"infoElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

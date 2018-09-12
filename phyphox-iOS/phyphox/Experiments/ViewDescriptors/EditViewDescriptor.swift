@@ -9,7 +9,7 @@
 import Foundation
 import CoreGraphics
 
-final class EditViewDescriptor: ViewDescriptor {
+struct EditViewDescriptor: ViewDescriptor, Equatable {
     let signed: Bool
     let decimal: Bool
     let unit: String?
@@ -24,7 +24,10 @@ final class EditViewDescriptor: ViewDescriptor {
     var value: Double {
         return buffer.last ?? defaultValue
     }
-    
+
+    let label: String
+    let translation: ExperimentTranslationCollection?
+
     init(label: String, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed
         self.decimal = decimal
@@ -34,11 +37,12 @@ final class EditViewDescriptor: ViewDescriptor {
         self.max = max
         self.defaultValue = defaultValue
         self.buffer = buffer
-        
-        super.init(label: label, translation: translation)
+
+        self.label = label
+        self.translation = translation
     }
     
-    override func generateViewHTMLWithID(_ id: Int) -> String {
+    func generateViewHTMLWithID(_ id: Int) -> String {
         //Construct value restrictions in HTML5
         var restrictions = ""
         
@@ -56,8 +60,8 @@ final class EditViewDescriptor: ViewDescriptor {
         
         return "<div style=\"font-size: 105%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(unit ?? "")</span></div>"
     }
-    
-    override func setValueHTMLWithID(_ id: Int) -> String {
+
+    func setValueHTMLWithID(_ id: Int) -> String {
         return "function (x) { if (!$(\"#element\(id) .value\").is(':focus')) $(\"#element\(id) .value\").val((x*\(factor))) }"
     }
 }

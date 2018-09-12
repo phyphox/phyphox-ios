@@ -329,7 +329,7 @@ extension Experiment: Equatable {
         print(lhs.translation == rhs.translation)
         
         print(lhs.buffers == rhs.buffers)
-        print(lhs.sensorInputs.contentsEqual(rhs.sensorInputs, using: { (l, r) -> Bool in
+        print(lhs.sensorInputs.elementsEqual(rhs.sensorInputs, by: { (l, r) -> Bool in
             ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
         }))
         print(lhs.gpsInputs == rhs.gpsInputs)
@@ -348,7 +348,7 @@ extension Experiment: Equatable {
             lhs.local == rhs.local &&
             lhs.translation == rhs.translation &&
             lhs.buffers == rhs.buffers &&
-            lhs.sensorInputs.contentsEqual(rhs.sensorInputs, using: { (l, r) -> Bool in
+            lhs.sensorInputs.elementsEqual(rhs.sensorInputs, by: { (l, r) -> Bool in
                 ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
             }) &&
             lhs.gpsInputs == rhs.gpsInputs &&

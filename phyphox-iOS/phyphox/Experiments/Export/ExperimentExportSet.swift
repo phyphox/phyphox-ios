@@ -168,19 +168,9 @@ struct ExperimentExportSet {
     }
 }
 
-extension Collection {
-    func contentsEqual<Other: RangeReplaceableCollection>(_ other: Other, using comparator: (Element, Element) -> Bool) -> Bool where Other.Element == Element  {
-        guard count == other.count else { return false }
-
-        let zipped = zip(self, other)
-
-        return !zipped.contains(where: { !comparator($0.0, $0.1) })
-    }
-}
-
 extension ExperimentExportSet: Equatable {
     static func == (lhs: ExperimentExportSet, rhs: ExperimentExportSet) -> Bool {
-        return lhs.data.contentsEqual(rhs.data, using: { (l, r) -> Bool in
+        return lhs.data.elementsEqual(rhs.data, by: { (l, r) -> Bool in
             return l.buffer == r.buffer && l.name == r.name
         }) &&
             lhs.name == rhs.name &&

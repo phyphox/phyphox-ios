@@ -85,7 +85,7 @@ final class DeserializerTests: XCTestCase {
 
         let info = InfoViewDescriptor(label: "l4", translation: translation)
 
-        let graph = GraphViewDescriptor(label: "l6", translation: translation, xLabel: "l7", yLabel: "l8", xInputBuffer: nil, yInputBuffer: buffer, logX: false, logY: false, xPrecision: 3, yPrecision: 3, scaleMinX: .auto, scaleMaxX: .auto, scaleMinY: .auto, scaleMaxY: .auto, minX: 0.0, maxX: 0.0, minY: 0.0, maxY: 0.0, aspectRatio: 3.0, drawDots: false, partialUpdate: false, history: 1, lineWidth: 1.0, color: kBackgroundColor)
+        let graph = GraphViewDescriptor(label: "l6", translation: translation, xLabel: "l7", yLabel: "l8", xInputBuffer: buffer, yInputBuffer: buffer, logX: false, logY: false, xPrecision: 3, yPrecision: 3, scaleMinX: .auto, scaleMaxX: .auto, scaleMinY: .auto, scaleMaxY: .auto, minX: 0.0, maxX: 0.0, minY: 0.0, maxY: 0.0, aspectRatio: 3.0, drawDots: false, partialUpdate: false, history: 1, lineWidth: 1.0, color: kHighlightColor)
 
         let viewCollection = ExperimentViewCollectionDescriptor(label: "v1", translation: translation, views: [edit, value, button, separator, info, graph])
 

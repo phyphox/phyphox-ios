@@ -8,18 +8,19 @@
 
 import Foundation
 
-final class SeparatorViewDescriptor: ViewDescriptor {
-    
+struct SeparatorViewDescriptor: ViewDescriptor, Equatable {
     let color: UIColor
     let height: CGFloat
-    
+
+    let label = ""
+    let translation: ExperimentTranslationCollection? = nil
+
     init(height: CGFloat, color: UIColor) {
         self.color = color
         self.height = height
-        super.init(label: "", translation: nil)
     }
     
-    override func generateViewHTMLWithID(_ id: Int) -> String {
+    func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:105%; background: #\(color.hexStringValue!); height: \(height)em \" class=\"separatorElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

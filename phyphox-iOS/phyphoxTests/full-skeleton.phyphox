@@ -85,7 +85,7 @@
             <output>buffer</output>
         </multiply>
 
-        <if equal="true">
+        <if>
             <input clear="false">buffer</input>
             <input type="value">0</input>
             <input clear="false">buffer</input>

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class GraphViewDescriptor: ViewDescriptor {
+struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private let xLabel: String
     private let yLabel: String
     
@@ -50,7 +50,10 @@ final class GraphViewDescriptor: ViewDescriptor {
     
     let lineWidth: CGFloat
     let color: UIColor
-    
+
+    let label: String
+    let translation: ExperimentTranslationCollection?
+
     init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
@@ -81,15 +84,16 @@ final class GraphViewDescriptor: ViewDescriptor {
         
         self.lineWidth = lineWidth
         self.color = color
-        
-        super.init(label: label, translation: translation)
+
+        self.label = label
+        self.translation = translation
     }
     
-    override func generateViewHTMLWithID(_ id: Int) -> String {
+    func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: \(100.0/aspectRatio)%\"></div><div class=\"graph\"></div></div></div>"
     }
     
-    override func generateDataCompleteHTMLWithID(_ id: Int) -> String {
+    func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         let transformX: String
         let transformY: String
         
@@ -135,11 +139,11 @@ final class GraphViewDescriptor: ViewDescriptor {
             "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
     }
     
-    override func setDataXHTMLWithID(_ id: Int) -> String {
+    func setDataXHTMLWithID(_ id: Int) -> String {
         return "function (x) { elementData[\(id)][\"x\"] = x }"
     }
     
-    override func setDataYHTMLWithID(_ id: Int) -> String {
+    func setDataYHTMLWithID(_ id: Int) -> String {
         return "function (y) { elementData[\(id)][\"y\"] = y }"
     }
 }

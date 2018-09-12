@@ -9,13 +9,13 @@
 import Foundation
 import CoreGraphics
 
-struct ValueViewMap {
+struct ValueViewMap: Equatable {
     let range: ClosedRange<Double>
 
     let replacement: String
 }
 
-final class ValueViewDescriptor: ViewDescriptor {
+struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let scientific: Bool
     let precision: Int
     let unit: String?
@@ -23,7 +23,10 @@ final class ValueViewDescriptor: ViewDescriptor {
     let buffer: DataBuffer
     let size: Double
     let mappings: [ValueViewMap]
-    
+
+    let label: String
+    let translation: ExperimentTranslationCollection?
+
     init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
         self.scientific = scientific
         self.precision = precision
@@ -35,15 +38,16 @@ final class ValueViewDescriptor: ViewDescriptor {
         let translatedMappings = mappings.compactMap { map in (translation?.localize(map.replacement)).map { ValueViewMap(range: map.range, replacement: $0) } }
         
         self.mappings = mappings + translatedMappings
-        
-        super.init(label: label, translation: translation)
+
+        self.label = label
+        self.translation = translation
     }
     
-    override func generateViewHTMLWithID(_ id: Int) -> String {
+    func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(unit ?? "")</span></span></div>"
     }
     
-    override func setValueHTMLWithID(_ id: Int) -> String {
+    func setValueHTMLWithID(_ id: Int) -> String {
         var mappingCode = "if (isNaN(x) || x == null) { v = \"-\" }"
         for mapping in mappings {
             let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;") // addingPercentEncoding() !???
