@@ -73,6 +73,7 @@
 		6B2E0FC3205AC5E1008FAA91 /* UIAlertController+PTExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2E0FC1205AC5E1008FAA91 /* UIAlertController+PTExtensions.m */; };
 		6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */; };
 		6B40FE1A21493AB90051E2C7 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = 6B40FE0B21493AB90051E2C7 /* full-skeleton.phyphox */; };
+		6B40FE1C2149976C0051E2C7 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = 6B40FE1B2149976C0051E2C7 /* incorrect-files */; };
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
 		6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */; };
 		6B422E2C1CA4A4BF00E945BC /* GraphGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */; };
@@ -137,6 +138,7 @@
 		6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8AA3F11C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift */; };
 		6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B94A6201CA015A4008D9ACF /* GLGraphView.swift */; };
 		6B9E3DA0205296E0008073D5 /* ExperimentViewModuleTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */; };
+		6BA14161214998940068AE5A /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */; };
 		6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DD1C1F749000FBD979 /* ValueViewDescriptor.swift */; };
 		6BAEC1E01C1F749700FBD979 /* EditViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BAEC1DF1C1F749700FBD979 /* EditViewDescriptor.swift */; };
@@ -174,7 +176,6 @@
 		6BEA9457207FF8CE0077274A /* GraphViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA9456207FF8CE0077274A /* GraphViewElementHandler.swift */; };
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
-		6BFB3248214915CA00303ACC /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE37C02049ABC800301CA3 /* BufferTests.swift */; };
 /* End PBXBuildFile section */
@@ -431,6 +432,7 @@
 		6B2E0FC1205AC5E1008FAA91 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIAlertController+PTExtensions.m"; sourceTree = "<group>"; };
 		6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Expanded.m"; sourceTree = "<group>"; };
 		6B40FE0B21493AB90051E2C7 /* full-skeleton.phyphox */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
+		6B40FE1B2149976C0051E2C7 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
 		6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridView.swift; sourceTree = "<group>"; };
 		6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridLineView.swift; sourceTree = "<group>"; };
 		6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentAudioOutput.swift; sourceTree = "<group>"; };
@@ -756,6 +758,7 @@
 			children = (
 				6BCD494D205005E90079E569 /* bounded_buffer.phyphox */,
 				6B40FE0B21493AB90051E2C7 /* full-skeleton.phyphox */,
+				6B40FE1B2149976C0051E2C7 /* incorrect-files */,
 				6BCD493D205005310079E569 /* unbounded_buffer.phyphox */,
 				6BFE37C02049ABC800301CA3 /* BufferTests.swift */,
 				6BD06B6F20D4150D0062829B /* DeserializerTests.swift */,
@@ -1361,10 +1364,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BA14161214998940068AE5A /* phyphox-experiments in Resources */,
 				6B40FE1A21493AB90051E2C7 /* full-skeleton.phyphox in Resources */,
 				6BCD494C205005310079E569 /* unbounded_buffer.phyphox in Resources */,
 				6BCD494E205005E90079E569 /* bounded_buffer.phyphox in Resources */,
-				6BFB3248214915CA00303ACC /* phyphox-experiments in Resources */,
+				6B40FE1C2149976C0051E2C7 /* incorrect-files in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
