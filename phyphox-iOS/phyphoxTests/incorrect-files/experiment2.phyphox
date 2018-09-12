@@ -39,7 +39,7 @@
         </audio>
     </input>
     <output>
-        <audio>
+        <audio rate="-1">
             <input>buffer</input>
         </audio>
     </output>

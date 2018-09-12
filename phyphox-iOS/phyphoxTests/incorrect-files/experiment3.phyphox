@@ -7,7 +7,7 @@
         <container>buffer</container>
     </data-containers>
     <translations>
-        <translation locale="de">
+        <translation>
             <title>titlede</title>
             <category>categoryde</category>
             <description>descriptionde</description>

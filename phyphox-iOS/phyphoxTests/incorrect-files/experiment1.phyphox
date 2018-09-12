@@ -8,13 +8,12 @@
     </data-containers>
     <translations>
         <translation locale="de">
-            <title>titlede</title>
             <category>categoryde</category>
             <description>descriptionde</description>
         </translation>
    </translations>
     <input>
-        <sensor type="linear_acceleration" rate="0">
+        <sensor type="linear_acceleration" rate="-1">
             <output component="abs">buffer</output>
             <output component="t">buffer</output>
             <output component="x">buffer</output>

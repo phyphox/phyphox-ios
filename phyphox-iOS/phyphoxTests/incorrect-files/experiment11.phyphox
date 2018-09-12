@@ -34,7 +34,7 @@
             <output component="satellites">buffer</output>
             <output component="status">buffer</output>
         </location>
-        <audio>
+        <audio rate="-1">
             <output>buffer</output>
             <output component="rate">buffer</output>
         </audio>

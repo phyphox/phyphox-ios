@@ -2,7 +2,6 @@
     <title>title</title>
     <category>category</category>
     <icon>icon</icon>
-    <description>description</description>
     <link label="l0">http://test.test</link>
     <data-containers>
         <container>buffer</container>
@@ -11,7 +10,6 @@
         <translation locale="de">
             <title>titlede</title>
             <category>categoryde</category>
-            <description>descriptionde</description>
         </translation>
    </translations>
     <input>

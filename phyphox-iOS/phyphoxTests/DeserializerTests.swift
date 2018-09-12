@@ -118,13 +118,13 @@ final class DeserializerTests: XCTestCase {
 
     /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files.
     func testIncorrectFiles() throws {
-        let experimentsPath = try testBundle.path(forResource: "incorrect-files", ofType: nil).unwrap()
-        let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsPath)
+        let experimentsURL = try testBundle.url(forResource: "incorrect-files", withExtension: nil).unwrap()
+        let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsURL.path)
 
         let handler = PhyphoxDocumentHandler()
 
         for file in experiments {
-            let url = experimentsBaseURL.appendingPathComponent(file)
+            let url = experimentsURL.appendingPathComponent(file)
 
             let stream = try InputStream(url: url).unwrap()
 
