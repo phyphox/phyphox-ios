@@ -19,6 +19,7 @@ extension LosslessStringConvertible where Self: RawRepresentable, Self.RawValue 
     }
 }
 
+/// Common error situations encountered by element handlers.
 enum ElementHandlerError: Error {
     /// To be used when a child element that cannot be handled is encountered
     case unexpectedChildElement(String)
@@ -77,6 +78,7 @@ extension ElementHandlerError: LocalizedError {
     }
 }
 
+/// Specialized element handler protocol, providing the implementation of `childHandler(for:)` and `clearChildHandlers`. The `childHandlers` getter needs to return a mapping from element name to element handler.
 protocol LookupElementHandler: ElementHandler {
     var childHandlers: [String: ElementHandler] { get set }
 }
@@ -95,11 +97,13 @@ extension LookupElementHandler {
     }
 }
 
+/// Extensions for `ResultElementHandler`, providing easy access to results along with verification of their multiplicity.
 extension ResultElementHandler {
     func clear() {
         results.removeAll()
     }
 
+    /// Returns an optional result, or throws an error if more than one result exists.
     func expectOptionalResult() throws -> Result? {
         guard results.count <= 1 else {
             throw ElementHandlerError.duplicateElement
@@ -108,6 +112,7 @@ extension ResultElementHandler {
         return results.first
     }
 
+    /// Returns the single result object, throws error otherwise.
     func expectSingleResult() throws -> Result {
         guard let result = try expectOptionalResult() else {
             throw ElementHandlerError.missingElement("")
@@ -116,6 +121,7 @@ extension ResultElementHandler {
         return result
     }
 
+    /// Returns non-empty results array, throws error otherwise.
     func expectAtLeastOneResult() throws -> [Result] {
         guard !results.isEmpty else {
             throw ElementHandlerError.missingElement("")
@@ -125,6 +131,7 @@ extension ResultElementHandler {
     }
 }
 
+/// Specialized element handler protocol for element handlers expecting no child elements. Provides the implementation for `childHandler(for:)`, which always throws an error, as no child elements are expected. It also provides `clearChildHandlers` as an empty method, as no child handlers exists, hence clearing all child handlers does nothing.
 protocol ChildlessElementHandler: ElementHandler {}
 
 extension ChildlessElementHandler {
@@ -135,14 +142,9 @@ extension ChildlessElementHandler {
     func clearChildHandlers() {}
 }
 
+/// Specialized element handler protocol for element handlers expecting no attributes. Provides the implementation for `startElement`, does nothing. This method is only provided with the element's attributes and therefore is only used to read attributes. When no attributes are expected, no attributes are read and hence the method is left empty.
 protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
     func startElement(attributes: AttributeContainer) throws {}
-}
-
-extension String: AttributeKey {
-    var rawValue: String {
-        return self
-    }
 }

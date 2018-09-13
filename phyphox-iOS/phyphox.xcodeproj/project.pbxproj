@@ -535,7 +535,7 @@
 		6BE5E142207A238C0065FE96 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		6BE5E144207A23B20065FE96 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		6BE5E145207A23B20065FE96 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		6BEA943B207FC5280077274A /* ExportElementHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExportElementHandler.swift; sourceTree = "<group>"; };
+		6BEA943B207FC5280077274A /* ExportElementHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExportElementHandler.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		6BEA944C207FCA2F0077274A /* ValueViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValueViewElementHandler.swift; sourceTree = "<group>"; };
 		6BEA944E207FD8350077274A /* InfoViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoViewElementHandler.swift; sourceTree = "<group>"; };
 		6BEA9450207FE3D90077274A /* SeparatorViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeparatorViewElementHandler.swift; sourceTree = "<group>"; };
@@ -683,14 +683,13 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
-		6B612FE0207E5A09001DA8D9 /* ExperimentParser */ = {
+		6B612FE0207E5A09001DA8D9 /* DocumentParser */ = {
 			isa = PBXGroup;
 			children = (
 				6B612FDE207E1648001DA8D9 /* DocumentParser.swift */,
 				6B612FF8207EBCF3001DA8D9 /* DocumentParser+Extensions.swift */,
-				6B612FE7207E5A9B001DA8D9 /* Handlers */,
 			);
-			path = ExperimentParser;
+			path = DocumentParser;
 			sourceTree = "<group>";
 		};
 		6B612FE7207E5A9B001DA8D9 /* Handlers */ = {
@@ -968,7 +967,8 @@
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
 				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
-				6B612FE0207E5A09001DA8D9 /* ExperimentParser */,
+				6B612FE7207E5A9B001DA8D9 /* Handlers */,
+				6B612FE0207E5A09001DA8D9 /* DocumentParser */,
 			);
 			path = Serialization;
 			sourceTree = "<group>";

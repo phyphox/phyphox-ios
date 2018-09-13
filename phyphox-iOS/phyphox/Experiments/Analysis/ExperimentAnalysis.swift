@@ -8,6 +8,12 @@
 
 import Foundation
 
+extension String: AttributeKey {
+    var rawValue: String {
+        return self
+    }
+}
+
 protocol ExperimentAnalysisDelegate: class {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis)
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)

@@ -15,18 +15,21 @@ protocol AttributeKey {
 
 /// This tructure provides readonly access to attribute values for a specific `AttributeKey` key type.
 struct KeyedAttributeContainer<Key: AttributeKey> {
+    /// The raw, underlying attribute dictionary
     private let attributes: [String: String]
 
     fileprivate init(attributes: [String: String]) {
         self.attributes = attributes
     }
 
+    /// Returns the original, optional string value for the provided key.
     func optionalString(for key: Key) -> String? {
         let keyString = key.rawValue
 
         return attributes[keyString]
     }
 
+    /// Returns a non-optional string for the provided key. Throws an error when no value exists for the provided key.
     func string(for key: Key) throws -> String {
         let keyString = key.rawValue
 
@@ -37,16 +40,18 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return stringValue
     }
 
+    /// Returns a non-optional, non-empty string for the provided key. Throws an error when no value exists for the provided key or if the value is empty.
     func nonEmptyString(for key: Key) throws -> String {
-        let keyString = key.rawValue
+        let stringValue = try string(for: key)
 
-        guard let stringValue = attributes[keyString], !stringValue.isEmpty else {
-            throw ElementHandlerError.missingAttribute(keyString)
+        guard !stringValue.isEmpty else {
+            throw ElementHandlerError.missingText
         }
 
         return stringValue
     }
 
+    /// Returns an optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error decoding to `T` fails.
     func optionalValue<T: LosslessStringConvertible>(for key: Key) throws -> T? {
         let keyString = key.rawValue
 
@@ -58,6 +63,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         })
     }
 
+    /// Returns a non-optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error when no value exists for the provided key or if decoding to `T` fails.
     func value<T: LosslessStringConvertible>(for key: Key) throws -> T {
         let keyString = key.rawValue
 
@@ -75,8 +81,10 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
 
 /// Contiains attributes. Provides `KeyedAttributeContainer` for specific `AttributeKey` key types, which allows reading values.
 struct AttributeContainer: Equatable {
+    /// The raw, underlying attribute dictionary
     private let attributes: [String: String]
 
+    /// Returns an empty attribute container
     static var empty: AttributeContainer {
         return AttributeContainer(attributes: [:])
     }
@@ -85,6 +93,7 @@ struct AttributeContainer: Equatable {
         self.attributes = attributes
     }
 
+    /// Creates and returns a `KeyedAttributeContainer` for the provided key type, providing access to the attributes from the attribute container.
     func attributes<Key: AttributeKey>(keyedBy key: Key.Type) -> KeyedAttributeContainer<Key> {
         return KeyedAttributeContainer(attributes: attributes)
     }
@@ -92,12 +101,16 @@ struct AttributeContainer: Equatable {
 
 /// Every element handler needs to coform to this protocol. This protocol is class-bound because `DocumentHandler` required element handlers to have reference semantics.
 protocol ElementHandler: AnyObject {
-    /// Called when the start tag for the element was encountered.
+    /// Called when the start tag for the element was encountered. Provides the element's attributes.
     func startElement(attributes: AttributeContainer) throws
+    /// Called when a child element is encountered. This method needs to return the appropriate element handler for the child element or throw an error.
     func childHandler(for elementName: String) throws -> ElementHandler
+    /// Called when the end tag for the element was encountered. Provides the element's attributes and the text content of the element.
     func endElement(text: String, attributes: AttributeContainer) throws
 
+    /// This method clears any results produced by the element handler.
     func clear()
+    /// This method calls `clear` on all child element handlers.
     func clearChildHandlers()
 }
 
@@ -105,10 +118,11 @@ protocol ElementHandler: AnyObject {
 protocol ResultElementHandler: ElementHandler {
     associatedtype Result
 
+    /// The results produced by an element handler. An element handler creates one instance of `Result` per element and appends it to this array.
     var results: [Result] { get set }
 }
 
-/// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes the specific logic. This class synchronously parses an input document and returns the result produced by the document handler. Depending on what result the document handler produces, this class acts as a deserializer.
+/// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes the specific logic. This class synchronously parses an input document and returns the result produced by the document handler. Depending on what result the document handler produces, this class acts as a deserializer. See documentation for `init(documentHandler:)` for details on the document handler.
 final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
     private let documentHandler: DocumentHandler
 
@@ -119,6 +133,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
 
     private var parsingError: Error?
 
+    /// Initializer for a reusable document parser. The document handler is a result element handler responsible for the entire document. Its `startElement` method is called when parsing the document begins and is provided with empty attributes. The `childHandler` method is called when the root element is encountered. The document handler needs to return the element handler for the root element, if the root element name is known, or throw an error. The `endElement` method is called when parsing the document has finished. This methid is called with empty attributes and empty text content. The implementaiton of `endElement` of the document handler needs to produce its resulting object and append it to its `results` array. The document parser subsequently returns the produced result from the `parse(stream)` method.
     init(documentHandler: DocumentHandler) {
         self.documentHandler = documentHandler
         super.init()

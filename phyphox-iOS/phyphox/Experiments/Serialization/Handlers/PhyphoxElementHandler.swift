@@ -161,6 +161,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         results.append(experiment)
     }
 
+    /// MARK: - Helpers required for the initialization of an `Experiment` instance and for the creation of properties of `Experiment` from intermediate element handler results.
+
     private func makeViewDescriptor(from descriptor: ViewElementDescriptor, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
         if let descriptor = descriptor as? SeparatorViewElementDescriptor {
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
