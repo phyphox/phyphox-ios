@@ -164,20 +164,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     /// MARK: - Helpers required for the initialization of an `Experiment` instance and for the creation of properties of `Experiment` from intermediate element handler results.
 
     private func makeViewDescriptor(from descriptor: ViewElementDescriptor, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
-        if let descriptor = descriptor as? SeparatorViewElementDescriptor {
+        switch descriptor {
+        case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
-        }
-        else if let descriptor = descriptor as? InfoViewElementDescriptor {
+        case .info(let descriptor):
             return InfoViewDescriptor(label: descriptor.label, translation: translations)
-        }
-        else if let descriptor = descriptor as? ValueViewElementDescriptor {
+        case .value(let descriptor):
             guard let buffer = buffers[descriptor.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
             return ValueViewDescriptor(label: descriptor.label, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
-        }
-        else if let descriptor = descriptor as? EditViewElementDescriptor {
+            
+        case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
@@ -187,8 +186,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
 
             return EditViewDescriptor(label: descriptor.label, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
-        }
-        else if let descriptor = descriptor as? ButtonViewElementDescriptor {
+
+        case .button(let descriptor):
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataIO, DataBuffer) in
                 guard let outputBuffer = buffers[flow.outputBufferName] else {
                     throw ElementHandlerError.missingElement("data-container")
@@ -213,8 +212,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
 
             return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow)
-        }
-        else if let descriptor = descriptor as? GraphViewElementDescriptor {
+
+        case .graph(let descriptor):
             let xBuffer = try descriptor.xInputBufferName.map({ name -> DataBuffer in
                 guard let buffer = buffers[name] else {
                     throw ElementHandlerError.missingElement("data-container")
@@ -227,9 +226,6 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
 
             return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xInputBuffer: xBuffer, yInputBuffer: yBuffer, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, drawDots: descriptor.drawDots, partialUpdate: descriptor.partialUpdate, history: descriptor.history, lineWidth: descriptor.lineWidth, color: descriptor.color)
-        }
-        else {
-            throw ElementHandlerError.message("Unknown View Descriptor: \(descriptor)")
         }
     }
 

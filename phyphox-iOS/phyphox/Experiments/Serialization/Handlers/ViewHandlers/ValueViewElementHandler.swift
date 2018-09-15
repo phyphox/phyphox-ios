@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `value` view element (and its child elements).
+
 final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ValueViewMap]()
 
@@ -32,7 +34,7 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
     }
 }
 
-struct ValueViewElementDescriptor: ViewElementDescriptor {
+struct ValueViewElementDescriptor {
     let label: String
     let size: Double
     let precision: Int
@@ -45,7 +47,7 @@ struct ValueViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    var results = [ValueViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     var childHandlers: [String: ElementHandler]
 
@@ -81,7 +83,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
 
-        results.append(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings))
+        results.append(.value(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

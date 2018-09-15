@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Element handler extracting multiline text content from an element. Text needs to be non-empty.
 final class MultilineTextElementHandler: ResultElementHandler, AttributelessElementHandler, ChildlessElementHandler {
     var results = [String]()
 

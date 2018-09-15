@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `analysis` child element (and its child elements) of the `phyphox` root element.
+
 enum ExperimentAnalysisDataIODescriptor {
     case value(value: Double, usedAs: String)
     case buffer(name: String, usedAs: String, clear: Bool)

@@ -683,7 +683,6 @@
 			children = (
 				6B612FE5207E5A8B001DA8D9 /* PhyphoxDocumentHandler.swift */,
 				6B612FE1207E5A24001DA8D9 /* PhyphoxElementHandler.swift */,
-				6B612FFC207F70D9001DA8D9 /* ExperimentAnalysisFactory.swift */,
 				6B612FE3207E5A6D001DA8D9 /* TextElementHandler.swift */,
 				6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */,
 				6B612FE8207E5ABC001DA8D9 /* LinkElementHandler.swift */,
@@ -693,6 +692,7 @@
 				6B612FF1207E791B001DA8D9 /* InputElementHandler.swift */,
 				6B612FF3207EA4E5001DA8D9 /* OutputElementHandler.swift */,
 				6B612FF5207EB052001DA8D9 /* AnalysisElementHandler.swift */,
+				6B612FFC207F70D9001DA8D9 /* ExperimentAnalysisFactory.swift */,
 				6B612FFA207F6FF3001DA8D9 /* ViewsElementHandler.swift */,
 				6BEA944B207FCA050077274A /* ViewHandlers */,
 				6BEA943B207FC5280077274A /* ExportElementHandler.swift */,

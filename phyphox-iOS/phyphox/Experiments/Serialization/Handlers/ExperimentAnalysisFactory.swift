@@ -8,6 +8,8 @@
 
 import Foundation
 
+// Helpers for `AnalysisElementHandler`.
+
 private extension ExperimentAnalysisDataIO {
     init(descriptor: ExperimentAnalysisDataIODescriptor, buffers: [String: DataBuffer]) throws {
         switch descriptor {

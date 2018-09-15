@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Element handler extracting the text content from an element. Text needs to be non-empty.
 final class TextElementHandler: ResultElementHandler, AttributelessElementHandler, ChildlessElementHandler {
     var results = [String]()
 

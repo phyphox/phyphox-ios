@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Element handler for the `link` child elements of the `phyphox` root element.
 final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentLink]()
 

@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `translations` child element (and its child elements) of the `phyphox` root element.
+
 private final class StringTranslationElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [(String, String)]()
 

@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `input` child element (and its child elements) of the `phyphox` root element.
+
 struct SensorOutputDescriptor {
     let component: String?
     let bufferName: String

@@ -8,13 +8,15 @@
 
 import Foundation
 
-struct SeparatorViewElementDescriptor: ViewElementDescriptor {
+// This file contains element handlers for the `separator` view element.
+
+struct SeparatorViewElementDescriptor {
     let height: CGFloat
     let color: UIColor
 }
 
 final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
-    var results = [SeparatorViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     func startElement(attributes: AttributeContainer) throws {}
 
@@ -37,7 +39,7 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
             return color
         }) ?? kBackgroundColor
 
-        results.append(SeparatorViewElementDescriptor(height: height, color: color))
+        results.append(.separator(SeparatorViewElementDescriptor(height: height, color: color)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

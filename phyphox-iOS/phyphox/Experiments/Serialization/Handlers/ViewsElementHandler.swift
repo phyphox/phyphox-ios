@@ -8,7 +8,16 @@
 
 import Foundation
 
-protocol ViewElementDescriptor {}
+// This file contains element handlers for the `views` child element (and its child elements) of the `phyphox` root element.
+
+enum ViewElementDescriptor {
+    case info(InfoViewElementDescriptor)
+    case separator(SeparatorViewElementDescriptor)
+    case value(ValueViewElementDescriptor)
+    case edit(EditViewElementDescriptor)
+    case button(ButtonViewElementDescriptor)
+    case graph(GraphViewElementDescriptor)
+}
 
 protocol ViewComponentElementHandler: ElementHandler {
     func nextResult() throws -> ViewElementDescriptor
@@ -66,7 +75,7 @@ private final class ViewElementHandler: ResultElementHandler {
 
         let label = try attributes.nonEmptyString(for: .label)
 
-        let views = try elementOrder.map { try $0.nextResult()  }
+        let views = try elementOrder.map { try $0.nextResult() }
 
         guard !views.isEmpty else { throw ElementHandlerError.missingChildElement("view-element") }
 

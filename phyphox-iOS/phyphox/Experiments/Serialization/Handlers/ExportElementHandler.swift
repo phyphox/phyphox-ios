@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `export` child element (and its child elements) of the `phyphox` root element.
+
 struct ExportSetDataDescriptor {
     let name: String
     let bufferName: String

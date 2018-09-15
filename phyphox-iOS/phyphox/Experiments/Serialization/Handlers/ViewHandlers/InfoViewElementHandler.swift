@@ -8,12 +8,14 @@
 
 import Foundation
 
-struct InfoViewElementDescriptor: ViewElementDescriptor {
+// This file contains element handlers for the `info` view element.
+
+struct InfoViewElementDescriptor {
     let label: String
 }
 
 final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
-    var results = [InfoViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     func startElement(attributes: AttributeContainer) throws {}
 
@@ -26,7 +28,7 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
         let label = try attributes.nonEmptyString(for: .label)
 
-        results.append(InfoViewElementDescriptor(label: label))
+        results.append(.info(InfoViewElementDescriptor(label: label)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

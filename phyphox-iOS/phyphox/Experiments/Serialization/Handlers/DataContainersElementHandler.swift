@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `data-container` child element (and its child elements) of the `phyphox` root element.
+
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
 
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {

@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `output` child element (and its child elements) of the `phyphox` root element.
+
 struct AudioOutputDescriptor {
     let rate: UInt
     let loop: Bool

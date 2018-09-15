@@ -8,6 +8,9 @@
 
 import Foundation
 
+// MARK: - Attributes
+/// KeyedAttributeContainer and AttributeContainer are defined in the same file as DocumentParser to allow their initializers to be fileprivate. This makes it possible for DocumentParser to initialize AttributeContainer but makes it impossible to initialize AttributeContainer from outside this file.
+
 /// Used as key for `KeyedAttributeContainer`. To be used by enumerations with `String` raw values, which by default provide the `rawValue` getter.
 protocol AttributeKey {
     var rawValue: String { get }
@@ -59,20 +62,15 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
             guard let value = T.init($0) else {
                 throw ElementHandlerError.unexpectedAttributeValue(keyString)
             }
+
             return value
         })
     }
 
     /// Returns a non-optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error when no value exists for the provided key or if decoding to `T` fails.
     func value<T: LosslessStringConvertible>(for key: Key) throws -> T {
-        let keyString = key.rawValue
-
-        guard let stringValue = attributes[keyString] else {
-            throw ElementHandlerError.missingAttribute(keyString)
-        }
-
-        guard let value = T.init(stringValue) else {
-            throw ElementHandlerError.unexpectedAttributeValue(keyString)
+        guard let value: T = try optionalValue(for: key) else {
+            throw ElementHandlerError.missingAttribute(key.rawValue)
         }
 
         return value
@@ -99,6 +97,8 @@ struct AttributeContainer: Equatable {
     }
 }
 
+// MARK: - Element Handlers
+
 /// Every element handler needs to coform to this protocol. This protocol is class-bound because `DocumentHandler` required element handlers to have reference semantics.
 protocol ElementHandler: AnyObject {
     /// Called when the start tag for the element was encountered. Provides the element's attributes.
@@ -121,6 +121,8 @@ protocol ResultElementHandler: ElementHandler {
     /// The results produced by an element handler. An element handler creates one instance of `Result` per element and appends it to this array.
     var results: [Result] { get set }
 }
+
+// MARK: - DocumentParser
 
 /// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes the specific logic. This class synchronously parses an input document and returns the result produced by the document handler. Depending on what result the document handler produces, this class acts as a deserializer. See documentation for `init(documentHandler:)` for details on the document handler.
 final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
@@ -168,7 +170,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
         return textToClean.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // MARK: - XMLParserDelegate Methods
+    // MARK: XMLParserDelegate Methods
     func parserDidStartDocument(_ parser: XMLParser) {
         handlerStack = [("", documentHandler)]
         textStack = [""]

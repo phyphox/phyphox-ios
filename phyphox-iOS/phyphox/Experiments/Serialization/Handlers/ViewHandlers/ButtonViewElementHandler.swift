@@ -8,13 +8,15 @@
 
 import Foundation
 
+// This file contains element handlers for the `button` view element (and its child elements).
+
 enum ButtonInputDescriptor {
     case buffer(String)
     case value(Double)
     case clear
 }
 
-struct ButtonViewElementDescriptor: ViewElementDescriptor {
+struct ButtonViewElementDescriptor {
     let label: String
 
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
@@ -64,7 +66,7 @@ private final class ButtonInputElementHandler: ResultElementHandler, ChildlessEl
 }
 
 final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    var results = [ButtonViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     var childHandlers: [String : ElementHandler]
 
@@ -92,7 +94,7 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))
 
-        results.append(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow))
+        results.append(.button(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

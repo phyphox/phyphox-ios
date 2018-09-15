@@ -8,7 +8,9 @@
 
 import Foundation
 
-struct EditViewElementDescriptor: ViewElementDescriptor {
+// This file contains element handlers for the `edit` view element (and its child elements).
+
+struct EditViewElementDescriptor {
     let label: String
     let signed: Bool
     let decimal: Bool
@@ -22,7 +24,7 @@ struct EditViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    var results = [EditViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     var childHandlers: [String : ElementHandler]
 
@@ -60,7 +62,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
 
-        results.append(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName))
+        results.append(.edit(EditViewElementDescriptor(label: label, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

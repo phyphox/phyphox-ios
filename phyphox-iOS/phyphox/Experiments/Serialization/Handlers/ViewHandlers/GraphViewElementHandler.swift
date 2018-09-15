@@ -8,6 +8,8 @@
 
 import Foundation
 
+// This file contains element handlers for the `graph` view element (and its child elements).
+
 private enum GraphAxis: String, LosslessStringConvertible {
     case x
     case y
@@ -48,7 +50,7 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
     }
 }
 
-struct GraphViewElementDescriptor: ViewElementDescriptor {
+struct GraphViewElementDescriptor {
     let label: String
     
     let xLabel: String
@@ -83,7 +85,7 @@ struct GraphViewElementDescriptor: ViewElementDescriptor {
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
-    var results = [GraphViewElementDescriptor]()
+    var results = [ViewElementDescriptor]()
 
     var childHandlers: [String : ElementHandler]
 
@@ -162,7 +164,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let minY: CGFloat = try attributes.optionalValue(for: .minY) ?? 0
         let maxY: CGFloat = try attributes.optionalValue(for: .maxY) ?? 0
 
-        results.append(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color))
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Element handler for the `icon` child element of the `phyphox` root element.
 final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentIcon]()
 
