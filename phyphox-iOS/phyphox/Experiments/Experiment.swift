@@ -320,26 +320,6 @@ extension Experiment {
 
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
-        print(lhs.title == rhs.title)
-        print(lhs.localizedDescription == rhs.localizedDescription)
-        print(lhs.localizedLinks == rhs.localizedLinks)
-        print(lhs.localizedCategory == rhs.localizedCategory)
-        print(lhs.icon == rhs.icon)
-        print(lhs.local == rhs.local)
-        print(lhs.translation == rhs.translation)
-        
-        print(lhs.buffers == rhs.buffers)
-        print(lhs.sensorInputs.elementsEqual(rhs.sensorInputs, by: { (l, r) -> Bool in
-            ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
-        }))
-        print(lhs.gpsInputs == rhs.gpsInputs)
-        print(lhs.audioInputs == rhs.audioInputs)
-        print(lhs.output == rhs.output)
-        print(lhs.analysis == rhs.analysis)
-        print(lhs.viewDescriptors == rhs.viewDescriptors)
-        print(lhs.export == rhs.export)
-
-        
         return lhs.title == rhs.title &&
             lhs.localizedDescription == rhs.localizedDescription &&
             lhs.localizedLinks == rhs.localizedLinks &&

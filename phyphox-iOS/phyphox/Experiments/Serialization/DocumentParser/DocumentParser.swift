@@ -69,10 +69,13 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
 
     /// Returns a non-optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error when no value exists for the provided key or if decoding to `T` fails.
     func value<T: LosslessStringConvertible>(for key: Key) throws -> T {
-        guard let value: T = try optionalValue(for: key) else {
+         let keyString = key.rawValue
+        guard let stringValue = attributes[keyString] else {
             throw ElementHandlerError.missingAttribute(key.rawValue)
         }
-
+        guard let value = T.init(stringValue) else {
+            throw ElementHandlerError.unexpectedAttributeValue(keyString)
+        }
         return value
     }
 }
