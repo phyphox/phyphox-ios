@@ -56,7 +56,11 @@ extension Sequence where Iterator.Element: DataCodable {
 
 extension Experiment {
     func saveState(to url: URL, with title: String) throws -> URL {
-        let stateFolderURL = url.appendingPathComponent(title).appendingPathExtension(experimentStateFileExtension)
+        guard let sanitizedTitle = title.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "\"\\/?<>:*|").inverted) else {
+            throw FileError.genericError
+        }
+
+        let stateFolderURL = url.appendingPathComponent(sanitizedTitle).appendingPathExtension(experimentStateFileExtension)
 
         let fileManager = FileManager.default
 
@@ -66,7 +70,7 @@ extension Experiment {
 
         try fileManager.createDirectory(at: stateFolderURL, withIntermediateDirectories: false, attributes: nil)
 
-        let experimentURL = stateFolderURL.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentStateFileExtension)
+        let experimentURL = stateFolderURL.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension)
 
         guard let source = source else {
             throw FileError.genericError

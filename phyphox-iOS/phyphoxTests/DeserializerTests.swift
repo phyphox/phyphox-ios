@@ -26,9 +26,7 @@ final class DeserializerTests: XCTestCase {
     private let experimentsBaseURL = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!
 
     /// Helper method that deserializes an experiment from an input stream using a `ResultElementHandler` and verifies that the result is the expected result (success or failure). In the case of success, the deserialized experiment is returned.
-    @discardableResult private func expectParserResult<Handler: ResultElementHandler>(expectedResult: XMLParseResult, handler: Handler, inputStream: InputStream) throws -> Handler.Result? {
-        let parser = DocumentParser(documentHandler: handler)
-
+    @discardableResult private func expectParserResult<Handler: ResultElementHandler>(expectedResult: XMLParseResult, inputStream: InputStream, parser: DocumentParser<Handler>) throws -> Handler.Result? {
         switch expectedResult {
         case .failure:
             do {
@@ -44,28 +42,53 @@ final class DeserializerTests: XCTestCase {
         }
     }
 
-    /// This test case deserializes all default experiment, ensuring that the deserializer successfully deserializes them without throwing an error.
-    func testDefaultExperiments() throws {
+    /// This test case deserializes all default experiment, ensuring that the deserializer successfully deserializes them without throwing an error. Also tests that reusing the same parser and using a fresh parser produces the same result.
+    func testDefaultExperimentsAndReuse() throws {
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
 
-        let handler = PhyphoxDocumentHandler()
+        let reusableParser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
 
         for file in experiments {
             let url = experimentsBaseURL.appendingPathComponent(file)
 
-            let stream = try InputStream(url: url).unwrap()
+            let stream1 = try InputStream(url: url).unwrap()
+            let stream2 = try InputStream(url: url).unwrap()
 
-            try expectParserResult(expectedResult: .success, handler: handler, inputStream: stream)
+            let oneTimeUseParser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
+
+            let reuse = try expectParserResult(expectedResult: .success, inputStream: stream1, parser: reusableParser)
+            let oneTime = try expectParserResult(expectedResult: .success, inputStream: stream2, parser: oneTimeUseParser)
+
+            XCTAssertEqual(reuse, oneTime)
         }
+    }
+
+    /// Tests whether an invalid input stream correctly triggers an error. Tests a fresh parser and a parser that has already been used to create a valid output.
+    func testInvalidStream() throws {
+        let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsBaseURL.path)
+
+        let usedParser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
+
+        guard let anyFile = experiments.first else { XCTFail(); return }
+
+        let streamValid = try InputStream(url: experimentsBaseURL.appendingPathComponent(anyFile)).unwrap()
+
+        try expectParserResult(expectedResult: .success, inputStream: streamValid, parser: usedParser)
+
+        let invalidStream1 = try InputStream(fileAtPath: UUID().uuidString).unwrap()
+        let invalidStream2 = try InputStream(fileAtPath: UUID().uuidString).unwrap()
+
+        try expectParserResult(expectedResult: .failure, inputStream: invalidStream1, parser: usedParser)
+        try expectParserResult(expectedResult: .failure, inputStream: invalidStream2, parser: DocumentParser(documentHandler: PhyphoxDocumentHandler()))
     }
 
     /// This test case deserializes an experiment from a file, which uses all features of experiments (sensor input, gps input, audio input, audio output, different view elements, export, different analysis modules). The experiment defined by the file is created hard-coded and the deserialized experiment is then compared to the hard-coded experiment for equality. This tests whether the deserializer properly deserializes the experiment. This test case allows finding errors in `DocumentParser`, in case it incorrectly manages element handlers, and errors in the phyphox specific element handlers (`PhyphoxDocumentHandler` & co), in case they incorrectly handle specific parts of an experiment file.
     func testValueAccuracy() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
 
-        let handler = PhyphoxDocumentHandler()
+        let parser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
 
-        let fileExperiment = try expectParserResult(expectedResult: .success, handler: handler, inputStream: InputStream(fileAtPath: skeleton).unwrap())
+        let fileExperiment = try expectParserResult(expectedResult: .success, inputStream: InputStream(fileAtPath: skeleton).unwrap(), parser: parser)
 
         let links = [ExperimentLink(label: "l0", url: try URL(string: "http://test.test").unwrap(), highlighted: false)]
 
@@ -116,19 +139,25 @@ final class DeserializerTests: XCTestCase {
         XCTAssertEqual(fileExperiment, experiment)
     }
 
-    /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files.
-    func testIncorrectFiles() throws {
+    /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files. Also tests that reusing the same parser and using a fresh parser produces the same result.
+    func testIncorrectFilesAndReuse() throws {
         let experimentsURL = try testBundle.url(forResource: "incorrect-files", withExtension: nil).unwrap()
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsURL.path)
 
-        let handler = PhyphoxDocumentHandler()
+        let reusableParser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
 
         for file in experiments {
             let url = experimentsURL.appendingPathComponent(file)
 
-            let stream = try InputStream(url: url).unwrap()
+            let stream1 = try InputStream(url: url).unwrap()
+            let stream2 = try InputStream(url: url).unwrap()
 
-            try expectParserResult(expectedResult: .failure, handler: handler, inputStream: stream)
+            let oneTimeUseParser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
+
+            let reuse = try expectParserResult(expectedResult: .failure, inputStream: stream1, parser: reusableParser)
+            let oneTime = try expectParserResult(expectedResult: .failure, inputStream: stream2, parser: oneTimeUseParser)
+
+            XCTAssertEqual(reuse, oneTime)
         }
     }
 }

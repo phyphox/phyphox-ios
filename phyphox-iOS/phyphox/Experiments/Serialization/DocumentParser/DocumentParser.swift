@@ -153,6 +153,14 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     func parse(stream: InputStream) throws -> DocumentHandler.Result {
         parsingError = nil
 
+        // Prepare stacks, clear document handler. Could also be done in parserDidStartDocument instead, but is safer to do here in case parserDidStartDocument never gets called (i.e. in an error situation). These operations are shown to be performed in parserDidStartDocument in the thesis to simplify the explanation.
+        handlerStack = [("", documentHandler)]
+        textStack = [""]
+        attributesStack = [.empty]
+
+        documentHandler.clear()
+        documentHandler.clearChildHandlers()
+
         let parser = XMLParser(stream: stream)
         parser.delegate = self
         parser.parse()
@@ -175,13 +183,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
 
     // MARK: XMLParserDelegate Methods
     func parserDidStartDocument(_ parser: XMLParser) {
-        handlerStack = [("", documentHandler)]
-        textStack = [""]
-        attributesStack = [.empty]
-
         do {
-            documentHandler.clear()
-            documentHandler.clearChildHandlers()
             try documentHandler.startElement(attributes: .empty)
         }
         catch {

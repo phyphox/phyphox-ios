@@ -43,6 +43,25 @@ final class DataBuffer {
     enum StorageType: Equatable {
         case memory(size: Int)
         case hybrid(memorySize: Int, persistentStorageLocation: URL)
+
+        static func == (lhs: StorageType, rhs: StorageType) -> Bool {
+            switch lhs {
+            case .memory(let sizeL):
+                switch rhs {
+                case .memory(let sizeR):
+                    return sizeL == sizeR
+                default:
+                    return false
+                }
+            case .hybrid(memorySize: let sizeL, persistentStorageLocation: _):
+                switch rhs {
+                case .hybrid(memorySize: let sizeR, persistentStorageLocation: _):
+                    return sizeL == sizeR
+                default:
+                    return false
+                }
+            }
+        }
     }
 
     let name: String
@@ -69,7 +88,7 @@ final class DataBuffer {
 
     private let baseContents: [Double]
 
-    let storageType: StorageType
+    private let storageType: StorageType
 
     private var lazyStateToken: UUID?
 

@@ -563,6 +563,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 ExperimentManager.shared.loadSavedExperiments()
             }
             catch {
+                self.showError(message: error.localizedDescription)
                 return
             }
         }))

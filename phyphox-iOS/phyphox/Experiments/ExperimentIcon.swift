@@ -32,4 +32,23 @@ enum ExperimentIcon: Equatable {
             return label
         }
     }
+
+    static func == (lhs: ExperimentIcon, rhs: ExperimentIcon) -> Bool {
+        switch lhs {
+        case .image(let imageL):
+            switch rhs {
+            case .image(let imageR):
+                return UIImagePNGRepresentation(imageL) == UIImagePNGRepresentation(imageR)
+            default:
+                return false
+            }
+        case .string(let stringL):
+            switch rhs {
+            case .string(let stringR):
+                return stringL == stringR
+            default:
+                return false
+            }
+        }
+    }
 }
