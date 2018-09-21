@@ -127,7 +127,7 @@ protocol ResultElementHandler: ElementHandler {
 
 // MARK: - DocumentParser
 
-/// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes the specific logic. This class synchronously parses an input document and returns the result produced by the document handler. Depending on what result the document handler produces, this class acts as a deserializer. See documentation for `init(documentHandler:)` for details on the document handler.
+/// Flexible XML parser that forwards SAX events to objects conforming to `ElementHandler`. A specific document handler needs to be provided, which realizes specific parsing or deserialization logic. This class synchronously parses an input document and returns the result produced by the document handler. See documentation for `init(documentHandler:)` for details on the document handler.
 final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XMLParserDelegate {
     private let documentHandler: DocumentHandler
 
@@ -136,6 +136,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     private var textStack = [String]()
     private var attributesStack = [AttributeContainer]()
 
+    /// Used internally to store errors thrown by element handlers
     private var parsingError: Error?
 
     /// Initializer for a reusable document parser. The document handler is a result element handler responsible for the entire document. Its `startElement` method is called when parsing the document begins and is provided with empty attributes. The `childHandler` method is called when the root element is encountered. The document handler needs to return the element handler for the root element, if the root element name is known, or throw an error. The `endElement` method is called when parsing the document has finished. This methid is called with empty attributes and empty text content. The implementaiton of `endElement` of the document handler needs to produce its resulting object and append it to its `results` array. The document parser subsequently returns the produced result from the `parse(stream)` method.
@@ -182,6 +183,8 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     // MARK: XMLParserDelegate Methods
+    // These methods realize the forwarding of SAX events to the appropriate element handlers by using handlerStack, textStack and attributesStack.
+
     func parserDidStartDocument(_ parser: XMLParser) {
         do {
             try documentHandler.startElement(attributes: .empty)
@@ -261,7 +264,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
 }
 
 fileprivate extension DocumentParser {
-    /// Error describing possible errors encountered by DocumentParser
+    /// Private, namespaced error describing possible errors encountered by `DocumentParser`.
     enum ParserError: LocalizedError {
         case parsingError(backtrace: String, line: Int, encounteredError: Error)
         case noResult

@@ -8,31 +8,23 @@
 
 import Foundation
 
-/// Allows types conforming to the `RawRepresentable` protocol with a `RawValue` of type `String` to conform to `LosslessStringConvertible` without implementing any methods. Example: Enumerations with `String` raw values.
-extension LosslessStringConvertible where Self: RawRepresentable, Self.RawValue == String {
-    init?(_ description: String) {
-        self.init(rawValue: description)
-    }
-
-    var description: String {
-        return rawValue
-    }
-}
+// This file contains useful extensions to `DocumentParser`, specifically to element handlers.
 
 /// Common error situations encountered by element handlers.
 enum ElementHandlerError: Error {
-    /// To be used when a child element that cannot be handled is encountered
+    /// To be used when a child element that cannot be handled is encountered.
     case unexpectedChildElement(String)
 
-    /// To be used by when an element has attributes it cannot handle
+    /// To be used by when an element has attributes it cannot handle.
     case unexpectedAttribute(String)
 
+    /// Missing (empty) text content.
     case missingText
 
-    /// Signals that a required attribute is missing
+    /// Signals that a required attribute is missing.
     case missingAttribute(String)
 
-    /// Signals an unexpected, unreadable value for an attribute name
+    /// Signals an unexpected, unreadable value for an attribute name.
     case unexpectedAttributeValue(String)
 
     /// To be used by an element when a child element is missing.
@@ -44,10 +36,10 @@ enum ElementHandlerError: Error {
     /// To be called by an element handler that expects only one result but has produced several.
     case duplicateElement
 
-    /// Unreadable (i.e. corrupted) data
+    /// Unreadable (i.e. corrupted) data.
     case unreadableData
 
-    /// Custom error message
+    /// Custom error message.
     case message(String)
 }
 
@@ -147,4 +139,15 @@ protocol AttributelessElementHandler: ElementHandler {}
 
 extension AttributelessElementHandler {
     func startElement(attributes: AttributeContainer) throws {}
+}
+
+/// Allows types conforming to the `RawRepresentable` protocol with a `RawValue` of type `String` to conform to `LosslessStringConvertible` without implementing any methods. Example: Enumerations with `String` raw values.
+extension LosslessStringConvertible where Self: RawRepresentable, Self.RawValue == String {
+    init?(_ description: String) {
+        self.init(rawValue: description)
+    }
+
+    var description: String {
+        return rawValue
+    }
 }
