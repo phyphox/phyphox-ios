@@ -3,7 +3,7 @@
 "switchColumns3" = "Vista: 3 colonne";
 "timedRunStartDelay" = "Ritardo (s)";
 "actions" = "Azioni";
-"help" = "Help e info";
+"help" = "Aiuto e informazioni";
 "newExperimentPhyphoxInfo" = "Vai su phyphox.org per creare esperimenti di livello avanzato, compresa l'analisi dei dati, e per condividerli con colleghi, studenti ed amici.";
 "loadingText" = "Caricamento esperimento…";
 "remoteServer" = "Permetti accesso remoto";
@@ -74,7 +74,7 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Vuoi eliminare questo esperimento dalla tua collezione?";
 "creditsNames" = "Sviluppatore e Creatore: \nDottore Sebastian Staacks\nCreatore :\nProfessore Christoph Stampfer\nDisegnatore :\nFrank posthoff (A.NikoPol)\nProgrammatore:\nCamilla Lummerzheim\nJonas Gessner";
-"remoteServerWarning" = "Stai per abilitare l’accesso remoto ai dati acquisiti. Fallo solo se sei su una rete affidabile! Nota: l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su alcune reti aziendali e universitarie.\n\nPer massimizzare la sicurezza e la performance è meglio connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver premuto OK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.";
+"remoteServerWarning" = "Stai per abilitare l’accesso remoto ai dati acquisiti. Fallo solo se sei su una rete affidabile! Nota: l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su alcune reti aziendali e universitarie. \n \nPer massimizzare la sicurezza e la performance è meglio connettersi a questo dispositivo col tethering (hotspot mobile). \n \nDopo aver premuto OK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.";
 "export_pick_share" = "Seleziona un metodo per esportare";
 "sensorNotAvailableWarningTitle" = "Sensore non disponibile.";
 "sensorNotAvailableWarningMoreInfo" = "Più info";
