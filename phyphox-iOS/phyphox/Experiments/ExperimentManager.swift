@@ -35,7 +35,7 @@ final class ExperimentManager {
     func deleteExperiment(_ experiment: Experiment) throws {
         guard let source = experiment.source else { return }
         try FileManager.default.removeItem(at: source)
-        loadCustomExperiments()
+        reloadUserExperiments()
     }
 
     private func registerExperiment(_ experiment: Experiment, custom: Bool) {
@@ -44,14 +44,14 @@ final class ExperimentManager {
         let category = experiment.localizedCategory
 
         if let collection = experimentCollections.first(where: { $0.title == category }) {
-            let insertIndex = collection.experiments.index(where: { $0.experiment.metadataEqual(to: experiment) }) ?? collection.experiments.endIndex
+            let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.localizedTitle > experiment.localizedTitle }) ?? collection.experiments.endIndex
 
             collection.experiments.insert((experiment, custom), at: insertIndex)
         }
         else {
-            let collection = ExperimentCollection(title: category, experiments: [experiment], customExperiments: custom)
+            let collection = ExperimentCollection(title: category, experiments: [(experiment, custom)])
 
-            let insertIndex = experimentCollections.index(where: { $0.title > category }) ?? experimentCollections.endIndex
+            let insertIndex = experimentCollections.firstIndex(where: { ($0.type.rawValue == collection.type.rawValue && $0.title > category) || $0.type.rawValue > collection.type.rawValue }) ?? experimentCollections.endIndex
 
             experimentCollections.insert(collection, at: insertIndex)
         }
@@ -129,6 +129,14 @@ final class ExperimentManager {
                 showLoadingError(for: file, error: error)
             }
         }
+    }
+    
+    func reloadUserExperiments() {
+        for collection in experimentCollections {
+            collection.experiments.removeAll(where: {$0.custom})
+        }
+        loadCustomExperiments()
+        loadSavedExperiments()
     }
     
     init() {

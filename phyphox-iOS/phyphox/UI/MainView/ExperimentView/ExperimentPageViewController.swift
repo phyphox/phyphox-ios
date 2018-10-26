@@ -273,8 +273,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         //Show a hint for the experiment info
         }
         else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
-            return
-            // TODO: This thing seriously shouldn't always appear. It probably shouldn't ever appear in the first place... Bad UX. If your button needs a hint your button is wrong.
+            // TODO: Only show this hint until the experiment has been started a limited number of times
             let label = UILabel()
             label.text = NSLocalizedString("experimentinfo_hint", comment: "")
             label.lineBreakMode = .byWordWrapping
@@ -560,7 +559,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
                 _ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
 
-                ExperimentManager.shared.loadSavedExperiments()
+                ExperimentManager.shared.reloadUserExperiments()
             }
             catch {
                 self.showError(message: error.localizedDescription)
@@ -795,7 +794,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.experiment.local = true
             
             mainThread {
-                ExperimentManager.shared.loadCustomExperiments()
+                ExperimentManager.shared.reloadUserExperiments()
 
                 let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
 
