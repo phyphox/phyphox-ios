@@ -112,7 +112,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
 
-        self.navigationItem.title = experiment.localizedTitle
+        self.navigationItem.title = experiment.displayTitle
         
         webServer.delegate = self
         
@@ -557,9 +557,38 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     return
                 }
 
-                _ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
+                //For now, we disable the new state serializer (saving buffers to a separate binary file)
+                //until the Android version has caught up and can offer the same function
+                //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
+                
+                //Instead use the legacy state serializer for now:
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+                let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+                let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
+                let target = savedExperimentStatesURL.appendingPathComponent(filename)
+                
+                let HUD = JGProgressHUD(style: .dark)
+                HUD.interactionType = .blockTouchesOnHUDView
+                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                
+                HUD.show(in: self.navigationController!.view)
+                
+                LegacyStateSerializer.writeStateFile(customTitle: title, target: target.path, experiment: self.experiment, callback: {(error, file) in
+                    if (error != nil) {
+                        self.showError(message: error!)
+                        return
+                    }
 
-                ExperimentManager.shared.reloadUserExperiments()
+                    ExperimentManager.shared.reloadUserExperiments()
+
+                    HUD.dismiss()
+                    
+                    let confirmation = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_success", comment: ""), preferredStyle: .alert)
+                    
+                    confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                    self.navigationController!.present(confirmation, animated: true, completion: nil)
+                })
             }
             catch {
                 self.showError(message: error.localizedDescription)
@@ -568,7 +597,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_share", comment: ""), style: .default, handler: { [unowned self] action in
-            // TODO:
 
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
@@ -576,30 +604,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
             let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox")
             
+            guard let title = alert.textFields?.first?.text else {
+                return
+            }
+            
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
             HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
             
             HUD.show(in: self.navigationController!.view)
             
-//            StateSerializer.writeStateFile(customTitle: alert.textFields![0].text!, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
-//                if (error != nil) {
-//                    self.showError(message: error!)
-//                    return
-//                }
-//
-//                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
-//
-//                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
-//
-//                self.navigationController!.present(vc, animated: true) {
-//                    HUD.dismiss()
-//                }
-//
-//                vc.completionWithItemsHandler = { _, _, _, _ in
-//                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
-//                }
-//            })
+            LegacyStateSerializer.writeStateFile(customTitle: title, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
+                if (error != nil) {
+                    self.showError(message: error!)
+                    return
+                }
+
+                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
+
+                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+
+                self.navigationController!.present(vc, animated: true) {
+                    HUD.dismiss()
+                }
+
+                vc.completionWithItemsHandler = { _, _, _, _ in
+                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+                }
+            })
         }))
             
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))

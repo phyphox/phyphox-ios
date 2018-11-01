@@ -30,12 +30,17 @@ struct ExperimentLink: Equatable {
 
 final class Experiment {
     let title: String
+    let stateTitle: String?
     private let description: String?
     private let links: [ExperimentLink]
     private let category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
+    }
+    
+    var displayTitle: String {
+        return stateTitle ?? localizedTitle
     }
     
     var localizedDescription: String? {
@@ -84,9 +89,11 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
+        self.stateTitle = stateTitle
+        
         self.description = description
         self.links = links
 

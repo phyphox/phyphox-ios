@@ -44,7 +44,7 @@ final class ExperimentManager {
         let category = experiment.localizedCategory
 
         if let collection = experimentCollections.first(where: { $0.title == category }) {
-            let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.localizedTitle > experiment.localizedTitle }) ?? collection.experiments.endIndex
+            let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.displayTitle > experiment.displayTitle }) ?? collection.experiments.endIndex
 
             collection.experiments.insert((experiment, custom), at: insertIndex)
         }
@@ -76,7 +76,9 @@ final class ExperimentManager {
         for file in experiments {
             let url = savedExperimentStatesURL.appendingPathComponent(file)
 
-            guard url.pathExtension == experimentStateFileExtension else { continue }
+            guard url.pathExtension == experimentStateFileExtension
+                || url.pathExtension == experimentFileExtension
+                else { continue }
 
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)

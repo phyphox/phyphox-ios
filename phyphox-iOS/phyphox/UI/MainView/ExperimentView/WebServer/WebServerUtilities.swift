@@ -54,7 +54,7 @@ final class WebServerUtilities {
     private class func prepareIndexFile(_ experiment: Experiment) -> (String, [ViewDescriptor]) {
         let raw = try! NSMutableString(contentsOfFile: Bundle.main.path(forResource: "phyphox-webinterface/index", ofType: "html")!, encoding: String.Encoding.utf8.rawValue)
         
-        raw.replaceOccurrences(of: "<!-- [[title]] -->", with: experiment.localizedTitle, options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[title]] -->", with: experiment.displayTitle, options: [], range: NSMakeRange(0, raw.length))
         
         raw.replaceOccurrences(of: "<!-- [[clearDataTranslation]] -->", with: NSLocalizedString("clear_data", comment: ""), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[clearConfirmTranslation]] -->", with: NSLocalizedString("clear_data_question", comment: ""), options: [], range: NSMakeRange(0, raw.length))

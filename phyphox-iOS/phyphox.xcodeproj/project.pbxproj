@@ -175,6 +175,7 @@
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE37C02049ABC800301CA3 /* BufferTests.swift */; };
+		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -543,6 +544,7 @@
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
 		6BFE37C02049ABC800301CA3 /* BufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferTests.swift; sourceTree = "<group>"; };
+		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -953,6 +955,7 @@
 				6B7BF7B31C130471007408FB /* ExperimentSerialization.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
 				4B0869971ED8880000AD2E77 /* StateSerializer.swift */,
+				C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */,
 				6B612FE7207E5A9B001DA8D9 /* Handlers */,
 				6B612FE0207E5A09001DA8D9 /* DocumentParser */,
 			);
@@ -1395,6 +1398,7 @@
 				6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */,
 				6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */,
 				6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */,
+				C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */,
 				6B612FDF207E1648001DA8D9 /* DocumentParser.swift in Sources */,
 				6B00F0991C4463A300971941 /* ExperimentAnalysis.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,

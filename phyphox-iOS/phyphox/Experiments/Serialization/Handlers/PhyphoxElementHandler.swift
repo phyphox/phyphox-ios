@@ -69,6 +69,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     var childHandlers: [String: ElementHandler]
 
     private let titleHandler = TextElementHandler()
+    private let stateTitleHandler = TextElementHandler()
     private let categoryHandler = TextElementHandler()
     private let descriptionHandler = MultilineTextElementHandler()
     private let iconHandler = IconElementHandler()
@@ -82,7 +83,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let exportHandler = ExportElementHandler()
 
     init() {
-        childHandlers = ["title": titleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     private enum Attribute: String, AttributeKey {
@@ -112,6 +113,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         guard let title = try titleHandler.expectOptionalResult() ?? translations?.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
+        
+        let stateTitle = try stateTitleHandler.expectOptionalResult()
 
         guard let category = try categoryHandler.expectOptionalResult() ?? translations?.selectedTranslation?.categoryString else {
             throw ElementHandlerError.missingElement("category")
@@ -156,7 +159,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, description: description, links: links, category: category, icon: icon, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }

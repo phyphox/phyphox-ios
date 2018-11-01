@@ -64,8 +64,12 @@ class ExperimentCell: UICollectionViewCell {
                 iconView?.removeFromSuperview()
 
                 if let experiment = experiment {
-                    titleLabel.text = experiment.localizedTitle
-                    subtitleLabel.text = experiment.localizedDescription
+                    titleLabel.text = experiment.displayTitle
+                    if experiment.stateTitle != nil {
+                        subtitleLabel.text = experiment.localizedTitle
+                    } else {
+                        subtitleLabel.text = experiment.localizedDescription
+                    }
 
                     for sensor in experiment.sensorInputs {
                         do {
