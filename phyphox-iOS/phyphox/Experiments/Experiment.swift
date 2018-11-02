@@ -65,6 +65,8 @@ final class Experiment {
     var local: Bool = false
     var source: URL?
     
+    var appleBan: Bool
+    
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translation: ExperimentTranslationCollection?
@@ -89,10 +91,12 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
+        
+        self.appleBan = appleBan
         
         self.description = description
         self.links = links
@@ -344,6 +348,7 @@ extension Experiment: Equatable {
             lhs.viewDescriptors == rhs.viewDescriptors &&
             lhs.analysis == rhs.analysis &&
             lhs.export == rhs.export &&
-            lhs.stateTitle == rhs.stateTitle
+            lhs.stateTitle == rhs.stateTitle &&
+            lhs.appleBan == rhs.appleBan
     }
 }

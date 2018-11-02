@@ -277,23 +277,39 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = collections[indexPath.section].experiments[indexPath.row]
 
-            for sensor in experiment.experiment.sensorInputs {
-                do {
-                    try sensor.verifySensorAvailibility()
-                }
-                catch SensorError.sensorUnavailable(let type) {
-                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
-                    
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                        UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
-                    }))
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-                    
-                    present(controller, animated: true, completion: nil)
-                    
-                    return
-                }
-                catch {}
+        if experiment.experiment.appleBan {
+            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            
+            /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
+             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             }))
+             */
+
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            
+            present(controller, animated: true, completion: nil)
+            
+            return
+        }
+        
+        for sensor in experiment.experiment.sensorInputs {
+            do {
+                try sensor.verifySensorAvailibility()
+            }
+            catch SensorError.sensorUnavailable(let type) {
+                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                
+                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                }))
+                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                
+                present(controller, animated: true, completion: nil)
+                
+                return
+            }
+            catch {}
         }
 
         let vc = ExperimentPageViewController(experiment: experiment.experiment)

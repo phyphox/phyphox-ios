@@ -24,6 +24,13 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
     var value: Double {
         return buffer.last ?? defaultValue
     }
+    
+    var localizedUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localize(unit!) ?? unit!
+    }
 
     let label: String
     let translation: ExperimentTranslationCollection?
@@ -58,7 +65,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
             restrictions += "step=\"1\" "
         }
         
-        return "<div style=\"font-size: 105%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(unit ?? "")</span></div>"
+        return "<div style=\"font-size: 105%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
     }
 
     func setValueHTMLWithID(_ id: Int) -> String {

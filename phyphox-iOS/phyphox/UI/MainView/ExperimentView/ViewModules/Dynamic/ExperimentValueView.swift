@@ -45,7 +45,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size) * defaultFont.pointSize)
         valueLabel.textAlignment = .left
         
-        unitLabel.text = descriptor.unit
+        unitLabel.text = descriptor.localizedUnit
         unitLabel.textColor = kTextColor
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         unitLabel.textAlignment = .left
@@ -83,7 +83,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
             }
             
             if !mapped {
-                unitLabel.text = descriptor.unit
+                unitLabel.text = descriptor.localizedUnit
                 
                 let formatter = NumberFormatter()
                 formatter.numberStyle = descriptor.scientific ? .scientific : .decimal

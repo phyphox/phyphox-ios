@@ -27,6 +27,13 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let translation: ExperimentTranslationCollection?
 
+    var localizedUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localize(unit!) ?? unit!
+    }
+    
     init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
         self.scientific = scientific
         self.precision = precision
@@ -44,7 +51,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(unit ?? "")</span></span></div>"
+        return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
     }
     
     func setValueHTMLWithID(_ id: Int) -> String {
@@ -70,7 +77,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                mappingCode +
                "    if (v == null) {" +
                "        v = (x*\(factor)).to\(scientific ? "Exponential" : "Fixed")(\(precision));" +
-               "        $(\"#element\(id) .value .valueUnit\").text(\"\(unit ?? "")\");" +
+               "        $(\"#element\(id) .value .valueUnit\").text(\"\(localizedUnit ?? "")\");" +
                "    } else { " +
                "        $(\"#element\(id) .value .valueUnit\").text(\"\");" +
                "    } " +

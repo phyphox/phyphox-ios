@@ -51,7 +51,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         if descriptor.unit != nil {
             unitLabel = {
                 let l = UILabel()
-                l.text = descriptor.unit
+                l.text = descriptor.localizedUnit
                 l.textColor = kTextColor
                 
                 l.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.subheadline)

@@ -70,6 +70,10 @@ class ExperimentCell: UICollectionViewCell {
                     } else {
                         subtitleLabel.text = experiment.localizedDescription
                     }
+                    
+                    if experiment.appleBan {
+                        available = false
+                    }
 
                     for sensor in experiment.sensorInputs {
                         do {

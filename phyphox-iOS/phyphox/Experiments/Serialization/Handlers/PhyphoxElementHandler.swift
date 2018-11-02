@@ -89,6 +89,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private enum Attribute: String, AttributeKey {
         case locale
         case version
+        case appleBan
     }
 
     func startElement(attributes: AttributeContainer) throws {}
@@ -99,6 +100,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let locale = attributes.optionalString(for: .locale) ?? "en"
 
         let versionString = try attributes.string(for: .version)
+        
+        let appleBan = try attributes.optionalValue(for: .appleBan) ?? false
 
         guard let version = SemanticVersion(string: versionString) else {
             throw ElementHandlerError.unexpectedAttributeValue("version")
@@ -123,7 +126,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         guard let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString else {
             throw ElementHandlerError.missingElement("description")
         }
-
+        
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
 
         let links = linkHandler.results
@@ -159,7 +162,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, persistentStorageURL: experimentPersistentStorageURL, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
