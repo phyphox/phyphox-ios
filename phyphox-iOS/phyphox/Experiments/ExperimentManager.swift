@@ -82,6 +82,7 @@ final class ExperimentManager {
 
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+                experiment.local = true
 
                 registerExperiment(experiment, custom: true)
             }
@@ -103,6 +104,7 @@ final class ExperimentManager {
 
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+                experiment.local = true
 
                 registerExperiment(experiment, custom: true)
             }
@@ -124,6 +126,7 @@ final class ExperimentManager {
 
             do {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+                experiment.local = true
 
                 registerExperiment(experiment, custom: false)
             }
@@ -157,7 +160,7 @@ final class ExperimentManager {
 
 extension ExperimentManager: ExperimentDelegate {
     func experimentWillBecomeActive(_ experiment: Experiment) {
-        guard experiment.local, let url = experiment.source, url.pathExtension == experimentStateFileExtension else { return }
+        guard let url = experiment.source, url.pathExtension == experimentStateFileExtension else { return }
 
         experiment.buffers.forEach { name, buffer in
             let bufferURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)

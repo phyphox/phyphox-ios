@@ -271,14 +271,17 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
+            //Only use memory for now
+            /*
             if bufferSize == 0 && !analysisInputBufferNames.contains(name) {
                 let bufferURL = experimentPersistentStorageURL.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
 
                 storageType = .hybrid(memorySize: 5000, persistentStorageLocation: bufferURL)
             }
             else {
+             */
                 storageType = .memory(size: bufferSize)
-            }
+            //}
 
             let buffer = try DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: staticBuffer)
 

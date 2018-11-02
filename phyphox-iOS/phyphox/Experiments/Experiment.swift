@@ -62,7 +62,7 @@ final class Experiment {
 
     let persistentStorageURL: URL
 
-    var local: Bool = true
+    var local: Bool = false
     var source: URL?
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
@@ -343,6 +343,7 @@ extension Experiment: Equatable {
             lhs.output == rhs.output &&
             lhs.viewDescriptors == rhs.viewDescriptors &&
             lhs.analysis == rhs.analysis &&
-            lhs.export == rhs.export
+            lhs.export == rhs.export &&
+            lhs.stateTitle == rhs.stateTitle
     }
 }

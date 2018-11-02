@@ -42,7 +42,6 @@ final class ExperimentSerialization {
         }
 
         let experiment = try parser.parse(stream: stream)
-        experiment.local = url.isFileURL
         experiment.source = url
 
         return experiment
