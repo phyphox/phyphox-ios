@@ -33,7 +33,7 @@ class CreateExperimentViewController: UITableViewController {
         
         tableView.keyboardDismissMode = .onDrag
         
-        title = NSLocalizedString("newExperiment", comment: "")
+        title = NSLocalizedString("newExperimentSimple", comment: "")
         
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(save))
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))

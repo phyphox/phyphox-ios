@@ -13,7 +13,8 @@ private let minCellWidth: CGFloat = 320.0
 final class ExperimentsCollectionViewController: CollectionViewController {
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
-
+    private var addButton: UIBarButtonItem? = nil
+    
     private var collections: [ExperimentCollection] = []
 
     override class var viewClass: CollectionContainerView.Type {
@@ -87,10 +88,10 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), for: .touchUpInside)
         infoButton!.sizeToFit()
         
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(createNewExperiment))
+        addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addExperiment))
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
-        navigationItem.rightBarButtonItem = addButton
+        navigationItem.rightBarButtonItem = addButton!
         
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
@@ -143,7 +144,21 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
-    @objc func createNewExperiment() {
+    @objc func addExperiment() {
+        let alert = UIAlertController(title: NSLocalizedString("newExperiment", comment: ""), message: nil, preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentSimple", comment: ""), style: .default, handler: createSimpleExperiment))
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = addButton!
+        }
+        
+        present(alert, animated: true, completion: nil)
+    }
+    
+    func createSimpleExperiment(_ action: UIAlertAction) {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         
