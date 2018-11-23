@@ -19,22 +19,16 @@ final class ExperimentTranslationCollection {
     init(translations: [String: ExperimentTranslation]?, defaultLanguageCode: String) {
         self.translations = translations
         
-        for code in  Locale.preferredLanguages {
-            let languageCode = code.components(separatedBy: "-")[0]
-            
-            //If the preferred language matches a translation block, this always takes precedence and so we select this and are done. Translations will fall back to the default language anyways...
-            if let selected = translations?[languageCode] {
-                selectedLanguageCode = languageCode
-                selectedTranslation = selected
-                break
-            }
-            
+        let code = Locale.current.languageCode
+        let languageCode = code?.components(separatedBy: "-")[0] ?? "en"
+        
+        //If the preferred language matches a translation block, this always takes precedence and so we select this and are done. Translations will fall back to the default language anyways...
+        if let selected = translations?[languageCode] {
+            selectedLanguageCode = languageCode
+            selectedTranslation = selected
+        } else if languageCode == defaultLanguageCode {
             //If we did not find a translation block for the preferred language, but it matches the defaultLanguage, we can use these strings without a translation
-            if languageCode == defaultLanguageCode {
-                selectedLanguageCode = defaultLanguageCode
-                break
-            }
-            
+            selectedLanguageCode = defaultLanguageCode
         }
     }
     
