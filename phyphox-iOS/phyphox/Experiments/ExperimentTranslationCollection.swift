@@ -14,10 +14,8 @@ struct ExperimentTranslationCollection: Equatable {
     
     init(translations: [String: ExperimentTranslation], defaultLanguageCode: String) {
         self.translations = translations
-
-        let preferredLanguageCodes = Locale.preferredLanguages.lazy.map({ $0.components(separatedBy: "-")[0] })
-
-        let selectedLanguageCode = preferredLanguageCodes.first(where: { translations.keys.contains($0) }) ?? defaultLanguageCode
+    
+        let selectedLanguageCode = Locale.current.languageCode?.components(separatedBy: "-")[0] ?? "en"
         
         selectedTranslation = translations[selectedLanguageCode]
     }
