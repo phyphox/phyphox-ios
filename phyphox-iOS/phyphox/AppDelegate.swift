@@ -19,32 +19,40 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     var main: MainNavigationViewController!
     var mainNavViewController: ScalableViewController!
 
-
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func initApp(url: URL?) -> Bool {
         KeyboardTracker.startTracking()
-
+        
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor.black
-
+        
+        let experimentsCollectionViewController = ExperimentsCollectionViewController()
+        
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
-        main.pushViewController(ExperimentsCollectionViewController(), animated: false)
-
+        main.pushViewController(experimentsCollectionViewController, animated: false)
+        
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         window!.makeKeyAndVisible()
-
+        
+        if let url = url {
+            return experimentsCollectionViewController.launchExperimentByURL(url)
+        }
+        
         return true
     }
-    
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        return initApp(url: nil)
+    }
     
     func application(_ application: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey: Any]) -> Bool {
         cleanInbox(url.lastPathComponent)
-        return launchExperimentByURL(url)
+        return initApp(url: url)
     }
     
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         cleanInbox(url.lastPathComponent)
-        return launchExperimentByURL(url)
+        return initApp(url: url)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -89,112 +97,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-    }
-
-    // TODO: Way too many nopes in this method...
-    func launchExperimentByURL(_ url: URL) -> Bool {
-        var experiment: Experiment?
-        
-        var experimentLoadingError: Error?
-        
-        if url.scheme == "phyphox" {
-            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
-                components.scheme = "https"
-
-                do {
-                    experiment = try ExperimentSerialization.readExperimentFromURL(components.url!)
-                }
-                catch {
-                    components.scheme = "http"
-
-                    do {
-                        experiment = try ExperimentSerialization.readExperimentFromURL(components.url!)
-                    }
-                    catch let error {
-                        experimentLoadingError = error
-                    }
-                }
-            }
-            else {
-                experimentLoadingError = SerializationError.invalidFilePath
-            }
-        }
-        else {
-            do {
-                experiment = try ExperimentSerialization.readExperimentFromURL(url)
-            }
-            catch let error {
-                experimentLoadingError = error
-            }
-        }
-        
-        if experimentLoadingError != nil {
-            let message: String
-            if let sError = experimentLoadingError as? SerializationError {
-                switch sError {
-                case .emptyData:
-                    message = "Empty data."
-                case .genericError(let emessage):
-                    message = emessage
-                case .invalidExperimentFile(let emessage):
-                    message = "Invalid experiment file. \(emessage)"
-                case .invalidFilePath:
-                    message = "Invalid file path"
-                case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
-                    message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
-                case .writeFailed:
-                    message = "Write failed."
-                }
-            } else {
-                message = String(describing: experimentLoadingError!)
-            }
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-            main.present(controller, animated: true, completion: nil)
-            return false
-        }
-
-        guard let loadedExperiment = experiment else { return false }
-
-        if loadedExperiment.appleBan {
-            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
-            
-            /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
-             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
-             }))
-             */
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-            
-            main.present(controller, animated: true, completion: nil)
-            
-            return false
-        }
-        
-        for sensor in loadedExperiment.sensorInputs {
-            do {
-                try sensor.verifySensorAvailibility()
-            }
-            catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
-                
-                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
-                }))
-                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-                main.present(controller, animated: true, completion: nil)
-                return false
-            }
-            catch {}
-        }
-        
-        main.popToRootViewController(animated: true)
-        
-        let controller = ExperimentPageViewController(experiment: loadedExperiment)
-
-        main.pushViewController(controller, animated: true)
-        
-        return true
     }
     
     func cleanInbox(_ skipFile: String?) {

@@ -7,10 +7,17 @@
 //
 
 import UIKit
+import ZipZap
 
 private let minCellWidth: CGFloat = 320.0
 
-final class ExperimentsCollectionViewController: CollectionViewController {
+
+protocol ExperimentController {
+    func launchExperimentByURL(_ url: URL) -> Bool
+    func addExperimentsToCollection(_ list: [Experiment])
+}
+
+final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController {
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
@@ -147,6 +154,8 @@ final class ExperimentsCollectionViewController: CollectionViewController {
     @objc func addExperiment() {
         let alert = UIAlertController(title: NSLocalizedString("newExperiment", comment: ""), message: nil, preferredStyle: .actionSheet)
         
+        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentQR", comment: ""), style: .default, handler: launchScanner))
+        
         alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentSimple", comment: ""), style: .default, handler: createSimpleExperiment))
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
@@ -157,6 +166,23 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         
         present(alert, animated: true, completion: nil)
     }
+
+    func launchScanner(_ action: UIAlertAction) {
+        let vc = ScannerViewController()
+        vc.experimentLauncher = self
+        let nav = UINavigationController(rootViewController: vc)
+        
+        if iPad {
+            nav.modalPresentationStyle = .formSheet
+        }
+        else {
+            nav.transitioningDelegate = overlayTransitioningDelegate
+            nav.modalPresentationStyle = .custom
+        }
+        
+        navigationController!.parent!.present(nav, animated: true, completion: nil)
+    }
+
     
     func createSimpleExperiment(_ action: UIAlertAction) {
         let vc = CreateExperimentViewController()
@@ -280,6 +306,26 @@ final class ExperimentsCollectionViewController: CollectionViewController {
             let collection = collections[indexPath.section]
 
             view.title = collection.title
+            var colorsInCollection = [UIColor : (Int, UIColor)]()
+            for experiment in collection.experiments {
+                if let count = colorsInCollection[experiment.experiment.color]?.0 {
+                    colorsInCollection[experiment.experiment.color]!.0 = count + 1
+                } else {
+                    colorsInCollection[experiment.experiment.color] = (1, experiment.experiment.fontColor)
+                }
+            }
+            var max = 0
+            var catColor = kHighlightColor
+            var catFontColor = UIColor.white
+            for (color, (count, fontColor)) in colorsInCollection {
+                if count > max {
+                    max = count
+                    catColor = color
+                    catFontColor = fontColor
+                }
+            }
+            view.color = catColor
+            view.fontColor = catFontColor
 
             return view
         }
@@ -330,5 +376,238 @@ final class ExperimentsCollectionViewController: CollectionViewController {
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    enum FileType {
+        case unknown
+        case phyphox
+        case zip
+    }
+    
+    func detectFileType(data: Data) -> FileType {
+        if data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04 {
+            //Look for ZIP signature
+            return .zip
+        }
+        if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
+            //Naive method to roughly check if this is a phyphox file without actually parsing it.
+            //A false positive will be caught be the parser, but we do not want to parse anything that is obviously not a phyphox file.
+            return .phyphox
+        }
+        return .unknown
+    }
+    
+    func handleZipFile(_ url: URL) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
+        try? FileManager.default.removeItem(at: tmp)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
+        
+        let archive = try ZZArchive(url: url)
+        var files: [URL] = []
+        for entry in archive.entries {
+            if (entry.fileMode & S_IFDIR) > 0 {
+                continue
+            }
+            if entry.fileName.hasSuffix(".phyphox") {
+                let fileName = tmp.appendingPathComponent(entry.fileName)
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try entry.newData().write(to: fileName, options: .atomic)
+                files.append(fileName)
+            }
+        }
+        
+        guard files.count > 0 else {
+            throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
+        }
+        
+        if files.count == 1 {
+            _ = launchExperimentByURL(files.first!)
+        } else {
+            var experiments: [URL] = []
+            for file in files {
+                experiments.append(file)
+            }
+            
+            let dialog = ExperimentPickerDialogView(title: NSLocalizedString("open_zip_title", comment: ""), message: NSLocalizedString("open_zip_dialog_instructions", comment: ""), experiments: files, delegate: self)
+            dialog.show(animated: true)
+        }
+    }
+    
+    func launchExperimentByURL(_ url: URL) -> Bool {
+
+        var fileType = FileType.unknown
+        var experiment: Experiment?
+        var finalURL = url
+        
+        var experimentLoadingError: Error?
+        
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
+        if url.scheme == "phyphox" {
+            //phyphox:// allow to retreive the experiment via https or http. Try both.
+            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                components.scheme = "https"
+                do {
+                    let data = try Data(contentsOf: components.url!)
+                    fileType = detectFileType(data: data)
+                    if fileType == .phyphox || fileType == .zip {
+                        try data.write(to: tmp, options: .atomic)
+                        finalURL = tmp
+                    }
+                } catch {
+                }
+                if fileType == .unknown {
+                    components.scheme = "http"
+                    do {
+                        let data = try Data(contentsOf: components.url!)
+                        fileType = detectFileType(data: data)
+                        if fileType == .phyphox || fileType == .zip {
+                            try data.write(to: tmp, options: .atomic)
+                            finalURL = tmp
+                        }
+                    } catch let error {
+                        experimentLoadingError = error
+                    }
+                }
+            }
+            else {
+                experimentLoadingError = SerializationError.invalidFilePath
+            }
+        }
+        else if url.scheme == "http" || url.scheme == "https" {
+            //Specific http or https. We need to download it first as InputStream/XMLParser only handles URLs to local files properly. (See todo above)
+            do {
+                let data = try Data(contentsOf: url)
+                fileType = detectFileType(data: data)
+                if fileType == .phyphox {
+                    try data.write(to: tmp, options: .atomic)
+                    finalURL = tmp
+                }
+            } catch let error {
+                experimentLoadingError = error
+            }
+        } else if url.isFileURL {
+            //Local file
+            do {
+                let data = try Data(contentsOf: url)
+                fileType = detectFileType(data: data)
+                finalURL = url
+            }
+            catch let error {
+                experimentLoadingError = error
+            }
+        } else {
+            experimentLoadingError = SerializationError.invalidFilePath
+        }
+        
+        if experimentLoadingError == nil {
+            switch fileType {
+            case .phyphox:
+                    do {
+                        experiment = try ExperimentSerialization.readExperimentFromURL(finalURL)
+                    } catch let error {
+                        experimentLoadingError = error
+                    }
+            case .zip:
+                do {
+                    try handleZipFile(finalURL)
+                    return true
+                } catch let error {
+                    experimentLoadingError = error
+                }
+            case .unknown:
+                experimentLoadingError = SerializationError.invalidExperimentFile(message: "Unkown file format.")
+            }
+        }
+        
+        if experimentLoadingError != nil {
+            let message: String
+            if let sError = experimentLoadingError as? SerializationError {
+                switch sError {
+                case .emptyData:
+                    message = "Empty data."
+                case .genericError(let emessage):
+                    message = emessage
+                case .invalidExperimentFile(let emessage):
+                    message = "Invalid experiment file. \(emessage)"
+                case .invalidFilePath:
+                    message = "Invalid file path"
+                case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
+                    message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
+                case .writeFailed:
+                    message = "Write failed."
+                }
+            } else {
+                message = String(describing: experimentLoadingError!)
+            }
+            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            navigationController?.present(controller, animated: true, completion: nil)
+            return false
+        }
+        
+        guard let loadedExperiment = experiment else { return false }
+        
+        if loadedExperiment.appleBan {
+            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            
+            /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
+             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             }))
+             */
+            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            
+            navigationController?.present(controller, animated: true, completion: nil)
+            
+            return false
+        }
+        
+        for sensor in loadedExperiment.sensorInputs {
+            do {
+                try sensor.verifySensorAvailibility()
+            }
+            catch SensorError.sensorUnavailable(let type) {
+                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                
+                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                }))
+                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                navigationController?.present(controller, animated: true, completion: nil)
+                return false
+            }
+            catch {}
+        }
+        
+        let controller = ExperimentPageViewController(experiment: loadedExperiment)
+        navigationController?.pushViewController(controller, animated: true)
+        
+        return true
+    }
+    
+    func addExperimentsToCollection(_ list: [Experiment]) {
+        for experiment in list {
+            print("Copying \(experiment.localizedTitle)")
+            do {
+                try experiment.saveLocally(quiet: true, presenter: nil)
+            } catch let error {
+                print("Error for \(experiment.localizedTitle): \(error.localizedDescription)")
+                let hud = JGProgressHUD(style: .dark)
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.indicatorView?.tintColor = .white
+                hud.textLabel.text = "Failed to copy experiment \(experiment.localizedTitle)"
+                hud.detailTextLabel.text = error.localizedDescription
+                
+                (UIApplication.shared.keyWindow?.rootViewController?.view).map {
+                    hud.show(in: $0)
+                    hud.dismiss(afterDelay: 3.0)
+                }
+            }
+        }
+        ExperimentManager.shared.reloadUserExperiments()
+
+        
     }
 }

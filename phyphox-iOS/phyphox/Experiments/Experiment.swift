@@ -59,6 +59,15 @@ final class Experiment {
     weak var delegate: ExperimentDelegate?
 
     let icon: ExperimentIcon
+    
+    let color: UIColor
+    var fontColor: UIColor {
+        if color.luminance > 0.7 {
+            return UIColor.black
+        } else {
+            return UIColor.white
+        }
+    }
 
     let persistentStorageURL: URL
 
@@ -91,7 +100,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -106,6 +115,7 @@ final class Experiment {
         self.category = category
         
         self.icon = icon
+        self.color = color
         
         self.translation = translation
 
@@ -158,6 +168,52 @@ final class Experiment {
      */
     func didBecomeInactive() {
         clear()
+    }
+    
+    func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
+        guard let source = self.source else { throw FileError.genericError }
+        
+        if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
+            try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
+        }
+        
+        var i = 1
+        
+        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(experimentFileExtension)
+        
+        while FileManager.default.fileExists(atPath: experimentURL.path) {
+            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(experimentFileExtension)
+            
+            i += 1
+        }
+        
+        func moveFile(from fileURL: URL) throws {
+            try FileManager.default.copyItem(at: fileURL, to: experimentURL)
+            
+            self.source = experimentURL
+            local = true
+            
+            mainThread {
+                
+                if !quiet, let controller = presenter {
+                    let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
+                    
+                    confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                    controller.present(confirmation, animated: true, completion: nil)
+                }
+            }
+        }
+        
+        if source.isFileURL {
+            try moveFile(from: source)
+        }
+        else {
+            URLSession.shared.downloadTask(with: source, completionHandler: { location, _, _ in
+                guard let location = location else { return }
+                
+                try? moveFile(from: location)
+            }).resume()
+        }
     }
     
     private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
@@ -336,6 +392,7 @@ extension Experiment: Equatable {
             lhs.localizedLinks == rhs.localizedLinks &&
             lhs.localizedCategory == rhs.localizedCategory &&
             lhs.icon == rhs.icon &&
+            lhs.color == rhs.color &&
             lhs.local == rhs.local &&
             lhs.translation == rhs.translation &&
             lhs.buffers == rhs.buffers &&
@@ -352,3 +409,4 @@ extension Experiment: Equatable {
             lhs.appleBan == rhs.appleBan
     }
 }
+

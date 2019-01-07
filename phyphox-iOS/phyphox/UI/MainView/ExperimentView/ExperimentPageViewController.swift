@@ -801,50 +801,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func saveLocally() throws {
-        guard let source = experiment.source else { throw FileError.genericError }
-
-        let title = experiment.title
-
-        if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
-            try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
-        }
-
-        var i = 1
-
-        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(experimentFileExtension)
-
-        while FileManager.default.fileExists(atPath: experimentURL.path) {
-            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(experimentFileExtension)
-
-            i += 1
-        }
-
-        func moveFile(from fileURL: URL) throws {
-            try FileManager.default.copyItem(at: fileURL, to: experimentURL)
-
-            self.experiment.source = experimentURL
-            self.experiment.local = true
-            
-            mainThread {
-                ExperimentManager.shared.reloadUserExperiments()
-
-                let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
-
-                confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
-                self.navigationController!.present(confirmation, animated: true, completion: nil)
-            }
-        }
-
-        if source.isFileURL {
-            try moveFile(from: source)
-        }
-        else {
-            URLSession.shared.downloadTask(with: source, completionHandler: { location, _, _ in
-                guard let location = location else { return }
-
-                try? moveFile(from: location)
-            }).resume()
-        }
+        try experiment.saveLocally(quiet: false, presenter: self.navigationController)
+        ExperimentManager.shared.reloadUserExperiments()
     }
 
     @objc func stopTimerFired() {

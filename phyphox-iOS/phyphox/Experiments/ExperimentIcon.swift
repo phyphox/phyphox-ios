@@ -12,11 +12,11 @@ enum ExperimentIcon: Equatable {
     case string(String)
     case image(UIImage)
     
-    func generateResizableRepresentativeView() -> UIView {
+    func generateResizableRepresentativeView(color: UIColor, fontColor: UIColor) -> UIView {
         switch self {
         case .image(let image):
             let imageView = UIImageView(image: image)
-            imageView.backgroundColor = kHighlightColor
+            imageView.backgroundColor = color
             return imageView
         case .string(let string):
             let label = UILabel()
@@ -26,8 +26,8 @@ enum ExperimentIcon: Equatable {
             label.adjustsFontSizeToFitWidth = true
             label.font = UIFont.preferredFont(forTextStyle: .headline)
 
-            label.textColor = kTextColor
-            label.backgroundColor = kHighlightColor
+            label.textColor = fontColor
+            label.backgroundColor = color
 
             return label
         }

@@ -136,6 +136,20 @@ final class ExperimentManager {
         }
     }
     
+    private func loadExperimentsByURL(_ files: [URL]) {
+        for file in files {
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromURL(file)
+                experiment.local = false
+                
+                registerExperiment(experiment, custom: true)
+            }
+            catch {
+                showLoadingError(for: file.absoluteString, error: error)
+            }
+        }
+    }
+    
     func reloadUserExperiments() {
         for collection in experimentCollections {
             collection.experiments.removeAll(where: {$0.custom})
@@ -155,6 +169,10 @@ final class ExperimentManager {
         let time = CFAbsoluteTimeGetCurrent() - timestamp
         print("Load took \(time * 1000) ms")
         #endif
+    }
+    
+    init(files: [URL]) {
+        loadExperimentsByURL(files)
     }
 }
 

@@ -23,6 +23,26 @@ final class ExperimentHeaderView: UICollectionReusableView {
         }
     }
     
+    var color: UIColor? {
+        set {
+            background.backgroundColor = newValue
+            setNeedsLayout()
+        }
+        get {
+            return background.backgroundColor
+        }
+    }
+    
+    var fontColor: UIColor? {
+        set {
+            label.textColor = newValue
+            setNeedsLayout()
+        }
+        get {
+            return label.textColor 
+        }
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         

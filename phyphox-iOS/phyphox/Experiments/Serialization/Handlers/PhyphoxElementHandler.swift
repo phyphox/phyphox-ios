@@ -73,6 +73,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let categoryHandler = TextElementHandler()
     private let descriptionHandler = MultilineTextElementHandler()
     private let iconHandler = IconElementHandler()
+    private let colorHandler = TextElementHandler()
     private let linkHandler = LinkElementHandler()
     private let dataContainersHandler = DataContainersElementHandler()
     private let translationsHandler = TranslationsElementHandler()
@@ -83,7 +84,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let exportHandler = ExportElementHandler()
 
     init() {
-        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "color": colorHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     private enum Attribute: String, AttributeKey {
@@ -129,6 +130,16 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
 
+        let colorString: String? = try colorHandler.expectOptionalResult()
+        
+        let color = try colorString.map({ string -> UIColor in
+            guard let color = UIColor(hexString: string) else {
+                throw ElementHandlerError.unexpectedAttributeValue("color")
+            }
+            
+            return color
+        }) ?? kHighlightColor
+        
         let links = linkHandler.results
 
         let dataContainersDescriptor = try dataContainersHandler.expectSingleResult()
@@ -162,7 +173,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
