@@ -1,1 +1,11 @@
 "NSMotionUsageDescription" = "Phyphox会读取你的传感器数据，以便在物理实验中使用。";
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox像记录其他传感器一样吗，记录麦克风的声音，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
+"NSLocationWhenInUseUsageDescription" = "phyphox像记录其他传感器一样记录GPS的位置数据，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
+"NSPhotoLibraryAddUsageDescription" = "如果您从实验菜单中选择“分享截图”，phyphox可以将截图添加到您的照片库中。";
