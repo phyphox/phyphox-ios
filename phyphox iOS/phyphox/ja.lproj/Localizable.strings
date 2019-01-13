@@ -10,7 +10,7 @@
 "warning" = "注意";
 "donotshowagain" = "今後表示しない";
 "damageWarning" = "実験中にお持ちのスマーフォンを損傷しないように気をつけてください．固い表面のものに落とすことのないように特に細心の注意を払い，過度に強度な磁場には晒さないようにしてください．開発者はお持ちのスマートフォンの損傷への責任は負えませんのでご了承ください．";
-"credits" = "信頼";
+"credits" = "クレジット";
 "creditsRWTH" = "phyphoxはRWTH Aachen大学の2nd Institute of Physicsにて開発されました．";
 "sensorLinearAcceleration" = "線形加速";
 "sensorLight" = "光";
@@ -38,11 +38,11 @@
 "clear_data" = "データクリア";
 "clear_data_question" = "記録したデータを消去しますか？";
 "clear" = "クリア";
-"timed_stop" = "タイムランを停止する";
-"timed_start" = "タイムランを開始する";
+"timed_stop" = "プログラム計測を停止する";
+"timed_start" = "プログラム計測を開始する";
 "loadingTitle" = "ローディング";
 "loadingText" = "実験をローディング中…";
-"timedRunDialogTitle" = "タイムラン";
+"timedRunDialogTitle" = "プログラム計測の時間設定";
 "timedRunStartDelay" = "開始遅延 (s)";
 "timedRunStopDelay" = "実験時間 (s)";
 "export" = "データのエクスポート";
@@ -51,7 +51,7 @@
 "share" = "スクリーンショットの共有";
 "share_subject" = "phyphoxからのスクリーンショット";
 "share_pick_share" = "共有方法の選択";
-"remoteServerWarning" = "取得データへの遠隔アクセスをしようとしています．信頼されたネットワーク環境においてのみこれを実行してください！また，多くの企業と大学のネットワーク環境下ではデバイス間の直接アクセスができない場合が多いことに注意してください．\n\n最も安全なセキュリティーとパフォーマンスのためにデザリング回線 (モバイルホットスポット) を経由して接続してください．\n\nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．";
+"remoteServerWarning" = "取得データへの遠隔アクセスをしようとしています．信頼されたネットワーク環境においてのみこれを実行してください！また，多くの企業と大学のネットワーク環境下ではデバイス間の直接アクセスができない場合が多いことに注意してください．\n \n最も安全なセキュリティーとパフォーマンスのためにデザリング回線 (モバイルホットスポット) を経由して接続してください．\n \nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．";
 "remoteServerWarningTitle" = "セキュリティ警告!";
 "hotspotSettings" = "ホットスポット設定";
 "switchToPhoneLayout" = "表示：狭い";
@@ -72,8 +72,8 @@
 "save_state_subject" = "phyphoxの実験状態";
 "save_state_default_title" = "実験";
 "save_state_success" = "状態はあなたのコレクションに保存されました．";
-"timedRun" = "タイムラン";
-"pick_exportSets" = "エクスポートするデータの選択";
+"timedRun" = "プログラム計測";
+"pick_exportSets" = "エクスポートするデータの選択.";
 "pick_exportFormat" = "データフォーマットを選択してください．";
 "noDrawableData" = "描画可能なデータがありません．";
 "categoryNewExperiment" = "簡単なカスタム実験";
@@ -100,6 +100,6 @@
 "remoteServerActive" = "リモートアクセスは有効です．下記のURLから本実験にアクセスしてください．URL：";
 "AudioRateMissmatch" = "エラー: サンプリングレートが一致しません．異なる音声サンプリングレートにするその他のアプリやサービス (Airplayなど) を無効にしてください．";
 "translationText" = "phyphoxはあなたのシステム設定の優先言語リストから第一可能言語を使用します．どの言語が使用可能か，どのように解決するかを知るためには \"ウェブサイトへ\" を選択してください．";
-"apple_ban" = "本実験はAppleにより禁止され，iOSでは利用できません．";
+"apple_ban" = "本実験は現在iOSでは利用できません。";
 "appleBanWarningMoreInfo" = "より詳細な情報";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";

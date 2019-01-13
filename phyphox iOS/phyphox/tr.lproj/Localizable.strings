@@ -95,3 +95,11 @@
 "categoryRawSensor" = "Ham sensörler";
 "remoteServerWarning" = "Elde edilen verilere uzaktan erişimi etkinleştirmek üzeresiniz. Bunu sadece güvenli bir ağda yapmanız tavsiye edilir. Ayrıca, birçok şirket veya üniversite ağında cihazlar arasında doğrudan erişim mümkün olmayabilir.\n\n En iyi güvenlik ve performans için bu cihaza bir bağlantı seçeneği olan mobil erişim noktası ile bağlanmalısınız.\n\nTamam düğmesine bastıktan sonra, aynı ağdaki herhangi bir web tarayıcısından ölçümlerinize erişebilirsiniz.";
 "pick_exportSets" = "Dışa aktarmak istediğiniz veri gruplarını seçin.";
+"apple_ban" = "Bu deney artık mevcut değil.";
+"creditsNames" = "Geliştirme ve Konsept:\nDr. Sebastian Staacks\nKonsept:\nProf. Christoph Stampfer\nTasarım:\nFrank Posthoff (A.NikoPol)\nProgramlama:\nCamilla Lummerzheim\nJonas Gessner";
+"appleBanWarningMoreInfo" = "Daha fazla bilgi";
+"appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
+"switch_to_calibrated_magnetometer" = "Kalibre edilmiş manyetometreye geçin";
+"switch_to_raw_magnetometer" = "Ham manyetometreye geçin";
+"AudioRateMissmatch" = "Hata: Örnekleme oranı uyuşmazlığı. Lütfen farklı ses örnekleme oranını zorlayan tüm uygulamaları veya hizmetleri (AirPlay gibi) devre dışı bırakın.";
+"translationText" = "Phyphox, sistem ayarlarınızda tercih ettiğiniz diller listesindeki ilk dili kullanacaktır. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.";
