@@ -112,7 +112,7 @@ final class GLGraphView: GLKView {
         setNeedsDisplay()
     }
     
-    func render() {
+    private func render() {
         EAGLContext.setCurrent(context)
         
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT))

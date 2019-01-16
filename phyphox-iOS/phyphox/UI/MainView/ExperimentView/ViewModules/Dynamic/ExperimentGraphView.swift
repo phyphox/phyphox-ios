@@ -8,8 +8,14 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule {
+    
+    private let sideMargins:CGFloat = 10.0
+    
     let descriptor: GraphViewDescriptor
+    
+    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
+    var resizableState: ResizableViewModuleState = .normal
 
     private let displayLink = DisplayLink(refreshRate: 0)
 
@@ -109,6 +115,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
             return l
         }
         
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body)
+        label.textColor = kTextColor
+        
         xLabel = makeLabel(descriptor.localizedXLabel)
         yLabel = makeLabel(descriptor.localizedYLabel)
         xLabel.textColor = kTextColor
@@ -131,6 +142,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
         }
 
         attachDisplayLink(displayLink)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        self.addGestureRecognizer(tapGesture)
     }
 
     @available(*, unavailable)
@@ -138,6 +152,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
         fatalError("init(coder:) has not been implemented")
     }
 
+    @objc func tapped(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            layoutDelegate?.presentExclusiveLayout(self)
+        } else {
+            layoutDelegate?.restoreLayout()
+        }
+    }
+    
     //MARK - Graph
     
     private var lastIndexXArray: [Double]?
@@ -356,6 +378,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
         guard !busy, superview != nil && window != nil else { return }
 
         busy = true
+        wantsUpdate = false
 
         queue.async { [weak self] in
             autoreleasepool {
@@ -381,9 +404,18 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
     //Mark - General UI
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let s1 = label.sizeThatFits(bounds.size)
-
-        return CGSize(width: size.width, height: Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+        switch resizableState {
+        case .exclusive:
+            return size
+        case .hidden:
+            return CGSize.init(width: 0, height: 0)
+        default:
+            let s1 = label.sizeThatFits(size)
+            let s2 = xLabel.sizeThatFits(size)
+            let s3 = yLabel.sizeThatFits(size).applying(yLabel.transform)
+            
+            return CGSize(width: size.width, height: Swift.min((size.width-s3.width-2*sideMargins)/descriptor.aspectRatio + s1.height + s2.height + 1.0, size.height))
+        }
     }
     
     private var graphFrame: CGRect {
@@ -392,6 +424,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
     
     override func layoutSubviews() {
         super.layoutSubviews()
+        
+        label.isHidden = resizableState == .hidden
+        xLabel.isHidden = resizableState == .hidden
+        yLabel.isHidden = resizableState == .hidden
+        gridView.isHidden = resizableState == .hidden
+        glGraph.isHidden = resizableState == .hidden
+        
+        if (resizableState == .hidden) {
+            return
+        }
         
         let spacing: CGFloat = 1.0
         
@@ -403,9 +445,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
         
         let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
         
-        gridView.frame = CGRect(x: s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - 2*spacing, height: bounds.size.height - s1.height - s2.height - 2*spacing)
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - s2.height - 2*spacing)
         
-        yLabel.frame = CGRect(x: spacing, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
+        yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
+        
+        updatePlotArea()
     }
     
     func animateFrame(_ frame: CGRect) {
@@ -429,7 +473,6 @@ extension ExperimentGraphView: GraphGridDelegate {
 extension ExperimentGraphView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate {
-            wantsUpdate = false
             update()
         }
     }

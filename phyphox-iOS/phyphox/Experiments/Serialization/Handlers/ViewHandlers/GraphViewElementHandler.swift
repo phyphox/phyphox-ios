@@ -134,7 +134,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
         let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
 
-        let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 3.0
+        let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         let dots = attributes.optionalString(for: .style) ?? "line" == "dots"
         let partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1

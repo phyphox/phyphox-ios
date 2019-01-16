@@ -10,19 +10,29 @@ import UIKit
 
 private let moduleCellID = "ModuleCell"
 
-final class ExperimentViewController: UITableViewController {
+protocol ModuleExclusiveLayoutDelegate {
+    func presentExclusiveLayout(_ view: UIView)
+    func restoreLayout()
+}
+
+final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate {
+    
     private let modules: [UIView]
+    var exclusiveView: UIView? = nil
 
     private let scrollView = UIScrollView()
     private let linearView = UIView()
     
     private let insetTop: CGFloat = 10
-    private let intercellSpacing: CGFloat = 10
+    private let intercellSpacing: CGFloat = 0
 
     var active = false {
         didSet {
             for module in modules {
                 (module as? DynamicViewModule)?.active = active
+            }
+            if !active {
+                restoreLayout()
             }
         }
     }
@@ -52,13 +62,18 @@ final class ExperimentViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let size = modules[indexPath.row].sizeThatFits(view.frame.size)
+        let module = modules[indexPath.row]
+        if (module.isHidden) {
+            return 0
+        }
+        
+        let size = module.sizeThatFits(view.frame.size)
 
         if indexPath.row > 0 {
             return size.height + intercellSpacing
         }
         else {
-            return size.height + insetTop
+            return size.height + (((module as? ResizableViewModule)?.resizableState == .exclusive) ? 0 : insetTop)
         }
     }
 
@@ -73,7 +88,7 @@ final class ExperimentViewController: UITableViewController {
             cell.topInset = intercellSpacing
         }
         else {
-            cell.topInset = insetTop
+            cell.topInset = ((module as? ResizableViewModule)?.resizableState == .exclusive) ? 0 : insetTop
         }
 
         // Add to new cell
@@ -98,6 +113,12 @@ final class ExperimentViewController: UITableViewController {
         self.modules = modules
 
         super.init(style: .grouped)
+        
+        for module in modules {
+            if var resizableViewModule = module as? ResizableViewModule {
+                resizableViewModule.layoutDelegate = self
+            }
+        }
 
         tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
 
@@ -112,5 +133,27 @@ final class ExperimentViewController: UITableViewController {
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func presentExclusiveLayout(_ view: UIView) {
+        exclusiveView = view
+        for module in modules {
+            if (module == view) {
+                (module as? ResizableViewModule)?.switchResizableState(.exclusive)
+            } else {
+                (module as? ResizableViewModule)?.switchResizableState(.hidden)
+                module.isHidden = true
+            }
+            self.tableView.reloadData()
+        }
+    }
+    
+    func restoreLayout() {
+        exclusiveView = nil
+        for module in modules {
+            (module as? ResizableViewModule)?.switchResizableState(.normal)
+            module.isHidden = false
+        }
+        self.tableView.reloadData()
     }
 }

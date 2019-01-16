@@ -37,6 +37,33 @@ extension DynamicViewModule where Self: DisplayLinkListener {
     }
 }
 
+enum ResizableViewModuleState {
+    case normal
+    case exclusive
+    case hidden
+}
+
+protocol ResizableViewModule : AnyObject {
+    var layoutDelegate: ModuleExclusiveLayoutDelegate? { get set }
+    var resizableState: ResizableViewModuleState { get set }
+    
+    func switchResizableState(_ newState: ResizableViewModuleState)
+}
+
+extension ResizableViewModule {
+    func switchResizableState(_ newState: ResizableViewModuleState) {
+        switch newState {
+        case .exclusive:
+            (self as? DynamicViewModule)?.active = true
+        case .hidden:
+            (self as? DynamicViewModule)?.active = false
+        default:
+            (self as? DynamicViewModule)?.active = true
+        }
+        self.resizableState = newState
+    }
+}
+
 protocol DescriptorBoundViewModule {
     associatedtype Descriptor: ViewDescriptor
 

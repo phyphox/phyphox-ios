@@ -13,8 +13,11 @@ private let maxPoints = 3000
 /**
  Graph view used to display functions (where each x value is is related to exactly one y value) where the stream of incoming x values is in ascending order (descriptor.partialUpdate = true on the view descriptor) and no values are deleted (inputBuffer sizes are 0). The displayed history also has to be 1 (descriptor.history = 1).
  */
-final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, GraphViewModule {
+final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule {
     let descriptor: GraphViewDescriptor
+    
+    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
+    var resizableState: ResizableViewModuleState = .normal
 
     private let displayLink = DisplayLink(refreshRate: 0)
 
@@ -95,11 +98,22 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Des
         }
 
         attachDisplayLink(displayLink)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        self.addGestureRecognizer(tapGesture)
     }
-
+    
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc func tapped(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            layoutDelegate?.presentExclusiveLayout(self)
+        } else {
+            layoutDelegate?.restoreLayout()
+        }
     }
 
     func registerForUpdatesFromBuffer(_ buffer: DataBuffer) {
@@ -251,6 +265,7 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Des
     private func update() {
         guard !busy else { return }
         busy = true
+        wantsUpdate = false
         
         queue.async { [weak self] in
             autoreleasepool {
@@ -272,9 +287,16 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Des
     //Mark - General UI
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let s1 = label.sizeThatFits(bounds.size)
+        switch resizableState {
+        case .exclusive:
+            return size
+        case .hidden:
+            return CGSize.init(width: 0, height: 0)
+        default:
+            let s1 = label.sizeThatFits(bounds.size)
 
-        return CGSize(width: size.width, height: Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+            return CGSize(width: size.width, height: Swift.min(size.width/descriptor.aspectRatio + s1.height + 1.0, size.height))
+        }
     }
 
     private var graphFrame: CGRect {
@@ -284,6 +306,16 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Des
     override func layoutSubviews() {
         super.layoutSubviews()
 
+        label.isHidden = resizableState == .hidden
+        xLabel.isHidden = resizableState == .hidden
+        yLabel.isHidden = resizableState == .hidden
+        gridView.isHidden = resizableState == .hidden
+        glGraph.isHidden = resizableState == .hidden
+        
+        if (resizableState == .hidden) {
+            return
+        }
+        
         let spacing: CGFloat = 1.0
 
         let s1 = label.sizeThatFits(bounds.size)
@@ -297,6 +329,8 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Des
         gridView.frame = CGRect(x: s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - 2*spacing, height: bounds.size.height - s1.height - s2.height - 2*spacing)
 
         yLabel.frame = CGRect(x: spacing, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
+        
+        updatePlotArea()
     }
 }
 
@@ -312,7 +346,6 @@ extension ExperimentUnboundedFunctionGraphView: GraphGridDelegate {
 extension ExperimentUnboundedFunctionGraphView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate {
-            wantsUpdate = false
             update()
         }
     }
