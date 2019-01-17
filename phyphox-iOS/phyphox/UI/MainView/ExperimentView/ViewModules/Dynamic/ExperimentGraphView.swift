@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule {
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate {
     
     private let sideMargins:CGFloat = 10.0
     
@@ -19,6 +19,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     private let displayLink = DisplayLink(refreshRate: 0)
 
+    private var graphTools: UITabBar?
+    enum Mode: Int {
+        case pan_zoom = 0, pick, none
+    }
+    private var mode = Mode.none {
+        didSet {
+            if let bar = graphTools, let items = bar.items {
+                bar.selectedItem = items[mode.rawValue]
+            }
+        }
+    }
+    private var graphArea = UIView()
+    
     var active = false {
         didSet {
             displayLink.active = active
@@ -130,11 +143,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         gridView.delegate = self
 
-        addSubview(label)
-        addSubview(gridView)
-        addSubview(glGraph)
-        addSubview(xLabel)
-        addSubview(yLabel)
+        graphArea.addSubview(label)
+        graphArea.addSubview(gridView)
+        graphArea.addSubview(glGraph)
+        graphArea.addSubview(xLabel)
+        graphArea.addSubview(yLabel)
+        
+        addSubview(graphArea)
 
         registerForUpdatesFromBuffer(descriptor.yInputBuffer)
         if let xBuffer = descriptor.xInputBuffer {
@@ -144,7 +159,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         attachDisplayLink(displayLink)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
-        self.addGestureRecognizer(tapGesture)
+        graphArea.addGestureRecognizer(tapGesture)
     }
 
     @available(*, unavailable)
@@ -401,6 +416,96 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.setPoints([], min: .zero, max: .zero)
     }
     
+    //Mark - Toolbar and interaction
+    
+    func setupToolbar() -> UITabBar {
+        let graphTools = UITabBar()
+        
+        let panZoomButton = UITabBarItem(title: NSLocalizedString("graph_tools_pan_and_zoom", comment: ""), image: UIImage(named: "pan_zoom"), tag: Mode.pan_zoom.rawValue)
+        let pickButton = UITabBarItem(title: NSLocalizedString("graph_tools_pick", comment: ""), image: UIImage(named: "pick"), tag: Mode.pick.rawValue)
+        let menuButton = UITabBarItem(title: NSLocalizedString("graph_tools_more", comment: ""), image: UIImage(named: "more"), tag: Mode.none.rawValue)
+        graphTools.items = [panZoomButton, pickButton, menuButton]
+        
+        graphTools.shadowImage = UIImage()
+        graphTools.backgroundImage = UIImage()
+        graphTools.backgroundColor = kBackgroundColor
+        graphTools.tintColor = kHighlightColor
+        if #available(iOS 10, *) {
+            graphTools.unselectedItemTintColor = kTextColor
+        }
+        
+        graphTools.delegate = self
+        
+        return graphTools
+    }
+    
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        switch item.tag {
+        case Mode.pan_zoom.rawValue: setModePanZoom()
+        case Mode.pick.rawValue: setModePick()
+        case Mode.none.rawValue:
+            showMenu()
+            graphTools?.selectedItem = graphTools!.items![mode.rawValue]
+        default:
+            print("Unknown item selected.")
+        }
+    }
+    
+    func setModePanZoom() {
+        mode = .pan_zoom
+        print("PanZoom")
+    }
+    
+    func setModePick() {
+        mode = .pick
+        print("pick")
+    }
+    
+    func showMenu() {
+        let alert = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_reset", comment: ""), style: .default, handler: resetZoom))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_follow", comment: "") + " \u{2714}", style: .default, handler: followNewData))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_linear_fit", comment: "") + " \u{2714}", style: .default, handler: linearFit))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_export", comment: ""), style: .default, handler: exportGraphData))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_log_x", comment: "") + " \u{2714}", style: .default, handler: toggleLogX))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_log_y", comment: "") + " \u{2714}", style: .default, handler: toggleLogY))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            let interactionViews = graphTools!.subviews.filter({$0.isUserInteractionEnabled})
+            let view = interactionViews.sorted(by: {$0.frame.minX < $1.frame.minX})[Mode.none.rawValue]
+            popover.sourceView = view
+            popover.sourceRect = view.frame
+        }
+        
+        layoutDelegate?.presentDialog(alert)
+    }
+    
+    func resetZoom(_ action: UIAlertAction) {
+        print("Reset zoom")
+    }
+    
+    func followNewData(_ action: UIAlertAction) {
+        print("Follow new data")
+    }
+    
+    func linearFit(_ action: UIAlertAction) {
+        print("Linear fit")
+    }
+    
+    func exportGraphData(_ action: UIAlertAction) {
+        print("Export graph data")
+    }
+    
+    func toggleLogX(_ action: UIAlertAction) {
+        print("Toggle log x")
+    }
+    
+    func toggleLogY(_ action: UIAlertAction) {
+        print("Toogle log y")
+    }
+    
     //Mark - General UI
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -425,29 +530,52 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        label.isHidden = resizableState == .hidden
-        xLabel.isHidden = resizableState == .hidden
-        yLabel.isHidden = resizableState == .hidden
-        gridView.isHidden = resizableState == .hidden
-        glGraph.isHidden = resizableState == .hidden
+        graphArea.isHidden = resizableState == .hidden
+        
+        if (resizableState == .exclusive) {
+            //We only need the toolbar if the graph is in fullscreen/exclusive mode, so we only set this up if the user switches to this mode.
+            if (graphTools == nil) {
+                graphTools = setupToolbar()
+                self.addSubview(graphTools!)
+            }
+            if mode == .none {
+                mode = .pan_zoom
+            }
+        } else if (graphTools != nil) {
+            graphTools?.removeFromSuperview()
+            graphTools = nil
+            mode = .none
+        }
         
         if (resizableState == .hidden) {
             return
         }
         
         let spacing: CGFloat = 1.0
+        var bottom: CGFloat = 0.0
+        
+        if (resizableState == .exclusive) {
+            if let s = graphTools?.sizeThatFits(bounds.size) {
+                graphTools?.frame = CGRect(x: 0, y: bounds.size.height-s.height, width: bounds.size.width, height: s.height)
+                bottom += s.height
+            }
+        }
+        
+        graphArea.frame = CGRect(x: 0, y: 0, width: bounds.size.width, height: bounds.size.height-bottom)
         
         let s1 = label.sizeThatFits(bounds.size)
         label.frame = CGRect(x: (bounds.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
         
         let s2 = xLabel.sizeThatFits(bounds.size)
-        xLabel.frame = CGRect(x: (bounds.size.width-s2.width)/2.0, y: bounds.size.height-s2.height-spacing, width: s2.width, height: s2.height)
+        xLabel.frame = CGRect(x: (bounds.size.width-s2.width)/2.0, y: bounds.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
         
         let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
         
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - s2.height - 2*spacing)
+        bottom += s2.height+spacing
         
-        yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height)
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - spacing - bottom)
+        
+        yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
         
         updatePlotArea()
     }

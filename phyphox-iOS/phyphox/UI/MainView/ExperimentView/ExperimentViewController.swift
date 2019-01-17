@@ -13,6 +13,7 @@ private let moduleCellID = "ModuleCell"
 protocol ModuleExclusiveLayoutDelegate {
     func presentExclusiveLayout(_ view: UIView)
     func restoreLayout()
+    func presentDialog(_ dialog: UIAlertController)
 }
 
 final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate {
@@ -115,7 +116,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         super.init(style: .grouped)
         
         for module in modules {
-            if var resizableViewModule = module as? ResizableViewModule {
+            if let resizableViewModule = module as? ResizableViewModule {
                 resizableViewModule.layoutDelegate = self
             }
         }
@@ -155,5 +156,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
             module.isHidden = false
         }
         self.tableView.reloadData()
+    }
+    
+    func presentDialog(_ dialog: UIAlertController) {
+        present(dialog, animated: true, completion: nil)
     }
 }
