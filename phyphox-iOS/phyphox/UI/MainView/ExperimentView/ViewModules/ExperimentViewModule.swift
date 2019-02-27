@@ -48,6 +48,7 @@ protocol ResizableViewModule : AnyObject {
     var resizableState: ResizableViewModuleState { get set }
     
     func switchResizableState(_ newState: ResizableViewModuleState)
+    func resizableStateChanged(_ newState: ResizableViewModuleState)
 }
 
 extension ResizableViewModule {
@@ -61,6 +62,10 @@ extension ResizableViewModule {
             (self as? DynamicViewModule)?.active = true
         }
         self.resizableState = newState
+        resizableStateChanged(newState)
+    }
+    
+    func resizableStateChanged(_ newState: ResizableViewModuleState) {
     }
 }
 

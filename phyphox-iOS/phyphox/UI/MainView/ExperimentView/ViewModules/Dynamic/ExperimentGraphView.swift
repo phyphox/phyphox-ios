@@ -47,7 +47,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private let glGraph: GLGraphView
     private let gridView: GraphGridView
+    
+    private var zoomMin: GraphPoint<Double>?
+    private var zoomMax: GraphPoint<Double>?
+    private var zoomFollows = false
 
+    var panGestureRecognizer: UIPanGestureRecognizer? = nil
+    var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
     private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
@@ -104,7 +111,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     required init?(descriptor: GraphViewDescriptor) {
         self.descriptor = descriptor
-
+        
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
         glGraph.lineWidth = Float(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0))
@@ -167,12 +174,135 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         fatalError("init(coder:) has not been implemented")
     }
 
+    func resizableStateChanged(_ newState: ResizableViewModuleState) {
+        if newState == .exclusive {
+            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
+            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
+            if let gr = panGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+        } else {
+            if let gr = panGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            panGestureRecognizer = nil
+            pinchGestureRecognizer = nil
+        }
+    }
+    
     @objc func tapped(_ sender: UITapGestureRecognizer) {
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
             layoutDelegate?.restoreLayout()
         }
+    }
+    
+    var panStartMin: GraphPoint<Double>?
+    var panStartMax: GraphPoint<Double>?
+    
+    @objc func panned (_ sender: UIPanGestureRecognizer) {
+        if (mode != .pan_zoom) {
+            return
+        }
+        
+        zoomFollows = false
+        
+        let offset = sender.translation(in: self)
+        
+        let min = self.min
+        let max = self.max
+        
+        if sender.state == .began {
+            panStartMin = min
+            panStartMax = max
+        }
+        
+        guard let startMin = panStartMin, let startMax = panStartMax else {
+            return
+        }
+        
+        let dx = Double(offset.x / self.frame.width) * (max.x - min.x)
+        let dy = Double(offset.y / self.frame.height) * (min.y - max.y)
+        
+        zoomMin = GraphPoint(x: startMin.x - dx, y: startMin.y - dy)
+        zoomMax = GraphPoint(x: startMax.x - dx, y: startMax.y - dy)
+        
+        self.update()
+    }
+    
+    var pinchOrigin: GraphPoint<Double>?
+    var pinchScale: GraphPoint<Double>?
+    var pinchTouchScale: GraphPoint<CGFloat>?
+    
+    @objc func pinched (_ sender: UIPinchGestureRecognizer) {
+        if (mode != .pan_zoom) {
+            return
+        }
+        if sender.numberOfTouches != 2 {
+            return
+        }
+        
+        zoomFollows = false
+        
+        let min = self.min
+        let max = self.max
+        
+        let t1 = sender.location(ofTouch: 0, in: self)
+        let t2 = sender.location(ofTouch: 1, in: self)
+        
+        let centerX = (t1.x + t2.x)/2.0
+        let centerY = (t1.y + t2.y)/2.0
+        
+        if sender.state == .began {
+            pinchTouchScale = GraphPoint(x: abs(t1.x - t2.x)/sender.scale, y: abs(t1.y - t2.y)/sender.scale)
+            pinchScale = GraphPoint(x: max.x - min.x, y: max.y - min.y)
+            pinchOrigin = GraphPoint(x: min.x + Double(centerX)/Double(self.frame.width)*pinchScale!.x, y: max.y - Double(centerY)/Double(self.frame.height)*pinchScale!.y)
+        }
+        
+        guard let origin = pinchOrigin, let scale = pinchScale, let touchScale = pinchTouchScale else {
+            return
+        }
+        
+        let dx = abs(t1.x-t2.x)
+        let dy = abs(t1.y-t2.y)
+        
+        var scaleX: Double
+        var scaleY: Double
+        
+        if touchScale.x / touchScale.y > 0.5 {
+            scaleX = Double(touchScale.x / dx) * scale.x
+        } else {
+            scaleX = scale.x
+        }
+        
+        if touchScale.y / touchScale.x > 0.5 {
+            scaleY = Double(touchScale.y / dy) * scale.y
+        } else {
+            scaleY = scale.y
+        }
+        
+        if scaleX > 20*scale.x {
+            scaleX = 20*scale.x
+        }
+        if scaleY > 20*scale.y {
+            scaleY = 20*scale.y
+        }
+        
+        let zoomMinX = origin.x - Double(centerX)/Double(self.frame.width) * scaleX
+        let zoomMaxX = zoomMinX + scaleX
+        let zoomMaxY = origin.y + Double(centerY)/Double(self.frame.height) * scaleY
+        let zoomMinY = zoomMaxY - scaleY
+        zoomMin = GraphPoint(x: zoomMinX, y: zoomMinY)
+        zoomMax = GraphPoint(x: zoomMaxX, y: zoomMaxY)
+        
+        self.update()
     }
     
     //MARK - Graph
@@ -251,10 +381,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var minY = Double.infinity
         var maxY = -Double.infinity
 
-        let xMinStrict = descriptor.scaleMinX == .fixed
-        let xMaxStrict = descriptor.scaleMaxX == .fixed
-        let yMinStrict = descriptor.scaleMinY == .fixed
-        let yMaxStrict = descriptor.scaleMaxY == .fixed
+        var xMinStrict = descriptor.scaleMinX == .fixed
+        var xMaxStrict = descriptor.scaleMaxX == .fixed
+        var yMinStrict = descriptor.scaleMinY == .fixed
+        var yMaxStrict = descriptor.scaleMaxY == .fixed
 
         if xMinStrict {
             minX = Double(descriptor.minX)
@@ -267,6 +397,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
         if yMaxStrict {
             maxY = Double(descriptor.maxY)
+        }
+        
+        if let zMin = zoomMin, let zMax = zoomMax {
+            minX = zMin.x
+            maxX = zMax.x
+            xMinStrict = true
+            xMaxStrict = true
+            if (zMin.y.isFinite && zMax.y.isFinite) {
+                minY = zMin.y
+                maxY = zMax.y
+                yMinStrict = true
+                yMaxStrict = true
+            }
         }
 
         var xOrderOK = true
@@ -290,40 +433,28 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 continue
             }
 
-            if x < minX {
-                if xMinStrict {
-                    continue
-                }
-                else {
-                    minX = x
-                }
+            if x < minX && !xMinStrict {
+                minX = x
             }
 
             if x > maxX {
-                if xMaxStrict {
-                    continue
-                }
-                else {
+                if !xMaxStrict {
                     maxX = x
+                } else if zoomFollows && zoomMin != nil && zoomMax != nil {
+                    let w = zoomMax!.x - zoomMin!.x
+                    zoomMin = GraphPoint(x: x - w, y: zoomMin!.y)
+                    zoomMax = GraphPoint(x: x, y: zoomMax!.y)
+                    minX = zoomMin!.x
+                    maxX = zoomMax!.x
                 }
             }
 
-            if y < minY {
-                if yMinStrict {
-                    continue
-                }
-                else {
-                    minY = y
-                }
+            if y < minY && !yMinStrict {
+                minY = y
             }
 
-            if y > maxY {
-                if yMaxStrict {
-                    continue
-                }
-                else {
-                    maxY = y
-                }
+            if y > maxY && !yMaxStrict {
+                maxY = y
             }
 
             points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
@@ -453,19 +584,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     func setModePanZoom() {
         mode = .pan_zoom
-        print("PanZoom")
     }
     
     func setModePick() {
         mode = .pick
-        print("pick")
     }
     
     func showMenu() {
         let alert = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_reset", comment: ""), style: .default, handler: resetZoom))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_follow", comment: "") + " \u{2714}", style: .default, handler: followNewData))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_follow", comment: "") + (zoomFollows ? " \u{2714}" : ""), style: .default, handler: followNewData))
         alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_linear_fit", comment: "") + " \u{2714}", style: .default, handler: linearFit))
         alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_export", comment: ""), style: .default, handler: exportGraphData))
         alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_log_x", comment: "") + " \u{2714}", style: .default, handler: toggleLogX))
@@ -487,7 +616,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func followNewData(_ action: UIAlertAction) {
-        print("Follow new data")
+        if !zoomFollows && (zoomMin == nil || zoomMax == nil) {
+            zoomMin = GraphPoint(x: self.min.x, y: Double.nan)
+            zoomMax = GraphPoint(x: self.max.x, y: Double.nan)
+        }
+        zoomFollows = !zoomFollows
+        
+        self.update()
     }
     
     func linearFit(_ action: UIAlertAction) {
@@ -587,6 +722,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             self.layoutIfNeeded()
         })
     }
+    
 }
 
 extension ExperimentGraphView: GraphGridDelegate {

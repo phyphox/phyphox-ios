@@ -201,8 +201,6 @@ final class GraphGridView: UIView {
                     continue
                 }
 
-                view.isHidden = (origin <= insetRect.origin.x + 2.0 || origin >= insetRect.size.width-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
-
                 view.frame = CGRect(x: origin+insetRect.origin.x, y: insetRect.origin.y, width: smallestUnit, height: insetRect.size.height)
 
                 let label = labels[index]
@@ -222,8 +220,6 @@ final class GraphGridView: UIView {
                     view.isHidden = true
                     continue
                 }
-
-                view.isHidden = (origin <= insetRect.origin.y + 2.0 || origin >= insetRect.size.height-2.0) //Hide the line if it is too close the the graph bounds (where fixed lines are shown anyways)
 
                 view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
 
