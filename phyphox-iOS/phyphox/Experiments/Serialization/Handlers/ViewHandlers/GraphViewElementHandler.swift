@@ -55,6 +55,8 @@ struct GraphViewElementDescriptor {
     
     let xLabel: String
     let yLabel: String
+    let xUnit: String?
+    let yUnit: String?
 
     let logX: Bool
     let logY: Bool
@@ -101,6 +103,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case label
         case labelX
         case labelY
+        case unitX
+        case unitY
         case aspectRatio
         case style
         case partialUpdate
@@ -127,6 +131,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let label = try attributes.nonEmptyString(for: .label)
         let xLabel = try attributes.nonEmptyString(for: .labelX)
         let yLabel = try attributes.nonEmptyString(for: .labelY)
+        let xUnit = attributes.optionalString(for: .unitX)
+        let yUnit = attributes.optionalString(for: .unitY)
 
         guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
             throw ElementHandlerError.missingElement("data-container")
@@ -164,7 +170,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let minY: CGFloat = try attributes.optionalValue(for: .minY) ?? 0
         let maxY: CGFloat = try attributes.optionalValue(for: .maxY) ?? 0
 
-        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color)))
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xUnit: xUnit, yUnit: yUnit, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

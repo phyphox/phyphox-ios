@@ -73,8 +73,8 @@ final class ExperimentUnboundedFunctionGraphView: UIView, DynamicViewModule, Res
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = kTextColor
 
-        xLabel = makeLabel(descriptor.localizedXLabel)
-        yLabel = makeLabel(descriptor.localizedYLabel)
+        xLabel = makeLabel(descriptor.localizedXLabelWithUnit)
+        yLabel = makeLabel(descriptor.localizedYLabelWithUnit)
         xLabel.textColor = kTextColor
         yLabel.textColor = kTextColor
 

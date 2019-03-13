@@ -8,13 +8,14 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate {
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, UITableViewDataSource, UITableViewDelegate {
     
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
     
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
+    var zoomDelegate: ApplyZoomDelegate? = nil
     var resizableState: ResizableViewModuleState = .normal
 
     private let displayLink = DisplayLink(refreshRate: 0)
@@ -140,8 +141,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = kTextColor
         
-        xLabel = makeLabel(descriptor.localizedXLabel)
-        yLabel = makeLabel(descriptor.localizedYLabel)
+        xLabel = makeLabel(descriptor.localizedXLabelWithUnit)
+        yLabel = makeLabel(descriptor.localizedYLabelWithUnit)
         xLabel.textColor = kTextColor
         yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
@@ -200,8 +201,126 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
-            layoutDelegate?.restoreLayout()
+            if (zoomFollows || zoomMax != nil) {
+                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit)
+                dialog.resultDelegate = self
+                dialog.show()
+            } else {
+                layoutDelegate?.restoreLayout()
+            }
         }
+    }
+    
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        
+        layoutDelegate?.restoreLayout()
+        
+        if zoomMin == nil || zoomMax == nil {
+            zoomMin = min
+            zoomMax = max
+            
+            if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
+                return
+            }
+        }
+        
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: zoomMin!, zoomMax: zoomMax!)
+        if (applyToX != .this || applyToY != .this) {
+            let targetX: String?
+            let targetY: String?
+            
+            switch applyToX {
+            case .sameUnit:
+                targetX = descriptor.localizedXUnit
+            case .sameVariable:
+                targetX = descriptor.xInputBuffer?.name
+            default:
+                targetX = nil
+            }
+            
+            switch applyToY {
+            case .sameUnit:
+                targetY = descriptor.localizedYUnit
+            case .sameVariable:
+                targetY = descriptor.yInputBuffer.name
+            default:
+                targetY = nil
+            }
+
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: zoomMin!, zoomMax: zoomMax!)
+        }
+    }
+    
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>) {
+        
+        var applyX = false
+        var applyY = false
+        
+        switch applyToX {
+        case .this:
+            applyX = true
+        case .sameAxis:
+            applyX = true
+        case .sameUnit:
+            if targetX == descriptor.localizedXUnit {
+                applyX = true
+            }
+        case .sameVariable:
+            if targetX == descriptor.xInputBuffer?.name {
+                applyX = true
+            }
+        case .none:
+            break
+        }
+        
+        switch applyToY {
+        case .this:
+            applyY = true
+        case .sameAxis:
+            applyY = true
+        case .sameUnit:
+            if targetY == descriptor.localizedYUnit {
+                applyY = true
+            }
+        case .sameVariable:
+            if targetY == descriptor.yInputBuffer.name {
+                applyY = true
+            }
+        case .none:
+            break
+        }
+        
+        if applyX {
+            switch modeX {
+            case .reset:
+                self.zoomMax = GraphPoint(x: Double.nan, y: self.zoomMax?.y ?? Double.nan)
+                self.zoomMin = GraphPoint(x: Double.nan, y: self.zoomMin?.y ?? Double.nan)
+            case .keep:
+                self.zoomMax = GraphPoint(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan)
+                self.zoomMin = GraphPoint(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan)
+            case .follow:
+                self.zoomMax = GraphPoint(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan)
+                self.zoomMin = GraphPoint(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan)
+                zoomFollows = true
+            case .none:
+                break
+            }
+        }
+        
+        if applyY {
+            switch modeY {
+            case .reset:
+                self.zoomMax = GraphPoint(x: self.zoomMax?.x ?? Double.nan, y: Double.nan)
+                self.zoomMin = GraphPoint(x: self.zoomMin?.x ?? Double.nan, y: Double.nan)
+            case .keep:
+                self.zoomMax = GraphPoint(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y)
+                self.zoomMin = GraphPoint(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y)
+            default:
+                break
+            }
+        }
+        
+        update()
     }
     
     var panStartMin: GraphPoint<Double>?
@@ -400,11 +519,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
         
         if let zMin = zoomMin, let zMax = zoomMax {
-            minX = zMin.x
-            maxX = zMax.x
-            xMinStrict = true
-            xMaxStrict = true
-            if (zMin.y.isFinite && zMax.y.isFinite) {
+            if zMin.x.isFinite && zMax.x.isFinite && zMin.x < zMax.x {
+                minX = zMin.x
+                maxX = zMax.x
+                xMinStrict = true
+                xMaxStrict = true
+            }
+                
+            if zMin.y.isFinite && zMax.y.isFinite && zMin.y < zMax.y {
                 minY = zMin.y
                 maxY = zMax.y
                 yMinStrict = true
@@ -440,7 +562,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             if x > maxX {
                 if !xMaxStrict {
                     maxX = x
-                } else if zoomFollows && zoomMin != nil && zoomMax != nil {
+                } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
                     let w = zoomMax!.x - zoomMin!.x
                     zoomMin = GraphPoint(x: x - w, y: zoomMin!.y)
                     zoomMax = GraphPoint(x: x, y: zoomMax!.y)
@@ -590,32 +712,90 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         mode = .pick
     }
     
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return getMenuElements().count
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: "")
+       
+        let (label, checked, _) = getMenuElements()[indexPath.row]
+    
+        cell.textLabel?.text = label
+        cell.accessoryType = checked ? .checkmark : .none
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let (_, _ , f) = getMenuElements()[indexPath.row]
+        f()
+        menuAlertController?.dismiss(animated: true, completion: nil)
+    }
+    
+    func getMenuElements() -> [(String, Bool, () -> ())] {
+        //returns [label, checked, action when clicked]
+        var elements: [(String, Bool, () -> ())] = []
+        
+        elements.append((NSLocalizedString("graph_tools_reset", comment: ""), false, resetZoom))
+        if (descriptor.partialUpdate) {
+            elements.append((NSLocalizedString("graph_tools_follow", comment: ""), zoomFollows, followNewData))
+        }
+        if (!descriptor.logX && !descriptor.logY) {
+            //TODO: Checkmark
+            elements.append((NSLocalizedString("graph_tools_linear_fit", comment: ""), false, linearFit))
+        }
+        elements.append((NSLocalizedString("graph_tools_export", comment: ""), false, exportGraphData))
+        if (descriptor.logX) {
+            //TODO: Checkmark
+            elements.append((NSLocalizedString("graph_tools_log_x", comment: ""), false, resetZoom))
+        }
+        if (descriptor.logY) {
+            elements.append((NSLocalizedString("graph_tools_log_y", comment: ""), false, resetZoom))
+        }
+        
+        return elements
+    }
+    
+    var menuAlertController: UIAlertController?
+    
     func showMenu() {
-        let alert = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_reset", comment: ""), style: .default, handler: resetZoom))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_follow", comment: "") + (zoomFollows ? " \u{2714}" : ""), style: .default, handler: followNewData))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_linear_fit", comment: "") + " \u{2714}", style: .default, handler: linearFit))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_export", comment: ""), style: .default, handler: exportGraphData))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_log_x", comment: "") + " \u{2714}", style: .default, handler: toggleLogX))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("graph_tools_log_y", comment: "") + " \u{2714}", style: .default, handler: toggleLogY))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        menuAlertController = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
         
-        if let popover = alert.popoverPresentationController {
+        let tableView = FixedTableView()
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.isUserInteractionEnabled = true
+        
+        let tableViewController = UITableViewController()
+        tableViewController.tableView = tableView
+        menuAlertController?.setValue(tableViewController, forKey: "contentViewController")
+        
+        menuAlertController?.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        
+        if let popover = menuAlertController?.popoverPresentationController {
             let interactionViews = graphTools!.subviews.filter({$0.isUserInteractionEnabled})
             let view = interactionViews.sorted(by: {$0.frame.minX < $1.frame.minX})[Mode.none.rawValue]
             popover.sourceView = view
             popover.sourceRect = view.frame
         }
         
-        layoutDelegate?.presentDialog(alert)
+        if menuAlertController != nil {
+            layoutDelegate?.presentDialog(menuAlertController!)
+        }
     }
     
-    func resetZoom(_ action: UIAlertAction) {
-        print("Reset zoom")
+    func resetZoom() {
+        zoomMin = nil
+        zoomMax = nil
+        update()
     }
     
-    func followNewData(_ action: UIAlertAction) {
+    func followNewData() {
         if !zoomFollows && (zoomMin == nil || zoomMax == nil) {
             zoomMin = GraphPoint(x: self.min.x, y: Double.nan)
             zoomMax = GraphPoint(x: self.max.x, y: Double.nan)
@@ -625,19 +805,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.update()
     }
     
-    func linearFit(_ action: UIAlertAction) {
+    func linearFit() {
         print("Linear fit")
     }
     
-    func exportGraphData(_ action: UIAlertAction) {
+    func exportGraphData() {
         print("Export graph data")
     }
     
-    func toggleLogX(_ action: UIAlertAction) {
+    func toggleLogX() {
         print("Toggle log x")
     }
     
-    func toggleLogY(_ action: UIAlertAction) {
+    func toggleLogY() {
         print("Toogle log y")
     }
     

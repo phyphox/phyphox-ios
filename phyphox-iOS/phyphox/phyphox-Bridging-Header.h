@@ -3,7 +3,8 @@
 //
 
 #import "UIAlertController+PTExtensions.h"
-#import "BEMCheckbox.h"
+#import "BEMCheckBox.h"
+#import "BEMCheckBoxGroup.h"
 #import <ZipZap/ZipZap.h>
 #import <JXLS/JXLS.h>
 #import "PTButton.h"

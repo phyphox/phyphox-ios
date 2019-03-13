@@ -11,13 +11,54 @@ import Foundation
 struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private let xLabel: String
     private let yLabel: String
+    private let xUnit: String?
+    private let yUnit: String?
+    
+    private var legacyXLabel: String? = nil
+    private var legacyXUnit: String? = nil
+    private var legacyYLabel: String? = nil
+    private var legacyYUnit: String? = nil
+    
+    var localizedXLabelWithUnit: String {
+        if legacyXLabel != nil && legacyXUnit != nil {
+            return legacyXLabel!  + " (" + legacyXUnit! + ")"
+        }
+        return localizedXLabel + " (" + localizedXUnit + ")"
+    }
+    
+    var localizedYLabelWithUnit: String {
+        if legacyYLabel != nil && legacyYUnit != nil {
+            return legacyYLabel!  + " (" + legacyYUnit! + ")"
+        }
+        return localizedYLabel + " (" + localizedYUnit + ")"
+    }
     
     var localizedXLabel: String {
+        if legacyXLabel != nil {
+            return legacyXLabel!
+        }
         return translation?.localize(xLabel) ?? xLabel
     }
     
     var localizedYLabel: String {
+        if legacyYLabel != nil {
+            return legacyYLabel!
+        }
         return translation?.localize(yLabel) ?? yLabel
+    }
+    
+    var localizedXUnit: String {
+        if legacyXUnit != nil {
+            return legacyXUnit!
+        }
+        return translation?.localize(xUnit ?? "") ?? xUnit ?? ""
+    }
+    
+    var localizedYUnit: String {
+        if legacyYUnit != nil {
+            return legacyYUnit!
+        }
+        return translation?.localize(yUnit ?? "") ?? yUnit ?? ""
     }
     
     let logX: Bool
@@ -54,9 +95,38 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xUnit: String?, yUnit: String?, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
         self.xLabel = xLabel
         self.yLabel = yLabel
+        self.xUnit = xUnit
+        self.yUnit = yUnit
+        
+        //Parse units from old experiments, where the unit is part of the label
+        if xUnit == nil {
+            let pattern = "^(.+)\\ \\((.+)\\)$"
+            let regex = try? NSRegularExpression(pattern: pattern)
+            let source = translation?.localize(xLabel) ?? xLabel
+            if let match = regex?.firstMatch(in: source, range: NSRange(location: 0, length: source.count)) {
+                if let labelRange = Range(match.range(at: 1), in: source), let unitRange = Range(match.range(at: 2), in: source) {
+                    let newLabel = source[labelRange]
+                    legacyXUnit = String(source[unitRange])
+                    legacyXLabel = String(newLabel)
+                }
+            }
+        }
+        
+        if yUnit == nil {
+            let pattern = "^(.+)\\ \\((.+)\\)$"
+            let regex = try? NSRegularExpression(pattern: pattern)
+            let source = translation?.localize(yLabel) ?? yLabel
+            if let match = regex?.firstMatch(in: source, range: NSRange(location: 0, length: source.count)) {
+                if let labelRange = Range(match.range(at: 1), in: source), let unitRange = Range(match.range(at: 2), in: source) {
+                    let newLabel = source[labelRange]
+                    legacyYUnit = String(source[unitRange])
+                    legacyYLabel = String(newLabel)
+                }
+            }
+        }
         
         self.logX = logX
         self.logY = logY
@@ -136,7 +206,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length && i < elementData[\(id)][\"x\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabel)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
     }
     
     func setDataXHTMLWithID(_ id: Int) -> String {

@@ -16,7 +16,7 @@ protocol ModuleExclusiveLayoutDelegate {
     func presentDialog(_ dialog: UIAlertController)
 }
 
-final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate {
+final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate, ApplyZoomDelegate {
     
     private let modules: [UIView]
     var exclusiveView: UIView? = nil
@@ -119,6 +119,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
             if let resizableViewModule = module as? ResizableViewModule {
                 resizableViewModule.layoutDelegate = self
             }
+            if let zoomableViewModule = module as? ZoomableViewModule {
+                zoomableViewModule.zoomDelegate = self
+            }
         }
 
         tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
@@ -160,5 +163,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     
     func presentDialog(_ dialog: UIAlertController) {
         present(dialog, animated: true, completion: nil)
+    }
+    
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>) {
+        
+        for module in modules {
+            if let zoomableViewModule = module as? ZoomableViewModule {
+                zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, modeY: modeY, applyToY: applyToY, targetY: targetY, zoomMin: zoomMin, zoomMax: zoomMax)
+            }
+        }
     }
 }

@@ -69,6 +69,14 @@ extension ResizableViewModule {
     }
 }
 
+protocol ApplyZoomDelegate {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>)
+}
+
+protocol ZoomableViewModule : AnyObject, ApplyZoomDelegate {
+    var zoomDelegate: ApplyZoomDelegate? { get set }
+}
+
 protocol DescriptorBoundViewModule {
     associatedtype Descriptor: ViewDescriptor
 
