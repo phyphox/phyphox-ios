@@ -22,19 +22,19 @@ final class GLGraphView: GLKView {
     private var min = GraphPoint<Double>.zero
     private var max = GraphPoint<Double>.zero
     
-    var lineWidth: GLfloat = 2.0 {
+    var lineWidth: [GLfloat] = [2.0] {
         didSet {
             setNeedsDisplay()
         }
     }
     
-    var drawDots: Bool = false {
+    var drawDots: [Bool] = [false] {
         didSet {
             setNeedsDisplay()
         }
     }
     
-    var lineColor: GLcolor = GLcolor(r: 1.0, g: 1.0, b: 1.0, a: 1.0) {
+    var lineColor: [GLcolor] = [GLcolor(r: 1.0, g: 1.0, b: 1.0, a: 1.0)] {
         didSet {
             setNeedsDisplay()
         }
@@ -91,10 +91,8 @@ final class GLGraphView: GLKView {
 
         xScale = GLfloat(2.0/(max.x-min.x))
 
-        let dataPerPixelY = GLfloat((max.y-min.y)/Double(bounds.size.height))
-        let biasDataY = lineWidth * dataPerPixelY
-
-        yScale = GLfloat(2.0/(Float(max.y-min.y)+biasDataY))
+        let biasDataY = (max.y-min.y)*0.1
+        yScale = GLfloat(2.0/(Float(max.y-min.y+biasDataY)))
 
         self.max = max
         self.min = min
@@ -139,9 +137,6 @@ final class GLGraphView: GLKView {
         
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
-        shader.setPointSize(lineWidth)
-        
-        glLineWidth(lineWidth)
         
         for (i,p) in points.enumerated() {
             let length = p.count
@@ -152,13 +147,21 @@ final class GLGraphView: GLKView {
             
             glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint<GLfloat>>.size), p, GLenum(GL_DYNAMIC_DRAW))
             
-            if (i == nSets-1) {
-                shader.setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a)
+            if historyLength > 1 {
+                shader.setPointSize(lineWidth[0])
+                glLineWidth(lineWidth[0])
+                if (i == nSets-1) {
+                    shader.setColor(lineColor[0].r, lineColor[0].g, lineColor[0].b, lineColor[0].a)
+                } else {
+                    shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
+                }
+                shader.drawPositions(mode: (drawDots[0] ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
             } else {
-                shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
+                shader.setPointSize(lineWidth[i])
+                glLineWidth(lineWidth[i])
+                shader.setColor(lineColor[i].r, lineColor[i].g, lineColor[i].b, lineColor[i].a)
+                shader.drawPositions(mode: (drawDots[i] ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
             }
-            
-            shader.drawPositions(mode: (drawDots ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
         }
     }
 

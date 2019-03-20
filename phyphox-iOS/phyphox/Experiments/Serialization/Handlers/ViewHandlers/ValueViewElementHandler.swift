@@ -36,6 +36,7 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
 
 struct ValueViewElementDescriptor {
     let label: String
+    let color: UIColor
     let size: Double
     let precision: Int
     let scientific: Bool
@@ -62,6 +63,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
 
     private enum Attribute: String, AttributeKey {
         case label
+        case color
         case size
         case precision
         case scientific
@@ -73,6 +75,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
+        let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
@@ -83,7 +86,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
 
-        results.append(.value(ValueViewElementDescriptor(label: label, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings)))
+        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

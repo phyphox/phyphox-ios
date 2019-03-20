@@ -97,10 +97,11 @@ final class WebServerUtilities {
                     
                     viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
 
+                    //TODO: For now we just reference the first buffer, but multiple graphs and the new plotting library need to be implemented
                     if let graph = element as? GraphViewDescriptor {
-                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffer.name)\", \"dataYInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
+                        viewLayout += ", \"partialUpdate\": \"\(graph.partialUpdate ? "partial" : "full")\", \"dataYInput\": \"\(graph.yInputBuffers[0].name)\", \"dataYInputFunction\":\n\(graph.setDataYHTMLWithID(idx))\n"
                         
-                        if let x = graph.xInputBuffer {
+                        if let x = graph.xInputBuffers[0] {
                             viewLayout += ", \"dataXInput\": \"\(x.name)\", \"dataXInputFunction\":\n\(graph.setDataXHTMLWithID(idx))\n"
                         }
                     }

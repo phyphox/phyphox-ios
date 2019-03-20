@@ -81,21 +81,21 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let scaleMinY: ScaleMode
     let scaleMaxY: ScaleMode
     
-    var xInputBuffer: DataBuffer?
-    var yInputBuffer: DataBuffer
+    var xInputBuffers: [DataBuffer?]
+    var yInputBuffers: [DataBuffer]
     
     let aspectRatio: CGFloat
     let partialUpdate: Bool
-    let drawDots: Bool
     let history: UInt
     
-    let lineWidth: CGFloat
-    let color: UIColor
+    let drawDots: [Bool]
+    let lineWidth: [CGFloat]
+    let color: [UIColor]
 
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xUnit: String?, yUnit: String?, xInputBuffer: DataBuffer?, yInputBuffer: DataBuffer, logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, drawDots: Bool, partialUpdate: Bool, history: UInt, lineWidth: CGFloat, color: UIColor) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xUnit: String?, yUnit: String?, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, drawDots: [Bool], lineWidth: [CGFloat], color: [UIColor]) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         self.xUnit = xUnit
@@ -144,14 +144,14 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         self.scaleMinY = scaleMinY
         self.scaleMaxY = scaleMaxY
         
-        self.xInputBuffer = xInputBuffer
-        self.yInputBuffer = yInputBuffer
+        self.xInputBuffers = xInputBuffers
+        self.yInputBuffers = yInputBuffers
         
         self.aspectRatio = aspectRatio
         self.partialUpdate = partialUpdate
-        self.drawDots = drawDots
         self.history = history
         
+        self.drawDots = drawDots
         self.lineWidth = lineWidth
         self.color = color
 
@@ -206,7 +206,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             "}" +
             "for (i = 0; i < elementData[\(id)][\"y\"].length && i < elementData[\(id)][\"x\"].length; i++)" +
             "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color.hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth)}, \"points\": {\"show\":\(drawDots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
+            //TODO For now we have just inserted the index 0 for multiple lines. This has to be converted to the new plotting library anyway.
+            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color[0].hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(drawDots[0] ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth[0])}, \"points\": {\"show\":\(drawDots[0] ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
     }
     
     func setDataXHTMLWithID(_ id: Int) -> String {

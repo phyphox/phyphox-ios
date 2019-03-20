@@ -33,6 +33,38 @@ let kRWTHBlue = UIColor(red: (0.0/255.0), green: (84.0/255.0), blue: (159.0/255.
 
 let kDarkenedColor = UIColor(white: 0.0, alpha: 0.5)
 
+let namedColors = [
+    "orange":  UIColor(red: (255.0/255.0), green: (126.0/255.0), blue:  (34.0/255.0), alpha: 1.0),
+    "red":     UIColor(red: (254.0/255.0), green:   (0.0/255.0), blue:  (93.0/255.0), alpha: 1.0),
+    "magenta": UIColor(red: (235.0/255.0), green:  (70.0/255.0), blue: (244.0/255.0), alpha: 1.0),
+    "blue":    UIColor(red:  (57.0/255.0), green: (162.0/255.0), blue: (255.0/255.0), alpha: 1.0),
+    "green":   UIColor(red:  (43.0/255.0), green: (251.0/255.0), blue:  (76.0/255.0), alpha: 1.0),
+    "yellow":  UIColor(red: (237.0/255.0), green: (246.0/255.0), blue: (104.0/255.0), alpha: 1.0),
+    "white":   UIColor(red: (255.0/255.0), green: (255.0/255.0), blue: (255.0/255.0), alpha: 1.0),
+    
+    "weakorange":  UIColor(red: (255.0/255.0), green: (195.0/255.0), blue: (153.0/255.0), alpha: 1.0),
+    "weakred":     UIColor(red: (255.0/255.0), green: (124.0/255.0), blue: (172.0/255.0), alpha: 1.0),
+    "weakmagenta": UIColor(red: (246.0/255.0), green: (170.0/255.0), blue: (250.0/255.0), alpha: 1.0),
+    "weakblue":    UIColor(red: (157.0/255.0), green: (209.0/255.0), blue: (255.0/255.0), alpha: 1.0),
+    "weakgreen":   UIColor(red: (161.0/255.0), green: (253.0/255.0), blue: (175.0/255.0), alpha: 1.0),
+    "weakyellow":  UIColor(red: (231.0/255.0), green: (224.0/255.0), blue: (155.0/255.0), alpha: 1.0),
+    "weakwhite":   UIColor(red: (196.0/255.0), green: (196.0/255.0), blue: (196.0/255.0), alpha: 1.0)
+]
+
+func mapColorString(_ string: String?) -> UIColor? {
+    guard let colorString = string else {
+        return nil
+    }
+    
+    if let color = namedColors[colorString.lowercased()] {
+        return color
+    } else if let color = UIColor(hexString: colorString) {
+        return color
+    } else {
+        return nil
+    }
+}
+
 /**
 Runs a closure on the main thread.
 */

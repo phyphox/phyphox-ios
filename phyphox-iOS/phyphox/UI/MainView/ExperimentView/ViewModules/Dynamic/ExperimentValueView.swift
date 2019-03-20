@@ -36,17 +36,17 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = kTextColor
+        label.textColor = descriptor.color
         label.textAlignment = .right
 
         valueLabel.text = "- "
-        valueLabel.textColor = kTextColor
+        valueLabel.textColor = descriptor.color
         let defaultFont = UIFont.preferredFont(forTextStyle: .headline)
         valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size) * defaultFont.pointSize)
         valueLabel.textAlignment = .left
         
         unitLabel.text = descriptor.localizedUnit
-        unitLabel.textColor = kTextColor
+        unitLabel.textColor = descriptor.color
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
         unitLabel.textAlignment = .left
         

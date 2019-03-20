@@ -25,6 +25,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let mappings: [ValueViewMap]
 
     let label: String
+    let color: UIColor
     let translation: ExperimentTranslationCollection?
 
     var localizedUnit: String? {
@@ -34,7 +35,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localize(unit!) ?? unit!
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
+    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -47,6 +48,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         self.mappings = mappings + translatedMappings
 
         self.label = label
+        self.color = color
         self.translation = translation
     }
     
@@ -55,6 +57,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func setValueHTMLWithID(_ id: Int) -> String {
+        //TODO: Color
         var mappingCode = "if (isNaN(x) || x == null) { v = \"-\" }"
         for mapping in mappings {
             let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;") // addingPercentEncoding() !???

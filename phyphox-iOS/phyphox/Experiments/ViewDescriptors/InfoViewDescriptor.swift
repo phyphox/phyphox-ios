@@ -10,14 +10,17 @@ import Foundation
 
 struct InfoViewDescriptor: ViewDescriptor, Equatable {
     let label: String
+    let color: UIColor
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?) {
+    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.color = color
         self.translation = translation
     }
 
     func generateViewHTMLWithID(_ id: Int) -> String {
+        //TODO: Color
         return "<div style=\"font-size:90%;\" class=\"infoElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

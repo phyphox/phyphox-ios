@@ -21,7 +21,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .footnote)
-        label.textColor = kTextColor
+        label.textColor = descriptor.color
         label.textAlignment = .justified
 
         addSubview(label)

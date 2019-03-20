@@ -12,6 +12,7 @@ import Foundation
 
 struct InfoViewElementDescriptor {
     let label: String
+    let color: UIColor
 }
 
 final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
@@ -21,14 +22,16 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
     private enum Attribute: String, AttributeKey {
         case label
+        case color
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
+        let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
 
-        results.append(.info(InfoViewElementDescriptor(label: label)))
+        results.append(.info(InfoViewElementDescriptor(label: label, color: color)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

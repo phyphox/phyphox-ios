@@ -17,6 +17,9 @@ private enum GraphAxis: String, LosslessStringConvertible {
 
 private struct GraphInputDescriptor {
     let axis: GraphAxis
+    let color: UIColor?
+    let lineWidth: CGFloat?
+    let dots: Bool?
     let bufferName: String
 }
 
@@ -35,6 +38,9 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
 
     private enum Attribute: String, AttributeKey {
         case axis
+        case color
+        case lineWidth
+        case style
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -45,8 +51,11 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let axis: GraphAxis = try attributes.value(for: .axis)
+        let lineWidth: CGFloat? = try attributes.optionalValue(for: .lineWidth)
+        let color: UIColor? = mapColorString(attributes.optionalString(for: .color))
+        let dots: Bool? = attributes.optionalString(for: .style) ?? "line" == "dots"
 
-        results.append(GraphInputDescriptor(axis: axis, bufferName: text))
+        results.append(GraphInputDescriptor(axis: axis, color: color, lineWidth: lineWidth, dots: dots, bufferName: text))
     }
 }
 
@@ -74,16 +83,16 @@ struct GraphViewElementDescriptor {
     let scaleMinY: GraphViewDescriptor.ScaleMode
     let scaleMaxY: GraphViewDescriptor.ScaleMode
 
-    var xInputBufferName: String?
-    var yInputBufferName: String
+    var xInputBufferNames: [String?]
+    var yInputBufferNames: [String]
 
     let aspectRatio: CGFloat
     let partialUpdate: Bool
-    let drawDots: Bool
+    let drawDots: [Bool]
     let history: UInt
 
-    let lineWidth: CGFloat
-    let color: UIColor
+    let lineWidth: [CGFloat]
+    let color: [UIColor]
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -134,26 +143,12 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let xUnit = attributes.optionalString(for: .unitX)
         let yUnit = attributes.optionalString(for: .unitY)
 
-        guard let yInputBufferName = inputHandler.results.first(where: { $0.axis == .y })?.bufferName else {
-            throw ElementHandlerError.missingElement("data-container")
-        }
-
-        let xInputBufferName = inputHandler.results.first(where: { $0.axis == .x })?.bufferName
-
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         let dots = attributes.optionalString(for: .style) ?? "line" == "dots"
         let partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
-        let colorString: String? = attributes.optionalString(for: .color)
-
-        let color = try colorString.map({ string -> UIColor in
-            guard let color = UIColor(hexString: string) else {
-                throw ElementHandlerError.unexpectedAttributeValue("color")
-            }
-
-            return color
-        }) ?? kHighlightColor
+        let color = mapColorString(attributes.optionalString(for: .color))
 
         let logX = try attributes.optionalValue(for: .logX) ?? false
         let logY = try attributes.optionalValue(for: .logY) ?? false
@@ -170,7 +165,60 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let minY: CGFloat = try attributes.optionalValue(for: .minY) ?? 0
         let maxY: CGFloat = try attributes.optionalValue(for: .maxY) ?? 0
 
-        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xUnit: xUnit, yUnit: yUnit, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferName: xInputBufferName, yInputBufferName: yInputBufferName, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dots, history: history, lineWidth: lineWidth, color: color)))
+        let inputBuffers = inputHandler.results
+        guard inputBuffers.count > 0 else {
+            throw ElementHandlerError.missingElement("input")
+        }
+        
+        var xInputBufferNames: [String?] = []
+        var yInputBufferNames: [String] = []
+        var colors: [UIColor] = []
+        var lineWidths: [CGFloat] = []
+        var dotsList: [Bool] = []
+        var inputCount = -1
+        for inputBuffer in inputBuffers {
+            if inputCount < 0 || inputBuffer.axis == .x || (inputBuffer.axis == .y && yInputBufferNames[inputCount] != "") {
+                if (inputCount >= 0 && yInputBufferNames[inputCount] == "") {
+                    throw ElementHandlerError.missingChildElement("input[axis=y]")
+                }
+                inputCount += 1
+                let autoColor: UIColor?
+                switch inputCount % 6 {
+                    case 0: autoColor = namedColors["orange"]
+                    case 1: autoColor = namedColors["green"]
+                    case 2: autoColor = namedColors["blue"]
+                    case 3: autoColor = namedColors["yellow"]
+                    case 4: autoColor = namedColors["magenta"]
+                    case 5: autoColor = namedColors["red"]
+                    default: autoColor = namedColors["orange"]
+                }
+                colors.append(color ?? autoColor ?? kHighlightColor)
+                lineWidths.append(lineWidth)
+                dotsList.append(dots)
+                if inputCount > 0 {
+                    xInputBufferNames.append(xInputBufferNames[inputCount-1])
+                } else {
+                    xInputBufferNames.append(nil)
+                }
+                yInputBufferNames.append("")
+            }
+            switch inputBuffer.axis {
+                case .x: xInputBufferNames[inputCount] = inputBuffer.bufferName
+                case .y: yInputBufferNames[inputCount] = inputBuffer.bufferName
+                default: yInputBufferNames[inputCount] = inputBuffer.bufferName
+            }
+            if let color = inputBuffer.color {
+                colors[inputCount] = color
+            }
+            if let lineWidth = inputBuffer.lineWidth {
+                lineWidths[inputCount] = lineWidth
+            }
+            if let dots = inputBuffer.dots {
+                dotsList[inputCount] = dots
+            }
+        }
+        
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, xUnit: xUnit, yUnit: yUnit, logX: logX, logY: logY, xPrecision: xPrecision, yPrecision: yPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, drawDots: dotsList, history: history, lineWidth: lineWidths, color: colors)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

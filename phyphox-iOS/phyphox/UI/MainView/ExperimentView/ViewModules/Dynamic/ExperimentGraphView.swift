@@ -60,12 +60,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
     
-    private func addDataSet(_ set: (bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])) {
-        if dataSets.count >= Int(descriptor.history) {
-            dataSets.removeFirst()
+    private func addDataSets(_ sets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])]) {
+        if descriptor.history > 1 {
+            if dataSets.count >= Int(descriptor.history) {
+                dataSets.removeFirst()
+            }
+            dataSets.append(sets[0])
+        } else {
+            dataSets = sets
         }
-        
-        dataSets.append(set)
     }
     
     private var max: GraphPoint<Double> {
@@ -115,11 +118,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         glGraph = GLGraphView()
         glGraph.drawDots = descriptor.drawDots
-        glGraph.lineWidth = Float(descriptor.lineWidth * (descriptor.drawDots ? 4.0 : 2.0))
-        var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+        glGraph.lineWidth = []
+        glGraph.lineColor = []
         
-        descriptor.color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        glGraph.lineColor = GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a))
+        for i in 0..<descriptor.yInputBuffers.count {
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.drawDots[i] ? 4.0 : 2.0)))
+            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+            
+            descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
+            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
+        }
         glGraph.historyLength = descriptor.history
         
         gridView = GraphGridView(descriptor: descriptor)
@@ -159,9 +167,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         addSubview(graphArea)
 
-        registerForUpdatesFromBuffer(descriptor.yInputBuffer)
-        if let xBuffer = descriptor.xInputBuffer {
-            registerForUpdatesFromBuffer(xBuffer)
+        for i in 0..<descriptor.yInputBuffers.count {
+            registerForUpdatesFromBuffer(descriptor.yInputBuffers[i])
+            if let xBuffer = descriptor.xInputBuffers[i] {
+                registerForUpdatesFromBuffer(xBuffer)
+            }
         }
 
         attachDisplayLink(displayLink)
@@ -233,7 +243,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             case .sameUnit:
                 targetX = descriptor.localizedXUnit
             case .sameVariable:
-                targetX = descriptor.xInputBuffer?.name
+                targetX = descriptor.xInputBuffers[0]?.name
             default:
                 targetX = nil
             }
@@ -242,7 +252,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             case .sameUnit:
                 targetY = descriptor.localizedYUnit
             case .sameVariable:
-                targetY = descriptor.yInputBuffer.name
+                targetY = descriptor.yInputBuffers[0].name
             default:
                 targetY = nil
             }
@@ -266,7 +276,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 applyX = true
             }
         case .sameVariable:
-            if targetX == descriptor.xInputBuffer?.name {
+            if targetX == descriptor.xInputBuffers[0]?.name {
                 applyX = true
             }
         case .none:
@@ -283,7 +293,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 applyY = true
             }
         case .sameVariable:
-            if targetY == descriptor.yInputBuffer.name {
+            if targetY == descriptor.yInputBuffers[0].name {
                 applyY = true
             }
         case .none:
@@ -430,66 +440,66 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private var lastCount: Int?
 
     private func runUpdate() {
-        var xValues: [Double]
+        var xValues: [[Double]] = []
+        var yValues: [[Double]] = []
+        var count: [Int] = []
+        var points: [[GraphPoint<GLfloat>]] = []
 
-        let yValues = descriptor.yInputBuffer.toArray()
-        let yCount = yValues.count
+        for i in 0..<descriptor.yInputBuffers.count {
+            yValues.append(descriptor.yInputBuffers[i].toArray())
 
-        var count = yCount
+            count.append(yValues[i].count)
 
-        if count <= 1 {
-            mainThread {
-                self.clearGraph()
+            if count[i] <= 1 {
+                continue
             }
-            return
-        }
-
-        if let xBuf = descriptor.xInputBuffer {
-            xValues = xBuf.toArray()
-            let xCount = xValues.count
-
-            count = Swift.min(xCount, count)
-        }
-        else {
-            var xC = 0
-
-            if lastIndexXArray != nil {
-                xC = lastIndexXArray!.count
+            
+            if let xBuf = descriptor.xInputBuffers[i] {
+                xValues.append(xBuf.toArray())
             }
+            else {
+                var xC = 0
 
-            let delta = count-xC
-
-            if delta > 0 && lastIndexXArray == nil {
-                lastIndexXArray = []
-            }
-
-            for i in xC..<count {
-                lastIndexXArray!.append(Double(i))
-            }
-
-            if lastIndexXArray == nil {
-                mainThread {
-                    self.clearGraph()
+                if lastIndexXArray != nil {
+                    xC = lastIndexXArray!.count
                 }
-                return
+
+                let delta = count[i]-xC
+
+                if delta > 0 && lastIndexXArray == nil {
+                    lastIndexXArray = []
+                }
+
+                for i in xC..<count[i] {
+                    lastIndexXArray!.append(Double(i))
+                }
+
+                if lastIndexXArray == nil {
+                    mainThread {
+                        self.clearGraph()
+                    }
+                    return
+                }
+
+                xValues.append(lastIndexXArray!)
             }
 
-            xValues = lastIndexXArray!
+            count[i] = Swift.min(xValues[i].count, yValues[i].count)
+
+            if count[i] <= 1 {
+                continue
+            }
+            
+            points.append([])
+            points[i].reserveCapacity(count[i])
         }
-
-        count = Swift.min(xValues.count, yValues.count)
-
-        if count <= 1 {
+        
+        if count.reduce(0, Swift.max) <= 1 {
             mainThread {
                 self.clearGraph()
             }
             return
         }
-
-        var points: [GraphPoint<GLfloat>] = []
-        points.reserveCapacity(count)
-
-        var lastX = -Double.infinity
 
         let logX = descriptor.logX
         let logY = descriptor.logY
@@ -534,65 +544,69 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
 
-        var xOrderOK = true
-        var valuesOK = true
+        var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+        for i in 0..<count.count {
+            var xOrderOK = true
+            var valuesOK = true
+            var lastX = -Double.infinity
+            
+            for j in 0..<count[i] {
+                let rawX = xValues[i][j]
+                let rawY = yValues[i][j]
 
-        for i in 0..<count {
-            let rawX = xValues[i]
-            let rawY = yValues[i]
-
-            if rawX < lastX {
-                xOrderOK = false
-            }
-
-            lastX = rawX
-
-            let x = (logX ? log(rawX) : rawX)
-            let y = (logY ? log(rawY) : rawY)
-
-            guard x.isFinite && y.isFinite else {
-                valuesOK = false
-                continue
-            }
-
-            if x < minX && !xMinStrict {
-                minX = x
-            }
-
-            if x > maxX {
-                if !xMaxStrict {
-                    maxX = x
-                } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
-                    let w = zoomMax!.x - zoomMin!.x
-                    zoomMin = GraphPoint(x: x - w, y: zoomMin!.y)
-                    zoomMax = GraphPoint(x: x, y: zoomMax!.y)
-                    minX = zoomMin!.x
-                    maxX = zoomMax!.x
+                if rawX < lastX {
+                    xOrderOK = false
                 }
+
+                lastX = rawX
+
+                let x = (logX ? log(rawX) : rawX)
+                let y = (logY ? log(rawY) : rawY)
+
+                guard x.isFinite && y.isFinite else {
+                    valuesOK = false
+                    continue
+                }
+
+                if x < minX && !xMinStrict {
+                    minX = x
+                }
+
+                if x > maxX {
+                    if !xMaxStrict {
+                        maxX = x
+                    } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
+                        let w = zoomMax!.x - zoomMin!.x
+                        zoomMin = GraphPoint(x: x - w, y: zoomMin!.y)
+                        zoomMax = GraphPoint(x: x, y: zoomMax!.y)
+                        minX = zoomMin!.x
+                        maxX = zoomMax!.x
+                    }
+                }
+
+                if y < minY && !yMinStrict {
+                    minY = y
+                }
+
+                if y > maxY && !yMaxStrict {
+                    maxY = y
+                }
+
+                points[i].append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
             }
 
-            if y < minY && !yMinStrict {
-                minY = y
+            if !xOrderOK {
+                print("x values are not ordered!")
             }
 
-            if y > maxY && !yMaxStrict {
-                maxY = y
+            if !valuesOK {
+                print("Tried drawing NaN or inf")
             }
 
-            points.append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+            dataSets.append((bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points[i]))
         }
 
-        if !xOrderOK {
-            print("x values are not ordered!")
-        }
-
-        if !valuesOK {
-            print("Tried drawing NaN or inf")
-        }
-
-        let dataSet = (bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points)
-
-        addDataSet(dataSet)
+        addDataSets(dataSets)
 
         let grid = generateGrid(logX: logX, logY: logY)
 

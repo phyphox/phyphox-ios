@@ -58,7 +58,7 @@ private extension ExperimentAudioInput {
 }
 
 // Mark: - Constants
-private let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 6, patch: 0)
+private let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 7, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -73,7 +73,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let categoryHandler = TextElementHandler()
     private let descriptionHandler = MultilineTextElementHandler()
     private let iconHandler = IconElementHandler()
-    private let colorHandler = TextElementHandler()
+    private let colorHandler = ColorElementHandler()
     private let linkHandler = LinkElementHandler()
     private let dataContainersHandler = DataContainersElementHandler()
     private let translationsHandler = TranslationsElementHandler()
@@ -129,16 +129,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
         
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
-
-        let colorString: String? = try colorHandler.expectOptionalResult()
         
-        let color = try colorString.map({ string -> UIColor in
-            guard let color = UIColor(hexString: string) else {
-                throw ElementHandlerError.unexpectedAttributeValue("color")
-            }
-            
-            return color
-        }) ?? kHighlightColor
+        let color = try colorHandler.expectOptionalResult() ?? kHighlightColor
         
         let links = linkHandler.results
 
@@ -185,13 +177,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
         case .info(let descriptor):
-            return InfoViewDescriptor(label: descriptor.label, translation: translations)
+            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations)
         case .value(let descriptor):
             guard let buffer = buffers[descriptor.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            return ValueViewDescriptor(label: descriptor.label, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
+            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
             
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -231,18 +223,24 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow)
 
         case .graph(let descriptor):
-            let xBuffer = try descriptor.xInputBufferName.map({ name -> DataBuffer in
+            let xBuffers = try descriptor.xInputBufferNames.map({ name -> DataBuffer? in
+                if name == nil {
+                    return nil
+                }
+                guard let buffer = buffers[name!] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                return buffer
+            })
+            
+            let yBuffers = try descriptor.yInputBufferNames.map({ name -> DataBuffer in
                 guard let buffer = buffers[name] else {
                     throw ElementHandlerError.missingElement("data-container")
                 }
                 return buffer
             })
 
-            guard let yBuffer = buffers[descriptor.yInputBufferName] else {
-                throw ElementHandlerError.missingElement("data-container")
-            }
-
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, xInputBuffer: xBuffer, yInputBuffer: yBuffer, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, drawDots: descriptor.drawDots, partialUpdate: descriptor.partialUpdate, history: descriptor.history, lineWidth: descriptor.lineWidth, color: descriptor.color)
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, xInputBuffers: xBuffers, yInputBuffers: yBuffers, logX: descriptor.logX, logY: descriptor.logY, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, drawDots: descriptor.drawDots, lineWidth: descriptor.lineWidth, color: descriptor.color)
         }
     }
 
