@@ -77,7 +77,7 @@
 "pick_exportFormat" = "データフォーマットを選択してください．";
 "noDrawableData" = "描画可能なデータがありません．";
 "categoryNewExperiment" = "簡単なカスタム実験";
-"categoryRawSensor" = "時系列センサー";
+"categoryRawSensor" = "センサー出力";
 "experimentinfo_hint" = "本実験をどのように使用するか知るために実験インフォを確認してください．";
 "experimentsPhyphoxOrg" = "実験アイデアと説明";
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
@@ -87,7 +87,7 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationInfo" = "言語";
 "translationToWebsite" = "ウェブサイトへ移行";
-"translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"translationToWebsiteURL" = "http://phyphox.org/languages#ja";
 "actions" = "実行";
 "newExperiment" = "実験の追加";
 "creditsNames" = "開発とコンセプト: \nDr. Sebastian Staacks\nコンセプト: \nProf. Christoph Stampfer\nデザイン:\nFrank Posthoff (A.NikoPol)\nプログラミング:\nCamilla Lummerzheim\nJonas Gessner";
