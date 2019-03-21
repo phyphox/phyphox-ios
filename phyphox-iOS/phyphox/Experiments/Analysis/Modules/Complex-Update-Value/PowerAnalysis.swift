@@ -27,6 +27,20 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     func powValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // scalar^scalar
+            return ValueSource(scalar: pow(scalarA, scalarB))
+        } else if let scalar = a.scalar, let vector = b.vector { // scalar^vector
+            return ValueSource(vector: vector.map({return pow(scalar, $0)}))
+        } else if let vector = a.vector, let scalar = b.scalar { // vector^scalar
+            return ValueSource(vector: vector.map({return pow($0, scalar)}))
+        } else if let vectorA = a.vector, let vectorB = b.vector { // vector^vector
+            return ValueSource(vector: zip(vectorA, vectorB).map({return pow($0, $1)}))
+        }
+        
+        fatalError("Invalid value sources")
+        
+        //Cannot use vvpow since it does not handle negative exponents
+        /*
+        if let scalarA = a.scalar, let scalarB = b.scalar { // scalar^scalar
             let result = pow(scalarA, scalarB)
             
             return ValueSource(scalar: result)
@@ -62,5 +76,6 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
         }
         
         fatalError("Invalid value sources")
+         */
     }
 }

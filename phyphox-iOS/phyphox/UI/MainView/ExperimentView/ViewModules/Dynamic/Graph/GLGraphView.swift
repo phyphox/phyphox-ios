@@ -28,7 +28,7 @@ final class GLGraphView: GLKView {
         }
     }
     
-    var drawDots: [Bool] = [false] {
+    var style: [GraphViewDescriptor.GraphStyle] = [.lines] {
         didSet {
             setNeedsDisplay()
         }
@@ -138,7 +138,8 @@ final class GLGraphView: GLKView {
         shader.setScale(xScale, yScale)
         shader.setTranslation(xTranslation, yTranslation)
         
-        for (i,p) in points.enumerated() {
+        for i in (0..<points.count).reversed() {
+            let p = points[i]
             let length = p.count
             
             if length == 0 {
@@ -155,12 +156,26 @@ final class GLGraphView: GLKView {
                 } else {
                     shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
                 }
-                shader.drawPositions(mode: (drawDots[0] ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
+                let renderMode: Int32
+                switch style[0] {
+                    case .dots: renderMode = GL_POINTS
+                    case .vbars: renderMode = GL_TRIANGLE_STRIP
+                    case .hbars: renderMode = GL_TRIANGLE_STRIP
+                    default: renderMode = GL_LINE_STRIP
+                }
+                shader.drawPositions(mode: renderMode, start: 0, count: length, strideFactor: 1)
             } else {
                 shader.setPointSize(lineWidth[i])
                 glLineWidth(lineWidth[i])
                 shader.setColor(lineColor[i].r, lineColor[i].g, lineColor[i].b, lineColor[i].a)
-                shader.drawPositions(mode: (drawDots[i] ? GL_POINTS : GL_LINE_STRIP), start: 0, count: length, strideFactor: 1)
+                let renderMode: Int32
+                switch style[i] {
+                    case .dots: renderMode = GL_POINTS
+                    case .vbars: renderMode = GL_TRIANGLES
+                    case .hbars: renderMode = GL_TRIANGLES
+                    default: renderMode = GL_LINE_STRIP
+                }
+                shader.drawPositions(mode: renderMode, start: 0, count: length, strideFactor: 1)
             }
         }
     }

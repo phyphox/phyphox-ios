@@ -117,12 +117,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.descriptor = descriptor
         
         glGraph = GLGraphView()
-        glGraph.drawDots = descriptor.drawDots
+        glGraph.style = descriptor.style
         glGraph.lineWidth = []
         glGraph.lineColor = []
         
         for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.drawDots[i] ? 4.0 : 2.0)))
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : 2.0)))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
             descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
@@ -450,7 +450,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
             count.append(yValues[i].count)
 
-            if count[i] <= 1 {
+            if count[i] < 1 {
+                xValues.append([])
+                yValues.append([])
+                points.append([])
                 continue
             }
             
@@ -486,15 +489,22 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
             count[i] = Swift.min(xValues[i].count, yValues[i].count)
 
-            if count[i] <= 1 {
+            if count[i] < 1 {
+                points.append([])
                 continue
             }
             
             points.append([])
-            points[i].reserveCapacity(count[i])
+            let styleCountFactor: Int
+            switch descriptor.style[i] {
+                case .vbars: styleCountFactor = 6
+                case .hbars: styleCountFactor = 6
+                default: styleCountFactor = 1
+            }
+            points[i].reserveCapacity(count[i] * styleCountFactor)
         }
         
-        if count.reduce(0, Swift.max) <= 1 {
+        if count.reduce(0, Swift.max) < 1 {
             mainThread {
                 self.clearGraph()
             }
@@ -549,19 +559,18 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             var xOrderOK = true
             var valuesOK = true
             var lastX = -Double.infinity
+            var lastY = Double.nan
             
             for j in 0..<count[i] {
                 let rawX = xValues[i][j]
                 let rawY = yValues[i][j]
 
-                if rawX < lastX {
-                    xOrderOK = false
-                }
-
-                lastX = rawX
-
                 let x = (logX ? log(rawX) : rawX)
                 let y = (logY ? log(rawY) : rawY)
+                
+                if x < lastX {
+                    xOrderOK = false
+                }
 
                 guard x.isFinite && y.isFinite else {
                     valuesOK = false
@@ -592,7 +601,37 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     maxY = y
                 }
 
-                points[i].append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+                switch descriptor.style[i] {
+                case .hbars:
+                    if lastX.isFinite && lastY.isFinite {
+                        let off = (y-lastY)*(1.0-Double(descriptor.lineWidth[i]))/2.0
+                        let yOff = y-off
+                        let lastYOff = lastY+off
+                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(lastYOff)))
+                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(yOff)))
+                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(lastYOff)))
+                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(yOff)))
+                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(lastYOff)))
+                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(yOff)))
+                    }
+                case .vbars:
+                    if lastX.isFinite && lastY.isFinite {
+                        let off = (x-lastX)*(1.0-Double(descriptor.lineWidth[i]))/2.0
+                        let xOff = x-off
+                        let lastXOff = lastX+off
+                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(0.0)))
+                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(0.0)))
+                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(lastY)))
+                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(lastY)))
+                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(lastY)))
+                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(0.0)))
+                    }
+                default:
+                    points[i].append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+                }
+                
+                lastX = x
+                lastY = y
             }
 
             if !xOrderOK {
@@ -600,9 +639,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
 
             if !valuesOK {
-                print("Tried drawing NaN or inf")
+                //No need to worry. NaN and especially inf may occur and is just skipped.
+                //print("Tried drawing NaN or inf")
             }
-
+            
             dataSets.append((bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points[i]))
         }
 

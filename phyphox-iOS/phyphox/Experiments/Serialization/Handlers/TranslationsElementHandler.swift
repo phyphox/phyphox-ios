@@ -59,9 +59,9 @@ private final class TranslationElementHandler: ResultElementHandler, LookupEleme
 
         let locale = try attributes.string(for: .locale)
 
-        let title = try titleHandler.expectSingleResult()
-        let category = try categoryHandler.expectSingleResult()
-        let description = try descriptionHandler.expectSingleResult()
+        let title = try titleHandler.expectOptionalResult()
+        let category = try categoryHandler.expectOptionalResult()
+        let description = try descriptionHandler.expectOptionalResult()
 
         let strings = Dictionary(stringHandler.results, uniquingKeysWith: { first, _ in first })
 

@@ -66,6 +66,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         super.init(frame: .zero)
 
         registerForUpdatesFromBuffer(descriptor.buffer)
+        descriptor.buffer.attachedToTextField = true
 
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
 
