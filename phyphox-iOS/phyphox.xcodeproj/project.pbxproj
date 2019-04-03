@@ -182,6 +182,8 @@
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
+		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
+		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -559,6 +561,8 @@
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
+		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
+		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1062,6 +1066,8 @@
 				4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */,
 				4B55689B1DD7BAC8000C033E /* IfAnalysis.swift */,
 				4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */,
+				C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */,
+				C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -1194,6 +1200,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 				de,
@@ -1482,6 +1489,7 @@
 				6BE320A01CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift in Sources */,
 				6B7BF7B71C130471007408FB /* Experiment.swift in Sources */,
 				6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */,
+				C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */,
 				6B00F0AE1C46818500971941 /* FirstAnalysis.swift in Sources */,
 				4BA9987F1EDB6A4100BD1860 /* RoundAnalysis.swift in Sources */,
 				6B00F0A01C457B5100971941 /* ExperimentInfoView.swift in Sources */,
@@ -1535,6 +1543,7 @@
 				6B0814DF1CABEE3000EE2791 /* BEMAnimationManager.m in Sources */,
 				6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */,
 				4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */,
+				C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */,
 				4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
 				4B36E35B1EDF513900F6D1DD /* ExperimentGPSInput.swift in Sources */,

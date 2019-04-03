@@ -70,7 +70,10 @@ final class ExperimentAnalysisFactory {
         "count": CountAnalysis.self,
         "average": AverageAnalysis.self,
         "binning": BinningAnalysis.self,
-        "if": IfAnalysis.self]
+        "if": IfAnalysis.self,
+        "reduce": ReduceAnalysis.self,
+        "map": MapAnalysis.self
+    ]
 
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {
         guard let analysisClass = classMap[key] else {
