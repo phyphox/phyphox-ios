@@ -72,7 +72,7 @@
 "loadingTitle" = "Chargement";
 "save_locally_message" = "Cette expérience a été ouverte depuis une source à distance. Voulez-vous l'ajouter à votre propre collection d'expériences ?";
 "save_locally_button" = "Enregistrer l'expérience";
-"save_state" = "Enregistrer l'état de cette expérience.";
+"save_state" = "Enregistrer l'état de cette expérience";
 "save_state_category" = "Expériences enregistrées";
 "save_state_message" = "Vous pouvez enregistrer l'état de cette expérience, y compris vos données, dans votre collection ou le partager avec une application tierce.";
 "save_state_title" = "Titre";
