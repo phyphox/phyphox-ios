@@ -103,3 +103,4 @@
 "experimentinfo_hint" = "Regardez les informations sur l'expérience pour apprendre comment l'utiliser.";
 "AudioRateMissmatch" = "Erreur : taux d'échantillonnage incorrect. Essayer de désactiver les applications (comme AirPlay) qui modifient le taux d'échantillonnage.";
 "translationText" = "Phyphox utilisera la première langue disponible dans votre liste de langues préférées dans les paramètres de votre système. Pour savoir quelles langues sont disponibles et comment vous pouvez aider, sélectionnez \"visiter le site Web\".";
+"newExperimentSimple" = "Ajouter une expérience simple";
