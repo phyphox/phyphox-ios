@@ -53,7 +53,7 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationInfo" = "Idiomas";
 "translationToWebsite" = "Visitar website (em inglês)";
-"translationToWebsiteURL" = "http://phyphox.org/languages#pt-br";
+"translationToWebsiteURL" = "http://phyphox.org/languages#pt";
 "newExperimentInputBufferSize" = "Tamanho do buffer (número de valores guardados)";
 "warning" = "Aviso";
 "damageWarning" = "Tome cuidado para não danificar o seu telefone durante os experimentos. Tenha muita atenção para evitar deixar cair sobre superfícies duras e não expor a campos magnéticos fortes. Os autores de phyphox não são responsáveis por qualquer dano ao seu telefone.";
