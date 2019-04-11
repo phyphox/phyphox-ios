@@ -51,7 +51,7 @@
 "remotePhyphoxOrg" = "遠程控制協助說明";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationToWebsite" = "拜訪網站";
-"translationToWebsiteURL" = "網址：http://phyphox.org/languages#en";
+"translationToWebsiteURL" = "http://phyphox.org/languages#zh_Hant";
 "export" = "匯出數據";
 "pick_exportFormat" = "選擇數據格式";
 "newExperiment" = "新增實驗";
@@ -98,6 +98,6 @@
 "timedRun" = "時程設定";
 "remoteServerWarning" = "你即將啟用遠端存取到已取得的數據。你應該在信任的網路中做這個動作!另外，在許多公司或大學的網路中，裝置間的直接存取可能無法執行。\n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。\n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。";
 "categoryNewExperiment" = "自訂實驗";
-"categoryRawSensor" = "內建感應器";
+"categoryRawSensor" = "原始感測器";
 "appleBanWarningMoreInfo" = "更多資訊";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
