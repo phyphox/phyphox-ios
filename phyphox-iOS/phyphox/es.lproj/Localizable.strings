@@ -1,5 +1,5 @@
 "action_settings" = "Ajustes";
-"newExperimentPhyphoxInfo" = "Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y para compartirlos con colegas, estudiantes y amigos.";
+"newExperimentPhyphoxInfo" = "Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y compártelos con colegas, estudiantes y amigos.";
 "newExperimentInputTitle" = "Título";
 "newExperimentInputBufferSize" = "Tamaño del búfer (cantidad de valores a ser almacenados)";
 "newExperimentInputRate" = "Tasa de muestreo del sensor (en Hz, 0 = lo más rápido posible)";
