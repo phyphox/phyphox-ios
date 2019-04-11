@@ -62,3 +62,12 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Ayuda con el control remoto";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
+"switchToPhoneLayout" = "Vista: Estrecha";
+"switchColumns1" = "Vista: 1 columna";
+"switchColumns2" = "Vista: 2 columnas";
+"switchColumns3" = "Vista: 3 columnas";
+"show_description" = "Información del experimento";
+"save_locally" = "Agregar el experimento a la colección";
+"save_locally_message" = "Este experimento ha sido abierto desde una fuente remota. ¿Deseas agregarlo a tu colección?";
+"save_locally_button" = "Guardar en la colección";
+"save_locally_done" = "Experimento exitosamente agregado a la colección";
