@@ -148,3 +148,7 @@
 "newExperimentBTReadErrorTitle" = "Blutut eksperiment greška.";
 "newExperimentBTReadErrorCorrupted" = "Prenosni podaci eksperimenta su poremećeni.";
 "generalErrorDialog" = "Desila se greška.";
+"tryagain" = "Pokušajte ponovo";
+"doContinue" = "Nastavi";
+"rename" = "Preimenuj";
+"loadingBluetoothConnectionText" = "Povezivanje na Bluetooth uređaj…";
