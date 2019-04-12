@@ -21,6 +21,13 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
     let defaultValue: Double
     let buffer: DataBuffer
     
+    var localizedUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localize(unit!) ?? unit!
+    }
+    
     var value: Double {
         return buffer.last ?? defaultValue
     }

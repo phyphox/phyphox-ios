@@ -1,1 +1,11 @@
+/* 
+  InfoPlist.strings
+  phyphox
 
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox如同其它感應器一樣，會從麥克風記錄聲音，並根據所選的實驗進行分析。若使用者選擇使用匯出功能，數據將會從app被匯出。";
+"NSLocationWhenInUseUsageDescription" = "phyphox如同其它感應器一樣，會從GPS記錄位置資訊，並根據所選的實驗進行分析。若使用者選擇使用匯出功能，數據將會從app被匯出。";
+"NSPhotoLibraryAddUsageDescription" = "若你從選單挑選\"分享螢幕截圖\"，phyphox會將圖片加到你的圖庫。";
+"NSMotionUsageDescription" = "phyphox會讀取你手機裡的感應器，以便用在物理實驗中。";

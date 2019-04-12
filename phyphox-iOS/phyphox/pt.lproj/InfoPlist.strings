@@ -1,0 +1,11 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox grava o audio do microfone assim como dados de outros sensores e faz uma análise de acordo com o experimento selecionado. Os dados serão exportados do aplicativo somente se o usuário escolher isso usando a função exportar.";
+"NSLocationWhenInUseUsageDescription" = "phyphox grava a sua localização usando o GPS tal qual os dados de outros sensores e faz uma análise de acordo com o experimento selecionado. Os dados serão exportados do aplicativo somente se o usuário escolher isso usando a função exportar.";
+"NSPhotoLibraryAddUsageDescription" = "phyphox pode adicionar imagens de tela a sua galeria de fotos se você selecionar \"compartilhar captura de tela\" nas opções do experimento.";
+"NSMotionUsageDescription" = "phyphox lê os sensores do seu aparelho para poder utilizar os dados nos experimentos.";

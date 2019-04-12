@@ -1,0 +1,11 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox ghi âm từ micro giống như các các cảm biến khác và phân tích dữ liệu cho thí nghiệm được chọn. Dữ liệu này sẽ chỉ được xuất ra từ phần mềm nếu người dùng chọn làm như vậy bằng cách dùng chức năng xuất dữ liệu.";
+"NSLocationWhenInUseUsageDescription" = "phyphox ghi lại dữ liệu vị trí giống như các các cảm biến khác và phân tích nó cho thí nghiệm được chọn. Dữ liệu này sẽ chỉ được xuất ra từ phần mềm nếu người dùng chọn làm như vậy bằng cách dùng chức năng xuất dữ liệu.";
+"NSPhotoLibraryAddUsageDescription" = "phyphox có thể lưu ảnh chụp màn hình vào thư viện ảnh nếu bạn chọn \"Chia sẻ  ảnh chụp màn hình\" từ bảng chọn trong thí nghiệm.";
+"NSMotionUsageDescription" = "phyphox đọc các cảm biến của điện thoại để sử dụng chúng cho thí nghiệm vật lý.";

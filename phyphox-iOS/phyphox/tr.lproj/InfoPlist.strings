@@ -1,1 +1,11 @@
+/* 
+  InfoPlist.strings
+  phyphox
 
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox, diğer sensörlerden olduğu gibi mikrofona ait sesi de kaydeder ve seçilen deneye göre analiz eder. Veriler yalnızca veri dışa aktarma işlevi seçilirse uygulamadan dışa aktarılacaktır.";
+"NSLocationWhenInUseUsageDescription" = "phyphox, GPS'den diğer sensörlerden alınan konum verilerini kaydeder ve seçilen deneye göre analiz eder. Veriler yalnızca veri dışa aktarma işlevi seçilirse uygulamadan dışa aktarılacaktır.";
+"NSPhotoLibraryAddUsageDescription" = "Deneme menüsünden \"Ekran görüntüsü al\"ı seçerseniz, phyphox fotoğraf kitaplığınıza ekran görüntüleri ekleyebilir.";
+"NSMotionUsageDescription" = "phyphox, telefonunuzun sensörlerini fizik deneylerinde kullanmaya izin verecek şekilde okur.";

@@ -1,1 +1,11 @@
+/* 
+  InfoPlist.strings
+  phyphox
 
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphoxは他のセンサーのようなものやマイクロフォンから音声を記録し，選択された実験に応じて解析を行います．使用者がエクスポート機能を用いてデータをエクスポートする場合はアプリからデータがエクスポートされます．";
+"NSLocationWhenInUseUsageDescription" = "phyphoxはその他のセンサーやGPSからの位置データを記録し，選択された実験によって解析します．エクスポート機能を用いて使用者はアプリからデータをエクスポートすることができます．";
+"NSPhotoLibraryAddUsageDescription" = "phyphoxでは実験から \"スクリーンショットを共有する\" を選択するとあなたのフォトライブラリーにスクリーンショットを追加することができます．";
+"NSMotionUsageDescription" = "phyphoxは物理実験でスマートフォンのセンサー使用することを許可し，読み取ります．";
