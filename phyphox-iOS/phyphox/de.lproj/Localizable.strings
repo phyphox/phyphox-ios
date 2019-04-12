@@ -207,5 +207,5 @@
 "bt_fail_reading" = "Die Leseoperation war nicht erfolgreich.";
 "bt_fail_writing" = "Die Schreiboperation war nicht erfolgreich.";
 "bt_more_info_link_text" = "Wenn dein Gerät nicht unterstützt wird, wähle \"Weitere Infos\" um mehr über die flexible Bluetooth Low Energy Unterstützung in phyphox auf unserer Webseite zu erfahren.";
-"bt_more_info_link_button" = "Weitere Infos";
+"bt_more_info_link_button" = "Mehr Infos";
 "bt_more_info_link_url" = "https://phyphox.org/ble-de";
