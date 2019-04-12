@@ -154,3 +154,4 @@
 "loadingBluetoothConnectionText" = "Povezivanje na Bluetooth uređaj…";
 "remoteServerNoNetwork" = "Najpre uspostavite WiFi konekciju na udaljenom uređaju. Molimo omogućite WiFi vezu ili mobilni hotspot.";
 "fontSize" = "Veličina slova";
+"open_zip_title" = "Otvaranje grupe eksperimenata";
