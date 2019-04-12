@@ -56,13 +56,13 @@ final class WebServerUtilities {
         
         raw.replaceOccurrences(of: "<!-- [[title]] -->", with: experiment.displayTitle, options: [], range: NSMakeRange(0, raw.length))
         
-        raw.replaceOccurrences(of: "<!-- [[clearDataTranslation]] -->", with: NSLocalizedString("clear_data", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[clearConfirmTranslation]] -->", with: NSLocalizedString("clear_data_question", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[exportTranslation]] -->", with: NSLocalizedString("export", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[switchToPhoneLayoutTranslation]] -->", with: NSLocalizedString("switchToPhoneLayout", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[switchColumns1Translation]] -->", with: NSLocalizedString("switchColumns1", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[switchColumns2Translation]] -->", with: NSLocalizedString("switchColumns2", comment: ""), options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "<!-- [[switchColumns3Translation]] -->", with: NSLocalizedString("switchColumns3", comment: ""), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[clearDataTranslation]] -->", with: localize("clear_data"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[clearConfirmTranslation]] -->", with: localize("clear_data_question"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[exportTranslation]] -->", with: localize("export"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[switchToPhoneLayoutTranslation]] -->", with: localize("switchToPhoneLayout"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[switchColumns1Translation]] -->", with: localize("switchColumns1"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[switchColumns2Translation]] -->", with: localize("switchColumns2"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[switchColumns3Translation]] -->", with: localize("switchColumns3"), options: [], range: NSMakeRange(0, raw.length))
         
         var viewLayout = "var views = ["
         var viewOptions = ""

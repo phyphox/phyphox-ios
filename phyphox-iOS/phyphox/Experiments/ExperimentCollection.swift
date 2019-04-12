@@ -15,9 +15,9 @@ final class ExperimentCollection {
         case rawSensors, savedStates, other
         init (title: String) {
             switch title {
-                case NSLocalizedString("categoryRawSensor", comment: ""):
+                case localize("categoryRawSensor"):
                     self = .rawSensors
-                case NSLocalizedString("save_state_category", comment: ""):
+                case localize("save_state_category"):
                     self = .savedStates
                 default:
                     self = .other

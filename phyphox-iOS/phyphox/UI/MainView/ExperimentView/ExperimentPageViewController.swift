@@ -182,9 +182,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.edgesForExtendedLayout = UIRectEdge()
         
         let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
-        actionItem.accessibilityLabel = NSLocalizedString("actions", comment: "")
+        actionItem.accessibilityLabel = localize("actions")
         let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
-        deleteItem.accessibilityLabel = NSLocalizedString("clear_data", comment: "")
+        deleteItem.accessibilityLabel = localize("clear_data")
         let playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
         self.navigationItem.rightBarButtonItems = [
             actionItem,
@@ -256,9 +256,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         //Ask to save the experiment locally if it has been loaded from a remote source
         if !experiment.local {
-            let al = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_message", comment: ""), preferredStyle: .alert)
+            let al = UIAlertController(title: localize("save_locally"), message: localize("save_locally_message"), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("save_locally_button", comment: ""), style: .default, handler: { _ in
+            al.addAction(UIAlertAction(title: localize("save_locally_button"), style: .default, handler: { _ in
                 do {
                     try self.saveLocally()
                 }
@@ -266,16 +266,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     print(error)
                 }
             }))
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
             
         //Show a hint for the experiment info
         }
-        else if (experiment.localizedCategory != NSLocalizedString("categoryRawSensor", comment: "")) {
+        else if (experiment.localizedCategory != localize("categoryRawSensor")) {
             // TODO: Only show this hint until the experiment has been started a limited number of times
             let label = UILabel()
-            label.text = NSLocalizedString("experimentinfo_hint", comment: "")
+            label.text = localize("experimentinfo_hint")
             label.lineBreakMode = .byWordWrapping
             label.numberOfLines = 0
             label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
@@ -434,7 +434,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
-            self.serverLabel!.text = NSLocalizedString("remoteServerActive", comment: "")+"\n\(url!)"
+            self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
             self.view.addSubview(self.serverLabel!)
             
             updateLayout()
@@ -458,12 +458,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tearDownWebServer()
         }
         else {
-            let al = UIAlertController(title: NSLocalizedString("remoteServerWarningTitle", comment: ""), message: NSLocalizedString("remoteServerWarning", comment: ""), preferredStyle: .alert)
+            let al = UIAlertController(title: localize("remoteServerWarningTitle"), message: localize("remoteServerWarning"), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: { [unowned self] action in
+            al.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: { [unowned self] action in
                 self.launchWebServer()
                 }))
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
         }
@@ -512,9 +512,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func showExport() {
-        let alert = UIAlertController(title: NSLocalizedString("export", comment: ""), message: NSLocalizedString("pick_exportFormat", comment: ""), preferredStyle: .alert)
+        let alert = UIAlertController(title: localize("export"), message: localize("pick_exportFormat"), preferredStyle: .alert)
         
-        let exportAction = UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .default, handler: { [unowned self] action in
+        let exportAction = UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
             self.runExportFromActionSheet()
             })
         
@@ -526,7 +526,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         alert.addAction(exportAction)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         alert.__pt__setAccessoryView(exportSelectionView!)
         
@@ -536,18 +536,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func showSaveState() {
         self.stopExperiment()
         
-        let alert = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_message", comment: ""), preferredStyle: .alert)
+        let alert = UIAlertController(title: localize("save_state"), message: localize("save_state_message"), preferredStyle: .alert)
         
         alert.addTextField(configurationHandler: { (textField) in
             let dateFormatter = DateFormatter()
             dateFormatter.dateStyle = .short
             dateFormatter.timeStyle = .short
             
-            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+            let fileNameDefault = localize("save_state_default_title")
             textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
         })
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_save", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("save_state_save"), style: .default, handler: { [unowned self] action in
             do {
                 if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
                     try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
@@ -564,7 +564,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 //Instead use the legacy state serializer for now:
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-                let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+                let fileNameDefault = localize("save_state_default_title")
                 let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
                 let target = savedExperimentStatesURL.appendingPathComponent(filename)
                 
@@ -584,9 +584,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
                     HUD.dismiss()
                     
-                    let confirmation = UIAlertController(title: NSLocalizedString("save_state", comment: ""), message: NSLocalizedString("save_state_success", comment: ""), preferredStyle: .alert)
+                    let confirmation = UIAlertController(title: localize("save_state"), message: localize("save_state_success"), preferredStyle: .alert)
                     
-                    confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
                     self.navigationController!.present(confirmation, animated: true, completion: nil)
                 })
             }
@@ -596,12 +596,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state_share", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
 
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
             
-            let fileNameDefault = NSLocalizedString("save_state_default_title", comment: "")
+            let fileNameDefault = localize("save_state_default_title")
             let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox")
             
             guard let title = alert.textFields?.first?.text else {
@@ -634,29 +634,29 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             })
         }))
             
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
     private func showTimerOptions() {
-        let alert = UIAlertController(title: NSLocalizedString("timedRunDialogTitle", comment: ""), message: nil, preferredStyle: .alert)
+        let alert = UIAlertController(title: localize("timedRunDialogTitle"), message: nil, preferredStyle: .alert)
         
         alert.addTextField { [unowned self] textField in
             textField.keyboardType = .decimalPad
-            textField.placeholder = NSLocalizedString("timedRunStartDelay", comment: "")
+            textField.placeholder = localize("timedRunStartDelay")
             
             textField.text = self.timerDelayString
         }
         
         alert.addTextField { [unowned self] textField in
             textField.keyboardType = .decimalPad
-            textField.placeholder = NSLocalizedString("timedRunStopDelay", comment: "")
+            textField.placeholder = localize("timedRunStopDelay")
             
             textField.text = self.timerDurationString
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("enableTimedRun", comment: ""), style: .default, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self, unowned alert] action in
             if (!self.timerEnabled) {
                 let label = UILabel()
                 label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
@@ -674,7 +674,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerDurationString = alert.textFields!.last!.text
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("disableTimedRun", comment: ""), style: .cancel, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self, unowned alert] action in
             if (self.timerEnabled) {
                 var items = self.navigationItem.rightBarButtonItems!
                 items.removeLast()
@@ -690,43 +690,43 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func action(_ item: UIBarButtonItem) {
-        let alert = UIAlertController(title: NSLocalizedString("actions", comment: ""), message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
         if experiment.export != nil {
-            alert.addAction(UIAlertAction(title: NSLocalizedString("export", comment: ""), style: .default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
                 self.showExport()
                 }))
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("timedRun", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("timedRun"), style: .default, handler: { [unowned self] action in
             self.showTimerOptions()
             }))
         
-        alert.addAction(UIAlertAction(title: (webServer.running ? NSLocalizedString("disableRemoteServer", comment: "") : NSLocalizedString("enableRemoteServer", comment: "")), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: (webServer.running ? localize("disableRemoteServer") : localize("enableRemoteServer")), style: .default, handler: { [unowned self] action in
             self.toggleWebServer()
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("show_description", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
             let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .alert)
 
             for link in self.experiment.localizedLinks {
-                al.addAction(UIAlertAction(title: NSLocalizedString(link.label, comment: ""), style: .default, handler: { _ in
+                al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
                     UIApplication.shared.openURL(link.url)
                 }))
             }
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
+            al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
             }))
 
         for link in experiment.localizedLinks where link.highlighted {
-            alert.addAction(UIAlertAction(title: NSLocalizedString(link.label, comment: ""), style: .default, handler: { _ in
+            alert.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
                 UIApplication.shared.openURL(link.url)
             }))
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("share", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("share"), style: .default, handler: { [unowned self] action in
             let w = UIApplication.shared.keyWindow!
             let s = UIScreen.main.scale
             UIGraphicsBeginImageContextWithOptions(w.frame.size, false, s)
@@ -766,12 +766,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for sensor in experiment.sensorInputs {
             if sensor.sensorType == SensorType.magneticField {
                 if sensor.calibrated {
-                    alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_raw_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
+                    alert.addAction(UIAlertAction(title: localize("switch_to_raw_magnetometer"), style: .default, handler: { [unowned self] action in
                         self.stopExperiment()
                         sensor.calibrated = false
                     }))
                 } else {
-                    alert.addAction(UIAlertAction(title: NSLocalizedString("switch_to_calibrated_magnetometer", comment: ""), style: .default, handler: { [unowned self] action in
+                    alert.addAction(UIAlertAction(title: localize("switch_to_calibrated_magnetometer"), style: .default, handler: { [unowned self] action in
                         self.stopExperiment()
                         sensor.calibrated = true
                     }))
@@ -781,15 +781,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if !experiment.local {
-            alert.addAction(UIAlertAction(title: NSLocalizedString("save_locally", comment: ""), style: .default, handler: { [unowned self] action in
+            alert.addAction(UIAlertAction(title: localize("save_locally"), style: .default, handler: { [unowned self] action in
                 try? self.saveLocally()
             }))
         }
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("save_state", comment: ""), style: .default, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("save_state"), style: .default, handler: { [unowned self] action in
             self.showSaveState()
         }))
         
@@ -978,12 +978,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func clearDataDialog() {
-        let al = UIAlertController(title: NSLocalizedString("clear_data", comment: ""), message: NSLocalizedString("clear_data_question", comment: ""), preferredStyle: .alert)
+        let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
         
-        al.addAction(UIAlertAction(title: NSLocalizedString("clear", comment: ""), style: .default, handler: { [unowned self] action in
+        al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
             self.clearData()
         }))
-        al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         self.navigationController!.present(al, animated: true, completion: nil)
     }

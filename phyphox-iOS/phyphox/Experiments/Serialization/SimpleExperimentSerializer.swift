@@ -119,7 +119,7 @@ final class SimpleExperimentSerializer {
         
         let inner = "<data-containers>\n\(containers)</data-containers>\n<input>\n\(input)</input>\n<views>\n\(views)</views>\n<export>\n\(export)</export>"
         
-        let outer = "<phyphox version=\"1.0\">\n<title>\(title)</title>\n<category>\(NSLocalizedString("categoryNewExperiment", comment: ""))</category>\n<description>A simple experiment.</description>\n\(inner)\n</phyphox>"
+        let outer = "<phyphox version=\"1.0\">\n<title>\(title)</title>\n<category>\(localize("categoryNewExperiment"))</category>\n<description>A simple experiment.</description>\n\(inner)\n</phyphox>"
         
         return outer
     }

@@ -69,7 +69,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         let saveButton = UIButton()
         saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButton.setTitle(NSLocalizedString("open_save_all", comment: ""), for: .normal)
+        saveButton.setTitle(localize("open_save_all"), for: .normal)
         saveButton.setTitleColor(UIColor.black, for: .normal)
         saveButton.addTarget(self, action: #selector(saveAll), for: .touchUpInside)
         dialogView.addSubview(saveButton)
@@ -81,7 +81,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle(NSLocalizedString("cancel", comment: ""), for: .normal)
+        cancelButton.setTitle(localize("cancel"), for: .normal)
         cancelButton.setTitleColor(UIColor.black, for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)

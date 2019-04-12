@@ -51,7 +51,7 @@ final class Experiment {
     
     var localizedCategory: String {
         if source?.path.hasPrefix(savedExperimentStatesURL.path) == true {
-            return NSLocalizedString("save_state_category", comment: "")
+            return localize("save_state_category")
         }
         return translation?.selectedTranslation?.categoryString ?? category
     }
@@ -196,9 +196,9 @@ final class Experiment {
             mainThread {
                 
                 if !quiet, let controller = presenter {
-                    let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
+                    let confirmation = UIAlertController(title: localize("save_locally"), message: localize("save_locally_done"), preferredStyle: .alert)
                     
-                    confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
                     controller.present(confirmation, animated: true, completion: nil)
                 }
             }

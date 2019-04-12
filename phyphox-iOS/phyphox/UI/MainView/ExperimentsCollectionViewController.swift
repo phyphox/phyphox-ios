@@ -44,35 +44,35 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
-        let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: localize("help"), message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .default, handler: infoPressed))
+        alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("experimentsPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("experimentsPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("experimentsPhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("faqPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("faqPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("faqPhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("remotePhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("translationInfo", comment: ""), style: .default, handler:{ _ in
-            let al = UIAlertController(title: NSLocalizedString("translationInfo", comment: ""), message: NSLocalizedString("translationText", comment: ""), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: localize("translationInfo"), style: .default, handler:{ _ in
+            let al = UIAlertController(title: localize("translationInfo"), message: localize("translationText"), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("translationToWebsite", comment: ""), style: .default, handler: { _ in
-                UIApplication.shared.openURL(URL(string: NSLocalizedString("translationToWebsiteURL", comment: ""))!)
+            al.addAction(UIAlertAction(title: localize("translationToWebsite"), style: .default, handler: { _ in
+                UIApplication.shared.openURL(URL(string: localize("translationToWebsiteURL"))!)
             }))
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
         }))
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = infoButton!
@@ -103,12 +103,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
         if (!defaults.bool(forKey: key)) {
-            let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .default, handler: { _ in
+            let alert = UIAlertController(title: localize("warning"), message: localize("damageWarning"), preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: localize("donotshowagain"), style: .default, handler: { _ in
                 defaults.set(true, forKey: key)
             }))
         
-            alert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+            alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
         
             navigationController!.present(alert, animated: true, completion: nil)
         }
@@ -117,7 +117,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private func showOpenSourceLicenses() {
         let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!), preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
         
         navigationController!.present(alert, animated: true, completion: nil)
     }
@@ -152,13 +152,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
     @objc func addExperiment() {
-        let alert = UIAlertController(title: NSLocalizedString("newExperiment", comment: ""), message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: localize("newExperiment"), message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentQR", comment: ""), style: .default, handler: launchScanner))
+        alert.addAction(UIAlertAction(title: localize("newExperimentQR"), style: .default, handler: launchScanner))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentSimple", comment: ""), style: .default, handler: createSimpleExperiment))
+        alert.addAction(UIAlertAction(title: localize("newExperimentSimple"), style: .default, handler: createSimpleExperiment))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.barButtonItem = addButton!
@@ -227,9 +227,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: localize("confirmDeleteTitle"), message: localize("confirmDelete"), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("delete") + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.shared.deleteExperiment(experiment)
             }
@@ -245,7 +245,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -258,11 +258,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
             self.showDeleteConfirmationForExperiment(experiment, button: button)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -339,15 +339,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let experiment = collections[indexPath.section].experiments[indexPath.row]
 
         if experiment.experiment.appleBan {
-            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
-             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
 
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
             present(controller, animated: true, completion: nil)
             
@@ -359,12 +359,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try sensor.verifySensorAvailibility()
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
-                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 
                 present(controller, animated: true, completion: nil)
                 
@@ -428,7 +428,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 experiments.append(file)
             }
             
-            let dialog = ExperimentPickerDialogView(title: NSLocalizedString("open_zip_title", comment: ""), message: NSLocalizedString("open_zip_dialog_instructions", comment: ""), experiments: files, delegate: self)
+            let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self)
             dialog.show(animated: true)
         }
     }
@@ -542,7 +542,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 message = String(describing: experimentLoadingError!)
             }
             let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             navigationController?.present(controller, animated: true, completion: nil)
             return false
         }
@@ -550,14 +550,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         guard let loadedExperiment = experiment else { return false }
         
         if loadedExperiment.appleBan {
-            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
-             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
             navigationController?.present(controller, animated: true, completion: nil)
             
@@ -569,12 +569,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try sensor.verifySensorAvailibility()
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
-                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 navigationController?.present(controller, animated: true, completion: nil)
                 return false
             }

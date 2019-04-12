@@ -728,9 +728,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     func setupToolbar() -> UITabBar {
         let graphTools = UITabBar()
         
-        let panZoomButton = UITabBarItem(title: NSLocalizedString("graph_tools_pan_and_zoom", comment: ""), image: UIImage(named: "pan_zoom"), tag: Mode.pan_zoom.rawValue)
-        let pickButton = UITabBarItem(title: NSLocalizedString("graph_tools_pick", comment: ""), image: UIImage(named: "pick"), tag: Mode.pick.rawValue)
-        let menuButton = UITabBarItem(title: NSLocalizedString("graph_tools_more", comment: ""), image: UIImage(named: "more"), tag: Mode.none.rawValue)
+        let panZoomButton = UITabBarItem(title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: Mode.pan_zoom.rawValue)
+        let pickButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: Mode.pick.rawValue)
+        let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: Mode.none.rawValue)
         graphTools.items = [panZoomButton, pickButton, menuButton]
         
         graphTools.shadowImage = UIImage()
@@ -794,21 +794,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         //returns [label, checked, action when clicked]
         var elements: [(String, Bool, () -> ())] = []
         
-        elements.append((NSLocalizedString("graph_tools_reset", comment: ""), false, resetZoom))
+        elements.append((localize("graph_tools_reset"), false, resetZoom))
         if (descriptor.partialUpdate) {
-            elements.append((NSLocalizedString("graph_tools_follow", comment: ""), zoomFollows, followNewData))
+            elements.append((localize("graph_tools_follow"), zoomFollows, followNewData))
         }
         if (!descriptor.logX && !descriptor.logY) {
             //TODO: Checkmark
-            elements.append((NSLocalizedString("graph_tools_linear_fit", comment: ""), false, linearFit))
+            elements.append((localize("graph_tools_linear_fit"), false, linearFit))
         }
-        elements.append((NSLocalizedString("graph_tools_export", comment: ""), false, exportGraphData))
+        elements.append((localize("graph_tools_export"), false, exportGraphData))
         if (descriptor.logX) {
             //TODO: Checkmark
-            elements.append((NSLocalizedString("graph_tools_log_x", comment: ""), false, resetZoom))
+            elements.append((localize("graph_tools_log_x"), false, resetZoom))
         }
         if (descriptor.logY) {
-            elements.append((NSLocalizedString("graph_tools_log_y", comment: ""), false, resetZoom))
+            elements.append((localize("graph_tools_log_y"), false, resetZoom))
         }
         
         return elements
@@ -818,7 +818,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     func showMenu() {
         
-        menuAlertController = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
+        menuAlertController = UIAlertController(title: localize("graph_tools_more"), message: nil, preferredStyle: .actionSheet)
         
         let tableView = FixedTableView()
         tableView.dataSource = self
@@ -829,7 +829,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         tableViewController.tableView = tableView
         menuAlertController?.setValue(tableViewController, forKey: "contentViewController")
         
-        menuAlertController?.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        menuAlertController?.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = menuAlertController?.popoverPresentationController {
             let interactionViews = graphTools!.subviews.filter({$0.isUserInteractionEnabled})

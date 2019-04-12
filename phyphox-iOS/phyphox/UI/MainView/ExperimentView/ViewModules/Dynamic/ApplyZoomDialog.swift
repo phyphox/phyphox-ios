@@ -22,11 +22,11 @@ enum ApplyZoomAction: Int {
     var description: String {
         switch self {
         case .reset:
-            return NSLocalizedString("applyZoomReset", comment: "")
+            return localize("applyZoomReset")
         case .keep:
-            return NSLocalizedString("applyZoomKeep", comment: "")
+            return localize("applyZoomKeep")
         case .follow:
-            return NSLocalizedString("applyZoomFollow", comment: "")
+            return localize("applyZoomFollow")
         default:
             return "None"
         }
@@ -43,13 +43,13 @@ enum ApplyZoomTarget: Int {
     var description: String {
         switch self {
         case .this:
-            return NSLocalizedString("applyZoomThis", comment: "")
+            return localize("applyZoomThis")
         case .sameVariable:
-            return NSLocalizedString("applyZoomSameVariable", comment: "")
+            return localize("applyZoomSameVariable")
         case .sameUnit:
-            return NSLocalizedString("applyZoomSameUnit", comment: "")
+            return localize("applyZoomSameUnit")
         case .sameAxis:
-            return NSLocalizedString("applyZoomSameAxis", comment: "")
+            return localize("applyZoomSameAxis")
         default:
             return "None"
         }
@@ -112,7 +112,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
                 }
             } else {
                 cell = UITableViewCell(style: .value1, reuseIdentifier: "")
-                cell.textLabel?.text = NSLocalizedString("applyZoomApply", comment: "")
+                cell.textLabel?.text = localize("applyZoomApply")
                 cell.detailTextLabel?.text = ApplyZoomTarget(rawValue: indexPath.section == 0 ? zoomTargetX.rawValue : zoomTargetY.rawValue)?.description
                 cell.accessoryType = .disclosureIndicator
             }
@@ -219,7 +219,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         
         let titleView = UILabel()
         titleView.translatesAutoresizingMaskIntoConstraints = false
-        titleView.text = NSLocalizedString("applyZoomTitle", comment: "")
+        titleView.text = localize("applyZoomTitle")
         titleView.font = UIFont.preferredFont(forTextStyle: .headline)
         dialogView.addSubview(titleView)
         
@@ -234,7 +234,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         
         let explView = UILabel()
         explView.translatesAutoresizingMaskIntoConstraints = false
-        explView.text = NSLocalizedString("applyZoomExplanation", comment: "")
+        explView.text = localize("applyZoomExplanation")
         explView.lineBreakMode = .byWordWrapping
         explView.numberOfLines = 0
         scrollContentView.addSubview(explView)
@@ -256,19 +256,19 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         
         let advancedSwitchLabel = UILabel()
         advancedSwitchLabel.translatesAutoresizingMaskIntoConstraints = false
-        advancedSwitchLabel.text = NSLocalizedString("applyZoomAdvanced", comment: "")
+        advancedSwitchLabel.text = localize("applyZoomAdvanced")
         dialogView.addSubview(advancedSwitchLabel)
         
         let okButton = UIButton()
         okButton.translatesAutoresizingMaskIntoConstraints = false
-        okButton.setTitle(NSLocalizedString("ok", comment: ""), for: .normal)
+        okButton.setTitle(localize("ok"), for: .normal)
         okButton.setTitleColor(UIColor.black, for: .normal)
         okButton.addTarget(self, action: #selector(confirmDialog), for: .touchUpInside)
         dialogView.addSubview(okButton)
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle(NSLocalizedString("cancel", comment: ""), for: .normal)
+        cancelButton.setTitle(localize("cancel"), for: .normal)
         cancelButton.setTitleColor(UIColor.black, for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)

@@ -23,7 +23,7 @@ class ExperimentCell: UICollectionViewCell {
                 if optionsButton == nil {
                     optionsButton = PTButton()
                     optionsButton!.setImage(generateDots(15.0), for: UIControlState())
-                    optionsButton!.accessibilityLabel = NSLocalizedString("actions", comment: "")
+                    optionsButton!.accessibilityLabel = localize("actions")
                     optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), for: .touchUpInside)
                     
                     optionsButton!.setTintColor(kHighlightColor, for: UIControlState())

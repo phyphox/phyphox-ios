@@ -179,6 +179,7 @@
 		C04FE6F522281E3800BD691C /* ApplyZoomDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04FE6F422281E3800BD691C /* ApplyZoomDialog.swift */; };
 		C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */; };
 		C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */; };
+		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
@@ -558,6 +559,7 @@
 		C075AA7C2232CC0600DE86D8 /* BEMCheckBox */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BEMCheckBox; path = ../External/BEMCheckBox; sourceTree = "<group>"; };
 		C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMCheckBoxGroup.m; sourceTree = "<group>"; };
 		C075AA7F2232CCF600DE86D8 /* BEMCheckBoxGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMCheckBoxGroup.h; sourceTree = "<group>"; };
+		C079BC692260D2B40018D6A5 /* localizationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = localizationHelper.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
@@ -755,6 +757,7 @@
 				6BFE374D2044718300301CA3 /* Experiments */,
 				6B7BF7AC1C130457007408FB /* Assets */,
 				6B0C71561C1C708F00500FEE /* Dependencies */,
+				C079BC692260D2B40018D6A5 /* localizationHelper.swift */,
 			);
 			path = phyphox;
 			sourceTree = "<group>";
@@ -1531,6 +1534,7 @@
 				6B7BF81F1C147CE0007408FB /* DifferentiationAnalysis.swift in Sources */,
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6BEA9457207FF8CE0077274A /* GraphViewElementHandler.swift in Sources */,
+				C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */,
 				6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */,
 				6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */,
 				6BEA9451207FE3D90077274A /* SeparatorViewElementHandler.swift in Sources */,
