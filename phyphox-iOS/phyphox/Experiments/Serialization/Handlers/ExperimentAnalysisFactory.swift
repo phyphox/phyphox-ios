@@ -72,7 +72,8 @@ final class ExperimentAnalysisFactory {
         "binning": BinningAnalysis.self,
         "if": IfAnalysis.self,
         "reduce": ReduceAnalysis.self,
-        "map": MapAnalysis.self
+        "map": MapAnalysis.self,
+        "formula": FormulaAnalysis.self
     ]
 
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {

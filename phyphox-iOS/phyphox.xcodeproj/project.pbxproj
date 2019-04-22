@@ -175,6 +175,7 @@
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		6BFE37C12049ABC800301CA3 /* BufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE37C02049ABC800301CA3 /* BufferTests.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
+		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C048ED1D21E3975200544E9A /* ExperimentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C048ED1C21E3975200544E9A /* ExperimentPickerView.swift */; };
 		C04FE6F522281E3800BD691C /* ApplyZoomDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04FE6F422281E3800BD691C /* ApplyZoomDialog.swift */; };
 		C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */; };
@@ -182,6 +183,7 @@
 		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
+		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
@@ -549,6 +551,7 @@
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
 		6BFE37C02049ABC800301CA3 /* BufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferTests.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
+		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
 		C031227E2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C031228D2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C031228E2260E01F005DFB5B /* el */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = el; path = el.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -576,6 +579,7 @@
 		C079BC692260D2B40018D6A5 /* localizationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = localizationHelper.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
+		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
@@ -1050,6 +1054,7 @@
 				6B00F0981C4463A300971941 /* ExperimentAnalysis.swift */,
 				6B00F0961C44176900971941 /* ExperimentAnalysisDataIO.swift */,
 				6B7BF7F71C1374A6007408FB /* ExperimentAnalysisModule.swift */,
+				C0914ED822688F1E00000A2F /* FormulaParser.swift */,
 				6BFE377920447C6D00301CA3 /* Modules */,
 			);
 			path = Analysis;
@@ -1085,6 +1090,7 @@
 				4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */,
 				C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */,
 				C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */,
+				C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -1476,6 +1482,7 @@
 				C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
 				6B0814E01CABEE3000EE2791 /* BEMCheckBox.m in Sources */,
+				C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */,
 				4BE1DEFB1E5096F400F10C71 /* SubrangeAnalysis.swift in Sources */,
 				C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
@@ -1549,6 +1556,7 @@
 				4B5568B51DD7D1F4000C033E /* ExperimentButtonView.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
+				C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */,
 				4B47B0311DA6A2F900CCBA6E /* Atan2Analysis.swift in Sources */,
 				6B6319651C48207D0038BE22 /* ExperimentViewModuleFactory.swift in Sources */,
 				6B7BF7F61C132722007408FB /* ExperimentSensorInput.swift in Sources */,
