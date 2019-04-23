@@ -1,0 +1,102 @@
+<phyphox version="1.4" locale="en">
+    <title>title</title>
+    <category>category</category>
+    <icon>icon</icon>
+    <description>description</description>
+    <link label="l0">http://test.test</link>
+    <data-containers>
+        <container>buffer</container>
+    </data-containers>
+    <translations>
+        <translation locale="de">
+            <title>titlede</title>
+            <category>categoryde</category>
+            <description>descriptionde</description>
+        </translation>
+   </translations>
+    <input>
+        <sensor type="linear_acceleration" rate="0">
+            <output component="abs">buffer</output>
+            <output component="t">buffer</output>
+            <output component="x">buffer</output>
+            <output component="y">buffer</output>
+            <output component="z">buffer</output>
+        </sensor>
+        <location>
+            <output component="lat">buffer</output>
+            <output component="lon">buffer</output>
+            <output component="z">buffer</output>
+            <output component="v">buffer</output>
+            <output component="dir">buffer</output>
+            <output component="accuracy">buffer</output>
+            <output component="zAccuracy">buffer</output>
+            <output component="t">buffer</output>
+            <output component="satellites">buffer</output>
+            <output component="status">buffer</output>
+        </location>
+        <audio>
+            <output>buffer</output>
+            <output component="rate">buffer</output>
+        </audio>
+    </input>
+    <output>
+        <audio>
+            <input>buffer</input>
+        </audio>
+    </output>
+    <views>
+        <view label="v1">
+            <edit label="l1">
+                <output>buffer</output>
+            </edit>
+            <value label="l2">
+                <input>buffer</input>
+            </value>
+            <button label="l3">
+                <input type="value">0</input>
+                <output>buffer</output>
+            </button>
+            <separator height="1"/>
+            <info label="l4"/>
+            <graph label="l6" labelX="l7" labelY="l8">
+                <input axis="x">buffer</input>
+                <input axis="y">buffer</input>
+            </graph>
+        </view>
+    </views>
+    <analysis>
+        <append>
+            <input>buffer</input>
+            <output>buffer</output>
+        </append>
+
+        <add>
+            <input>buffer</input>
+            <output>buffer</output>
+        </add>
+
+        <subtract>
+            <input>buffer</input>
+            <output>buffer</output>
+        </subtract>
+
+        <multiply>
+            <input>buffer</input>
+            <output>buffer</output>
+        </multiply>
+
+        <if>
+            <input clear="false">buffer</input>
+            <input type="value">0</input>
+            <input clear="false">buffer</input>
+            <input clear="false">buffer</input>
+            <output>buffer</output>
+        </if>
+
+    </analysis>
+    <export>
+        <set name="n1">
+            <data name="n2">buffer</data>
+        </set>
+    </export>
+</phyphox>
