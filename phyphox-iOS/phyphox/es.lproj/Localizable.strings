@@ -154,7 +154,7 @@
 "switch_to_raw_magnetometer" = "Cambiar a magnetómetro primario";
 "enableRemoteServer" = "Habilitar acceso remoto";
 "disableRemoteServer" = "Deshabilitar acceso remoto";
-"remoteServerActive" = "Acceso remoto habilitado. Accede a este experimento desde el siguiente enlace:\n%1$s";
+"remoteServerActive" = "Acceso remoto habilitado. Accede a este experimento desde el siguiente enlace:";
 "fontSize" = "Tamaño de la fuente";
 "categoryNewExperiment" = "Experimentos personales simples";
 "categoryRawSensor" = "Sensores primarios";
@@ -164,7 +164,7 @@
 "translationText" = "Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".";
 "remoteColorMapWarning" = "El espectro de color en la interfaz remota es sólo una aproximación. Al contrario del espectro en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x y y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.";
 "newExperimentBluetoothLoadFromDeviceInfo" = "Este dispositivo proporciona su propio experimento phyphox. Selecciona cargar desde dispositivo para abrirlo.";
-"newExperimentQRCodesMissing2" = "códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan:";
+"newExperimentQRCodesMissing2" = "códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan: ";
 "bluetooth" = "Bluetooth LE";
 "bt_pick_device" = "Por favor selecciona un dispositivo.";
 "bt_scanning_generic" = "Buscando dispositivos Bluetooth…";
