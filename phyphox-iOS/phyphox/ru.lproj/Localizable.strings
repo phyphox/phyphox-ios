@@ -155,7 +155,7 @@
 "newExperimentQRNoExperiment" = "Не удалось найти QR-код содержащий эксперимент от phyphox.";
 "newExperimentQRcrcMismatch" = "QR-код, который вы только что считали, похоже, не соответствует предыдущим кодам. Обязательно считывайте только коды принадлежащие одному эксперименту.";
 "newExperimentQRCodesMissing1" = "QR-код, который вы только что считали, является частью набора";
-"newExperimentQRCodesMissing2" = "коды. Продолжайте считывать оставшиеся коды. Коды все еще отсутствуют:";
+"newExperimentQRCodesMissing2" = "коды. Продолжайте считывать оставшиеся коды. Коды все еще отсутствуют: ";
 "newExperimentQRBadCRC" = "Неверная контрольная сумма. Это означает, что либо QR-код ошибочный, либо что-то пошло не так во время считывания.";
 "newExperimentBTReadErrorTitle" = "Ошибка эксперимента Bluetooth.";
 "newExperimentBTReadErrorCorrupted" = "Переданные данные эксперимента повреждены.";
@@ -198,5 +198,5 @@
 "bt_fail_reading" = "Операция чтения была безуспешной.";
 "bt_fail_writing" = "Операция записи была безуспешной.";
 "bt_more_info_link_text" = "Если ваше устройство не поддерживается, выберите «подробнее», чтобы узнать больше о поддержке Bluetooth Low Energy в phyphox на нашем веб-сайте.";
-"bt_more_info_link_button" = "Больше информации";
+"bt_more_info_link_button" = "Подробнее";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
