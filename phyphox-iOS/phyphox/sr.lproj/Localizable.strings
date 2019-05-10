@@ -99,7 +99,7 @@
 "pick_exportFormat" = "Izaberi format podataka.";
 "noDrawableData" = "Nema slikovnih podataka.";
 "categoryNewExperiment" = "Laki nasumični eksperimenti";
-"categoryRawSensor" = "Sirovi senzori";
+"categoryRawSensor" = "Senzori";
 "experimentinfo_hint" = "Pogledaj uputstvo za eksperiment kako bi ga izvršio.";
 "AudioRateMissmatch" = "Greška: Neusklađenost uzorkovanja. Molimo vas da onemogućite aplikacije ili servise (kao AirPlay) koji traže drugačije uzorkovanje.";
 "translationText" = "Phyhox će koristiti prvi mogući jezik iz liste omiljenih jezika u vašem sistemskom podešavanju. Da vidite koji jezici su mogući i kako možete pomoći, izaberite \"poseti vebsajt\".";
