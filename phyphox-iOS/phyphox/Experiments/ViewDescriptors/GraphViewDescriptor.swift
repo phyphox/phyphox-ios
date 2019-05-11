@@ -11,8 +11,10 @@ import Foundation
 struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private let xLabel: String
     private let yLabel: String
+    private let zLabel: String?
     private let xUnit: String?
     private let yUnit: String?
+    private let zUnit: String?
     
     private var legacyXLabel: String? = nil
     private var legacyXUnit: String? = nil
@@ -33,6 +35,10 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         return localizedYLabel + " (" + localizedYUnit + ")"
     }
     
+    var localizedZLabelWithUnit: String {
+        return localizedZLabel + " (" + localizedZUnit + ")"
+    }
+    
     var localizedXLabel: String {
         if legacyXLabel != nil {
             return legacyXLabel!
@@ -45,6 +51,10 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             return legacyYLabel!
         }
         return translation?.localize(yLabel) ?? yLabel
+    }
+    
+    var localizedZLabel: String {
+        return translation?.localize(zLabel ?? "") ?? zLabel ?? ""
     }
     
     var localizedXUnit: String {
@@ -61,11 +71,17 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localize(yUnit ?? "") ?? yUnit ?? ""
     }
     
+    var localizedZUnit: String {
+        return translation?.localize(zUnit ?? "") ?? zUnit ?? ""
+    }
+    
     let logX: Bool
     let logY: Bool
+    let logZ: Bool
     
     let xPrecision: UInt
     let yPrecision: UInt
+    let zPrecision: UInt
     
     enum ScaleMode: String, LosslessStringConvertible {
         case auto, extend, fixed
@@ -77,21 +93,25 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         case hbars
         case vbars
         case map
-        case mapZ
     }
     
     let minX: CGFloat
     let maxX: CGFloat
     let minY: CGFloat
     let maxY: CGFloat
+    let minZ: CGFloat
+    let maxZ: CGFloat
     
     let scaleMinX: ScaleMode
     let scaleMaxX: ScaleMode
     let scaleMinY: ScaleMode
     let scaleMaxY: ScaleMode
+    let scaleMinZ: ScaleMode
+    let scaleMaxZ: ScaleMode
     
     var xInputBuffers: [DataBuffer?]
     var yInputBuffers: [DataBuffer]
+    var zInputBuffers: [DataBuffer?]
     
     let aspectRatio: CGFloat
     let partialUpdate: Bool
@@ -101,14 +121,19 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let lineWidth: [CGFloat]
     let color: [UIColor]
 
+    let mapWidth: UInt
+    let colorMap: [UIColor]
+    
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, xUnit: String?, yUnit: String?, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], logX: Bool, logY: Bool, xPrecision: UInt, yPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor]) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: UInt, yPrecision: UInt, zPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor]) {
         self.xLabel = xLabel
         self.yLabel = yLabel
+        self.zLabel = zLabel
         self.xUnit = xUnit
         self.yUnit = yUnit
+        self.zUnit = zUnit
         
         //Parse units from old experiments, where the unit is part of the label
         if xUnit == nil {
@@ -139,22 +164,29 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         
         self.logX = logX
         self.logY = logY
+        self.logZ = logZ
         
         self.xPrecision = xPrecision
         self.yPrecision = yPrecision
+        self.zPrecision = zPrecision
         
         self.minX = minX
         self.maxX = maxX
         self.minY = minY
         self.maxY = maxY
+        self.minZ = minZ
+        self.maxZ = maxZ
         
         self.scaleMinX = scaleMinX
         self.scaleMaxX = scaleMaxX
         self.scaleMinY = scaleMinY
         self.scaleMaxY = scaleMaxY
+        self.scaleMinZ = scaleMinZ
+        self.scaleMaxZ = scaleMaxZ
         
         self.xInputBuffers = xInputBuffers
         self.yInputBuffers = yInputBuffers
+        self.zInputBuffers = zInputBuffers
         
         self.aspectRatio = aspectRatio
         self.partialUpdate = partialUpdate
@@ -164,6 +196,13 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         self.lineWidth = lineWidth
         self.color = color
 
+        self.mapWidth = mapWidth
+        if colorMap.count > 1 {
+            self.colorMap = colorMap
+        } else {
+            self.colorMap = [UIColor.black, kHighlightColor, UIColor.white]
+        }
+        
         self.label = label
         self.translation = translation
     }

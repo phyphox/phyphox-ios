@@ -132,7 +132,7 @@ final class GLRangedPointGraphView: GLKView {
 
         // Allocate buffer for vertex position data
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * maximumVertexCount, nil, GLenum(GL_DYNAMIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint2D<GLfloat>>.stride * maximumVertexCount, nil, GLenum(GL_DYNAMIC_DRAW))
 
         // Allocate and fill coordinate-indipendet buffers for triangulation and outline indices
         let startIndices: [GLuint] = [0, 1, 2,
@@ -169,24 +169,24 @@ final class GLRangedPointGraphView: GLKView {
         glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), MemoryLayout<GLuint>.stride * outlineIndices.count, outlineIndices, GLenum(GL_STATIC_DRAW))
     }
 
-    private func createVertices<S: Sequence>(from points: S) -> [GraphPoint<GLfloat>] where S.Element == RangedGraphPoint<GLfloat> {
-        let vertices: [GraphPoint<GLfloat>]
+    private func createVertices<S: Sequence>(from points: S) -> [GraphPoint2D<GLfloat>] where S.Element == RangedGraphPoint<GLfloat> {
+        let vertices: [GraphPoint2D<GLfloat>]
 
         if singlePointMode {
-            vertices = points.map { point -> GraphPoint<GLfloat> in
-                return GraphPoint(x: point.xRange.lowerBound, y: point.yRange.lowerBound)
+            vertices = points.map { point -> GraphPoint2D<GLfloat> in
+                return GraphPoint2D(x: point.xRange.lowerBound, y: point.yRange.lowerBound)
             }
         }
         else {
-            vertices = points.flatMap { point -> [GraphPoint<GLfloat>] in
+            vertices = points.flatMap { point -> [GraphPoint2D<GLfloat>] in
                 return [
-                    GraphPoint(x: point.xRange.lowerBound,
+                    GraphPoint2D(x: point.xRange.lowerBound,
                                y: point.yRange.upperBound),
-                    GraphPoint(x: point.xRange.lowerBound,
+                    GraphPoint2D(x: point.xRange.lowerBound,
                                y: point.yRange.lowerBound),
-                    GraphPoint(x: point.xRange.upperBound,
+                    GraphPoint2D(x: point.xRange.upperBound,
                                y: point.yRange.upperBound),
-                    GraphPoint(x: point.xRange.upperBound,
+                    GraphPoint2D(x: point.xRange.upperBound,
                                y: point.yRange.lowerBound)
                 ]
             }
@@ -195,33 +195,33 @@ final class GLRangedPointGraphView: GLKView {
         return vertices
     }
 
-    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
+    func appendPoints<S: Sequence>(_ points: S, replace: Int, min: GraphPoint2D<Double>, max: GraphPoint2D<Double>) where S.Element == RangedGraphPoint<GLfloat> {
         let vertices = createVertices(from: points)
 
         EAGLContext.setCurrent(context)
 
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
-        glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
+        glBufferSubData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GraphPoint2D<GLfloat>>.stride * (vertexCount - replace * 4), MemoryLayout<GraphPoint2D<GLfloat>>.stride * vertices.count, vertices)
 
         vertexCount = vertexCount - replace * 4 + vertices.count
 
         updateTransform(min: min, max: max)
     }
 
-    func setPoints<S: Sequence>(_ points: S, min: GraphPoint<Double>, max: GraphPoint<Double>) where S.Element == RangedGraphPoint<GLfloat> {
+    func setPoints<S: Sequence>(_ points: S, min: GraphPoint2D<Double>, max: GraphPoint2D<Double>) where S.Element == RangedGraphPoint<GLfloat> {
         let vertices = createVertices(from: points)
 
         EAGLContext.setCurrent(context)
 
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
-        glBufferSubData(GLenum(GL_ARRAY_BUFFER), 0, MemoryLayout<GraphPoint<GLfloat>>.stride * vertices.count, vertices)
+        glBufferSubData(GLenum(GL_ARRAY_BUFFER), 0, MemoryLayout<GraphPoint2D<GLfloat>>.stride * vertices.count, vertices)
 
         vertexCount = vertices.count
 
         updateTransform(min: min, max: max)
     }
 
-    private func updateTransform(min: GraphPoint<Double>, max: GraphPoint<Double>) {
+    private func updateTransform(min: GraphPoint2D<Double>, max: GraphPoint2D<Double>) {
         let dataPerPointX = GLfloat((max.x - min.x) / Double(pointSize.width))
         let biasDataX = lineWidth * dataPerPointX
 

@@ -14,10 +14,6 @@ public func localize(_ key: String) -> String {
     let fallbackBundle = Bundle.main.path(forResource: fallback, ofType: "lproj")
     let fallbackString = fallbackBundle != nil ? Bundle(path: fallbackBundle!)?.localizedString(forKey: key, value: key, table: nil) : nil
     
-    if (key == "graph_tools_pick") {
-        print (fallbackString)
-    }
-    
     return Bundle.main.localizedString(forKey: key, value: fallbackString, table: nil)
     
 }

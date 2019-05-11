@@ -184,6 +184,9 @@
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
+		C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C0984B292278838C00D0EBCD /* MapVertexShader.glsl */; };
+		C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C0984B2B227883B100D0EBCD /* MapFragmentShader.glsl */; };
+		C0984B2E2278870300D0EBCD /* GLMapShaderProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
@@ -580,6 +583,9 @@
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
+		C0984B292278838C00D0EBCD /* MapVertexShader.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = MapVertexShader.glsl; sourceTree = "<group>"; };
+		C0984B2B227883B100D0EBCD /* MapFragmentShader.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = MapFragmentShader.glsl; sourceTree = "<group>"; };
+		C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMapShaderProgram.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
@@ -902,10 +908,13 @@
 				6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */,
 				6B94A6201CA015A4008D9ACF /* GLGraphView.swift */,
 				6B6A4C1F2056A367007586D0 /* GLGraphShaderProgram.swift */,
+				C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */,
 				6B53D82920517E410090F57C /* GLRangedPointGraphView.swift */,
 				6BFE376A20447B3B00301CA3 /* Grid */,
 				6BE320951CB06F7200DCC1ED /* VertexShader.glsl */,
 				6BE320971CB11A7200DCC1ED /* FragmentShader.glsl */,
+				C0984B292278838C00D0EBCD /* MapVertexShader.glsl */,
+				C0984B2B227883B100D0EBCD /* MapFragmentShader.glsl */,
 			);
 			path = Graph;
 			sourceTree = "<group>";
@@ -1401,6 +1410,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
+				C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */,
+				C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
 				6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */,
 				6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */,
@@ -1498,6 +1509,7 @@
 				4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */,
 				6B0814E11CABEE3000EE2791 /* BEMPathManager.m in Sources */,
 				6B9E3DA0205296E0008073D5 /* ExperimentViewModuleTableViewCell.swift in Sources */,
+				C0984B2E2278870300D0EBCD /* GLMapShaderProgram.swift in Sources */,
 				6B7BF8091C146FC9007408FB /* ABSAnalysis.swift in Sources */,
 				6BE3209F1CB19E0300DCC1ED /* CreatePresentationController.swift in Sources */,
 				4B3E495E1CF7716D00C43837 /* MatchAnalysis.swift in Sources */,

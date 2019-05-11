@@ -17,6 +17,8 @@ final class GraphGridView: UIView {
     weak var delegate: GraphGridDelegate?
     var descriptor: GraphViewDescriptor? = nil
     
+    var isZScale: Bool = false
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -48,13 +50,14 @@ final class GraphGridView: UIView {
         return bounds.insetBy(dx: gridInset.x + gridLabelSpace.x/2.0, dy: gridInset.y + gridLabelSpace.y/2.0).offsetBy(dx: gridOffset.x+gridLabelSpace.x/2.0, dy: gridOffset.y - gridLabelSpace.y/2.0)
     }
     
-    convenience init(descriptor: GraphViewDescriptor?) {
+    convenience init(descriptor: GraphViewDescriptor?, isZScale: Bool) {
         self.init(frame: .zero)
         self.descriptor = descriptor
+        self.isZScale = isZScale
     }
     
     required convenience init?(coder aDecoder: NSCoder) {
-        self.init(descriptor: nil)
+        self.init(descriptor: nil, isZScale: false)
     }
     
     var grid: GraphGrid? {
@@ -133,7 +136,7 @@ final class GraphGridView: UIView {
         
         let formatterX = NumberFormatter()
         formatterX.usesSignificantDigits = true
-        formatterX.minimumSignificantDigits = Int(descriptor?.xPrecision ?? 3)
+        formatterX.minimumSignificantDigits = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? 3)
         
         let formatterY = NumberFormatter()
         formatterY.usesSignificantDigits = true
@@ -155,7 +158,8 @@ final class GraphGridView: UIView {
         var index = 0
 
         if let grid = grid {
-            for line in grid.xGridLines {
+            let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
+            for line in horizontalGridLines {
                 let label = labels[index]
                 label.textColor = kTextColor
 
@@ -167,16 +171,18 @@ final class GraphGridView: UIView {
                 index += 1
             }
 
-            for line in grid.yGridLines {
-                let label = labels[index]
-                label.textColor = kTextColor
+            if !isZScale {
+                for line in grid.yGridLines {
+                    let label = labels[index]
+                    label.textColor = kTextColor
 
-                label.text = format(line.absoluteValue, formatter: formatterY)
-                label.sizeToFit()
+                    label.text = format(line.absoluteValue, formatter: formatterY)
+                    label.sizeToFit()
 
-                xSpace = max(xSpace, label.frame.size.width)
+                    xSpace = max(xSpace, label.frame.size.width)
 
-                index += 1
+                    index += 1
+                }
             }
         }
 
@@ -189,7 +195,9 @@ final class GraphGridView: UIView {
 
             let smallestUnit = 1.0/UIScreen.main.scale
 
-            for line in grid.xGridLines {
+            let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
+            
+            for line in horizontalGridLines {
                 let view = lineViews[index]
 
                 view.horizontal = false
@@ -209,24 +217,26 @@ final class GraphGridView: UIView {
                 index += 1
             }
 
-            for line in grid.yGridLines {
-                let view = lineViews[index]
+            if !isZScale {
+                for line in grid.yGridLines {
+                    let view = lineViews[index]
 
-                view.horizontal = true
+                    view.horizontal = true
 
-                let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
+                    let origin = insetRect.size.height-insetRect.size.height*line.relativeValue
 
-                if !origin.isFinite {
-                    view.isHidden = true
-                    continue
+                    if !origin.isFinite {
+                        view.isHidden = true
+                        continue
+                    }
+
+                    view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
+
+                    let label = labels[index]
+                    label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
+
+                    index += 1
                 }
-
-                view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
-
-                let label = labels[index]
-                label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
-
-                index += 1
             }
         }
     }

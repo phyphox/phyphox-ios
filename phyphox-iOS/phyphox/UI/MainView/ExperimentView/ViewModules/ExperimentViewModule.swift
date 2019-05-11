@@ -70,7 +70,7 @@ extension ResizableViewModule {
 }
 
 protocol ApplyZoomDelegate {
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>)
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>)
 }
 
 protocol ZoomableViewModule : AnyObject, ApplyZoomDelegate {
