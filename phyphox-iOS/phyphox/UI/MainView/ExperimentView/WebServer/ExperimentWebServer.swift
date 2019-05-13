@@ -213,7 +213,11 @@ final class ExperimentWebServer {
                     }
                     else {
                         let extraComponents = value.components(separatedBy: "|")
-                        let threshold = (Double(extraComponents.first!) ?? -Double.infinity)+1e-8
+                        let thresholdGiven = (Double(extraComponents.first!) ?? -Double.infinity)
+                        
+                        //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+                        //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+                        let threshold = thresholdGiven.isFinite ? thresholdGiven + pow(10.0, floor(log10(thresholdGiven/1e7))) : -Double.infinity
                         
                         var final: [Double] = []
                         

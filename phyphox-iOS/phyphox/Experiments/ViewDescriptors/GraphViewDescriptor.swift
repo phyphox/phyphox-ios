@@ -22,21 +22,33 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private var legacyYUnit: String? = nil
     
     var localizedXLabelWithUnit: String {
-        if legacyXLabel != nil && legacyXUnit != nil {
-            return legacyXLabel!  + " (" + legacyXUnit! + ")"
+        let label = legacyXLabel ?? localizedXLabel
+        let unit = legacyXUnit ?? localizedXUnit
+        if unit != "" {
+            return label + " (" + unit + ")"
+        } else {
+            return label
         }
-        return localizedXLabel + " (" + localizedXUnit + ")"
     }
     
     var localizedYLabelWithUnit: String {
-        if legacyYLabel != nil && legacyYUnit != nil {
-            return legacyYLabel!  + " (" + legacyYUnit! + ")"
+        let label = legacyYLabel ?? localizedYLabel
+        let unit = legacyYUnit ?? localizedYUnit
+        if unit != "" {
+            return label + " (" + unit + ")"
+        } else {
+            return label
         }
-        return localizedYLabel + " (" + localizedYUnit + ")"
     }
     
     var localizedZLabelWithUnit: String {
-        return localizedZLabel + " (" + localizedZUnit + ")"
+        let label = localizedZLabel
+        let unit = localizedZUnit
+        if unit != "" {
+            return label + " (" + unit + ")"
+        } else {
+            return label
+        }
     }
     
     var localizedXLabel: String {
@@ -93,6 +105,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         case hbars
         case vbars
         case map
+        case mapZ //This is only used in the remote interface to identify the third buffer for z data as the remote interface treats all axes in pairs of two
     }
     
     let minX: CGFloat
@@ -208,61 +221,313 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: \(100.0/aspectRatio)%\"></div><div class=\"graph\"></div></div></div>"
+        let warningText = localize("remoteColorMapWarning").replacingOccurrences(of: "\"", with: "\\\"")
+        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\" onclick=\"toggleExclusive(\(id));\">\(localizedLabel)</span>\(style[0] == .map ? "<div class=\"warningIcon\" onclick=\"alert('\(warningText)')\"></div>" : "")<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: \(100.0/aspectRatio)%\"></div><div class=\"graph\"><canvas></canvas></div></div></div>"
     }
     
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
-        let transformX: String
-        let transformY: String
+        var rescale = ""
+        var scaleX = ""
+        if scaleMinX == .fixed && minX.isFinite {
+            scaleX += "\"min\":\(minX), "
+        } else {
+            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = minX;"
+        }
+        if scaleMaxX == .fixed && maxX.isFinite {
+            scaleX += "\"max\":\(maxX), "
+        } else {
+            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"
+        }
+        var scaleY = ""
+        if scaleMinY == .fixed && minY.isFinite {
+            scaleY += "\"min\":\(minY), "
+        } else {
+            rescale += "elementData[\(id)][\"graph\"].options.scales.yAxes[0].ticks.min = minY;"
+        }
+        if scaleMaxY == .fixed && maxY.isFinite {
+            scaleY += "\"max\":\(maxY), "
+        } else {
+            rescale += "elementData[\(id)][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;"
+        }
         
-        if logX {
-            transformX = "ticks: [0.1,1,10,100,1000,10000], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, "
+        var scaleZ = ""
+        var colorScale = "["
+        if style[0] == .map {
+            if scaleMinZ == .fixed && minZ.isFinite {
+                scaleZ += "minZ = \(minZ);"
+            }
+            if scaleMaxZ == .fixed && maxZ.isFinite {
+                scaleZ += "maxZ = \(maxZ);"
+            }
+            scaleZ += "elementData[\(id)][\"graph\"].logZ = \(logZ ? "true" : "false");";
+            scaleZ += "elementData[\(id)][\"graph\"].minZ = minZ;";
+            scaleZ += "elementData[\(id)][\"graph\"].maxZ = maxZ;";
+            
+            colorScale += colorMap.map{"\($0.rgbHex)"}.joined(separator: ",")
         }
-        else {
-            transformX = "\"ticks\": 3, "
-        }
+        colorScale += "]";
         
-        if logY {
-            transformY = "ticks: [0.01,0.1,1,10], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, "
-        }
-        else {
-            transformY = "\"ticks\": 3, "
-        }
+        let type = (style[0] == .map ? "colormap" : "scatter");
         
-        var scaleX: String = ""
-        if scaleMinX == GraphViewDescriptor.ScaleMode.fixed && minX.isFinite {
-            scaleX += "\"min\": " + String(describing: minX) + ", "
+        var styleDetection = "switch (i/2) {";
+        var graphSetup = "[";
+        for i in 0..<yInputBuffers.count {
+            graphSetup += ("{" +
+            "type: \"\(type)\"," +
+                "showLine: \(style[i] == .dots || style[i] == .map ? "false" : "true")," +
+                    "fill: \(style[i] == .vbars || style[i] == .hbars ? "\"origin\"" : "false")," +
+                    "pointRadius: \(style[i] == .dots ? 2.0*lineWidth[i] : 0)*scaleFactor," +
+                        "pointHitRadius: \(4.0*lineWidth[i])*scaleFactor," +
+                            "pointHoverRadius: \(4.0*lineWidth[i])*scaleFactor," +
+                                "lineTension: 0," +
+                                "borderCapStyle: \"butt\"," +
+                                "borderJoinStyle: \"round\"," +
+                                "spanGaps: false," +
+                                "borderColor: \"#\(color[i].hexStringValue!)\"," +
+                                "backgroundColor: \"#\(color[i].hexStringValue!)\"," +
+                                "borderWidth: \(style[i] == .vbars || style[i] == .hbars ? 0.0 : lineWidth[i])*scaleFactor," +
+                                "xAxisID: \"xaxis\"," +
+                                "yAxisID: \"yaxis\"" +
+            "},")
+            
+            styleDetection += "case \(i): type = \"\(style[i])\"; lineWidth = \(lineWidth[i])*scaleFactor; break;"
         }
-        if scaleMaxX == GraphViewDescriptor.ScaleMode.fixed && maxX.isFinite {
-            scaleX += "\"max\": " + String(describing: maxX) + ", "
+        if zInputBuffers.count > 0 && zInputBuffers[0] != nil {
+            graphSetup += ("{" +
+                "type: \"\(type)\"," +
+                "showLine: false," +
+                "fill: false," +
+                "pointRadius: 0," +
+                "pointHitRadius: \(4.0*lineWidth[0])*scaleFactor," +
+                "pointHoverRadius: \(4.0*lineWidth[0])*scaleFactor," +
+                "lineTension: 0," +
+                "borderCapStyle: \"butt\"," +
+                "borderJoinStyle: \"round\"," +
+                "spanGaps: false," +
+                "borderColor: \"#\(color[0].hexStringValue!)\"," +
+                "backgroundColor: \"#\(color[0].hexStringValue!)\"," +
+                "borderWidth: \(lineWidth[0])*scaleFactor," +
+                "xAxisID: \"xaxis\"," +
+                "yAxisID: \"yaxis\"" +
+                "},")
+            
+            styleDetection += "case 1: type = \"\(GraphStyle.mapZ)\"; lineWidth = 1.0*scaleFactor; break;"
         }
-        var scaleY: String = ""
-        if scaleMinY == GraphViewDescriptor.ScaleMode.fixed && minY.isFinite {
-            scaleY += "\"min\": " + String(describing: minY) + ", "
-        }
-        if scaleMaxY == GraphViewDescriptor.ScaleMode.fixed && maxY.isFinite {
-            scaleY += "\"max\": " + String(describing: maxY) + ", "
-        }
+        styleDetection += "}"
+        graphSetup += "],"
+        
+        let gridColor = UIColor(white: 0.6, alpha: 1.0).hexStringValue!
         
         return "function () {" +
-            "var d = [];" +
-            "if (!elementData[\(id)].hasOwnProperty(\"y\"))return;" +
-            "if (!elementData[\(id)].hasOwnProperty(\"x\") || elementData[\(id)][\"x\"].length == 0) {" +
-            "elementData[\(id)][\"x\"] = [];" +
-            "for (i = 0; i < elementData[\(id)][\"y\"].length; i++)" +
-            "elementData[\(id)][\"x\"][i] = i" +
+            "if (elementData[\(id)][\"datasets\"].length < 1)" +
+            "   return;" +
+            "var changed = false;" +
+            "for (var i = 0; i < elementData[\(id)][\"datasets\"].length; i++) {" +
+            "   if (elementData[\(id)][\"datasets\"][i][\"changed\"])" +
+            "       changed = true;" +
             "}" +
-            "for (i = 0; i < elementData[\(id)][\"y\"].length && i < elementData[\(id)][\"x\"].length; i++)" +
-            "d[i] = [elementData[\(id)][\"x\"][i], elementData[\(id)][\"y\"][i]];" +
-            //TODO For now we have just inserted the index 0 for multiple lines. This has to be converted to the new plotting library anyway.
-            "$.plot(\"#element\(id) .graph\", [{ \"color\": \"#\(color[0].hexStringValue!)\" , \"data\": d }], {\"lines\": {\"show\":\(style[0] == .dots ? "false" : "true"), \"lineWidth\":\(2.0*lineWidth[0])}, \"points\": {\"show\":\(style[0] == .dots ? "true" : "false")}, \"xaxis\": {\(scaleX) \(transformX)\"axisLabel\": \"\(localizedXLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"yaxis\": {\(scaleY) \(transformY)\"axisLabel\": \"\(localizedYLabelWithUnit)\", \"tickColor\": \"#\(UIColor(white: 0.6, alpha: 1.0).hexStringValue!)\"}, \"grid\": {\"borderColor\": \"#\(kTextColor.hexStringValue!)\", \"backgroundColor\": \"#\(kBackgroundColor.hexStringValue!)\"}});}"
+            "if (!changed)" +
+            "   return;" +
+            "var d = [];" +
+            "var minX = Number.POSITIVE_INFINITY; " +
+            "var maxX = Number.NEGATIVE_INFINITY; " +
+            "var minY = Number.POSITIVE_INFINITY; " +
+            "var maxY = Number.NEGATIVE_INFINITY; " +
+            "var minZ = Number.POSITIVE_INFINITY; " +
+            "var maxZ = Number.NEGATIVE_INFINITY; " +
+            "for (var i = 0; i < elementData[\(id)][\"datasets\"].length; i+=2) {" +
+            "   d[i/2] = [];" +
+            "   var xIndexed = ((i+1 >= elementData[\(id)][\"datasets\"].length) || elementData[\(id)][\"datasets\"][i+1][\"data\"].length == 0);" +
+            "   var type;" +
+            "   var lineWidth;" +
+                styleDetection +
+            "   if (type == \"\(GraphStyle.mapZ)\" || (type == \"\(GraphStyle.map)\" && elementData[\(id)][\"datasets\"].length < i+2)) {" +
+            "       continue;" +
+            "   }" +
+            "   var lastX = false;" +
+            "   var lastY = false;" +
+            "   var nElements = elementData[\(id)][\"datasets\"][i][\"data\"].length;" +
+            "   if (!xIndexed)" +
+            "       nElements = Math.min(nElements, elementData[\(id)][\"datasets\"][i+1][\"data\"].length);" +
+            "   if (type == \"\(GraphStyle.map)\")" +
+            "       nElements = Math.min(nElements, elementData[\(id)][\"datasets\"][i+2][\"data\"].length);" +
+            "   for (j = 0; j < nElements; j++) {" +
+            "       var x = xIndexed ? j : elementData[\(id)][\"datasets\"][i+1][\"data\"][j];" +
+            "       var y = elementData[\(id)][\"datasets\"][i][\"data\"][j];" +
+            "       if (x < minX)" +
+            "           minX = x;" +
+            "       if (x > maxX)" +
+            "           maxX = x;" +
+            "       if (y < minY)" +
+            "           minY = y;" +
+            "       if (y > maxY)" +
+            "           maxY = y;" +
+            "       if (type == \"\(GraphStyle.vbars)\") {" +
+            "           if (lastX !== false && lastY !== false) {" +
+            "               var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
+            "               d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
+            "               d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
+            "               d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+            "           }" +
+            "       } else if (type == \"\(GraphStyle.hbars)\") {" +
+            "           if (lastX !== false && lastY !== false) {" +
+            "               var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
+            "               d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
+            "               d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
+            "               d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+            "           }" +
+            "       } else if (type == \"\(GraphStyle.map)\") {" +
+            "           var z = elementData[\(id)][\"datasets\"][i+2][\"data\"][j];" +
+            "           if (z < minZ)" +
+            "               minZ = z;" +
+            "           if (z > maxZ)" +
+            "               maxZ = z;" +
+            "           d[i/2][j] = {x: x, y: y, z: z};" +
+            "       } else {" +
+            "           d[i/2][j] = {x: x, y: y};" +
+            "       }" +
+            "       lastX = x;" +
+            "       lastY = y;" +
+            "   }" +
+            
+            "}" +
+            "if (minX > maxX) {" +
+            "   minX = 0;" +
+            "   maxX = 1;" +
+            "}" +
+            "if (minY > maxY) {" +
+            "   minY = 0;" +
+            "   maxY = 1;" +
+            "}" +
+            "if (minZ > maxZ) {" +
+            "   minZ = 0;" +
+            "   maxZ = 1;" +
+            "}" +
+            
+            "if (!elementData[\(id)][\"graph\"]) {" +
+            "   var ctx = document.getElementById(\"element\(id)\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
+            "   elementData[\(id)][\"graph\"] = new Chart(ctx, {" +
+            "   type: \"" + type + "\"," +
+            "   mapwidth: \(mapWidth)," +
+            "   colorscale: \(colorScale)," +
+            "   data: {datasets: " +
+                    graphSetup +
+            "   }," +
+            "   options: {" +
+            "      responsive: true, " +
+            "       maintainAspectRatio: false, " +
+            "       animation: false," +
+            "       legend: false," +
+            "       tooltips: {" +
+            "           titleFontSize: 15*scaleFactor," +
+            "           bodyFontSize: 15*scaleFactor," +
+            "           mode: \"nearest\"," +
+            "           intersect: \(style[0] == GraphStyle.map ? "false" : "true")," +
+            "           callbacks: {" +
+            "               title: function() {}," +
+            "               label: function(tooltipItem, data) {" +
+            "                   var lines = [];" +
+            "                   lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].x + \"\(localizedXUnit)\");" +
+            "                   lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y + \"\(localizedYUnit)\");" +
+                                (style[0] == GraphStyle.map ? "lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].z + \"\(localizedZUnit)\");" : "") +
+            "                   return lines;" +
+            "               }" +
+            "           }" +
+            "       }," +
+                "   hover: {" +
+                "       mode: \"nearest\"," +
+                "       intersect: \(style[0] == GraphStyle.map ? "false" : "true")," +
+                "   }, " +
+                "   scales: {" +
+                "       xAxes: [{" +
+                "           id: \"xaxis\"," +
+                "           type: \"\(logX && !(style[0] == GraphStyle.map) ? "logarithmic" : "linear")\"," +
+                "           position: \"bottom\"," +
+                "           gridLines: {" +
+                "               color: \"#\(gridColor)\"," +
+                "               zeroLineColor: \"#\(gridColor)\"," +
+                "               tickMarkLength: 0," +
+                "           }," +
+                "           scaleLabel: {" +
+                "               display: true," +
+                "               labelString: \"\(localizedXLabelWithUnit)\"," +
+                "               fontColor: \"#ffffff\"," +
+                "               fontSize: 15*scaleFactor," +
+                "               padding: 0, " +
+                "           }," +
+                "           ticks: {" +
+                "               fontColor: \"#ffffff\"," +
+                "               fontSize: 15*scaleFactor," +
+                "               padding: 3*scaleFactor, " +
+                "               autoSkip: true," +
+                "               maxTicksLimit: 10," +
+                "               maxRotation: 0," +
+                                scaleX +
+                "           }," +
+                "           afterBuildTicks: filterEdgeTicks" +
+                "       }]," +
+                "       yAxes: [{" +
+                "           id: \"yaxis\"," +
+                "           type: \"\(logX && !(style[0] == GraphStyle.map) ? "logarithmic" : "linear")\"," +
+                "           position: \"bottom\"," +
+                "           gridLines: {" +
+                "               color: \"#"+gridColor+"\"," +
+                "               zeroLineColor: \"#"+gridColor+"\"," +
+                "               tickMarkLength: 0," +
+                "           }," +
+                "           scaleLabel: {" +
+                "               display: true," +
+                "               labelString: \"\(localizedYLabelWithUnit)\"," +
+                "               fontColor: \"#ffffff\"," +
+                "               fontSize: 15*scaleFactor," +
+                "               padding: 3*scaleFactor, " +
+                "           }," +
+                "           ticks: {" +
+                "               fontColor: \"#ffffff\"," +
+                "               fontSize: 15*scaleFactor," +
+                "               padding: 3*scaleFactor, " +
+                "               autoSkip: true," +
+                "               maxTicksLimit: 7," +
+                                scaleY +
+                "           }," +
+                "           afterBuildTicks: filterEdgeTicks" +
+                "       }]," +
+                "   }" +
+                "}" +
+            "});" +
+            "}" +
+            "for (var i = 0; i < elementData[\(id)][\"datasets\"].length; i+=2) {" +
+            "   elementData[\(id)][\"graph\"].data.datasets[i/2].data = d[i/2];" +
+            "}" +
+            scaleZ +
+            rescale +
+            "elementData[\(id)][\"graph\"].update();" +
+        "}";
     }
     
-    func setDataXHTMLWithID(_ id: Int) -> String {
-        return "function (x) { elementData[\(id)][\"x\"] = x }"
+    func setDataHTMLWithID(_ id: Int) -> String {
+        var code = "function (data) {"
+        code +=    "     elementData[\(id)][\"datasets\"] = [];"
+        var inputs: [DataBuffer?] = []
+        if (style[0] == .map) {
+            inputs = [yInputBuffers[0], xInputBuffers[0], zInputBuffers[0], nil]
+        } else {
+            for i in 0..<yInputBuffers.count {
+                inputs.append(yInputBuffers[i])
+                inputs.append(xInputBuffers[i])
+            }
+        }
+        for (i, input) in inputs.enumerated() {
+            if let input = input {
+                let bufferName = input.name.replacingOccurrences(of: "\"", with: "\\\"")
+                code += "if (!data.hasOwnProperty(\"\(bufferName)\"))"
+                code += "    return;"
+                code += "elementData[\(id)][\"datasets\"][\(i)] = data[\"\(bufferName)\"];"
+            }
+        }
+        code += "}"
+        
+        return code
     }
     
-    func setDataYHTMLWithID(_ id: Int) -> String {
-        return "function (y) { elementData[\(id)][\"y\"] = y }"
-    }
 }

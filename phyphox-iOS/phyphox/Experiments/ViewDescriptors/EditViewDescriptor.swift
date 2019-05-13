@@ -65,11 +65,19 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
             restrictions += "step=\"1\" "
         }
         
-        return "<div style=\"font-size: 105%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"$.getJSON('control?cmd=set&buffer=\(buffer.name)&value='+$(this).val()/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
+        return "<div style=\"font-size: 105%;\" class=\"editElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
     }
 
-    func setValueHTMLWithID(_ id: Int) -> String {
-        return "function (x) { if (!$(\"#element\(id) .value\").is(':focus')) $(\"#element\(id) .value\").val((x*\(factor))) }"
+    func setDataHTMLWithID(_ id: Int) -> String {
+        let bufferName = buffer.name.replacingOccurrences(of: "\"", with: "\\\"")
+        return "function (data) {" +
+            "var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
+            "if (!data.hasOwnProperty(\"\(bufferName)\"))" +
+            "    return;" +
+            "var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
+            "if (valueElement !== document.activeElement)" +
+            "   valueElement.value = (x*\(factor))" +
+        "}"
     }
 }
 

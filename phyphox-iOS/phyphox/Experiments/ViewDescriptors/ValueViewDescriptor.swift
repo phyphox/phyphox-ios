@@ -53,11 +53,11 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%;\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
+        return "<div style=\"font-size:105%;color:#\(color.hexStringValue!)\" class=\"valueElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
     }
     
-    func setValueHTMLWithID(_ id: Int) -> String {
-        //TODO: Color
+    func setDataHTMLWithID(_ id: Int) -> String {
+        let bufferName = buffer.name.replacingOccurrences(of: "\"", with: "\\\"")
         var mappingCode = "if (isNaN(x) || x == null) { v = \"-\" }"
         for mapping in mappings {
             let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;") // addingPercentEncoding() !???
@@ -75,16 +75,22 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                 mappingCode += "else if (true) {v = \"\(str)\";}"
             }
         }
-        return "function (x) {" +
+        return "function (data) {" +
+               "    if (!data.hasOwnProperty(\"\(bufferName)\"))" +
+               "        return;" +
+               "    var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
                "    var v = null;" +
                mappingCode +
+               "    var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
+               "     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];" +
+               "     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];" +
                "    if (v == null) {" +
                "        v = (x*\(factor)).to\(scientific ? "Exponential" : "Fixed")(\(precision));" +
-               "        $(\"#element\(id) .value .valueUnit\").text(\"\(localizedUnit ?? "")\");" +
+               "        valueUnit.textContent = \"\(localizedUnit ?? "")\";" +
                "    } else { " +
-               "        $(\"#element\(id) .value .valueUnit\").text(\"\");" +
+               "        valueUnit.textContent = \"\";" +
                "    } " +
-               "    $(\"#element\(id) .value .valueNumber\").text(v);" +
+               "    valueNumber.textContent = v;" +
                "}"
     }
 }
