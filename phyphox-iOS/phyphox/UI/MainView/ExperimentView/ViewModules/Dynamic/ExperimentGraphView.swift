@@ -969,13 +969,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i]))
         }
         
-        if !logX && !xMinStrict && !xMaxStrict {
+        if !logX && !xMinStrict && !xMaxStrict && !hasZData {
             let extraX = (maxX-minX)*0.05;
             maxX += extraX
             minX -= extraX
         }
         
-        if !logY && !yMinStrict && !yMaxStrict {
+        if !logY && !yMinStrict && !yMaxStrict && !hasZData {
             let extraY = (maxY-minY)*0.05;
             maxY += extraY
             minY -= extraY
