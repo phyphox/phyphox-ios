@@ -49,9 +49,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private let glGraph: GLGraphView
     private let gridView: GraphGridView
+    private let markerOverlayView: MarkerOverlayView
+    
     private let glZScale: GLGraphView?
     private let zGridView: GraphGridView?
-    let hasZScale: Bool
+    let hasZData: Bool
     let zScaleHeight: CGFloat = 40
     
     private var zoomMin: GraphPoint3D<Double>?
@@ -62,6 +64,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
     var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
     var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    
+    var markers: [(set: Int, index: Int)] = [] {
+        didSet {
+            refreshMarkers()
+        }
+    }
+    var markerLabel: UILabel? = nil
+    var markerLabelFrame: UIView? = nil
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
@@ -147,13 +157,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.mapWidth = descriptor.mapWidth
         glGraph.colorMap = descriptor.colorMap
         
-        hasZScale = glGraph.style[0] == .map
+        hasZData = glGraph.style[0] == .map
         
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
         gridView.gridOffset = CGPoint(x: 0.0, y: 0)
         
-        if hasZScale {
+        markerOverlayView = MarkerOverlayView()
+        markerOverlayView.clipsToBounds = true
+        
+        if hasZData {
             glZScale = GLGraphView()
             glZScale?.style = descriptor.style
             glZScale?.mapWidth = 2
@@ -198,7 +211,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
         
-        if hasZScale {
+        if hasZData {
             zLabel = makeLabel(descriptor.localizedZLabelWithUnit)
             zLabel?.textColor = kTextColor
         } else {
@@ -212,6 +225,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         gridView.isUserInteractionEnabled = false
         zGridView?.isUserInteractionEnabled = false
+        markerOverlayView.isUserInteractionEnabled = false
 
         graphArea.addSubview(label)
         graphArea.addSubview(glGraph)
@@ -223,6 +237,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             graphArea.addSubview(zGridView)
             graphArea.addSubview(zLabel)
         }
+        graphArea.addSubview(markerOverlayView)
         
         addSubview(graphArea)
 
@@ -237,6 +252,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
         graphArea.addGestureRecognizer(tapGesture)
+        
+        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
+        glGraph.addGestureRecognizer(plotTapGesture)
     }
 
     @available(*, unavailable)
@@ -265,6 +283,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 }
             }
         } else {
+            markers = []
             if let gr = panGestureRecognizer {
                 glGraph.removeGestureRecognizer(gr)
             }
@@ -297,6 +316,89 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             } else {
                 layoutDelegate?.restoreLayout()
             }
+        }
+    }
+    
+    func getIndexOfNearestPoint(at: CGPoint) -> (set: Int, index: Int)? {
+        var minDist = CGFloat.infinity
+        var minSet = -1
+        var minIndex = -1
+        
+        let searchRange: CGFloat = 30.0
+        let searchRange2 = searchRange*searchRange
+        
+        let rangeMin = self.min
+        let rangeMax = self.max
+        let minX = CGFloat(rangeMin.x)
+        let minY = CGFloat(rangeMin.y)
+        let maxX = CGFloat(rangeMax.x)
+        let maxY = CGFloat(rangeMax.y)
+        let frame = graphFrame
+        let w = frame.width
+        let h = frame.height
+        
+        func viewXtoDataX(_ x: CGFloat) -> CGFloat {
+            return (maxX-minX)*(x/w) + minX
+        }
+        
+        func viewYtoDataY(_ y: CGFloat) -> CGFloat {
+            return maxY - (maxY-minY) * (y/h)
+        }
+        
+        let searchRangeMaxX = Swift.max(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        let searchRangeMinX = Swift.min(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        let searchRangeMaxY = Swift.max(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        let searchRangeMinY = Swift.min(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        
+        for (i, dataSet) in dataSets.enumerated() {
+            
+            let n = hasZData ? dataSet.data3D.count : dataSet.data2D.count
+            for j in 0..<n {
+                if descriptor.style[i] == .hbars || descriptor.style[i] == .vbars {
+                    if j % 6 != 2 && j % 6 != 3 {
+                        continue
+                    }
+                }
+                let x = CGFloat(hasZData ? dataSet.data3D[j].x : dataSet.data2D[j].x)
+                let y = CGFloat(hasZData ? dataSet.data3D[j].y : dataSet.data2D[j].y)
+                
+                if x < searchRangeMinX || x > searchRangeMaxX || y < searchRangeMinY || y > searchRangeMaxY {
+                    continue
+                }
+                
+                let vx = (x - minX) / (maxX-minX) * w
+                let vy = (maxY - y) / (maxY-minY) * h
+                let dx = vx - at.x
+                let dy = vy - at.y
+                let d = dx*dx+dy*dy
+                
+                if (d < searchRange2 && d < minDist) {
+                    minDist = d
+                    minSet = i
+                    minIndex = j
+                }
+            }
+        }
+        
+        if minSet >= 0 && minIndex >= 0 {
+            return (set: minSet, index: minIndex)
+        } else {
+            return nil
+        }
+    }
+    
+    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            tapped(sender)
+        }
+        if mode != .pick {
+            return
+        }
+        
+        if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+            markers = [point]
+        } else {
+            markers = []
         }
     }
     
@@ -416,33 +518,47 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     var panStartMax: GraphPoint2D<Double>?
     
     @objc func panned (_ sender: UIPanGestureRecognizer) {
-        if (mode != .pan_zoom) {
-            return
+        if (mode == .pan_zoom) {
+            zoomFollows = false
+            
+            let offset = sender.translation(in: self)
+            
+            let min = GraphPoint2D(x: self.min.x, y: self.min.y)
+            let max = GraphPoint2D(x: self.max.x, y: self.max.y)
+            
+            if sender.state == .began {
+                panStartMin = min
+                panStartMax = max
+            }
+            
+            guard let startMin = panStartMin, let startMax = panStartMax else {
+                return
+            }
+            
+            let dx = Double(offset.x / glGraph.frame.width) * (max.x - min.x)
+            let dy = Double(offset.y / glGraph.frame.height) * (min.y - max.y)
+            
+            zoomMin = GraphPoint3D(x: startMin.x - dx, y: startMin.y - dy, z: zoomMin?.z ?? Double.nan)
+            zoomMax = GraphPoint3D(x: startMax.x - dx, y: startMax.y - dy, z: zoomMax?.z ?? Double.nan)
+            
+            self.update()
+        } else if mode == .pick {
+            if sender.state == .began {
+                if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+                    markers = [point]
+                } else {
+                    markers = []
+                }
+            } else {
+                if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+                    if markers.count > 1 {
+                        markers[1] = point
+                    } else {
+                        markers.append(point)
+                    }
+                }
+            }
         }
-        
-        zoomFollows = false
-        
-        let offset = sender.translation(in: self)
-        
-        let min = GraphPoint2D(x: self.min.x, y: self.min.y)
-        let max = GraphPoint2D(x: self.max.x, y: self.max.y)
-        
-        if sender.state == .began {
-            panStartMin = min
-            panStartMax = max
-        }
-        
-        guard let startMin = panStartMin, let startMax = panStartMax else {
-            return
-        }
-        
-        let dx = Double(offset.x / glGraph.frame.width) * (max.x - min.x)
-        let dy = Double(offset.y / glGraph.frame.height) * (min.y - max.y)
-        
-        zoomMin = GraphPoint3D(x: startMin.x - dx, y: startMin.y - dy, z: zoomMin?.z ?? Double.nan)
-        zoomMax = GraphPoint3D(x: startMax.x - dx, y: startMax.y - dy, z: zoomMax?.z ?? Double.nan)
-        
-        self.update()
     }
     
     var pinchOrigin: GraphPoint2D<Double>?
@@ -850,19 +966,23 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 //print("Tried drawing NaN or inf")
             }
             
-            if !logX && !xMinStrict && !xMaxStrict {
-                let extraX = (maxX-minX)*0.05;
-                maxX += extraX
-                minX -= extraX
-            }
-            
-            if !logY && !yMinStrict && !yMaxStrict {
-                let extraY = (maxY-minY)*0.05;
-                maxY += extraY
-                minY -= extraY
-            }
-            
-            dataSets.append((bounds: (min: GraphPoint3D(x: minX, y: minY, z: minZ), max: GraphPoint3D(x: maxX, y: maxY, z: maxZ)), data2D: points2D[i], data3D: points3D[i]))
+            dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i]))
+        }
+        
+        if !logX && !xMinStrict && !xMaxStrict {
+            let extraX = (maxX-minX)*0.05;
+            maxX += extraX
+            minX -= extraX
+        }
+        
+        if !logY && !yMinStrict && !yMaxStrict {
+            let extraY = (maxY-minY)*0.05;
+            maxY += extraY
+            minY -= extraY
+        }
+        
+        for i in 0..<dataSets.count {
+            dataSets[i].bounds = (min: GraphPoint3D(x: minX, y: minY, z: minZ), max: GraphPoint3D(x: maxX, y: maxY, z: maxZ))
         }
 
         addDataSets(dataSets)
@@ -879,9 +999,122 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             self.gridView.grid = grid
             self.zGridView?.grid = grid
             self.glGraph.setPoints(points2D: finalPoints2D, points3D: finalPoints3D, min: min, max: max)
+            self.refreshMarkers()
         }
     }
 
+    private func setMarkerLabel(_ text: String?) {
+        if let text = text {
+            if markerLabel == nil {
+                markerLabel = UILabel()
+                markerLabel?.textColor = UIColor.black
+                markerLabel?.numberOfLines = 0
+                markerLabelFrame = UIView()
+                markerLabelFrame?.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
+                markerLabelFrame?.layer.cornerRadius = 5.0
+                markerLabelFrame?.layer.masksToBounds = true
+                markerLabelFrame?.addSubview(markerLabel!)
+                markerLabelFrame?.isUserInteractionEnabled = false
+                addSubview(markerLabelFrame!)
+            }
+            
+            markerLabel?.text = text
+            let minSize = markerLabel!.sizeThatFits(bounds.size)
+            markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: minSize.width + 20.0, height: minSize.height + 20.0)
+            markerLabel?.frame = CGRect(x: 10.0, y: 10.0, width: minSize.width, height: minSize.height)
+        } else if markerLabel != nil {
+            markerLabel!.removeFromSuperview()
+            markerLabelFrame!.removeFromSuperview()
+            markerLabel = nil
+            markerLabelFrame = nil
+        }
+    }
+    
+    private func refreshMarkers() {
+        var relativeCoordinates: [(CGFloat, CGFloat)] = []
+        
+        let min = self.min
+        let max = self.max
+        
+        var xlist: [GLfloat] = []
+        var ylist: [GLfloat] = []
+        var zlist: [GLfloat] = []
+        var avgRX = CGFloat(0.0)
+        var minRY = CGFloat.infinity
+        var n = 0
+        
+        for marker in markers {
+            if marker.set < dataSets.count {
+                let dataSet = dataSets[marker.set]
+                
+                let x: GLfloat, y: GLfloat
+                if marker.index < dataSet.data2D.count {
+                    x = dataSet.data2D[marker.index].x
+                    y = dataSet.data2D[marker.index].y
+                    zlist.append(GLfloat.nan)
+                } else if marker.index < dataSet.data3D.count {
+                    x = dataSet.data3D[marker.index].x
+                    y = dataSet.data3D[marker.index].y
+                    let z = dataSet.data3D[marker.index].z
+                    zlist.append(z)
+                } else {
+                    continue
+                }
+                
+                let rx = CGFloat((Double(x) - min.x) / (max.x-min.x))
+                let ry = CGFloat((max.y - Double(y)) / (max.y-min.y))
+                
+                xlist.append(x)
+                ylist.append(y)
+                
+                avgRX += rx
+                n += 1
+                if ry < minRY {
+                    minRY = ry
+                }
+                
+                relativeCoordinates.append((rx, ry))
+            }
+        }
+        
+        if n == 1 {
+            var labelText = localize("graph_point_label")
+            labelText += "\n    \(xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            if hasZData {
+                labelText += "\n    \(zlist[0])" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+            }
+            setMarkerLabel(labelText)
+        } else if n == 2 {
+            var labelText = localize("graph_difference_label")
+            labelText += "\n    \(abs(xlist[0] - xlist[1]))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(abs(ylist[0] - ylist[1]))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            if hasZData {
+                labelText += "\n    \(abs(zlist[0] - zlist[1]))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+            }
+            labelText += "\n" + localize("graph_slope_label")
+            labelText += "\n    \((ylist[0] - ylist[1])/(xlist[0] - xlist[1])) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+            setMarkerLabel(labelText)
+        } else {
+            setMarkerLabel(nil)
+        }
+        
+        if let markerLabelFrame = markerLabelFrame, n > 0 {
+            avgRX /= CGFloat(n)
+            
+            let w = markerLabelFrame.frame.width
+            let h = markerLabelFrame.frame.height
+            
+            let frame = glGraph.frame
+            let x = Swift.min(Swift.max(frame.minX + avgRX * frame.width - 0.5*w, 0), bounds.width - w)
+            let y = Swift.min(Swift.max(frame.minY + minRY * frame.height - h - 15.0, 0), bounds.height - h)
+            
+            markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
+        }
+        
+        self.markerOverlayView.markers = relativeCoordinates
+    }
+    
     private func generateGrid(logX: Bool, logY: Bool, logZ: Bool) -> GraphGrid {
         let min = self.min
         let max = self.max
@@ -1180,7 +1413,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let s4 = zLabel?.sizeThatFits(bounds.size) ?? .zero
         zLabel?.frame = CGRect(x: (bounds.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
         
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZScale ? zScaleHeight + s4.height + spacing : 0), width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - spacing - bottom - (hasZScale ? zScaleHeight + spacing + s4.height : 0))
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZData ? zScaleHeight + s4.height + spacing : 0), width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - spacing - bottom - (hasZData ? zScaleHeight + spacing + s4.height : 0))
         zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
         
         yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
@@ -1205,6 +1438,8 @@ extension ExperimentGraphView: GraphGridDelegate {
             glGraph.setNeedsLayout()
             glZScale?.frame = zScaleFrame
             glZScale?.setNeedsLayout()
+            markerOverlayView.frame = graphFrame
+            refreshMarkers()
         }
     }
 }
