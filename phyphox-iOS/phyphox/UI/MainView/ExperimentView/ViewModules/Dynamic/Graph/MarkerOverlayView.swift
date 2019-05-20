@@ -27,6 +27,8 @@ final class MarkerOverlayView: UIView {
         }
     }
     
+    var showMarkers: Bool = true
+    
     private var markerLayers: [CAShapeLayer] = []
     private var lineLayers: [CAShapeLayer] = []
     
@@ -58,7 +60,7 @@ final class MarkerOverlayView: UIView {
         }
         
         for i in (0..<max(markers?.count ?? 0, markerLayers.count)).reversed() {
-            if i >= markers?.count ?? 0 {
+            if (!showMarkers && i < markerLayers.count) || i >= markers?.count ?? 0 {
                 markerLayers[i].removeFromSuperlayer()
                 markerLayers.remove(at: i)
             } else if i >= markerLayers.count {

@@ -13,6 +13,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
+    var logX, logY, logZ: Bool
     
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
     var zoomDelegate: ApplyZoomDelegate? = nil
@@ -72,6 +73,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     var markerLabel: UILabel? = nil
     var markerLabelFrame: UIView? = nil
+    
+    var showLinearFit = false
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
@@ -140,6 +143,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     required init?(descriptor: GraphViewDescriptor) {
         self.descriptor = descriptor
+        
+        logX = descriptor.logX
+        logY = descriptor.logY
+        logZ = descriptor.logZ
         
         glGraph = GLGraphView()
         glGraph.style = descriptor.style
@@ -284,6 +291,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         } else {
             markers = []
+            showLinearFit = false
             if let gr = panGestureRecognizer {
                 glGraph.removeGestureRecognizer(gr)
             }
@@ -397,6 +405,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
             markers = [point]
+            showLinearFit = false
         } else {
             markers = []
         }
@@ -546,6 +555,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             if sender.state == .began {
                 if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
                     markers = [point]
+                    showLinearFit = false
                 } else {
                     markers = []
                 }
@@ -800,10 +810,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return
         }
 
-        let logX = descriptor.logX
-        let logY = descriptor.logY
-        let logZ = descriptor.logZ
-
         var minX = Double.infinity
         var maxX = -Double.infinity
 
@@ -1043,41 +1049,48 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var minRY = CGFloat.infinity
         var n = 0
         
+        func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
+            let rx = CGFloat((Double(x) - min.x) / (max.x-min.x))
+            let ry = CGFloat((max.y - Double(y)) / (max.y-min.y))
+            
+            xlist.append(x)
+            ylist.append(y)
+            zlist.append(z)
+            
+            avgRX += rx
+            n += 1
+            if ry < minRY {
+                minRY = ry
+            }
+            
+            relativeCoordinates.append((rx, ry))
+        }
+        
         for marker in markers {
             if marker.set < dataSets.count {
                 let dataSet = dataSets[marker.set]
                 
-                let x: GLfloat, y: GLfloat
+                let x: GLfloat, y: GLfloat, z: GLfloat
                 if marker.index < dataSet.data2D.count {
                     x = dataSet.data2D[marker.index].x
                     y = dataSet.data2D[marker.index].y
-                    zlist.append(GLfloat.nan)
+                    z = GLfloat.nan
                 } else if marker.index < dataSet.data3D.count {
                     x = dataSet.data3D[marker.index].x
                     y = dataSet.data3D[marker.index].y
-                    let z = dataSet.data3D[marker.index].z
-                    zlist.append(z)
+                    z = dataSet.data3D[marker.index].z
                 } else {
                     continue
                 }
                 
-                let rx = CGFloat((Double(x) - min.x) / (max.x-min.x))
-                let ry = CGFloat((max.y - Double(y)) / (max.y-min.y))
-                
-                xlist.append(x)
-                ylist.append(y)
-                
-                avgRX += rx
-                n += 1
-                if ry < minRY {
-                    minRY = ry
-                }
-                
-                relativeCoordinates.append((rx, ry))
+                appendMarker(x, y, z)
             }
         }
         
         if n == 1 {
+            self.markerOverlayView.showMarkers = true
+            self.markerOverlayView.markers = relativeCoordinates
+            
             var labelText = localize("graph_point_label")
             labelText += "\n    \(xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
             labelText += "\n    \(ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
@@ -1086,6 +1099,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             setMarkerLabel(labelText)
         } else if n == 2 {
+            self.markerOverlayView.showMarkers = true
+            self.markerOverlayView.markers = relativeCoordinates
+            
             var labelText = localize("graph_difference_label")
             labelText += "\n    \(abs(xlist[0] - xlist[1]))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
             labelText += "\n    \(abs(ylist[0] - ylist[1]))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
@@ -1095,8 +1111,32 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             labelText += "\n" + localize("graph_slope_label")
             labelText += "\n    \((ylist[0] - ylist[1])/(xlist[0] - xlist[1])) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
             setMarkerLabel(labelText)
+        } else if showLinearFit {
+            if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
+                let a: GLfloat, b: GLfloat
+                (a, b) = calculateLinearRegression(dataSet.data2D)
+                
+                let x1 = GLfloat(min.x)
+                let y1 = a * GLfloat(min.x) + b
+                appendMarker(x1, y1, GLfloat.nan)
+                let x2 = GLfloat(max.x)
+                let y2 = a * GLfloat(max.x) + b
+                appendMarker(x2, y2, GLfloat.nan)
+                
+                self.markerOverlayView.showMarkers = false
+                self.markerOverlayView.markers = relativeCoordinates
+                
+                var labelText = localize("graph_fit_label")
+                labelText += "\na = \(a) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+                labelText += "\nb = \(b)" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                setMarkerLabel(labelText)
+            } else {
+                setMarkerLabel(nil)
+                self.markerOverlayView.markers = []
+            }
         } else {
             setMarkerLabel(nil)
+            self.markerOverlayView.markers = []
         }
         
         if let markerLabelFrame = markerLabelFrame, n > 0 {
@@ -1111,8 +1151,32 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             
             markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
         }
+    }
+    
+    private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
+        var sumX:GLfloat = 0.0
+        var sumX2:GLfloat = 0.0
+        var sumY:GLfloat = 0.0
+        var sumY2:GLfloat = 0.0
+        var sumXY:GLfloat = 0.0
         
-        self.markerOverlayView.markers = relativeCoordinates
+        for point in data {
+            sumX += point.x
+            sumX2 += point.x*point.x
+            sumY += point.y
+            sumY2 += point.y*point.y
+            sumXY += point.x*point.y
+        }
+        
+        let norm = GLfloat(data.count) * sumX2 - sumX*sumX;
+        guard norm != 0 else {
+            return (GLfloat.nan, GLfloat.nan);
+        }
+        
+        let a = (GLfloat(data.count) * sumXY  -  sumX * sumY) / norm;
+        let b = (sumY * sumX2  -  sumX * sumXY) / norm;
+        
+        return (a, b)
     }
     
     private func generateGrid(logX: Bool, logY: Bool, logZ: Bool) -> GraphGrid {
@@ -1262,17 +1326,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if (descriptor.partialUpdate) {
             elements.append((localize("graph_tools_follow"), zoomFollows, followNewData))
         }
-        if (!descriptor.logX && !descriptor.logY) {
-            //TODO: Checkmark
-            elements.append((localize("graph_tools_linear_fit"), false, linearFit))
+        if (!descriptor.logX && !descriptor.logY && !hasZData) {
+            elements.append((localize("graph_tools_linear_fit"), showLinearFit, linearFit))
         }
         elements.append((localize("graph_tools_export"), false, exportGraphData))
         if (descriptor.logX) {
-            //TODO: Checkmark
-            elements.append((localize("graph_tools_log_x"), false, resetZoom))
+            elements.append((localize("graph_tools_log_x"), logX, toggleLogX))
         }
         if (descriptor.logY) {
-            elements.append((localize("graph_tools_log_y"), false, resetZoom))
+            elements.append((localize("graph_tools_log_y"), logY, toggleLogY))
         }
         
         return elements
@@ -1324,7 +1386,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func linearFit() {
-        print("Linear fit")
+        showLinearFit = !showLinearFit
+        markers = []
+        self.update()
     }
     
     func exportGraphData() {
@@ -1332,11 +1396,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func toggleLogX() {
-        print("Toggle log x")
+        logX = !logX
+        self.update()
     }
     
     func toggleLogY() {
-        print("Toogle log y")
+        logY = !logY
+        self.update()
     }
     
     //Mark - General UI
