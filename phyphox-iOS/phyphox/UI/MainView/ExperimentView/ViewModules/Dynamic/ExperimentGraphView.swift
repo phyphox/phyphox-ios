@@ -10,6 +10,9 @@ import UIKit
 
 final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate {
     
+    let unfoldMoreImageView: UIImageView
+    let unfoldLessImageView: UIImageView
+    
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
@@ -226,6 +229,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             zLabel = nil
         }
         
+        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        
         super.init(frame: .zero)
         
         gridView.delegate = self
@@ -235,6 +241,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         zGridView?.isUserInteractionEnabled = false
         markerOverlayView.isUserInteractionEnabled = false
 
+        let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
+        unfoldMoreImageView.frame = unfoldRect
+        unfoldLessImageView.frame = unfoldRect
+        unfoldLessImageView.isHidden = true
+        unfoldMoreImageView.isHidden = false
+        
+        graphArea.addSubview(unfoldMoreImageView)
+        graphArea.addSubview(unfoldLessImageView)
         graphArea.addSubview(label)
         graphArea.addSubview(glGraph)
         graphArea.addSubview(gridView)
@@ -272,6 +286,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
+            unfoldMoreImageView.isHidden = true
+            unfoldLessImageView.isHidden = false
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
             pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
             if let gr = panGestureRecognizer {
@@ -291,6 +307,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 }
             }
         } else {
+            unfoldMoreImageView.isHidden = false
+            unfoldLessImageView.isHidden = true
             markers = []
             showLinearFit = false
             if let gr = panGestureRecognizer {
