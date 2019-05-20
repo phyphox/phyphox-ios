@@ -14,15 +14,13 @@ private let xSpacing: CGFloat = 10.0
 private let checkboxSize = CGSize(width: 24.0, height: 24.0)
 
 final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
-    let export: ExperimentExport
     
     let formatSwitches: [BEMCheckBox]
     let formatLabels: [UILabel]
     
     let exportAvailabilityCallback: (Bool) -> Void
     
-    init(export: ExperimentExport, translation: ExperimentTranslationCollection?, exportAvailabilityCallback: @escaping (Bool) -> Void) {
-        self.export = export
+    init(exportAvailabilityCallback: @escaping (Bool) -> Void) {
         self.exportAvailabilityCallback = exportAvailabilityCallback
         
         var fs = [BEMCheckBox]()

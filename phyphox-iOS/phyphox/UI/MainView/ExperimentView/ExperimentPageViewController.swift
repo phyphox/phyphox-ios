@@ -9,7 +9,12 @@
 import Foundation
 import GCDWebServers
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate {
+protocol ExportDelegate {
+    func showExport(_ export: ExperimentExport, singleSet: Bool)
+}
+
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate, ExportDelegate {
+    
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
@@ -109,6 +114,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     
                     self?.buttonPressed(viewDescriptor: button.descriptor)
                 }
+            }
+            if let exportingViewModule = module as? ExportingViewModule {
+                exportingViewModule.exportDelegate = self
             }
         }
 
@@ -469,7 +477,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func runExportFromActionSheet() {
+    private func runExportFromActionSheet(_ export: ExperimentExport, singleSet: Bool) {
         let format = exportSelectionView!.selectedFormat()
         
         let HUD = JGProgressHUD(style: .dark)
@@ -478,7 +486,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         HUD.show(in: navigationController!.view)
         
-        runExport(format: format) { error, URL in
+        runExport(export, singleSet: singleSet, format: format) { error, URL in
             if error != nil {
                 HUD.indicatorView = JGProgressHUDErrorIndicatorView()
                 HUD.textLabel.text = error!.localizedDescription
@@ -500,8 +508,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func runExport(format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        self.experiment.export!.runExport(format) { (errorMessage, fileURL) in
+    func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
+        export.runExport(format, singleSet: singleSet) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -511,15 +519,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func showExport() {
+    internal func showExport(_ export: ExperimentExport, singleSet: Bool) {
         let alert = UIAlertController(title: localize("export"), message: localize("pick_exportFormat"), preferredStyle: .alert)
         
         let exportAction = UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
-            self.runExportFromActionSheet()
+            self.runExportFromActionSheet(export, singleSet: singleSet)
             })
         
         if exportSelectionView == nil {
-            exportSelectionView = ExperimentExportSetSelectionView(export: experiment.export!, translation: experiment.translation) { [unowned exportAction] available in
+            exportSelectionView = ExperimentExportSetSelectionView() { [unowned exportAction] available in
                 exportAction.isEnabled = available
             }
         }
@@ -694,7 +702,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if experiment.export != nil {
             alert.addAction(UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
-                self.showExport()
+                self.showExport(self.experiment.export!, singleSet: false)
                 }))
         }
         

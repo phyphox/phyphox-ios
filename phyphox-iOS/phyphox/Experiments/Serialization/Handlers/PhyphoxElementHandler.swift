@@ -159,7 +159,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
 
         let exportDescriptor = try exportHandler.expectSingleResult()
-        let export = try makeExport(from: exportDescriptor, buffers: buffers, translations: translations)
+        let export = try makeExport(from: exportDescriptor, buffers: buffers)
 
         let viewCollectionDescriptors = try viewsHandler.expectOptionalResult()
 
@@ -266,7 +266,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         })
     }
 
-    private func makeExport(from descriptors: [ExportSetDescriptor], buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ExperimentExport {
+    private func makeExport(from descriptors: [ExportSetDescriptor], buffers: [String: DataBuffer]) throws -> ExperimentExport {
         let sets = try descriptors.map { descriptor -> ExperimentExportSet in
             let dataSets = try descriptor.dataSets.map { set -> (String, DataBuffer) in
                 guard let buffer = buffers[set.bufferName] else {
@@ -276,7 +276,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return (set.name, buffer)
             }
 
-            return ExperimentExportSet(name: descriptor.name, data: dataSets, translation: translations)
+            return ExperimentExportSet(name: descriptor.name, data: dataSets)
         }
 
         return ExperimentExport(sets: sets)

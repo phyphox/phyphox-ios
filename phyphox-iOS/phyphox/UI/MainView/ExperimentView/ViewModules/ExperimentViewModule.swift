@@ -120,3 +120,7 @@ final class DisplayLink {
         listener?.display(self)
     }
 }
+
+protocol ExportingViewModule : AnyObject {
+    var exportDelegate: ExportDelegate? { get set }
+}

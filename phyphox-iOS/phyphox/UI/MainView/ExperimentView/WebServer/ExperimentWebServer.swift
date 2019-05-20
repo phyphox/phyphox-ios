@@ -17,7 +17,7 @@ protocol ExperimentWebServerDelegate: class {
     func stopExperiment()
     func clearData()
     func buttonPressed(viewDescriptor: ButtonViewDescriptor)
-    func runExport(format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
+    func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
 }
 
 final class ExperimentWebServer {
@@ -88,7 +88,7 @@ final class ExperimentWebServer {
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
                 var sets = [ExperimentExportSet]()
                 
-                self.delegate!.runExport(format: format) { error, URL in
+                self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
                     if error == nil {
                         self.temporaryFiles.append(URL!.path)
                         let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)

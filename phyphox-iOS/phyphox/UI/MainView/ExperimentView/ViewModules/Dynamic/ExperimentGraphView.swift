@@ -8,13 +8,14 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, UITableViewDataSource, UITableViewDelegate {
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate {
     
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
     var logX, logY, logZ: Bool
     
+    var exportDelegate: ExportDelegate? = nil
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
     var zoomDelegate: ApplyZoomDelegate? = nil
     var resizableState: ResizableViewModuleState = .normal
@@ -1392,7 +1393,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func exportGraphData() {
-        print("Export graph data")
+        let name = self.descriptor.label
+        var data: [(name: String, buffer: DataBuffer)] = []
+        for i in 0..<self.descriptor.yInputBuffers.count {
+            if let buffer = self.descriptor.xInputBuffers[i] {
+                data.append((name: self.descriptor.localizedXLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedXUnit != "" ? "(" + self.descriptor.localizedXUnit + ")" : ""), buffer: buffer))
+            }
+            data.append((name: self.descriptor.localizedYLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedYUnit != "" ? "(" + self.descriptor.localizedYUnit + ")" : ""), buffer: self.descriptor.yInputBuffers[i]))
+            if let buffer = self.descriptor.zInputBuffers[i] {
+                data.append((name: self.descriptor.localizedZLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedZUnit != "" ? "(" + self.descriptor.localizedZUnit + ")" : ""), buffer: buffer))
+            }
+        }
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: name, data: data)])
+        menuAlertController?.dismiss(animated: true, completion: {() -> Void in
+            self.exportDelegate?.showExport(export, singleSet: true)
+            })
     }
     
     func toggleLogX() {
