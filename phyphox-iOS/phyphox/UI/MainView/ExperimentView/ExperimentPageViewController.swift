@@ -13,7 +13,11 @@ protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)
 }
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate, ExportDelegate {
+protocol StopExperimentDelegate {
+    func stopExperiment()
+}
+
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate {
     
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
@@ -199,7 +203,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             deleteItem,
             playItem
         ]
-        
+
+        connectToBluetoothDevices()        
+
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
             var buttons: [String] = []
@@ -334,6 +340,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        
+        disconnectFromBluetoothDevices()
         
         if isMovingFromParentViewController {
             tearDownWebServer()
@@ -1008,6 +1016,66 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     graphView.clearData()
                 }
             }
+        }
+    }
+
+    func connectToBluetoothDevices() {
+        
+        if experiment.bluetoothDevices.count == 1, let input = experiment.bluetoothDevices.first {
+            if input.deviceAddress != nil {
+                input.stopExperimentDelegate = self
+                input.scanToConnect()
+                return
+            }
+        }
+        
+        for device in experiment.bluetoothDevices {
+            if device.deviceAddress == nil {
+                device.stopExperimentDelegate = self
+                
+                let message: String
+                let deviceIDInfo: String
+                if let deviceID = device.id, deviceID != "" {
+                   deviceIDInfo =  " (" + deviceID + ")"
+                } else {
+                    deviceIDInfo = ""
+                }
+                if let filterName = device.deviceName, filterName != "" {
+                    message = localize("bt_scanning_specific1") + " \"" + filterName + "\" " + localize("bt_scanning_specific2") + deviceIDInfo
+                } else {
+                    message = localize("bt_scanning_generic") + deviceIDInfo
+                }
+                let alertController = UIAlertController(title: localize("bt_pick_device"),
+                                                        message: message,
+                                                        preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+                { (action) in
+                    // TODO ...
+                }
+                alertController.addAction(cancelAction)
+
+                let scanController = BluetoothScanResultsTableViewController(filterByName: device.deviceName, filterByUUID: device.advertiseUUID, checkExperiments: false)
+                scanController.tableView = FixedTableView()
+                alertController.setValue(scanController, forKey: "contentViewController")
+                
+                scanController.deviceIsChosenDelegate = device
+                scanController.dialogDismissedDelegate = self
+                
+                self.present(alertController, animated: true)
+                
+                return
+            }
+        }
+    }
+    
+    func bluetoothScanDialogDismissed() {
+        connectToBluetoothDevices()
+    }
+    
+    func disconnectFromBluetoothDevices(){
+        for device in experiment.bluetoothDevices {
+            device.disconnect()
         }
     }
 }

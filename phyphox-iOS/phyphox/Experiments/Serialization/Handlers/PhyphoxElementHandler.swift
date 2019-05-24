@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreBluetooth
 
 // MARK: - Extensions required for the initialization of an Experiment instance.
 private extension SensorDescriptor {
@@ -54,6 +55,36 @@ private extension ExperimentAudioInput {
         let sampleRateBuffer = descriptor.buffer(for: "rate", from: buffers)
 
         self.init(sampleRate: descriptor.rate, outBuffer: outBuffer, sampleRateInfoBuffer: sampleRateBuffer)
+    }
+}
+
+private extension ExperimentBluetoothInput {
+    convenience init(device: ExperimentBluetoothDevice, descriptor: BluetoothInputBlockDescriptor, buffers: [String: DataBuffer]) throws {
+        
+        var outputs: [BluetoothOutput] = []
+        for output in descriptor.outputs {
+            guard let outBuffer = buffers[output.bufferName] else {
+                throw ElementHandlerError.message("No such buffer: \(output.bufferName)")
+            }
+            outputs.append(BluetoothOutput(char: output.char, conversion: output.conversion, buffer: outBuffer, extra: output.extra))
+        }
+        
+        self.init(device: device, mode: descriptor.mode, outputList: outputs, configList: descriptor.configs, subscribeOnStart: descriptor.subscribeOnStart, rate: descriptor.rate)
+    }
+}
+
+private extension ExperimentBluetoothOutput {
+    convenience init(device: ExperimentBluetoothDevice, descriptor: BluetoothOutputBlockDescriptor, buffers: [String: DataBuffer]) throws {
+        
+        var inputs: [BluetoothInput] = []
+        for input in descriptor.inputs {
+            guard let inBuffer = buffers[input.bufferName] else {
+                throw ElementHandlerError.message("No such buffer: \(input.bufferName)")
+            }
+            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, buffer: inBuffer))
+        }
+        
+        self.init(device: device, inputList: inputs, configList: descriptor.configs)
     }
 }
 
@@ -152,11 +183,46 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
-        let output = try outputDescriptor.map { try makeOutput(from: $0, buffers: buffers) }
-
         let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) } ?? []
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
+        
+        let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
+        
+        var bluetoothDevices: [ExperimentBluetoothDevice] = []
+        var bluetoothInputs: [ExperimentBluetoothInput] = []
+        var bluetoothOutputs: [ExperimentBluetoothOutput] = []
+        var bluetoothDeviceMap: [String:ExperimentBluetoothDevice] = [:]
+        
+        func getBluetoothDeviceForId(id: String?, name: String?, uuid: CBUUID?) -> ExperimentBluetoothDevice {
+            let bluetoothDevice: ExperimentBluetoothDevice
+            if let id = id, id != "" {
+                if let device = bluetoothDeviceMap[id] {
+                    bluetoothDevice = device
+                } else {
+                    bluetoothDevice = ExperimentBluetoothDevice(id: id, name: name, uuid: uuid)
+                    bluetoothDeviceMap[id] = bluetoothDevice
+                    bluetoothDevices.append(bluetoothDevice)
+                }
+            } else {
+                bluetoothDevice = ExperimentBluetoothDevice(id: nil, name: name, uuid: uuid)
+                bluetoothDevices.append(bluetoothDevice)
+            }
+            return bluetoothDevice
+        }
+        
+        if let descriptors = inputDescriptor?.bluetooth {
+            for descriptor in descriptors {
+                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid)
+                bluetoothInputs.append(try ExperimentBluetoothInput(device: device, descriptor: descriptor, buffers: buffers) )
+            }
+        }
+        if let descriptors = outputDescriptor?.bluetooth {
+            for descriptor in descriptors {
+                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid)
+                bluetoothOutputs.append(try ExperimentBluetoothOutput(device: device, descriptor: descriptor, buffers: buffers) )
+            }
+        }
 
         let exportDescriptor = try exportHandler.expectSingleResult()
         let export = try makeExport(from: exportDescriptor, buffers: buffers)
@@ -165,7 +231,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, output: output, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -228,14 +294,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     return nil
                 }
                 guard let buffer = buffers[name!] else {
-                    throw ElementHandlerError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container \(name!) for graph \(descriptor.label)")
                 }
                 return buffer
             })
             
             let yBuffers = try descriptor.yInputBufferNames.map({ name -> DataBuffer in
                 guard let buffer = buffers[name] else {
-                    throw ElementHandlerError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container \(name) for graph \(descriptor.label)")
                 }
                 return buffer
             })
@@ -245,7 +311,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     return nil
                 }
                 guard let buffer = buffers[name!] else {
-                    throw ElementHandlerError.missingElement("data-container")
+                    throw ElementHandlerError.missingElement("data-container \(name!) for graph \(descriptor.label)")
                 }
                 return buffer
             })
@@ -254,16 +320,16 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
     }
 
-    private func makeOutput(from descriptor: OutputDescriptor, buffers: [String: DataBuffer]) throws -> ExperimentOutput {
-        let audioOutput = descriptor.audioOutput
+    private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {
 
-        return ExperimentOutput(audioOutput: try audioOutput.map {
-            guard let buffer = buffers[$0.inputBufferName] else {
+        if let audioOutput = descriptor {
+            guard let buffer = buffers[audioOutput.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            return ExperimentAudioOutput(sampleRate: $0.rate, loop: $0.loop, dataSource: buffer)
-        })
+            return ExperimentAudioOutput(sampleRate: audioOutput.rate, loop: audioOutput.loop, dataSource: buffer)
+        }
+        return nil
     }
 
     private func makeExport(from descriptors: [ExportSetDescriptor], buffers: [String: DataBuffer]) throws -> ExperimentExport {

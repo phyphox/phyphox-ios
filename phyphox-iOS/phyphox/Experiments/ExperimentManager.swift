@@ -8,6 +8,7 @@
 
 import UIKit
 import JGProgressHUD
+import CoreBluetooth
 
 let emptyBuffer: DataBuffer = {
     let buffer = try! DataBuffer(name: "empty", storage: .memory(size: 0), baseContents: [], static: true)
@@ -30,6 +31,7 @@ enum FileError: Error {
 
 final class ExperimentManager {
     var experimentCollections: [ExperimentCollection] = []
+    var hiddenExperimentCollections: [ExperimentCollection] = []
     static let shared = ExperimentManager()
 
     func deleteExperiment(_ experiment: Experiment) throws {
@@ -38,22 +40,84 @@ final class ExperimentManager {
         reloadUserExperiments()
     }
 
-    private func registerExperiment(_ experiment: Experiment, custom: Bool) {
-        experiment.delegate = self
-
+    let filteredServices: [String] = [CBUUID(string: "0x1812").uuid128String]
+    
+    public func getSupportedBLEServices() -> [CBUUID] {
+        var supportedServices = Set<CBUUID>()
+        for collection in hiddenExperimentCollections {
+            for (experiment, _) in collection.experiments {
+                for dev in experiment.bluetoothDevices {
+                    if let uuid = dev.advertiseUUID {
+                        if !filteredServices.contains(uuid.uuid128String) {
+                            supportedServices.insert(uuid)
+                        }
+                    }
+                }
+            }
+        }
+        return Array(supportedServices)
+    }
+    
+    public func getExperimentsForBluetoothDevice(deviceName: String?, deviceUUIDs: [CBUUID]?) -> [ExperimentCollection] {
+        var resultCollections: [ExperimentCollection] = []
+        for collection in hiddenExperimentCollections {
+            for (experiment, custom) in collection.experiments {
+                if experiment.bluetoothInputs.count != 1 {
+                    continue
+                }
+                if let dev = experiment.bluetoothDevices.first {
+                    if let name = dev.deviceName, name != "" {
+                        if let deviceName = deviceName {
+                            if !deviceName.contains(name) {
+                                continue
+                            }
+                        } else {
+                            continue
+                        }
+                    }
+                    if let uuid = dev.advertiseUUID {
+                        if filteredServices.contains(uuid.uuid128String) {
+                            continue
+                        }
+                        if let deviceUUIDs = deviceUUIDs {
+                            if !deviceUUIDs.contains(uuid) {
+                                continue
+                            }
+                        } else {
+                            continue
+                        }
+                    }
+                    registerExperimentToCollections(experiment, custom: custom, collections: &resultCollections)
+                }
+            }
+        }
+        return resultCollections
+    }
+    
+    private func registerExperimentToCollections(_ experiment: Experiment, custom: Bool, collections: inout [ExperimentCollection]) {
         let category = experiment.localizedCategory
-
-        if let collection = experimentCollections.first(where: { $0.title == category }) {
+        
+        if let collection = collections.first(where: { $0.title == category }) {
             let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.displayTitle > experiment.displayTitle }) ?? collection.experiments.endIndex
-
+            
             collection.experiments.insert((experiment, custom), at: insertIndex)
         }
         else {
             let collection = ExperimentCollection(title: category, experiments: [(experiment, custom)])
+            
+            let insertIndex = collections.firstIndex(where: { ($0.type.rawValue == collection.type.rawValue && $0.title > category) || $0.type.rawValue > collection.type.rawValue }) ?? collections.endIndex
+            
+            collections.insert(collection, at: insertIndex)
+        }
+    }
+    
+    private func registerExperiment(_ experiment: Experiment, custom: Bool, hidden: Bool) {
+        experiment.delegate = self
 
-            let insertIndex = experimentCollections.firstIndex(where: { ($0.type.rawValue == collection.type.rawValue && $0.title > category) || $0.type.rawValue > collection.type.rawValue }) ?? experimentCollections.endIndex
-
-            experimentCollections.insert(collection, at: insertIndex)
+        if hidden {
+            registerExperimentToCollections(experiment, custom: custom, collections: &hiddenExperimentCollections)
+        } else {
+            registerExperimentToCollections(experiment, custom: custom, collections: &experimentCollections)
         }
     }
 
@@ -84,7 +148,7 @@ final class ExperimentManager {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
                 experiment.local = true
 
-                registerExperiment(experiment, custom: true)
+                registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
                 showLoadingError(for: file, error: error)
@@ -106,7 +170,7 @@ final class ExperimentManager {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
                 experiment.local = true
 
-                registerExperiment(experiment, custom: true)
+                registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
                 showLoadingError(for: file, error: error)
@@ -128,7 +192,27 @@ final class ExperimentManager {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(url)
                 experiment.local = true
 
-                registerExperiment(experiment, custom: false)
+                registerExperiment(experiment, custom: false, hidden: false)
+            }
+            catch {
+                showLoadingError(for: file, error: error)
+            }
+        }
+    }
+    
+    private func loadHiddenBluetoothExperiments() {
+        let bluetoothBaseURL = experimentsBaseURL.appendingPathComponent("bluetooth")
+        guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: bluetoothBaseURL.path) else { return }
+        
+        for file in experiments {
+            let url = bluetoothBaseURL.appendingPathComponent(file)
+            
+            guard url.pathExtension == experimentFileExtension else { continue }
+            
+            do {
+                let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+                
+                registerExperiment(experiment, custom: false, hidden: true)
             }
             catch {
                 showLoadingError(for: file, error: error)
@@ -142,7 +226,7 @@ final class ExperimentManager {
                 let experiment = try ExperimentSerialization.readExperimentFromURL(file)
                 experiment.local = false
                 
-                registerExperiment(experiment, custom: true)
+                registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
                 showLoadingError(for: file.absoluteString, error: error)
@@ -161,9 +245,10 @@ final class ExperimentManager {
     init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
 
-       loadExperiments()
-       loadCustomExperiments()
-       loadSavedExperiments()
+        loadExperiments()
+        loadCustomExperiments()
+        loadSavedExperiments()
+        loadHiddenBluetoothExperiments()
 
         #if DEBUG
         let time = CFAbsoluteTimeGetCurrent() - timestamp

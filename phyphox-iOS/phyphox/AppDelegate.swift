@@ -35,7 +35,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window!.makeKeyAndVisible()
         
         if let url = url {
-            return experimentsCollectionViewController.launchExperimentByURL(url)
+            return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
         }
         
         return true

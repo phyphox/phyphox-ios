@@ -83,8 +83,13 @@ final class Experiment {
     let sensorInputs: [ExperimentSensorInput]
     let gpsInputs: [ExperimentGPSInput]
     let audioInputs: [ExperimentAudioInput]
-
-    let output: ExperimentOutput?
+    
+    let audioOutput: ExperimentAudioOutput?
+    
+    let bluetoothDevices: [ExperimentBluetoothDevice]
+    let bluetoothInputs: [ExperimentBluetoothInput]
+    let bluetoothOutputs: [ExperimentBluetoothOutput]
+    
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
@@ -100,7 +105,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -123,7 +128,13 @@ final class Experiment {
         self.sensorInputs = sensorInputs
         self.gpsInputs = gpsInputs
         self.audioInputs = audioInputs
-        self.output = output
+        
+        self.audioOutput = audioOutput
+        
+        self.bluetoothDevices = bluetoothDevices
+        self.bluetoothInputs = bluetoothInputs
+        self.bluetoothOutputs = bluetoothOutputs
+        
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
         self.export = export
@@ -167,6 +178,10 @@ final class Experiment {
      Called when the experiment view controller did dismiss.
      */
     func didBecomeInactive() {
+        for device in bluetoothDevices {
+            device.disconnect()
+            device.deviceAddress = nil
+        }
         clear()
     }
     
@@ -271,8 +286,8 @@ final class Experiment {
     }
     
     private func startAudio() throws {
-        if output?.audioOutput != nil || !audioInputs.isEmpty {
-            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInputs.first)
+        if audioOutput != nil || !audioInputs.isEmpty {
+            audioEngine = try AudioEngine(audioOutput: audioOutput, audioInput: audioInputs.first)
             try audioEngine?.startEngine()
         }
     }
@@ -312,6 +327,7 @@ final class Experiment {
         
         sensorInputs.forEach { $0.start() }
         gpsInputs.forEach { $0.start() }
+        bluetoothInputs.forEach { $0.start() }
         
         analysis?.running = true
         analysis?.setNeedsUpdate()
@@ -328,6 +344,7 @@ final class Experiment {
         
         sensorInputs.forEach { $0.stop() }
         gpsInputs.forEach { $0.stop() }
+        bluetoothInputs.forEach { $0.stop() }
         
         try? stopAudio()
         
@@ -366,6 +383,9 @@ extension Experiment: ExperimentAnalysisDelegate {
     func analysisDidUpdate(_: ExperimentAnalysis) {
         if running {
             audioEngine?.playAudioOutput()
+            for bluetoothOutput in bluetoothOutputs {
+                bluetoothOutput.send()
+            }
         }
     }
 }
@@ -401,7 +421,10 @@ extension Experiment: Equatable {
             }) &&
             lhs.gpsInputs == rhs.gpsInputs &&
             lhs.audioInputs == rhs.audioInputs &&
-            lhs.output == rhs.output &&
+            lhs.audioOutput == rhs.audioOutput &&
+            lhs.bluetoothDevices == rhs.bluetoothDevices &&
+            lhs.bluetoothInputs == rhs.bluetoothInputs &&
+            lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
             lhs.viewDescriptors == rhs.viewDescriptors &&
             lhs.analysis == rhs.analysis &&
             lhs.export == rhs.export &&

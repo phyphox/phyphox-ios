@@ -200,7 +200,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             }
 
             
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp)})
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: nil)})
         }
         
 
@@ -239,7 +239,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRNoExperiment"), endScanner: true)
                 return
             }
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url)})
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url, chosenPeripheral: nil)})
         } else {
             //The experiment is directly encoded in the QR code as a zip file
             

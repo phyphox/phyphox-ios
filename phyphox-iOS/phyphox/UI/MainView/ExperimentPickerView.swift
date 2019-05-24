@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreBluetooth
 
 protocol ExperimentReceiver {
     func experimentSelected(_ experiment: Experiment)
@@ -17,10 +18,16 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
     var dialogView = UIView()
     var delegate: ExperimentController?
     let experimentPicker = ExperimentPickerViewController()
+    var chosenPeripheral: CBPeripheral?
     
     convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController) {
         self.init(frame: UIScreen.main.bounds)
-        setup(title: title, message: message, experiments: experiments, delegate: delegate)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: nil)
+    }
+    
+    convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?) {
+        self.init(frame: UIScreen.main.bounds)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: chosenPeripheral)
     }
     
     override init(frame: CGRect) {
@@ -31,9 +38,11 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         fatalError("init(coder:) has not been implemented.")
     }
     
-    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController) {
+    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?) {
         self.delegate = delegate
         self.autoresizingMask = [.flexibleHeight, .flexibleWidth]
+        
+        self.chosenPeripheral = chosenPeripheral
         
         dialogView.clipsToBounds = true
         dialogView.translatesAutoresizingMaskIntoConstraints = false
@@ -194,7 +203,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             return
         }
         dismiss(animated: true,  completion: {() in _ =
-            self.delegate?.launchExperimentByURL(url)
+            self.delegate?.launchExperimentByURL(url, chosenPeripheral: self.chosenPeripheral)
         })
     }
     

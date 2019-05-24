@@ -230,7 +230,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         var styles: [GraphViewDescriptor.GraphStyle] = []
         var inputCount = -1
         for inputBuffer in inputBuffers {
-            if inputCount < 0 || inputBuffer.axis == .x || (inputBuffer.axis == .y && yInputBufferNames[inputCount] != "") {
+            if inputCount < 0 || (inputBuffer.axis == .x && inputBuffers.count > 2 ) || (inputBuffer.axis == .y && yInputBufferNames[inputCount] != "") {
                 if (inputCount >= 0 && yInputBufferNames[inputCount] == "") {
                     throw ElementHandlerError.missingChildElement("input[axis=y]")
                 }

@@ -47,7 +47,6 @@
 		6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0AB1C4680CC00971941 /* IntegrationAnalysis.swift */; };
 		6B00F0AE1C46818500971941 /* FirstAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0AD1C46818500971941 /* FirstAnalysis.swift */; };
 		6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */; };
-		6B00F0B21C46CE2300971941 /* ExperimentOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */; };
 		6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B61C46F23000971941 /* ExperimentExport.swift */; };
 		6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */; };
 		6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B06C2151CC770200030BB7D /* ExperimentWebServer.swift */; };
@@ -182,13 +181,21 @@
 		C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063DA8A228C52D000367384 /* MarkerOverlayView.swift */; };
 		C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */; };
 		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
+		C07B53032294264200BA085A /* BluetoothScanResultsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */; };
+		C07B53062294265800BA085A /* BluetoothDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53042294265800BA085A /* BluetoothDevice.swift */; };
+		C07B53072294265800BA085A /* BluetoothScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53052294265800BA085A /* BluetoothScan.swift */; };
+		C07B53092294267400BA085A /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */; };
+		C07B530B229426AD00BA085A /* ExperimentBluetoothOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */; };
+		C07B530D22942CC300BA085A /* InputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530C22942CC300BA085A /* InputConversion.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
+		C097E4452297DA1800FB62B9 /* OutputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C097E4442297DA1800FB62B9 /* OutputConversion.swift */; };
 		C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C0984B292278838C00D0EBCD /* MapVertexShader.glsl */; };
 		C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C0984B2B227883B100D0EBCD /* MapFragmentShader.glsl */; };
 		C0984B2E2278870300D0EBCD /* GLMapShaderProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
+		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 /* End PBXBuildFile section */
@@ -386,7 +393,6 @@
 		4B55689B1DD7BAC8000C033E /* IfAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IfAnalysis.swift; sourceTree = "<group>"; };
 		4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentButtonView.swift; sourceTree = "<group>"; };
 		4B5568B61DD7D846000C033E /* ButtonViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonViewDescriptor.swift; sourceTree = "<group>"; };
-		4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothInput.swift; sourceTree = "<group>"; };
 		4B5770C11D7868A500394B07 /* SerialProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialProtocol.swift; sourceTree = "<group>"; };
 		4B6AE7131CF9AF0B0070A691 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B6AE7151CF9AF0D0070A691 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -414,7 +420,6 @@
 		6B00F0AB1C4680CC00971941 /* IntegrationAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegrationAnalysis.swift; sourceTree = "<group>"; };
 		6B00F0AD1C46818500971941 /* FirstAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirstAnalysis.swift; sourceTree = "<group>"; };
 		6B00F0AF1C4684F100971941 /* ThresholdAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThresholdAnalysis.swift; sourceTree = "<group>"; };
-		6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentOutput.swift; sourceTree = "<group>"; };
 		6B00F0B61C46F23000971941 /* ExperimentExport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExport.swift; sourceTree = "<group>"; };
 		6B00F0B91C46F24400971941 /* ExperimentExportSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSet.swift; sourceTree = "<group>"; };
 		6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "phyphox-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -582,13 +587,21 @@
 		C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMCheckBoxGroup.m; sourceTree = "<group>"; };
 		C075AA7F2232CCF600DE86D8 /* BEMCheckBoxGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMCheckBoxGroup.h; sourceTree = "<group>"; };
 		C079BC692260D2B40018D6A5 /* localizationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = localizationHelper.swift; sourceTree = "<group>"; };
+		C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothScanResultsTableViewController.swift; sourceTree = "<group>"; };
+		C07B53042294265800BA085A /* BluetoothDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothDevice.swift; sourceTree = "<group>"; };
+		C07B53052294265800BA085A /* BluetoothScan.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothScan.swift; sourceTree = "<group>"; };
+		C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothInput.swift; sourceTree = "<group>"; };
+		C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothOutput.swift; sourceTree = "<group>"; };
+		C07B530C22942CC300BA085A /* InputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConversion.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
+		C097E4442297DA1800FB62B9 /* OutputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputConversion.swift; sourceTree = "<group>"; };
 		C0984B292278838C00D0EBCD /* MapVertexShader.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = MapVertexShader.glsl; sourceTree = "<group>"; };
 		C0984B2B227883B100D0EBCD /* MapFragmentShader.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = MapFragmentShader.glsl; sourceTree = "<group>"; };
 		C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMapShaderProgram.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
+		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -873,6 +886,8 @@
 				6B7BF7AF1C130471007408FB /* ExperimentCollection.swift */,
 				6B7BF7B11C130471007408FB /* ExperimentManager.swift */,
 				4BA406C11EB618B30046E36A /* AudioEngine.swift */,
+				C07B53042294265800BA085A /* BluetoothDevice.swift */,
+				C07B53052294265800BA085A /* BluetoothScan.swift */,
 				6BF82BC72147FF6F00175659 /* SemanticVersion.swift */,
 				6BFE377820447C6300301CA3 /* Analysis */,
 				6BFE377720447C4D00301CA3 /* Data-Input */,
@@ -954,6 +969,7 @@
 				6BFE377020447BC900301CA3 /* ExperimentView */,
 				6BFE376E20447BA100301CA3 /* CreateExperiment */,
 				C01B1DC621A89E06001FE525 /* ScannerViewController.swift */,
+				C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */,
 				C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */,
 				C048ED1C21E3975200544E9A /* ExperimentPickerView.swift */,
 			);
@@ -1041,7 +1057,7 @@
 		6BFE377620447C4300301CA3 /* Output */ = {
 			isa = PBXGroup;
 			children = (
-				6B00F0B11C46CE2300971941 /* ExperimentOutput.swift */,
+				C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */,
 				6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */,
 			);
 			path = Output;
@@ -1050,12 +1066,15 @@
 		6BFE377720447C4D00301CA3 /* Data-Input */ = {
 			isa = PBXGroup;
 			children = (
+				C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */,
 				6B7BF7F51C132722007408FB /* ExperimentSensorInput.swift */,
 				4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */,
 				6B7BF7F31C132563007408FB /* MotionSession.swift */,
 				6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */,
-				4B5770A81D7836F700394B07 /* ExperimentBluetoothInput.swift */,
 				4B5770C11D7868A500394B07 /* SerialProtocol.swift */,
+				C07B530C22942CC300BA085A /* InputConversion.swift */,
+				C097E4442297DA1800FB62B9 /* OutputConversion.swift */,
+				C0AE8A972294558000A3EC48 /* ConfigConversion.swift */,
 			);
 			path = "Data-Input";
 			sourceTree = "<group>";
@@ -1466,12 +1485,12 @@
 				4B53E8491CFC65EE004E6164 /* ExperimentPageViewController.swift in Sources */,
 				6B612FEB207E5ACF001DA8D9 /* IconElementHandler.swift in Sources */,
 				6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */,
-				6B00F0B21C46CE2300971941 /* ExperimentOutput.swift in Sources */,
 				C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */,
 				6B6A4C302056A48F007586D0 /* PointCollection.swift in Sources */,
 				6B7BF8151C1479E8007408FB /* ConstGeneratorAnalysis.swift in Sources */,
 				6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */,
 				6BC011AD1CAA86670053D0DF /* ExperimentTranslationCollection.swift in Sources */,
+				C07B53092294267400BA085A /* ExperimentBluetoothInput.swift in Sources */,
 				6B63199B1C4969DA0038BE22 /* MainNavigationBar.swift in Sources */,
 				6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */,
 				6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */,
@@ -1538,10 +1557,12 @@
 				6B7BF7B71C130471007408FB /* Experiment.swift in Sources */,
 				6B7BF7D31C13069A007408FB /* DataBuffer.swift in Sources */,
 				C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */,
+				C07B53072294265800BA085A /* BluetoothScan.swift in Sources */,
 				6B00F0AE1C46818500971941 /* FirstAnalysis.swift in Sources */,
 				4BA9987F1EDB6A4100BD1860 /* RoundAnalysis.swift in Sources */,
 				6B00F0A01C457B5100971941 /* ExperimentInfoView.swift in Sources */,
 				6B422E2E1CA535EB00E945BC /* GraphGridLineView.swift in Sources */,
+				C097E4452297DA1800FB62B9 /* OutputConversion.swift in Sources */,
 				6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */,
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
 				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
@@ -1568,6 +1589,7 @@
 				C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */,
 				4B47B0391DA6AF5200CCBA6E /* CoshAnalysis.swift in Sources */,
 				6B612FE4207E5A6D001DA8D9 /* TextElementHandler.swift in Sources */,
+				C07B53062294265800BA085A /* BluetoothDevice.swift in Sources */,
 				6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */,
 				4B5568B51DD7D1F4000C033E /* ExperimentButtonView.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
@@ -1584,15 +1606,19 @@
 				C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */,
 				6B00F0AC1C4680CC00971941 /* IntegrationAnalysis.swift in Sources */,
 				6B00F0971C44176900971941 /* ExperimentAnalysisDataIO.swift in Sources */,
+				C07B53032294264200BA085A /* BluetoothScanResultsTableViewController.swift in Sources */,
 				6BEA9451207FE3D90077274A /* SeparatorViewElementHandler.swift in Sources */,
 				6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */,
+				C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */,
 				6B612FE9207E5ABC001DA8D9 /* LinkElementHandler.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
+				C07B530B229426AD00BA085A /* ExperimentBluetoothOutput.swift in Sources */,
 				6BBA063A1C518BC900E4B1B0 /* UpdateValueAnalysis.swift in Sources */,
 				4B47B02B1DA6A19000CCBA6E /* AsinAnalysis.swift in Sources */,
 				6B0814DF1CABEE3000EE2791 /* BEMAnimationManager.m in Sources */,
 				6BBD28B21C20C696009E3757 /* ExperimentIcon.swift in Sources */,
+				C07B530D22942CC300BA085A /* InputConversion.swift in Sources */,
 				4B47B0351DA6A93200CCBA6E /* AverageAnalysis.swift in Sources */,
 				C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */,
 				4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */,

@@ -8,16 +8,18 @@
 
 import UIKit
 import ZipZap
+import CoreBluetooth
 
 private let minCellWidth: CGFloat = 320.0
 
 
 protocol ExperimentController {
-    func launchExperimentByURL(_ url: URL) -> Bool
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
 }
 
-final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController {
+final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
+    
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
@@ -121,7 +123,43 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         navigationController!.present(alert, animated: true, completion: nil)
     }
+
+    private func scanForBLEDevices(_ action: UIAlertAction) {
+        
+        let alertController = UIAlertController(title: "Scanning..",
+        message: "sorted by signal strengh",
+        preferredStyle: .actionSheet)
+
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        { (action) in
+
+        }
+        alertController.addAction(cancelAction)
+
+        let tableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
+        tableViewController.tableView = FixedTableView()
+        tableViewController.deviceIsChosenDelegate = self
+        alertController.setValue(tableViewController, forKey: "contentViewController")
+        navigationController!.present(alertController, animated: true)
+    }
     
+    func useChosenBLEDevice(chosenDevice: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+        let experimentCollections = ExperimentManager.shared.getExperimentsForBluetoothDevice(deviceName: chosenDevice.name, deviceUUIDs: advertisedUUIDs)
+        
+        var files: [URL] = []
+        for collection in experimentCollections {
+            for (experiment, _) in collection.experiments {
+                if let file = experiment.source {
+                    files.append(file)
+                }
+            }
+        }
+        
+        let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets"), experiments: files, delegate: self, chosenPeripheral: chosenDevice)
+        dialog.show(animated: true)
+        print("Showing?")
+    }
+
     func infoPressed(_ action: UIAlertAction) {
         let vc = UIViewController()
         vc.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -155,6 +193,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let alert = UIAlertController(title: localize("newExperiment"), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: localize("newExperimentQR"), style: .default, handler: launchScanner))
+        
+        alert.addAction(UIAlertAction(title: localize("newExperimentBluetooth"), style: .default, handler: scanForBLEDevices))
         
         alert.addAction(UIAlertAction(title: localize("newExperimentSimple"), style: .default, handler: createSimpleExperiment))
         
@@ -421,7 +461,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         
         if files.count == 1 {
-            _ = launchExperimentByURL(files.first!)
+            _ = launchExperimentByURL(files.first!, chosenPeripheral: nil)
         } else {
             var experiments: [URL] = []
             for file in files {
@@ -433,7 +473,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
     }
     
-    func launchExperimentByURL(_ url: URL) -> Bool {
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
 
         var fileType = FileType.unknown
         var experiment: Experiment?
@@ -579,6 +619,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 return false
             }
             catch {}
+        }
+        
+        if loadedExperiment.bluetoothDevices.count == 1, let input = loadedExperiment.bluetoothDevices.first {
+            if let chosenPeripheral = chosenPeripheral {
+                input.deviceAddress = chosenPeripheral.identifier
+            }
         }
         
         let controller = ExperimentPageViewController(experiment: loadedExperiment)
