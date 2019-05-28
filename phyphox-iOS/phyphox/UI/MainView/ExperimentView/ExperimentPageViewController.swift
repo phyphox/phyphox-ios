@@ -712,37 +712,23 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     @objc func action(_ item: UIBarButtonItem) {
         let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
-        if experiment.export != nil {
-            alert.addAction(UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
-                self.showExport(self.experiment.export!, singleSet: false)
-                }))
-        }
-        
-        alert.addAction(UIAlertAction(title: localize("timedRun"), style: .default, handler: { [unowned self] action in
-            self.showTimerOptions()
-            }))
-        
-        alert.addAction(UIAlertAction(title: (webServer.running ? localize("disableRemoteServer") : localize("enableRemoteServer")), style: .default, handler: { [unowned self] action in
-            self.toggleWebServer()
-            }))
-        
         alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
-            let al = UIAlertController(title: self.experiment.localizedTitle, message: self.experiment.localizedDescription, preferredStyle: .alert)
-
+            let state = self.experiment.stateTitle ?? ""
+            let al = UIAlertController(title: self.experiment.localizedTitle + (state != "" ? "\n\n" + state : ""), message: self.experiment.localizedDescription, preferredStyle: .alert)
+            
             for link in self.experiment.localizedLinks {
                 al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
                     UIApplication.shared.openURL(link.url)
                 }))
             }
-            
             al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
-            }))
-
-        for link in experiment.localizedLinks where link.highlighted {
-            alert.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
-                UIApplication.shared.openURL(link.url)
+        }))
+            
+        if experiment.export != nil {
+            alert.addAction(UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
+                self.showExport(self.experiment.export!, singleSet: false)
             }))
         }
         
@@ -758,9 +744,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
             HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
-
+            
             HUD.show(in: self.navigationController!.view)
-
+            
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
             let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).png")
@@ -781,7 +767,22 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             }
             
+        }))
+            
+        alert.addAction(UIAlertAction(title: localize("timedRun"), style: .default, handler: { [unowned self] action in
+            self.showTimerOptions()
             }))
+        
+        alert.addAction(UIAlertAction(title: (webServer.running ? localize("disableRemoteServer") : localize("enableRemoteServer")), style: .default, handler: { [unowned self] action in
+            self.toggleWebServer()
+            }))
+
+        for link in experiment.localizedLinks where link.highlighted {
+            alert.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
+                UIApplication.shared.openURL(link.url)
+            }))
+        }
+        
 
         for sensor in experiment.sensorInputs {
             if sensor.sensorType == SensorType.magneticField {
@@ -800,8 +801,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 break
             }
         }
-
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if !experiment.local {
             alert.addAction(UIAlertAction(title: localize("save_locally"), style: .default, handler: { [unowned self] action in
@@ -812,6 +811,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alert.addAction(UIAlertAction(title: localize("save_state"), style: .default, handler: { [unowned self] action in
             self.showSaveState()
         }))
+        
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.barButtonItem = item
