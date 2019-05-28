@@ -169,7 +169,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         
         if files.count > 0 {
-            let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets") + (experimentOnDevice ? "\n\n" +  localize("newExperimentBluetoothLoadFromDevice") : ""), experiments: files, delegate: self, chosenPeripheral: chosenDevice, onDevice: experimentOnDevice)
+            let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets") + (experimentOnDevice ? "\n\n" +  localize("newExperimentBluetoothLoadFromDeviceInfo") : ""), experiments: files, delegate: self, chosenPeripheral: chosenDevice, onDevice: experimentOnDevice)
             dialog.show(animated: true)
         } else {
             loadExperimentFromPeripheral(chosenDevice)

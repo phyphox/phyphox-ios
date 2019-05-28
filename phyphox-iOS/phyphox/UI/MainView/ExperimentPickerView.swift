@@ -19,16 +19,15 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
     var delegate: ExperimentController?
     let experimentPicker = ExperimentPickerViewController()
     var chosenPeripheral: CBPeripheral?
-    var onDevice: Bool = false
     
     convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController) {
         self.init(frame: UIScreen.main.bounds)
-        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: nil)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: nil, onDevice: false)
     }
     
     convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?, onDevice: Bool) {
         self.init(frame: UIScreen.main.bounds)
-        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: chosenPeripheral)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: chosenPeripheral, onDevice: onDevice)
     }
     
     override init(frame: CGRect) {
@@ -39,7 +38,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         fatalError("init(coder:) has not been implemented.")
     }
     
-    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?) {
+    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?, onDevice: Bool) {
         self.delegate = delegate
         self.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
@@ -165,24 +164,26 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         dialogView.addConstraint(NSLayoutConstraint(item: separatorView2, attribute: .right, relatedBy: .equal, toItem: saveButton, attribute: .right, multiplier: 1, constant: 0))
         dialogView.addConstraint(NSLayoutConstraint(item: separatorView2, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 1))
         
-        dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+        if onDevice {
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .left, relatedBy: .equal, toItem: separatorView2, attribute: .left, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .right, relatedBy: .equal, toItem: separatorView2, attribute: .right, multiplier: 1, constant: 0))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .top, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .bottom, multiplier: 1, constant: margin))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .left, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .left, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .right, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .right, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 1))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView3!, attribute: .bottom, multiplier: 1, constant: margin))
+        } else {
+            dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+        }
         dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .left, relatedBy: .equal, toItem: separatorView2, attribute: .left, multiplier: 1, constant: 0))
         dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .right, relatedBy: .equal, toItem: separatorView2, attribute: .right, multiplier: 1, constant: 0))
         
-        if let separatorView3 = separatorView3, let fromDeviceButton = fromDeviceButton {
-            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3, attribute: .top, relatedBy: .equal, toItem: cancelButton, attribute: .bottom, multiplier: 1, constant: margin))
-            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3, attribute: .left, relatedBy: .equal, toItem: cancelButton, attribute: .left, multiplier: 1, constant: 0))
-            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3, attribute: .right, relatedBy: .equal, toItem: cancelButton, attribute: .right, multiplier: 1, constant: 0))
-            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 1))
-            
-            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton, attribute: .top, relatedBy: .equal, toItem: separatorView3, attribute: .bottom, multiplier: 1, constant: margin))
-            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton, attribute: .left, relatedBy: .equal, toItem: separatorView3, attribute: .left, multiplier: 1, constant: 0))
-            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton, attribute: .right, relatedBy: .equal, toItem: separatorView3, attribute: .right, multiplier: 1, constant: 0))
-            
-            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton, attribute: .bottom, relatedBy: .equal, toItem: dialogView, attribute: .bottom, multiplier: 1, constant: -margin))
-        } else {
-            dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .bottom, relatedBy: .equal, toItem: dialogView, attribute: .bottom, multiplier: 1, constant: -margin))
-        }
+        
+        dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .bottom, relatedBy: .equal, toItem: dialogView, attribute: .bottom, multiplier: 1, constant: -margin))
         
     }
     
