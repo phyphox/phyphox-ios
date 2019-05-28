@@ -49,6 +49,32 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
         let alert = UIAlertController(title: localize("help"), message: nil, preferredStyle: .actionSheet)
         
+        alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
+        
+        alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("experimentsPhyphoxOrgURL"))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("faqPhyphoxOrgURL"))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("translationInfo"), style: .default, handler:{ _ in
+            let al = UIAlertController(title: localize("translationInfo"), message: localize("translationText"), preferredStyle: .alert)
+            
+            al.addAction(UIAlertAction(title: localize("translationToWebsite"), style: .default, handler: { _ in
+                UIApplication.shared.openURL(URL(string: localize("translationToWebsiteURL"))!)
+            }))
+            
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }))
+        
         alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in
             var msg = "phyphox\n"
             msg += "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")\n"
@@ -75,32 +101,6 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             al.addAction(UIAlertAction(title: localize("copyToClipboard"), style: .default, handler: { _ in
                 UIPasteboard.general.string = msg
                 self.dismiss(animated: true, completion: nil)
-            }))
-            
-            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-            
-            self.navigationController!.present(al, animated: true, completion: nil)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
-        
-        alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("experimentsPhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("faqPhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("translationInfo"), style: .default, handler:{ _ in
-            let al = UIAlertController(title: localize("translationInfo"), message: localize("translationText"), preferredStyle: .alert)
-            
-            al.addAction(UIAlertAction(title: localize("translationToWebsite"), style: .default, handler: { _ in
-                UIApplication.shared.openURL(URL(string: localize("translationToWebsiteURL"))!)
             }))
             
             al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
