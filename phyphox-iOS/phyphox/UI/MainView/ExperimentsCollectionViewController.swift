@@ -49,6 +49,39 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
         let alert = UIAlertController(title: localize("help"), message: nil, preferredStyle: .actionSheet)
         
+        alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in
+            var msg = "phyphox\n"
+            msg += "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")\n"
+            msg += "Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")\n"
+            msg += "File format: \(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)\n\n"
+            
+            var systemInfo = utsname()
+            uname(&systemInfo)
+            let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                    ptr in String.init(validatingUTF8: ptr)
+                }
+            }
+            let model = String.init(validatingUTF8: modelCode!)!
+            
+            msg += "Device\n"
+            msg += "Model: \(model)\n"
+            msg += "Brand: Apple\n"
+            msg += "iOS version: \(UIDevice.current.systemVersion)"
+            
+            
+            let al = UIAlertController(title: localize("deviceInfo"), message: msg, preferredStyle: .alert)
+            
+            al.addAction(UIAlertAction(title: localize("copyToClipboard"), style: .default, handler: { _ in
+                UIPasteboard.general.string = msg
+                self.dismiss(animated: true, completion: nil)
+            }))
+            
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }))
+        
         alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
         
         alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in

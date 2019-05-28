@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct SemanticVersion: Comparable {
+public struct SemanticVersion: Comparable {
     let major: UInt
     let minor: UInt
     let patch: UInt
@@ -40,7 +40,7 @@ struct SemanticVersion: Comparable {
         }
     }
 
-    static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
+    public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
         guard lhs.major <= rhs.major else { return false }
         guard lhs.major == rhs.major else { return true }
 
