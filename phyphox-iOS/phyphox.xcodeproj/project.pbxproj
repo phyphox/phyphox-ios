@@ -602,6 +602,8 @@
 		C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMapShaderProgram.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
 		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
+		C0B840C3229DE5BC006C958A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C0B840D2229DE5BC006C958A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1273,6 +1275,7 @@
 				"zh-Hans",
 				zh_Hans,
 				zh_Hant,
+				sr,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1706,6 +1709,7 @@
 				C03122992260E06F005DFB5B /* vi */,
 				C031229B2260E07C005DFB5B /* zh_Hans */,
 				C031229D2260E086005DFB5B /* zh_Hant */,
+				C0B840D2229DE5BC006C958A /* sr */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1729,6 +1733,7 @@
 				C03122982260E06F005DFB5B /* vi */,
 				C031229A2260E07C005DFB5B /* zh_Hans */,
 				C031229C2260E086005DFB5B /* zh_Hant */,
+				C0B840C3229DE5BC006C958A /* sr */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
