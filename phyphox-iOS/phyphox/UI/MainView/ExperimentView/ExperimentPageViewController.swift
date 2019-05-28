@@ -521,7 +521,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        export.runExport(format, singleSet: singleSet) { (errorMessage, fileURL) in
+        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -584,7 +584,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 //Instead use the legacy state serializer for now:
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-                let fileNameDefault = localize("save_state_default_title")
+                let fileNameDefault = self.experiment.cleanedFilenameTitle
                 let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
                 let target = savedExperimentStatesURL.appendingPathComponent(filename)
                 
@@ -749,7 +749,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).png")
+            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(self.experiment.cleanedFilenameTitle) \(dateFormatter.string(from: Date())).png")
             
             do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             do { try png.write(to: URL(fileURLWithPath: tmpFile), options: .noFileProtection) } catch {}

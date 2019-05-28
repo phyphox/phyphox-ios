@@ -43,6 +43,14 @@ final class Experiment {
         return stateTitle ?? localizedTitle
     }
     
+    var cleanedFilenameTitle: String {
+        let title = displayTitle
+        let regex = try! NSRegularExpression(pattern: "[^0-9a-zA-Z \\-_]", options: [])
+        let range = NSMakeRange(0, title.count)
+        let result = regex.stringByReplacingMatches(in: title, options: [], range: range, withTemplate: "")
+        return result
+    }
+    
     var localizedDescription: String? {
         return translation?.selectedTranslation?.descriptionString ?? description
     }

@@ -15,7 +15,7 @@ struct ExperimentExport: Equatable {
         self.sets = sets
     }
     
-    func runExport(_ format: ExportFileFormat, singleSet: Bool, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
+    func runExport(_ format: ExportFileFormat, singleSet: Bool, filename: String, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             autoreleasepool {
                 let dateFormatter = DateFormatter()
@@ -24,7 +24,7 @@ struct ExperimentExport: Equatable {
                 if format.isCSV() {
                     //Originally, if the data could be exported in a single csv file, it was not zipped. However, many experiments require multiple csv files and this alternating behaviour of the export function was confusing for many users. Therefore, we now always export a zip file even if there is only one set while (since phyphox 1.1.0) individual CSV files can be created by directly exporting individual graphs (which sets "singleSet").
                     if singleSet {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).csv")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).csv")
                         
                         do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
@@ -50,7 +50,7 @@ struct ExperimentExport: Equatable {
                         }
                     }
                     else {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).zip")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).zip")
                         
                         do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
@@ -85,7 +85,7 @@ struct ExperimentExport: Equatable {
                     }
                 }
                 else {
-                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("phyphox \(dateFormatter.string(from: Date())).xls")
+                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).xls")
                     
                     do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                     
