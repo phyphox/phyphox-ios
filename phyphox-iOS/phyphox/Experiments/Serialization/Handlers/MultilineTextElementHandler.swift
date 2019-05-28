@@ -15,7 +15,7 @@ final class MultilineTextElementHandler: ResultElementHandler, AttributelessElem
     func endElement(text: String, attributes: AttributeContainer) throws {
         let cleanText = text.replacingOccurrences(of: "(?m)((?:^\\s+)|(?:\\s+$))", with: "\n", options: .regularExpression, range: nil)
 
-        guard !cleanText.isEmpty else { throw ElementHandlerError.missingText }
+        //guard !cleanText.isEmpty else { throw ElementHandlerError.missingText }
 
         results.append(cleanText)
     }

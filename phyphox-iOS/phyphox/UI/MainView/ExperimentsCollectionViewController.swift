@@ -16,6 +16,7 @@ private let minCellWidth: CGFloat = 320.0
 protocol ExperimentController {
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
+    func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
 
 final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
@@ -124,22 +125,26 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         navigationController!.present(alert, animated: true, completion: nil)
     }
 
+    var bluetoothScanResultsTableViewController: BluetoothScanResultsTableViewController? = nil
+    
     private func scanForBLEDevices(_ action: UIAlertAction) {
         
-        let alertController = UIAlertController(title: "Scanning..",
-        message: "sorted by signal strengh",
+        let alertController = UIAlertController(title: localize("bt_pick_device"),
+        message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"),
         preferredStyle: .actionSheet)
 
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        { (action) in
-
+        let infoAction = UIAlertAction(title: localize("bt_more_info_link_button"), style: .default) { (action) in
+            UIApplication.shared.openURL(URL(string: localize("bt_more_info_link_url"))!)
         }
+        alertController.addAction(infoAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
         alertController.addAction(cancelAction)
 
-        let tableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
-        tableViewController.tableView = FixedTableView()
-        tableViewController.deviceIsChosenDelegate = self
-        alertController.setValue(tableViewController, forKey: "contentViewController")
+        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
+        bluetoothScanResultsTableViewController?.tableView = FixedTableView()
+        bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
+        alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
         navigationController!.present(alertController, animated: true)
     }
     
@@ -155,9 +160,24 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
         }
         
-        let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets"), experiments: files, delegate: self, chosenPeripheral: chosenDevice)
-        dialog.show(animated: true)
-        print("Showing?")
+        
+        let experimentOnDevice: Bool
+        if let advertisedUUIDs = advertisedUUIDs {
+            experimentOnDevice = advertisedUUIDs.map({(uuid) -> String in uuid.uuid128String}).contains(phyphoxServiceUUID.uuidString)
+        } else {
+            experimentOnDevice = false
+        }
+        
+        if files.count > 0 {
+            let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets") + (experimentOnDevice ? "\n\n" +  localize("newExperimentBluetoothLoadFromDevice") : ""), experiments: files, delegate: self, chosenPeripheral: chosenDevice, onDevice: experimentOnDevice)
+            dialog.show(animated: true)
+        } else {
+            loadExperimentFromPeripheral(chosenDevice)
+        }
+    }
+    
+    func loadExperimentFromPeripheral(_ peripheral: CBPeripheral) {
+        bluetoothScanResultsTableViewController?.ble.loadExperimentFromPeripheral(peripheral, viewController: self, experimentLauncher: self)
     }
 
     func infoPressed(_ action: UIAlertAction) {

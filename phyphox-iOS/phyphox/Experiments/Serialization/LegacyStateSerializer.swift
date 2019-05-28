@@ -101,6 +101,7 @@ final class LegacyStateSerializer {
             newBlock += "</container>\n"
         }
         let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
-        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + "</phyphox>"
+        let color = "<color>blue</color>"
+        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + color + "\n" + "</phyphox>"
     }
 }

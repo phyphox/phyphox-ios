@@ -60,7 +60,17 @@ final class Experiment {
 
     let icon: ExperimentIcon
     
-    let color: UIColor
+    let rawColor: UIColor?
+    var color: UIColor {
+        if let color = rawColor {
+            return color
+        } else if bluetoothDevices.count > 0 {
+            return kBluetooth
+        } else {
+            return kHighlightColor
+        }
+    }
+    
     var fontColor: UIColor {
         if color.luminance > 0.7 {
             return UIColor.black
@@ -105,7 +115,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -120,7 +130,7 @@ final class Experiment {
         self.category = category
         
         self.icon = icon
-        self.color = color
+        self.rawColor = color
         
         self.translation = translation
 
@@ -300,6 +310,12 @@ final class Experiment {
     func start() throws {
         guard !running else {
             return
+        }
+        
+        for device in bluetoothDevices {
+            if !device.prepareForStart() {
+                return
+            }
         }
         
         if pauseBegin > 0 {

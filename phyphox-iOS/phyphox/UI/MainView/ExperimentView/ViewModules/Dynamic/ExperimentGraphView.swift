@@ -893,7 +893,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             var valuesOK = true
             var lastX = -Double.infinity
             var lastY = Double.nan
-            var lastZ = Double.nan
             
             for j in 0..<count[i] {
                 let rawX = xValues[i][j]
@@ -979,7 +978,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 
                 lastX = x
                 lastY = y
-                lastZ = z
             }
 
             if !xOrderOK && descriptor.style[i] != .map {

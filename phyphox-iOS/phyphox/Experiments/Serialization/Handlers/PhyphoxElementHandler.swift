@@ -155,13 +155,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.missingElement("category")
         }
 
-        guard let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString else {
-            throw ElementHandlerError.missingElement("description")
-        }
+        let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString ?? ""
         
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
         
-        let color = try colorHandler.expectOptionalResult() ?? kHighlightColor
+        let color = try colorHandler.expectOptionalResult()
         
         let links = linkHandler.results
 

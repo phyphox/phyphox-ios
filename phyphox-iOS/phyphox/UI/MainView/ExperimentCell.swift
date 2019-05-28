@@ -26,8 +26,10 @@ class ExperimentCell: UICollectionViewCell {
                     optionsButton!.accessibilityLabel = localize("actions")
                     optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), for: .touchUpInside)
                     
-                    optionsButton!.setTintColor(kHighlightColor, for: UIControlState())
-                    optionsButton!.setTintColor(kHighlightColor.interpolating(to: UIColor.black, byFraction: 0.5), for: .highlighted)
+                    let expColor = experiment?.color ?? kHighlightColor
+                    let color = expColor.luminance > 0.1 ? expColor : kHighlightColor
+                    optionsButton!.setTintColor(color, for: UIControlState())
+                    optionsButton!.setTintColor(color.interpolating(to: UIColor.black, byFraction: 0.5), for: .highlighted)
                     contentView.addSubview(optionsButton!)
                 }
             }

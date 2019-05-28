@@ -204,6 +204,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             playItem
         ]
 
+        for device in experiment.bluetoothDevices {
+            device.feedbackViewController = self
+        }
+        
         connectToBluetoothDevices()        
 
         //TabBar to switch collections
@@ -1032,37 +1036,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for device in experiment.bluetoothDevices {
             if device.deviceAddress == nil {
                 device.stopExperimentDelegate = self
-                
-                let message: String
-                let deviceIDInfo: String
-                if let deviceID = device.id, deviceID != "" {
-                   deviceIDInfo =  " (" + deviceID + ")"
-                } else {
-                    deviceIDInfo = ""
-                }
-                if let filterName = device.deviceName, filterName != "" {
-                    message = localize("bt_scanning_specific1") + " \"" + filterName + "\" " + localize("bt_scanning_specific2") + deviceIDInfo
-                } else {
-                    message = localize("bt_scanning_generic") + deviceIDInfo
-                }
-                let alertController = UIAlertController(title: localize("bt_pick_device"),
-                                                        message: message,
-                                                        preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-                { (action) in
-                    // TODO ...
-                }
-                alertController.addAction(cancelAction)
-
-                let scanController = BluetoothScanResultsTableViewController(filterByName: device.deviceName, filterByUUID: device.advertiseUUID, checkExperiments: false)
-                scanController.tableView = FixedTableView()
-                alertController.setValue(scanController, forKey: "contentViewController")
-                
-                scanController.deviceIsChosenDelegate = device
-                scanController.dialogDismissedDelegate = self
-                
-                self.present(alertController, animated: true)
+                device.showScanDialog(dismissDelegate: self)
                 
                 return
             }

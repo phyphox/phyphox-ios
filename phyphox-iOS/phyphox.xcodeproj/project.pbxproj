@@ -1251,10 +1251,9 @@
 			};
 			buildConfigurationList = 6B7BF7751C130425007408FB /* Build configuration list for PBXProject "phyphox" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
 				Base,
 				de,
