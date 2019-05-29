@@ -160,7 +160,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
     var bluetoothScanResultsTableViewController: BluetoothScanResultsTableViewController? = nil
     
-    private func scanForBLEDevices(_ action: UIAlertAction) {
+    private func scanForBLEDevices() {
         
         let alertController = UIAlertController(title: localize("bt_pick_device"),
         message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"),
@@ -243,24 +243,18 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
     @objc func addExperiment() {
-        let alert = UIAlertController(title: localize("newExperiment"), message: nil, preferredStyle: .actionSheet)
+        var menuElements: [MenuTableViewController.MenuElement] = []
         
-        alert.addAction(UIAlertAction(title: localize("newExperimentQR"), style: .default, handler: launchScanner))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentBluetooth"), icon: UIImage(named: "new_experiment_bluetooth")!, callback: scanForBLEDevices))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentSimple"), icon: UIImage(named: "new_experiment_simple")!, callback: createSimpleExperiment))
         
-        alert.addAction(UIAlertAction(title: localize("newExperimentBluetooth"), style: .default, handler: scanForBLEDevices))
-        
-        alert.addAction(UIAlertAction(title: localize("newExperimentSimple"), style: .default, handler: createSimpleExperiment))
-        
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.barButtonItem = addButton!
+        if let menu = MenuTableViewController(label: localize("newExperiment"), message: nil, elements: menuElements).getMenu(sourceButton: addButton!) {
+            present(menu, animated: true, completion: nil)
         }
-        
-        present(alert, animated: true, completion: nil)
     }
 
-    func launchScanner(_ action: UIAlertAction) {
+    func launchScanner() {
         let vc = ScannerViewController()
         vc.experimentLauncher = self
         let nav = UINavigationController(rootViewController: vc)
@@ -277,7 +271,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     
-    func createSimpleExperiment(_ action: UIAlertAction) {
+    func createSimpleExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         
