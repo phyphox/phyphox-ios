@@ -17,7 +17,7 @@ protocol StopExperimentDelegate {
     func stopExperiment()
 }
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, ExperimentWebServerDelegate, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate {
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate {
     
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
@@ -272,6 +272,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+        var hintShown = false
+        
         //Ask to save the experiment locally if it has been loaded from a remote source
         if !experiment.local {
             let al = UIAlertController(title: localize("save_locally"), message: localize("save_locally_message"), preferredStyle: .alert)
@@ -289,35 +291,31 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.navigationController!.present(al, animated: true, completion: nil)
             
         //Show a hint for the experiment info
-        }
-        else if (experiment.localizedCategory != localize("categoryRawSensor")) {
-            // TODO: Only show this hint until the experiment has been started a limited number of times
-            let label = UILabel()
-            label.text = localize("experimentinfo_hint")
-            label.lineBreakMode = .byWordWrapping
-            label.numberOfLines = 0
-            label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
-            label.textColor = kDarkBackgroundColor
-            let maxSize = CGSize(width: self.view.frame.width*2/3, height: self.view.frame.height*2/3)
-            label.frame.size = label.sizeThatFits(maxSize)
-            label.frame = label.frame.offsetBy(dx: 10, dy: 10)
-            let paddedFrame = label.frame.insetBy(dx: -10, dy: -10)
-            let popoverHint = UIViewController()
-            popoverHint.view.addSubview(label)
-            popoverHint.preferredContentSize = paddedFrame.size
-            popoverHint.modalPresentationStyle = UIModalPresentationStyle.popover
-            let pc = popoverHint.popoverPresentationController
-            pc?.permittedArrowDirections = .any
-            pc?.barButtonItem = actionItem
-            pc?.sourceView = self.view
-            pc?.delegate = self
-            self.present(popoverHint, animated: true, completion: nil)
+        } else {
+            if !hintShown {
+                let defaults = UserDefaults.standard
+                let key = "experiment_start_hint_dismiss_count"
+                if (defaults.integer(forKey: key) < 3) {
+                    let bubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
+                    }, button: playItem, source: self.view, delegate: self)
+                    
+                    self.present(bubble, animated: true, completion: nil)
+                    hintShown = true
+                }
+            }
             
-            let tapHandler = UITapGestureRecognizer.init(target: self, action: #selector(closeHint))
-            tapHandler.delegate = self
-            tapHandler.numberOfTapsRequired = 1
-            popoverHint.view.isUserInteractionEnabled = true
-            popoverHint.view.addGestureRecognizer(tapHandler)
+            if !hintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+                let defaults = UserDefaults.standard
+                let key = "experiment_info_hint_dismiss_count"
+                if (defaults.integer(forKey: key) < 3) {
+                    let bubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
+                        defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
+                    }, button: actionItem, source: self.view, delegate: self)
+                    
+                    self.present(bubble, animated: true, completion: nil)
+                    hintShown = true
+                }
+            }
         }
         
     }
@@ -336,10 +334,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     //Force iPad-style popups (for the hint to the menu)
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         return .none
-    }
-    
-    @objc func closeHint(_ sender: UITapGestureRecognizer? = nil) {
-        self.dismiss(animated: true, completion: nil)
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -879,6 +873,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func startExperiment() {
+        let defaults = UserDefaults.standard
+        let key = "experiment_start_hint_dismiss_count"
+        defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
+        print(defaults.integer(forKey: key))
+        
         if !experiment.running {
             UIApplication.shared.isIdleTimerDisabled = true
             
