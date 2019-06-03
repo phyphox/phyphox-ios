@@ -169,9 +169,9 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyString(for: .label)
-        let xLabel = try attributes.nonEmptyString(for: .labelX)
-        let yLabel = try attributes.nonEmptyString(for: .labelY)
+        let label = attributes.optionalString(for: .label) ?? ""
+        let xLabel = attributes.optionalString(for: .labelX) ?? ""
+        let yLabel = attributes.optionalString(for: .labelY) ?? ""
         let zLabel = attributes.optionalString(for: .labelZ)
         let xUnit = attributes.optionalString(for: .unitX)
         let yUnit = attributes.optionalString(for: .unitY)

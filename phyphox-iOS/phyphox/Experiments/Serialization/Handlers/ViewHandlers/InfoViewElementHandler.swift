@@ -28,7 +28,7 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyString(for: .label)
+        let label = attributes.optionalString(for: .label) ?? ""
         let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
 
         results.append(.info(InfoViewElementDescriptor(label: label, color: color)))
