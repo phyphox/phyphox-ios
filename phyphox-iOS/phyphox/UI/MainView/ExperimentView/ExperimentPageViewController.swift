@@ -26,6 +26,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.horizontal, options: nil)
     
     var serverLabel: UILabel? = nil
+    var serverLabelBackground: UIView? = nil
     
     let experiment: Experiment
     
@@ -75,6 +76,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func updateSelectedViewCollection() {
         segControl?.selectedSegmentIndex = selectedViewCollection
         updateTabScrollPosition(selectedViewCollection)
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        updateLayout()
     }
     
     @available(*, unavailable)
@@ -173,15 +179,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if (experiment.viewDescriptors!.count > 1) {
             offsetTop += tabBarHeight
         }
+        let offsetBottom: CGFloat = self.bottomLayoutGuide.length
+        let offsetFrame: CGRect
+        if #available(iOS 11, *) {
+            offsetFrame = self.view.safeAreaLayoutGuide.layoutFrame
+        } else {
+            offsetFrame = self.view.frame
+        }
+        
         var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         
-        if let label = self.serverLabel {
-            let s = label.sizeThatFits(CGSize(width: pageViewControlerRect.width, height: 200))
-            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height))
+        if let label = self.serverLabel, let labelBackground = self.serverLabelBackground {
+            let s = label.sizeThatFits(CGSize(width: offsetFrame.width, height: 300))
+            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height-offsetBottom))
             
-            let labelFrame = CGRect(x: 0, y: self.view.frame.height - s.height, width: pageViewControlerRect.width, height: s.height)
+            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom, width: pageViewControlerRect.width, height: s.height + offsetBottom)
+            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom, width: offsetFrame.width, height: s.height)
             label.frame = labelFrame
+            labelBackground.frame = labelBackgroundFrame
             label.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
+            labelBackground.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
         }
         
         self.pageViewControler.view.frame = pageViewControlerRect
@@ -449,6 +466,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
             self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
+            self.serverLabelBackground = UIView()
+            self.serverLabelBackground!.backgroundColor = kLightBackgroundColor
+            self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             
             updateLayout()
@@ -460,7 +480,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if let label = self.serverLabel {
             label.removeFromSuperview()
         }
+        if let labelBackground = self.serverLabelBackground {
+            labelBackground.removeFromSuperview()
+        }
         self.serverLabel = nil
+        self.serverLabelBackground = nil
         updateLayout()
         if (!self.experiment.running) {
             UIApplication.shared.isIdleTimerDisabled = false

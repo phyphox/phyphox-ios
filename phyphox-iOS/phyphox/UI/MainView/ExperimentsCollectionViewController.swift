@@ -303,13 +303,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
         var cells: CGFloat = 1.0
         
-        var width = self.view.frame.size.width
+        let availableWidth = self.view.frame.size.width - collectionView.contentInset.left - collectionView.contentInset.right
+        var width = availableWidth
         
-        while self.view.frame.size.width/(cells+1.0) >= minCellWidth {
+        while availableWidth/(cells+1.0) >= minCellWidth {
             cells += 1.0
-            width = self.view.frame.size.width/cells
+            width = availableWidth/cells
         }
         
         cellsPerRow = Int(cells)
@@ -389,7 +391,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        return CGSize(width: self.view.frame.size.width, height: 36.0)
+        let availableWidth = self.view.frame.size.width - collectionView.contentInset.left - collectionView.contentInset.right
+        return CGSize(width: availableWidth, height: 36.0)
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {

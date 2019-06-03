@@ -1489,29 +1489,29 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var bottom: CGFloat = 0.0
         
         if (resizableState == .exclusive) {
-            if let s = graphTools?.sizeThatFits(bounds.size) {
-                graphTools?.frame = CGRect(x: 0, y: bounds.size.height-s.height, width: bounds.size.width, height: s.height)
+            if let s = graphTools?.sizeThatFits(frame.size) {
+                graphTools?.frame = CGRect(x: 0, y: frame.size.height-s.height, width: frame.size.width, height: s.height)
                 bottom += s.height
             }
         }
         
-        graphArea.frame = CGRect(x: 0, y: 0, width: bounds.size.width, height: bounds.size.height-bottom)
+        graphArea.frame = CGRect(x: 0, y: 0, width: frame.size.width, height: frame.size.height-bottom)
         
-        let s1 = label.sizeThatFits(bounds.size)
-        label.frame = CGRect(x: (bounds.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
+        let s1 = label.sizeThatFits(frame.size)
+        label.frame = CGRect(x: (frame.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
         
-        let s2 = xLabel.sizeThatFits(bounds.size)
-        let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
+        let s2 = xLabel.sizeThatFits(frame.size)
+        let s3 = yLabel.sizeThatFits(frame.size).applying(yLabel.transform)
         
-        xLabel.frame = CGRect(x: (bounds.size.width+s3.width-s2.width)/2.0, y: bounds.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
+        xLabel.frame = CGRect(x: (frame.size.width+s3.width-s2.width)/2.0, y: frame.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
         
         bottom += s2.height+spacing
         
-        let s4 = zLabel?.sizeThatFits(bounds.size) ?? .zero
-        zLabel?.frame = CGRect(x: (bounds.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
+        let s4 = zLabel?.sizeThatFits(frame.size) ?? .zero
+        zLabel?.frame = CGRect(x: (frame.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
         
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZData ? zScaleHeight + s4.height + spacing : 0), width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - spacing - bottom - (hasZData ? zScaleHeight + spacing + s4.height : 0))
-        zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZData ? zScaleHeight + s4.height + spacing : 0), width: frame.size.width - s3.width - spacing - 2*sideMargins, height: frame.size.height - s1.height - spacing - bottom - (hasZData ? zScaleHeight + spacing + s4.height : 0))
+        zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: frame.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
         
         yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
         

@@ -22,7 +22,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     var exclusiveView: UIView? = nil
     
     private let insetTop: CGFloat = 10
-    private let intercellSpacing: CGFloat = 0
+    private let intercellSpacing: CGFloat = 0.0
 
     var active = false {
         didSet {
@@ -65,13 +65,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
             return 0
         }
         
-        let size = module.sizeThatFits(view.frame.size)
+        let availableSize = CGSize(width: view.frame.width, height: view.frame.height - bottomLayoutGuide.length)
+        let size = module.sizeThatFits(availableSize)
 
         if indexPath.row > 0 {
-            return size.height + (((module as? ResizableViewModule)?.resizableState == .normal) ? intercellSpacing : 0)
+            return size.height + (((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0)
         }
         else {
-            return size.height + (((module as? ResizableViewModule)?.resizableState == .normal) ? insetTop : 0)
+            return size.height + (((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0)
         }
     }
 
@@ -83,10 +84,10 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         let module = modules[indexPath.row]
 
         if indexPath.row > 0 {
-            cell.topInset = ((module as? ResizableViewModule)?.resizableState == .normal) ? intercellSpacing : 0
+            cell.topInset = ((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0
         }
         else {
-            cell.topInset = ((module as? ResizableViewModule)?.resizableState == .normal) ? insetTop : 0
+            cell.topInset = ((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0
         }
 
         // Add to new cell
