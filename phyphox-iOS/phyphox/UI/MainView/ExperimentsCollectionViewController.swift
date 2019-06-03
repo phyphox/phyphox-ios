@@ -164,7 +164,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let alertController = UIAlertController(title: localize("bt_pick_device"),
         message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"),
-        preferredStyle: .actionSheet)
+        preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
 
         let infoAction = UIAlertAction(title: localize("bt_more_info_link_button"), style: .default) { (action) in
             UIApplication.shared.openURL(URL(string: localize("bt_more_info_link_url"))!)
@@ -178,6 +178,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
         bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
         alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
+        if let popover = alertController.popoverPresentationController {
+            popover.sourceView = self.view
+            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+
+        }
         navigationController!.present(alertController, animated: true)
     }
     

@@ -58,6 +58,7 @@ class MenuTableViewController: UITableViewController {
         let element = elements[indexPath.row]
         
         cell.textLabel?.text = element.label
+        cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
         cell.accessoryView = UIImageView(image: element.icon)
         return cell
     }
