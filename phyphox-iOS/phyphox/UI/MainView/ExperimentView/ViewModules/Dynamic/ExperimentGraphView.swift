@@ -1374,10 +1374,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         menuAlertController?.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
-        if let popover = menuAlertController?.popoverPresentationController {
-            let interactionViews = graphTools!.subviews.filter({$0.isUserInteractionEnabled})
+        if let popover = menuAlertController?.popoverPresentationController, let graphTools = graphTools {
+            let interactionViews = graphTools.subviews.filter({$0.isUserInteractionEnabled})
             let view = interactionViews.sorted(by: {$0.frame.minX < $1.frame.minX})[Mode.none.rawValue]
-            popover.sourceView = view
+            popover.sourceView = graphTools
             popover.sourceRect = view.frame
         }
         
