@@ -199,7 +199,7 @@ class StringInputConversion: InputConversion {
         guard var str: String = String(data: subdata, encoding: .utf8) else {
             return Double.nan
         }
-        print(str)
+
         if let decimalPoint = decimalPoint {
            str = str.replacingOccurrences(of: decimalPoint, with: ".")
         }

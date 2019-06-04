@@ -493,7 +493,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return .unknown
     }
     
-    func handleZipFile(_ url: URL) throws {
+    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
         try? FileManager.default.removeItem(at: tmp)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
@@ -517,14 +517,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         
         if files.count == 1 {
-            _ = launchExperimentByURL(files.first!, chosenPeripheral: nil)
+            _ = launchExperimentByURL(files.first!, chosenPeripheral: chosenPeripheral)
         } else {
             var experiments: [URL] = []
             for file in files {
                 experiments.append(file)
             }
             
-            let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self)
+            let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
     }
@@ -607,7 +607,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                     }
             case .zip:
                 do {
-                    try handleZipFile(finalURL)
+                    try handleZipFile(finalURL, chosenPeripheral: chosenPeripheral)
                     return true
                 } catch let error {
                     experimentLoadingError = error

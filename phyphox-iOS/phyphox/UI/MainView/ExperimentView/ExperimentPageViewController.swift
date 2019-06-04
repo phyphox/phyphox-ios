@@ -900,7 +900,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
-        print(defaults.integer(forKey: key))
         
         if !experiment.running {
             UIApplication.shared.isIdleTimerDisabled = true
