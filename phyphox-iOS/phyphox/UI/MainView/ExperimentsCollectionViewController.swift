@@ -478,12 +478,18 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         case unknown
         case phyphox
         case zip
+        case partialZip
     }
     
     func detectFileType(data: Data) -> FileType {
         if data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04 {
             //Look for ZIP signature
             return .zip
+        }
+        let i = data.count - 16 //Offset of possible data descriptor
+        if data[i] == 0x50 && data[i+1] == 0x4b && data[i+2] == 0x07 && data[i+3] == 0x08 {
+            //Look for data descriptor of a partial ZIP file
+            return .partialZip
         }
         if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
             //Naive method to roughly check if this is a phyphox file without actually parsing it.
@@ -527,6 +533,69 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
+    }
+    
+    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        var data = Data()
+        
+        //Local file header
+        data.append(Data(bytes: [0x50, 0x4b, 0x03, 0x04])) //Local file header signature
+        data.append(Data(bytes: [0x0a, 0x00])) //Version
+        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
+        data.append(Data(bytes: [0x00, 0x00])) //Compression method
+        data.append(Data(bytes: [0x00, 0x00])) //modification time
+        data.append(Data(bytes: [0x00, 0x00])) //modification date
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //CRC32
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Compressed size
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Uncompressed size
+        data.append(Data(bytes: [0x09, 0x00])) //File name length
+        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
+        data.append("a.phyphox".data(using: .utf8)!) //File name
+        
+        //Data (including data descriptor)
+        data.append(try Data(contentsOf: url))
+        
+        let i = data.count - 16 //Offset of possible data descriptor
+        let crc32 = data.subdata(in: Range(i+4..<i+8))
+        let compressedSize = data.subdata(in: Range(i+8..<i+12))
+        let uncompressedSize = data.subdata(in: Range(i+12..<i+16))
+        
+        //Central directory
+        var startIndex = UInt32(data.count)
+        data.append(Data(bytes: [0x50, 0x4b, 0x01, 0x02])) //signature
+        data.append(Data(bytes: [0x0a, 0x00])) //Version made by
+        data.append(Data(bytes: [0x0a, 0x00])) //Version needed
+        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
+        data.append(Data(bytes: [0x00, 0x00])) //Compression method
+        data.append(Data(bytes: [0x00, 0x00])) //modification time
+        data.append(Data(bytes: [0x00, 0x00])) //modification date
+        data.append(crc32) //CRC32
+        data.append(compressedSize) //Compressed size
+        data.append(uncompressedSize) //Uncompressed size
+        data.append(Data(bytes: [0x09, 0x00])) //File name length
+        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
+        data.append(Data(bytes: [0x00, 0x00])) //File comment length
+        data.append(Data(bytes: [0x00, 0x00])) //Disk number
+        data.append(Data(bytes: [0x00, 0x00])) //Internal file attributes
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //External file attributes
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Relative offset of local header
+        data.append("a.phyphox".data(using: .utf8)!) //File name
+        
+        //End of central directory
+        data.append(Data(bytes: [0x50, 0x4b, 0x05, 0x06])) //signature
+        data.append(Data(bytes: [0x00, 0x00])) //Disk number
+        data.append(Data(bytes: [0x00, 0x00])) //Start disk number
+        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories on disk
+        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories in total
+        data.append(Data(bytes: [0x37, 0x00, 0x00, 0x00])) //Size of central directory
+        data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
+        data.append(Data(bytes: [0x00, 0x00])) //Comment length
+        
+        
+        try data.write(to: tmp, options: .atomic)
+        try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
     }
     
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
@@ -608,6 +677,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             case .zip:
                 do {
                     try handleZipFile(finalURL, chosenPeripheral: chosenPeripheral)
+                    return true
+                } catch let error {
+                    experimentLoadingError = error
+                }
+            case .partialZip:
+                do {
+                    try handlePartialZipFile(finalURL, chosenPeripheral: chosenPeripheral)
                     return true
                 } catch let error {
                     experimentLoadingError = error
