@@ -305,13 +305,13 @@ final class Experiment {
     
     private func startAudio() throws {
         if audioOutput != nil || !audioInputs.isEmpty {
-            audioEngine = try AudioEngine(audioOutput: audioOutput, audioInput: audioInputs.first)
+            audioEngine = AudioEngine(audioOutput: audioOutput, audioInput: audioInputs.first)
             try audioEngine?.startEngine()
         }
     }
     
-    private func stopAudio() throws {
-        try audioEngine?.stopEngine()
+    private func stopAudio() {
+        audioEngine?.stopEngine()
         audioEngine = nil
     }
     
@@ -406,7 +406,7 @@ extension Experiment: ExperimentAnalysisDelegate {
 
     func analysisDidUpdate(_: ExperimentAnalysis) {
         if running {
-            audioEngine?.playAudioOutput()
+            audioEngine?.play()
             for bluetoothOutput in bluetoothOutputs {
                 bluetoothOutput.send()
             }
