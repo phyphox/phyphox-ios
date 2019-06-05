@@ -39,6 +39,12 @@ final class ExperimentManager {
         try FileManager.default.removeItem(at: source)
         reloadUserExperiments()
     }
+    
+    func renameExperiment(_ experiment: Experiment, newTitle: String) throws {
+        guard let source = experiment.source else { return }
+        try LegacyStateSerializer.renameStateFile(customTitle: newTitle, file: source)
+        reloadUserExperiments()
+    }
 
     let filteredServices: [String] = [CBUUID(string: "0x1812").uuid128String]
     

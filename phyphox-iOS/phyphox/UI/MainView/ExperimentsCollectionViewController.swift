@@ -321,10 +321,47 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return CGSize(width: width, height: h)
     }
     
+    private func showStateTitleEditForExperiment(_ experiment: Experiment, button: UIButton, oldTitle: String) {
+        let alert = UIAlertController(title: localize("rename"), message: nil, preferredStyle: .alert)
+        
+        alert.addTextField(configurationHandler: {(textfield: UITextField!) -> Void in
+            textfield.placeholder = localize("newExperimentInputTitle")
+            textfield.text = oldTitle
+        })
+        
+        alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+            do {
+                let textField = alert.textFields![0] as UITextField
+                if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
+                    try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)
+                }
+            }
+            catch let error as NSError {
+                let hud = JGProgressHUD(style: .dark)
+                hud.interactionType = .blockTouchesOnHUDView
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.textLabel.text = "Failed to rename experiment: \(error.localizedDescription)"
+                
+                hud.show(in: self.view)
+                
+                hud.dismiss(afterDelay: 3.0)
+            }
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.navigationController!.view
+            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
+        }
+        
+        present(alert, animated: true, completion: nil)
+    }
+    
     private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: localize("confirmDeleteTitle"), message: localize("confirmDelete"), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: localize("delete") + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("delete") + " " + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.shared.deleteExperiment(experiment)
             }
@@ -356,6 +393,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
             self.showDeleteConfirmationForExperiment(experiment, button: button)
         }))
+        
+        if let stateTitle = experiment.stateTitle {
+            alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+                self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: stateTitle)
+            }))
+        }
         
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
