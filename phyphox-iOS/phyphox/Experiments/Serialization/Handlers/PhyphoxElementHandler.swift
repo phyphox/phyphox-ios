@@ -222,7 +222,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
         }
 
-        let exportDescriptor = try exportHandler.expectSingleResult()
+        let exportDescriptor = try exportHandler.expectOptionalResult() ?? []
         let export = try makeExport(from: exportDescriptor, buffers: buffers)
 
         let viewCollectionDescriptors = try viewsHandler.expectOptionalResult()

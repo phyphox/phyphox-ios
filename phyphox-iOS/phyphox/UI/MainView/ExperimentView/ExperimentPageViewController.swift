@@ -550,23 +550,28 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     internal func showExport(_ export: ExperimentExport, singleSet: Bool) {
-        let alert = UIAlertController(title: localize("export"), message: localize("pick_exportFormat"), preferredStyle: .alert)
-        
-        let exportAction = UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
-            self.runExportFromActionSheet(export, singleSet: singleSet)
-            })
-        
-        if exportSelectionView == nil {
-            exportSelectionView = ExperimentExportSetSelectionView() { [unowned exportAction] available in
-                exportAction.isEnabled = available
+        let alert: UIAlertController
+        if export.sets.count > 0 {
+            alert = UIAlertController(title: localize("export"), message: localize("pick_exportFormat"), preferredStyle: .alert)
+            
+            let exportAction = UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
+                self.runExportFromActionSheet(export, singleSet: singleSet)
+                })
+            
+            if exportSelectionView == nil {
+                exportSelectionView = ExperimentExportSetSelectionView()
             }
+            
+            alert.addAction(exportAction)
+            
+            alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            
+            alert.__pt__setAccessoryView(exportSelectionView!)
+        } else {
+            alert = UIAlertController(title: localize("export"), message: localize("export_empty"), preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
         }
-        
-        alert.addAction(exportAction)
-        
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        alert.__pt__setAccessoryView(exportSelectionView!)
         
         self.navigationController!.present(alert, animated: true, completion: nil)
     }

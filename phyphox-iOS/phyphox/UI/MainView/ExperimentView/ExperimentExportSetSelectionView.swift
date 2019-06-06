@@ -18,10 +18,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
     let formatSwitches: [BEMCheckBox]
     let formatLabels: [UILabel]
     
-    let exportAvailabilityCallback: (Bool) -> Void
-    
-    init(exportAvailabilityCallback: @escaping (Bool) -> Void) {
-        self.exportAvailabilityCallback = exportAvailabilityCallback
+    init() {
         
         var fs = [BEMCheckBox]()
         fs.reserveCapacity(exportTypes.count)
