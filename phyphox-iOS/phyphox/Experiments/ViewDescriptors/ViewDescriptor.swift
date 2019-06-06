@@ -14,9 +14,7 @@ protocol ViewDescriptor {
 
     func generateViewHTMLWithID(_ id: Int) -> String
     func generateDataCompleteHTMLWithID(_ id: Int) -> String
-    func setValueHTMLWithID(_ id: Int) -> String
-    func setDataXHTMLWithID(_ id: Int) -> String
-    func setDataYHTMLWithID(_ id: Int) -> String
+    func setDataHTMLWithID(_ id: Int) -> String
 }
 
 extension ViewDescriptor {
@@ -28,15 +26,8 @@ extension ViewDescriptor {
         return "function() {}"
     }
 
-    func setValueHTMLWithID(_ id: Int) -> String {
+    func setDataHTMLWithID(_ id: Int) -> String {
         return "function(x) {}"
     }
 
-    func setDataXHTMLWithID(_ id: Int) -> String {
-        return "function(x) {}"
-    }
-
-    func setDataYHTMLWithID(_ id: Int) -> String {
-        return "function(y) {}"
-    }
 }

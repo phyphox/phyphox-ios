@@ -50,7 +50,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyString(for: .label)
+        let label = attributes.optionalString(for: .label) ?? ""
 
         let outputBufferName = try outputHandler.expectSingleResult()
 

@@ -19,6 +19,7 @@ final class CreditsView: UIView {
     let creditsRWTH: UILabel
     let namesBackground: UIView
     let creditsNames: UILabel
+    let creditsGPL: UILabel
     let closeButton: UIButton
     let licenceButton: UIButton
     
@@ -42,7 +43,7 @@ final class CreditsView: UIView {
         
         creditsRWTH = UILabel()
         creditsRWTH.numberOfLines = 0
-        creditsRWTH.text = NSLocalizedString("creditsRWTH", comment: "")
+        creditsRWTH.text = localize("creditsRWTH")
         creditsRWTH.font = UIFont.systemFont(ofSize: fontSize)
         creditsRWTH.textColor = kRWTHTextColor
         
@@ -52,8 +53,14 @@ final class CreditsView: UIView {
         creditsNames = UILabel()
         creditsNames.numberOfLines = 0
         
+        creditsGPL = UILabel()
+        creditsGPL.numberOfLines = 0
+        creditsGPL.text = localize("gpl")
+        creditsGPL.font = UIFont.systemFont(ofSize: fontSize)
+        creditsGPL.textColor = kRWTHTextColor
+        
         closeButton = UIButton()
-        closeButton.setTitle(NSLocalizedString("close", comment: ""), for: UIControlState())
+        closeButton.setTitle(localize("close"), for: UIControlState())
         closeButton.backgroundColor = kRWTHBackgroundColor
         closeButton.setTitleColor(kRWTHTextColor, for: UIControlState.normal)
         closeButton.setTitleColor(kRWTHBlue, for: UIControlState.highlighted)
@@ -70,7 +77,7 @@ final class CreditsView: UIView {
         
         super.init(frame: CGRect.zero)
         
-        creditsNames.attributedText = formatNames(raw: NSLocalizedString("creditsNames", comment: ""))
+        creditsNames.attributedText = formatNames(raw: localize("creditsNames"))
         
         self.backgroundColor = kDarkenedColor
         
@@ -81,6 +88,7 @@ final class CreditsView: UIView {
         scrollView.addSubview(creditsRWTH)
         namesBackground.addSubview(creditsNames)
         scrollView.addSubview(namesBackground)
+        scrollView.addSubview(creditsGPL)
         dialogView.addSubview(scrollView)
         dialogView.addSubview(licenceButton)
         dialogView.addSubview(closeButton)
@@ -161,6 +169,9 @@ final class CreditsView: UIView {
         namesBackground.frame = CGRect(x: margin, y: actualArea.height, width: namesBackgroundSize.width, height: namesBackgroundSize.height)
         actualArea.height += namesBackgroundSize.height + margin
         
+        let gplSize = creditsGPL.sizeThatFits(targetArea)
+        creditsGPL.frame = CGRect(x: margin, y: actualArea.height, width: gplSize.width, height: gplSize.height)
+        actualArea.height += gplSize.height + margin
         
         let height = min(frame.height - 2*margin - closeButtonSize.height - licenceButtonSize.height, actualArea.height)
         scrollView.contentSize = actualArea

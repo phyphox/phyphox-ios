@@ -61,6 +61,11 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
 
                 maxNonScalarCount = Swift.max(maxNonScalarCount, array.count)
                 maxCount = Swift.max(maxCount, array.count)
+                
+                if array.count == 0 {
+                    maxCount = 0
+                    break
+                }
             case .value(value: let fixed, usedAs: _):
                 let src = ValueSource(scalar: fixed)
 

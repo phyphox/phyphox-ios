@@ -8,16 +8,19 @@
 
 import UIKit
 import ZipZap
+import CoreBluetooth
 
 private let minCellWidth: CGFloat = 320.0
 
 
 protocol ExperimentController {
-    func launchExperimentByURL(_ url: URL) -> Bool
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
+    func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
 
-final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController {
+final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
+    
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
@@ -44,35 +47,68 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
-        let alert = UIAlertController(title: NSLocalizedString("help", comment: ""), message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: localize("help"), message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("credits", comment: ""), style: .default, handler: infoPressed))
+        alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("experimentsPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("experimentsPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("experimentsPhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("faqPhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("faqPhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("faqPhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("remotePhyphoxOrg", comment: ""), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: NSLocalizedString("remotePhyphoxOrgURL", comment: ""))!)
+        alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
+            UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("translationInfo", comment: ""), style: .default, handler:{ _ in
-            let al = UIAlertController(title: NSLocalizedString("translationInfo", comment: ""), message: NSLocalizedString("translationText", comment: ""), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: localize("translationInfo"), style: .default, handler:{ _ in
+            let al = UIAlertController(title: localize("translationInfo"), message: localize("translationText"), preferredStyle: .alert)
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("translationToWebsite", comment: ""), style: .default, handler: { _ in
-                UIApplication.shared.openURL(URL(string: NSLocalizedString("translationToWebsiteURL", comment: ""))!)
+            al.addAction(UIAlertAction(title: localize("translationToWebsite"), style: .default, handler: { _ in
+                UIApplication.shared.openURL(URL(string: localize("translationToWebsiteURL"))!)
             }))
             
-            al.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in
+            var msg = "phyphox\n"
+            msg += "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")\n"
+            msg += "Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")\n"
+            msg += "File format: \(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)\n\n"
+            
+            var systemInfo = utsname()
+            uname(&systemInfo)
+            let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                    ptr in String.init(validatingUTF8: ptr)
+                }
+            }
+            let model = String.init(validatingUTF8: modelCode!)!
+            
+            msg += "Device\n"
+            msg += "Model: \(model)\n"
+            msg += "Brand: Apple\n"
+            msg += "iOS version: \(UIDevice.current.systemVersion)"
+            
+            
+            let al = UIAlertController(title: localize("deviceInfo"), message: msg, preferredStyle: .alert)
+            
+            al.addAction(UIAlertAction(title: localize("copyToClipboard"), style: .default, handler: { _ in
+                UIPasteboard.general.string = msg
+                self.dismiss(animated: true, completion: nil)
+            }))
+            
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
             
             self.navigationController!.present(al, animated: true, completion: nil)
         }))
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = infoButton!
@@ -103,12 +139,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
         if (!defaults.bool(forKey: key)) {
-            let alert = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("damageWarning", comment: ""), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: NSLocalizedString("donotshowagain", comment: ""), style: .default, handler: { _ in
+            let alert = UIAlertController(title: localize("warning"), message: localize("damageWarning"), preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: localize("donotshowagain"), style: .default, handler: { _ in
                 defaults.set(true, forKey: key)
             }))
         
-            alert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+            alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
         
             navigationController!.present(alert, animated: true, completion: nil)
         }
@@ -117,11 +153,72 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private func showOpenSourceLicenses() {
         let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!), preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("close", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
         
         navigationController!.present(alert, animated: true, completion: nil)
     }
+
+    var bluetoothScanResultsTableViewController: BluetoothScanResultsTableViewController? = nil
     
+    private func scanForBLEDevices() {
+        
+        let alertController = UIAlertController(title: localize("bt_pick_device"),
+        message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"),
+        preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
+
+        let infoAction = UIAlertAction(title: localize("bt_more_info_link_button"), style: .default) { (action) in
+            UIApplication.shared.openURL(URL(string: localize("bt_more_info_link_url"))!)
+        }
+        alertController.addAction(infoAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
+        alertController.addAction(cancelAction)
+
+        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
+        bluetoothScanResultsTableViewController?.tableView = FixedTableView()
+        bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
+        alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
+        if let popover = alertController.popoverPresentationController {
+            popover.sourceView = self.view
+            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+
+        }
+        navigationController!.present(alertController, animated: true)
+    }
+    
+    func useChosenBLEDevice(chosenDevice: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+        let experimentCollections = ExperimentManager.shared.getExperimentsForBluetoothDevice(deviceName: chosenDevice.name, deviceUUIDs: advertisedUUIDs)
+        
+        var files: [URL] = []
+        for collection in experimentCollections {
+            for (experiment, _) in collection.experiments {
+                if let file = experiment.source {
+                    files.append(file)
+                }
+            }
+        }
+        
+        
+        let experimentOnDevice: Bool
+        if let advertisedUUIDs = advertisedUUIDs {
+            experimentOnDevice = advertisedUUIDs.map({(uuid) -> String in uuid.uuid128String}).contains(phyphoxServiceUUID.uuidString)
+        } else {
+            experimentOnDevice = false
+        }
+        
+        if files.count > 0 {
+            let dialog = ExperimentPickerDialogView(title: localize("open_bluetooth_assets_title"), message: localize("open_bluetooth_assets") + (experimentOnDevice ? "\n\n" +  localize("newExperimentBluetoothLoadFromDeviceInfo") : ""), experiments: files, delegate: self, chosenPeripheral: chosenDevice, onDevice: experimentOnDevice)
+            dialog.show(animated: true)
+        } else {
+            loadExperimentFromPeripheral(chosenDevice)
+        }
+    }
+    
+    func loadExperimentFromPeripheral(_ peripheral: CBPeripheral) {
+        bluetoothScanResultsTableViewController?.ble.loadExperimentFromPeripheral(peripheral, viewController: self, experimentLauncher: self)
+    }
+
     func infoPressed(_ action: UIAlertAction) {
         let vc = UIViewController()
         vc.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -152,22 +249,18 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     let overlayTransitioningDelegate = CreateViewControllerTransitioningDelegate()
     
     @objc func addExperiment() {
-        let alert = UIAlertController(title: NSLocalizedString("newExperiment", comment: ""), message: nil, preferredStyle: .actionSheet)
+        var menuElements: [MenuTableViewController.MenuElement] = []
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentQR", comment: ""), style: .default, handler: launchScanner))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentBluetooth"), icon: UIImage(named: "new_experiment_bluetooth")!, callback: scanForBLEDevices))
+        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentSimple"), icon: UIImage(named: "new_experiment_simple")!, callback: createSimpleExperiment))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("newExperimentSimple", comment: ""), style: .default, handler: createSimpleExperiment))
-        
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.barButtonItem = addButton!
+        if let menu = MenuTableViewController(label: localize("newExperiment"), message: nil, elements: menuElements).getMenu(sourceButton: addButton!) {
+            present(menu, animated: true, completion: nil)
         }
-        
-        present(alert, animated: true, completion: nil)
     }
 
-    func launchScanner(_ action: UIAlertAction) {
+    func launchScanner() {
         let vc = ScannerViewController()
         vc.experimentLauncher = self
         let nav = UINavigationController(rootViewController: vc)
@@ -184,7 +277,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     
-    func createSimpleExperiment(_ action: UIAlertAction) {
+    func createSimpleExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
         
@@ -210,13 +303,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
         var cells: CGFloat = 1.0
         
-        var width = self.view.frame.size.width
+        let availableWidth = self.view.frame.size.width - collectionView.contentInset.left - collectionView.contentInset.right
+        var width = availableWidth
         
-        while self.view.frame.size.width/(cells+1.0) >= minCellWidth {
+        while availableWidth/(cells+1.0) >= minCellWidth {
             cells += 1.0
-            width = self.view.frame.size.width/cells
+            width = availableWidth/cells
         }
         
         cellsPerRow = Int(cells)
@@ -226,10 +321,47 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return CGSize(width: width, height: h)
     }
     
-    private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: NSLocalizedString("confirmDeleteTitle", comment: ""), message: NSLocalizedString("confirmDelete", comment: ""), preferredStyle: .actionSheet)
+    private func showStateTitleEditForExperiment(_ experiment: Experiment, button: UIButton, oldTitle: String) {
+        let alert = UIAlertController(title: localize("rename"), message: nil, preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: "") + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
+        alert.addTextField(configurationHandler: {(textfield: UITextField!) -> Void in
+            textfield.placeholder = localize("newExperimentInputTitle")
+            textfield.text = oldTitle
+        })
+        
+        alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+            do {
+                let textField = alert.textFields![0] as UITextField
+                if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
+                    try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)
+                }
+            }
+            catch let error as NSError {
+                let hud = JGProgressHUD(style: .dark)
+                hud.interactionType = .blockTouchesOnHUDView
+                hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                hud.textLabel.text = "Failed to rename experiment: \(error.localizedDescription)"
+                
+                hud.show(in: self.view)
+                
+                hud.dismiss(afterDelay: 3.0)
+            }
+        }))
+        
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.navigationController!.view
+            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
+        }
+        
+        present(alert, animated: true, completion: nil)
+    }
+    
+    private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
+        let alert = UIAlertController(title: localize("confirmDeleteTitle"), message: localize("confirmDelete"), preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: localize("delete") + " " + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
             do {
                 try ExperimentManager.shared.deleteExperiment(experiment)
             }
@@ -245,7 +377,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -258,11 +390,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("delete", comment: ""), style: .destructive, handler: { [unowned self] action in
+        alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
             self.showDeleteConfirmationForExperiment(experiment, button: button)
         }))
         
-        alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        if let stateTitle = experiment.stateTitle {
+            alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+                self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: stateTitle)
+            }))
+        }
+        
+        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.navigationController!.view
@@ -296,7 +434,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        return CGSize(width: self.view.frame.size.width, height: 36.0)
+        let availableWidth = self.view.frame.size.width - collectionView.contentInset.left - collectionView.contentInset.right
+        return CGSize(width: availableWidth, height: 36.0)
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -339,15 +478,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let experiment = collections[indexPath.section].experiments[indexPath.row]
 
         if experiment.experiment.appleBan {
-            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
-             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
 
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
             present(controller, animated: true, completion: nil)
             
@@ -359,12 +498,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try sensor.verifySensorAvailibility()
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
-                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 
                 present(controller, animated: true, completion: nil)
                 
@@ -382,12 +521,18 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         case unknown
         case phyphox
         case zip
+        case partialZip
     }
     
     func detectFileType(data: Data) -> FileType {
         if data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04 {
             //Look for ZIP signature
             return .zip
+        }
+        let i = data.count - 16 //Offset of possible data descriptor
+        if data[i] == 0x50 && data[i+1] == 0x4b && data[i+2] == 0x07 && data[i+3] == 0x08 {
+            //Look for data descriptor of a partial ZIP file
+            return .partialZip
         }
         if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
             //Naive method to roughly check if this is a phyphox file without actually parsing it.
@@ -397,7 +542,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return .unknown
     }
     
-    func handleZipFile(_ url: URL) throws {
+    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
         try? FileManager.default.removeItem(at: tmp)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
@@ -421,19 +566,82 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         
         if files.count == 1 {
-            _ = launchExperimentByURL(files.first!)
+            _ = launchExperimentByURL(files.first!, chosenPeripheral: chosenPeripheral)
         } else {
             var experiments: [URL] = []
             for file in files {
                 experiments.append(file)
             }
             
-            let dialog = ExperimentPickerDialogView(title: NSLocalizedString("open_zip_title", comment: ""), message: NSLocalizedString("open_zip_dialog_instructions", comment: ""), experiments: files, delegate: self)
+            let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
     }
     
-    func launchExperimentByURL(_ url: URL) -> Bool {
+    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        var data = Data()
+        
+        //Local file header
+        data.append(Data(bytes: [0x50, 0x4b, 0x03, 0x04])) //Local file header signature
+        data.append(Data(bytes: [0x0a, 0x00])) //Version
+        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
+        data.append(Data(bytes: [0x00, 0x00])) //Compression method
+        data.append(Data(bytes: [0x00, 0x00])) //modification time
+        data.append(Data(bytes: [0x00, 0x00])) //modification date
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //CRC32
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Compressed size
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Uncompressed size
+        data.append(Data(bytes: [0x09, 0x00])) //File name length
+        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
+        data.append("a.phyphox".data(using: .utf8)!) //File name
+        
+        //Data (including data descriptor)
+        data.append(try Data(contentsOf: url))
+        
+        let i = data.count - 16 //Offset of possible data descriptor
+        let crc32 = data.subdata(in: Range(i+4..<i+8))
+        let compressedSize = data.subdata(in: Range(i+8..<i+12))
+        let uncompressedSize = data.subdata(in: Range(i+12..<i+16))
+        
+        //Central directory
+        var startIndex = UInt32(data.count)
+        data.append(Data(bytes: [0x50, 0x4b, 0x01, 0x02])) //signature
+        data.append(Data(bytes: [0x0a, 0x00])) //Version made by
+        data.append(Data(bytes: [0x0a, 0x00])) //Version needed
+        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
+        data.append(Data(bytes: [0x00, 0x00])) //Compression method
+        data.append(Data(bytes: [0x00, 0x00])) //modification time
+        data.append(Data(bytes: [0x00, 0x00])) //modification date
+        data.append(crc32) //CRC32
+        data.append(compressedSize) //Compressed size
+        data.append(uncompressedSize) //Uncompressed size
+        data.append(Data(bytes: [0x09, 0x00])) //File name length
+        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
+        data.append(Data(bytes: [0x00, 0x00])) //File comment length
+        data.append(Data(bytes: [0x00, 0x00])) //Disk number
+        data.append(Data(bytes: [0x00, 0x00])) //Internal file attributes
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //External file attributes
+        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Relative offset of local header
+        data.append("a.phyphox".data(using: .utf8)!) //File name
+        
+        //End of central directory
+        data.append(Data(bytes: [0x50, 0x4b, 0x05, 0x06])) //signature
+        data.append(Data(bytes: [0x00, 0x00])) //Disk number
+        data.append(Data(bytes: [0x00, 0x00])) //Start disk number
+        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories on disk
+        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories in total
+        data.append(Data(bytes: [0x37, 0x00, 0x00, 0x00])) //Size of central directory
+        data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
+        data.append(Data(bytes: [0x00, 0x00])) //Comment length
+        
+        
+        try data.write(to: tmp, options: .atomic)
+        try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
+    }
+    
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
 
         var fileType = FileType.unknown
         var experiment: Experiment?
@@ -511,7 +719,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                     }
             case .zip:
                 do {
-                    try handleZipFile(finalURL)
+                    try handleZipFile(finalURL, chosenPeripheral: chosenPeripheral)
+                    return true
+                } catch let error {
+                    experimentLoadingError = error
+                }
+            case .partialZip:
+                do {
+                    try handlePartialZipFile(finalURL, chosenPeripheral: chosenPeripheral)
                     return true
                 } catch let error {
                     experimentLoadingError = error
@@ -542,7 +757,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 message = String(describing: experimentLoadingError!)
             }
             let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             navigationController?.present(controller, animated: true, completion: nil)
             return false
         }
@@ -550,14 +765,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         guard let loadedExperiment = experiment else { return false }
         
         if loadedExperiment.appleBan {
-            let controller = UIAlertController(title: NSLocalizedString("warning", comment: ""), message: NSLocalizedString("apple_ban", comment: ""), preferredStyle: .alert)
+            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
-             controller.addAction(UIAlertAction(title: NSLocalizedString("appleBanWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-             UIApplication.shared.openURL(URL(string: NSLocalizedString("appleBanWarningMoreInfoURL", comment: ""))!)
+             controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
+             UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
             navigationController?.present(controller, animated: true, completion: nil)
             
@@ -569,16 +784,22 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try sensor.verifySensorAvailibility()
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
-                controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 navigationController?.present(controller, animated: true, completion: nil)
                 return false
             }
             catch {}
+        }
+        
+        if loadedExperiment.bluetoothDevices.count == 1, let input = loadedExperiment.bluetoothDevices.first {
+            if let chosenPeripheral = chosenPeripheral {
+                input.deviceAddress = chosenPeripheral.identifier
+            }
         }
         
         let controller = ExperimentPageViewController(experiment: loadedExperiment)

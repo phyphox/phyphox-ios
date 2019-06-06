@@ -10,8 +10,8 @@ import Foundation
 import CoreMotion
 
 class MotionSessionReceiver: Hashable {
-    var hashValue: Int {
-        return Unmanaged.passUnretained(self).toOpaque().hashValue
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(Unmanaged.passUnretained(self).toOpaque().hashValue)
     }
 }
 

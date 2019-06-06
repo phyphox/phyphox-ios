@@ -30,6 +30,7 @@ let kTextColorDeactivated = UIColor(white: 0.5, alpha: 1.0)
 let kRWTHBackgroundColor = UIColor(white: 1.0, alpha: 1.0)
 let kRWTHTextColor = UIColor(white: 0.0, alpha: 1.0)
 let kRWTHBlue = UIColor(red: (0.0/255.0), green: (84.0/255.0), blue: (159.0/255.0), alpha: 1.0)
+let kBluetooth = UIColor(red: (34.0/255.0), green: (96.0/255.0), blue: (165.0/255.0), alpha: 1.0)
 
 let kDarkenedColor = UIColor(white: 0.0, alpha: 0.5)
 

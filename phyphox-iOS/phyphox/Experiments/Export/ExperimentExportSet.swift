@@ -30,30 +30,10 @@ let exportTypes = [("Excel", ExportFileFormat.excel),
                    ("CSV (Semicolon, decimal comma)", ExportFileFormat.csv(separator: ";", decimalPoint: ","))]
 
 struct ExperimentExportSet {
-    private let name: String
-    private let data: [(name: String, buffer: DataBuffer)]
+    let name: String
+    let data: [(name: String, buffer: DataBuffer)]
     
-    let translation: ExperimentTranslationCollection?
-    
-    var localizedName: String {
-        return translation?.localize(name) ?? name
-    }
-    
-    var localizedData: [(name: String, buffer: DataBuffer)] {
-        var t: [(name: String, buffer: DataBuffer)] = []
-        t.reserveCapacity(data.count)
-        
-        for entry in data {
-            let name = entry.name
-            
-            t.append((name: translation?.localize(name) ?? name, buffer: entry.buffer))
-        }
-        
-        return t
-    }
-    
-    init(name: String, data: [(name: String, buffer: DataBuffer)], translation: ExperimentTranslationCollection?) {
-        self.translation = translation
+    init(name: String, data: [(name: String, buffer: DataBuffer)]) {
         self.name = name
         self.data = data
     }
@@ -89,7 +69,7 @@ struct ExperimentExportSet {
             
             
             if index == 0 {
-                for (j, entry) in localizedData.enumerated() {
+                for (j, entry) in data.enumerated() {
                     if j == 0 {
                         line += "\"\(entry.name)\""
                     }
@@ -101,7 +81,7 @@ struct ExperimentExportSet {
                 addedValue = true
             }
             else {
-                for (j, entry) in localizedData.enumerated() {
+                for (j, entry) in data.enumerated() {
                     let val = entry.buffer.objectAtIndex(index-1)
                     
                     let str = val != nil ? format(val!) : "\"\""
@@ -133,7 +113,7 @@ struct ExperimentExportSet {
     }
     
     private func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
-        let sheet = workbook.workSheet(withName: localizedName)
+        let sheet = workbook.workSheet(withName: name)
         
         var i = 0
         
@@ -142,12 +122,12 @@ struct ExperimentExportSet {
             
             if i == 0 {
                 addedValue = true
-                for (j, entry) in localizedData.enumerated() {
+                for (j, entry) in data.enumerated() {
                     _ = sheet?.setCellAtRow(0, column: UInt32(j), to: entry.name)
                 }
             }
             else {
-                for (j, entry) in localizedData.enumerated() {
+                for (j, entry) in data.enumerated() {
                     let value = entry.buffer.objectAtIndex(i-1)
                     
                     if value != nil {
@@ -173,7 +153,6 @@ extension ExperimentExportSet: Equatable {
         return lhs.data.elementsEqual(rhs.data, by: { (l, r) -> Bool in
             return l.buffer == r.buffer && l.name == r.name
         }) &&
-            lhs.name == rhs.name &&
-            lhs.translation == rhs.translation
+            lhs.name == rhs.name
     }
 }

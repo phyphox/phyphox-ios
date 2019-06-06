@@ -16,7 +16,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     var experimentLauncher: ExperimentController?
     
     func actualInit() {
-        title = NSLocalizedString("newExperimentQR", comment: "")
+        title = localize("newExperimentQR")
         
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
     }
@@ -153,7 +153,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         } else {
             //We have already scanned at least one QR code with phyphox data and are expecting more matching codes...
             guard thisCRC32 == currentCRC32 && count == currentCount && index <= count else {
-                showMessage(title: NSLocalizedString("newExperimentQRErrorTitle", comment: ""), msg: NSLocalizedString("newExperimentQRcrcMismatch", comment: ""), endScanner: true)
+                showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRcrcMismatch"), endScanner: true)
                 return
             }
         }
@@ -169,8 +169,8 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         
         if missing > 0 {
             //We are looking at a set of QR codes and need to tell the user that we need more of them...
-            let message = NSLocalizedString("newExperimentQRCodesMissing1", comment: "") + " " + String(currentCount) + " " + NSLocalizedString("newExperimentQRCodesMissing2", comment: "") + " " + String(missing)
-            showMessage(title: NSLocalizedString("newExperimentQR", comment: ""), msg: message, endScanner: false)
+            let message = localize("newExperimentQRCodesMissing1") + " " + String(currentCount) + " " + localize("newExperimentQRCodesMissing2") + " " + String(missing)
+            showMessage(title: localize("newExperimentQR"), msg: message, endScanner: false)
             return
         } else if count > 0 {
             //The set of QR codes is complete. Check the CRC32, write the data to a file and let the experiment launcher handle the rest...
@@ -186,7 +186,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             }
             
             guard thisCRC32 == receivedCRC32 else {
-                showMessage(title: NSLocalizedString("newExperimentQRErrorTitle", comment: ""), msg: NSLocalizedString("newExperimentQRBadCRC", comment: ""), endScanner: true)
+                showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRBadCRC"), endScanner: true)
                 return
             }
             
@@ -195,12 +195,12 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             do {
                 try data.write(to: tmp, options: .atomic)
             } catch {
-                showMessage(title: NSLocalizedString("newExperimentQRErrorTitle", comment: ""), msg: "Could not write QR code content to temporary file.", endScanner: true)
+                showMessage(title: localize("newExperimentQRErrorTitle"), msg: "Could not write QR code content to temporary file.", endScanner: true)
                 return
             }
 
             
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp)})
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: nil)})
         }
         
 
@@ -236,10 +236,10 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         if content != nil && (content!.starts(with: "phyphox://") || content!.starts(with: "http://") || content!.starts(with: "https://")) {
             //This is a URL to a phyphox experiment
             guard let url = URL.init(string: content!) else {
-                showMessage(title: NSLocalizedString("newExperimentQRErrorTitle", comment: ""), msg: NSLocalizedString("newExperimentQRNoExperiment", comment: ""), endScanner: true)
+                showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRNoExperiment"), endScanner: true)
                 return
             }
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url)})
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url, chosenPeripheral: nil)})
         } else {
             //The experiment is directly encoded in the QR code as a zip file
             
@@ -271,7 +271,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 let length = (Int(shiftedData[0]) << 8) | Int(shiftedData[1])
                 data = shiftedData.subdata(in: Range((2+7)..<(length+2)))
             } else {
-                showMessage(title: NSLocalizedString("newExperimentQRErrorTitle", comment: ""), msg: NSLocalizedString("newExperimentQRNoExperiment", comment: ""), endScanner: true)
+                showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRNoExperiment"), endScanner: true)
                 return
             }
 

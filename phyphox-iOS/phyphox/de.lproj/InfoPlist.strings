@@ -10,3 +10,4 @@
 "NSPhotoLibraryAddUsageDescription" = "phyphox kann Screenshots zu deiner Bildersammlung über die Funktion \"Screenshot teilen\" aus dem Experiment-Menü hinzufügen.";
 "NSMotionUsageDescription" = "phyphox liest die Sensoren deines Smartphones aus um diese in Physik-Experimenten nutzen zu können.";
 "NSCameraUsageDescription" = "phyphox nutzt die Kamera um QR-Codes zu scannen, welche benutzt werden können um eigene Experiment-Konfigurationen zu laden.";
+"NSBluetoothPeripheralUsageDescription" = "phyphox kann Daten von externen Bluetooth-Sensoren lesen und auch Daten auf externe Bluetooth-Geräte schreiben. Du kannst mehr über diese Funktion und unterstützte Geräte auf http://phyphox.org/ble erfahren.";

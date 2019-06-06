@@ -17,7 +17,7 @@ protocol ExperimentWebServerDelegate: class {
     func stopExperiment()
     func clearData()
     func buttonPressed(viewDescriptor: ButtonViewDescriptor)
-    func runExport(format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
+    func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
 }
 
 final class ExperimentWebServer {
@@ -88,7 +88,7 @@ final class ExperimentWebServer {
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
                 var sets = [ExperimentExportSet]()
                 
-                self.delegate!.runExport(format: format) { error, URL in
+                self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
                     if error == nil {
                         self.temporaryFiles.append(URL!.path)
                         let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
@@ -213,7 +213,11 @@ final class ExperimentWebServer {
                     }
                     else {
                         let extraComponents = value.components(separatedBy: "|")
-                        let threshold = (Double(extraComponents.first!) ?? -Double.infinity)+1e-8
+                        let thresholdGiven = (Double(extraComponents.first!) ?? -Double.infinity)
+                        
+                        //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+                        //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+                        let threshold = thresholdGiven.isFinite ? thresholdGiven + pow(10.0, floor(log10(thresholdGiven/1e7))) : -Double.infinity
                         
                         var final: [Double] = []
                         

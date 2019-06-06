@@ -19,6 +19,6 @@ final class FixedTableView: UITableView {
     
     override var intrinsicContentSize: CGSize {
         self.layoutIfNeeded()
-        return contentSize
+        return CGSize(width: UIViewNoIntrinsicMetric, height: contentSize.height)
     }
 }

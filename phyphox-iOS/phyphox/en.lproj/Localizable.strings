@@ -71,6 +71,7 @@
 "enableTimedRun" = "Enable a timed run";
 "disableTimedRun" = "Disable a timed run";
 "export" = "Export Data";
+"export_empty" = "This experiment configuration does not define any data to be exported. If this is an error, please contact the source of the QR code or configuration file.";
 "export_subject" = "Data from phyphox";
 "export_pick_share" = "Pick an export method";
 "share" = "Share screenshot";

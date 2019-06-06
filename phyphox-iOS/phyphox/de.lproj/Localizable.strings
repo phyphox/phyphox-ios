@@ -28,6 +28,7 @@
 "enableRemoteServer" = "Fernzugriff aktivieren";
 "enableTimedRun" = "Zeitautomatik aktivieren";
 "export" = "Daten exportieren";
+"export_empty" = "Diese Experiment-Konfiguration definiert keine Daten für den Export. Wenn dies ein Fehler ist, wende dich bitte an die Quelle des QR-Codes oder der Konfigurationsdatei.";
 "export_pick_share" = "Wählen Sie eine App für den Export";
 "export_subject" = "Daten aus phyphox";
 "hotspotSettings" = "Hotspot Einstellungen";
