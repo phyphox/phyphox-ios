@@ -546,8 +546,6 @@
 		6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShrinkingAnimaitonViewController.swift; sourceTree = "<group>"; };
 		6BE5E133207A22470065FE96 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6BE5E134207A22470065FE96 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-		6BE5E13C207A23260065FE96 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		6BE5E13D207A23290065FE96 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6BE5E13E207A23740065FE96 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6BE5E13F207A23740065FE96 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6BEA943B207FC5280077274A /* ExportElementHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExportElementHandler.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
@@ -563,6 +561,10 @@
 		6BFE37C02049ABC800301CA3 /* BufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferTests.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
+		C0279A2A22ADB3F300B4F2A0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		C0279A2B22ADB3F300B4F2A0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		C0279A2C22ADB3FF00B4F2A0 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		C0279A2D22ADB3FF00B4F2A0 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		C031227E2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C031228D2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C031228E2260E01F005DFB5B /* el */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = el; path = el.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -577,10 +579,6 @@
 		C03122972260E059005DFB5B /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C03122982260E06F005DFB5B /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C03122992260E06F005DFB5B /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
-		C031229A2260E07C005DFB5B /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		C031229B2260E07C005DFB5B /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
-		C031229C2260E086005DFB5B /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		C031229D2260E086005DFB5B /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C048ED1C21E3975200544E9A /* ExperimentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentPickerView.swift; sourceTree = "<group>"; };
 		C04FE6F422281E3800BD691C /* ApplyZoomDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyZoomDialog.swift; sourceTree = "<group>"; };
 		C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentPickerViewController.swift; sourceTree = "<group>"; };
@@ -1268,7 +1266,6 @@
 				pl,
 				cs,
 				es,
-				tr,
 				ru,
 				pt,
 				fr,
@@ -1277,11 +1274,11 @@
 				ja,
 				nl,
 				vi,
-				"zh-Hant",
-				"zh-Hans",
 				zh_Hans,
 				zh_Hant,
 				sr,
+				"zh-Hans",
+				"zh-Hant",
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1706,7 +1703,6 @@
 				4B6EFB5C1FFD61070019511C /* pl */,
 				4B6EFB5E1FFD61120019511C /* cs */,
 				6BE5E134207A22470065FE96 /* es */,
-				6BE5E13D207A23290065FE96 /* tr */,
 				6BE5E13F207A23740065FE96 /* ru */,
 				C031227E2260E006005DFB5B /* pt */,
 				C031228F2260E01F005DFB5B /* el */,
@@ -1715,9 +1711,9 @@
 				C03122952260E04C005DFB5B /* ja */,
 				C03122962260E059005DFB5B /* nl */,
 				C03122992260E06F005DFB5B /* vi */,
-				C031229B2260E07C005DFB5B /* zh_Hans */,
-				C031229D2260E086005DFB5B /* zh_Hant */,
 				C0B840D2229DE5BC006C958A /* sr */,
+				C0279A2B22ADB3F300B4F2A0 /* zh-Hans */,
+				C0279A2D22ADB3FF00B4F2A0 /* zh-Hant */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1730,7 +1726,6 @@
 				4B6EFB461FFD61070019511C /* pl */,
 				4B6EFB5D1FFD61120019511C /* cs */,
 				6BE5E133207A22470065FE96 /* es */,
-				6BE5E13C207A23260065FE96 /* tr */,
 				6BE5E13E207A23740065FE96 /* ru */,
 				C031228D2260E006005DFB5B /* pt */,
 				C031228E2260E01F005DFB5B /* el */,
@@ -1739,9 +1734,9 @@
 				C03122942260E04C005DFB5B /* ja */,
 				C03122972260E059005DFB5B /* nl */,
 				C03122982260E06F005DFB5B /* vi */,
-				C031229A2260E07C005DFB5B /* zh_Hans */,
-				C031229C2260E086005DFB5B /* zh_Hant */,
 				C0B840C3229DE5BC006C958A /* sr */,
+				C0279A2A22ADB3F300B4F2A0 /* zh-Hans */,
+				C0279A2C22ADB3FF00B4F2A0 /* zh-Hant */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
