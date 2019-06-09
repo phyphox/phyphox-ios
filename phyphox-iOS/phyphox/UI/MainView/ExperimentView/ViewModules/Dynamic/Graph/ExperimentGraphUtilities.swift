@@ -12,14 +12,26 @@ protocol GraphViewModule {
     func clearData()
 }
 
-struct GraphPoint<T: Numeric> {
+struct GraphPoint2D<T: Numeric> {
     let x: T
     let y: T
 }
 
-extension GraphPoint {
-    static var zero: GraphPoint {
-        return GraphPoint(x: 0, y: 0)
+struct GraphPoint3D<T: Numeric> {
+    let x: T
+    let y: T
+    let z: T
+}
+
+extension GraphPoint2D {
+    static var zero: GraphPoint2D {
+        return GraphPoint2D(x: 0, y: 0)
+    }
+}
+
+extension GraphPoint3D {
+    static var zero: GraphPoint3D {
+        return GraphPoint3D(x: 0, y: 0, z: 0)
     }
 }
 
@@ -30,6 +42,7 @@ struct GLcolor {
 struct GraphGrid {
     let xGridLines: [GraphGridLine]
     let yGridLines: [GraphGridLine]
+    let zGridLines: [GraphGridLine]
 }
 
 struct GraphGridLine {

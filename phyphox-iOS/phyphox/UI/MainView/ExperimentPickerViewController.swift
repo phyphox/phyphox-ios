@@ -8,6 +8,41 @@
 
 import UIKit
 
+final class DynamicCollectionView: UICollectionView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if !__CGSizeEqualToSize(bounds.size, self.intrinsicContentSize) {
+            self.invalidateIntrinsicContentSize()
+        }
+    }
+    
+    override var intrinsicContentSize: CGSize {
+        return collectionViewLayout.collectionViewContentSize
+    }
+}
+
+final class PickerContainerView: CollectionContainerView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if !__CGSizeEqualToSize(bounds.size, self.intrinsicContentSize) {
+            self.invalidateIntrinsicContentSize()
+        }
+    }
+    
+    override class var collectionViewClass: UICollectionView.Type {
+        return DynamicCollectionView.self
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        collectionView.backgroundColor = kBackgroundColor
+    }
+    
+    override var intrinsicContentSize: CGSize {
+        return collectionView.intrinsicContentSize
+    }
+}
+
 final class ExperimentPickerViewController: CollectionViewController {
     var delegate: ExperimentReceiver?
 
@@ -24,7 +59,7 @@ final class ExperimentPickerViewController: CollectionViewController {
     }
     
     override class var viewClass: CollectionContainerView.Type {
-        return MainView.self
+        return PickerContainerView.self
     }
     
     override class var customCells: [String : UICollectionViewCell.Type]? {

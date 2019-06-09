@@ -20,12 +20,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     
     private let modules: [UIView]
     var exclusiveView: UIView? = nil
-
-    private let scrollView = UIScrollView()
-    private let linearView = UIView()
     
     private let insetTop: CGFloat = 10
-    private let intercellSpacing: CGFloat = 0
+    private let intercellSpacing: CGFloat = 0.0
 
     var active = false {
         didSet {
@@ -47,11 +44,11 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     }
 
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 0.0
+        return CGFloat.leastNormalMagnitude
     }
 
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 0.0
+        return CGFloat.leastNormalMagnitude
     }
 
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -68,13 +65,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
             return 0
         }
         
-        let size = module.sizeThatFits(view.frame.size)
+        let availableSize = CGSize(width: view.frame.width, height: view.frame.height - bottomLayoutGuide.length)
+        let size = module.sizeThatFits(availableSize)
 
         if indexPath.row > 0 {
-            return size.height + intercellSpacing
+            return size.height + (((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0)
         }
         else {
-            return size.height + (((module as? ResizableViewModule)?.resizableState == .exclusive) ? 0 : insetTop)
+            return size.height + (((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0)
         }
     }
 
@@ -86,10 +84,10 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         let module = modules[indexPath.row]
 
         if indexPath.row > 0 {
-            cell.topInset = intercellSpacing
+            cell.topInset = ((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0
         }
         else {
-            cell.topInset = ((module as? ResizableViewModule)?.resizableState == .exclusive) ? 0 : insetTop
+            cell.topInset = ((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0
         }
 
         // Add to new cell
@@ -130,8 +128,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         tableView.separatorStyle = .none
 
         tableView.alwaysBounceVertical = false
-
-        // TODO: table view top content inset on iOS < 11.
+        
     }
 
     @available(*, unavailable)
@@ -165,7 +162,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         present(dialog, animated: true, completion: nil)
     }
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>) {
         
         for module in modules {
             if let zoomableViewModule = module as? ZoomableViewModule {

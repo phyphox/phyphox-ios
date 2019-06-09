@@ -43,6 +43,14 @@ final class Experiment {
         return stateTitle ?? localizedTitle
     }
     
+    var cleanedFilenameTitle: String {
+        let title = displayTitle
+        let regex = try! NSRegularExpression(pattern: "[^0-9a-zA-Z \\-_]", options: [])
+        let range = NSMakeRange(0, title.count)
+        let result = regex.stringByReplacingMatches(in: title, options: [], range: range, withTemplate: "")
+        return result
+    }
+    
     var localizedDescription: String? {
         return translation?.selectedTranslation?.descriptionString ?? description
     }
@@ -51,7 +59,7 @@ final class Experiment {
     
     var localizedCategory: String {
         if source?.path.hasPrefix(savedExperimentStatesURL.path) == true {
-            return NSLocalizedString("save_state_category", comment: "")
+            return localize("save_state_category")
         }
         return translation?.selectedTranslation?.categoryString ?? category
     }
@@ -60,7 +68,17 @@ final class Experiment {
 
     let icon: ExperimentIcon
     
-    let color: UIColor
+    let rawColor: UIColor?
+    var color: UIColor {
+        if let color = rawColor {
+            return color
+        } else if bluetoothDevices.count > 0 {
+            return kBluetooth
+        } else {
+            return kHighlightColor
+        }
+    }
+    
     var fontColor: UIColor {
         if color.luminance > 0.7 {
             return UIColor.black
@@ -83,8 +101,13 @@ final class Experiment {
     let sensorInputs: [ExperimentSensorInput]
     let gpsInputs: [ExperimentGPSInput]
     let audioInputs: [ExperimentAudioInput]
-
-    let output: ExperimentOutput?
+    
+    let audioOutput: ExperimentAudioOutput?
+    
+    let bluetoothDevices: [ExperimentBluetoothDevice]
+    let bluetoothInputs: [ExperimentBluetoothInput]
+    let bluetoothOutputs: [ExperimentBluetoothOutput]
+    
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
@@ -100,7 +123,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], output: ExperimentOutput?, viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -115,7 +138,7 @@ final class Experiment {
         self.category = category
         
         self.icon = icon
-        self.color = color
+        self.rawColor = color
         
         self.translation = translation
 
@@ -123,7 +146,13 @@ final class Experiment {
         self.sensorInputs = sensorInputs
         self.gpsInputs = gpsInputs
         self.audioInputs = audioInputs
-        self.output = output
+        
+        self.audioOutput = audioOutput
+        
+        self.bluetoothDevices = bluetoothDevices
+        self.bluetoothInputs = bluetoothInputs
+        self.bluetoothOutputs = bluetoothOutputs
+        
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
         self.export = export
@@ -167,6 +196,10 @@ final class Experiment {
      Called when the experiment view controller did dismiss.
      */
     func didBecomeInactive() {
+        for device in bluetoothDevices {
+            device.disconnect()
+            device.deviceAddress = nil
+        }
         clear()
     }
     
@@ -196,9 +229,9 @@ final class Experiment {
             mainThread {
                 
                 if !quiet, let controller = presenter {
-                    let confirmation = UIAlertController(title: NSLocalizedString("save_locally", comment: ""), message: NSLocalizedString("save_locally_done", comment: ""), preferredStyle: .alert)
+                    let confirmation = UIAlertController(title: localize("save_locally"), message: localize("save_locally_done"), preferredStyle: .alert)
                     
-                    confirmation.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: nil))
+                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
                     controller.present(confirmation, animated: true, completion: nil)
                 }
             }
@@ -271,20 +304,26 @@ final class Experiment {
     }
     
     private func startAudio() throws {
-        if output?.audioOutput != nil || !audioInputs.isEmpty {
-            audioEngine = try AudioEngine(audioOutput: output?.audioOutput, audioInput: audioInputs.first)
+        if audioOutput != nil || !audioInputs.isEmpty {
+            audioEngine = AudioEngine(audioOutput: audioOutput, audioInput: audioInputs.first)
             try audioEngine?.startEngine()
         }
     }
     
-    private func stopAudio() throws {
-        try audioEngine?.stopEngine()
+    private func stopAudio() {
+        audioEngine?.stopEngine()
         audioEngine = nil
     }
     
     func start() throws {
         guard !running else {
             return
+        }
+        
+        for device in bluetoothDevices {
+            if !device.prepareForStart() {
+                return
+            }
         }
         
         if pauseBegin > 0 {
@@ -312,6 +351,7 @@ final class Experiment {
         
         sensorInputs.forEach { $0.start() }
         gpsInputs.forEach { $0.start() }
+        bluetoothInputs.forEach { $0.start() }
         
         analysis?.running = true
         analysis?.setNeedsUpdate()
@@ -328,6 +368,7 @@ final class Experiment {
         
         sensorInputs.forEach { $0.stop() }
         gpsInputs.forEach { $0.stop() }
+        bluetoothInputs.forEach { $0.stop() }
         
         try? stopAudio()
         
@@ -365,7 +406,10 @@ extension Experiment: ExperimentAnalysisDelegate {
 
     func analysisDidUpdate(_: ExperimentAnalysis) {
         if running {
-            audioEngine?.playAudioOutput()
+            audioEngine?.play()
+            for bluetoothOutput in bluetoothOutputs {
+                bluetoothOutput.send()
+            }
         }
     }
 }
@@ -401,7 +445,10 @@ extension Experiment: Equatable {
             }) &&
             lhs.gpsInputs == rhs.gpsInputs &&
             lhs.audioInputs == rhs.audioInputs &&
-            lhs.output == rhs.output &&
+            lhs.audioOutput == rhs.audioOutput &&
+            lhs.bluetoothDevices == rhs.bluetoothDevices &&
+            lhs.bluetoothInputs == rhs.bluetoothInputs &&
+            lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
             lhs.viewDescriptors == rhs.viewDescriptors &&
             lhs.analysis == rhs.analysis &&
             lhs.export == rhs.export &&

@@ -35,7 +35,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window!.makeKeyAndVisible()
         
         if let url = url {
-            return experimentsCollectionViewController.launchExperimentByURL(url)
+            return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
         }
         
         return true
@@ -100,105 +100,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 
-    func launchExperimentByURL(_ url: URL) -> Bool {
-        print("Opening \(url)")
-        
-        var experiment: Experiment?
-        
-        var fatalError: Error?
-        
-        if (url.scheme == "phyphox") {
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-            components?.scheme = "https"
-            do {
-                experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
-            } catch {
-                components?.scheme = "http"
-                do {
-                    experiment = try ExperimentSerialization.readExperimentFromURL(components!.url!)
-                } catch let error {
-                    fatalError = error
-                }
-            }
-        } else {
-            do {
-                experiment = try ExperimentSerialization.readExperimentFromURL(url)
-            } catch let error {
-                fatalError = error
-            }
-        }
-        
-        if (fatalError != nil) {
-            let message: String
-            if let sError = fatalError as? SerializationError {
-                switch sError {
-                case .emptyData:
-                    message = "Empty data."
-                case .genericError(let emessage):
-                    message = emessage
-                case .invalidExperimentFile(let emessage):
-                    message = "Invalid experiment file. \(emessage)"
-                case .invalidFilePath:
-                    message = "Invalid file path"
-                case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
-                    message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
-                case .writeFailed:
-                    message = "Write failed."
-                }
-            } else {
-                message = String(describing: fatalError!)
-            }
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
-            controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-            main.present(controller, animated: true, completion: nil)
-            return false
-        }
-        
-        if let sensors = experiment!.sensorInputs {
-            for sensor in sensors {
-                do {
-                    try sensor.verifySensorAvailibility()
-                }
-                catch SensorError.sensorUnavailable(let type) {
-                    let controller = UIAlertController(title: NSLocalizedString("sensorNotAvailableWarningTitle", comment: ""), message: NSLocalizedString("sensorNotAvailableWarningText1", comment: "") + " \(type) " + NSLocalizedString("sensorNotAvailableWarningText2", comment: ""), preferredStyle: .alert)
-                    
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("sensorNotAvailableWarningMoreInfo", comment: ""), style: .default, handler:{ _ in
-                        UIApplication.shared.openURL(URL(string: NSLocalizedString("sensorNotAvailableWarningMoreInfoURL", comment: ""))!)
-                    }))
-                    controller.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .cancel, handler:nil))
-                    main.present(controller, animated: true, completion: nil)
-                    return false
-                }
-                catch {}
-            }
-        }
-        
-        while (main.viewControllers.count > 1) {
-            main.popViewController(animated: true)
-        }
-        
-        let controller = ExperimentPageViewController(experiment: experiment!)
-        
-        var denied = false
-        var showing = false
-        
-        experiment!.willGetActive {
-            denied = true
-            if showing {
-                self.main.popViewController(animated: true)
-            }
-        }
-        
-        if !denied {
-            main.pushViewController(controller, animated: true)
-            showing = true
-        } else {
-            return false
-        }
-        
-        return true
-    }
-    
     func cleanInbox(_ skipFile: String?) {
         let fileMgr = FileManager.default
         let inbox = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Inbox")

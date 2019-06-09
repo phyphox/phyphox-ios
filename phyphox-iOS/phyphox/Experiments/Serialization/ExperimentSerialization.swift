@@ -19,6 +19,25 @@ enum SerializationError: Error {
     case newExperimentFileVersion(phyphoxFormat: String, fileFormat: String)
 }
 
+extension SerializationError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .genericError(let message):
+            return message
+        case .invalidExperimentFile(let message):
+            return "Invalid experiment file: \(message)"
+        case .invalidFilePath:
+            return "Invalid file path."
+        case .writeFailed:
+            return "Write failed."
+        case .emptyData:
+            return "Empty data."
+        case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
+            return "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
+        }
+    }
+}
+
 let experimentStateFileExtension = "phystate"
 let bufferContentsFileExtension = "buffer"
 let experimentStateExperimentFileName = "Experiment"

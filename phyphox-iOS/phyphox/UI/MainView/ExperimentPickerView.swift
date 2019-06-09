@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreBluetooth
 
 protocol ExperimentReceiver {
     func experimentSelected(_ experiment: Experiment)
@@ -17,10 +18,16 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
     var dialogView = UIView()
     var delegate: ExperimentController?
     let experimentPicker = ExperimentPickerViewController()
+    var chosenPeripheral: CBPeripheral?
     
     convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController) {
         self.init(frame: UIScreen.main.bounds)
-        setup(title: title, message: message, experiments: experiments, delegate: delegate)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: nil, onDevice: false)
+    }
+    
+    convenience init(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?, onDevice: Bool) {
+        self.init(frame: UIScreen.main.bounds)
+        setup(title: title, message: message, experiments: experiments, delegate: delegate, chosenPeripheral: chosenPeripheral, onDevice: onDevice)
     }
     
     override init(frame: CGRect) {
@@ -31,9 +38,11 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         fatalError("init(coder:) has not been implemented.")
     }
     
-    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController) {
+    func setup(title: String, message: String, experiments: [URL], delegate: ExperimentController, chosenPeripheral: CBPeripheral?, onDevice: Bool) {
         self.delegate = delegate
         self.autoresizingMask = [.flexibleHeight, .flexibleWidth]
+        
+        self.chosenPeripheral = chosenPeripheral
         
         dialogView.clipsToBounds = true
         dialogView.translatesAutoresizingMaskIntoConstraints = false
@@ -65,11 +74,13 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         messageLabel.text = message
         messageLabel.font = messageFont
         messageLabel.textAlignment = .left
+        messageLabel.lineBreakMode = .byWordWrapping
+        messageLabel.numberOfLines = 0
         dialogView.addSubview(messageLabel)
         
         let saveButton = UIButton()
         saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButton.setTitle(NSLocalizedString("open_save_all", comment: ""), for: .normal)
+        saveButton.setTitle(localize("open_save_all"), for: .normal)
         saveButton.setTitleColor(UIColor.black, for: .normal)
         saveButton.addTarget(self, action: #selector(saveAll), for: .touchUpInside)
         dialogView.addSubview(saveButton)
@@ -81,16 +92,36 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle(NSLocalizedString("cancel", comment: ""), for: .normal)
+        cancelButton.setTitle(localize("cancel"), for: .normal)
         cancelButton.setTitleColor(UIColor.black, for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)
+        
+        let fromDeviceButton: UIButton?
+        let separatorView3: UIView?
+        if onDevice {
+            separatorView3 = UIView()
+            separatorView3?.translatesAutoresizingMaskIntoConstraints = false
+            separatorView3?.backgroundColor = UIColor.groupTableViewBackground
+            dialogView.addSubview(separatorView3!)
+            
+            fromDeviceButton = UIButton()
+            fromDeviceButton?.translatesAutoresizingMaskIntoConstraints = false
+            fromDeviceButton?.setTitle(localize("newExperimentBluetoothLoadFromDevice"), for: .normal)
+            fromDeviceButton?.setTitleColor(UIColor.black, for: .normal)
+            fromDeviceButton?.addTarget(self, action: #selector(loadFromDevice), for: .touchUpInside)
+            dialogView.addSubview(fromDeviceButton!)
+        } else {
+            fromDeviceButton = nil
+            separatorView3 = nil
+        }
         
         addSubview(dialogView)
         
         experimentPicker.delegate = self
         experimentPicker.populate(experiments)
         experimentPicker.view.translatesAutoresizingMaskIntoConstraints = false
+        experimentPicker.view.layoutIfNeeded()
         dialogView.addSubview(experimentPicker.view)
         
         let margin: CGFloat = 8.0
@@ -103,8 +134,9 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .left, relatedBy: .equal, toItem: backgroundView, attribute: .left, multiplier: 1, constant: outerMargin))
         self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .right, relatedBy: .equal, toItem: backgroundView, attribute: .right, multiplier: 1, constant: -outerMargin))
-        self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .top, relatedBy: .equal, toItem: backgroundView, attribute: .top, multiplier: 1, constant: outerMargin))
-        self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .bottom, relatedBy: .equal, toItem: backgroundView, attribute: .bottom, multiplier: 1, constant: -outerMargin))
+        self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .top, relatedBy: .greaterThanOrEqual, toItem: backgroundView, attribute: .top, multiplier: 1, constant: outerMargin))
+        self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .bottom, relatedBy: .lessThanOrEqual, toItem: backgroundView, attribute: .bottom, multiplier: 1, constant: -outerMargin))
+        self.addConstraint(NSLayoutConstraint(item: dialogView, attribute: .centerY, relatedBy: .equal, toItem: backgroundView, attribute: .centerY, multiplier: 1, constant: 0))
         
         dialogView.addConstraint(NSLayoutConstraint(item: titleLabel, attribute: .top, relatedBy: .equal, toItem: dialogView, attribute: .top, multiplier: 1, constant: margin))
         dialogView.addConstraint(NSLayoutConstraint(item: titleLabel, attribute: .left, relatedBy: .equal, toItem: dialogView, attribute: .left, multiplier: 1, constant: margin))
@@ -132,9 +164,24 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         dialogView.addConstraint(NSLayoutConstraint(item: separatorView2, attribute: .right, relatedBy: .equal, toItem: saveButton, attribute: .right, multiplier: 1, constant: 0))
         dialogView.addConstraint(NSLayoutConstraint(item: separatorView2, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 1))
         
-        dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+        if onDevice {
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .left, relatedBy: .equal, toItem: separatorView2, attribute: .left, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: fromDeviceButton!, attribute: .right, relatedBy: .equal, toItem: separatorView2, attribute: .right, multiplier: 1, constant: 0))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .top, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .bottom, multiplier: 1, constant: margin))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .left, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .left, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .right, relatedBy: .equal, toItem: fromDeviceButton!, attribute: .right, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: separatorView3!, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 1))
+            
+            dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView3!, attribute: .bottom, multiplier: 1, constant: margin))
+        } else {
+            dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .top, relatedBy: .equal, toItem: separatorView2, attribute: .bottom, multiplier: 1, constant: margin))
+        }
         dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .left, relatedBy: .equal, toItem: separatorView2, attribute: .left, multiplier: 1, constant: 0))
         dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .right, relatedBy: .equal, toItem: separatorView2, attribute: .right, multiplier: 1, constant: 0))
+        
         
         dialogView.addConstraint(NSLayoutConstraint(item: cancelButton, attribute: .bottom, relatedBy: .equal, toItem: dialogView, attribute: .bottom, multiplier: 1, constant: -margin))
         
@@ -172,6 +219,14 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         dismiss(animated: true, completion: nil)
     }
     
+    @objc func loadFromDevice() {
+        dismiss(animated: true, completion: {() -> Void in
+            if let chosenPeripheral = self.chosenPeripheral {
+                self.delegate?.loadExperimentFromPeripheral(chosenPeripheral)
+            }
+        })
+    }
+    
     func dismiss(animated: Bool, completion: (() -> Void)?) {
         if animated {
             UIView.animate(withDuration: 0.3, animations: {
@@ -194,7 +249,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             return
         }
         dismiss(animated: true,  completion: {() in _ =
-            self.delegate?.launchExperimentByURL(url)
+            self.delegate?.launchExperimentByURL(url, chosenPeripheral: self.chosenPeripheral)
         })
     }
     

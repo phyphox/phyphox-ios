@@ -94,11 +94,16 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
         
         if fac > 1 {
             let ifac = Int(round(fac))
-            for i in 0..<x.count {
+            var index = 0
+            var i = 0
+            while index < x.count {
                 var newX = 0.0
                 var newY = 0.0
                 for j in 0..<ifac {
-                    let index = i*ifac+j
+                    index = i*ifac+j
+                    if index >= x.count {
+                        break
+                    }
                     if j == 0 {
                         newX = x[index]
                         newY = y != nil ? y![index] : 0.0
@@ -120,11 +125,12 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
                 
                 resX.append(newX)
                 resY.append(newY)
+                i += 1
             }
-        } else {
+        } else if fac > 0 {
             let ifac = Int(round(1.0/fac))
             for i in 0..<x.count {
-                for j in 0..<ifac {
+                for _ in 0..<ifac {
                     resX.append(x[i])
                     resY.append(y != nil ? y![i] : 0.0)
                 }

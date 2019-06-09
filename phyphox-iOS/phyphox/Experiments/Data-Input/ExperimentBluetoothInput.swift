@@ -1,153 +1,216 @@
 //
-//  ExperimentBluetoothInput.swift
+//  BluetoothInput.swift
 //  phyphox
 //
-//  Created by Sebastian Kuhlen on 01.09.16.
-//  Copyright © 2016 RWTH Aachen. All rights reserved.
+//  Created by Dominik Dorsel on 27.02.19.
+//  Copyright © 2019 RWTH Aachen. All rights reserved.
 //
 
-
-// This is a first step for the implementation of Bluetooth...
-
 import Foundation
+import CoreBluetooth
 
-final class ExperimentBluetoothInput {
-    /**
-     The update frequency of the sensor.
-     */
-    private(set) var rate: TimeInterval //in s
+class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     
-    var effectiveRate: TimeInterval {
-        get {
-            if self.averaging != nil {
-                return 0.0
+    let device: ExperimentBluetoothDevice
+    
+    let rate: Double
+    let mode: BluetoothMode
+    let subscribeOnStart: Bool
+    
+    private var startTimestamp: TimeInterval?
+    var configList: [BluetoothConfigDescriptor] = []
+    
+    var running: Bool = false
+    
+    struct BluetoothOutput: Equatable {
+        let char: CBUUID
+        let conversion: InputConversion?
+        let buffer: DataBuffer
+        let extra: BluetoothOutputExtra
+        
+        static func ==(lhs: BluetoothOutput, rhs: BluetoothOutput) -> Bool {
+            return lhs.char == rhs.char &&
+                lhs.buffer == rhs.buffer &&
+                lhs.extra == rhs.extra
+        }
+    }
+
+    private var outputList: [BluetoothOutput] = []
+
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothQueue", attributes: [])
+    
+    var timer = Timer()
+    
+    init(device: ExperimentBluetoothDevice, mode: BluetoothMode, outputList: [BluetoothOutput], configList: [BluetoothConfigDescriptor], subscribeOnStart: Bool, rate: Double?) {
+        
+        self.outputList = outputList
+        self.configList = configList
+        
+        self.mode = mode
+        self.rate = rate ?? 0.0
+        self.subscribeOnStart = subscribeOnStart
+        
+        self.device = device
+        self.device.attachDelegate(self)
+    }
+    
+    func start(){
+        running = true
+        startTimestamp = nil
+        switch mode {
+        case .poll:
+            timer = Timer.scheduledTimer(timeInterval: (1.0/rate), target: self, selector: #selector(pollData), userInfo: nil, repeats: true)
+        case .notification:
+            if subscribeOnStart {
+                do {
+                    for char in Set(outputList.map({$0.char})) {
+                        try device.subscribeToCharacteristic(uuid: char)
+                    }
+                } catch BluetoothDeviceError.generic(let msg) {
+                    device.disconnect()
+                    device.showError(msg: msg)
+                    return
+                } catch {
+                    device.showError(msg: "Unknown error.")
+                    return
+                }
             }
-            else {
-                return rate
+        default:
+            print("default")
+        }
+        
+    }
+    
+    @objc func pollData() {
+        do {
+            for char in Set(outputList.map({$0.char})) {
+                try device.readCharacteristic(uuid: char)
+            }
+        } catch BluetoothDeviceError.generic(let msg) {
+            device.disconnect()
+            device.showError(msg: msg)
+            return
+        } catch {
+            device.showError(msg: "Unknown error.")
+            return
+        }
+    }
+ 
+    func stop(){
+        running = false
+        switch mode {
+        case .notification:
+            if subscribeOnStart {
+                do {
+                    for char in Set(outputList.map({$0.char})) {
+                        try device.unsubscribeFromCharacteristic(uuid: char)
+                    }
+                } catch BluetoothDeviceError.generic(let msg) {
+                    device.disconnect()
+                    device.showError(msg: msg)
+                    return
+                } catch {
+                    device.showError(msg: "Unknown error.")
+                    return
+                }
+            }
+        case .poll:
+            timer.invalidate()
+        default:
+            print("default stop message")
+        }
+    }
+    
+    func deviceReady() throws {
+        if !subscribeOnStart {
+            for char in Set(outputList.map({$0.char})) {
+                try device.subscribeToCharacteristic(uuid: char)
             }
         }
     }
     
-    private(set) var startTimestamp: TimeInterval?
-    
-    private(set) var buffers: [DataBuffer]?
-    
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothInputQueue", attributes: [])
-    
-    private class Averaging {
-        /**
-         The duration of averaging intervals.
-         */
-        var averagingInterval: TimeInterval
-        
-        /**
-         Start of current average mesurement.
-         */
-        var iterationStartTimestamp: TimeInterval?
-        
-        var v: [Double]?
-        
-        var numberOfUpdates: UInt = 0
-        
-        init(averagingInterval: TimeInterval) {
-            self.averagingInterval = averagingInterval
-        }
-        
-        func requiresFlushing(_ currentT: TimeInterval) -> Bool {
-            return iterationStartTimestamp != nil && iterationStartTimestamp! + averagingInterval <= currentT
+    func writeConfigData() throws {
+        for config in configList{
+            try device.writeCharacteristic(uuid: config.char, data: config.data)
         }
     }
     
-    /**
-     Information on averaging. Set to `nil` to disable averaging.
-     */
-    private var averaging: Averaging?
-    
-    var recordingAverages: Bool {
-        get {
-            return self.averaging != nil
-        }
-    }
-    
-    init(rate: TimeInterval, average: Bool, buffers: [DataBuffer]?) {
-        self.rate = rate
-        
-        self.buffers = buffers
-        
-        if average {
-            self.averaging = Averaging(averagingInterval: rate)
-        }
-    }
-    
-    private func resetValuesForAveraging() {
-        guard let averaging = self.averaging else {
+    func dataFromCharacteristic(uuid: CBUUID, data: Data) {
+        if !running {
             return
         }
         
-        averaging.iterationStartTimestamp = nil
-        
-        averaging.v = []
-        
-        averaging.numberOfUpdates = 0
-    }
-    
-    func start() {
-        resetValuesForAveraging()
-        
-        //TODO
-    }
-    
-    func stop() {
-        //TODO
-    }
-    
-    func clear() {
-        self.startTimestamp = nil
-    }
-    
-    private func writeToBuffers(_ x: Double?, y: Double?, z: Double?, t: TimeInterval) {
-        //TODO
-    }
-    
-    private func dataIn(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
-        //TODO
-        
-        func dataInSync(_ x: Double?, y: Double?, z: Double?, t: TimeInterval?, error: NSError?) {
-            guard error == nil else {
-                print("Sensor error: \(error!.localizedDescription)")
-                return
-            }
-            
-            if let av = self.averaging {
-                if av.iterationStartTimestamp == nil {
-                    av.iterationStartTimestamp = t
-                }
+        let t = CFAbsoluteTimeGetCurrent()
+        for item in outputList{
+            if item.char.uuid128String == uuid.uuid128String {
                 
-                //TODO
-                
-                av.numberOfUpdates += 1
-            }
-            else {
-                writeToBuffers(x, y: y, z: z, t: t!)
-            }
-            
-            if let av = self.averaging {
-                if av.requiresFlushing(t!) {
-                    let u = Double(av.numberOfUpdates)
-  
-                    //TODO
-//                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), t: t!)
+                if item.extra == .time {
+                    if startTimestamp == nil {
+                        startTimestamp = t - (item.buffer.last ?? 0.0)
+                    }
                     
-                    self.resetValuesForAveraging()
-                    av.iterationStartTimestamp = t
+                    let relativeT = t-startTimestamp!
+                    
+                    self.dataIn(relativeT, t: t, dataBufferIn: item.buffer)
+                } else {
+                    if let newDataConverted = item.conversion?.convert(data: data), newDataConverted.isFinite {
+                        self.dataIn(newDataConverted, t: t, dataBufferIn: item.buffer)
+                    }
                 }
             }
         }
+    }
+   
+    private func writeToBuffers(_ value: Double?,t: TimeInterval, dataBufferIn: DataBuffer) {
+        
+        func tryAppend(myValue: Double?, to buffer: DataBuffer?) {
+            guard let myValue = myValue, let buffer = buffer else { return }
+            
+            buffer.append(myValue)
+        }
+        
+        tryAppend(myValue: value, to: dataBufferIn)
+    }
+   
+    private func dataIn(_ value: Double?, t: TimeInterval, dataBufferIn: DataBuffer) {
+        
+        
+        func dataInSync(_ value: Double?, t: TimeInterval?, dataBufferIn: DataBuffer) {
+            writeToBuffers(value, t: t!, dataBufferIn: dataBufferIn )
+        }
+        
         
         queue.async {
             autoreleasepool(invoking: {
-                dataInSync(x, y: y, z: z, t: t, error: error)
+                dataInSync(value, t: t, dataBufferIn: dataBufferIn)
             })
         }
     }
 }
+
+extension ExperimentBluetoothInput: Equatable {
+    static func ==(lhs: ExperimentBluetoothInput, rhs: ExperimentBluetoothInput) -> Bool {
+        return lhs.configList == rhs.configList &&
+                lhs.device == rhs.device &&
+                lhs.mode == lhs.mode &&
+                lhs.outputList == rhs.outputList &&
+                lhs.rate == rhs.rate &&
+                lhs.subscribeOnStart == rhs.subscribeOnStart
+    }
+}
+
+extension BluetoothConfigDescriptor: Equatable {
+    static func ==(lhs: BluetoothConfigDescriptor, rhs: BluetoothConfigDescriptor) -> Bool {
+        return lhs.char == rhs.char &&
+               lhs.data == rhs.data
+    }
+}
+
+extension BluetoothOutputDescriptor: Equatable {
+    static func ==(lhs: BluetoothOutputDescriptor, rhs: BluetoothOutputDescriptor) -> Bool {
+        return lhs.bufferName == rhs.bufferName &&
+               lhs.char == rhs.char &&
+               lhs.extra == rhs.extra
+    }
+}
+

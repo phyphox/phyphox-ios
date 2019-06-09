@@ -33,7 +33,7 @@ class CreateExperimentViewController: UITableViewController {
         
         tableView.keyboardDismissMode = .onDrag
         
-        title = NSLocalizedString("newExperimentSimple", comment: "")
+        title = localize("newExperimentSimple")
         
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(save))
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
@@ -118,7 +118,7 @@ class CreateExperimentViewController: UITableViewController {
 //        case 2:
 //            return "Sensor Refresh Rate"
         case 2:
-            return NSLocalizedString("newExperimentInputSensors", comment: "")
+            return localize("newExperimentInputSensors")
         default:
             return nil
         }
@@ -130,25 +130,25 @@ class CreateExperimentViewController: UITableViewController {
             
             switch indexPath.row {
             case 0:
-                cell.textLabel!.text = NSLocalizedString("sensorAccelerometer", comment: "")
+                cell.textLabel!.text = localize("sensorAccelerometer")
                 cell.accessoryType = selectedSensors.contains(.Accelerometer) ? .checkmark : .none
             case 1:
-                cell.textLabel!.text = NSLocalizedString("sensorLinearAcceleration", comment: "")
+                cell.textLabel!.text = localize("sensorLinearAcceleration")
                 cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .checkmark : .none
             case 2:
-                cell.textLabel!.text = NSLocalizedString("location", comment: "")
+                cell.textLabel!.text = localize("location")
                 cell.accessoryType = selectedSensors.contains(.GPS) ? .checkmark : .none
             case 3:
-                cell.textLabel!.text = NSLocalizedString("sensorGyroscope", comment: "")
+                cell.textLabel!.text = localize("sensorGyroscope")
                 cell.accessoryType = selectedSensors.contains(.Gyroscope) ? .checkmark : .none
             case 4:
-                cell.textLabel!.text = NSLocalizedString("sensorMagneticField", comment: "")
+                cell.textLabel!.text = localize("sensorMagneticField")
                 cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .checkmark : .none
             case 5:
-                cell.textLabel!.text = NSLocalizedString("sensorPressure", comment: "")
+                cell.textLabel!.text = localize("sensorPressure")
                 cell.accessoryType = selectedSensors.contains(.Barometer) ? .checkmark : .none
             case 6:
-                cell.textLabel!.text = NSLocalizedString("sensorProximity", comment: "")
+                cell.textLabel!.text = localize("sensorProximity")
                 cell.accessoryType = selectedSensors.contains(.Proximity) ? .checkmark : .none
             default:
                 break
@@ -160,12 +160,12 @@ class CreateExperimentViewController: UITableViewController {
             let cell = tableView.dequeueReusableCell(withIdentifier: "TextCell", for: indexPath) as! TextFieldTableViewCell
             
             if indexPath.section == 0 {
-                cell.textField.placeholder = NSLocalizedString("newExperimentInputTitle", comment: "")
+                cell.textField.placeholder = localize("newExperimentInputTitle")
                 cell.textField.keyboardType = .default
                 cell.textField.text = experimentTitle
             }
             else if indexPath.section == 1 {
-                cell.textField.placeholder = NSLocalizedString("newExperimentInputRate", comment: "")
+                cell.textField.placeholder = localize("newExperimentInputRate")
                 cell.textField.keyboardType = .decimalPad
                 cell.textField.text = rateString
             }

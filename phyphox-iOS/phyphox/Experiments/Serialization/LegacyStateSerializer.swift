@@ -14,6 +14,16 @@ final class LegacyStateSerializer {
         case SourceError(String)
     }
     
+    class func renameStateFile(customTitle: String, file: URL) throws {
+        let data = try String(contentsOf: file, encoding: .utf8)
+        let modifiedData = data.replacingOccurrences(
+            of: "<state-title>.*<\\/state-title>",
+            with: "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>",
+            options: .regularExpression
+        )
+        try modifiedData.write(to: file, atomically: true, encoding: .utf8)
+    }
+    
     class func writeStateFile(customTitle: String, target: String, experiment: Experiment, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) -> Void {
         let str: String
         do {
@@ -73,6 +83,16 @@ final class LegacyStateSerializer {
         } catch {
             throw stateError.SourceError("Cannot load experiment source.")
         }
+        sourceStr = sourceStr.replacingOccurrences(
+            of: "<state-title>.*<\\/state-title>",
+            with: "",
+            options: .regularExpression
+        )
+        sourceStr = sourceStr.replacingOccurrences(
+            of: "<color>.*<\\/color>",
+            with: "",
+            options: .regularExpression
+        )
         let dataContainersBlockStart = sourceStr.range(of: "<data-containers>", options: .caseInsensitive)
         let dataContainersBlockStop = sourceStr.range(of: "</data-containers>", options: .caseInsensitive)
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil {
@@ -101,6 +121,7 @@ final class LegacyStateSerializer {
             newBlock += "</container>\n"
         }
         let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
-        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + "</phyphox>"
+        let color = "<color>blue</color>"
+        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + color + "\n" + "</phyphox>"
     }
 }

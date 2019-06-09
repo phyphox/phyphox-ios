@@ -8,12 +8,17 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, UITableViewDataSource, UITableViewDelegate {
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate {
+    
+    let unfoldMoreImageView: UIImageView
+    let unfoldLessImageView: UIImageView
     
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
+    var logX, logY, logZ: Bool
     
+    var exportDelegate: ExportDelegate? = nil
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
     var zoomDelegate: ApplyZoomDelegate? = nil
     var resizableState: ResizableViewModuleState = .normal
@@ -45,22 +50,41 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private let label = UILabel()
     private let xLabel: UILabel
     private let yLabel: UILabel
+    private let zLabel: UILabel?
     
     private let glGraph: GLGraphView
     private let gridView: GraphGridView
+    private let markerOverlayView: MarkerOverlayView
     
-    private var zoomMin: GraphPoint<Double>?
-    private var zoomMax: GraphPoint<Double>?
+    private let glZScale: GLGraphView?
+    private let zGridView: GraphGridView?
+    let hasZData: Bool
+    let zScaleHeight: CGFloat = 40
+    
+    private var zoomMin: GraphPoint3D<Double>?
+    private var zoomMax: GraphPoint3D<Double>?
     private var zoomFollows = false
 
     var panGestureRecognizer: UIPanGestureRecognizer? = nil
     var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
+    var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    
+    var markers: [(set: Int, index: Int)] = [] {
+        didSet {
+            refreshMarkers()
+        }
+    }
+    var markerLabel: UILabel? = nil
+    var markerLabelFrame: UIView? = nil
+    
+    var showLinearFit = false
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
-    private var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])] = []
     
-    private func addDataSets(_ sets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])]) {
+    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])]) {
         if descriptor.history > 1 {
             if dataSets.count >= Int(descriptor.history) {
                 dataSets.removeFirst()
@@ -71,50 +95,62 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    private var max: GraphPoint<Double> {
+    private var max: GraphPoint3D<Double> {
         if dataSets.count > 1 {
             var maxX = -Double.infinity
             var maxY = -Double.infinity
+            var maxZ = -Double.infinity
             
             for set in dataSets {
                 let maxPoint = set.bounds.max
-
+                
                 maxX = Swift.max(maxX, maxPoint.x)
                 maxY = Swift.max(maxY, maxPoint.y)
+                maxZ = Swift.max(maxZ, maxPoint.z)
             }
             
-            return GraphPoint(x: maxX, y: maxY)
+            return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
         else {
-            return dataSets.first?.bounds.max ?? .zero
+            return dataSets.first?.bounds.max ?? GraphPoint3D.zero
         }
     }
     
-    private var min: GraphPoint<Double> {
+    private var min: GraphPoint3D<Double> {
         if dataSets.count > 1 {
             var minX = Double.infinity
             var minY = Double.infinity
+            var minZ = Double.infinity
             
             for set in dataSets {
                 let minPoint = set.bounds.min
                 
                 minX = Swift.min(minX, minPoint.x)
                 minY = Swift.min(minY, minPoint.y)
+                minZ = Swift.min(minZ, minPoint.z)
             }
             
-            return GraphPoint(x: minX, y: minY)
+            return GraphPoint3D(x: minX, y: minY, z: minZ)
         }
         else {
-            return dataSets.first?.bounds.min ?? .zero
+            return dataSets.first?.bounds.min ?? GraphPoint3D.zero
         }
     }
     
-    private var points: [[GraphPoint<GLfloat>]] {
-        return dataSets.map { $0.data }
+    private var points2D: [[GraphPoint2D<GLfloat>]] {
+        return dataSets.map { $0.data2D }
+    }
+    
+    private var points3D: [[GraphPoint3D<GLfloat>]] {
+        return dataSets.map { $0.data3D }
     }
     
     required init?(descriptor: GraphViewDescriptor) {
         self.descriptor = descriptor
+        
+        logX = descriptor.logX
+        logY = descriptor.logY
+        logZ = descriptor.logZ
         
         glGraph = GLGraphView()
         glGraph.style = descriptor.style
@@ -129,10 +165,41 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
         }
         glGraph.historyLength = descriptor.history
+        glGraph.mapWidth = descriptor.mapWidth
+        glGraph.colorMap = descriptor.colorMap
         
-        gridView = GraphGridView(descriptor: descriptor)
+        hasZData = glGraph.style[0] == .map
+        
+        gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
-        gridView.gridOffset = CGPoint(x: 0.0, y: 0.0)
+        gridView.gridOffset = CGPoint(x: 0.0, y: 0)
+        
+        markerOverlayView = MarkerOverlayView()
+        markerOverlayView.clipsToBounds = true
+        
+        if hasZData {
+            glZScale = GLGraphView()
+            glZScale?.style = descriptor.style
+            glZScale?.mapWidth = 2
+            glZScale?.colorMap = descriptor.colorMap
+            
+            //We only set some dummy points once to show the gradient.
+            //We do not event need to update it when the user scales the z axis as this only changes the tics of the grid view below that is mapped to the same color gradient
+            let x0y0z0 = GraphPoint3D<GLfloat>(x: 0.0, y: 0.0, z: 0.0)
+            let x1y0z1 = GraphPoint3D<GLfloat>(x: 1.0, y: 0.0, z: 1.0)
+            let x0y1z0 = GraphPoint3D<GLfloat>(x: 0.0, y: 1.0, z: 0.0)
+            let x1y1z1 = GraphPoint3D<GLfloat>(x: 1.0, y: 1.0, z: 1.0)
+            let min = GraphPoint3D<Double>(x: 0.0, y: 0.0, z: 0.0)
+            let max = GraphPoint3D<Double>(x: 1.0, y: 1.0, z: 1.0)
+            glZScale?.setPoints(points2D: [[]], points3D: [[x0y0z0, x1y0z1, x0y1z0, x1y1z1]], min: min, max: max)
+            
+            zGridView = GraphGridView(descriptor: descriptor, isZScale: true)
+            zGridView?.gridInset = CGPoint(x: 2.0, y: 2.0)
+            zGridView?.gridOffset = CGPoint(x: 0.0, y: 0.0)
+        } else {
+            glZScale = nil
+            zGridView = nil
+        }
         
         func makeLabel(_ text: String?) -> UILabel {
             let l = UILabel()
@@ -155,15 +222,44 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
         
+        if hasZData {
+            zLabel = makeLabel(descriptor.localizedZLabelWithUnit)
+            zLabel?.textColor = kTextColor
+        } else {
+            zLabel = nil
+        }
+        
+        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        
         super.init(frame: .zero)
         
         gridView.delegate = self
+        zGridView?.delegate = self
+        
+        gridView.isUserInteractionEnabled = false
+        zGridView?.isUserInteractionEnabled = false
+        markerOverlayView.isUserInteractionEnabled = false
 
+        let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
+        unfoldMoreImageView.frame = unfoldRect
+        unfoldLessImageView.frame = unfoldRect
+        unfoldLessImageView.isHidden = true
+        unfoldMoreImageView.isHidden = false
+        
+        graphArea.addSubview(unfoldMoreImageView)
+        graphArea.addSubview(unfoldLessImageView)
         graphArea.addSubview(label)
-        graphArea.addSubview(gridView)
         graphArea.addSubview(glGraph)
+        graphArea.addSubview(gridView)
         graphArea.addSubview(xLabel)
         graphArea.addSubview(yLabel)
+        if let glZScale = glZScale, let zGridView = zGridView, let zLabel = zLabel {
+            graphArea.addSubview(glZScale)
+            graphArea.addSubview(zGridView)
+            graphArea.addSubview(zLabel)
+        }
+        graphArea.addSubview(markerOverlayView)
         
         addSubview(graphArea)
 
@@ -178,6 +274,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
         graphArea.addGestureRecognizer(tapGesture)
+        
+        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
+        glGraph.addGestureRecognizer(plotTapGesture)
     }
 
     @available(*, unavailable)
@@ -187,6 +286,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
+            unfoldMoreImageView.isHidden = true
+            unfoldLessImageView.isHidden = false
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
             pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
             if let gr = panGestureRecognizer {
@@ -195,7 +296,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             if let gr = pinchGestureRecognizer {
                 glGraph.addGestureRecognizer(gr)
             }
+            if let glZScale = glZScale {
+                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
+                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
+                if let gr = zPanGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+            }
         } else {
+            unfoldMoreImageView.isHidden = false
+            unfoldLessImageView.isHidden = true
+            markers = []
+            showLinearFit = false
             if let gr = panGestureRecognizer {
                 glGraph.removeGestureRecognizer(gr)
             }
@@ -204,6 +319,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             panGestureRecognizer = nil
             pinchGestureRecognizer = nil
+            if let glZScale = glZScale {
+                if let gr = zPanGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                zPanGestureRecognizer = nil
+                zPinchGestureRecognizer = nil
+            }
         }
     }
     
@@ -221,20 +346,104 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
+    func getIndexOfNearestPoint(at: CGPoint) -> (set: Int, index: Int)? {
+        var minDist = CGFloat.infinity
+        var minSet = -1
+        var minIndex = -1
+        
+        let searchRange: CGFloat = 30.0
+        let searchRange2 = searchRange*searchRange
+        
+        let rangeMin = self.min
+        let rangeMax = self.max
+        let minX = CGFloat(rangeMin.x)
+        let minY = CGFloat(rangeMin.y)
+        let maxX = CGFloat(rangeMax.x)
+        let maxY = CGFloat(rangeMax.y)
+        let frame = graphFrame
+        let w = frame.width
+        let h = frame.height
+        
+        func viewXtoDataX(_ x: CGFloat) -> CGFloat {
+            return (maxX-minX)*(x/w) + minX
+        }
+        
+        func viewYtoDataY(_ y: CGFloat) -> CGFloat {
+            return maxY - (maxY-minY) * (y/h)
+        }
+        
+        let searchRangeMaxX = Swift.max(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        let searchRangeMinX = Swift.min(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        let searchRangeMaxY = Swift.max(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        let searchRangeMinY = Swift.min(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        
+        for (i, dataSet) in dataSets.enumerated() {
+            
+            let n = hasZData ? dataSet.data3D.count : dataSet.data2D.count
+            for j in 0..<n {
+                if descriptor.style[i] == .hbars || descriptor.style[i] == .vbars {
+                    if j % 6 != 2 && j % 6 != 3 {
+                        continue
+                    }
+                }
+                let x = CGFloat(hasZData ? dataSet.data3D[j].x : dataSet.data2D[j].x)
+                let y = CGFloat(hasZData ? dataSet.data3D[j].y : dataSet.data2D[j].y)
+                
+                if x < searchRangeMinX || x > searchRangeMaxX || y < searchRangeMinY || y > searchRangeMaxY {
+                    continue
+                }
+                
+                let vx = (x - minX) / (maxX-minX) * w
+                let vy = (maxY - y) / (maxY-minY) * h
+                let dx = vx - at.x
+                let dy = vy - at.y
+                let d = dx*dx+dy*dy
+                
+                if (d < searchRange2 && d < minDist) {
+                    minDist = d
+                    minSet = i
+                    minIndex = j
+                }
+            }
+        }
+        
+        if minSet >= 0 && minIndex >= 0 {
+            return (set: minSet, index: minIndex)
+        } else {
+            return nil
+        }
+    }
+    
+    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            tapped(sender)
+        }
+        if mode != .pick {
+            return
+        }
+        
+        if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+            markers = [point]
+            showLinearFit = false
+        } else {
+            markers = []
+        }
+    }
+    
     func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
         
         layoutDelegate?.restoreLayout()
         
         if zoomMin == nil || zoomMax == nil {
-            zoomMin = min
-            zoomMax = max
+            zoomMin = GraphPoint3D(x: min.x, y: min.y, z: min.z)
+            zoomMax = GraphPoint3D(x: max.x, y: max.y, z: max.z)
             
             if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
                 return
             }
         }
         
-        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: zoomMin!, zoomMax: zoomMax!)
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y))
         if (applyToX != .this || applyToY != .this) {
             let targetX: String?
             let targetY: String?
@@ -257,11 +466,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 targetY = nil
             }
 
-            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: zoomMin!, zoomMax: zoomMax!)
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y))
         }
     }
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint<Double>, zoomMax: GraphPoint<Double>) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>) {
         
         var applyX = false
         var applyY = false
@@ -303,14 +512,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if applyX {
             switch modeX {
             case .reset:
-                self.zoomMax = GraphPoint(x: Double.nan, y: self.zoomMax?.y ?? Double.nan)
-                self.zoomMin = GraphPoint(x: Double.nan, y: self.zoomMin?.y ?? Double.nan)
+                self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
             case .keep:
-                self.zoomMax = GraphPoint(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan)
-                self.zoomMin = GraphPoint(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan)
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
             case .follow:
-                self.zoomMax = GraphPoint(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan)
-                self.zoomMin = GraphPoint(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan)
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
                 zoomFollows = true
             case .none:
                 break
@@ -320,11 +529,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if applyY {
             switch modeY {
             case .reset:
-                self.zoomMax = GraphPoint(x: self.zoomMax?.x ?? Double.nan, y: Double.nan)
-                self.zoomMin = GraphPoint(x: self.zoomMin?.x ?? Double.nan, y: Double.nan)
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
             case .keep:
-                self.zoomMax = GraphPoint(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y)
-                self.zoomMin = GraphPoint(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y)
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
             default:
                 break
             }
@@ -333,42 +542,57 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         update()
     }
     
-    var panStartMin: GraphPoint<Double>?
-    var panStartMax: GraphPoint<Double>?
+    var panStartMin: GraphPoint2D<Double>?
+    var panStartMax: GraphPoint2D<Double>?
     
     @objc func panned (_ sender: UIPanGestureRecognizer) {
-        if (mode != .pan_zoom) {
-            return
+        if (mode == .pan_zoom) {
+            zoomFollows = false
+            
+            let offset = sender.translation(in: self)
+            
+            let min = GraphPoint2D(x: self.min.x, y: self.min.y)
+            let max = GraphPoint2D(x: self.max.x, y: self.max.y)
+            
+            if sender.state == .began {
+                panStartMin = min
+                panStartMax = max
+            }
+            
+            guard let startMin = panStartMin, let startMax = panStartMax else {
+                return
+            }
+            
+            let dx = Double(offset.x / glGraph.frame.width) * (max.x - min.x)
+            let dy = Double(offset.y / glGraph.frame.height) * (min.y - max.y)
+            
+            zoomMin = GraphPoint3D(x: startMin.x - dx, y: startMin.y - dy, z: zoomMin?.z ?? Double.nan)
+            zoomMax = GraphPoint3D(x: startMax.x - dx, y: startMax.y - dy, z: zoomMax?.z ?? Double.nan)
+            
+            self.update()
+        } else if mode == .pick {
+            if sender.state == .began {
+                if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+                    markers = [point]
+                    showLinearFit = false
+                } else {
+                    markers = []
+                }
+            } else {
+                if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
+                    if markers.count > 1 {
+                        markers[1] = point
+                    } else {
+                        markers.append(point)
+                    }
+                }
+            }
         }
-        
-        zoomFollows = false
-        
-        let offset = sender.translation(in: self)
-        
-        let min = self.min
-        let max = self.max
-        
-        if sender.state == .began {
-            panStartMin = min
-            panStartMax = max
-        }
-        
-        guard let startMin = panStartMin, let startMax = panStartMax else {
-            return
-        }
-        
-        let dx = Double(offset.x / self.frame.width) * (max.x - min.x)
-        let dy = Double(offset.y / self.frame.height) * (min.y - max.y)
-        
-        zoomMin = GraphPoint(x: startMin.x - dx, y: startMin.y - dy)
-        zoomMax = GraphPoint(x: startMax.x - dx, y: startMax.y - dy)
-        
-        self.update()
     }
     
-    var pinchOrigin: GraphPoint<Double>?
-    var pinchScale: GraphPoint<Double>?
-    var pinchTouchScale: GraphPoint<CGFloat>?
+    var pinchOrigin: GraphPoint2D<Double>?
+    var pinchScale: GraphPoint2D<Double>?
+    var pinchTouchScale: GraphPoint2D<CGFloat>?
     
     @objc func pinched (_ sender: UIPinchGestureRecognizer) {
         if (mode != .pan_zoom) {
@@ -390,9 +614,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let centerY = (t1.y + t2.y)/2.0
         
         if sender.state == .began {
-            pinchTouchScale = GraphPoint(x: abs(t1.x - t2.x)/sender.scale, y: abs(t1.y - t2.y)/sender.scale)
-            pinchScale = GraphPoint(x: max.x - min.x, y: max.y - min.y)
-            pinchOrigin = GraphPoint(x: min.x + Double(centerX)/Double(self.frame.width)*pinchScale!.x, y: max.y - Double(centerY)/Double(self.frame.height)*pinchScale!.y)
+            pinchTouchScale = GraphPoint2D(x: abs(t1.x - t2.x)/sender.scale, y: abs(t1.y - t2.y)/sender.scale)
+            pinchScale = GraphPoint2D(x: max.x - min.x, y: max.y - min.y)
+            pinchOrigin = GraphPoint2D(x: min.x + Double(centerX-glGraph.frame.minX)/Double(glGraph.frame.width)*pinchScale!.x, y: max.y - Double(centerY-glGraph.frame.minY)/Double(glGraph.frame.height)*pinchScale!.y)
         }
         
         guard let origin = pinchOrigin, let scale = pinchScale, let touchScale = pinchTouchScale else {
@@ -424,12 +648,88 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             scaleY = 20*scale.y
         }
         
-        let zoomMinX = origin.x - Double(centerX)/Double(self.frame.width) * scaleX
+        let zoomMinX = origin.x - Double(centerX-glGraph.frame.minX)/Double(glGraph.frame.width) * scaleX
         let zoomMaxX = zoomMinX + scaleX
-        let zoomMaxY = origin.y + Double(centerY)/Double(self.frame.height) * scaleY
+        let zoomMaxY = origin.y + Double(centerY-glGraph.frame.minY)/Double(glGraph.frame.height) * scaleY
         let zoomMinY = zoomMaxY - scaleY
-        zoomMin = GraphPoint(x: zoomMinX, y: zoomMinY)
-        zoomMax = GraphPoint(x: zoomMaxX, y: zoomMaxY)
+        zoomMin = GraphPoint3D(x: zoomMinX, y: zoomMinY, z: zoomMin?.z ?? Double.nan)
+        zoomMax = GraphPoint3D(x: zoomMaxX, y: zoomMaxY, z: zoomMax?.z ?? Double.nan)
+        
+        self.update()
+    }
+    
+    var zPanStartMin: Double?
+    var zPanStartMax: Double?
+    
+    @objc func zPanned (_ sender: UIPanGestureRecognizer) {
+        if (mode != .pan_zoom) {
+            return
+        }
+        
+        let offset = sender.translation(in: self)
+        
+        let min = self.min.z
+        let max = self.max.z
+        
+        if sender.state == .began {
+            zPanStartMin = min
+            zPanStartMax = max
+        }
+        
+        guard let startMin = zPanStartMin, let startMax = zPanStartMax else {
+            return
+        }
+        
+        let dz = Double(offset.x / glZScale!.frame.width) * (max - min)
+        
+        zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: zoomMin?.y ?? Double.nan, z: startMin - dz)
+        zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: zoomMax?.y ?? Double.nan, z: startMax - dz)
+        
+        self.update()
+    }
+    
+    var zPinchOrigin: Double?
+    var zPinchScale: Double?
+    var zPinchTouchScale: CGFloat?
+    
+    @objc func zPinched (_ sender: UIPinchGestureRecognizer) {
+        if (mode != .pan_zoom) {
+            return
+        }
+        if sender.numberOfTouches != 2 {
+            return
+        }
+        
+        let min = self.min.z
+        let max = self.max.z
+        
+        let t1 = sender.location(ofTouch: 0, in: self)
+        let t2 = sender.location(ofTouch: 1, in: self)
+        
+        let centerX = (t1.x + t2.x)/2.0
+        
+        if sender.state == .began {
+            zPinchTouchScale = abs(t1.x - t2.x)/sender.scale
+            zPinchScale = max - min
+            zPinchOrigin = min + Double(centerX-glZScale!.frame.minX)/Double(glZScale!.frame.width)*zPinchScale!
+        }
+        
+        guard let origin = zPinchOrigin, let scale = zPinchScale, let touchScale = zPinchTouchScale else {
+            return
+        }
+        
+        let dz = abs(t1.x-t2.x)
+        var scaleZ = Double(touchScale / dz) * scale
+        
+        if scaleZ > 20*scale {
+            scaleZ = 20*scale
+        }
+        
+        let zoomMinZ = origin - Double(centerX-glZScale!.frame.minX)/Double(glZScale!.frame.width) * scaleZ
+        let zoomMaxZ = zoomMinZ + scaleZ
+        
+        zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: zoomMin?.y ?? Double.nan, z: zoomMinZ)
+        zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: zoomMax?.y ?? Double.nan, z: zoomMaxZ)
         
         self.update()
     }
@@ -442,8 +742,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private func runUpdate() {
         var xValues: [[Double]] = []
         var yValues: [[Double]] = []
+        var zValues: [[Double]] = []
         var count: [Int] = []
-        var points: [[GraphPoint<GLfloat>]] = []
+        var points2D: [[GraphPoint2D<GLfloat>]] = []
+        var points3D: [[GraphPoint3D<GLfloat>]] = []
 
         for i in 0..<descriptor.yInputBuffers.count {
             yValues.append(descriptor.yInputBuffers[i].toArray())
@@ -453,7 +755,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             if count[i] < 1 {
                 xValues.append([])
                 yValues.append([])
-                points.append([])
+                zValues.append([])
+                points2D.append([])
+                points3D.append([])
                 continue
             }
             
@@ -486,22 +790,36 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
                 xValues.append(lastIndexXArray!)
             }
+            
+            if let zBuf = descriptor.zInputBuffers[i] {
+                zValues.append(zBuf.toArray())
+            } else {
+                zValues.append([])
+            }
 
             count[i] = Swift.min(xValues[i].count, yValues[i].count)
+            if descriptor.style[i] == .map {
+                count[i] = Swift.min(count[i], zValues[i].count)
+            }
 
+            points2D.append([])
+            points3D.append([])
+            
             if count[i] < 1 {
-                points.append([])
                 continue
             }
             
-            points.append([])
             let styleCountFactor: Int
             switch descriptor.style[i] {
                 case .vbars: styleCountFactor = 6
                 case .hbars: styleCountFactor = 6
                 default: styleCountFactor = 1
             }
-            points[i].reserveCapacity(count[i] * styleCountFactor)
+            if descriptor.style[i] == .map {
+                points3D[i].reserveCapacity(count[i] * styleCountFactor)
+            } else {
+                points2D[i].reserveCapacity(count[i] * styleCountFactor)
+            }
         }
         
         if count.reduce(0, Swift.max) < 1 {
@@ -511,19 +829,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return
         }
 
-        let logX = descriptor.logX
-        let logY = descriptor.logY
-
         var minX = Double.infinity
         var maxX = -Double.infinity
 
         var minY = Double.infinity
         var maxY = -Double.infinity
+        
+        var minZ = Double.infinity
+        var maxZ = -Double.infinity
 
         var xMinStrict = descriptor.scaleMinX == .fixed
         var xMaxStrict = descriptor.scaleMaxX == .fixed
         var yMinStrict = descriptor.scaleMinY == .fixed
         var yMaxStrict = descriptor.scaleMaxY == .fixed
+        var zMinStrict = descriptor.scaleMinZ == .fixed
+        var zMaxStrict = descriptor.scaleMaxZ == .fixed
 
         if xMinStrict {
             minX = Double(descriptor.minX)
@@ -536,6 +856,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
         if yMaxStrict {
             maxY = Double(descriptor.maxY)
+        }
+        if zMinStrict {
+            minZ = Double(descriptor.minZ)
+        }
+        if zMaxStrict {
+            maxZ = Double(descriptor.maxZ)
         }
         
         if let zMin = zoomMin, let zMax = zoomMax {
@@ -552,9 +878,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 yMinStrict = true
                 yMaxStrict = true
             }
+            
+            if zMin.z.isFinite && zMax.z.isFinite && zMin.z < zMax.z {
+                minZ = zMin.z
+                maxZ = zMax.z
+                zMinStrict = true
+                zMaxStrict = true
+            }
         }
 
-        var dataSets: [(bounds: (min: GraphPoint<Double>, max: GraphPoint<Double>), data: [GraphPoint<GLfloat>])] = []
+        var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])] = []
         for i in 0..<count.count {
             var xOrderOK = true
             var valuesOK = true
@@ -564,9 +897,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             for j in 0..<count[i] {
                 let rawX = xValues[i][j]
                 let rawY = yValues[i][j]
+                let rawZ = zValues[i].count > j ? zValues[i][j] : Double.nan
 
                 let x = (logX ? log(rawX) : rawX)
                 let y = (logY ? log(rawY) : rawY)
+                let z = (logZ ? log(rawZ) : rawZ)
                 
                 if x < lastX {
                     xOrderOK = false
@@ -586,8 +921,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                         maxX = x
                     } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
                         let w = zoomMax!.x - zoomMin!.x
-                        zoomMin = GraphPoint(x: x - w, y: zoomMin!.y)
-                        zoomMax = GraphPoint(x: x, y: zoomMax!.y)
+                        zoomMin = GraphPoint3D(x: x - w, y: zoomMin!.y, z: zoomMin!.z)
+                        zoomMax = GraphPoint3D(x: x, y: zoomMax!.y, z: zoomMax!.z)
                         minX = zoomMin!.x
                         maxX = zoomMax!.x
                     }
@@ -600,6 +935,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 if y > maxY && !yMaxStrict {
                     maxY = y
                 }
+                
+                if z < minZ && !zMinStrict {
+                    minZ = z
+                }
+                
+                if z > maxZ && !zMaxStrict {
+                    maxZ = z
+                }
 
                 switch descriptor.style[i] {
                 case .hbars:
@@ -607,34 +950,37 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                         let off = (y-lastY)*(1.0-Double(descriptor.lineWidth[i]))/2.0
                         let yOff = y-off
                         let lastYOff = lastY+off
-                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(lastYOff)))
-                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(yOff)))
-                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(lastYOff)))
-                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(yOff)))
-                        points[i].append(GraphPoint(x: GLfloat(lastX), y: GLfloat(lastYOff)))
-                        points[i].append(GraphPoint(x: GLfloat(0.0), y: GLfloat(yOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(0.0), y: GLfloat(lastYOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(0.0), y: GLfloat(yOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastX), y: GLfloat(lastYOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastX), y: GLfloat(yOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastX), y: GLfloat(lastYOff)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(0.0), y: GLfloat(yOff)))
                     }
                 case .vbars:
                     if lastX.isFinite && lastY.isFinite {
                         let off = (x-lastX)*(1.0-Double(descriptor.lineWidth[i]))/2.0
                         let xOff = x-off
                         let lastXOff = lastX+off
-                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(0.0)))
-                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(0.0)))
-                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(lastY)))
-                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(lastY)))
-                        points[i].append(GraphPoint(x: GLfloat(lastXOff), y: GLfloat(lastY)))
-                        points[i].append(GraphPoint(x: GLfloat(xOff), y: GLfloat(0.0)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastXOff), y: GLfloat(0.0)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(xOff), y: GLfloat(0.0)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastXOff), y: GLfloat(lastY)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(xOff), y: GLfloat(lastY)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(lastXOff), y: GLfloat(lastY)))
+                        points2D[i].append(GraphPoint2D(x: GLfloat(xOff), y: GLfloat(0.0)))
                     }
+                case .map:
+                    points3D[i].append(GraphPoint3D(x: GLfloat(x), y: GLfloat(y), z: GLfloat(z)))
+                    //Note: The only difference is that we are storing 3D data. To actually render this as a map, we will use an index buffer to create the corresponding triangles. Also, it should be mentioned, that we do not use points3D for all the other graphs as storing z = NaN for each point would lead to excessive memory waste.
                 default:
-                    points[i].append(GraphPoint(x: GLfloat(x), y: GLfloat(y)))
+                    points2D[i].append(GraphPoint2D(x: GLfloat(x), y: GLfloat(y)))
                 }
                 
                 lastX = x
                 lastY = y
             }
 
-            if !xOrderOK {
+            if !xOrderOK && descriptor.style[i] != .map {
                 print("x values are not ordered!")
             }
 
@@ -643,25 +989,214 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 //print("Tried drawing NaN or inf")
             }
             
-            dataSets.append((bounds: (min: GraphPoint(x: minX, y: minY), max: GraphPoint(x: maxX, y: maxY)), data: points[i]))
+            dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i]))
+        }
+        
+        if !logX && !xMinStrict && !xMaxStrict && !hasZData {
+            let extraX = (maxX-minX)*0.05;
+            maxX += extraX
+            minX -= extraX
+        }
+        
+        if !logY && !yMinStrict && !yMaxStrict && !hasZData {
+            let extraY = (maxY-minY)*0.05;
+            maxY += extraY
+            minY -= extraY
+        }
+        
+        for i in 0..<dataSets.count {
+            dataSets[i].bounds = (min: GraphPoint3D(x: minX, y: minY, z: minZ), max: GraphPoint3D(x: maxX, y: maxY, z: maxZ))
         }
 
         addDataSets(dataSets)
 
-        let grid = generateGrid(logX: logX, logY: logY)
+        let grid = generateGrid(logX: logX, logY: logY, logZ: logZ)
 
-        let finalPoints = self.points
+        let finalPoints2D = self.points2D
+        let finalPoints3D = self.points3D
 
         let min = self.min
         let max = self.max
 
         mainThread {
             self.gridView.grid = grid
-            self.glGraph.setPoints(finalPoints, min: min, max: max)
+            self.zGridView?.grid = grid
+            self.glGraph.setPoints(points2D: finalPoints2D, points3D: finalPoints3D, min: min, max: max)
+            self.refreshMarkers()
         }
     }
 
-    private func generateGrid(logX: Bool, logY: Bool) -> GraphGrid {
+    private func setMarkerLabel(_ text: String?) {
+        if let text = text {
+            if markerLabel == nil {
+                markerLabel = UILabel()
+                markerLabel?.textColor = UIColor.black
+                markerLabel?.numberOfLines = 0
+                markerLabelFrame = UIView()
+                markerLabelFrame?.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
+                markerLabelFrame?.layer.cornerRadius = 5.0
+                markerLabelFrame?.layer.masksToBounds = true
+                markerLabelFrame?.addSubview(markerLabel!)
+                markerLabelFrame?.isUserInteractionEnabled = false
+                addSubview(markerLabelFrame!)
+            }
+            
+            markerLabel?.text = text
+            let minSize = markerLabel!.sizeThatFits(bounds.size)
+            markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: minSize.width + 20.0, height: minSize.height + 20.0)
+            markerLabel?.frame = CGRect(x: 10.0, y: 10.0, width: minSize.width, height: minSize.height)
+        } else if markerLabel != nil {
+            markerLabel!.removeFromSuperview()
+            markerLabelFrame!.removeFromSuperview()
+            markerLabel = nil
+            markerLabelFrame = nil
+        }
+    }
+    
+    private func refreshMarkers() {
+        var relativeCoordinates: [(CGFloat, CGFloat)] = []
+        
+        let min = self.min
+        let max = self.max
+        
+        var xlist: [GLfloat] = []
+        var ylist: [GLfloat] = []
+        var zlist: [GLfloat] = []
+        var avgRX = CGFloat(0.0)
+        var minRY = CGFloat.infinity
+        var n = 0
+        
+        func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
+            let rx = CGFloat((Double(x) - min.x) / (max.x-min.x))
+            let ry = CGFloat((max.y - Double(y)) / (max.y-min.y))
+            
+            xlist.append(x)
+            ylist.append(y)
+            zlist.append(z)
+            
+            avgRX += rx
+            n += 1
+            if ry < minRY {
+                minRY = ry
+            }
+            
+            relativeCoordinates.append((rx, ry))
+        }
+        
+        for marker in markers {
+            if marker.set < dataSets.count {
+                let dataSet = dataSets[marker.set]
+                
+                let x: GLfloat, y: GLfloat, z: GLfloat
+                if marker.index < dataSet.data2D.count {
+                    x = dataSet.data2D[marker.index].x
+                    y = dataSet.data2D[marker.index].y
+                    z = GLfloat.nan
+                } else if marker.index < dataSet.data3D.count {
+                    x = dataSet.data3D[marker.index].x
+                    y = dataSet.data3D[marker.index].y
+                    z = dataSet.data3D[marker.index].z
+                } else {
+                    continue
+                }
+                
+                appendMarker(x, y, z)
+            }
+        }
+        
+        if n == 1 {
+            self.markerOverlayView.showMarkers = true
+            self.markerOverlayView.markers = relativeCoordinates
+            
+            var labelText = localize("graph_point_label")
+            labelText += "\n    \(xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            if hasZData {
+                labelText += "\n    \(zlist[0])" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+            }
+            setMarkerLabel(labelText)
+        } else if n == 2 {
+            self.markerOverlayView.showMarkers = true
+            self.markerOverlayView.markers = relativeCoordinates
+            
+            var labelText = localize("graph_difference_label")
+            labelText += "\n    \(abs(xlist[0] - xlist[1]))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(abs(ylist[0] - ylist[1]))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            if hasZData {
+                labelText += "\n    \(abs(zlist[0] - zlist[1]))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+            }
+            labelText += "\n" + localize("graph_slope_label")
+            labelText += "\n    \((ylist[0] - ylist[1])/(xlist[0] - xlist[1])) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+            setMarkerLabel(labelText)
+        } else if showLinearFit {
+            if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
+                let a: GLfloat, b: GLfloat
+                (a, b) = calculateLinearRegression(dataSet.data2D)
+                
+                let x1 = GLfloat(min.x)
+                let y1 = a * GLfloat(min.x) + b
+                appendMarker(x1, y1, GLfloat.nan)
+                let x2 = GLfloat(max.x)
+                let y2 = a * GLfloat(max.x) + b
+                appendMarker(x2, y2, GLfloat.nan)
+                
+                self.markerOverlayView.showMarkers = false
+                self.markerOverlayView.markers = relativeCoordinates
+                
+                var labelText = localize("graph_fit_label")
+                labelText += "\na = \(a) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+                labelText += "\nb = \(b)" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                setMarkerLabel(labelText)
+            } else {
+                setMarkerLabel(nil)
+                self.markerOverlayView.markers = []
+            }
+        } else {
+            setMarkerLabel(nil)
+            self.markerOverlayView.markers = []
+        }
+        
+        if let markerLabelFrame = markerLabelFrame, n > 0 {
+            avgRX /= CGFloat(n)
+            
+            let w = markerLabelFrame.frame.width
+            let h = markerLabelFrame.frame.height
+            
+            let frame = glGraph.frame
+            let x = Swift.min(Swift.max(frame.minX + avgRX * frame.width - 0.5*w, 0), bounds.width - w)
+            let y = Swift.min(Swift.max(frame.minY + minRY * frame.height - h - 15.0, 0), bounds.height - h)
+            
+            markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
+        }
+    }
+    
+    private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
+        var sumX:GLfloat = 0.0
+        var sumX2:GLfloat = 0.0
+        var sumY:GLfloat = 0.0
+        var sumY2:GLfloat = 0.0
+        var sumXY:GLfloat = 0.0
+        
+        for point in data {
+            sumX += point.x
+            sumX2 += point.x*point.x
+            sumY += point.y
+            sumY2 += point.y*point.y
+            sumXY += point.x*point.y
+        }
+        
+        let norm = GLfloat(data.count) * sumX2 - sumX*sumX;
+        guard norm != 0 else {
+            return (GLfloat.nan, GLfloat.nan);
+        }
+        
+        let a = (GLfloat(data.count) * sumXY  -  sumX * sumY) / norm;
+        let b = (sumY * sumX2  -  sumX * sumXY) / norm;
+        
+        return (a, b)
+    }
+    
+    private func generateGrid(logX: Bool, logY: Bool, logZ: Bool) -> GraphGrid {
         let min = self.min
         let max = self.max
 
@@ -670,12 +1205,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
         let minY = min.y
         let maxY = max.y
+        
+        let minZ = min.z
+        let maxZ = max.z
 
         let xRange = maxX - minX
         let yRange = maxY - minY
+        let zRange = maxZ - minZ
 
         let xTicks = ExperimentGraphUtilities.getTicks(minX, max: maxX, maxTicks: 6, log: logX)
         let yTicks = ExperimentGraphUtilities.getTicks(minY, max: maxY, maxTicks: 6, log: logY)
+        let zTicks = ExperimentGraphUtilities.getTicks(minZ, max: maxZ, maxTicks: 6, log: logZ)
 
         let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
             return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val) - minX) / xRange))
@@ -684,8 +1224,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let mappedYTicks = yTicks.map({ (val) -> GraphGridLine in
             return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val) - minY) / yRange))
         })
+        
+        let mappedZTicks = zTicks.map({ (val) -> GraphGridLine in
+            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logZ ? log(val) : val) - minZ) / zRange))
+        })
 
-        return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks)
+        return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks, zGridLines: mappedZTicks)
     }
 
     private var wantsUpdate = false
@@ -717,10 +1261,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private func clearGraph() {
         gridView.grid = nil
+        zGridView?.grid = nil
         
         lastIndexXArray = nil
         
-        glGraph.setPoints([], min: .zero, max: .zero)
+        glGraph.setPoints(points2D: [], points3D: [], min: .zero, max: .zero)
     }
     
     //Mark - Toolbar and interaction
@@ -728,9 +1273,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     func setupToolbar() -> UITabBar {
         let graphTools = UITabBar()
         
-        let panZoomButton = UITabBarItem(title: NSLocalizedString("graph_tools_pan_and_zoom", comment: ""), image: UIImage(named: "pan_zoom"), tag: Mode.pan_zoom.rawValue)
-        let pickButton = UITabBarItem(title: NSLocalizedString("graph_tools_pick", comment: ""), image: UIImage(named: "pick"), tag: Mode.pick.rawValue)
-        let menuButton = UITabBarItem(title: NSLocalizedString("graph_tools_more", comment: ""), image: UIImage(named: "more"), tag: Mode.none.rawValue)
+        let panZoomButton = UITabBarItem(title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: Mode.pan_zoom.rawValue)
+        let pickButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: Mode.pick.rawValue)
+        let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: Mode.none.rawValue)
         graphTools.items = [panZoomButton, pickButton, menuButton]
         
         graphTools.shadowImage = UIImage()
@@ -794,21 +1339,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         //returns [label, checked, action when clicked]
         var elements: [(String, Bool, () -> ())] = []
         
-        elements.append((NSLocalizedString("graph_tools_reset", comment: ""), false, resetZoom))
+        elements.append((localize("graph_tools_reset"), false, resetZoom))
         if (descriptor.partialUpdate) {
-            elements.append((NSLocalizedString("graph_tools_follow", comment: ""), zoomFollows, followNewData))
+            elements.append((localize("graph_tools_follow"), zoomFollows, followNewData))
         }
-        if (!descriptor.logX && !descriptor.logY) {
-            //TODO: Checkmark
-            elements.append((NSLocalizedString("graph_tools_linear_fit", comment: ""), false, linearFit))
+        if (!descriptor.logX && !descriptor.logY && !hasZData) {
+            elements.append((localize("graph_tools_linear_fit"), showLinearFit, linearFit))
         }
-        elements.append((NSLocalizedString("graph_tools_export", comment: ""), false, exportGraphData))
+        elements.append((localize("graph_tools_export"), false, exportGraphData))
         if (descriptor.logX) {
-            //TODO: Checkmark
-            elements.append((NSLocalizedString("graph_tools_log_x", comment: ""), false, resetZoom))
+            elements.append((localize("graph_tools_log_x"), logX, toggleLogX))
         }
         if (descriptor.logY) {
-            elements.append((NSLocalizedString("graph_tools_log_y", comment: ""), false, resetZoom))
+            elements.append((localize("graph_tools_log_y"), logY, toggleLogY))
         }
         
         return elements
@@ -818,7 +1361,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     func showMenu() {
         
-        menuAlertController = UIAlertController(title: NSLocalizedString("graph_tools_more", comment: ""), message: nil, preferredStyle: .actionSheet)
+        menuAlertController = UIAlertController(title: localize("graph_tools_more"), message: nil, preferredStyle: .actionSheet)
         
         let tableView = FixedTableView()
         tableView.dataSource = self
@@ -829,12 +1372,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         tableViewController.tableView = tableView
         menuAlertController?.setValue(tableViewController, forKey: "contentViewController")
         
-        menuAlertController?.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
+        menuAlertController?.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
-        if let popover = menuAlertController?.popoverPresentationController {
-            let interactionViews = graphTools!.subviews.filter({$0.isUserInteractionEnabled})
+        if let popover = menuAlertController?.popoverPresentationController, let graphTools = graphTools {
+            let interactionViews = graphTools.subviews.filter({$0.isUserInteractionEnabled})
             let view = interactionViews.sorted(by: {$0.frame.minX < $1.frame.minX})[Mode.none.rawValue]
-            popover.sourceView = view
+            popover.sourceView = graphTools
             popover.sourceRect = view.frame
         }
         
@@ -851,8 +1394,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     func followNewData() {
         if !zoomFollows && (zoomMin == nil || zoomMax == nil) {
-            zoomMin = GraphPoint(x: self.min.x, y: Double.nan)
-            zoomMax = GraphPoint(x: self.max.x, y: Double.nan)
+            zoomMin = GraphPoint3D(x: self.min.x, y: Double.nan, z: Double.nan)
+            zoomMax = GraphPoint3D(x: self.max.x, y: Double.nan, z: Double.nan)
         }
         zoomFollows = !zoomFollows
         
@@ -860,19 +1403,37 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func linearFit() {
-        print("Linear fit")
+        showLinearFit = !showLinearFit
+        markers = []
+        self.update()
     }
     
     func exportGraphData() {
-        print("Export graph data")
+        let name = self.descriptor.label
+        var data: [(name: String, buffer: DataBuffer)] = []
+        for i in 0..<self.descriptor.yInputBuffers.count {
+            if let buffer = self.descriptor.xInputBuffers[i] {
+                data.append((name: self.descriptor.localizedXLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedXUnit != "" ? "(" + self.descriptor.localizedXUnit + ")" : ""), buffer: buffer))
+            }
+            data.append((name: self.descriptor.localizedYLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedYUnit != "" ? "(" + self.descriptor.localizedYUnit + ")" : ""), buffer: self.descriptor.yInputBuffers[i]))
+            if let buffer = self.descriptor.zInputBuffers[i] {
+                data.append((name: self.descriptor.localizedZLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedZUnit != "" ? "(" + self.descriptor.localizedZUnit + ")" : ""), buffer: buffer))
+            }
+        }
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: name, data: data)])
+        menuAlertController?.dismiss(animated: true, completion: {() -> Void in
+            self.exportDelegate?.showExport(export, singleSet: true)
+            })
     }
     
     func toggleLogX() {
-        print("Toggle log x")
+        logX = !logX
+        self.update()
     }
     
     func toggleLogY() {
-        print("Toogle log y")
+        logY = !logY
+        self.update()
     }
     
     //Mark - General UI
@@ -894,6 +1455,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private var graphFrame: CGRect {
         return gridView.insetRect.offsetBy(dx: gridView.frame.origin.x, dy: gridView.frame.origin.y)
+    }
+    
+    private var zScaleFrame: CGRect {
+        return zGridView?.insetRect.offsetBy(dx: zGridView!.frame.origin.x, dy: zGridView!.frame.origin.y) ?? .zero
     }
     
     override func layoutSubviews() {
@@ -924,25 +1489,29 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var bottom: CGFloat = 0.0
         
         if (resizableState == .exclusive) {
-            if let s = graphTools?.sizeThatFits(bounds.size) {
-                graphTools?.frame = CGRect(x: 0, y: bounds.size.height-s.height, width: bounds.size.width, height: s.height)
+            if let s = graphTools?.sizeThatFits(frame.size) {
+                graphTools?.frame = CGRect(x: 0, y: frame.size.height-s.height, width: frame.size.width, height: s.height)
                 bottom += s.height
             }
         }
         
-        graphArea.frame = CGRect(x: 0, y: 0, width: bounds.size.width, height: bounds.size.height-bottom)
+        graphArea.frame = CGRect(x: 0, y: 0, width: frame.size.width, height: frame.size.height-bottom)
         
-        let s1 = label.sizeThatFits(bounds.size)
-        label.frame = CGRect(x: (bounds.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
+        let s1 = label.sizeThatFits(frame.size)
+        label.frame = CGRect(x: (frame.size.width-s1.width)/2.0, y: spacing, width: s1.width, height: s1.height)
         
-        let s2 = xLabel.sizeThatFits(bounds.size)
-        xLabel.frame = CGRect(x: (bounds.size.width-s2.width)/2.0, y: bounds.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
+        let s2 = xLabel.sizeThatFits(frame.size)
+        let s3 = yLabel.sizeThatFits(frame.size).applying(yLabel.transform)
         
-        let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
+        xLabel.frame = CGRect(x: (frame.size.width+s3.width-s2.width)/2.0, y: frame.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
         
         bottom += s2.height+spacing
         
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.size.width - s3.width - spacing - 2*sideMargins, height: bounds.size.height - s1.height - spacing - bottom)
+        let s4 = zLabel?.sizeThatFits(frame.size) ?? .zero
+        zLabel?.frame = CGRect(x: (frame.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
+        
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZData ? zScaleHeight + s4.height + spacing : 0), width: frame.size.width - s3.width - spacing - 2*sideMargins, height: frame.size.height - s1.height - spacing - bottom - (hasZData ? zScaleHeight + spacing + s4.height : 0))
+        zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: frame.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
         
         yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
         
@@ -964,6 +1533,10 @@ extension ExperimentGraphView: GraphGridDelegate {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
             glGraph.setNeedsLayout()
+            glZScale?.frame = zScaleFrame
+            glZScale?.setNeedsLayout()
+            markerOverlayView.frame = graphFrame
+            refreshMarkers()
         }
     }
 }

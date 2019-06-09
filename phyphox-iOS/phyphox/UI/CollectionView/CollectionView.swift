@@ -32,6 +32,11 @@ class CollectionContainerView: UIView {
         super.layoutSubviews()
         
         collectionView.frame = self.bounds
+        
+        if #available(iOS 11, *) {
+            let insets = self.safeAreaInsets
+            collectionView.contentInset = UIEdgeInsets(top: 0, left: insets.left, bottom: 0, right: insets.right)
+        }
     }
     
     @available(*, unavailable)

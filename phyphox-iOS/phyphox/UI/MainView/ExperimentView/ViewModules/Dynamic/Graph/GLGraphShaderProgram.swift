@@ -89,7 +89,7 @@ final class GLGraphShaderProgram {
     func drawPositions(mode: Int32, start: Int, count: Int, strideFactor: Int) {
         guard count > 0 else { return }
 
-        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride * strideFactor), nil)
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint2D<GLfloat>>.stride * strideFactor), nil)
 
         glDrawArrays(GLenum(mode), GLint(start * MemoryLayout<GLuint>.stride), GLsizei(count))
     }
@@ -101,7 +101,7 @@ final class GLGraphShaderProgram {
     func drawElements(mode: Int32, start: Int, count: Int) {
         guard count > 0 else { return }
 
-        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint<GLfloat>>.stride), nil)
+        glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint2D<GLfloat>>.stride), nil)
 
         let pointer = bufferOffset(start * MemoryLayout<GLuint>.stride)
         glDrawElements(GLenum(mode), GLsizei(count), GLenum(GL_UNSIGNED_INT), pointer)
