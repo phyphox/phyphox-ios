@@ -41,7 +41,7 @@ struct ExperimentTranslationCollection: Equatable {
             region = ""
             script = ""
         }
-        print("________\(Bundle.main.preferredLocalizations.first)")
+
         let appLocale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
         let currentBaseLanguage = appLocale.languageCode?.lowercased()
         let currentRegion = appLocale.regionCode?.lowercased()
