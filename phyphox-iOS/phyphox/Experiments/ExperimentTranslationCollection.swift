@@ -41,10 +41,11 @@ struct ExperimentTranslationCollection: Equatable {
             region = ""
             script = ""
         }
-        
-        let currentBaseLanguage = Locale.current.languageCode?.lowercased()
-        let currentRegion = Locale.current.regionCode?.lowercased()
-        let currentScript = Locale.current.scriptCode?.lowercased()
+        print("________\(Bundle.main.preferredLocalizations.first)")
+        let appLocale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        let currentBaseLanguage = appLocale.languageCode?.lowercased()
+        let currentRegion = appLocale.regionCode?.lowercased()
+        let currentScript = appLocale.scriptCode?.lowercased()
         
         if baseLanguage == currentBaseLanguage {
             score += 100

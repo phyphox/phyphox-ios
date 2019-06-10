@@ -561,10 +561,6 @@
 		6BFE37C02049ABC800301CA3 /* BufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferTests.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
-		C0279A2A22ADB3F300B4F2A0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		C0279A2B22ADB3F300B4F2A0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		C0279A2C22ADB3FF00B4F2A0 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		C0279A2D22ADB3FF00B4F2A0 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		C031227E2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C031228D2260E006005DFB5B /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C031228E2260E01F005DFB5B /* el */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = el; path = el.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -583,6 +579,10 @@
 		C04FE6F422281E3800BD691C /* ApplyZoomDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyZoomDialog.swift; sourceTree = "<group>"; };
 		C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentPickerViewController.swift; sourceTree = "<group>"; };
 		C063DA8A228C52D000367384 /* MarkerOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerOverlayView.swift; sourceTree = "<group>"; };
+		C06D0E6722AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C06D0E7622AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C06D0E7722AEAFC100B2BDF1 /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C06D0E7822AEAFC100B2BDF1 /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C075AA7C2232CC0600DE86D8 /* BEMCheckBox */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BEMCheckBox; path = ../External/BEMCheckBox; sourceTree = "<group>"; };
 		C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BEMCheckBoxGroup.m; sourceTree = "<group>"; };
 		C075AA7F2232CCF600DE86D8 /* BEMCheckBoxGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BEMCheckBoxGroup.h; sourceTree = "<group>"; };
@@ -604,8 +604,6 @@
 		C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuTableViewController.swift; sourceTree = "<group>"; };
 		C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintBubbleViewController.swift; sourceTree = "<group>"; };
 		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
-		C0B840C3229DE5BC006C958A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		C0B840D2229DE5BC006C958A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1276,9 +1274,6 @@
 				vi,
 				zh_Hans,
 				zh_Hant,
-				sr,
-				"zh-Hans",
-				"zh-Hant",
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1711,9 +1706,8 @@
 				C03122952260E04C005DFB5B /* ja */,
 				C03122962260E059005DFB5B /* nl */,
 				C03122992260E06F005DFB5B /* vi */,
-				C0B840D2229DE5BC006C958A /* sr */,
-				C0279A2B22ADB3F300B4F2A0 /* zh-Hans */,
-				C0279A2D22ADB3FF00B4F2A0 /* zh-Hant */,
+				C06D0E7622AEAFB400B2BDF1 /* zh_Hant */,
+				C06D0E7822AEAFC100B2BDF1 /* zh_Hans */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1734,9 +1728,8 @@
 				C03122942260E04C005DFB5B /* ja */,
 				C03122972260E059005DFB5B /* nl */,
 				C03122982260E06F005DFB5B /* vi */,
-				C0B840C3229DE5BC006C958A /* sr */,
-				C0279A2A22ADB3F300B4F2A0 /* zh-Hans */,
-				C0279A2C22ADB3FF00B4F2A0 /* zh-Hant */,
+				C06D0E6722AEAFB400B2BDF1 /* zh_Hant */,
+				C06D0E7722AEAFC100B2BDF1 /* zh_Hans */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
