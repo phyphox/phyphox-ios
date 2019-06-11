@@ -30,7 +30,10 @@ class phyphox_screenshots: XCTestCase {
     func testExample() {
         
         let app = XCUIApplication()
-        app.alerts.element(boundBy: 0).buttons.element(boundBy: 1).tap()
+
+        let label = app.alerts.element(boundBy: 0).buttons.element(boundBy: 0).label
+        let index = (label == "取消" ? 0 : 1) //Detect Chinese cancel button in different order, ugly workaround...
+        app.alerts.element(boundBy: 0).buttons.element(boundBy: index).tap()
         
         snapshot("screen1")
         
@@ -47,7 +50,7 @@ class phyphox_screenshots: XCTestCase {
         
         snapshot("screen3")
         
-        app.navigationBars["screenshots"].buttons["phyphox"].tap()
+        app.navigationBars.element(boundBy: 0).buttons["phyphox"].tap()
         
         snapshot("main")
         
