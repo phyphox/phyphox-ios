@@ -381,7 +381,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             
             let n = hasZData ? dataSet.data3D.count : dataSet.data2D.count
             for j in 0..<n {
-                if descriptor.style[i] == .hbars || descriptor.style[i] == .vbars {
+                if descriptor.style.count > i && (descriptor.style[i] == .hbars || descriptor.style[i] == .vbars) {
                     if j % 6 != 2 && j % 6 != 3 {
                         continue
                     }
@@ -907,7 +907,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     xOrderOK = false
                 }
 
-                guard x.isFinite && y.isFinite else {
+                guard x.isFinite && y.isFinite && (descriptor.style[0] != .map || z.isFinite) else {
                     valuesOK = false
                     continue
                 }

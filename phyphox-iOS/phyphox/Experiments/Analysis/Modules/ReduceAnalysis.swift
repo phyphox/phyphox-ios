@@ -132,7 +132,7 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
             for i in 0..<x.count {
                 for _ in 0..<ifac {
                     resX.append(x[i])
-                    resY.append(y != nil ? y![i] : 0.0)
+                    resY.append(y != nil && y!.count > i ? y![i] : 0.0)
                 }
             }
         }
