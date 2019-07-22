@@ -343,7 +343,7 @@ final class FormulaParser {
         
         if formula[s] == "-" {
             s = formula.index(after: s)
-            return Source(FormulaNode(function: MinusFunction(), in1: Source(0), in2: try parse(formula: formula, start: s, end: e)))
+            return Source(FormulaNode(function: MinusFunction(), in1: try parse(formula: formula, start: s, end: e), in2: nil))
         }
         
         var s1 = s

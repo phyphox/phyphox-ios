@@ -19,6 +19,9 @@ protocol StopExperimentDelegate {
 
 final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate {
     
+    var actionItem: UIBarButtonItem?
+    var playItem: UIBarButtonItem?
+    
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
@@ -210,15 +213,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
-        let actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
-        actionItem.accessibilityLabel = localize("actions")
+        actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
+        actionItem?.accessibilityLabel = localize("actions")
         let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
         deleteItem.accessibilityLabel = localize("clear_data")
-        let playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
+        playItem = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
         self.navigationItem.rightBarButtonItems = [
-            actionItem,
+            actionItem!,
             deleteItem,
-            playItem
+            playItem!
         ]
 
         for device in experiment.bluetoothDevices {
@@ -238,6 +241,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
+            let font: [AnyHashable : Any] = [NSAttributedStringKey.foregroundColor : kTextColor, NSAttributedStringKey.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            segControl!.setTitleTextAttributes(font, for: .normal)
+            segControl!.setTitleTextAttributes(font, for: .selected)
             segControl!.tintColor = kTextColor
             segControl!.backgroundColor = kTextColor
             
@@ -249,18 +255,24 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //Background
             ctx!.setFillColor(kLightBackgroundColor.cgColor)
             ctx!.fill(rect)
-            let bgImage = UIGraphicsGetImageFromCurrentImageContext()
+            let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
             //Higlighted image, bg with underline
             ctx!.setFillColor(kHighlightColor.cgColor)
             ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
-            let highlightImage = UIGraphicsGetImageFromCurrentImageContext()
+            let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
             UIGraphicsEndImageContext()
             
-            segControl!.setBackgroundImage(bgImage, for: UIControlState(), barMetrics: .default)
+            segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
             segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: UIControlState(), rightSegmentState: UIControlState(), barMetrics: .default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
+            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
+            if #available(iOS 11.0, *) {
+                segControl!.layer.maskedCorners = []
+            }
             segControl!.sizeToFit()
             
             tabBar = UIScrollView()
@@ -289,6 +301,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+    }
+
+    func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
+        for (input, output) in viewDescriptor.dataFlow {
+            switch input {
+            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                output.replaceValues(buffer.toArray())
+            case .value(let value, usedAs: _):
+                output.replaceValues([value])
+            }
+        }
+    }
+    
+    //Force iPad-style popups (for the hint to the menu)
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
         var hintShown = false
         
         //Ask to save the experiment locally if it has been loaded from a remote source
@@ -307,50 +338,37 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             self.navigationController!.present(al, animated: true, completion: nil)
             
-        //Show a hint for the experiment info
+            //Show a hint for the experiment info
         } else {
-            if !hintShown {
+            if let playItem = playItem, !hintShown {
                 let defaults = UserDefaults.standard
                 let key = "experiment_start_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
                     let bubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
-                    }, button: playItem, source: self.view, delegate: self)
+                    })
+                    bubble.popoverPresentationController?.delegate = self
+                    bubble.popoverPresentationController?.barButtonItem = playItem
                     
                     self.present(bubble, animated: true, completion: nil)
                     hintShown = true
                 }
             }
             
-            if !hintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+            if let actionItem = actionItem, !hintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
                 let defaults = UserDefaults.standard
                 let key = "experiment_info_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
                     let bubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
                         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
-                    }, button: actionItem, source: self.view, delegate: self)
+                    })
+                    bubble.popoverPresentationController?.delegate = self
+                    bubble.popoverPresentationController?.barButtonItem = actionItem
                     
                     self.present(bubble, animated: true, completion: nil)
                     hintShown = true
                 }
             }
         }
-        
-    }
-
-    func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
-        for (input, output) in viewDescriptor.dataFlow {
-            switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                output.replaceValues(buffer.toArray())
-            case .value(let value, usedAs: _):
-                output.replaceValues([value])
-            }
-        }
-    }
-    
-    //Force iPad-style popups (for the hint to the menu)
-    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
-        return .none
     }
     
     override func viewDidDisappear(_ animated: Bool) {

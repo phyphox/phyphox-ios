@@ -10,13 +10,16 @@ import Foundation
 
 class HintBubbleViewController: UIViewController, UIPopoverPresentationControllerDelegate, UIGestureRecognizerDelegate {
     let callback: () -> Void
+    let label: UILabel
     
-    init(text: String, onDismiss: @escaping () -> Void, button: UIBarButtonItem, source: UIView, delegate: UIPopoverPresentationControllerDelegate) {
+    init(text: String, onDismiss: @escaping () -> Void) {
         self.callback = onDismiss
+        label = UILabel()
         
         super.init(nibName: nil, bundle: nil)
         
-        let label = UILabel()
+        self.modalPresentationStyle = .popover
+        
         label.text = text
         label.lineBreakMode = .byWordWrapping
         label.numberOfLines = 0
@@ -25,20 +28,11 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
         let maxSize = CGSize(width: 250, height: 250)
         label.frame.size = label.sizeThatFits(maxSize)
         label.frame = label.frame.offsetBy(dx: 10, dy: 10)
+        
         let paddedFrame = label.frame.insetBy(dx: -10, dy: -10)
         
         self.view.addSubview(label)
         self.preferredContentSize = paddedFrame.size
-        self.modalPresentationStyle = .popover
-        guard let pc = self.popoverPresentationController else {
-            print("Bubble error: Could not get popoverPresentationController")
-            return
-        }
-        
-        pc.permittedArrowDirections = .any
-        pc.barButtonItem = button
-        pc.sourceView = source
-        pc.delegate = delegate
         
         let tapHandler = UITapGestureRecognizer.init(target: self, action: #selector(closeHint))
         tapHandler.delegate = self
@@ -55,7 +49,13 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
         self.dismiss(animated: true, completion: nil)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        //The following line was needed to fix label alignment when built with XCode 11. My impression was that the little arrow of the bubble then was also part of self.view, but we will have to wait for the official release of XCode 11 to be sure and while we still build with XCode 10, this needs to stay disabled.
+        //label.frame = CGRect.init(x: 10, y: self.view.frame.maxY-label.frame.height-10, width: label.frame.width, height: label.frame.height)
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
         callback()
     }
+    
 }

@@ -157,7 +157,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString ?? ""
         
-        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<min(title.index(title.startIndex, offsetBy: 2), title.endIndex)]).uppercased())
+        let maxIndex = title.index(title.startIndex, offsetBy: min(2, title.count))
+        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<maxIndex]).uppercased())
         
         let color = try colorHandler.expectOptionalResult()
         

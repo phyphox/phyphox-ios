@@ -121,6 +121,13 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     func verifySensorAvailibility() throws {
+        //The following line is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and we will then ignore sensor tests as otherwise the generated screenshots in the simulator will show almost all sensors as missing
+        if ProcessInfo.processInfo.arguments.contains("screenshot") {
+            if sensorType != .light {
+                return
+            }
+        }
+        
         switch sensorType {
         case .accelerometer, .linearAcceleration:
             guard motionSession.accelerometerAvailable else {

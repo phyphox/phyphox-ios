@@ -74,8 +74,12 @@ final class GraphGridView: UIView {
         var neededViews = 0
         
         if let grid = grid {
-            neededViews += grid.xGridLines.count
-            neededViews += grid.yGridLines.count
+            if isZScale {
+                neededViews += grid.zGridLines.count
+            } else {
+                neededViews += grid.xGridLines.count
+                neededViews += grid.yGridLines.count
+            }
         }
         
         let delta = lineViews.count-neededViews
