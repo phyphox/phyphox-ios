@@ -227,8 +227,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
         }
-        
-        connectToBluetoothDevices()        
 
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
@@ -319,7 +317,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return .none
     }
     
-    override func viewDidAppear(_ animated: Bool) {
+    func showOptionalDialogsAndHints() {
         var hintShown = false
         
         //Ask to save the experiment locally if it has been loaded from a remote source
@@ -368,6 +366,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     hintShown = true
                 }
             }
+        }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        if experiment.bluetoothDevices.count > 0 {
+            connectToBluetoothDevices()
+        } else {
+            showOptionalDialogsAndHints()
         }
     }
     
@@ -1075,6 +1081,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if input.deviceAddress != nil {
                 input.stopExperimentDelegate = self
                 input.scanToConnect()
+                showOptionalDialogsAndHints()
                 return
             }
         }
@@ -1087,6 +1094,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 return
             }
         }
+        
+        //No more dialogs shown. Now show any other dialog that had to wait.
+        showOptionalDialogsAndHints()
     }
     
     func bluetoothScanDialogDismissed() {
