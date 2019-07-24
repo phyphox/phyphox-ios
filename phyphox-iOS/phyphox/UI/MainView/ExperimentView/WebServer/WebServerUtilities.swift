@@ -32,14 +32,6 @@ final class WebServerUtilities {
     private class func prepareStyleFile(backgroundColor: UIColor, lightBackgroundColor: UIColor, lightBackgroundHoverColor: UIColor, mainColor: UIColor, highlightColor: UIColor) -> String {
         let raw = try! NSMutableString(contentsOfFile: Bundle.main.path(forResource: "phyphox-webinterface/style", ofType: "css")!, encoding: String.Encoding.utf8.rawValue)
         
-        raw.replaceOccurrences(of: "###background-color###", with: "#" + backgroundColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "###background2-color###", with: "#" + lightBackgroundColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
-        raw.replaceOccurrences(of: "###background2hover-color###", with: "#" + lightBackgroundHoverColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
-        
-        raw.replaceOccurrences(of: "###main-color###", with: "#" + mainColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
-        
-        raw.replaceOccurrences(of: "###highlight-color###", with: "#" + highlightColor.hexStringValue, options: [], range: NSMakeRange(0, raw.length))
-        
         //These icons have been generated with the Android version of phyphox. Maybe, we should switch to a more flexible solution...?
         raw.replaceOccurrences(of: "###drawablePlay###", with: "iVBORw0KGgoAAAANSUhEUgAAAD8AAAA/CAYAAABXXxDfAAAABHNCSVQICAgIfAhkiAAAAUtJREFUaIHt12tRw1AUReETBgFIQAISKgEHBCXgAJxQFBQH4KA4IA4WP+AyQ/pIbnKfyf4EZM6ahm5qJiIiIiIiIoeAJ+Aq9x1Z8GMPbHLfkhz/vazqLeDQF3CX+64kjsQ7O+A6931RnYl3b8FD7hujGYh33oGb3LcGNzLeWdYsesbDkmZxQrxT/yzOiIfaZ3FmvLOjxlkMFA81zmLAeKeeWYwQ75Q/ixHjIeAsNiEe0gcQ47k9WzO7b5qmm/qAi4DHpHZrZntKm8XIr/0xj7mb/ySM7oB26p2XAZtTezWzds7ffBSRP+1PSv4RFDH8mRXu/Acr/A+vo6Rv8jEChb+xwl91s+YruxnhW0r/QhsyIbrs+fLhGV7+fPkYGV3PfPkYiK5vvnycCa9zvnyc+LTb3Hcl0Quvf758/EYvZ758sLT5EhERERERKdU3bpp4a7S0RxEAAAAASUVORK5CYII=", options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "###drawableTimedPlay###", with: "iVBORw0KGgoAAAANSUhEUgAAAD8AAAA/CAYAAABXXxDfAAAABHNCSVQICAgIfAhkiAAAA7dJREFUaIHtW9tx2zAQXGTyH3YQdmCXwA7sVBCmAqsEd+B0ILkCqQMxFUiuQHIFoirYfIDKcOQ7EsSDlCfcTwq828XjCOBOwIwZM2b8JzBjOCGZAbgDcA8gA1AIzSoANYA9gDdjTD0GtyQgmZN8IrmjH7bN+/nUWpxB8qEhHhNbkg9Ta1NBsiB5iCz6GgeSxdRa/4FkRnKdWPQ11rRxJAhBAa8ZhTVsEHPBO4AjbFBrB7QMNhjmAL472qoB/DDGVI7t44E2GLlgQ7KkY+CiDZRl854LnhJL/UBw2UOoJvnsKrjDT97YqXv8LSNJ6yXUJ3zFCOvxymfG/pmQtgNILnpG+zGx/8eeWbBI5bjocLrnSJsR2qWw7+BSxHaYkTx1CI86zR35aB1wisqH+nd8dOEtTl0dsI7lRJvuNSfed9MuAS0GFDEcHBTjg4JbqhlCGwQlHFIZXnnY2pAsgwh12447+pRPZ7XPKJKsmveXsWcB7fqXpv/W12Cu9Oazp72qZWNH8t6LmG7/t8I39zGmbWiGG8MH8aT9JJU+thT72mAN3/gIZElyE0BOskdGXAaU13411EimEC0DiGniyUjLgPY0+AFa+y/Kc41IFUqww982pHMbVNJDKlF/iPh3Y8zRi5IbMgDLkGXQ8DsLP4mDqYmXnB99CHmghJ0FvstgLzwTO1MTXzgaTYWQZSDxLKSGmngJYycRfJeBM8+vwzmNjhL2orWMbXjIyE+FVwBJbmiGjPzY5/YzgIUxZjXwPWee2shXwrOoe/EevAEoPIQDMs9KaqiJl4KGazIhFK+wwn2/LnfCMzEIauIlxznT3tycAfwyxpS+6emGnzTtxY4cIh5QvpcREDLN2yiU5+7im55/E35KcS8fOs3bkPj9GTyTmP48X0c4yLTtRz3Pp7zJ2cc4wl7Zj3eTIxC+wCsp0LKVKpcnJVWqEKOf5fZWS6oUoYaPiuFbv7c/xjCuZWxOvI2MjZZDLGI50ZICu1Qj6sApo17m5n3RqjnScmKjd0CPcK+kSp/Drvz8juPm57sKG4tUjrsqM04cpzJDW+NkqsqMFoFVh3MyUo3clU+XWr9VTJ9dZPo64ETyhXGqsV56Rns84S1iXUugjTXJn64d0Qj+SfeqTu+pHqMCcwPgm+Mrl5JyrQLzUpLugjOAx0kqMC+gW41cbGw40f5CBO2nUNsKx8KRt1R1fQ3az1FXRtYH1U2LvgZt4FoEdETVvJ+n4jjmf2zaAa0QmlVoBcRP/R+bGTNmzLg1/AWXMEdyptzdlQAAAABJRU5ErkJggg==", options: [], range: NSMakeRange(0, raw.length))
@@ -68,6 +60,7 @@ final class WebServerUtilities {
         raw.replaceOccurrences(of: "<!-- [[switchColumns1Translation]] -->", with: localize("switchColumns1"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[switchColumns2Translation]] -->", with: localize("switchColumns2"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[switchColumns3Translation]] -->", with: localize("switchColumns3"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[toggleBrightModeTranslation]] -->", with: localize("toggleBrightMode"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[fontSizeTranslation]] -->", with: localize("fontSize"), options: [], range: NSMakeRange(0, raw.length))
         
         var viewLayout = "var views = ["
