@@ -22,6 +22,7 @@ languages([
   "pl",
   "pt-BR",
   "ru",
+  "sr",
   "vi",
   "zh-Hant",
   "zh-Hans"
