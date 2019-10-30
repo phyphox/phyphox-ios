@@ -69,9 +69,9 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: UITableViewCell.CellStyle.subtitle, reuseIdentifier: "my")
         cell.backgroundColor = kBackgroundColor
-        let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values)[indexPath.row]
+        let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values.sorted(by: {$0.firstSeen.compare($1.firstSeen) == .orderedAscending}))[indexPath.row]
         cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
-        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : kTextColor
+        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : kTextColor)
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
         cell.detailTextLabel?.textColor = kHighlightColor
         let signal_i: Int

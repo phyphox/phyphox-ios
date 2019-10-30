@@ -18,6 +18,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         let experiment: ExperimentForDevice
         let advertisedUUIDs: [CBUUID]?
         let advertisedName: String?
+        var oneOfMany: Bool
+        var strongestSignal: Bool
+        var firstSeen: Date
     }
     
     public var centralManager: CBCentralManager?
@@ -90,6 +93,10 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     
     func addDevice(peripheral: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?, rssi: NSNumber) {
         let advertisedName = advertisedName ?? discoveredDevices[peripheral.identifier]?.advertisedName
+        let firstSeen = discoveredDevices[peripheral.identifier]?.firstSeen ?? Date()
+        var oneOfMany = false
+        var strongestSignal = true
+        
         if let foundName = advertisedName ?? peripheral.name {
             
             if let filterByUUID = filterByUUID {
@@ -119,6 +126,22 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 return
             }
             
+            for device in discoveredDevices {
+                if device.key != peripheral.identifier {
+                    if let otherName = device.value.advertisedName ?? device.value.peripheral.name {
+                        if otherName == foundName {
+                            discoveredDevices[device.key]?.oneOfMany = true
+                            oneOfMany = true
+                            if device.value.rssi.decimalValue > rssi.decimalValue {
+                                strongestSignal = false
+                            } else {
+                                discoveredDevices[device.key]?.strongestSignal = false
+                            }
+                        }
+                    }
+                }
+            }
+            
             var experiment: ExperimentForDevice
             if checkExperiments {
                 let experimentCollections = ExperimentManager.shared.getExperimentsForBluetoothDevice(deviceName: foundName, deviceUUIDs: advertisedUUIDs)
@@ -135,7 +158,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             }
             
             
-            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName)
+            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName, oneOfMany: oneOfMany, strongestSignal: strongestSignal, firstSeen: firstSeen)
             scanResultsDelegate?.reloadScanResults()
         }
     }
