@@ -48,7 +48,7 @@ private extension ExperimentGPSInput {
 
 private extension ExperimentAudioInput {
     init(descriptor: AudioInputDescriptor, buffers: [String: DataBuffer]) throws {
-        guard let outBuffer = descriptor.buffer(for: "output", from: buffers) else {
+        guard let outBuffer = (descriptor.buffer(for: "output", from: buffers) ?? descriptor.buffer(for: "out", from: buffers)) else {
             throw ElementHandlerError.missingAttribute("output")
         }
 
