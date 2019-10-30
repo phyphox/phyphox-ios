@@ -193,7 +193,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         } else {
             showScanDialog(dismissDelegate: nil)
             scanImmediately = true
-            centralManager?.scanForPeripherals(withServices: nil, options: nil)
+            centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey : NSNumber(value: true)])
         }
     }
     

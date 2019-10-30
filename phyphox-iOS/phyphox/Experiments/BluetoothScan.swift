@@ -17,6 +17,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         let rssi: NSNumber
         let experiment: ExperimentForDevice
         let advertisedUUIDs: [CBUUID]?
+        let advertisedName: String?
     }
     
     public var centralManager: CBCentralManager?
@@ -69,7 +70,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
 
     func scan(_ central: CBCentralManager) {
         discoveredDevices = [:]
-        central.scanForPeripherals(withServices: nil, options: nil)
+        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey : NSNumber(value: true)])
         let services: [CBUUID]
         if let filterByUUID = filterByUUID {
             services = [filterByUUID]
@@ -78,7 +79,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
         for service in services {
             for device in central.retrieveConnectedPeripherals(withServices: [service]) {
-                addDevice(peripheral: device, advertisedUUIDs: [service], rssi: -100)
+                addDevice(peripheral: device, advertisedUUIDs: [service], advertisedName: nil, rssi: -100)
             }
         }
     }
@@ -87,8 +88,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         centralManager?.stopScan()
     }
     
-    func addDevice(peripheral: CBPeripheral, advertisedUUIDs: [CBUUID]?, rssi: NSNumber) {
-        if let foundName = peripheral.name {
+    func addDevice(peripheral: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?, rssi: NSNumber) {
+        let advertisedName = advertisedName ?? discoveredDevices[peripheral.identifier]?.advertisedName
+        if let foundName = advertisedName ?? peripheral.name {
             
             if let filterByUUID = filterByUUID {
                 if let advertisedUUIDs = advertisedUUIDs {
@@ -133,15 +135,16 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             }
             
             
-            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs)
+            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName)
             scanResultsDelegate?.reloadScanResults()
         }
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         
-        let advertisedUUIDs = advertisementData["kCBAdvDataServiceUUIDs"] as? [CBUUID]
-        addDevice(peripheral: peripheral, advertisedUUIDs: advertisedUUIDs, rssi: RSSI)
+        let advertisedUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]
+        let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        addDevice(peripheral: peripheral, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName, rssi: RSSI)
         
     }
     

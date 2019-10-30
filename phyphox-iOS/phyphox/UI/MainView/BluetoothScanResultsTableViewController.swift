@@ -70,7 +70,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         let cell = UITableViewCell(style: UITableViewCell.CellStyle.subtitle, reuseIdentifier: "my")
         cell.backgroundColor = kBackgroundColor
         let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values)[indexPath.row]
-        cell.textLabel?.text = entry.peripheral.name ?? localize("unknown")
+        cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
         cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : kTextColor
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
         cell.detailTextLabel?.textColor = kHighlightColor
