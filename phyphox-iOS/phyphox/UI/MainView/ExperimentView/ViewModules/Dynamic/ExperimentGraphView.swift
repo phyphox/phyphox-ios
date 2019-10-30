@@ -1109,10 +1109,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             self.markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_point_label")
-            labelText += "\n    \(xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            labelText += "\n    \(ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            labelText += "\n    \(logX ? exp(xlist[0]) : xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(logY ? exp(ylist[0]) : ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                labelText += "\n    \(zlist[0])" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                labelText += "\n    \(logZ ? exp(zlist[0]) : zlist[0])" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             setMarkerLabel(labelText)
         } else if n == 2 {
@@ -1120,13 +1120,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             self.markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_difference_label")
-            labelText += "\n    \(abs(xlist[0] - xlist[1]))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            labelText += "\n    \(abs(ylist[0] - ylist[1]))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            labelText += "\n    \(abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1])))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            labelText += "\n    \(abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1])))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                labelText += "\n    \(abs(zlist[0] - zlist[1]))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                labelText += "\n    \(abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1])))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             labelText += "\n" + localize("graph_slope_label")
-            labelText += "\n    \((ylist[0] - ylist[1])/(xlist[0] - xlist[1])) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+            labelText += "\n    \(((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
             setMarkerLabel(labelText)
         } else if showLinearFit {
             if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
