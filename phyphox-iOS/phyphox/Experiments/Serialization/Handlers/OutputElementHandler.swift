@@ -97,6 +97,7 @@ struct BluetoothOutputBlockDescriptor {
     let id: String?
     let name: String?
     let uuid: CBUUID?
+    let autoConnect: Bool
     let inputs: [BluetoothInputDescriptor]
     let configs: [BluetoothConfigDescriptor]
 }
@@ -119,6 +120,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case id
         case name
         case uuid
+        case autoConnect
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -134,7 +136,9 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
             uuid = nil
         }
         
-        results.append(BluetoothOutputBlockDescriptor(id: id, name: name, uuid: uuid, inputs: inputHandler.results, configs: configHandler.results))
+        let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
+        
+        results.append(BluetoothOutputBlockDescriptor(id: id, name: name, uuid: uuid, autoConnect: autoConnect, inputs: inputHandler.results, configs: configHandler.results))
     }
 }
 

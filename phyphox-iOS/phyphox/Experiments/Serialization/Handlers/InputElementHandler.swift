@@ -272,6 +272,7 @@ struct BluetoothInputBlockDescriptor {
     let mode: BluetoothMode
     let rate: Double?
     let subscribeOnStart: Bool
+    let autoConnect: Bool
     let outputs: [BluetoothOutputDescriptor]
     let configs: [BluetoothConfigDescriptor]
 }
@@ -297,6 +298,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case mode
         case subscribeOnStart
         case rate
+        case autoConnect
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -313,13 +315,14 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         }
         let mode: BluetoothMode = try attributes.value(for: .mode)
         let subscribeOnStart: Bool = try attributes.optionalValue(for: .subscribeOnStart) ?? false
+        let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
         let rate: Double? = try attributes.optionalValue(for: .rate)
         
         guard mode != .poll || (rate != nil && rate!.isFinite && rate! > 0) else {
             throw ElementHandlerError.message("For poll mode, a finite rate > 0 is required.")
         }
         
-        results.append(BluetoothInputBlockDescriptor(id: id, name: name, uuid: uuid, mode: mode, rate: rate, subscribeOnStart: subscribeOnStart, outputs: outputHandler.results, configs: configHandler.results))
+        results.append(BluetoothInputBlockDescriptor(id: id, name: name, uuid: uuid, mode: mode, rate: rate, subscribeOnStart: subscribeOnStart, autoConnect: autoConnect, outputs: outputHandler.results, configs: configHandler.results))
     }
 }
 

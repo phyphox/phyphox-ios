@@ -22,13 +22,14 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     public var centralManager: CBCentralManager?
     
     public var discoveredDevices: [UUID:ScanResult] = [:]
-    var ScanResultsDelegate: ScanResultsDelegate?
+    var scanResultsDelegate: ScanResultsDelegate?
     
     let filterByName: String?
     let filterByUUID: CBUUID?
     let checkExperiments: Bool
    
     var scanImmediately: Bool
+    let autoConnect: Bool
     
     enum ExperimentForDevice {
         case local
@@ -38,11 +39,12 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         case unknown
     }
     
-    init(scanDirectly: Bool, filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool) {
+    init(scanDirectly: Bool, filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
         self.scanImmediately = scanDirectly
         self.filterByName = filterByName
         self.filterByUUID = filterByUUID
         self.checkExperiments = checkExperiments
+        self.autoConnect = autoConnect
 
         super.init()
         if scanDirectly {
@@ -110,6 +112,11 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 }
             }
             
+            if autoConnect {
+                scanResultsDelegate?.autoConnect(device: peripheral, advertisedUUIDs: advertisedUUIDs)
+                return
+            }
+            
             var experiment: ExperimentForDevice
             if checkExperiments {
                 let experimentCollections = ExperimentManager.shared.getExperimentsForBluetoothDevice(deviceName: foundName, deviceUUIDs: advertisedUUIDs)
@@ -125,8 +132,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 experiment = .unknown
             }
             
+            
             discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs)
-            ScanResultsDelegate?.reloadScanResults()
+            scanResultsDelegate?.reloadScanResults()
         }
     }
     

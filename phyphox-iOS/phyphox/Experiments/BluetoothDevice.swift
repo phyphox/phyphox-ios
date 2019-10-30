@@ -96,7 +96,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     let hud: JGProgressHUD
     var feedbackViewController: UIViewController?
     
-    init(id: String?, name: String?, uuid: CBUUID?) {
+    init(id: String?, name: String?, uuid: CBUUID?, autoConnect: Bool) {
         self.id = id
         self.deviceName = name
         self.advertiseUUID = uuid
@@ -106,7 +106,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         hud.textLabel.text = localize("loadingTitle")
         hud.detailTextLabel.text = localize("loadingBluetoothConnectionText")
         
-        super.init(scanDirectly: false, filterByName: name, filterByUUID: uuid, checkExperiments: false)
+        super.init(scanDirectly: false, filterByName: name, filterByUUID: uuid, checkExperiments: false, autoConnect: autoConnect)
     }
     
     public func prepareForStart() -> Bool {
@@ -153,7 +153,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
             message = localize("bt_scanning_generic") + deviceIDInfo
         }
         
-        let alertController = UIAlertController(title: localize("bt_pick_device"),
+        let alertController = UIAlertController(title: autoConnect ?  nil : localize("bt_pick_device"),
                                                 message: message,
                                                 preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
         
@@ -163,7 +163,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         alertController.addAction(cancelAction)
         
-        let scanController = BluetoothScanResultsTableViewController(filterByName: deviceName, filterByUUID: advertiseUUID, checkExperiments: false)
+        let scanController = BluetoothScanResultsTableViewController(filterByName: deviceName, filterByUUID: advertiseUUID, checkExperiments: false, autoConnect: autoConnect)
         scanController.tableView = FixedTableView()
         alertController.setValue(scanController, forKey: "contentViewController")
         

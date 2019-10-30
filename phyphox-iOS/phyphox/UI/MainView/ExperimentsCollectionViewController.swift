@@ -174,7 +174,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
         alertController.addAction(cancelAction)
 
-        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
+        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
         bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
         alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
