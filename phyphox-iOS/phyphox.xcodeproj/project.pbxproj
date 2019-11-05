@@ -617,6 +617,10 @@
 		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
+		C0F2A7C422E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C0F2A7C522E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C0F2A7C622E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C0F2A7C722E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1327,6 +1331,9 @@
 				vi,
 				zh_Hans,
 				zh_Hant,
+				sr,
+				sr_Latn,
+				"sr-Latn",
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1782,6 +1789,8 @@
 				C03122992260E06F005DFB5B /* vi */,
 				C06D0E7622AEAFB400B2BDF1 /* zh_Hant */,
 				C06D0E7822AEAFC100B2BDF1 /* zh_Hans */,
+				C0F2A7C522E5E14E00CC2C2A /* sr */,
+				C0F2A7C722E5E16F00CC2C2A /* sr_Latn */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1803,6 +1812,8 @@
 				C03122982260E06F005DFB5B /* vi */,
 				C06D0E6722AEAFB400B2BDF1 /* zh_Hant */,
 				C06D0E7722AEAFC100B2BDF1 /* zh_Hans */,
+				C0F2A7C422E5E14E00CC2C2A /* sr */,
+				C0F2A7C622E5E16F00CC2C2A /* sr_Latn */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

@@ -12,6 +12,7 @@ import UIKit
 
 final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
     let descriptor: SeparatorViewDescriptor
+    let fontScale = UIFont.preferredFont(forTextStyle: .footnote).pointSize
 
     required init?(descriptor: SeparatorViewDescriptor) {
         self.descriptor = descriptor
@@ -25,6 +26,6 @@ final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
     }
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        return CGSize(width: size.width, height: descriptor.height)
+        return CGSize(width: size.width, height: descriptor.height * fontScale)
     }
 }

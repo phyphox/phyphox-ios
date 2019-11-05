@@ -86,6 +86,7 @@
 "switchColumns2" = "Ansicht: 2 Spalten";
 "switchColumns3" = "Ansicht: 3 Spalten";
 "switchToPhoneLayout" = "Ansicht: Schmal";
+"toggleBrightMode" = "Helle Ansicht";
 "switch_to_calibrated_magnetometer" = "Zu kalibriertem Magnetometer wechseln";
 "switch_to_raw_magnetometer" = "Zu Rohdaten-Magnetometer wechseln";
 "timedRun" = "Zeitautomatik";

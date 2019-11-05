@@ -92,7 +92,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
                 formatter.minimumIntegerDigits = 1
 
                 let number = NSNumber(value: last * descriptor.factor)
-                valueLabel.text = formatter.string(from: number)
+                valueLabel.text = (formatter.string(from: number) ?? "-") + " "
             }
         }
         else {

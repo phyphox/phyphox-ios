@@ -20,6 +20,6 @@ struct InfoViewDescriptor: ViewDescriptor, Equatable {
     }
 
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:90%;color:#\(color.hexStringValue!)\" class=\"infoElement\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
+        return "<div style=\"font-size:90%;color:#\(color.hexStringValue!)\" class=\"infoElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

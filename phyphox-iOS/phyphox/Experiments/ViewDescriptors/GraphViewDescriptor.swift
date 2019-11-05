@@ -283,8 +283,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
                                 "borderCapStyle: \"butt\"," +
                                 "borderJoinStyle: \"round\"," +
                                 "spanGaps: false," +
-                                "borderColor: \"#\(color[i].hexStringValue!)\"," +
-                                "backgroundColor: \"#\(color[i].hexStringValue!)\"," +
+                                "borderColor: adjustableColor(\"#\(color[i].hexStringValue!)\")," +
+                                "backgroundColor: adjustableColor(\"#\(color[i].hexStringValue!)\")," +
                                 "borderWidth: \(style[i] == .vbars || style[i] == .hbars ? 0.0 : lineWidth[i])*scaleFactor," +
                                 "xAxisID: \"xaxis\"," +
                                 "yAxisID: \"yaxis\"" +
@@ -304,8 +304,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
                 "borderCapStyle: \"butt\"," +
                 "borderJoinStyle: \"round\"," +
                 "spanGaps: false," +
-                "borderColor: \"#\(color[0].hexStringValue!)\"," +
-                "backgroundColor: \"#\(color[0].hexStringValue!)\"," +
+                "borderColor: adjustableColor(\"#\(color[0].hexStringValue!)\")," +
+                "backgroundColor: adjustableColor(\"#\(color[0].hexStringValue!)\")," +
                 "borderWidth: \(lineWidth[0])*scaleFactor," +
                 "xAxisID: \"xaxis\"," +
                 "yAxisID: \"yaxis\"" +
@@ -444,19 +444,19 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
                 "           type: \"\(logX && !(style[0] == GraphStyle.map) ? "logarithmic" : "linear")\"," +
                 "           position: \"bottom\"," +
                 "           gridLines: {" +
-                "               color: \"#\(gridColor)\"," +
-                "               zeroLineColor: \"#\(gridColor)\"," +
+                "               color: adjustableColor(\"#\(gridColor)\")," +
+                "               zeroLineColor: adjustableColor(\"#\(gridColor)\")," +
                 "               tickMarkLength: 0," +
                 "           }," +
                 "           scaleLabel: {" +
                 "               display: true," +
                 "               labelString: \"\(localizedXLabelWithUnit)\"," +
-                "               fontColor: \"#ffffff\"," +
+                "               fontColor: adjustableColor(\"#ffffff\")," +
                 "               fontSize: 15*scaleFactor," +
                 "               padding: 0, " +
                 "           }," +
                 "           ticks: {" +
-                "               fontColor: \"#ffffff\"," +
+                "               fontColor: adjustableColor(\"#ffffff\")," +
                 "               fontSize: 15*scaleFactor," +
                 "               padding: 3*scaleFactor, " +
                 "               autoSkip: true," +
@@ -471,19 +471,19 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
                 "           type: \"\(logX && !(style[0] == GraphStyle.map) ? "logarithmic" : "linear")\"," +
                 "           position: \"bottom\"," +
                 "           gridLines: {" +
-                "               color: \"#"+gridColor+"\"," +
-                "               zeroLineColor: \"#"+gridColor+"\"," +
+                "               color: adjustableColor(\"#"+gridColor+"\")," +
+                "               zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
                 "               tickMarkLength: 0," +
                 "           }," +
                 "           scaleLabel: {" +
                 "               display: true," +
                 "               labelString: \"\(localizedYLabelWithUnit)\"," +
-                "               fontColor: \"#ffffff\"," +
+                "               fontColor: adjustableColor(\"#ffffff\")," +
                 "               fontSize: 15*scaleFactor," +
                 "               padding: 3*scaleFactor, " +
                 "           }," +
                 "           ticks: {" +
-                "               fontColor: \"#ffffff\"," +
+                "               fontColor: adjustableColor(\"#ffffff\")," +
                 "               fontSize: 15*scaleFactor," +
                 "               padding: 3*scaleFactor, " +
                 "               autoSkip: true," +

@@ -90,6 +90,7 @@
 "switchColumns1" = "View: 1 column";
 "switchColumns2" = "View: 2 columns";
 "switchColumns3" = "View: 3 columns";
+"toggleBrightMode" = "Bright mode";
 "fontSize" = "Font size";
 "show_description" = "Experiment info";
 "save_locally" = "Add experiment to collection";
