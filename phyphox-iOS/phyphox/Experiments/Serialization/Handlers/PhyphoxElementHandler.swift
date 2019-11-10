@@ -17,7 +17,7 @@ private extension SensorDescriptor {
 }
 
 private extension ExperimentSensorInput {
-    convenience init(descriptor: SensorInputDescriptor, buffers: [String: DataBuffer]) {
+    convenience init(descriptor: SensorInputDescriptor, sensorInputTimeReference: SensorInputTimeReference, buffers: [String: DataBuffer]) {
         let xBuffer = descriptor.buffer(for: "x", from: buffers)
         let yBuffer = descriptor.buffer(for: "y", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
@@ -25,7 +25,7 @@ private extension ExperimentSensorInput {
         let absBuffer = descriptor.buffer(for: "abs", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
 
-        self.init(sensorType: descriptor.sensor, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
+        self.init(sensorType: descriptor.sensor, sensorInputTimeReference: sensorInputTimeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
     }
 }
 
@@ -182,7 +182,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
-        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) } ?? []
+        let sensorInputTimeReference = SensorInputTimeReference()
+        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, sensorInputTimeReference: sensorInputTimeReference, buffers: buffers) } ?? []
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
@@ -230,7 +231,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputTimeReference: sensorInputTimeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }

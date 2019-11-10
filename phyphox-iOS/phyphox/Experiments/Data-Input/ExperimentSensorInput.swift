@@ -25,10 +25,16 @@ enum SensorError : Error {
     case sensorUnavailable(SensorType)
 }
 
+class SensorInputTimeReference {
+    public var t0: TimeInterval? = nil
+}
+
 private let kG = -9.81
 
 final class ExperimentSensorInput: MotionSessionReceiver {
     let sensorType: SensorType
+    let sensorInputTimeReference: SensorInputTimeReference
+    var localInputTimeReference: TimeInterval?
     
     /**
      The update frequency of the sensor.
@@ -46,8 +52,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
-    
-    private(set) var startTimestamp: TimeInterval?
     
     private(set) weak var xBuffer: DataBuffer?
     private(set) weak var yBuffer: DataBuffer?
@@ -97,8 +101,9 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             return averaging != nil
     }
     
-    init(sensorType: SensorType, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
+    init(sensorType: SensorType, sensorInputTimeReference: SensorInputTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
         self.sensorType = sensorType
+        self.sensorInputTimeReference = sensorInputTimeReference
         self.rate = rate
         self.calibrated = calibrated
         
@@ -174,8 +179,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     func start() {
-        startTimestamp = nil
         
+        localInputTimeReference = nil
         resetValuesForAveraging()
         
         switch sensorType {
@@ -308,10 +313,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 
                 let distance = state ? 0.0 : 5.0 //Estimate in cm
                 
-                let t = CFAbsoluteTimeGetCurrent()
-                
                 self.ready = true
-                self.dataIn(distance, y: nil, z: nil, accuracy: nil, t: t, error: nil)
+                self.dataIn(distance, y: nil, z: nil, accuracy: nil, t: nil, error: nil)
                 })
             
         default:
@@ -363,13 +366,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         tryAppend(value: accuracy, to: accuracyBuffer)
         
         if let tBuffer = tBuffer {
-            if startTimestamp == nil {
-                startTimestamp = t - (tBuffer.last ?? 0.0)
-            }
-            
-            let relativeT = t-startTimestamp!
-            
-            tBuffer.append(relativeT)
+            tBuffer.append(t)
         }
         
         if let x = x, let y = y, let z = z, let absBuffer = absBuffer {
@@ -385,9 +382,24 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 return
             }
             
+            let relativeT: TimeInterval
+            if let t = t {
+                if sensorInputTimeReference.t0 == nil {
+                    sensorInputTimeReference.t0 = t - (tBuffer?.last ?? 0.0)
+                }
+                
+                relativeT = t-(sensorInputTimeReference.t0 ?? 0.0)
+            } else {
+                let localT = CFAbsoluteTimeGetCurrent()
+                if localInputTimeReference == nil {
+                    localInputTimeReference = localT - (tBuffer?.last ?? 0.0)
+                }
+                relativeT = localT-(localInputTimeReference ?? 0.0)
+            }
+            
             if let av = averaging {
                 if av.iterationStartTimestamp == nil {
-                    av.iterationStartTimestamp = t
+                    av.iterationStartTimestamp = relativeT
                 }
                 
                 if x != nil {
@@ -429,17 +441,17 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 av.numberOfUpdates += 1
             }
             else {
-                writeToBuffers(x, y: y, z: z, accuracy: accuracy, t: t!)
+                writeToBuffers(x, y: y, z: z, accuracy: accuracy, t: relativeT)
             }
             
             if let av = averaging {
-                if av.requiresFlushing(t!) && av.numberOfUpdates > 0 {
+                if av.requiresFlushing(relativeT) && av.numberOfUpdates > 0 {
                     let u = Double(av.numberOfUpdates)
                     
-                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), accuracy: av.accuracy, t: t!)
+                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), accuracy: av.accuracy, t: relativeT)
                     
                     resetValuesForAveraging()
-                    av.iterationStartTimestamp = t
+                    av.iterationStartTimestamp = relativeT
                 }
             }
         }

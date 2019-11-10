@@ -98,6 +98,7 @@ final class Experiment {
     
     let translation: ExperimentTranslationCollection?
 
+    let sensorInputTimeReference: SensorInputTimeReference
     let sensorInputs: [ExperimentSensorInput]
     let gpsInputs: [ExperimentGPSInput]
     let audioInputs: [ExperimentAudioInput]
@@ -123,7 +124,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -143,6 +144,7 @@ final class Experiment {
         self.translation = translation
 
         self.buffers = buffers
+        self.sensorInputTimeReference = sensorInputTimeReference
         self.sensorInputs = sensorInputs
         self.gpsInputs = gpsInputs
         self.audioInputs = audioInputs
@@ -349,6 +351,7 @@ final class Experiment {
         
         try startAudio()
         
+        sensorInputTimeReference.t0 = nil
         sensorInputs.forEach { $0.start() }
         gpsInputs.forEach { $0.start() }
         bluetoothInputs.forEach { $0.start() }
