@@ -13,6 +13,14 @@ import Foundation
 struct InfoViewElementDescriptor {
     let label: String
     let color: UIColor
+    let fontSize: CGFloat
+    let align: TextAlignment
+    let bold: Bool
+    let italic: Bool
+    
+    enum TextAlignment: String, LosslessStringConvertible {
+        case left, right, center
+    }
 }
 
 final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
@@ -23,6 +31,10 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
     private enum Attribute: String, AttributeKey {
         case label
         case color
+        case size
+        case align
+        case bold
+        case italic
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -30,8 +42,12 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
         let label = attributes.optionalString(for: .label) ?? ""
         let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
+        let fontSize = CGFloat(try attributes.optionalValue(for: .size) ?? 1.0)
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
+        let bold = try attributes.optionalValue(for: .bold) ?? false
+        let italic = try attributes.optionalValue(for: .italic) ?? false
 
-        results.append(.info(InfoViewElementDescriptor(label: label, color: color)))
+        results.append(.info(InfoViewElementDescriptor(label: label, color: color, fontSize: fontSize, align: align, bold: bold, italic: italic)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

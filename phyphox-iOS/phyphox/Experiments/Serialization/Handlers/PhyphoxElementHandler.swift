@@ -164,14 +164,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let links = linkHandler.results
 
-        let dataContainersDescriptor = try dataContainersHandler.expectSingleResult()
+        let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult()
 
         let analysisInputBufferNames = analysisDescriptor.map { getInputBufferNames(from: $0) } ?? []
 
         let experimentPersistentStorageURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
 
-        let buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
+        let buffers: [String : DataBuffer]
+        if let dataContainersDescriptor = dataContainersDescriptor {
+            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
+        } else {
+            buffers = [String : DataBuffer]()
+        }
 
         let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
             let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
@@ -243,7 +248,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
         case .info(let descriptor):
-            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations)
+            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
         case .value(let descriptor):
             guard let buffer = buffers[descriptor.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
