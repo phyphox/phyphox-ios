@@ -63,8 +63,8 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        if currentIn != nil {
-            iterators.append((Range(min: currentMin, max: currentMax), currentIn!))
+        if let currentIn = currentIn {
+            iterators.append((Range(min: currentMin, max: currentMax), currentIn))
         }
         
         var delete = Set<Int>()
