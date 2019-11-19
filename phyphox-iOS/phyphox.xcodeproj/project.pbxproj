@@ -179,6 +179,8 @@
 		C04FE6F522281E3800BD691C /* ApplyZoomDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04FE6F422281E3800BD691C /* ApplyZoomDialog.swift */; };
 		C051CFAF22AEEB4100355864 /* phyphox_screenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = C051CFAE22AEEB4100355864 /* phyphox_screenshots.swift */; };
 		C051CFC522AEEB8800355864 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C051CFC422AEEB8800355864 /* SnapshotHelper.swift */; };
+		C0601DDD23840C550033FFF6 /* GpsGeoid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0601DDC23840C550033FFF6 /* GpsGeoid.swift */; };
+		C0601DEF23840ECE0033FFF6 /* egm84_30.pgm in Resources */ = {isa = PBXBuildFile; fileRef = C0601DEE23840ECE0033FFF6 /* egm84_30.pgm */; };
 		C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */; };
 		C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063DA8A228C52D000367384 /* MarkerOverlayView.swift */; };
 		C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */; };
@@ -588,6 +590,8 @@
 		C051CFAE22AEEB4100355864 /* phyphox_screenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphox_screenshots.swift; sourceTree = "<group>"; };
 		C051CFB022AEEB4100355864 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C051CFC422AEEB8800355864 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
+		C0601DDC23840C550033FFF6 /* GpsGeoid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GpsGeoid.swift; sourceTree = "<group>"; };
+		C0601DEE23840ECE0033FFF6 /* egm84_30.pgm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = egm84_30.pgm; path = Assets.xcassets/egm84_30.pgm; sourceTree = "<group>"; };
 		C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentPickerViewController.swift; sourceTree = "<group>"; };
 		C063DA8A228C52D000367384 /* MarkerOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerOverlayView.swift; sourceTree = "<group>"; };
 		C06D0E6722AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -844,6 +848,7 @@
 				6BD026CA1CB5707F005085B1 /* phyphox-webinterface */,
 				6B0814C81CABEE0700EE2791 /* phyphox-experiments */,
 				6B7BF7841C130425007408FB /* Assets.xcassets */,
+				C0601DEE23840ECE0033FFF6 /* egm84_30.pgm */,
 				6B7BF7861C130425007408FB /* LaunchScreen.storyboard */,
 				6B7BF7891C130425007408FB /* Info.plist */,
 				4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */,
@@ -1097,6 +1102,7 @@
 				C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */,
 				6B7BF7F51C132722007408FB /* ExperimentSensorInput.swift */,
 				4B36E35A1EDF513900F6D1DD /* ExperimentGPSInput.swift */,
+				C0601DDC23840C550033FFF6 /* GpsGeoid.swift */,
 				6B7BF7F31C132563007408FB /* MotionSession.swift */,
 				6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */,
 				4B5770C11D7868A500394B07 /* SerialProtocol.swift */,
@@ -1493,6 +1499,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
+				C0601DEF23840ECE0033FFF6 /* egm84_30.pgm in Resources */,
 				C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */,
 				C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
@@ -1648,6 +1655,7 @@
 				6B7BF8211C147CF3007408FB /* AutocorrelationAnalysis.swift in Sources */,
 				6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */,
 				6B00F0A81C46705100971941 /* ExperimentViewModule.swift in Sources */,
+				C0601DDD23840C550033FFF6 /* GpsGeoid.swift in Sources */,
 				6B612FF0207E6DFF001DA8D9 /* TranslationsElementHandler.swift in Sources */,
 				6B612FF2207E791B001DA8D9 /* InputElementHandler.swift in Sources */,
 				6B7BF8071C146DC2007408FB /* LCMAnalysis.swift in Sources */,

@@ -34,6 +34,7 @@ private extension ExperimentGPSInput {
         let latBuffer = descriptor.buffer(for: "lat", from: buffers)
         let lonBuffer = descriptor.buffer(for: "lon", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
+        let zWgs84Buffer = descriptor.buffer(for: "zwgs84", from: buffers)
         let vBuffer = descriptor.buffer(for: "v", from: buffers)
         let dirBuffer = descriptor.buffer(for: "dir", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
@@ -42,7 +43,7 @@ private extension ExperimentGPSInput {
         let statusBuffer = descriptor.buffer(for: "status", from: buffers)
         let satellitesBuffer = descriptor.buffer(for: "satellites", from: buffers)
 
-        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
+        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, zWgs84Buffer: zWgs84Buffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
     }
 }
 
