@@ -10,6 +10,8 @@ echo Refreshing GitHub Sources
 
 . checkoutLatestRelease.sh swisspol/GCDWebServer GCDWebServer
 
+. checkoutLatestTag.sh EdumodeOrg/EduRoomSDK-iOS EduRoomSDK-iOS
+
 #echo Removing CocoaPods stuff
 #find . -iname "Pod*" -prune -exec rm -rf "{}" \
 

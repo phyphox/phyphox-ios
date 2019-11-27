@@ -23,7 +23,7 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
             return
         }
 
-        var inArray = inputBuffer.toArray()
+        let inArray = inputBuffer.toArray()
         let count = inArray.count
         
         var result: [Double]

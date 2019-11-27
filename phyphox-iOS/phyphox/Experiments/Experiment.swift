@@ -373,7 +373,7 @@ final class Experiment {
         gpsInputs.forEach { $0.stop() }
         bluetoothInputs.forEach { $0.stop() }
         
-        try? stopAudio()
+        stopAudio()
         
         UIApplication.shared.isIdleTimerDisabled = false
         

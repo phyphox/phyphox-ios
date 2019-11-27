@@ -182,6 +182,7 @@
 		C0601DDD23840C550033FFF6 /* GpsGeoid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0601DDC23840C550033FFF6 /* GpsGeoid.swift */; };
 		C0601DEF23840ECE0033FFF6 /* egm84_30.pgm in Resources */ = {isa = PBXBuildFile; fileRef = C0601DEE23840ECE0033FFF6 /* egm84_30.pgm */; };
 		C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */; };
+		C063C65D238EBD0F00327AE7 /* EduRoom.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0BD0ADD238EA8D600D76032 /* EduRoom.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063DA8A228C52D000367384 /* MarkerOverlayView.swift */; };
 		C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */; };
 		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
@@ -202,6 +203,7 @@
 		C0AD8542229E7E7A00421738 /* MenuTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */; };
 		C0AD8552229EA1CF00421738 /* HintBubbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */; };
 		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
+		C0BD0AE0238EA8F400D76032 /* EduRoom.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0BD0ADD238EA8D600D76032 /* EduRoom.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 /* End PBXBuildFile section */
@@ -361,6 +363,20 @@
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
 		};
+		C0BD0ADC238EA8D600D76032 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C0BD0A7F238EA76500D76032;
+			remoteInfo = EduRoom;
+		};
+		C0BD0ADE238EA8D600D76032 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C0BD0A88238EA76500D76032;
+			remoteInfo = EduRoomTests;
+		};
 		C0CB36B12034A98D00D3AD77 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B0814CC1CABEE2600EE2791 /* JGProgressHUD.xcodeproj */;
@@ -377,6 +393,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				C063C65D238EBD0F00327AE7 /* EduRoom.framework in Embed Frameworks */,
 				6B0815321CABEE7F00EE2791 /* ZipZap.framework in Embed Frameworks */,
 				6BD026E61CB571A4005085B1 /* GCDWebServers.framework in Embed Frameworks */,
 				6B08152A1CABEE7700EE2791 /* JGProgressHUD.framework in Embed Frameworks */,
@@ -619,6 +636,7 @@
 		C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuTableViewController.swift; sourceTree = "<group>"; };
 		C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintBubbleViewController.swift; sourceTree = "<group>"; };
 		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
+		C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = EduRoom.xcodeproj; path = "EduRoom-Framework/EduRoom/EduRoom.xcodeproj"; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
 		C0F2A7C422E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -632,6 +650,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0BD0AE0238EA8F400D76032 /* EduRoom.framework in Frameworks */,
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				6BD026E51CB571A4005085B1 /* GCDWebServers.framework in Frameworks */,
 				6B0815421CABEFBF00EE2791 /* libJXLS.a in Frameworks */,
@@ -1216,9 +1235,19 @@
 		C075AA7B2232CC0500DE86D8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */,
 				C075AA7C2232CC0600DE86D8 /* BEMCheckBox */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C0BD0AD8238EA8D600D76032 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0BD0ADD238EA8D600D76032 /* EduRoom.framework */,
+				C0BD0ADF238EA8D600D76032 /* EduRoomTests.xctest */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1345,6 +1374,10 @@
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = C0BD0AD8238EA8D600D76032 /* Products */;
+					ProjectRef = C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */;
+				},
 				{
 					ProductGroup = 6BD026CD1CB57199005085B1 /* Products */;
 					ProjectRef = 6BD026CC1CB57199005085B1 /* GCDWebServer.xcodeproj */;
@@ -1482,6 +1515,20 @@
 			fileType = wrapper.cfbundle;
 			path = Tests.xctest;
 			remoteRef = 6BD026E31CB57199005085B1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C0BD0ADD238EA8D600D76032 /* EduRoom.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = EduRoom.framework;
+			remoteRef = C0BD0ADC238EA8D600D76032 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C0BD0ADF238EA8D600D76032 /* EduRoomTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = EduRoomTests.xctest;
+			remoteRef = C0BD0ADE238EA8D600D76032 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		C0CB36B22034A98D00D3AD77 /* JGProgressHUD.framework */ = {

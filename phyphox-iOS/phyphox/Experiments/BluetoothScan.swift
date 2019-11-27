@@ -349,7 +349,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                         return
                     }
                     
-                    self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral)
+                    _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral)
                     
                 } else {
                     loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: true)

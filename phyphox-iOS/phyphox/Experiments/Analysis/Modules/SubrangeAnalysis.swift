@@ -85,7 +85,6 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             }
 
             guard i < outputs.count else { break }
-            guard inBuffer != nil else { break }
 
             let output = outputs[i]
 
