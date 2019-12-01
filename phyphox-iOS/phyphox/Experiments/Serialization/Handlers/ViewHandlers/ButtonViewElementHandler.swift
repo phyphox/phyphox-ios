@@ -20,6 +20,7 @@ struct ButtonViewElementDescriptor {
     let label: String
 
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
+    let triggers: [String]
 }
 
 enum DataInputTypeAttribute: String, LosslessStringConvertible {
@@ -72,9 +73,10 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
 
     private let outputHandler = TextElementHandler()
     private let inputHandler = ButtonInputElementHandler()
+    private let triggerHandler = TextElementHandler()
 
     init() {
-        childHandlers = ["output": outputHandler, "input": inputHandler]
+        childHandlers = ["output": outputHandler, "input": inputHandler, "trigger": triggerHandler]
     }
 
     func startElement(attributes: AttributeContainer) throws {}
@@ -93,8 +95,9 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         }
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))
+        let triggers = triggerHandler.results
 
-        results.append(.button(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow)))
+        results.append(.button(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow, triggers: triggers)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

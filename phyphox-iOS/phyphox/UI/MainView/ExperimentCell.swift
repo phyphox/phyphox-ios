@@ -79,7 +79,9 @@ class ExperimentCell: UICollectionViewCell {
 
                     for sensor in experiment.sensorInputs {
                         do {
-                            try sensor.verifySensorAvailibility()
+                            if !sensor.ignoreUnavailable {
+                                try sensor.verifySensorAvailibility()
+                            }
                         }
                         catch SensorError.sensorUnavailable(_) {
                             available = false

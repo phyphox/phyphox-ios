@@ -17,7 +17,7 @@ protocol StopExperimentDelegate {
     func stopExperiment()
 }
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate {
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate {
     
     var actionItem: UIBarButtonItem?
     var playItem: UIBarButtonItem?
@@ -124,8 +124,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if let button = module as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
-                    
-                    self?.buttonPressed(viewDescriptor: button.descriptor)
+                    self?.buttonPressed(viewDescriptor: button.descriptor, buttonViewTriggerCallback: button)
                 }
             }
             if let exportingViewModule = module as? ExportingViewModule {
@@ -227,6 +226,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
         }
+        
+        for connection in experiment.networkConnections {
+            connection.feedbackViewController = self
+        }
 
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
@@ -301,7 +304,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
     }
 
-    func buttonPressed(viewDescriptor: ButtonViewDescriptor) {
+    class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
+        let callback: ButtonViewTriggerCallback
+        init(callback: ButtonViewTriggerCallback) {
+            self.callback = callback
+        }
+        
+        func requestFinished(result: NetworkServiceResult) {
+            callback.finished()
+        }
+    }
+    
+    func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {
+        var callbackHandedOver = false
+        for trigger in viewDescriptor.triggers {
+            for networkConnection in experiment.networkConnections {
+                if networkConnection.id == trigger {
+                    let callbacks: [NetworkServiceRequestCallback]
+                    if let buttonViewTriggerCallback = buttonViewTriggerCallback {
+                        callbacks = [NetworkServiceRequestCallbackWrapper(callback: buttonViewTriggerCallback)]
+                    } else {
+                        callbacks = []
+                    }
+                    networkConnection.execute(requestCallbacks: callbacks)
+                    callbackHandedOver = true
+                }
+            }
+        }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
@@ -309,6 +338,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             case .value(let value, usedAs: _):
                 output.replaceValues([value])
             }
+        }
+        if !callbackHandedOver {
+            buttonViewTriggerCallback?.finished()
         }
     }
     
@@ -370,7 +402,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        if experiment.bluetoothDevices.count > 0 {
+        if let networkConnection = experiment.networkConnections.first {
+            var sensorList: [String] = []
+            for sensorInput in experiment.sensorInputs {
+                sensorList.append(sensorInput.sensorType.getLocalizedName())
+            }
+            networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
+        } else if experiment.bluetoothDevices.count > 0 {
             connectToBluetoothDevices()
         } else {
             showOptionalDialogsAndHints()
@@ -381,6 +419,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.viewDidDisappear(animated)
         
         disconnectFromBluetoothDevices()
+        disconnectFromNetworkDevices()
         
         if isMovingFromParentViewController {
             tearDownWebServer()
@@ -1081,7 +1120,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if input.deviceAddress != nil {
                 input.stopExperimentDelegate = self
                 input.scanToConnect()
-                showOptionalDialogsAndHints()
+                if (experiment.networkConnections.count > 0) {
+                    connectToNetworkDevices()
+                } else {
+                    showOptionalDialogsAndHints()
+                }
                 return
             }
         }
@@ -1096,7 +1139,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         //No more dialogs shown. Now show any other dialog that had to wait.
-        showOptionalDialogsAndHints()
+        if (experiment.networkConnections.count > 0) {
+            connectToNetworkDevices()
+        } else {
+            showOptionalDialogsAndHints()
+        }
     }
     
     func bluetoothScanDialogDismissed() {
@@ -1106,6 +1153,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func disconnectFromBluetoothDevices(){
         for device in experiment.bluetoothDevices {
             device.disconnect()
+        }
+    }
+    
+    func connectToNetworkDevices() {
+        for device in experiment.networkConnections {
+            if device.specificAddress == nil {
+                device.connect(dismissDelegate: self)
+                return
+            }
+        }
+        showOptionalDialogsAndHints()
+    }
+    
+    func networkScanDialogDismissed() {
+        connectToNetworkDevices()
+    }
+    
+    func disconnectFromNetworkDevices() {
+        for device in experiment.networkConnections {
+            device.disconnect()
+        }
+    }
+    
+    func dataPolicyInfoDismissed() {
+        if experiment.bluetoothDevices.count > 0 {
+            connectToBluetoothDevices()
+        } else {
+            connectToNetworkDevices()
         }
     }
 }

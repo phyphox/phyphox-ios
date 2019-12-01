@@ -109,6 +109,8 @@ final class Experiment {
     let bluetoothInputs: [ExperimentBluetoothInput]
     let bluetoothOutputs: [ExperimentBluetoothOutput]
     
+    let networkConnections: [NetworkConnection]
+    
     let analysis: ExperimentAnalysis?
     let export: ExperimentExport?
     
@@ -124,7 +126,7 @@ final class Experiment {
 
     private var audioEngine: AudioEngine?
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -154,6 +156,8 @@ final class Experiment {
         self.bluetoothDevices = bluetoothDevices
         self.bluetoothInputs = bluetoothInputs
         self.bluetoothOutputs = bluetoothOutputs
+        
+        self.networkConnections = networkConnections
         
         self.viewDescriptors = viewDescriptors
         self.analysis = analysis
@@ -201,6 +205,10 @@ final class Experiment {
         for device in bluetoothDevices {
             device.disconnect()
             device.deviceAddress = nil
+        }
+        for networkConnection in networkConnections {
+            networkConnection.disconnect()
+            networkConnection.specificAddress = nil
         }
         clear()
     }
@@ -355,6 +363,7 @@ final class Experiment {
         sensorInputs.forEach { $0.start() }
         gpsInputs.forEach { $0.start() }
         bluetoothInputs.forEach { $0.start() }
+        networkConnections.forEach { $0.start() }
         
         analysis?.running = true
         analysis?.setNeedsUpdate()
@@ -372,6 +381,7 @@ final class Experiment {
         sensorInputs.forEach { $0.stop() }
         gpsInputs.forEach { $0.stop() }
         bluetoothInputs.forEach { $0.stop() }
+        networkConnections.forEach { $0.stop() }
         
         stopAudio()
         
@@ -405,6 +415,9 @@ final class Experiment {
 
 extension Experiment: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_: ExperimentAnalysis) {
+        for networkConnection in networkConnections {
+            networkConnection.pushDataToBuffers()
+        }
     }
 
     func analysisDidUpdate(_: ExperimentAnalysis) {
@@ -412,6 +425,10 @@ extension Experiment: ExperimentAnalysisDelegate {
             audioEngine?.play()
             for bluetoothOutput in bluetoothOutputs {
                 bluetoothOutput.send()
+            }
+            for networkConnection in networkConnections {
+                networkConnection.pushDataToBuffers()
+                networkConnection.doExecute()
             }
         }
     }
@@ -452,6 +469,7 @@ extension Experiment: Equatable {
             lhs.bluetoothDevices == rhs.bluetoothDevices &&
             lhs.bluetoothInputs == rhs.bluetoothInputs &&
             lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
+            lhs.networkConnections == rhs.networkConnections &&
             lhs.viewDescriptors == rhs.viewDescriptors &&
             lhs.analysis == rhs.analysis &&
             lhs.export == rhs.export &&

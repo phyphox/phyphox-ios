@@ -17,6 +17,33 @@ enum SensorType: String, LosslessStringConvertible, Equatable {
     case pressure
     case light
     case proximity
+    case temperature
+    case humidity
+}
+
+extension SensorType {
+    func getLocalizedName() -> String {
+        switch self {
+        case .accelerometer:
+            return localize("sensorAccelerometer")
+        case .gyroscope:
+            return localize("sensorGyroscope")
+        case .humidity:
+            return localize("sensorHumidity")
+        case .light:
+            return localize("sensorLight")
+        case .linearAcceleration:
+            return localize("sensorLinearAcceleration")
+        case .magneticField:
+            return localize("sensorMagneticField")
+        case .pressure:
+            return localize("sensorPressure")
+        case .proximity:
+            return localize("sensorProximity")
+        case .temperature:
+            return localize("sensorTemperature")
+        }
+    }
 }
 
 enum SensorError : Error {
@@ -97,15 +124,19 @@ final class ExperimentSensorInput: MotionSessionReceiver {
      */
     private var averaging: Averaging?
     
+    let ignoreUnavailable: Bool
+    
     var recordingAverages: Bool {
             return averaging != nil
     }
     
-    init(sensorType: SensorType, sensorInputTimeReference: SensorInputTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
+    init(sensorType: SensorType, sensorInputTimeReference: SensorInputTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, ignoreUnavailable: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.sensorInputTimeReference = sensorInputTimeReference
         self.rate = rate
         self.calibrated = calibrated
+        
+        self.ignoreUnavailable = ignoreUnavailable
         
         self.xBuffer = xBuffer
         self.yBuffer = yBuffer
@@ -158,7 +189,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             guard motionSession.proximityAvailable else {
                 throw SensorError.sensorUnavailable(sensorType)
             }
-        case .light:
+        case .light, .temperature, .humidity:
             throw SensorError.sensorUnavailable(sensorType)
         }
     }
@@ -179,6 +210,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     func start() {
+        
+        do {
+            try verifySensorAvailibility()
+        } catch SensorError.sensorUnavailable(_) {
+            return
+        } catch {}
         
         localInputTimeReference = nil
         resetValuesForAveraging()
@@ -324,6 +361,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     func stop() {
         
+        do {
+            try verifySensorAvailibility()
+        } catch SensorError.sensorUnavailable(_) {
+            return
+        } catch {}
+        
         ready = false
         
         switch sensorType {
@@ -343,7 +386,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             motionSession.stopAltimeterUpdates(self)
         case .proximity:
             motionSession.stopProximityUpdates(self)
-        case .light:
+        case .light, .temperature, .humidity:
             break
         }
     }

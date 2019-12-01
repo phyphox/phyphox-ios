@@ -15,16 +15,19 @@ struct ButtonViewDescriptor: ViewDescriptor, Equatable {
             lhs.translation == rhs.translation &&
             lhs.dataFlow.elementsEqual(rhs.dataFlow, by: { (l, r) -> Bool in
                 return l.input == r.input && l.output == r.output
-            })
+            }) &&
+            lhs.triggers.elementsEqual(rhs.triggers)
     }
 
     let dataFlow: [(input: ExperimentAnalysisDataIO, output: DataBuffer)]
+    let triggers: [String]
 
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataIO, output: DataBuffer)]) {
+    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataIO, output: DataBuffer)], triggers: [String]) {
         self.dataFlow = dataFlow
+        self.triggers = triggers
 
         self.label = label
         self.translation = translation

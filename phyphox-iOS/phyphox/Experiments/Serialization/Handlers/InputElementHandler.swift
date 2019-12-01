@@ -69,6 +69,7 @@ struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
     let average: Bool
+    let ignoreUnavailable: Bool
 
     let outputs: [SensorOutputDescriptor]
 }
@@ -90,6 +91,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         case type
         case rate
         case average
+        case ignoreUnavailable
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -99,6 +101,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
 
         let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
         let average = try attributes.optionalValue(for: .average) ?? false
+        let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
@@ -106,7 +109,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
             throw ElementHandlerError.message("Averaging is enabled but rate is 0")
         }
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, average: average, outputs: outputHandler.results))
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, average: average, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
     }
 }
 

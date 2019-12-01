@@ -10,7 +10,11 @@ import UIKit
 
 private let spacing: CGFloat = 20.0
 
-final class ExperimentButtonView: UIView, DescriptorBoundViewModule {
+protocol ButtonViewTriggerCallback {
+    func finished()
+}
+
+final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewTriggerCallback {
     let descriptor: ButtonViewDescriptor
 
     private let button: UIButton
@@ -37,7 +41,16 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule {
     }
 
     @objc private func buttonPressed() {
+        button.isEnabled = false
+        button.alpha = 0.5
         buttonTappedCallback?()
+    }
+    
+    func finished() {
+        DispatchQueue.main.async {
+            self.button.alpha = 1
+            self.button.isEnabled = true
+        }
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
