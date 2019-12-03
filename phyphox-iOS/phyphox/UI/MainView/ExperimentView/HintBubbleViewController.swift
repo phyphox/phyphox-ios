@@ -50,8 +50,8 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        //The following line was needed to fix label alignment when built with XCode 11. My impression was that the little arrow of the bubble then was also part of self.view, but we will have to wait for the official release of XCode 11 to be sure and while we still build with XCode 10, this needs to stay disabled.
-        //label.frame = CGRect.init(x: 10, y: self.view.frame.maxY-label.frame.height-10, width: label.frame.width, height: label.frame.height)
+        //The following line was needed to fix label alignment when built with XCode 11. My impression was that the little arrow of the bubble then was also part of self.view.
+        label.frame = CGRect.init(x: 10, y: self.view.frame.maxY-label.frame.height-10, width: label.frame.width, height: label.frame.height)
     }
     
     override func viewDidDisappear(_ animated: Bool) {
