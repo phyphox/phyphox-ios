@@ -174,7 +174,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
         alertController.addAction(cancelAction)
 
-        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true)
+        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
         bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
         alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
@@ -495,10 +495,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         for sensor in experiment.experiment.sensorInputs {
             do {
-                try sensor.verifySensorAvailibility()
+                if !sensor.ignoreUnavailable {
+                    try sensor.verifySensorAvailibility()
+                }
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
                 controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
                     UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
@@ -781,7 +783,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         for sensor in loadedExperiment.sensorInputs {
             do {
-                try sensor.verifySensorAvailibility()
+                if !sensor.ignoreUnavailable {
+                    try sensor.verifySensorAvailibility()
+                }
             }
             catch SensorError.sensorUnavailable(let type) {
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)

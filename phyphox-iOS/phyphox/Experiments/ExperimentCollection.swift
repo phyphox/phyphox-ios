@@ -12,13 +12,15 @@ final class ExperimentCollection {
     private(set) var title: String
     
     enum ContentType: Int {
-        case rawSensors, savedStates, other
+        case rawSensors, savedStates, other, phyphoxOrg
         init (title: String) {
             switch title {
                 case localize("categoryRawSensor"):
                     self = .rawSensors
                 case localize("save_state_category"):
                     self = .savedStates
+                case "phyphox.org":
+                    self = .phyphoxOrg
                 default:
                     self = .other
             }

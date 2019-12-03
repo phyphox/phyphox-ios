@@ -17,18 +17,23 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         let rssi: NSNumber
         let experiment: ExperimentForDevice
         let advertisedUUIDs: [CBUUID]?
+        let advertisedName: String?
+        var oneOfMany: Bool
+        var strongestSignal: Bool
+        var firstSeen: Date
     }
     
     public var centralManager: CBCentralManager?
     
     public var discoveredDevices: [UUID:ScanResult] = [:]
-    var ScanResultsDelegate: ScanResultsDelegate?
+    var scanResultsDelegate: ScanResultsDelegate?
     
     let filterByName: String?
     let filterByUUID: CBUUID?
     let checkExperiments: Bool
    
     var scanImmediately: Bool
+    let autoConnect: Bool
     
     enum ExperimentForDevice {
         case local
@@ -38,11 +43,12 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         case unknown
     }
     
-    init(scanDirectly: Bool, filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool) {
+    init(scanDirectly: Bool, filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
         self.scanImmediately = scanDirectly
         self.filterByName = filterByName
         self.filterByUUID = filterByUUID
         self.checkExperiments = checkExperiments
+        self.autoConnect = autoConnect
 
         super.init()
         if scanDirectly {
@@ -67,7 +73,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
 
     func scan(_ central: CBCentralManager) {
         discoveredDevices = [:]
-        central.scanForPeripherals(withServices: nil, options: nil)
+        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey : NSNumber(value: true)])
         let services: [CBUUID]
         if let filterByUUID = filterByUUID {
             services = [filterByUUID]
@@ -76,7 +82,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
         for service in services {
             for device in central.retrieveConnectedPeripherals(withServices: [service]) {
-                addDevice(peripheral: device, advertisedUUIDs: [service], rssi: -100)
+                addDevice(peripheral: device, advertisedUUIDs: [service], advertisedName: nil, rssi: -100)
             }
         }
     }
@@ -85,8 +91,13 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         centralManager?.stopScan()
     }
     
-    func addDevice(peripheral: CBPeripheral, advertisedUUIDs: [CBUUID]?, rssi: NSNumber) {
-        if let foundName = peripheral.name {
+    func addDevice(peripheral: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?, rssi: NSNumber) {
+        let advertisedName = advertisedName ?? discoveredDevices[peripheral.identifier]?.advertisedName
+        let firstSeen = discoveredDevices[peripheral.identifier]?.firstSeen ?? Date()
+        var oneOfMany = false
+        var strongestSignal = true
+        
+        if let foundName = advertisedName ?? peripheral.name {
             
             if let filterByUUID = filterByUUID {
                 if let advertisedUUIDs = advertisedUUIDs {
@@ -110,6 +121,27 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 }
             }
             
+            if autoConnect {
+                scanResultsDelegate?.autoConnect(device: peripheral, advertisedUUIDs: advertisedUUIDs)
+                return
+            }
+            
+            for device in discoveredDevices {
+                if device.key != peripheral.identifier {
+                    if let otherName = device.value.advertisedName ?? device.value.peripheral.name {
+                        if otherName == foundName {
+                            discoveredDevices[device.key]?.oneOfMany = true
+                            oneOfMany = true
+                            if device.value.rssi.decimalValue > rssi.decimalValue {
+                                strongestSignal = false
+                            } else {
+                                discoveredDevices[device.key]?.strongestSignal = false
+                            }
+                        }
+                    }
+                }
+            }
+            
             var experiment: ExperimentForDevice
             if checkExperiments {
                 let experimentCollections = ExperimentManager.shared.getExperimentsForBluetoothDevice(deviceName: foundName, deviceUUIDs: advertisedUUIDs)
@@ -125,15 +157,17 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 experiment = .unknown
             }
             
-            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs)
-            ScanResultsDelegate?.reloadScanResults()
+            
+            discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName, oneOfMany: oneOfMany, strongestSignal: strongestSignal, firstSeen: firstSeen)
+            scanResultsDelegate?.reloadScanResults()
         }
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         
-        let advertisedUUIDs = advertisementData["kCBAdvDataServiceUUIDs"] as? [CBUUID]
-        addDevice(peripheral: peripheral, advertisedUUIDs: advertisedUUIDs, rssi: RSSI)
+        let advertisedUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]
+        let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        addDevice(peripheral: peripheral, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName, rssi: RSSI)
         
     }
     
@@ -315,7 +349,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                         return
                     }
                     
-                    self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral)
+                    _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral)
                     
                 } else {
                     loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: true)

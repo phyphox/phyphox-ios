@@ -11,11 +11,19 @@ import Foundation
 struct InfoViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let color: UIColor
+    let fontSize: CGFloat
+    let align: InfoViewElementDescriptor.TextAlignment
+    let bold: Bool
+    let italic: Bool
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?) {
+    init(label: String, color: UIColor, fontSize: CGFloat, align: InfoViewElementDescriptor.TextAlignment, bold: Bool, italic: Bool, translation: ExperimentTranslationCollection?) {
         self.label = label
         self.color = color
+        self.fontSize = fontSize
+        self.align = align
+        self.bold = bold
+        self.italic = italic
         self.translation = translation
     }
 

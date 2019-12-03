@@ -159,20 +159,18 @@ final class MapAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        guard let mapWidthD = self.mapWidth.getSingleValue() else {
+        guard let mapWidth = self.mapWidth.getSingleValueAsInt() else {
             return
         }
-        let mapWidth = Int(mapWidthD)
         guard let minX = self.minX.getSingleValue() else {
             return
         }
         guard let maxX = self.maxX.getSingleValue() else {
             return
         }
-        guard let mapHeightD = self.mapHeight.getSingleValue() else {
+        guard let mapHeight = self.mapHeight.getSingleValueAsInt() else {
             return
         }
-        let mapHeight = Int(mapHeightD)
         guard let minY = self.minX.getSingleValue() else {
             return
         }

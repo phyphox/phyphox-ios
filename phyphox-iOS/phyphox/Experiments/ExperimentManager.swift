@@ -104,14 +104,14 @@ final class ExperimentManager {
         let category = experiment.localizedCategory
         
         if let collection = collections.first(where: { $0.title == category }) {
-            let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.displayTitle > experiment.displayTitle }) ?? collection.experiments.endIndex
+            let insertIndex = collection.experiments.firstIndex(where: { $0.experiment.displayTitle.lowercased() > experiment.displayTitle.lowercased() }) ?? collection.experiments.endIndex
             
             collection.experiments.insert((experiment, custom), at: insertIndex)
         }
         else {
             let collection = ExperimentCollection(title: category, experiments: [(experiment, custom)])
             
-            let insertIndex = collections.firstIndex(where: { ($0.type.rawValue == collection.type.rawValue && $0.title > category) || $0.type.rawValue > collection.type.rawValue }) ?? collections.endIndex
+            let insertIndex = collections.firstIndex(where: { ($0.type.rawValue == collection.type.rawValue && $0.title.lowercased() > category.lowercased()) || $0.type.rawValue > collection.type.rawValue }) ?? collections.endIndex
             
             collections.insert(collection, at: insertIndex)
         }

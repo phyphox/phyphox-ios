@@ -11,6 +11,7 @@ import CoreBluetooth
 
 protocol ScanResultsDelegate {
     func reloadScanResults()
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?)
 }
 
 protocol DeviceIsChosenDelegate {
@@ -30,8 +31,8 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     
     var signalImages: [UIImage]
     
-    init(filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool) {
-        ble = BluetoothScan(scanDirectly: true, filterByName: filterByName, filterByUUID: filterByUUID, checkExperiments: checkExperiments)
+    init(filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
+        ble = BluetoothScan(scanDirectly: true, filterByName: filterByName, filterByUUID: filterByUUID, checkExperiments: checkExperiments, autoConnect: autoConnect)
         
         signalImages = []
         for i in 0..<5 {
@@ -40,7 +41,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         
         super.init(style: .plain)
 
-        ble.ScanResultsDelegate = self
+        ble.scanResultsDelegate = self
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -68,9 +69,9 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: UITableViewCell.CellStyle.subtitle, reuseIdentifier: "my")
         cell.backgroundColor = kBackgroundColor
-        let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values)[indexPath.row]
-        cell.textLabel?.text = entry.peripheral.name ?? localize("unknown")
-        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : kTextColor
+        let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values.sorted(by: {$0.firstSeen.compare($1.firstSeen) == .orderedAscending}))[indexPath.row]
+        cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
+        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : kTextColor)
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
         cell.detailTextLabel?.textColor = kHighlightColor
         let signal_i: Int
@@ -98,6 +99,13 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         
         self.dismiss(animated: true, completion: { () in
             self.deviceIsChosenDelegate?.useChosenBLEDevice(chosenDevice: [BluetoothScan.ScanResult] (self.ble.discoveredDevices.values)[indexPath.row].peripheral, advertisedUUIDs: [BluetoothScan.ScanResult] (self.ble.discoveredDevices.values)[indexPath.row].advertisedUUIDs)
+            self.dialogDismissedDelegate?.bluetoothScanDialogDismissed()
+        })
+    }
+    
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+        self.dismiss(animated: true, completion: { () in
+            self.deviceIsChosenDelegate?.useChosenBLEDevice(chosenDevice: device, advertisedUUIDs: advertisedUUIDs)
             self.dialogDismissedDelegate?.bluetoothScanDialogDismissed()
         })
     }

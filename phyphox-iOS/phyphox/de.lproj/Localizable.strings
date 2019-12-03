@@ -211,3 +211,13 @@
 "bt_more_info_link_text" = "Wenn dein Gerät nicht unterstützt wird, wähle \"Weitere Infos\" um mehr über die flexible Bluetooth Low Energy Unterstützung in phyphox auf unserer Webseite zu erfahren.";
 "bt_more_info_link_button" = "Mehr Infos";
 "bt_more_info_link_url" = "https://phyphox.org/ble-de";
+
+"networkPrivacyWarning" = "Datenschutz-Warnung";
+"networkVisitPrivacyURL" = "Datenschutzerklärung";
+"networkPrivacyInfo" = "Dieses Experiment nutzt eine Netzwerkverbindung, was bedeutet, dass Daten an einen Netzwerk-Dienst übermittelt werden können. Um mehr Details zu erfahren, kannst du unten auf Datenschutzerklärung tippen, was dich auf eine Webseite führen wird, die eine Datenschutzerklärung beinhaltet, welche vom Autor dieser Experiment-Konfiguration bereitgestellt wird. Wenn der Netzwerk-Dienst kein lokales Gerät ist, sollte dir bewusst sein, dass phyphox möglicherweise folgende Daten übertragen wird:";
+"networkPrivacyUniqueID" = "Eine ID, die eindeutig für dieses Gerät und den Netzwerk-Dienst ist. Dies ermöglicht es, alle mit diesem Gerät über dieses Experiment verschickten Daten einander zuzuordnen.";
+"networkPrivacySensorData" = "Daten von den folgenden Sensoren:";
+"networkPrivacySensorMicrophone" = "Aufnahmen vom Mikrofon oder Daten die aus solchen Aufnahmen abgeleitet wurden.";
+"networkPrivacySensorLocation" = "Standortdaten (GPS-Daten oder ähnliches).";
+"networkPrivacyDeviceInfo" = "Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.";
+"networkPrivacySensorInfo" = "Technische Details zu den folgenden Sensoren:";

@@ -20,9 +20,14 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
 
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .footnote)
+        let fontSize = UIFont.systemFontSize * descriptor.fontSize
+        label.font = (descriptor.bold ? UIFont.boldSystemFont(ofSize: fontSize) : (descriptor.italic ? UIFont.italicSystemFont(ofSize: fontSize) : UIFont.systemFont(ofSize: fontSize)))
         label.textColor = descriptor.color
-        label.textAlignment = .justified
+        switch (descriptor.align) {
+            case .left: label.textAlignment = .natural
+        case .right: label.textAlignment = UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .left : .right
+            case .center: label.textAlignment = .center
+        }
 
         addSubview(label)
     }
@@ -35,7 +40,8 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         var s = size
         s.width = size.width - 20.0
-        return label.sizeThatFits(s)
+        s.height = label.sizeThatFits(s).height
+        return s
     }
     
     override func layoutSubviews() {

@@ -31,9 +31,6 @@ final class ExperimentAnalysis {
     private let sleep: Double
     private let dynamicSleep: DataBuffer?
 
-    let inputBuffers: [String: DataBuffer]
-    let outputBuffers: [String: DataBuffer]
-
     var running = false
     
     weak var timestampSource: ExperimentAnalysisTimestampSource?
@@ -41,37 +38,30 @@ final class ExperimentAnalysis {
 
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
         self.modules = modules
-        let inputBufferTuples = modules.flatMap({ $0.inputs.compactMap { input -> (String, DataBuffer)? in
-            switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                return (buffer.name, buffer)
-            case .value(value: _, usedAs: _):
-                return nil
-            }
-            }
-        })
-
-        inputBuffers = Dictionary(inputBufferTuples, uniquingKeysWith: { first, _ in first })
-
-        let outputBufferTuples = modules.flatMap({ $0.outputs.compactMap { output -> (String, DataBuffer)? in
-            switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                return (buffer.name, buffer)
-            case .value(value: _, usedAs: _):
-                return nil
-            }
-            }
-        })
-
-        outputBuffers = Dictionary(outputBufferTuples, uniquingKeysWith: { first, _ in first })
-
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
 
-        let pureInputs = inputBuffers.filter { outputBuffers[$0.key] == nil }
-
-        pureInputs.forEach {
-            $0.value.addObserver(self, alwaysNotify: false)
+        //We subscribe to all buffers which are used as an input BEFORE another analysis module has written to them. This in particular not only includes inputs from sensors, Bluetooth inputs and similar, but also buffers that may have been written at the end of the previous analysis run.
+        var internallyUpdatedBuffers: Set<String> = []
+        for module in modules {
+            for input in module.inputs {
+                switch input {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    if !(internallyUpdatedBuffers.contains(buffer.name)) {
+                        buffer.addObserver(self, alwaysNotify: false)
+                    }
+                case .value(value: _, usedAs: _):
+                    continue
+                }
+            }
+            for output in module.outputs {
+                switch output {
+                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                    internallyUpdatedBuffers.insert(buffer.name)
+                case .value(value: _, usedAs: _):
+                    continue
+                }
+            }
         }
     }
     

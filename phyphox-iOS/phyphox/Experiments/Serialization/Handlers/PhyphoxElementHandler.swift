@@ -17,7 +17,7 @@ private extension SensorDescriptor {
 }
 
 private extension ExperimentSensorInput {
-    convenience init(descriptor: SensorInputDescriptor, buffers: [String: DataBuffer]) {
+    convenience init(descriptor: SensorInputDescriptor, sensorInputTimeReference: SensorInputTimeReference, buffers: [String: DataBuffer]) {
         let xBuffer = descriptor.buffer(for: "x", from: buffers)
         let yBuffer = descriptor.buffer(for: "y", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
@@ -25,7 +25,7 @@ private extension ExperimentSensorInput {
         let absBuffer = descriptor.buffer(for: "abs", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
 
-        self.init(sensorType: descriptor.sensor, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
+        self.init(sensorType: descriptor.sensor, sensorInputTimeReference: sensorInputTimeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
     }
 }
 
@@ -34,6 +34,7 @@ private extension ExperimentGPSInput {
         let latBuffer = descriptor.buffer(for: "lat", from: buffers)
         let lonBuffer = descriptor.buffer(for: "lon", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
+        let zWgs84Buffer = descriptor.buffer(for: "zwgs84", from: buffers)
         let vBuffer = descriptor.buffer(for: "v", from: buffers)
         let dirBuffer = descriptor.buffer(for: "dir", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
@@ -42,13 +43,13 @@ private extension ExperimentGPSInput {
         let statusBuffer = descriptor.buffer(for: "status", from: buffers)
         let satellitesBuffer = descriptor.buffer(for: "satellites", from: buffers)
 
-        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
+        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, zWgs84Buffer: zWgs84Buffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
     }
 }
 
 private extension ExperimentAudioInput {
     init(descriptor: AudioInputDescriptor, buffers: [String: DataBuffer]) throws {
-        guard let outBuffer = descriptor.buffer(for: "output", from: buffers) else {
+        guard let outBuffer = (descriptor.buffer(for: "output", from: buffers) ?? descriptor.buffer(for: "out", from: buffers)) else {
             throw ElementHandlerError.missingAttribute("output")
         }
 
@@ -89,7 +90,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 7, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 8, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -110,12 +111,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let translationsHandler = TranslationsElementHandler()
     private let inputHandler = InputElementHandler()
     private let outputHandler = OutputElementHandler()
+    private let networkHandler = NetworkElementHandler()
     private let analysisHandler = AnalysisElementHandler()
     private let viewsHandler = ViewsElementHandler()
     private let exportHandler = ExportElementHandler()
 
     init() {
-        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "color": colorHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "color": colorHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "network": networkHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
     }
 
     private enum Attribute: String, AttributeKey {
@@ -164,14 +166,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let links = linkHandler.results
 
-        let dataContainersDescriptor = try dataContainersHandler.expectSingleResult()
+        let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult()
 
         let analysisInputBufferNames = analysisDescriptor.map { getInputBufferNames(from: $0) } ?? []
 
         let experimentPersistentStorageURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
 
-        let buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
+        let buffers: [String : DataBuffer]
+        if let dataContainersDescriptor = dataContainersDescriptor {
+            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
+        } else {
+            buffers = [String : DataBuffer]()
+        }
 
         let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
             let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
@@ -181,8 +188,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
+        let networkDescriptor = try networkHandler.expectOptionalResult()
 
-        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, buffers: buffers) } ?? []
+        let sensorInputTimeReference = SensorInputTimeReference()
+        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, sensorInputTimeReference: sensorInputTimeReference, buffers: buffers) } ?? []
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
@@ -193,18 +202,18 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         var bluetoothOutputs: [ExperimentBluetoothOutput] = []
         var bluetoothDeviceMap: [String:ExperimentBluetoothDevice] = [:]
         
-        func getBluetoothDeviceForId(id: String?, name: String?, uuid: CBUUID?) -> ExperimentBluetoothDevice {
+        func getBluetoothDeviceForId(id: String?, name: String?, uuid: CBUUID?, autoConnect: Bool) -> ExperimentBluetoothDevice {
             let bluetoothDevice: ExperimentBluetoothDevice
             if let id = id, id != "" {
                 if let device = bluetoothDeviceMap[id] {
                     bluetoothDevice = device
                 } else {
-                    bluetoothDevice = ExperimentBluetoothDevice(id: id, name: name, uuid: uuid)
+                    bluetoothDevice = ExperimentBluetoothDevice(id: id, name: name, uuid: uuid, autoConnect: autoConnect)
                     bluetoothDeviceMap[id] = bluetoothDevice
                     bluetoothDevices.append(bluetoothDevice)
                 }
             } else {
-                bluetoothDevice = ExperimentBluetoothDevice(id: nil, name: name, uuid: uuid)
+                bluetoothDevice = ExperimentBluetoothDevice(id: nil, name: name, uuid: uuid, autoConnect: autoConnect)
                 bluetoothDevices.append(bluetoothDevice)
             }
             return bluetoothDevice
@@ -212,14 +221,88 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         if let descriptors = inputDescriptor?.bluetooth {
             for descriptor in descriptors {
-                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid)
+                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
                 bluetoothInputs.append(try ExperimentBluetoothInput(device: device, descriptor: descriptor, buffers: buffers) )
             }
         }
         if let descriptors = outputDescriptor?.bluetooth {
             for descriptor in descriptors {
-                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid)
+                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
                 bluetoothOutputs.append(try ExperimentBluetoothOutput(device: device, descriptor: descriptor, buffers: buffers) )
+            }
+        }
+        
+        var networkConnections: [NetworkConnection] = []
+        if let networkConnectionDescriptors = try networkHandler.expectOptionalResult() {
+            for descriptor in networkConnectionDescriptors {
+                var send: [String: NetworkSendableData] = [:]
+                for item in descriptor.send {
+                    switch item.type {
+                    case .buffer:
+                        guard let buffer = buffers[item.name] else {
+                            throw ElementHandlerError.missingElement("data-container")
+                        }
+                        send[item.id] = NetworkSendableData.Buffer(buffer)
+                    case .meta:
+                        let metadata: NetworkSendableData
+                        switch (item.name) {
+                        case "uniqueID": metadata = .Metadata(.uniqueId)
+                        case "version": metadata = .Metadata(.version)
+                        case "build": metadata = .Metadata(.build)
+                        case "fileFormat": metadata = .Metadata(.fileFormat)
+                        case "deviceModel": metadata = .Metadata(.deviceModel)
+                        case "deviceBrand": metadata = .Metadata(.deviceBrand)
+                        case "deviceBoard": metadata = .Metadata(.deviceBoard)
+                        case "deviceManufacturer": metadata = .Metadata(.deviceManufacturer)
+                        case "deviceBaseOS": metadata = .Metadata(.deviceBaseOS)
+                        case "deviceCodename": metadata = .Metadata(.deviceCodename)
+                        case "deviceRelease": metadata = .Metadata(.deviceRelease)
+                        default:
+                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData? {
+                                if name.starts(with: sensor) {
+                                    let sensorMetadata = name.dropFirst(sensor.count)
+                                    let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
+                                    guard let sensorMeta = NetworkSensorMetadata(rawValue: String(sensorMetadataMatch)) else {
+                                        throw ElementHandlerError.message("Unknown metadata name \(name)")
+                                    }
+                                    return NetworkSendableData.Metadata(.sensor(SensorType.accelerometer, sensorMeta))
+                                }
+                                return nil
+                            }
+                            if let res = try matchSensor(name: item.name, sensor: SensorType.accelerometer.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gyroscope.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.humidity.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.light.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.linearAcceleration.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.magneticField.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.pressure.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.proximity.description) {
+                                metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.temperature.description) {
+                                metadata = res
+                            } else {
+                                throw ElementHandlerError.message("Unknown metadata name \(item.name)")
+                            }
+                        }
+                        send[item.id] = metadata
+                    }
+                    
+                }
+                var receive: [String: NetworkReceivableData] = [:]
+                for item in descriptor.receive {
+                    guard let buffer = buffers[item.name] else {
+                        throw ElementHandlerError.missingElement("data-container")
+                    }
+                    receive[item.id] = NetworkReceivableData(buffer: buffer, clear: item.clear)
+                }
+                networkConnections.append(NetworkConnection(id: descriptor.id, privacyURL: descriptor.privacyURL, address: descriptor.address, discovery: descriptor.discovery, autoConnect: descriptor.autoConnect, service: descriptor.service, conversion: descriptor.conversion, send: send, receive: receive, interval: descriptor.interval, autoPush: analysis == nil))
             }
         }
 
@@ -230,7 +313,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputTimeReference: sensorInputTimeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -242,7 +325,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
         case .info(let descriptor):
-            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations)
+            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
         case .value(let descriptor):
             guard let buffer = buffers[descriptor.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
@@ -285,7 +368,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return (input, outputBuffer)
             }
 
-            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow)
+            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers)
 
         case .graph(let descriptor):
             let xBuffers = try descriptor.xInputBufferNames.map({ name -> DataBuffer? in

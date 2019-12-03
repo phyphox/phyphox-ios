@@ -20,6 +20,18 @@ enum ExperimentAnalysisDataIO: Equatable {
             return value
         }
     }
+    
+    func getSingleValueAsInt() -> Int? {
+        if let d = getSingleValue() {
+            if d > Double(Int.min) && d < Double(Int.max) {
+                return Int(d)
+            } else {
+                return nil
+            }
+        } else {
+            return nil
+        }
+    }
 
     var asString: String {
         switch self {

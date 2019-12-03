@@ -65,6 +65,10 @@ struct ExperimentGraphUtilities {
             let logMax = log10(expMax)
             let logMin = log10(expMin)
 
+            let digitRangeDouble = ceil(logMax)-floor(logMin)
+            
+            guard digitRangeDouble > Double(Int.min) && digitRangeDouble < Double(Int.max) else { return [] }
+            
             let digitRange = Int(ceil(logMax)-floor(logMin))
             if digitRange < 1 {
                 return []

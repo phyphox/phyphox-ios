@@ -47,16 +47,16 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
         var start = 0
         var end = -1
         
-        if let v = from?.getSingleValue() {
-            start = Int(v)
+        if let v = from?.getSingleValueAsInt() {
+            start = v
         }
         
-        if let v = to?.getSingleValue() {
-            end = Int(v)
+        if let v = to?.getSingleValueAsInt() {
+            end = v
         }
         
-        if let v = length?.getSingleValue() {
-            end = start + Int(v)
+        if let v = length?.getSingleValueAsInt() {
+            end = start + v
         }
         
         if start < 0 {
@@ -90,7 +90,7 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
 
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                let thisEnd = min(end, inBuffer.count)
+                let thisEnd = min(end, inBuffer.memoryCount)
                 if thisEnd < start {
                     if clear {
                         buffer.clear()

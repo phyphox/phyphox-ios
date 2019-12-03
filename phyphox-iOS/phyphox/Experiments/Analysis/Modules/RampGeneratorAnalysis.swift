@@ -48,8 +48,8 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
             stop = s
         }
         
-        if let l = lengthInput?.getSingleValue() {
-            length = Int(l)
+        if let l = lengthInput?.getSingleValueAsInt() {
+            length = l
         }
 
         if length == 0 {

@@ -1,6 +1,9 @@
 Web interface::
 The web-interface for remote access uses the JavaScript libraries "Chart.js" (http://chartjs.org), available under the MIT licence.
 -->
+WGS84 height model::
+The GPS height is transformed into the WGS84 ellipsoid reference height using the egm84 data (30' resolution) and a ported algorithm from the GeographicLib (https://geographiclib.sourceforge.io/, MIT/X11 Licence).
+-->
 JGProgressHUD::
 The MIT License (MIT)
 
