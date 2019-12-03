@@ -8,8 +8,6 @@
 import Foundation
 import UIKit
 
-private let VALID_SOURCE_APP_BUNDLE_ID = "org.edumode.eduroom"
-
 @available(iOS 9.0, *)
 @objc final public class EduRoom: NSObject, PingManagerDelegate {
 
@@ -125,9 +123,9 @@ private let VALID_SOURCE_APP_BUNDLE_ID = "org.edumode.eduroom"
         return factory.url()
     }
     
-    @objc public func startSession(source: String, url: URL) {
+    @objc public func startSession(url: URL) {
         do {
-            self.settings = try createSettings(source, url)
+            self.settings = try self.parseSettings(url)
         } catch let error as NSError {
             self.openEduRoom(error)
         }
@@ -153,22 +151,7 @@ private let VALID_SOURCE_APP_BUNDLE_ID = "org.edumode.eduroom"
         
         pingManager.stopSession()
     }
-    
-    private func createSettings(_ source: String, _ url: URL) throws -> Settings {
-        if source != VALID_SOURCE_APP_BUNDLE_ID
-        {
-            let description = "Source \"\(String(describing: source))\" is not valid. Only valid source: \"\(VALID_SOURCE_APP_BUNDLE_ID)\""
-            let addInfo = [
-                "sourceGiven" : String(describing: source),
-                "sourceExpected" : VALID_SOURCE_APP_BUNDLE_ID
-            ]
-            
-            throw EduRoomError.invalidSourceError.asNSError(description, additionalInfo: addInfo)
-        }
-        
-        return try self.parseSettings(url)
-    }
-    
+       
     private func stopSessionAndOpenEduRoom(_ error: NSError)
     {
         self.logger?.error("ERROR, stopping session and going back to EduRoom. Details: \(error)")

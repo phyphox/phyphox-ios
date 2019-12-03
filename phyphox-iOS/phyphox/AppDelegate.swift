@@ -54,7 +54,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         if url.scheme == "eduroom.phyphox" {
             if #available(iOS 9.0, *) {
-                EduRoom.shared.startSession(source: "", url: url)
+                EduRoom.shared.startSession(url: url)
             }
             return initApp(url: nil)
         }
@@ -66,7 +66,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         if url.scheme == "eduroom.phyphox" {
             if #available(iOS 9.0, *) {
-                EduRoom.shared.startSession(source: "", url: url)
+                EduRoom.shared.startSession(url: url)
             }
             return initApp(url: nil)
         }
