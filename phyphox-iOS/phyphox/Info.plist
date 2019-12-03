@@ -59,7 +59,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>8426</string>
+	<string>8427</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -70,6 +70,8 @@
 		<true/>
 	</dict>
 	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>phyphox uses the camera to scan QR codes, which can be used to add custom experiment configurations.</string>
