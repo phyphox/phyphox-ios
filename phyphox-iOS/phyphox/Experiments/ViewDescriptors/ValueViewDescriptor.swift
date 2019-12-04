@@ -43,9 +43,9 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         self.buffer = buffer
         self.size = size
 
-        let translatedMappings = mappings.compactMap { map in (translation?.localize(map.replacement)).map { ValueViewMap(range: map.range, replacement: $0) } }
+        let translatedMappings = mappings.compactMap { map in (translation?.localize(map.replacement) ?? map.replacement).map { ValueViewMap(range: map.range, replacement: $0) } }
         
-        self.mappings = mappings + translatedMappings
+        self.mappings = translatedMappings
 
         self.label = label
         self.color = color
