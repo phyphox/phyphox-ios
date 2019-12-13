@@ -157,7 +157,7 @@
 "newExperimentQRNoExperiment" = "Kan inte hitta en QR-kod som innehåller ett phyphox-experiment.";
 "newExperimentQRcrcMismatch" = "Den QR-kod du just skannade verkar inte matcha de tidigare koderna. Se till att bara scanna koder som hör till samma experiment.";
 "newExperimentQRCodesMissing1" = "Den QR-kod du just skannade är en del av en grupp med";
-"newExperimentQRCodesMissing2" = "koder. Tryck \"FORTSÄTT\" för att skanna de övriga  koderna. Antal koder som saknas:";
+"newExperimentQRCodesMissing2" = "koder. Tryck \"FORTSÄTT\" för att skanna de övriga koderna. Antal koder som saknas: ";
 "newExperimentQRBadCRC" = "Ogiltig checksumma. Detta betyder antingen att det är något fel på QR koden eller att något blev fel under skanningen.";
 "newExperimentBTReadErrorTitle" = "Bluetooth experiment-fel.";
 "newExperimentBTReadErrorCorrupted" = "Data som överförts från experimentet är skadade.";
