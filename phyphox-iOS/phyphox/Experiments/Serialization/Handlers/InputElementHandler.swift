@@ -302,6 +302,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case subscribeOnStart
         case rate
         case autoConnect
+        case mtu
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
