@@ -333,7 +333,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     public func writeCharacteristic(uuid: CBUUID, data: Data) throws {
         if let char = characteristics_map[uuid.uuid128String] {
-            peripheral?.writeValue(data, for: char, type: CBCharacteristicWriteType.withResponse)
+            peripheral?.writeValue(data, for: char, type: char.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
         } else {
             throw BluetoothDeviceError.generic(localize("bt_error_writing") + " \(uuid)")
         }
