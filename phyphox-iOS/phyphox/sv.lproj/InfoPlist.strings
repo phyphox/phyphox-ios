@@ -1,0 +1,14 @@
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox tar ljudet från mikrofonen, och även data från andra sensorer, som analyseras utgående från det valda experimentet. Data kan exporteras från appen genom Export-funktionen.";
+"NSLocationWhenInUseUsageDescription" = "phyphox hämtar platsdata från GPS, och även data från andra sensorer, och analyserar dem utgående från det valda experimentet. Data kan exporteras från appen genom Export-funktionen.";
+"NSPhotoLibraryAddUsageDescription" = "phyphox kan lägga till skärmbilder till ditt fotobibliotek om du väljer \"Dela skärmbild\" från experiment-menyn.";
+"NSMotionUsageDescription" = "phyphox läser telefonens sensorer för att tillåta användning av dem i fysikexperiment.";
+"NSCameraUsageDescription" = "phyphox använder kameran för att scanna QR-koder, som kan användas för att lägga till egna experimentkonfigurationer.";
+"NSBluetoothPeripheralUsageDescription" = "phyphox kan läsa från externa Bluetooth-sensorer och skriva data till externa Bluetooth-enheter. Läs mer om denna möjlighet och om enheter som stöds på http://phyphox.org/ble.";
+"NSBluetoothAlwaysUsageDescription" = "phyphox kan läsa från externa Bluetooth-sensorer och skriva data till externa Bluetooth-enheter. Läs mer om denna möjlighet och om enheter som stöds på http://phyphox.org/ble.";
