@@ -157,7 +157,7 @@
 "remoteServerActive" = "Acceso remoto habilitado. Accede a este experimento desde el siguiente enlace:";
 "fontSize" = "Tamaño de la fuente";
 "categoryNewExperiment" = "Experimentos personalizados simples";
-"categoryRawSensor" = "Sensores sin procesar";
+"categoryRawSensor" = "Sensores";
 "experimentinfo_hint" = "Revisa la información del experimento para aprender cómo utilizarlo.";
 "start_hint" = "Toca el triángulo para comenzar el experimento.";
 "AudioRateMissmatch" = "Error: No coincide la tasa de muestreo. Por favor deshabilita cualquier aplicación o servicio (como AirPlay) que pudiera forzar una tasa de muestreo de audio diferente.";
