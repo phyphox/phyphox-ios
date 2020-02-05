@@ -200,3 +200,14 @@
 "bt_more_info_link_text" = "Ukoliko Vaš uređaj nije podržan, izaberite opciju \"more info\" da biste saznali viže o prilagodljivoj Bluetooth Low Energy podršci u phyphox na našem veb sajtu.";
 "bt_more_info_link_button" = "Više informacija";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
+"export_empty" = "Ova konfiguracija eksperimenta ne definiše podatke koje treba izvoziti. Ako je ovo greška, obratite se izvoru QR koda ili konfiguracione datoteke.";
+"toggleBrightMode" = "Osvetljeni mod";
+"networkPrivacyWarning" = "Upozorenje o privatnosti";
+"networkVisitPrivacyURL" = "Polisa privatnosti";
+"networkPrivacyInfo" = "Ovaj eksperiment koristi mrežnu vezu, što znači da se podaci eksperimenta mogu preneti na mrežni servis. Više detalja možete pronaći klikom na dugme smernice za privatnost dole, koje će vas odvesti na veb lokaciju sa politikom privatnosti koju je stvorio autor ovog eksperimenta. Ako mrežna usluga nije lokalni uređaj, trebali biste biti svesni da phyphox može preneti sledeće informacije ako pokrenete ovaj eksperiment:";
+"networkPrivacyUniqueID" = "ID koji je jedinstven za ovaj uređaj i mrežni servis, koji omogućavaju da se podudaraju sa svim podacima koji se šalju sa ovog uređaja kroz ovu eksperimentalnu konfiguraciju";
+"networkPrivacySensorData" = "Podaci sa sledećih senzora:";
+"networkPrivacySensorMicrophone" = "Snimci ili podaci dobijeni snimanjem sa mikrofona.";
+"networkPrivacySensorLocation" = "Podaci o položaju (GPS podaci ili slični).";
+"networkPrivacyDeviceInfo" = "Detaljne informacije o modelu vašeg uređaja i / ili verziji phyphox-a.";
+"networkPrivacySensorInfo" = "Tehnički podaci o sledećim senzorima:";
