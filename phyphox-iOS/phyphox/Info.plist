@@ -59,7 +59,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>8426</string>
+	<string>8451</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -69,6 +69,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.</string>
 	<key>NSCameraUsageDescription</key>
@@ -100,6 +102,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>UTExportedTypeDeclarations</key>

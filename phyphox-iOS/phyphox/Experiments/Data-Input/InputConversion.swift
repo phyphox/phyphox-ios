@@ -237,7 +237,7 @@ class FormattedStringInputConversion: InputConversion {
             //Use label to find relevant part
             for part in parts {
                 if part.starts(with: label) {
-                    return Double(part) ?? Double.nan
+                    return Double(part[part.index(part.startIndex, offsetBy: label.count)...]) ?? Double.nan
                 }
             }
             return Double.nan
