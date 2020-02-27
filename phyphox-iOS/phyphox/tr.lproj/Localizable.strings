@@ -96,7 +96,7 @@
 "remoteServerWarning" = "Elde edilen verilere uzaktan erişimi etkinleştirmek üzeresiniz. Bunu sadece güvenli bir ağda yapmanız tavsiye edilir. Ayrıca, birçok şirket veya üniversite ağında cihazlar arasında doğrudan erişim mümkün olmayabilir.\n\n En iyi güvenlik ve performans için bu cihaza bir bağlantı seçeneği olan mobil erişim noktası ile bağlanmalısınız.\n\nTamam düğmesine bastıktan sonra, aynı ağdaki herhangi bir web tarayıcısından ölçümlerinize erişebilirsiniz.";
 "pick_exportSets" = "Dışa aktarmak istediğiniz veri gruplarını seçin.";
 "apple_ban" = "Bu deney artık mevcut değil.";
-"creditsNames" = "Fikir ve Geliştirme:\n…Dr. Sebastian Staacks\n…Konsept:\n…Prof. Christoph Stampfer\n…Programlama:\n…Dominik Dorsel\n…Jonas Gessner\n…Camilla Lummerzheim";
+"creditsNames" = "Fikir ve Geliştirme: \nDr. Sebastian Staacks \nKonsept: \nProf. Christoph Stampfer \nProgramlama: \nDominik Dorsel \nJonas Gessner \nCamilla Lummerzheim";
 "appleBanWarningMoreInfo" = "Daha fazla bilgi";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "switch_to_calibrated_magnetometer" = "Kalibre edilmiş manyetometreye geçin";
