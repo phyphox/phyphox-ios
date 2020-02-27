@@ -653,6 +653,8 @@
 		C0BD0AD7238EA8D600D76032 /* EduRoom.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = EduRoom.xcodeproj; path = "EduRoom-Framework/EduRoom/EduRoom.xcodeproj"; sourceTree = "<group>"; };
 		C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceAnalysis.swift; sourceTree = "<group>"; };
 		C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAnalysis.swift; sourceTree = "<group>"; };
+		C0D47C172408741600F84F74 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C0D47C182408741600F84F74 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0F2A7C422E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C0F2A7C522E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0F2A7C622E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1398,6 +1400,7 @@
 				sr_Latn,
 				"sr-Latn",
 				es,
+				tr,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -1882,6 +1885,7 @@
 				C0F2A7C522E5E14E00CC2C2A /* sr */,
 				C0F2A7C722E5E16F00CC2C2A /* sr_Latn */,
 				C025FC0623D9D45800AE13B6 /* es */,
+				C0D47C182408741600F84F74 /* tr */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1906,6 +1910,7 @@
 				C0F2A7C422E5E14E00CC2C2A /* sr */,
 				C0F2A7C622E5E16F00CC2C2A /* sr_Latn */,
 				C025FC1723D9D46500AE13B6 /* es */,
+				C0D47C172408741600F84F74 /* tr */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -2053,6 +2058,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = YES;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
@@ -2114,6 +2120,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = YES;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
