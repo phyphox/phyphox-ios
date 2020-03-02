@@ -9,3 +9,6 @@
 "NSLocationWhenInUseUsageDescription" = "phyphox, GPS'den diğer sensörlerden alınan konum verilerini kaydeder ve seçilen deneye göre analiz eder. Veriler yalnızca veri dışa aktarma işlevi seçilirse uygulamadan dışa aktarılacaktır.";
 "NSPhotoLibraryAddUsageDescription" = "Deneme menüsünden \"Ekran görüntüsü al\"ı seçerseniz, phyphox fotoğraf kitaplığınıza ekran görüntüleri ekleyebilir.";
 "NSMotionUsageDescription" = "phyphox, telefonunuzun sensörlerini fizik deneylerinde kullanmaya izin verecek şekilde okur.";
+"NSCameraUsageDescription" = "Phyphox, özel deney konfigürasyonlarını eklemekte kullanılabilen QR kodlarını taramak için kamerayı kullanır.";
+"NSBluetoothPeripheralUsageDescription" = "Phyphox harici Bluetooth sensörlerinden veri okuma ve harici Bluetooth cihazlarına veri yazma özelliğine sahiptir. Bu özellik ve desteklenen cihazlar hakkında daha fazla bilgiyi http://phyphox.org/ble adresinde bulabilirsiniz.";
+"NSBluetoothAlwaysUsageDescription" = "Phyphox harici Bluetooth sensörlerinden veri okuma ve harici Bluetooth cihazlarına veri yazma özelliğine sahiptir. Bu özellik ve desteklenen cihazlar hakkında daha fazla bilgiyi http://phyphox.org/ble adresinde bulabilirsiniz.";
