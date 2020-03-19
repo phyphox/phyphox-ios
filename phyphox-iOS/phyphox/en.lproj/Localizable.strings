@@ -35,6 +35,7 @@
 "sensorProximity" = "Proximity";
 "sensorTemperature" = "Temperature";
 "sensorHumidity" = "Humidity";
+"sensorAttitude" = "Attitude";
 "sensorVendor" = "Vendor specific";
 "location" = "Location";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";

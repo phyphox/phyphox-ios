@@ -119,6 +119,7 @@
 "gpl" = "Phyphox ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.";
 "sensorTemperature" = "Temperatur";
 "sensorHumidity" = "Luftfeuchtigkeit";
+"sensorAttitude" = "Lage";
 "sensorVendor" = "Herstellerspezifisch";
 "tryagain" = "nochmal versuchen";
 "doContinue" = "Weiter";

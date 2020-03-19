@@ -26,6 +26,7 @@ final class MotionSession {
     private lazy var altimeter = CMAltimeter()
 
     var calibratedMagnetometer = true
+    var attitude = false
 
     private(set) var altimeterRunning = false
     private(set) var accelerometerRunning = false
@@ -216,8 +217,8 @@ final class MotionSession {
 
                 motionManager.deviceMotionUpdateInterval = interval
                 motionManager.showsDeviceMovementDisplay = true
-                if motionManager.isMagnetometerAvailable && calibratedMagnetometer {
-                    motionManager.startDeviceMotionUpdates(using: .xArbitraryCorrectedZVertical, to: makeQueue(), withHandler: { [unowned self] (motion, error) in
+                if motionManager.isMagnetometerAvailable && (calibratedMagnetometer || attitude) {
+                    motionManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical, to: makeQueue(), withHandler: { [unowned self] (motion, error) in
                         for (_, h) in self.deviceMotionReceivers {
                             h(motion, error as NSError?)
                         }
