@@ -83,7 +83,7 @@ final class ExperimentWebServer {
             let result: String
             
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
-            let query = queryDictionary((components?.query!)!)
+            let query = queryDictionary(components?.query ?? "")
             
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
                 var sets = [ExperimentExportSet]()
@@ -120,7 +120,7 @@ final class ExperimentWebServer {
             let result: String
             
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)!
-            let query = queryDictionary(components.query!)
+            let query = queryDictionary(components.query ?? "")
             
             let cmd = query["cmd"]
             
