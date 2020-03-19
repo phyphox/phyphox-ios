@@ -61,6 +61,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     let hasZData: Bool
     let zScaleHeight: CGFloat = 40
     
+    private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
+    
     private var zoomMin: GraphPoint3D<Double>?
     private var zoomMax: GraphPoint3D<Double>?
     private var zoomFollows = false
@@ -337,7 +339,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
             if (zoomFollows || zoomMax != nil) {
-                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit)
+                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
                 dialog.resultDelegate = self
                 dialog.show()
             } else {
@@ -431,6 +433,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        
+        previouslyKept = !(modeX == .reset && modeY == .reset)
         
         layoutDelegate?.restoreLayout()
         

@@ -197,10 +197,13 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         return nil
     }
     
-    init (labelX: String, labelY: String) {
+    init (labelX: String, labelY: String, preselectKeep: Bool) {
         
         self.labelX = labelX
         self.labelY = labelY
+        
+        self.zoomActionX = preselectKeep ? ApplyZoomAction.keep : ApplyZoomAction.reset
+        self.zoomActionY = preselectKeep ? ApplyZoomAction.keep : ApplyZoomAction.reset
         
         super.init(nibName: nil, bundle: nil)
         
