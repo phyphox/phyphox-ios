@@ -159,7 +159,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             
             
             discoveredDevices[peripheral.identifier] = ScanResult(peripheral: peripheral, rssi: rssi, experiment: experiment, advertisedUUIDs: advertisedUUIDs, advertisedName: advertisedName, oneOfMany: oneOfMany, strongestSignal: strongestSignal, firstSeen: firstSeen)
-            scanResultsDelegate?.reloadScanResults()
+            scanResultsDelegate?.reloadScanResults(updatedEntry: peripheral.identifier)
         }
     }
     

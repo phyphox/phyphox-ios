@@ -10,7 +10,7 @@ import UIKit
 import CoreBluetooth
 
 protocol ScanResultsDelegate {
-    func reloadScanResults()
+    func reloadScanResults(updatedEntry: UUID)
     func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?)
 }
 
@@ -28,6 +28,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     var dialogDismissedDelegate: BluetoothScanDialogDismissedDelegate?
     var tableData: [String] = []
     public var ble: BluetoothScan
+    private var sortedResults: [BluetoothScan.ScanResult] = []
     
     var signalImages: [UIImage]
     
@@ -66,10 +67,8 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         super.didReceiveMemoryWarning()
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: UITableViewCell.CellStyle.subtitle, reuseIdentifier: "my")
+    func formatCell(_ cell: UITableViewCell, withEntry entry: BluetoothScan.ScanResult) {
         cell.backgroundColor = kBackgroundColor
-        let entry = [BluetoothScan.ScanResult] (ble.discoveredDevices.values.sorted(by: {$0.firstSeen.compare($1.firstSeen) == .orderedAscending}))[indexPath.row]
         cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
         cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : kTextColor)
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
@@ -88,17 +87,22 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         }
         cell.accessoryView = UIImageView(image: signalImages[signal_i])
         cell.isUserInteractionEnabled = entry.experiment != .unavailable
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: UITableViewCell.CellStyle.subtitle, reuseIdentifier: "my")
+        formatCell(cell, withEntry: sortedResults[indexPath.row])
         return cell
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return ble.discoveredDevices.count
+        return sortedResults.count
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         self.dismiss(animated: true, completion: { () in
-            self.deviceIsChosenDelegate?.useChosenBLEDevice(chosenDevice: [BluetoothScan.ScanResult] (self.ble.discoveredDevices.values)[indexPath.row].peripheral, advertisedUUIDs: [BluetoothScan.ScanResult] (self.ble.discoveredDevices.values)[indexPath.row].advertisedUUIDs)
+            self.deviceIsChosenDelegate?.useChosenBLEDevice(chosenDevice: self.sortedResults[indexPath.row].peripheral, advertisedUUIDs: self.sortedResults[indexPath.row].advertisedUUIDs)
             self.dialogDismissedDelegate?.bluetoothScanDialogDismissed()
         })
     }
@@ -110,8 +114,14 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         })
     }
     
-    func reloadScanResults(){
-        tableView.reloadData()
+    func reloadScanResults(updatedEntry: UUID){
+        if let i = sortedResults.firstIndex(where: { $0.peripheral.identifier == updatedEntry }), let newData = ble.discoveredDevices[updatedEntry], let cell = tableView.cellForRow(at: IndexPath.init(row: i, section: 0)) {
+            sortedResults[i] = newData
+            formatCell(cell, withEntry: newData)
+        } else {
+            sortedResults =  [BluetoothScan.ScanResult] (ble.discoveredDevices.values.sorted(by: {$0.firstSeen.compare($1.firstSeen) == .orderedAscending}))
+            tableView.reloadData()
+        }
     }
    
 }
