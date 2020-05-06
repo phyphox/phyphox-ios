@@ -19,8 +19,6 @@ protocol ExperimentAnalysisDelegate: class {
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }
 
-private let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
-
 protocol ExperimentAnalysisTimestampSource: class {
     func getCurrentTimestamp() -> TimeInterval
 }
@@ -36,6 +34,8 @@ final class ExperimentAnalysis {
     weak var timestampSource: ExperimentAnalysisTimestampSource?
     weak var delegate: ExperimentAnalysisDelegate?
 
+    public var queue: DispatchQueue?
+    
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
         self.modules = modules
         self.sleep = sleep
@@ -110,7 +110,7 @@ final class ExperimentAnalysis {
         let timestamp = timestampSource?.getCurrentTimestamp() ?? 0.0
 
         for (i, analysis) in modules.enumerated() {
-            analysisQueue.async(execute: {
+            queue?.async(execute: {
                 analysis.setNeedsUpdate(timestamp)
                 if i == c {
                     mainThread {

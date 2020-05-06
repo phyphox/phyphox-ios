@@ -37,12 +37,12 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
 
     private var outputList: [BluetoothOutput] = []
 
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothQueue", attributes: [])
+    private var queue: DispatchQueue?
     
     var timer = Timer()
     
     init(device: ExperimentBluetoothDevice, mode: BluetoothMode, outputList: [BluetoothOutput], configList: [BluetoothConfigDescriptor], subscribeOnStart: Bool, rate: Double?) {
-        
+                
         self.outputList = outputList
         self.configList = configList
         
@@ -54,7 +54,8 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         self.device.attachDelegate(self)
     }
     
-    func start(){
+    func start(queue: DispatchQueue){
+        self.queue = queue
         running = true
         startTimestamp = nil
         switch mode {
@@ -180,7 +181,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         }
         
         
-        queue.async {
+        queue?.async {
             autoreleasepool(invoking: {
                 dataInSync(value, t: t, dataBufferIn: dataBufferIn)
             })

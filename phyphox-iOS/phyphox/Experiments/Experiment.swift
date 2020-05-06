@@ -125,6 +125,8 @@ final class Experiment {
     private var pauseBegin: TimeInterval = 0.0
 
     private var audioEngine: AudioEngine?
+    
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
     init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
@@ -360,12 +362,13 @@ final class Experiment {
         try startAudio()
         
         sensorInputTimeReference.t0 = nil
-        sensorInputs.forEach { $0.start() }
-        gpsInputs.forEach { $0.start() }
-        bluetoothInputs.forEach { $0.start() }
+        sensorInputs.forEach { $0.start(queue: queue) }
+        gpsInputs.forEach { $0.start(queue: queue) }
+        bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
         
         analysis?.running = true
+        analysis?.queue = queue
         analysis?.setNeedsUpdate()
     }
     

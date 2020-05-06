@@ -15,6 +15,7 @@ languages([
   "de-DE",
   "el",
   "en-US",
+  "es-ES",
   "fr-FR",
   "it",
   "ja",
@@ -23,6 +24,7 @@ languages([
   "pt-BR",
   "ru",
   "sr",
+  "tr-TR",
   "vi",
   "zh-Hant",
   "zh-Hans"
