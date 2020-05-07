@@ -407,11 +407,84 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {
 
         if let audioOutput = descriptor {
-            guard let buffer = buffers[audioOutput.inputBufferName] else {
-                throw ElementHandlerError.missingElement("data-container")
+            let directBuffer: DataBuffer?
+            var tones: [ExperimentAudioOutputTone] = []
+            let noise: ExperimentAudioOutputNoise?
+            
+            if let inputBuffer = audioOutput.inputBufferName {
+                directBuffer = buffers[inputBuffer]
+                guard directBuffer != nil else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+            } else {
+                directBuffer = nil
             }
-
-            return ExperimentAudioOutput(sampleRate: audioOutput.rate, loop: audioOutput.loop, dataSource: buffer)
+            
+            for toneDescriptor in audioOutput.tones {
+                var frequency = AudioParameter.value(value: 440.0)
+                var amplitude = AudioParameter.value(value: 1.0)
+                var duration = AudioParameter.value(value: 1.0)
+                
+                for input in toneDescriptor.inputs {
+                    let target: String
+                    let parameter: AudioParameter
+                    switch input {
+                    case .buffer(name: let name, usedAs: let usedAs):
+                        target = usedAs
+                        guard let buffer = buffers[name] else {
+                            throw ElementHandlerError.missingElement("data-container")
+                        }
+                        parameter = AudioParameter.buffer(buffer: buffer)
+                    case .value(value: let value, usedAs: let usedAs):
+                        target = usedAs
+                        parameter = AudioParameter.value(value: value)
+                    }
+                    switch target {
+                    case "frequency": frequency = parameter
+                    case "amplitude": amplitude = parameter
+                    case "duration": duration = parameter
+                    default: throw ElementHandlerError.message("Invalid parameter for input of audio output tone.")
+                    }
+                }
+                
+                let tone = ExperimentAudioOutputTone(frequency: frequency, amplitude: amplitude, duration: duration)
+                tones.append(tone)
+            }
+            
+            var amplitude = AudioParameter.value(value: 1.0)
+            var duration = AudioParameter.value(value: 1.0)
+            
+            if let noiseDescriptor = audioOutput.noise {
+                for input in noiseDescriptor.inputs {
+                    let target: String
+                    let parameter: AudioParameter
+                    switch input {
+                    case .buffer(name: let name, usedAs: let usedAs):
+                        target = usedAs
+                        guard let buffer = buffers[name] else {
+                            throw ElementHandlerError.missingElement("data-container")
+                        }
+                        parameter = AudioParameter.buffer(buffer: buffer)
+                    case .value(value: let value, usedAs: let usedAs):
+                        target = usedAs
+                        parameter = AudioParameter.value(value: value)
+                    }
+                    switch target {
+                    case "amplitude": amplitude = parameter
+                    case "duration": duration = parameter
+                    default: throw ElementHandlerError.message("Invalid parameter for input of audio output noise.")
+                    }
+                }
+                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration)
+            } else {
+                noise = nil
+            }
+            
+            if directBuffer == nil && tones.count == 0 && noise == nil {
+                throw ElementHandlerError.message("No inputs for audio output.")
+            }
+            
+            return ExperimentAudioOutput(sampleRate: audioOutput.rate, loop: audioOutput.loop, normalize: audioOutput.normalize, directSource: directBuffer, tones: tones, noise: noise)
         }
         return nil
     }

@@ -10,12 +10,15 @@ import Foundation
 import AVFoundation
 
 private let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioInput", attributes: [])
+private let audioOutputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioOutput", qos: .userInteractive, attributes: [])
 
 final class AudioEngine {
+    let bufferFrameCount: AVAudioFrameCount = 2048
     
     private var engine: AVAudioEngine? = nil
     private var playbackPlayer: AVAudioPlayerNode? = nil
-    private var playbackBuffer: AVAudioPCMBuffer? = nil
+    private var frameIndex: Int = 0
+    private var endIndex: Int = 0
     private var recordInput: AVAudioInputNode? = nil
     
     private var playing = false
@@ -26,8 +29,9 @@ final class AudioEngine {
     
     private var format: AVAudioFormat? = nil
     
-    private var audioOutput: ExperimentAudioOutput? = nil
-    private var audioInput: ExperimentAudioInput? = nil
+    private var sineLookup: [Float]?
+    let sineLookupSize = 4096
+    private var phases: [Double] = []
     
     enum AudioEngineError: Error {
         case RateMissmatch
@@ -51,6 +55,12 @@ final class AudioEngine {
     func startEngine() throws {
         if playbackOut == nil && recordIn == nil {
             return
+        }
+        
+        if let playbackOut = playbackOut, playbackOut.tones.count > 0 {
+            if sineLookup == nil {
+                sineLookup = (0..<sineLookupSize).map{sin(2*Float.pi*Float($0)/Float(sineLookupSize))}
+            }
         }
         
         let avSession = AVAudioSession.sharedInstance()
@@ -105,50 +115,155 @@ final class AudioEngine {
     }
     
     func play() {
-        if playbackOut == nil {
+        guard let playbackOut = playbackOut else {
             return
         }
         
-        if !playing ||  !self.playbackOut!.dataSource.stateTokenIsValid(self.playbackStateToken) {
+        if !playing {
             playing = true
             
-            //If a buffer gets played and paused repeatedly (like the sonar) but the content that is played is always the same the buffer doesn't need to be created again.
-            if self.playbackBuffer == nil || !self.playbackOut!.dataSource.stateTokenIsValid(self.playbackStateToken) {
-                var source = self.playbackOut!.dataSource.toArray().map { Float($0) }
-                self.playbackStateToken = self.playbackOut!.dataSource.stateToken
-                
-                if self.playbackPlayer!.isPlaying {
-                    self.playbackBuffer = nil
-                    self.playbackPlayer!.stop()
-                }
-                
-                if source.count == 0 {
-                    //There is no data to play
-                    playing = false
-                    return
-                }
-                
-                self.playbackBuffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: UInt32(source.count))
-                self.playbackBuffer!.floatChannelData?[0].assign(from: &source, count: source.count)
-                self.playbackBuffer!.frameLength = UInt32(source.count)
+            frameIndex = 0
+            endIndex = 0
+            phases = [Double](repeating: 0.0, count: playbackOut.tones.count)
+            
+            if let inBuffer = playbackOut.directSource {
+                endIndex = max(endIndex, inBuffer.count);
+            }
+            for tone in playbackOut.tones {
+                endIndex = max(endIndex, Int(tone.duration.getValue() ?? 0.0 * AVAudioSession.sharedInstance().sampleRate))
+            }
+            if let noise = playbackOut.noise {
+                endIndex = max(endIndex, Int(noise.duration.getValue() ?? 0.0 * AVAudioSession.sharedInstance().sampleRate))
             }
             
-            do {
-                weak var bufferRef = self.playbackBuffer
-                self.playbackPlayer!.play()
-                self.playbackPlayer!.scheduleBuffer(self.playbackBuffer!, at: nil, options: (playbackOut!.loop ? .loops : []), completionHandler: { [unowned self] in
-                    if bufferRef == self.playbackBuffer { //bufferRef != self.pcmBuffer <=> pcmBuffer was cancelled and recreated because the data source changed, playback should not be cancelled.
-                        self.playing = false
-                    }
-                })
+            appendBufferToPlayback()
+            appendBufferToPlayback()
+            appendBufferToPlayback()
+            appendBufferToPlayback()
+            
+            self.playbackPlayer!.play()
+        }
+    }
+    
+    func appendBufferToPlayback() {
+        guard let playbackOut = playbackOut else {
+            return
+        }
+        
+        var data = [Float](repeating: 0, count: Int(bufferFrameCount))
+        
+        var totalAmplitude: Float = 0.0
+        
+        addDirectBuffer: if let inBuffer = playbackOut.directSource {
+            let inArray = inBuffer.toArray()
+            let sampleCount = inArray.count
+            guard sampleCount > 0 else {
+                break addDirectBuffer
+            }
+            let start = playbackOut.loop ? frameIndex % sampleCount : frameIndex
+            let end = min(inArray.count, start+Int(bufferFrameCount))
+            if end > start {
+                data.replaceSubrange(0..<end-start, with: inArray[start..<end].map { Float($0) })
+            }
+            if playbackOut.loop {
+                var offset = end-start
+                while offset < Int(bufferFrameCount) {
+                    let subEnd = min(inArray.count, Int(bufferFrameCount)-offset)
+                    data.replaceSubrange(offset..<offset+subEnd, with: inArray[0..<subEnd].map { Float($0) })
+                    offset += subEnd
+                }
+            }
+            totalAmplitude += 1.0
+        }
+        for (i, tone) in playbackOut.tones.enumerated() {
+            guard let f = tone.frequency.getValue(), f > 0 else {
+                continue
+            }
+            guard let a = tone.amplitude.getValue(), a > 0 else {
+                continue
+            }
+            totalAmplitude += Float(a)
+            guard let d = tone.duration.getValue(), d > 0 else {
+                continue
+            }
+            guard let sineLookup = sineLookup else {
+                continue
+            }
+            let end: Int
+            if playbackOut.loop {
+                end = Int(bufferFrameCount)
+            } else {
+                end = min(Int(bufferFrameCount), Int(d * AVAudioSession.sharedInstance().sampleRate)-frameIndex)
+            }
+            if end < 1 {
+                continue
+            }
+            //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
+            let phaseStep = f / (Double)(AVAudioSession.sharedInstance().sampleRate)
+            var phase = phases[i]
+            for i in 0..<end {
+                let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                data[i] += Float(a)*sineLookup[lookupIndex]
+                phase += phaseStep
+            }
+            phases[i] = phase
+        }
+        
+        addNoise: if let noise = playbackOut.noise {
+            guard let a = noise.amplitude.getValue(), a > 0 else {
+                break addNoise
+            }
+            totalAmplitude += Float(a)
+            guard let d = noise.duration.getValue(), d > 0 else {
+                break addNoise
+            }
+            let end: Int
+            if playbackOut.loop {
+                end = Int(bufferFrameCount)
+            } else {
+                end = min(Int(bufferFrameCount), Int(d * AVAudioSession.sharedInstance().sampleRate)-frameIndex)
+            }
+            if end < 1 {
+                break addNoise
+            }
+            for i in 0..<end {
+                data[i] += Float.random(in: -Float(a)...Float(a))
             }
         }
+        
+        if playbackOut.normalize {
+            for i in 0..<Int(bufferFrameCount) {
+                data[i] = data[i] / totalAmplitude
+            }
+        }
+        
+        frameIndex += Int(bufferFrameCount)
+            
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: bufferFrameCount) else {
+            return
+        }
+        buffer.floatChannelData?[0].assign(from: &data, count: Int(bufferFrameCount))
+        buffer.frameLength = UInt32(bufferFrameCount)
+        
+        if !playing {
+            return
+        }
+        
+        self.playbackPlayer!.scheduleBuffer(buffer, at: nil, options: [], completionHandler: { [unowned self] in
+            if self.playing && (self.playbackOut?.loop ?? false || self.frameIndex < self.endIndex) {
+                audioOutputQueue.async {
+                    self.appendBufferToPlayback()
+                }
+            } else {
+                self.playing = false
+            }
+        })
     }
     
     func stop() {
         if playing {
-            self.playbackPlayer!.stop()
             playing = false
+            self.playbackPlayer!.stop()
         }
     }
     
@@ -159,7 +274,6 @@ final class AudioEngine {
         engine = nil
         
         playbackPlayer = nil
-        playbackBuffer = nil
         
         playbackOut = nil
         recordIn = nil

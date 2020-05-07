@@ -11,22 +11,116 @@ import CoreBluetooth
 
 // This file contains element handlers for the `output` child element (and its child elements) of the `phyphox` root element.
 
+enum AudioOutputSubInputDescriptor {
+    case value(value: Double, usedAs: String)
+    case buffer(name: String, usedAs: String)
+}
+
+final class AudioOutputSubInputElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [AudioOutputSubInputDescriptor]()
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    private enum Attribute: String, AttributeKey {
+        case type
+        case clear
+        case usedAs = "parameter"
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let type = try attributes.optionalValue(for: .type) ?? DataInputTypeAttribute.buffer
+        let usedAs = attributes.optionalString(for: .usedAs) ?? ""
+
+        switch type {
+        case .buffer:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
+
+            results.append(.buffer(name: text, usedAs: usedAs))
+        case .value:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
+
+            guard let value = Double(text) else {
+                throw ElementHandlerError.unreadableData
+            }
+
+            results.append(.value(value: value, usedAs: usedAs))
+        case .empty:
+            break
+        }
+    }
+}
+
+struct AudioOutputToneDescriptor {
+    let inputs: [AudioOutputSubInputDescriptor]
+}
+
+private final class AudioToneElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [AudioOutputToneDescriptor]()
+    
+    private let inputsHandler = AudioOutputSubInputElementHandler()
+    
+    var childHandlers: [String : ElementHandler]
+    
+    init() {
+        childHandlers = ["input": inputsHandler]
+    }
+    
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let inputs = inputsHandler.results
+        
+        results.append(AudioOutputToneDescriptor(inputs: inputs))
+    }
+}
+
+struct AudioOutputNoiseDescriptor {
+    let inputs: [AudioOutputSubInputDescriptor]
+}
+
+private final class AudioNoiseElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [AudioOutputNoiseDescriptor]()
+    
+    private let inputsHandler = AudioOutputSubInputElementHandler()
+    
+    var childHandlers: [String : ElementHandler]
+    
+    init() {
+        childHandlers = ["input": inputsHandler]
+    }
+    
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let inputs = inputsHandler.results
+        
+        results.append(AudioOutputNoiseDescriptor(inputs: inputs))
+    }
+}
+
 struct AudioOutputDescriptor {
     let rate: UInt
     let loop: Bool
+    let normalize: Bool
 
-    let inputBufferName: String
+    let inputBufferName: String?
+    let tones: [AudioOutputToneDescriptor]
+    let noise: AudioOutputNoiseDescriptor?
 }
 
 private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
     var results = [AudioOutputDescriptor]()
 
     private let inputHandler = TextElementHandler()
+    private let toneHandler = AudioToneElementHandler()
+    private let noiseHandler = AudioNoiseElementHandler()
 
     var childHandlers: [String : ElementHandler]
 
     init() {
-        childHandlers = ["input": inputHandler]
+        childHandlers = ["input": inputHandler, "tone": toneHandler, "noise": noiseHandler]
     }
 
     func startElement(attributes: AttributeContainer) throws {}
@@ -34,6 +128,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     private enum Attribute: String, AttributeKey {
         case rate
         case loop
+        case normalize
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -41,10 +136,13 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
 
         let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
         let loop = try attributes.optionalValue(for: .loop) ?? false
+        let normalize = try attributes.optionalValue(for: .normalize) ?? false
 
-        let inputBufferName = try inputHandler.expectSingleResult()
+        let inputBufferName = try inputHandler.expectOptionalResult()
+        let tones = toneHandler.results
+        let noise = try noiseHandler.expectOptionalResult()
         
-        results.append(AudioOutputDescriptor(rate: rate, loop: loop, inputBufferName: inputBufferName))
+        results.append(AudioOutputDescriptor(rate: rate, loop: loop, normalize: normalize, inputBufferName: inputBufferName, tones: tones, noise: noise))
     }
 }
 
