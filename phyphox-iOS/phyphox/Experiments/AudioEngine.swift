@@ -146,6 +146,7 @@ final class AudioEngine {
     }
     
     func appendBufferToPlayback() {
+
         guard let playbackOut = playbackOut else {
             return
         }
@@ -153,7 +154,7 @@ final class AudioEngine {
         var data = [Float](repeating: 0, count: Int(bufferFrameCount))
         
         var totalAmplitude: Float = 0.0
-        
+
         addDirectBuffer: if let inBuffer = playbackOut.directSource {
             let inArray = inBuffer.toArray()
             let sampleCount = inArray.count
@@ -175,6 +176,7 @@ final class AudioEngine {
             }
             totalAmplitude += 1.0
         }
+
         for (i, tone) in playbackOut.tones.enumerated() {
             guard let f = tone.frequency.getValue(), f > 0 else {
                 continue
@@ -208,7 +210,7 @@ final class AudioEngine {
             }
             phases[i] = phase
         }
-        
+
         addNoise: if let noise = playbackOut.noise {
             guard let a = noise.amplitude.getValue(), a > 0 else {
                 break addNoise
@@ -230,6 +232,11 @@ final class AudioEngine {
                 data[i] += Float.random(in: -Float(a)...Float(a))
             }
         }
+
+        guard totalAmplitude > 0 else {
+            stop()
+            return
+        }
         
         if playbackOut.normalize {
             for i in 0..<Int(bufferFrameCount) {
@@ -240,6 +247,7 @@ final class AudioEngine {
         frameIndex += Int(bufferFrameCount)
             
         guard let buffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: bufferFrameCount) else {
+            stop()
             return
         }
         buffer.floatChannelData?[0].assign(from: &data, count: Int(bufferFrameCount))
@@ -248,7 +256,6 @@ final class AudioEngine {
         if !playing {
             return
         }
-        
         self.playbackPlayer!.scheduleBuffer(buffer, at: nil, options: [], completionHandler: { [unowned self] in
             if self.playing && (self.playbackOut?.loop ?? false || self.frameIndex < self.endIndex) {
                 audioOutputQueue.async {
