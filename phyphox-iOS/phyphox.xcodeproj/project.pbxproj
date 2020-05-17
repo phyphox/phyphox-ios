@@ -197,6 +197,7 @@
 		C07B53092294267400BA085A /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */; };
 		C07B530B229426AD00BA085A /* ExperimentBluetoothOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */; };
 		C07B530D22942CC300BA085A /* InputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530C22942CC300BA085A /* InputConversion.swift */; };
+		C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
@@ -638,6 +639,7 @@
 		C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothInput.swift; sourceTree = "<group>"; };
 		C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothOutput.swift; sourceTree = "<group>"; };
 		C07B530C22942CC300BA085A /* InputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConversion.swift; sourceTree = "<group>"; };
+		C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRC32InputStream.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
@@ -856,6 +858,7 @@
 				6B0C71541C1C706A00500FEE /* Constants.swift */,
 				6BD026611CB5423C005085B1 /* checkout.sh */,
 				C079BC692260D2B40018D6A5 /* localizationHelper.swift */,
+				C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */,
 				6B00F0CE1C46F74A00971941 /* phyphox-Bridging-Header.h */,
 				6BFE374C2044715E00301CA3 /* Licenses */,
 				6BFE374B2044714600301CA3 /* UI */,
@@ -1786,6 +1789,7 @@
 				4BA406C21EB618B30046E36A /* AudioEngine.swift in Sources */,
 				6B00F0A41C457B7200971941 /* ExperimentEditView.swift in Sources */,
 				4B36E35B1EDF513900F6D1DD /* ExperimentGPSInput.swift in Sources */,
+				C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */,
 				6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
 				6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */,

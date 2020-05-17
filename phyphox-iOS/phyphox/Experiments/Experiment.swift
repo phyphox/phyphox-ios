@@ -33,7 +33,7 @@ final class Experiment {
     let stateTitle: String?
     private let description: String?
     private let links: [ExperimentLink]
-    private let category: String
+    let category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
@@ -91,6 +91,7 @@ final class Experiment {
 
     var local: Bool = false
     var source: URL?
+    var crc32: UInt?
     
     var appleBan: Bool
     

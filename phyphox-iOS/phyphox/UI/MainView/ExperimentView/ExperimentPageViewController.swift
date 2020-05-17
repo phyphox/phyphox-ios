@@ -353,7 +353,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         var hintShown = false
         
         //Ask to save the experiment locally if it has been loaded from a remote source
-        if !experiment.local {
+        if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
             let al = UIAlertController(title: localize("save_locally"), message: localize("save_locally_message"), preferredStyle: .alert)
             
             al.addAction(UIAlertAction(title: localize("save_locally_button"), style: .default, handler: { _ in
@@ -888,7 +888,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
         
-        if !experiment.local {
+        if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
             alert.addAction(UIAlertAction(title: localize("save_locally"), style: .default, handler: { [unowned self] action in
                 try? self.saveLocally()
             }))
@@ -908,6 +908,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func saveLocally() throws {
+        if (ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32)) {
+            return
+        }
         try experiment.saveLocally(quiet: false, presenter: self.navigationController)
         ExperimentManager.shared.reloadUserExperiments()
     }

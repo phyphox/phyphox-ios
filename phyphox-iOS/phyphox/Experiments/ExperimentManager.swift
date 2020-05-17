@@ -248,6 +248,20 @@ final class ExperimentManager {
         loadSavedExperiments()
     }
     
+    func experimentInCollection(crc32: UInt?) -> Bool {
+        guard let crc32 = crc32 else {
+            return false
+        }
+        for collection in experimentCollections {
+            for experiment in collection.experiments {
+                if experiment.experiment.crc32 == crc32 {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
     init() {
         let timestamp = CFAbsoluteTimeGetCurrent()
 
