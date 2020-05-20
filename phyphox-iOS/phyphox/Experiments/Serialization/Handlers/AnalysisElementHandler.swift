@@ -86,6 +86,10 @@ struct AnalysisDescriptor {
     let sleep: Double
     let dynamicSleepName: String?
 
+    let timedRun: Bool
+    let timedRunStartDelay: Double
+    let timedRunStopDelay: Double
+    
     let modules: [(name: String, descriptor: AnalysisModuleDescriptor)]
 }
 
@@ -107,6 +111,9 @@ final class AnalysisElementHandler: ResultElementHandler {
     private enum Attribute: String, AttributeKey {
         case sleep
         case dynamicSleep
+        case timedRun
+        case timedRunStartDelay
+        case timedRunStopDelay
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -114,14 +121,18 @@ final class AnalysisElementHandler: ResultElementHandler {
 
         let sleep = try attributes.optionalValue(for: .sleep) ?? 0.0
         let dynamicSleep: String? = attributes.optionalString(for: .dynamicSleep)
-
+        
+        let timedRun = try attributes.optionalValue(for: .timedRun) ?? false
+        let timedRunStartDelay = try attributes.optionalValue(for: .timedRunStartDelay) ?? 3.0
+        let timedRunStopDelay = try attributes.optionalValue(for: .timedRunStopDelay) ?? 10.0
+        
         guard moduleNames.count == moduleHandler.results.count else {
             throw ElementHandlerError.message("Unparsed Analysis Module")
         }
 
         let modules = Array(zip(moduleNames, moduleHandler.results))
 
-        results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, modules: modules))
+        results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, timedRun: timedRun, timedRunStartDelay: timedRunStartDelay, timedRunStopDelay: timedRunStopDelay, modules: modules))
     }
 
     func clearChildHandlers() {

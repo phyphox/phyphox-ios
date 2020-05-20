@@ -183,7 +183,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
             let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
 
-            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil)
+            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil, timedRun: descriptor.timedRun, timedRunStartDelay: descriptor.timedRunStartDelay, timedRunStopDelay: descriptor.timedRunStopDelay)
         }
 
         let inputDescriptor = try inputHandler.expectOptionalResult()

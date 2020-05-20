@@ -47,8 +47,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return experimentRunTimer?.fireDate.timeIntervalSinceNow ?? 0.0
     }
     
-    private var timerDelayString: String?
-    private var timerDurationString: String?
+    private var timerDelay: Double
+    private var timerDuration: Double
     private var timerEnabled = false
     
     private var experimentStartTimer: Timer?
@@ -99,6 +99,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     init(experiment: Experiment) {
         self.experiment = experiment
         self.webServer = ExperimentWebServer(experiment: experiment)
+        
+        self.timerEnabled = experiment.analysis?.timedRun ?? false
+        self.timerDelay = experiment.analysis?.timedRunStartDelay ?? 3.0
+        self.timerDuration = experiment.analysis?.timedRunStopDelay ?? 10.0
         
         var modules: [[UIView]] = []
         
@@ -222,6 +226,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             deleteItem,
             playItem!
         ]
+        
+        updateTimerInBar()
 
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
@@ -745,6 +751,38 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
+    private func updateTimerInBar() {
+        guard var items = self.navigationItem.rightBarButtonItems else {
+            return
+        }
+
+        if let label = items.last?.customView as? UILabel {
+            //The timer label is visible
+            if !timerEnabled {
+                //...but it should not be
+                items.removeLast()
+                self.navigationItem.rightBarButtonItems = items
+            } else {
+                //...and that is correct. Let's make sure it is up to date
+                label.text = "\(self.timerDelay)s"
+                label.sizeToFit()
+            }
+        } else {
+            //The timer label is not visible
+            if timerEnabled {
+                //...but it should be
+                let label = UILabel()
+                label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                label.textColor = kTextColor
+                label.text = "\(self.timerDelay)s"
+                label.sizeToFit()
+            
+                items.append(UIBarButtonItem(customView: label))
+                self.navigationItem.rightBarButtonItems = items
+            }
+        }
+    }
+    
     private func showTimerOptions() {
         let alert = UIAlertController(title: localize("timedRunDialogTitle"), message: nil, preferredStyle: .alert)
         
@@ -752,44 +790,32 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             textField.keyboardType = .decimalPad
             textField.placeholder = localize("timedRunStartDelay")
             
-            textField.text = self.timerDelayString
+            textField.text = String(self.timerDelay)
         }
         
         alert.addTextField { [unowned self] textField in
             textField.keyboardType = .decimalPad
             textField.placeholder = localize("timedRunStopDelay")
             
-            textField.text = self.timerDurationString
+            textField.text = String(self.timerDuration)
         }
         
         alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self, unowned alert] action in
-            if (!self.timerEnabled) {
-                let label = UILabel()
-                label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
-                label.textColor = kTextColor
-                label.text = "\(alert.textFields!.first!.text ?? "0")s"
-                label.sizeToFit()
-            
-                var items = self.navigationItem.rightBarButtonItems!
-                items.append(UIBarButtonItem(customView: label))
-                self.navigationItem.rightBarButtonItems = items
-            }
             
             self.timerEnabled = true
-            self.timerDelayString = alert.textFields!.first!.text
-            self.timerDurationString = alert.textFields!.last!.text
+            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
+            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            
+            self.updateTimerInBar()
             }))
         
         alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self, unowned alert] action in
-            if (self.timerEnabled) {
-                var items = self.navigationItem.rightBarButtonItems!
-                items.removeLast()
-                self.navigationItem.rightBarButtonItems = items
-            }
             
             self.timerEnabled = false
-            self.timerDelayString = alert.textFields!.first!.text
-            self.timerDurationString = alert.textFields!.last!.text
+            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
+            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            
+            self.updateTimerInBar()
             }))
         
         self.navigationController!.present(alert, animated: true, completion: nil)
@@ -925,7 +951,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentStartTimer?.invalidate()
         experimentStartTimer = nil
         
-        let d = Double(timerDurationString ?? "0") ?? 0.0
+        let d = timerDuration
         let i = Int(d)
         
         var items = navigationItem.rightBarButtonItems
@@ -979,11 +1005,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
+                updateTimerInBar()
                 return
             }
             
             if timerEnabled {
-                let d = Double(timerDelayString ?? "0") ?? 0.0
+                let d = timerDelay
                 let i = Int(d)
 
                 var items = navigationItem.rightBarButtonItems
@@ -1066,7 +1093,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let label = items.last!.customView! as! UILabel
                 
-                label.text = "\(self.timerDelayString ?? "0")s"
+                label.text = "\(self.timerDelay)s"
                 label.sizeToFit()
                 
                 items.removeLast()

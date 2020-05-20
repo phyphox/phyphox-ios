@@ -29,6 +29,10 @@ final class ExperimentAnalysis {
     private let sleep: Double
     private let dynamicSleep: DataBuffer?
 
+    public let timedRun: Bool
+    public let timedRunStartDelay: Double
+    public let timedRunStopDelay: Double
+    
     var running = false
     
     weak var timestampSource: ExperimentAnalysisTimestampSource?
@@ -36,11 +40,15 @@ final class ExperimentAnalysis {
 
     public var queue: DispatchQueue?
     
-    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
+    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double) {
         self.modules = modules
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
 
+        self.timedRun = timedRun
+        self.timedRunStartDelay = timedRunStartDelay
+        self.timedRunStopDelay = timedRunStopDelay
+        
         //We subscribe to all buffers which are used as an input BEFORE another analysis module has written to them. This in particular not only includes inputs from sensors, Bluetooth inputs and similar, but also buffers that may have been written at the end of the previous analysis run.
         var internallyUpdatedBuffers: Set<String> = []
         for module in modules {
