@@ -207,6 +207,9 @@
 		C0984B2E2278870300D0EBCD /* GLMapShaderProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */; };
 		C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09962AC22391AF00015AE17 /* FixedTableView.swift */; };
 		C0A3BE5B2390070900951C23 /* NetworkElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A3BE5A2390070900951C23 /* NetworkElementHandler.swift */; };
+		C0A97FE72477DCBF00A630EE /* SortAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A97FE62477DCBF00A630EE /* SortAnalysis.swift */; };
+		C0A97FF92477E39000A630EE /* InterpolateAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A97FF82477E39000A630EE /* InterpolateAnalysis.swift */; };
+		C0A97FFB2477EC9B00A630EE /* LoessAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A97FFA2477EC9A00A630EE /* LoessAnalysis.swift */; };
 		C0AD8542229E7E7A00421738 /* MenuTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */; };
 		C0AD8552229EA1CF00421738 /* HintBubbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */; };
 		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
@@ -649,6 +652,9 @@
 		C0984B2D2278870300D0EBCD /* GLMapShaderProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMapShaderProgram.swift; sourceTree = "<group>"; };
 		C09962AC22391AF00015AE17 /* FixedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTableView.swift; sourceTree = "<group>"; };
 		C0A3BE5A2390070900951C23 /* NetworkElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkElementHandler.swift; sourceTree = "<group>"; };
+		C0A97FE62477DCBF00A630EE /* SortAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortAnalysis.swift; sourceTree = "<group>"; };
+		C0A97FF82477E39000A630EE /* InterpolateAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpolateAnalysis.swift; sourceTree = "<group>"; };
+		C0A97FFA2477EC9A00A630EE /* LoessAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoessAnalysis.swift; sourceTree = "<group>"; };
 		C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuTableViewController.swift; sourceTree = "<group>"; };
 		C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintBubbleViewController.swift; sourceTree = "<group>"; };
 		C0AE8A972294558000A3EC48 /* ConfigConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigConversion.swift; sourceTree = "<group>"; };
@@ -1179,6 +1185,8 @@
 				6B7BF8181C147C94007408FB /* RangefilterAnalysis.swift */,
 				4B3E495D1CF7716D00C43837 /* MatchAnalysis.swift */,
 				6B7BF81A1C147CA8007408FB /* GaussSmoothAnalysis.swift */,
+				C0A97FFA2477EC9A00A630EE /* LoessAnalysis.swift */,
+				C0A97FF82477E39000A630EE /* InterpolateAnalysis.swift */,
 				6B7BF81C1C147CC2007408FB /* CrosscorrelationAnalysis.swift */,
 				6B7BF8221C147D09007408FB /* FFTAnalysis.swift */,
 				6B7BF8201C147CF3007408FB /* AutocorrelationAnalysis.swift */,
@@ -1193,6 +1201,7 @@
 				4B47B03C1DA6B12500CCBA6E /* BinningAnalysis.swift */,
 				4B55689B1DD7BAC8000C033E /* IfAnalysis.swift */,
 				4BE1DEFA1E5096F400F10C71 /* SubrangeAnalysis.swift */,
+				C0A97FE62477DCBF00A630EE /* SortAnalysis.swift */,
 				C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */,
 				C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */,
 				C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */,
@@ -1671,6 +1680,7 @@
 				6B612FF4207EA4E5001DA8D9 /* OutputElementHandler.swift in Sources */,
 				6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */,
 				6B612FFD207F70D9001DA8D9 /* ExperimentAnalysisFactory.swift in Sources */,
+				C0A97FE72477DCBF00A630EE /* SortAnalysis.swift in Sources */,
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
@@ -1775,6 +1785,7 @@
 				6BEA9451207FE3D90077274A /* SeparatorViewElementHandler.swift in Sources */,
 				6B0C714E1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift in Sources */,
 				C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */,
+				C0A97FF92477E39000A630EE /* InterpolateAnalysis.swift in Sources */,
 				6B612FE9207E5ABC001DA8D9 /* LinkElementHandler.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,
@@ -1791,6 +1802,7 @@
 				4B36E35B1EDF513900F6D1DD /* ExperimentGPSInput.swift in Sources */,
 				C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */,
 				6B00F02A1C4072B700971941 /* ExperimentViewController.swift in Sources */,
+				C0A97FFB2477EC9B00A630EE /* LoessAnalysis.swift in Sources */,
 				6B7BF7BB1C130471007408FB /* ExperimentManager.swift in Sources */,
 				6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */,
 				6B6A4C202056A367007586D0 /* GLGraphShaderProgram.swift in Sources */,
