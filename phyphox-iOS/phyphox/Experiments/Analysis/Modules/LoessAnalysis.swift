@@ -95,7 +95,9 @@ final class LoessAnalysis: ExperimentAnalysisModule {
         
         let incount = min(x.count, y.count)
 
-        var result: [Double] = []
+        var result_yi0: [Double] = []
+        var result_yi1: [Double] = []
+        var result_yi2: [Double] = []
         
         var minj = 0
         for xi in xOut {
@@ -154,22 +156,61 @@ final class LoessAnalysis: ExperimentAnalysisModule {
 
             let yi = (a*swy + b*swxy + c*swxxy)/det;
 
+            result_yi0.append(yi)
             
-            result.append(yi)
+            if outputs.count > 1 {
+                let d = sw*swxxxx-swxx*swxx;
+                let e = swx*swxx-sw*swxxx;
+                let f = sw*swxx-swx*swx;
 
+                let yi1 = (b * swy + d * swxy + e * swxxy) / det;
+                result_yi1.append(yi1);
+            
+                let yi2 = (c * swy + e * swxy + f * swxxy) / det;
+                result_yi2.append(yi2);
+            }
+            
         }
         
 
         switch outputs[0] {
         case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
             if clear {
-                buffer.replaceValues(result)
+                buffer.replaceValues(result_yi0)
             }
             else {
-                buffer.appendFromArray(result)
+                buffer.appendFromArray(result_yi0)
             }
         case .value(value: _, usedAs: _):
             break
+        }
+        
+        if outputs.count > 1 {
+            switch outputs[1] {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result_yi1)
+                }
+                else {
+                    buffer.appendFromArray(result_yi1)
+                }
+            case .value(value: _, usedAs: _):
+                break
+            }
+        }
+        
+        if outputs.count > 2 {
+            switch outputs[2] {
+            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                if clear {
+                    buffer.replaceValues(result_yi2)
+                }
+                else {
+                    buffer.appendFromArray(result_yi2)
+                }
+            case .value(value: _, usedAs: _):
+                break
+            }
         }
     }
 }
