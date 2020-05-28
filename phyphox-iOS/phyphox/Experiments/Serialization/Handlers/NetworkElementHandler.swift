@@ -16,6 +16,7 @@ struct NetworkConnectionSendDescriptor {
     }
     let type: SendableType
     let name: String
+    let additionalAttributes: [String:String]
 }
 
 private final class NetworkConnectionSendElementHandler: ResultElementHandler, ChildlessElementHandler {
@@ -26,6 +27,7 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
     private enum Attribute: String, AttributeKey {
         case id
         case type
+        case datatype
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -35,7 +37,11 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
 
         let id = try attributes.nonEmptyString(for: .id)
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
-        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text))
+        var additionalAttributes = [String:String]()
+        if let datatype = attributes.optionalString(for: .datatype) {
+            additionalAttributes[Attribute.datatype.rawValue] = datatype
+        }
+        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text, additionalAttributes: additionalAttributes))
     }
 
     func clear() {

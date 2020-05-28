@@ -54,7 +54,7 @@ class HttpGetService: NetworkService {
         
         var queryItems: [URLQueryItem] = url.queryItems ?? []
         for item in send.keys {
-            switch send[item] {
+            switch send[item]?.source {
             case .Buffer(let buffer):
                 queryItems.append(URLQueryItem(name: item, value: String(buffer.last ?? Double.nan)))
             case .Metadata(let metadata):
@@ -131,9 +131,17 @@ class HttpPostService: NetworkService {
         if send.count > 0 {
             var json = [String:Any]()
             for item in send.keys {
-                switch send[item] {
+                switch send[item]?.source {
                 case .Buffer(let buffer):
-                    json[item] = buffer.toArray().map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject
+                    if send[item]?.additionalAttributes["datatype"] == "number" {
+                        if let last = buffer.last {
+                            json[item] = last.isFinite ? last as AnyObject : NSNull() as AnyObject
+                        } else {
+                            json[item] = NSNull() as AnyObject
+                        }
+                    } else {
+                        json[item] = buffer.toArray().map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject
+                    }
                 case .Metadata(let metadata):
                     json[item] = metadata.get(hash: address)
                 case .none: break

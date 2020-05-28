@@ -242,9 +242,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         guard let buffer = buffers[item.name] else {
                             throw ElementHandlerError.missingElement("data-container")
                         }
-                        send[item.id] = NetworkSendableData.Buffer(buffer)
+                        send[item.id] = NetworkSendableData(source: .Buffer(buffer), additionalAttributes: item.additionalAttributes)
                     case .meta:
-                        let metadata: NetworkSendableData
+                        let metadata: NetworkSendableData.Source
                         switch (item.name) {
                         case "uniqueID": metadata = .Metadata(.uniqueId)
                         case "version": metadata = .Metadata(.version)
@@ -258,14 +258,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "deviceCodename": metadata = .Metadata(.deviceCodename)
                         case "deviceRelease": metadata = .Metadata(.deviceRelease)
                         default:
-                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData? {
+                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData.Source? {
                                 if name.starts(with: sensor) {
                                     let sensorMetadata = name.dropFirst(sensor.count)
                                     let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
                                     guard let sensorMeta = NetworkSensorMetadata(rawValue: String(sensorMetadataMatch)) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
-                                    return NetworkSendableData.Metadata(.sensor(SensorType.accelerometer, sensorMeta))
+                                    return .Metadata(.sensor(SensorType.accelerometer, sensorMeta))
                                 }
                                 return nil
                             }
@@ -293,7 +293,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                                 throw ElementHandlerError.message("Unknown metadata name \(item.name)")
                             }
                         }
-                        send[item.id] = metadata
+                        send[item.id] = NetworkSendableData(source: metadata, additionalAttributes: item.additionalAttributes)
                     }
                     
                 }
