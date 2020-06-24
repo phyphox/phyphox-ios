@@ -653,6 +653,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
         
+        _ = url.startAccessingSecurityScopedResource()
+        
         //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
         if url.scheme == "phyphox" {
             //phyphox:// allow to retreive the experiment via https or http. Try both.
@@ -737,6 +739,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 experimentLoadingError = SerializationError.invalidExperimentFile(message: "Unkown file format.")
             }
         }
+        
+        _ = url.stopAccessingSecurityScopedResource()
         
         if experimentLoadingError != nil {
             let message: String
