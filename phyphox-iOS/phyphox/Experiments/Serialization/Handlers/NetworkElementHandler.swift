@@ -145,10 +145,11 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         default: throw ElementHandlerError.message("Unkown network service: \(serviceStr)")
         }
         
-        let conversionStr = try attributes.nonEmptyString(for: .conversion)
+        let conversionStr = attributes.optionalString(for: .conversion) ?? "none"
         let conversion: NetworkConversion
         
         switch conversionStr {
+        case "none": conversion = NoneNetworkConversion()
         case "json": conversion = JSONNetworkConversion()
         default: throw ElementHandlerError.message("Unkown network conversion: \(conversionStr)")
         }

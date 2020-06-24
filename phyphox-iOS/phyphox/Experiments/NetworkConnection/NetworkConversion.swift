@@ -20,6 +20,16 @@ enum NetworkConversionError: Error {
     case notImplemented
 }
 
+class NoneNetworkConversion: NetworkConversion {
+
+    func prepare(data: Data) throws {
+    }
+    
+    func get(_ id: String) throws -> [Double] {
+        return []
+    }
+}
+
 class JSONNetworkConversion: NetworkConversion {
 
     var json: [String: Any]? = nil
