@@ -81,9 +81,9 @@ final class Experiment {
     
     var fontColor: UIColor {
         if color.luminance > 0.7 {
-            return UIColor.black
+            return UIColor(white: 0.0, alpha: 1.0)
         } else {
-            return UIColor.white
+            return UIColor(white: 1.0, alpha: 1.0)
         }
     }
 

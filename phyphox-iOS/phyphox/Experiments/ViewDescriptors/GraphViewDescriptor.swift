@@ -213,7 +213,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         if colorMap.count > 1 {
             self.colorMap = colorMap
         } else {
-            self.colorMap = [UIColor.black, kHighlightColor, UIColor.white]
+            self.colorMap = [UIColor(white: 0.0, alpha: 1.0), kHighlightColor, UIColor(white: 1.0, alpha: 1.0)]
         }
         
         self.label = label

@@ -18,9 +18,9 @@ func CGRectGetMid(_ r: CGRect) -> CGPoint {
 
 let iPad = UI_USER_INTERFACE_IDIOM() == .pad
 
-let kBackgroundColor = UIColor(white: 0.251, alpha: 1.0)
-let kDarkBackgroundColor = UIColor(white: 0.125, alpha: 1.0)
-let kLightBackgroundColor = UIColor(white: 0.376, alpha: 1.0)
+let kBackgroundColor = UIColor(white: 32.0/255.0, alpha: 1.0)
+let kDarkBackgroundColor = UIColor(white: 16.0/255.0, alpha: 1.0)
+let kLightBackgroundColor = UIColor(white: 64.0/255.0, alpha: 1.0)
 let kLightBackgroundHoverColor = UIColor(white: 0.5, alpha: 1.0)
 let kHighlightColor = UIColor(red: (255.0/255.0), green: (126.0/255.0), blue: (34.0/255.0), alpha: 1.0)
 let kTextColor = UIColor(white: 1.0, alpha: 1.0)
