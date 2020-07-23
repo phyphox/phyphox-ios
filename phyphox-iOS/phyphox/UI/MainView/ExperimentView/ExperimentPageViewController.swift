@@ -341,8 +341,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             switch input {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
                 output.replaceValues(buffer.toArray())
+                output.triggerUserInput()
             case .value(let value, usedAs: _):
                 output.replaceValues([value])
+                output.triggerUserInput()
             }
         }
         if !callbackHandedOver {
