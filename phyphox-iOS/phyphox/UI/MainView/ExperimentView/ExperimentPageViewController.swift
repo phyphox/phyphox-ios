@@ -1131,7 +1131,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func clearData() {
         self.stopExperiment()
-        self.experiment.clear()
+        self.experiment.clear(byUser: true)
         
         self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
         

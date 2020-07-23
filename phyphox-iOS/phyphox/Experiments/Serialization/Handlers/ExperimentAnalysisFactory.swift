@@ -87,7 +87,47 @@ final class ExperimentAnalysisFactory {
         let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
         let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
         let attributes = descriptor.attributes
+        
+        var cycles: [(Int,Int)] = []
+        if let cycleStr = attributes.attributes(keyedBy: String.self).optionalString(for: "cycles") {
+            cycles = []
+            let parts = cycleStr.components(separatedBy: " ")
+            for part in parts {
+                let startStop = part.trimmingCharacters(in: .whitespaces).components(separatedBy: "-")
+                switch startStop.count {
+                case 1:
+                    if let cycle = Int(startStop[0]) {
+                        cycles.append((cycle, cycle))
+                    } else {
+                        throw ElementHandlerError.message("Invalid cycle descriptor: \(part)")
+                    }
+                case 2:
+                    let cycle1: Int, cycle2: Int
+                    if startStop[0].count > 0 {
+                        guard let i = Int(startStop[0]) else {
+                            throw ElementHandlerError.message("Invalid cycle descriptor: \(part)")
+                        }
+                        cycle1 = i
+                    } else {
+                        cycle1 = -1
+                    }
+                    if startStop[1].count > 0 {
+                        guard let i = Int(startStop[1]) else {
+                            throw ElementHandlerError.message("Invalid cycle descriptor: \(part)")
+                        }
+                        cycle2 = i
+                    } else {
+                        cycle2 = -1
+                    }
+                    cycles.append((cycle1, cycle2))
+                default:
+                    throw ElementHandlerError.message("Invalid cycle descriptor: \(part)")
+                }
+            }
+        }
 
-        return try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+        let module = try analysisClass.init(inputs: inputs, outputs: outputs, additionalAttributes: attributes)
+        module.setCycles(cycles: cycles)
+        return module
     }
 }

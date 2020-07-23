@@ -36,6 +36,8 @@ final class FormulaAnalysis: ExperimentAnalysisModule {
         
         let result = parser.execute(buffers: inArrays)
 
+        beforeWrite()
+        
         if let output = outputs.first {
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

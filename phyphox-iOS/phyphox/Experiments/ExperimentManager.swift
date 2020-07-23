@@ -11,7 +11,7 @@ import JGProgressHUD
 import CoreBluetooth
 
 let emptyBuffer: DataBuffer = {
-    let buffer = try! DataBuffer(name: "empty", storage: .memory(size: 0), baseContents: [], static: true)
+    let buffer = try! DataBuffer(name: "empty", size: 0, baseContents: [], static: true)
     buffer.clear()
     return buffer
 }()

@@ -15,6 +15,8 @@ class ExperimentAnalysisModule {
     let inputs: [ExperimentAnalysisDataIO]
     let outputs: [ExperimentAnalysisDataIO]
     
+    var cycles: [(Int,Int)] = []
+    
     var timestamp: TimeInterval = 0.0
 
     let attributeContainer: AttributeContainer
@@ -23,6 +25,10 @@ class ExperimentAnalysisModule {
         self.inputs = inputs
         self.outputs = outputs
         self.attributeContainer = additionalAttributes
+    }
+    
+    func setCycles(cycles: [(Int,Int)]) {
+        self.cycles = cycles
     }
     
     /**
@@ -52,7 +58,7 @@ class ExperimentAnalysisModule {
         
     }
     
-    func didUpdate() {
+    func beforeWrite() {
         for input in inputs {
             switch input {
             case .value(value: _, usedAs: _):
@@ -63,6 +69,10 @@ class ExperimentAnalysisModule {
                 }
             }
         }
+    }
+    
+    func didUpdate() {
+        
     }
     
     func update() {

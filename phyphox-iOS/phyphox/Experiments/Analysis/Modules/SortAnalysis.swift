@@ -53,27 +53,30 @@ final class SortAnalysis: ExperimentAnalysisModule {
             offsets = mainArray.enumerated().sorted {$0.element < $1.element}.map{$0.offset}
         }
         
+        var results: [[Double]] = []
         for (i, bufferIn) in ins.enumerated() {
-            let inArray: [Double]
+            guard i < outputs.count else { break }
 
             switch bufferIn {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                inArray = buffer.toArray()
+                results.append(offsets.map{buffer.toArray()[$0]})
             case .value(value: _, usedAs: _):
-                continue
+                results.append([])
             }
-
-            guard i < outputs.count else { break }
-
+        }
+        
+        beforeWrite()
+        
+        for (i, result) in results.enumerated() {
             let output = outputs[i]
 
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
                 if clear {
-                    buffer.replaceValues(offsets.map{inArray[$0]})
+                    buffer.replaceValues(result)
                 }
                 else {
-                    buffer.appendFromArray(offsets.map{inArray[$0]})
+                    buffer.appendFromArray(result)
                 }
             case .value(value: _, usedAs: _):
                 break

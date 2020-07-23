@@ -172,6 +172,7 @@ final class LoessAnalysis: ExperimentAnalysisModule {
             
         }
         
+        beforeWrite()
 
         switch outputs[0] {
         case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

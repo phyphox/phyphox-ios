@@ -103,6 +103,8 @@ final class IfAnalysis: ExperimentAnalysisModule {
             outputValues = [value]
         }
 
+        beforeWrite()
+
         switch firstOutput {
         case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
             if clear {

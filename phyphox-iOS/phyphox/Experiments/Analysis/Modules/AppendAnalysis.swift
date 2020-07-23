@@ -42,6 +42,8 @@ final class AppendAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(result)
         #endif
         
+        beforeWrite()
+        
         for output in outputs {
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

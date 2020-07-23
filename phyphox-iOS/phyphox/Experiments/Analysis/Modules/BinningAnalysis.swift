@@ -102,6 +102,8 @@ final class BinningAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        beforeWrite()
+        
         if let binStartsOutput = binStartsOutput {
             switch binStartsOutput {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

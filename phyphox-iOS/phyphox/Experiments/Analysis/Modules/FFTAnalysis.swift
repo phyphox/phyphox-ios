@@ -165,7 +165,9 @@ final class FFTAnalysis: ExperimentAnalysisModule {
                 imagOutputArray = Array(imagOutputArray[0..<countI/2])
             }
         }
-        
+
+        beforeWrite()
+
         if let realOutput = realOutput {
             switch realOutput {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

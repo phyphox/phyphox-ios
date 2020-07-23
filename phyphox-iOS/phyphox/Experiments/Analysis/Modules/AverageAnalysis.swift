@@ -61,6 +61,8 @@ final class AverageAnalysis: ExperimentAnalysisModule {
 
         let avg = sum/Double(count)
         
+        beforeWrite()
+
         if let avgOutput = avgOutput {
             switch avgOutput {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

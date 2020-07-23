@@ -198,6 +198,9 @@ final class Experiment {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
 
+        analysis?.queue = queue
+        analysis?.setNeedsUpdate(isPreRun: true)
+        
         delegate?.experimentWillBecomeActive(self)
     }
     
@@ -213,7 +216,7 @@ final class Experiment {
             networkConnection.disconnect()
             networkConnection.specificAddress = nil
         }
-        clear()
+        clear(byUser: false)
     }
     
     func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
@@ -352,10 +355,6 @@ final class Experiment {
 
         try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
 
-        for buffer in buffers.values {
-            buffer.open()
-        }
-
         hasStarted = true
 
         UIApplication.shared.isIdleTimerDisabled = true
@@ -394,7 +393,7 @@ final class Experiment {
         running = false
     }
     
-    func clear() {
+    func clear(byUser: Bool) {
         stop()
         pauseBegin = 0.0
         startTimestamp = nil
@@ -410,9 +409,9 @@ final class Experiment {
 
         sensorInputs.forEach { $0.clear() }
         gpsInputs.forEach { $0.clear() }
-
-        for buffer in buffers.values {
-            buffer.close()
+        
+        if byUser {
+            analysis?.setNeedsUpdate(isPreRun: true)
         }
     }
 }

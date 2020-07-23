@@ -109,6 +109,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
             vDSP_maxvD(inArray, 1, &max, vDSP_Length(inArray.count))
             
+            beforeWrite()
+            
             if let maxOut = maxOut {
                 switch maxOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
@@ -148,6 +150,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
                     thisX = xIn?.objectAtIndex(i) ?? Double(i)
                 }
             }
+            
+            beforeWrite()
             
             if let maxOut = maxOut {
                 switch maxOut {
@@ -196,6 +200,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             else {
                 x = Double(index)
             }
+            
+            beforeWrite()
             
             if let maxOut = maxOut {
                 switch maxOut {

@@ -183,7 +183,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
             let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
 
-            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil, timedRun: descriptor.timedRun, timedRunStartDelay: descriptor.timedRunStartDelay, timedRunStopDelay: descriptor.timedRunStopDelay)
+            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: descriptor.onUserInput, timedRun: descriptor.timedRun, timedRunStartDelay: descriptor.timedRunStartDelay, timedRunStopDelay: descriptor.timedRunStopDelay)
         }
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
@@ -509,26 +509,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         var buffers: [String: DataBuffer] = [:]
 
         for descriptor in descriptors {
-            let storageType: DataBuffer.StorageType
-
             let bufferSize = descriptor.size
             let name = descriptor.name
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
-            //Only use memory for now
-            /*
-            if bufferSize == 0 && !analysisInputBufferNames.contains(name) {
-                let bufferURL = experimentPersistentStorageURL.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
-
-                storageType = .hybrid(memorySize: 5000, persistentStorageLocation: bufferURL)
-            }
-            else {
-             */
-                storageType = .memory(size: bufferSize)
-            //}
-
-            let buffer = try DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: staticBuffer)
+            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer)
 
             buffers[name] = buffer
 

@@ -223,6 +223,8 @@ final class MapAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        beforeWrite()
+        
         if let xOut = outX {
             switch xOut {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

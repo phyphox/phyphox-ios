@@ -74,31 +74,34 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        var results: [[Double]] = []
         for (i, arrayIn) in arrayIns.enumerated() {
-            let inBuffer: DataBuffer
-
+            guard i < outputs.count else { break }
+            
             switch arrayIn {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                inBuffer = buffer
+                
+                let thisEnd = min(end, buffer.memoryCount)
+                if thisEnd < start {
+                    results.append([])
+                } else {
+                    results.append(Array(buffer.toArray()[start..<thisEnd]))
+                }
+                
             case .value(value: _, usedAs: _):
-                continue
+                results.append([])
             }
-
-            guard i < outputs.count else { break }
+            
+        }
+            
+        beforeWrite()
+         
+        for (i, result) in results.enumerated() {
 
             let output = outputs[i]
 
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                let thisEnd = min(end, inBuffer.memoryCount)
-                if thisEnd < start {
-                    if clear {
-                        buffer.clear()
-                    }
-                    continue
-                }
-
-                let result = Array(inBuffer.toArray()[start..<thisEnd])
                 if clear {
                     buffer.replaceValues(result)
                 }
