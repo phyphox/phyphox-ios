@@ -189,6 +189,7 @@
 		C063C666238ECF7A00327AE7 /* NetworkConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C665238ECF7A00327AE7 /* NetworkConversion.swift */; };
 		C063C668238F27D900327AE7 /* NetworkMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C667238F27D900327AE7 /* NetworkMetadata.swift */; };
 		C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063DA8A228C52D000367384 /* MarkerOverlayView.swift */; };
+		C065AB9324CAE08300919670 /* UIExperimentTabControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C065AB9224CAE08300919670 /* UIExperimentTabControl.swift */; };
 		C075AA802232CCF600DE86D8 /* BEMCheckBoxGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = C075AA7E2232CCF500DE86D8 /* BEMCheckBoxGroup.m */; };
 		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
 		C07B53032294264200BA085A /* BluetoothScanResultsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */; };
@@ -628,6 +629,7 @@
 		C063C665238ECF7A00327AE7 /* NetworkConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConversion.swift; sourceTree = "<group>"; };
 		C063C667238F27D900327AE7 /* NetworkMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMetadata.swift; sourceTree = "<group>"; };
 		C063DA8A228C52D000367384 /* MarkerOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerOverlayView.swift; sourceTree = "<group>"; };
+		C065AB9224CAE08300919670 /* UIExperimentTabControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIExperimentTabControl.swift; sourceTree = "<group>"; };
 		C06D0E6722AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C06D0E7622AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C06D0E7722AEAFC100B2BDF1 /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1081,6 +1083,7 @@
 				C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */,
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
 				6B9E3D91205296DF008073D5 /* ExperimentViewModuleTableViewCell.swift */,
+				C065AB9224CAE08300919670 /* UIExperimentTabControl.swift */,
 				6BFE376620447B0600301CA3 /* WebServer */,
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
 				6B2E0F9E20593A01008FAA91 /* ViewModules */,
@@ -1750,6 +1753,7 @@
 				6B2E0FC3205AC5E1008FAA91 /* UIAlertController+PTExtensions.m in Sources */,
 				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,
 				6B7BF8211C147CF3007408FB /* AutocorrelationAnalysis.swift in Sources */,
+				C065AB9324CAE08300919670 /* UIExperimentTabControl.swift in Sources */,
 				6B7BF7FC1C13954E007408FB /* SubtractionAnalysis.swift in Sources */,
 				6B00F0A81C46705100971941 /* ExperimentViewModule.swift in Sources */,
 				C0601DDD23840C550033FFF6 /* GpsGeoid.swift in Sources */,

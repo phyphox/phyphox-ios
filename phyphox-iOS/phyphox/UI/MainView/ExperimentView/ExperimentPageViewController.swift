@@ -247,7 +247,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             for collection in experiment.viewDescriptors! {
                 buttons.append(collection.localizedLabel)
             }
-            segControl = UISegmentedControl(items: buttons)
+            segControl = UIExperimentTabControl(items: buttons)
             segControl!.addTarget(self, action: #selector(switchToCollection), for: .valueChanged)
             
             segControl!.apportionsSegmentWidthsByContent = true
