@@ -450,11 +450,15 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             tBuffer.append(t)
         }
         
-        if let x = x, let y = y, let z = z, let absBuffer = absBuffer {
+        if let absBuffer = absBuffer {
             if let abs = abs {
                 absBuffer.append(abs)
-            } else {
-                absBuffer.append(sqrt(x*x + y*y + z*z))
+            } else if let x = x {
+                if let y = y, let z = z {
+                    absBuffer.append(sqrt(x*x + y*y + z*z))
+                } else {
+                    absBuffer.append(x)
+                }
             }
         }
     }
