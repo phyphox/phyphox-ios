@@ -441,7 +441,11 @@ extension Experiment: ExperimentAnalysisTimestampSource {
     func getCurrentTimestamp() -> TimeInterval {
         guard let startTimestamp = startTimestamp else { return 0.0 }
 
-        return CFAbsoluteTimeGetCurrent() - startTimestamp
+        if pauseBegin > 0 {
+            return pauseBegin - startTimestamp
+        } else {
+            return CFAbsoluteTimeGetCurrent() - startTimestamp
+        }
     }
 }
 

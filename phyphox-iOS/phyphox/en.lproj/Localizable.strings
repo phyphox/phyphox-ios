@@ -61,6 +61,9 @@
 "clear_data" = "Clear data";
 "clear_data_question" = "Clear recorded data?";
 "clear" = "Clear";
+"leave_experiment" = "Leave experiment";
+"leave_experiment_question" = "Leave this experiment and discard recorded data?";
+"leave" = "Leave";
 "timed_stop" = "Stop timed run";
 "timed_start" = "Start timed run";
 "loadingTitle" = "Loading";

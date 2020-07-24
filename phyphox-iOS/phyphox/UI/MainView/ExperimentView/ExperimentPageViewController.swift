@@ -138,6 +138,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         self.navigationItem.title = experiment.displayTitle
         
+        let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
+        backButton.setTitleTextAttributes([NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
+        navigationItem.leftBarButtonItem = backButton
+        
         webServer.delegate = self
         
         defer {
@@ -1108,6 +1112,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             items[2] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
             
             navigationItem.rightBarButtonItems = items
+        }
+    }
+    
+    @objc func leaveExperiment() {
+        if experiment.getCurrentTimestamp() > 10 {
+            let al = UIAlertController(title: localize("leave_experiment"), message: localize("leave_experiment_question"), preferredStyle: .alert)
+            
+            al.addAction(UIAlertAction(title: localize("leave"), style: .default, handler: { [unowned self] action in
+                self.navigationController?.popViewController(animated: true)
+            }))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            
+            self.navigationController!.present(al, animated: true, completion: nil)
+        } else {
+            navigationController?.popViewController(animated: true)
         }
     }
     
