@@ -211,3 +211,7 @@
 "networkPrivacySensorLocation" = "Данные о местоположении (данные GPS или аналогичные данные).";
 "networkPrivacyDeviceInfo" = "Подробная информация о модели устройства и/или версии phyphox.";
 "networkPrivacySensorInfo" = "Технические подробности о следующих датчиках:";
+"sensorAttitude" = "Позиция";
+"leave_experiment" = "Покинуть эксперимент";
+"leave_experiment_question" = "Покинуть эксперимент и удалить измерения?";
+"leave" = "Покинуть";
