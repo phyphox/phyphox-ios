@@ -230,6 +230,17 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
     }
     
+    func setControlCharacteristicIfPresent(value: UInt8, peripheral: CBPeripheral) {
+        //If the characteristic phyphoxExperimentControlCharacteristicUUID is present, the peripheral expects us to write a 1 to start the experiment transfer and a 0 when we are done. Otherwise, the peripheral just looks for subscriptions to the phyphoxExperimentCharacteristicUUID characteristic
+        guard let service = peripheral.services?.first(where: {$0.uuid.uuid128String == phyphoxServiceUUID.uuidString}) else {
+            return
+        }
+        guard let controlCharacteristic = service.characteristics?.first(where: {$0.uuid.uuid128String == phyphoxExperimentControlCharacteristicUUID.uuidString}) else {
+            return
+        }
+        peripheral.writeValue(Data(bytes: [value]), for: controlCharacteristic, type: controlCharacteristic.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
+    }
+    
     func loadExperimentFromPeripheralConnect() {
         if let peripheralToBeConnected = peripheralToBeConnected {
             self.peripheralConnecting = peripheralToBeConnected
@@ -242,6 +253,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?) {
         if let char = characteristic {
             peripheral.setNotifyValue(false, for: char)
+        }
+        if let service = peripheral.services?.first(where: {$0.uuid.uuid128String == phyphoxServiceUUID.uuidString}) {
+            setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
         }
         centralManager?.cancelPeripheralConnection(peripheral)
         loadFromBluetoothDeviceStage = .failed
@@ -277,7 +291,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard let service = peripheral.services?.first, service.uuid.uuid128String == phyphoxServiceUUID.uuidString else {
+        guard let service = peripheral.services?.first(where: {$0.uuid.uuid128String == phyphoxServiceUUID.uuidString}) else {
             self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
             return
         }
@@ -292,12 +306,13 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         
-        guard let characteristic = service.characteristics?.first, characteristic.uuid.uuid128String == phyphoxExperimentCharacteristicUUID.uuidString else {
+        guard let characteristic = service.characteristics?.first(where: {$0.uuid.uuid128String == phyphoxExperimentCharacteristicUUID.uuidString}) else {
             self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
             return
         }
         loadFromBluetoothDeviceStage = .subscribing
         peripheral.setNotifyValue(true, for: characteristic)
+        setControlCharacteristicIfPresent(value: 0x01, peripheral: peripheral)
         after(30) {
             if self.loadFromBluetoothDeviceStage != .done && self.loadFromBluetoothDeviceStage != .failed {
                 self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
@@ -321,6 +336,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 if currentBluetoothData!.count >= currentBluetoothDataSize {
                     loadFromBluetoothDeviceStage = .done
                     peripheral.setNotifyValue(false, for: characteristic)
+                    setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
                     centralManager?.cancelPeripheralConnection(peripheral)
                     loadHud?.dismiss()
                     
