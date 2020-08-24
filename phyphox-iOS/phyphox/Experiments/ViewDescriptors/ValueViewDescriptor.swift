@@ -60,7 +60,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         let bufferName = buffer.name.replacingOccurrences(of: "\"", with: "\\\"")
         var mappingCode = "if (isNaN(x) || x == null) { v = \"-\" }"
         for mapping in mappings {
-            let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;") // addingPercentEncoding() !???
+            let str = mapping.replacement.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;").replacingOccurrences(of: "\"", with: "\\\"") // addingPercentEncoding() !???
 
             if mapping.range.upperBound.isFinite && mapping.range.lowerBound.isFinite {
                 mappingCode += "else if (x >= \(mapping.range.lowerBound) && x <= \(mapping.range.upperBound)) {v = \"\(str)\";}"
