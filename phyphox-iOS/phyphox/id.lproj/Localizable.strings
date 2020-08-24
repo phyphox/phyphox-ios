@@ -118,3 +118,5 @@
 "networkPrivacySensorLocation" = "Data lokasi (GPS atau yang lain).";
 "networkPrivacyDeviceInfo" = "Informasi detil tentang hp anda dan/atau versi phyphox.";
 "networkPrivacySensorInfo" = "Detil teknis sensor berikut:";
+"leave_experiment" = "Hentikan eksperimen";
+"leave_experiment_question" = "Hentikan eksperimen dan data akan hilang?";
