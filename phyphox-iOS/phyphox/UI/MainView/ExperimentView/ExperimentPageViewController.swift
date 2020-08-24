@@ -176,7 +176,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         if isMovingToParentViewController {
             experiment.willBecomeActive {
-                self.navigationController?.popToRootViewController(animated: true)
+                DispatchQueue.main.async {
+                    self.navigationController?.popToRootViewController(animated: true)
+                }
             }
         }
 
