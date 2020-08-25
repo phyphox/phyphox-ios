@@ -50,7 +50,7 @@ class phyphox_screenshots: XCTestCase {
         
         snapshot("screen3")
         
-        app.navigationBars.element(boundBy: 0).buttons["phyphox"].tap()
+        app.navigationBars.element(boundBy: 0).buttons["‹"].tap()
         
         snapshot("main")
         
