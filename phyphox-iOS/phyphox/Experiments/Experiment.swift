@@ -112,7 +112,7 @@ final class Experiment {
     
     let networkConnections: [NetworkConnection]
     
-    let analysis: ExperimentAnalysis?
+    let analysis: ExperimentAnalysis
     let export: ExperimentExport?
     
     let buffers: [String: DataBuffer]
@@ -129,7 +129,7 @@ final class Experiment {
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.persistentStorageURL = persistentStorageURL
         self.title = title
         self.stateTitle = stateTitle
@@ -178,8 +178,8 @@ final class Experiment {
             requiredPermissions.insert(.location)
         }
         
-        analysis?.delegate = self
-        analysis?.timestampSource = self
+        analysis.delegate = self
+        analysis.timestampSource = self
     }
 
     @objc private func endBackgroundSession() {
@@ -198,8 +198,8 @@ final class Experiment {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
 
-        analysis?.queue = queue
-        analysis?.setNeedsUpdate(isPreRun: true)
+        analysis.queue = queue
+        analysis.setNeedsUpdate(isPreRun: true)
         
         delegate?.experimentWillBecomeActive(self)
     }
@@ -366,10 +366,10 @@ final class Experiment {
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
-        
-        analysis?.running = true
-        analysis?.queue = queue
-        analysis?.setNeedsUpdate()
+
+        analysis.running = true
+        analysis.queue = queue
+        analysis.setNeedsUpdate()
     }
     
     func stop() {
@@ -377,7 +377,7 @@ final class Experiment {
             return
         }
         
-        analysis?.running = false
+        analysis.running = false
         
         pauseBegin = CFAbsoluteTimeGetCurrent()
         
@@ -411,7 +411,7 @@ final class Experiment {
         gpsInputs.forEach { $0.clear() }
         
         if byUser {
-            analysis?.setNeedsUpdate(isPreRun: true)
+            analysis.setNeedsUpdate(isPreRun: true)
         }
     }
 }

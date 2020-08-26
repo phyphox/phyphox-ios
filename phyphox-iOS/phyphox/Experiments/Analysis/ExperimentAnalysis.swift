@@ -101,7 +101,6 @@ final class ExperimentAnalysis {
 
                 self.requestedUpdateWhileBusy = false
                 self.busy = false
-
                 self.delegate?.analysisDidUpdate(self)
 
                 if self.cycle > 1 && (didRequestUpdateWhileBusy || !self.onUserInput) {
@@ -135,18 +134,24 @@ final class ExperimentAnalysis {
 
         let timestamp = timestampSource?.getCurrentTimestamp() ?? 0.0
 
-        for (i, analysis) in modulesInCycle.enumerated() {
-            queue?.async(execute: {
-                analysis.setNeedsUpdate(timestamp)
-                if i == c {
-                    mainThread {
-                        completion()
+        if (c >= 0) {
+            for (i, analysis) in modulesInCycle.enumerated() {
+                queue?.async(execute: {
+                    analysis.setNeedsUpdate(timestamp)
+                    if i == c {
+                        mainThread {
+                            self.cycle += 1
+                            completion()
+                        }
                     }
-                }
-            })
+                })
+            }
+        } else {
+            mainThread {
+                self.cycle += 1
+                completion()
+            }
         }
-        
-        cycle += 1
     }
 }
 

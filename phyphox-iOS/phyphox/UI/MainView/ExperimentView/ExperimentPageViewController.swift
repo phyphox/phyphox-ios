@@ -100,9 +100,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.experiment = experiment
         self.webServer = ExperimentWebServer(experiment: experiment)
         
-        self.timerEnabled = experiment.analysis?.timedRun ?? false
-        self.timerDelay = experiment.analysis?.timedRunStartDelay ?? 3.0
-        self.timerDuration = experiment.analysis?.timedRunStopDelay ?? 10.0
+        self.timerEnabled = experiment.analysis.timedRun
+        self.timerDelay = experiment.analysis.timedRunStartDelay
+        self.timerDuration = experiment.analysis.timedRunStopDelay
         
         var modules: [[UIView]] = []
         

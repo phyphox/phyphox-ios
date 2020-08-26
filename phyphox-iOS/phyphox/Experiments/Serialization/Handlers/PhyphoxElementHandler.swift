@@ -167,9 +167,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let links = linkHandler.results
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
-        let analysisDescriptor = try analysisHandler.expectOptionalResult()
+        let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
 
-        let analysisInputBufferNames = analysisDescriptor.map { getInputBufferNames(from: $0) } ?? []
+        let analysisInputBufferNames = getInputBufferNames(from: analysisDescriptor)
 
         let experimentPersistentStorageURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
 
@@ -180,11 +180,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             buffers = [String : DataBuffer]()
         }
 
-        let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
-            let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
-
-            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: descriptor.onUserInput, timedRun: descriptor.timedRun, timedRunStartDelay: descriptor.timedRunStartDelay, timedRunStopDelay: descriptor.timedRunStopDelay)
-        }
+        let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
+        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay)
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()

@@ -254,9 +254,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         if let char = characteristic {
             peripheral.setNotifyValue(false, for: char)
         }
-        if let service = peripheral.services?.first(where: {$0.uuid.uuid128String == phyphoxServiceUUID.uuidString}) {
-            setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
-        }
+        setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
         centralManager?.cancelPeripheralConnection(peripheral)
         loadFromBluetoothDeviceStage = .failed
         currentBluetoothData = nil
@@ -296,7 +294,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             return
         }
         loadFromBluetoothDeviceStage = .discoveringCharacteristics
-        peripheral.discoverCharacteristics([CBUUID(nsuuid: phyphoxExperimentCharacteristicUUID)], for: service)
+        peripheral.discoverCharacteristics([CBUUID(nsuuid: phyphoxExperimentCharacteristicUUID),CBUUID(nsuuid: phyphoxExperimentControlCharacteristicUUID)], for: service)
         after(5) {
             if self.loadFromBluetoothDeviceStage == .discoveringCharacteristics {
                 self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
