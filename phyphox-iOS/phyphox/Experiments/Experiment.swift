@@ -87,13 +87,12 @@ final class Experiment {
         }
     }
 
-    let persistentStorageURL: URL
-
     var local: Bool = false
     var source: URL?
     var crc32: UInt?
     
     var appleBan: Bool
+    var invalid = false
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
@@ -129,8 +128,7 @@ final class Experiment {
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
-        self.persistentStorageURL = persistentStorageURL
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -182,6 +180,11 @@ final class Experiment {
         analysis.timestampSource = self
     }
 
+    convenience init(file: String, error: String) {
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, translation: nil, buffers: [:], sensorInputTimeReference: SensorInputTimeReference(), sensorInputs: [], gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0), export: nil)
+        invalid = true;
+    }
+    
     @objc private func endBackgroundSession() {
         stop()
     }
@@ -353,8 +356,6 @@ final class Experiment {
         
         running = true
 
-        try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
-
         hasStarted = true
 
         UIApplication.shared.isIdleTimerDisabled = true
@@ -398,8 +399,6 @@ final class Experiment {
         pauseBegin = 0.0
         startTimestamp = nil
         hasStarted = false
-
-        try? FileManager.default.removeItem(at: persistentStorageURL)
 
         for buffer in buffers.values {
             if !buffer.attachedToTextField {
