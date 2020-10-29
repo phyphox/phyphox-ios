@@ -710,7 +710,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             do {
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
-                if fileType == .phyphox {
+                if fileType == .phyphox || fileType == .zip {
                     try data.write(to: tmp, options: .atomic)
                     finalURL = tmp
                 }
@@ -722,7 +722,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             do {
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
-                finalURL = url
+                if fileType == .phyphox || fileType == .zip {
+                    try data.write(to: tmp, options: .atomic)
+                    finalURL = tmp
+                }
             }
             catch let error {
                 experimentLoadingError = error

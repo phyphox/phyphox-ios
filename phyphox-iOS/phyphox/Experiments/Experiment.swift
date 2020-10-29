@@ -224,21 +224,21 @@ final class Experiment {
     
     func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
         guard let source = self.source else { throw FileError.genericError }
-        
+
         if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
             try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
         }
         
         var i = 1
-        
-        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(experimentFileExtension)
-        
+        let cleanedTitle = title.replacingOccurrences(of: "/", with: "")
+        var experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle).appendingPathExtension(experimentFileExtension)
+
         while FileManager.default.fileExists(atPath: experimentURL.path) {
-            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(experimentFileExtension)
+            experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle + "-\(i)").appendingPathExtension(experimentFileExtension)
             
             i += 1
         }
-        
+
         func moveFile(from fileURL: URL) throws {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
@@ -255,7 +255,7 @@ final class Experiment {
                 }
             }
         }
-        
+
         if source.isFileURL {
             try moveFile(from: source)
         }
