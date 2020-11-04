@@ -222,13 +222,14 @@ class FormattedStringInputConversion: InputConversion {
         guard let str: String = String(data: data, encoding: .utf8) else {
             return Double.nan
         }
+
         var parts: [Substring]
         if let separator = separator?.first {
             parts = str.split(separator: separator)
         } else {
             parts = [Substring(str)]
         }
-        
+                
         if parts.count <= index {
             return Double.nan
         }
@@ -243,7 +244,7 @@ class FormattedStringInputConversion: InputConversion {
             return Double.nan
         } else {
             //Use index to find relevant part (CSV style)
-            return Double(parts[index]) ?? Double.nan
+            return Double(parts[index].trimmingCharacters(in: .whitespacesAndNewlines)) ?? Double.nan
         }
     }
 }
