@@ -12,6 +12,10 @@ echo Refreshing GitHub Sources
 
 . checkoutLatestTag.sh EdumodeOrg/EduRoomSDK-iOS EduRoomSDK-iOS
 
+. checkoutLatestTag.sh robbiehanson/CocoaAsyncSocket CocoaAsyncSocket
+
+. checkoutLatestTag.sh emqx/CocoaMQTT CocoaMQTT
+
 #echo Removing CocoaPods stuff
 #find . -iname "Pod*" -prune -exec rm -rf "{}" \
 
