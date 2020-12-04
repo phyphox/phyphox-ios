@@ -61,7 +61,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         switch mode {
         case .poll:
             timer = Timer.scheduledTimer(timeInterval: (1.0/rate), target: self, selector: #selector(pollData), userInfo: nil, repeats: true)
-        case .notification:
+        case .notification, .indication:
             if subscribeOnStart {
                 do {
                     for char in Set(outputList.map({$0.char})) {
@@ -76,8 +76,6 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
                     return
                 }
             }
-        default:
-            print("default")
         }
         
     }
@@ -100,7 +98,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     func stop(){
         running = false
         switch mode {
-        case .notification:
+        case .notification, .indication:
             if subscribeOnStart {
                 do {
                     for char in Set(outputList.map({$0.char})) {
@@ -117,8 +115,6 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             }
         case .poll:
             timer.invalidate()
-        default:
-            print("default stop message")
         }
     }
     

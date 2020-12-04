@@ -390,15 +390,25 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
-            self.showDeleteConfirmationForExperiment(experiment, button: button)
-        }))
+        if let source = experiment.source {
+            alert.addAction(UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
+                let vc = UIActivityViewController(activityItems: [source], applicationActivities: nil)
+                vc.popoverPresentationController?.sourceView = self.navigationController!.view
+                vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
+                self.navigationController!.present(vc, animated: true)
+                
+            }))
+        }
         
         if let stateTitle = experiment.stateTitle {
             alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
                 self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: stateTitle)
             }))
         }
+        
+        alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
+            self.showDeleteConfirmationForExperiment(experiment, button: button)
+        }))
         
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
@@ -477,7 +487,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = collections[indexPath.section].experiments[indexPath.row]
 
-        if experiment.experiment.appleBan {
+        if experiment.experiment.invalid {
+            let controller = UIAlertController(title: localize("warning"), message: experiment.experiment.localizedDescription, preferredStyle: .alert)
+
+            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
+            
+            present(controller, animated: true, completion: nil)
+            
+            return
+        } else if experiment.experiment.appleBan {
             let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
@@ -692,7 +710,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             do {
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
-                if fileType == .phyphox {
+                if fileType == .phyphox || fileType == .zip {
                     try data.write(to: tmp, options: .atomic)
                     finalURL = tmp
                 }
@@ -704,7 +722,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             do {
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
-                finalURL = url
+                if fileType == .phyphox || fileType == .zip {
+                    try data.write(to: tmp, options: .atomic)
+                    finalURL = tmp
+                }
             }
             catch let error {
                 experimentLoadingError = error

@@ -73,7 +73,7 @@ class ExperimentCell: UICollectionViewCell {
                         subtitleLabel.text = experiment.localizedDescription
                     }
                     
-                    if experiment.appleBan {
+                    if experiment.appleBan || experiment.invalid {
                         available = false
                     }
 

@@ -17,7 +17,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
     private let valueLabel = UILabel()
     private let unitLabel = UILabel()
 
-    private let displayLink = DisplayLink(refreshRate: 5)
+    private let displayLink = DisplayLink(refreshRate: 0)
 
     var active = false {
         didSet {

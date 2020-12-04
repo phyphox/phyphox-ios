@@ -119,6 +119,8 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         case service
         case conversion
         case interval
+        case sendTopic
+        case receiveTopic
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -129,6 +131,8 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let address = try attributes.nonEmptyString(for: .address)
         let discoveryStr = attributes.optionalString(for: .discovery)
         let discovery: NetworkDiscovery?
+        let sendTopic = attributes.optionalString(for: .sendTopic)
+        let receiveTopic = attributes.optionalString(for: .receiveTopic) ?? ""
         
         switch discoveryStr {
         case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
@@ -140,8 +144,14 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let service: NetworkService
         
         switch serviceStr {
-        case "http/get": service = HttpGetService()
+        case "http/get":  service = HttpGetService()
         case "http/post": service = HttpPostService()
+        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic)
+        case "mqtt/json":
+            guard let sendTopic = sendTopic else {
+                throw ElementHandlerError.message("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.")
+            }
+            service = MqttJsonService(receiveTopic: receiveTopic, sendTopic: sendTopic)
         default: throw ElementHandlerError.message("Unkown network service: \(serviceStr)")
         }
         
@@ -150,6 +160,7 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         
         switch conversionStr {
         case "none": conversion = NoneNetworkConversion()
+        case "csv":  conversion = CSVNetworkConversion()
         case "json": conversion = JSONNetworkConversion()
         default: throw ElementHandlerError.message("Unkown network conversion: \(conversionStr)")
         }

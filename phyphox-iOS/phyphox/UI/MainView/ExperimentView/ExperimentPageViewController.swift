@@ -100,9 +100,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.experiment = experiment
         self.webServer = ExperimentWebServer(experiment: experiment)
         
-        self.timerEnabled = experiment.analysis?.timedRun ?? false
-        self.timerDelay = experiment.analysis?.timedRunStartDelay ?? 3.0
-        self.timerDuration = experiment.analysis?.timedRunStopDelay ?? 10.0
+        self.timerEnabled = experiment.analysis.timedRun
+        self.timerDelay = experiment.analysis.timedRunStartDelay
+        self.timerDuration = experiment.analysis.timedRunStopDelay
         
         var modules: [[UIView]] = []
         
@@ -176,7 +176,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         if isMovingToParentViewController {
             experiment.willBecomeActive {
-                self.navigationController?.popToRootViewController(animated: true)
+                DispatchQueue.main.async {
+                    self.navigationController?.popToRootViewController(animated: true)
+                }
             }
         }
 
@@ -247,7 +249,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             for collection in experiment.viewDescriptors! {
                 buttons.append(collection.localizedLabel)
             }
-            segControl = UISegmentedControl(items: buttons)
+            segControl = UIExperimentTabControl(items: buttons)
             segControl!.addTarget(self, action: #selector(switchToCollection), for: .valueChanged)
             
             segControl!.apportionsSegmentWidthsByContent = true
