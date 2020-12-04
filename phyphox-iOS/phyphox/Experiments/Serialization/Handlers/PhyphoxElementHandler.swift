@@ -90,7 +90,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 9, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 11, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -167,24 +167,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let links = linkHandler.results
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
-        let analysisDescriptor = try analysisHandler.expectOptionalResult()
+        let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
 
-        let analysisInputBufferNames = analysisDescriptor.map { getInputBufferNames(from: $0) } ?? []
-
-        let experimentPersistentStorageURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        let analysisInputBufferNames = getInputBufferNames(from: analysisDescriptor)
 
         let buffers: [String : DataBuffer]
         if let dataContainersDescriptor = dataContainersDescriptor {
-            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, experimentPersistentStorageURL: experimentPersistentStorageURL)
+            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames)
         } else {
             buffers = [String : DataBuffer]()
         }
 
-        let analysis = try analysisDescriptor.map { descriptor -> ExperimentAnalysis in
-            let analysisModules = try descriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
-
-            return ExperimentAnalysis(modules: analysisModules, sleep: descriptor.sleep, dynamicSleep: descriptor.dynamicSleepName.map { buffers[$0] } ?? nil)
-        }
+        let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
+        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay)
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
@@ -242,9 +237,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         guard let buffer = buffers[item.name] else {
                             throw ElementHandlerError.missingElement("data-container")
                         }
-                        send[item.id] = NetworkSendableData.Buffer(buffer)
+                        send[item.id] = NetworkSendableData(source: .Buffer(buffer), additionalAttributes: item.additionalAttributes)
                     case .meta:
-                        let metadata: NetworkSendableData
+                        let metadata: NetworkSendableData.Source
                         switch (item.name) {
                         case "uniqueID": metadata = .Metadata(.uniqueId)
                         case "version": metadata = .Metadata(.version)
@@ -258,14 +253,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "deviceCodename": metadata = .Metadata(.deviceCodename)
                         case "deviceRelease": metadata = .Metadata(.deviceRelease)
                         default:
-                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData? {
+                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData.Source? {
                                 if name.starts(with: sensor) {
                                     let sensorMetadata = name.dropFirst(sensor.count)
                                     let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
                                     guard let sensorMeta = NetworkSensorMetadata(rawValue: String(sensorMetadataMatch)) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
-                                    return NetworkSendableData.Metadata(.sensor(SensorType.accelerometer, sensorMeta))
+                                    return .Metadata(.sensor(SensorType.accelerometer, sensorMeta))
                                 }
                                 return nil
                             }
@@ -293,7 +288,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                                 throw ElementHandlerError.message("Unknown metadata name \(item.name)")
                             }
                         }
-                        send[item.id] = metadata
+                        send[item.id] = NetworkSendableData(source: metadata, additionalAttributes: item.additionalAttributes)
                     }
                     
                 }
@@ -315,7 +310,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, persistentStorageURL: experimentPersistentStorageURL, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputTimeReference: sensorInputTimeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputTimeReference: sensorInputTimeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -400,18 +395,91 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return buffer
             })
 
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
         }
     }
 
     private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {
 
         if let audioOutput = descriptor {
-            guard let buffer = buffers[audioOutput.inputBufferName] else {
-                throw ElementHandlerError.missingElement("data-container")
+            let directBuffer: DataBuffer?
+            var tones: [ExperimentAudioOutputTone] = []
+            let noise: ExperimentAudioOutputNoise?
+            
+            if let inputBuffer = audioOutput.inputBufferName {
+                directBuffer = buffers[inputBuffer]
+                guard directBuffer != nil else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+            } else {
+                directBuffer = nil
             }
-
-            return ExperimentAudioOutput(sampleRate: audioOutput.rate, loop: audioOutput.loop, dataSource: buffer)
+            
+            for toneDescriptor in audioOutput.tones {
+                var frequency = AudioParameter.value(value: 440.0)
+                var amplitude = AudioParameter.value(value: 1.0)
+                var duration = AudioParameter.value(value: 1.0)
+                
+                for input in toneDescriptor.inputs {
+                    let target: String
+                    let parameter: AudioParameter
+                    switch input {
+                    case .buffer(name: let name, usedAs: let usedAs):
+                        target = usedAs
+                        guard let buffer = buffers[name] else {
+                            throw ElementHandlerError.missingElement("data-container")
+                        }
+                        parameter = AudioParameter.buffer(buffer: buffer)
+                    case .value(value: let value, usedAs: let usedAs):
+                        target = usedAs
+                        parameter = AudioParameter.value(value: value)
+                    }
+                    switch target {
+                    case "frequency": frequency = parameter
+                    case "amplitude": amplitude = parameter
+                    case "duration": duration = parameter
+                    default: throw ElementHandlerError.message("Invalid parameter for input of audio output tone.")
+                    }
+                }
+                
+                let tone = ExperimentAudioOutputTone(frequency: frequency, amplitude: amplitude, duration: duration)
+                tones.append(tone)
+            }
+            
+            var amplitude = AudioParameter.value(value: 1.0)
+            var duration = AudioParameter.value(value: 1.0)
+            
+            if let noiseDescriptor = audioOutput.noise {
+                for input in noiseDescriptor.inputs {
+                    let target: String
+                    let parameter: AudioParameter
+                    switch input {
+                    case .buffer(name: let name, usedAs: let usedAs):
+                        target = usedAs
+                        guard let buffer = buffers[name] else {
+                            throw ElementHandlerError.missingElement("data-container")
+                        }
+                        parameter = AudioParameter.buffer(buffer: buffer)
+                    case .value(value: let value, usedAs: let usedAs):
+                        target = usedAs
+                        parameter = AudioParameter.value(value: value)
+                    }
+                    switch target {
+                    case "amplitude": amplitude = parameter
+                    case "duration": duration = parameter
+                    default: throw ElementHandlerError.message("Invalid parameter for input of audio output noise.")
+                    }
+                }
+                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration)
+            } else {
+                noise = nil
+            }
+            
+            if directBuffer == nil && tones.count == 0 && noise == nil {
+                throw ElementHandlerError.message("No inputs for audio output.")
+            }
+            
+            return ExperimentAudioOutput(sampleRate: audioOutput.rate, loop: audioOutput.loop, normalize: audioOutput.normalize, directSource: directBuffer, tones: tones, noise: noise)
         }
         return nil
     }
@@ -432,30 +500,16 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         return ExperimentExport(sets: sets)
     }
 
-    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>, experimentPersistentStorageURL: URL) throws -> [String: DataBuffer] {
+    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>) throws -> [String: DataBuffer] {
         var buffers: [String: DataBuffer] = [:]
 
         for descriptor in descriptors {
-            let storageType: DataBuffer.StorageType
-
             let bufferSize = descriptor.size
             let name = descriptor.name
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
-            //Only use memory for now
-            /*
-            if bufferSize == 0 && !analysisInputBufferNames.contains(name) {
-                let bufferURL = experimentPersistentStorageURL.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
-
-                storageType = .hybrid(memorySize: 5000, persistentStorageLocation: bufferURL)
-            }
-            else {
-             */
-                storageType = .memory(size: bufferSize)
-            //}
-
-            let buffer = try DataBuffer(name: name, storage: storageType, baseContents: baseContents, static: staticBuffer)
+            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer)
 
             buffers[name] = buffer
 

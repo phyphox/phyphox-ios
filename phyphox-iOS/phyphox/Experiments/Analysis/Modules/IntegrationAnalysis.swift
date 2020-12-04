@@ -44,6 +44,8 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        beforeWrite()
+
         for output in outputs {
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

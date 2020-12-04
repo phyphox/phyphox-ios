@@ -56,12 +56,13 @@ final class ExperimentSerialization {
             readURL = url
         }
 
-        guard let stream = InputStream(url: readURL) else {
+        guard let inputStream = InputStream(url: readURL) else {
             throw SerializationError.invalidFilePath
         }
-
-        let experiment = try parser.parse(stream: stream)
+        let crc32Stream = CRC32InputStream(inputStream)
+        let experiment = try parser.parse(stream: crc32Stream)
         experiment.source = url
+        experiment.crc32 = crc32Stream.crcValue
 
         return experiment
     }

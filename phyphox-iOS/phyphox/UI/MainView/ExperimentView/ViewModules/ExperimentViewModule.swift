@@ -23,11 +23,14 @@ protocol DynamicViewModule: DataBufferObserver {
 
 extension DynamicViewModule {
     func registerForUpdatesFromBuffer(_ buffer: DataBuffer) {
-        buffer.addObserver(self, alwaysNotify: false)
+        buffer.addObserver(self)
     }
 
     func dataBufferUpdated(_ buffer: DataBuffer) {
         setNeedsUpdate()
+    }
+    
+    func userInputTriggered(_ buffer: DataBuffer) {
     }
 }
 

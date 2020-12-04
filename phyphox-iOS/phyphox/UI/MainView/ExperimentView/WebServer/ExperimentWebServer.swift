@@ -278,7 +278,118 @@ final class ExperimentWebServer {
             let response = GCDWebServerDataResponse(jsonObject: mainDict)
             
             completionBlock(response)
-            })
+        })
+        
+        server!.addHandler(forMethod: "GET", pathRegex: "/config", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            func returnErrorResponse() {
+                let response = GCDWebServerResponse(statusCode: 400)
+                
+                completionBlock(response)
+            }
+            
+            var json = [String: AnyObject]()
+            
+            json["crc32"] = String(format:"%02x", self.experiment.crc32 ?? 0) as AnyObject
+            json["title"] = self.experiment.title as AnyObject
+            json["localTitle"] = self.experiment.localizedTitle as AnyObject
+            json["category"] = self.experiment.category as AnyObject
+            json["localCategory"] = self.experiment.localizedCategory as AnyObject
+            
+            var buffers = [AnyObject]()
+            for (name, buffer) in self.experiment.buffers {
+                buffers.append(["name": name, "size": buffer.size] as AnyObject)
+            }
+            json["buffers"] = buffers as AnyObject
+            
+            var inputs = [AnyObject]()
+            if self.experiment.audioInputs.count > 0 {
+                var outputs = [AnyObject]()
+                outputs.append(["out": self.experiment.audioInputs[0].outBuffer.name] as AnyObject)
+                if let rateBuffer = self.experiment.audioInputs[0].sampleRateInfoBuffer {
+                    outputs.append(["rate": rateBuffer.name] as AnyObject)
+                }
+                inputs.append(["source": "audio", "outputs": outputs] as AnyObject)
+            }
+            if self.experiment.gpsInputs.count > 0 {
+                var outputs = [AnyObject]()
+                if let buffer = self.experiment.gpsInputs[0].latBuffer {
+                    outputs.append(["lat": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].lonBuffer {
+                    outputs.append(["lon": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].zBuffer {
+                    outputs.append(["z": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].zWgs84Buffer {
+                    outputs.append(["zwgs84": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].vBuffer {
+                    outputs.append(["v": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].dirBuffer {
+                    outputs.append(["dir": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].tBuffer {
+                    outputs.append(["t": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].accuracyBuffer {
+                    outputs.append(["accuracy": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].zAccuracyBuffer {
+                    outputs.append(["zAccuracy": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].statusBuffer {
+                    outputs.append(["status": buffer.name] as AnyObject)
+                }
+                if let buffer = self.experiment.gpsInputs[0].satellitesBuffer {
+                    outputs.append(["satellites": buffer.name] as AnyObject)
+                }
+                inputs.append(["source": "location", "outputs": outputs] as AnyObject)
+            }
+            for input in self.experiment.sensorInputs {
+                var outputs = [AnyObject]()
+                if let buffer = input.xBuffer {
+                    outputs.append(["x": buffer.name] as AnyObject)
+                }
+                if let buffer = input.yBuffer {
+                    outputs.append(["y": buffer.name] as AnyObject)
+                }
+                if let buffer = input.zBuffer {
+                    outputs.append(["z": buffer.name] as AnyObject)
+                }
+                if let buffer = input.absBuffer {
+                    outputs.append(["abs": buffer.name] as AnyObject)
+                }
+                if let buffer = input.tBuffer {
+                    outputs.append(["t": buffer.name] as AnyObject)
+                }
+                if let buffer = input.accuracyBuffer {
+                    outputs.append(["accuracy": buffer.name] as AnyObject)
+                }
+                inputs.append(["source": input.sensorType.description, "outputs": outputs] as AnyObject)
+            }
+            if self.experiment.bluetoothInputs.count > 0 {
+                inputs.append(["source": "bluetooth"] as AnyObject)
+            }
+            json["inputs"] = inputs as AnyObject
+            
+            var export = [AnyObject]()
+            if let sets = self.experiment.export?.sets {
+                for set in sets {
+                    var sources = [AnyObject]()
+                    for source in set.data {
+                        sources.append(["label": source.name, "buffer": source.buffer.name] as AnyObject)
+                    }
+                    export.append(["set": set.name, "sources": sources] as AnyObject)
+                }
+            }
+            json["export"] = export as AnyObject
+            
+            let response = GCDWebServerDataResponse(jsonObject: json)
+            
+            completionBlock(response)
+        })
         
         if server!.start(withPort: 80, bonjourName: nil){
             print("Webserver running on \(String(describing: server!.serverURL))")

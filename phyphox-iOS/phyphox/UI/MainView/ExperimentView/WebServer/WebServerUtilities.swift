@@ -14,7 +14,7 @@ final class WebServerUtilities {
         
         UIGraphicsBeginImageContextWithOptions(s, true, 0.0)
         
-        UIColor.green.setFill()
+        UIColor.init(red: 0.0, green: 1.0, blue: 0, alpha: 1.0).setFill()
         
         UIBezierPath(rect: CGRect(origin: CGPoint.zero, size: s)).fill()
         

@@ -11,6 +11,7 @@ import Foundation
 final class TimerAnalysis: ExperimentAnalysisModule {
     
     override func update() {
+        beforeWrite()
         for output in outputs {
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

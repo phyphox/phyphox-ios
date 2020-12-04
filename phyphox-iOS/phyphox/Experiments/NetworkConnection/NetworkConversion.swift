@@ -9,7 +9,7 @@
 import Foundation
 
 protocol NetworkConversion {
-    func prepare(data: Data) throws
+    func prepare(data: [Data]) throws
     func get(_ id: String) throws -> [Double]
 }
 
@@ -20,45 +20,93 @@ enum NetworkConversionError: Error {
     case notImplemented
 }
 
+class NoneNetworkConversion: NetworkConversion {
+
+    func prepare(data: [Data]) throws {
+    }
+    
+    func get(_ id: String) throws -> [Double] {
+        return []
+    }
+}
+
+class CSVNetworkConversion: NetworkConversion {
+    var data: [String?] = []
+    
+    func prepare(data: [Data]) throws {
+        self.data = data.map{String(data: $0, encoding: .utf8)}
+    }
+    
+    func get(_ id: String) throws -> [Double] {
+        var result: [Double] = []
+        let index = Int(id) ?? -1
+        
+        for subdata in data {
+            guard let set = subdata else {
+                continue
+            }
+            let lines = set.components(separatedBy: "\n")
+            for line in lines {
+                let columns = line.components(separatedBy: CharacterSet(charactersIn: ",;"))
+                if index < 0 {
+                    for column in columns {
+                        result.append(Double(column.trimmingCharacters(in: .whitespacesAndNewlines)) ?? Double.nan)
+                    }
+                } else if columns.count > index {
+                    result.append(Double(columns[index].trimmingCharacters(in: .whitespacesAndNewlines)) ?? Double.nan)
+                }
+            }
+        }
+        return result
+    }
+}
+
 class JSONNetworkConversion: NetworkConversion {
 
-    var json: [String: Any]? = nil
+    var json: [[String: Any]] = []
     
-    func prepare(data: Data) throws {
-        if data.count == 0 {
-            throw NetworkConversionError.emptyInput
-        }
-        
-        let serialized = try? JSONSerialization.jsonObject(with: data, options: [])
-        guard let serializedJSON = serialized else {
-            throw NetworkConversionError.invalidInput(message: "Could not parse JSON.")
-        }
-        
-        json = serializedJSON as? [String: Any]
-        
-        guard json != nil else {
-            throw NetworkConversionError.invalidInput(message: "No JSON object.")
+    func prepare(data: [Data]) throws {
+        json = []
+        for set in data {
+            let serialized = try? JSONSerialization.jsonObject(with: set, options: [])
+            guard let serializedJSON = serialized else {
+                throw NetworkConversionError.invalidInput(message: "Could not parse JSON.")
+            }
+            
+            let jsoncast = serializedJSON as? [String: Any]
+            
+            guard let json = jsoncast else {
+                throw NetworkConversionError.invalidInput(message: "No JSON object.")
+            }
+            
+            self.json.append(json)
         }
     }
     
     func get(_ id: String) throws -> [Double] {
         let components = id.components(separatedBy: ".")
-        var currentJSON: Any = json as Any
-        for component in components {
-            guard let currentDict = currentJSON as? [String: Any] else {
-                throw NetworkConversionError.genericError(message: "Could not find \(id). (No object)")
+        var result: [Double] = []
+        for set in json {
+            var currentJSON: Any = set as Any
+            for component in components {
+                guard let currentDict = currentJSON as? [String: Any] else {
+                    throw NetworkConversionError.genericError(message: "Could not find \(id). (No object)")
+                }
+                guard let nextJSON = currentDict[component] else {
+                    throw NetworkConversionError.genericError(message: "Could not find \(id). (Not found)")
+                }
+                currentJSON = nextJSON
             }
-            guard let nextJSON = currentDict[component] else {
-                throw NetworkConversionError.genericError(message: "Could not find \(id). (Not found)")
+            if let values = currentJSON as? [Double] {
+                result.append(contentsOf: values)
+                continue
             }
-            currentJSON = nextJSON
+            if let value = currentJSON as? Double {
+                result.append(value)
+                continue
+            }
+            throw NetworkConversionError.genericError(message: "\(id) is not a number or a numerical array.")
         }
-        if let values = currentJSON as? [Double] {
-            return values
-        }
-        if let value = currentJSON as? Double {
-            return [value]
-        }
-        throw NetworkConversionError.genericError(message: "\(id) is not a number or a numerical array.")
+        return result
     }
 }

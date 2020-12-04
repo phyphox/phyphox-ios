@@ -16,6 +16,7 @@ struct NetworkConnectionSendDescriptor {
     }
     let type: SendableType
     let name: String
+    let additionalAttributes: [String:String]
 }
 
 private final class NetworkConnectionSendElementHandler: ResultElementHandler, ChildlessElementHandler {
@@ -26,6 +27,7 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
     private enum Attribute: String, AttributeKey {
         case id
         case type
+        case datatype
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -35,7 +37,11 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
 
         let id = try attributes.nonEmptyString(for: .id)
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
-        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text))
+        var additionalAttributes = [String:String]()
+        if let datatype = attributes.optionalString(for: .datatype) {
+            additionalAttributes[Attribute.datatype.rawValue] = datatype
+        }
+        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text, additionalAttributes: additionalAttributes))
     }
 
     func clear() {
@@ -113,6 +119,8 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         case service
         case conversion
         case interval
+        case sendTopic
+        case receiveTopic
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -123,6 +131,8 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let address = try attributes.nonEmptyString(for: .address)
         let discoveryStr = attributes.optionalString(for: .discovery)
         let discovery: NetworkDiscovery?
+        let sendTopic = attributes.optionalString(for: .sendTopic)
+        let receiveTopic = attributes.optionalString(for: .receiveTopic) ?? ""
         
         switch discoveryStr {
         case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
@@ -134,15 +144,23 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let service: NetworkService
         
         switch serviceStr {
-        case "http/get": service = HttpGetService()
+        case "http/get":  service = HttpGetService()
         case "http/post": service = HttpPostService()
+        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic)
+        case "mqtt/json":
+            guard let sendTopic = sendTopic else {
+                throw ElementHandlerError.message("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.")
+            }
+            service = MqttJsonService(receiveTopic: receiveTopic, sendTopic: sendTopic)
         default: throw ElementHandlerError.message("Unkown network service: \(serviceStr)")
         }
         
-        let conversionStr = try attributes.nonEmptyString(for: .conversion)
+        let conversionStr = attributes.optionalString(for: .conversion) ?? "none"
         let conversion: NetworkConversion
         
         switch conversionStr {
+        case "none": conversion = NoneNetworkConversion()
+        case "csv":  conversion = CSVNetworkConversion()
         case "json": conversion = JSONNetworkConversion()
         default: throw ElementHandlerError.message("Unkown network conversion: \(conversionStr)")
         }

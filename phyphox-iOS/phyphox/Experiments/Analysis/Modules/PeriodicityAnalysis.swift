@@ -184,6 +184,8 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             periodOut.append(xMax)
         }
         
+        beforeWrite()
+
         if let timeOutput = timeOutput {
             switch timeOutput {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

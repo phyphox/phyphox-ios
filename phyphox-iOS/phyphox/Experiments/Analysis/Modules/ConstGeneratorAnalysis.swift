@@ -61,6 +61,8 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(result)
         #endif
         
+        beforeWrite()
+        
         for output in outputs {
             switch output {
             case .value(value: _, usedAs: _):

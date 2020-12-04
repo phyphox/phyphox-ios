@@ -11,7 +11,7 @@ import JGProgressHUD
 import CoreBluetooth
 
 let emptyBuffer: DataBuffer = {
-    let buffer = try! DataBuffer(name: "empty", storage: .memory(size: 0), baseContents: [], static: true)
+    let buffer = try! DataBuffer(name: "empty", size: 0, baseContents: [], static: true)
     buffer.clear()
     return buffer
 }()
@@ -127,7 +127,7 @@ final class ExperimentManager {
         }
     }
 
-    private func showLoadingError(for name: String, error: Error) {
+    private func showLoadingError(for name: String, error: Error, local: Bool, custom: Bool, src: URL) {
         let hud = JGProgressHUD(style: .dark)
         hud.indicatorView = JGProgressHUDErrorIndicatorView()
         hud.indicatorView?.tintColor = .white
@@ -138,6 +138,11 @@ final class ExperimentManager {
             hud.show(in: $0)
             hud.dismiss(afterDelay: 3.0)
         }
+        
+        let experiment = Experiment(file: name, error: error.localizedDescription)
+        experiment.local = local
+        experiment.source = src
+        registerExperiment(experiment, custom: custom, hidden: false)
     }
 
     func loadSavedExperiments() {
@@ -157,7 +162,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
-                showLoadingError(for: file, error: error)
+                showLoadingError(for: file, error: error, local: true, custom: true, src: url)
             }
         }
 
@@ -179,7 +184,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
-                showLoadingError(for: file, error: error)
+                showLoadingError(for: file, error: error, local: true, custom: true, src: url)
             }
         }
 
@@ -201,7 +206,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: false, hidden: false)
             }
             catch {
-                showLoadingError(for: file, error: error)
+                showLoadingError(for: file, error: error, local: true, custom: false, src: url)
             }
         }
     }
@@ -221,7 +226,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: false, hidden: true)
             }
             catch {
-                showLoadingError(for: file, error: error)
+                showLoadingError(for: file, error: error, local: true, custom: false, src: url)
             }
         }
     }
@@ -235,7 +240,7 @@ final class ExperimentManager {
                 registerExperiment(experiment, custom: true, hidden: false)
             }
             catch {
-                showLoadingError(for: file.absoluteString, error: error)
+                showLoadingError(for: file.absoluteString, error: error, local: false, custom: true, src: file)
             }
         }
     }
@@ -246,6 +251,20 @@ final class ExperimentManager {
         }
         loadCustomExperiments()
         loadSavedExperiments()
+    }
+    
+    func experimentInCollection(crc32: UInt?) -> Bool {
+        guard let crc32 = crc32 else {
+            return false
+        }
+        for collection in experimentCollections {
+            for experiment in collection.experiments {
+                if experiment.experiment.crc32 == crc32 {
+                    return true
+                }
+            }
+        }
+        return false
     }
     
     init() {

@@ -190,6 +190,8 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             yValues = minimizedY
         }
         
+        beforeWrite()
+        
         if let yOut = yOut {
             switch yOut {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

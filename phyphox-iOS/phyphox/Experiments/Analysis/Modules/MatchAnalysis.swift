@@ -44,6 +44,8 @@ final class MatchAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        beforeWrite()
+        
         for (i, output) in outputs.enumerated() {
             switch output {
             case .value(value: _, usedAs: _):

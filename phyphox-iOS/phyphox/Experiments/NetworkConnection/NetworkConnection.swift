@@ -16,9 +16,14 @@ protocol NetworkConnectionDataPolicyInfoDelegate {
     func dataPolicyInfoDismissed()
 }
 
-enum NetworkSendableData {
+struct NetworkSendableData {
+    enum Source {
     case Buffer(DataBuffer)
     case Metadata(NetworkMetadata)
+    }
+    let source: Source
+    
+    var additionalAttributes: [String:String]
 }
 
 struct NetworkReceivableData {
@@ -93,7 +98,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         var infoSensorInfoList: Set<String> = []
         
         for dataset in send {
-            switch dataset.value {
+            switch dataset.value.source {
             case .Metadata(let metadata):
                 switch metadata {
                 case .uniqueId:

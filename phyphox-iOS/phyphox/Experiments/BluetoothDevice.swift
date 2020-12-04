@@ -12,6 +12,7 @@ import CoreBluetooth
 let baseUUID: UUID = UUID(uuidString: "00000000-0000-1000-8000-00805f9b34fb")!
 let phyphoxServiceUUID: UUID = UUID(uuidString: "cddf0001-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxExperimentCharacteristicUUID: UUID = UUID(uuidString: "cddf0002-30f7-4671-8b43-5e40ba53514a")!
+let phyphoxExperimentControlCharacteristicUUID: UUID = UUID(uuidString: "cddf0003-30f7-4671-8b43-5e40ba53514a")!
 
 public extension CBUUID {
     convenience init(uuidString: String) throws {

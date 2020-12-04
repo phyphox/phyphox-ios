@@ -19,48 +19,51 @@ protocol ExperimentAnalysisDelegate: class {
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }
 
-private let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
-
 protocol ExperimentAnalysisTimestampSource: class {
     func getCurrentTimestamp() -> TimeInterval
 }
 
 final class ExperimentAnalysis {
     private let modules: [ExperimentAnalysisModule]
+    
+    private var cycle = 0
 
     private let sleep: Double
     private let dynamicSleep: DataBuffer?
+    private let onUserInput: Bool
 
+    public let timedRun: Bool
+    public let timedRunStartDelay: Double
+    public let timedRunStopDelay: Double
+    
     var running = false
     
     weak var timestampSource: ExperimentAnalysisTimestampSource?
     weak var delegate: ExperimentAnalysisDelegate?
 
-    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?) {
+    public var queue: DispatchQueue?
+    
+    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double) {
         self.modules = modules
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
+        self.onUserInput = onUserInput
 
-        //We subscribe to all buffers which are used as an input BEFORE another analysis module has written to them. This in particular not only includes inputs from sensors, Bluetooth inputs and similar, but also buffers that may have been written at the end of the previous analysis run.
-        var internallyUpdatedBuffers: Set<String> = []
-        for module in modules {
-            for input in module.inputs {
-                switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    if !(internallyUpdatedBuffers.contains(buffer.name)) {
-                        buffer.addObserver(self, alwaysNotify: false)
+        self.timedRun = timedRun
+        self.timedRunStartDelay = timedRunStartDelay
+        self.timedRunStopDelay = timedRunStopDelay
+        
+        if onUserInput {
+            for module in modules {
+                for input in module.inputs {
+                    switch input {
+                    case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                        buffer.addObserver(self)
+                    case .value(value: _, usedAs: _):
+                        continue
                     }
-                case .value(value: _, usedAs: _):
-                    continue
                 }
-            }
-            for output in module.outputs {
-                switch output {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    internallyUpdatedBuffers.insert(buffer.name)
-                case .value(value: _, usedAs: _):
-                    continue
-                }
+                
             }
         }
     }
@@ -71,7 +74,11 @@ final class ExperimentAnalysis {
     /**
      Schedules an update.
      */
-    func setNeedsUpdate() {
+    func setNeedsUpdate(isPreRun: Bool = false) {
+        if isPreRun {
+            cycle = 0
+        }
+        
         guard !busy else {
             requestedUpdateWhileBusy = true
             return
@@ -79,10 +86,10 @@ final class ExperimentAnalysis {
 
         busy = true
 
-        let delay = max(1/50.0, dynamicSleep?.last ?? sleep)
+        let delay = cycle > 0 ? max(1/50.0, dynamicSleep?.last ?? sleep) : 0
 
         after(delay) {
-            if !self.running { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
+            if !self.running && self.cycle > 0 { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
                 self.busy = false
                 return
             }
@@ -94,10 +101,9 @@ final class ExperimentAnalysis {
 
                 self.requestedUpdateWhileBusy = false
                 self.busy = false
-
                 self.delegate?.analysisDidUpdate(self)
 
-                if didRequestUpdateWhileBusy {
+                if self.cycle > 1 && (didRequestUpdateWhileBusy || !self.onUserInput) {
                     self.setNeedsUpdate()
                 }
             }
@@ -105,26 +111,56 @@ final class ExperimentAnalysis {
     }
     
     private func update(_ completion: @escaping () -> Void) {
-        let c = modules.count - 1
+
+        func inCycleList(thisCycle: Int, cycles: [(Int, Int)]) -> Bool {
+            if cycles.count == 0 {
+                return true
+            }
+            for cycle in cycles {
+                if thisCycle < cycle.0 && cycle.0 >= 0 {
+                    continue
+                }
+                if thisCycle > cycle.1 && cycle.1 >= 0 {
+                    continue
+                }
+                return true
+            }
+            return false
+        }
+        
+        let modulesInCycle = modules.filter{inCycleList(thisCycle: cycle, cycles: $0.cycles)}
+        
+        let c = modulesInCycle.count - 1
 
         let timestamp = timestampSource?.getCurrentTimestamp() ?? 0.0
 
-        for (i, analysis) in modules.enumerated() {
-            analysisQueue.async(execute: {
-                analysis.setNeedsUpdate(timestamp)
-                if i == c {
-                    mainThread {
-                        completion()
+        if (c >= 0) {
+            for (i, analysis) in modulesInCycle.enumerated() {
+                queue?.async(execute: {
+                    analysis.setNeedsUpdate(timestamp)
+                    if i == c {
+                        mainThread {
+                            self.cycle += 1
+                            completion()
+                        }
                     }
-                }
-            })
+                })
+            }
+        } else {
+            mainThread {
+                self.cycle += 1
+                completion()
+            }
         }
     }
 }
 
 extension ExperimentAnalysis: DataBufferObserver {
     func dataBufferUpdated(_ buffer: DataBuffer) {
-        setNeedsUpdate()
+    }
+    
+    func userInputTriggered(_ buffer: DataBuffer) {
+        setNeedsUpdate(isPreRun: !running)
     }
 }
 

@@ -33,7 +33,7 @@ final class Experiment {
     let stateTitle: String?
     private let description: String?
     private let links: [ExperimentLink]
-    private let category: String
+    let category: String
     
     var localizedTitle: String {
         return translation?.selectedTranslation?.titleString ?? title
@@ -81,18 +81,18 @@ final class Experiment {
     
     var fontColor: UIColor {
         if color.luminance > 0.7 {
-            return UIColor.black
+            return UIColor(white: 0.0, alpha: 1.0)
         } else {
-            return UIColor.white
+            return UIColor(white: 1.0, alpha: 1.0)
         }
     }
 
-    let persistentStorageURL: URL
-
     var local: Bool = false
     var source: URL?
+    var crc32: UInt?
     
     var appleBan: Bool
+    var invalid = false
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
@@ -111,7 +111,7 @@ final class Experiment {
     
     let networkConnections: [NetworkConnection]
     
-    let analysis: ExperimentAnalysis?
+    let analysis: ExperimentAnalysis
     let export: ExperimentExport?
     
     let buffers: [String: DataBuffer]
@@ -125,9 +125,10 @@ final class Experiment {
     private var pauseBegin: TimeInterval = 0.0
 
     private var audioEngine: AudioEngine?
+    
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, persistentStorageURL: URL, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis?, export: ExperimentExport?) {
-        self.persistentStorageURL = persistentStorageURL
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -175,10 +176,15 @@ final class Experiment {
             requiredPermissions.insert(.location)
         }
         
-        analysis?.delegate = self
-        analysis?.timestampSource = self
+        analysis.delegate = self
+        analysis.timestampSource = self
     }
 
+    convenience init(file: String, error: String) {
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, translation: nil, buffers: [:], sensorInputTimeReference: SensorInputTimeReference(), sensorInputs: [], gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0), export: nil)
+        invalid = true;
+    }
+    
     @objc private func endBackgroundSession() {
         stop()
     }
@@ -195,6 +201,9 @@ final class Experiment {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
 
+        analysis.queue = queue
+        analysis.setNeedsUpdate(isPreRun: true)
+        
         delegate?.experimentWillBecomeActive(self)
     }
     
@@ -210,26 +219,26 @@ final class Experiment {
             networkConnection.disconnect()
             networkConnection.specificAddress = nil
         }
-        clear()
+        clear(byUser: false)
     }
     
     func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
         guard let source = self.source else { throw FileError.genericError }
-        
+
         if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
             try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
         }
         
         var i = 1
-        
-        var experimentURL = customExperimentsURL.appendingPathComponent(title).appendingPathExtension(experimentFileExtension)
-        
+        let cleanedTitle = title.replacingOccurrences(of: "/", with: "")
+        var experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle).appendingPathExtension(experimentFileExtension)
+
         while FileManager.default.fileExists(atPath: experimentURL.path) {
-            experimentURL = customExperimentsURL.appendingPathComponent(title + "-\(i)").appendingPathExtension(experimentFileExtension)
+            experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle + "-\(i)").appendingPathExtension(experimentFileExtension)
             
             i += 1
         }
-        
+
         func moveFile(from fileURL: URL) throws {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
@@ -246,7 +255,7 @@ final class Experiment {
                 }
             }
         }
-        
+
         if source.isFileURL {
             try moveFile(from: source)
         }
@@ -347,12 +356,6 @@ final class Experiment {
         
         running = true
 
-        try? FileManager.default.createDirectory(at: persistentStorageURL, withIntermediateDirectories: false, attributes: nil)
-
-        for buffer in buffers.values {
-            buffer.open()
-        }
-
         hasStarted = true
 
         UIApplication.shared.isIdleTimerDisabled = true
@@ -360,13 +363,14 @@ final class Experiment {
         try startAudio()
         
         sensorInputTimeReference.t0 = nil
-        sensorInputs.forEach { $0.start() }
-        gpsInputs.forEach { $0.start() }
-        bluetoothInputs.forEach { $0.start() }
+        sensorInputs.forEach { $0.start(queue: queue) }
+        gpsInputs.forEach { $0.start(queue: queue) }
+        bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
-        
-        analysis?.running = true
-        analysis?.setNeedsUpdate()
+
+        analysis.running = true
+        analysis.queue = queue
+        analysis.setNeedsUpdate()
     }
     
     func stop() {
@@ -374,7 +378,7 @@ final class Experiment {
             return
         }
         
-        analysis?.running = false
+        analysis.running = false
         
         pauseBegin = CFAbsoluteTimeGetCurrent()
         
@@ -390,13 +394,11 @@ final class Experiment {
         running = false
     }
     
-    func clear() {
+    func clear(byUser: Bool) {
         stop()
         pauseBegin = 0.0
         startTimestamp = nil
         hasStarted = false
-
-        try? FileManager.default.removeItem(at: persistentStorageURL)
 
         for buffer in buffers.values {
             if !buffer.attachedToTextField {
@@ -406,9 +408,9 @@ final class Experiment {
 
         sensorInputs.forEach { $0.clear() }
         gpsInputs.forEach { $0.clear() }
-
-        for buffer in buffers.values {
-            buffer.close()
+        
+        if byUser {
+            analysis.setNeedsUpdate(isPreRun: true)
         }
     }
 }
@@ -438,7 +440,11 @@ extension Experiment: ExperimentAnalysisTimestampSource {
     func getCurrentTimestamp() -> TimeInterval {
         guard let startTimestamp = startTimestamp else { return 0.0 }
 
-        return CFAbsoluteTimeGetCurrent() - startTimestamp
+        if pauseBegin > 0 {
+            return pauseBegin - startTimestamp
+        } else {
+            return CFAbsoluteTimeGetCurrent() - startTimestamp
+        }
     }
 }
 

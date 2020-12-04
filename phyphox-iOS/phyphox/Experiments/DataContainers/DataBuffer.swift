@@ -11,13 +11,14 @@ import Dispatch
 
 protocol DataBufferObserver: class {
     func dataBufferUpdated(_ buffer: DataBuffer)
+    func userInputTriggered(_ buffer: DataBuffer)
 }
 
-private typealias ObserverCapture = () -> (observer: DataBufferObserver?, alwaysNotify: Bool)
+private typealias ObserverCapture = () -> DataBufferObserver?
 
-private func weakObserverCapture(_ object: DataBufferObserver, alwaysNotify: Bool) -> ObserverCapture {
+private func weakObserverCapture(_ object: DataBufferObserver) -> ObserverCapture {
     return { [weak object] in
-        return (object, alwaysNotify)
+        return (object)
     }
 }
 
@@ -40,29 +41,6 @@ extension DataBufferError: LocalizedError {
  Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
 final class DataBuffer {
-    enum StorageType: Equatable {
-        case memory(size: Int)
-        case hybrid(memorySize: Int, persistentStorageLocation: URL)
-
-        static func == (lhs: StorageType, rhs: StorageType) -> Bool {
-            switch lhs {
-            case .memory(let sizeL):
-                switch rhs {
-                case .memory(let sizeR):
-                    return sizeL == sizeR
-                default:
-                    return false
-                }
-            case .hybrid(memorySize: let sizeL, persistentStorageLocation: _):
-                switch rhs {
-                case .hybrid(memorySize: let sizeR, persistentStorageLocation: _):
-                    return sizeL == sizeR
-                default:
-                    return false
-                }
-            }
-        }
-    }
 
     let name: String
     let size: Int
@@ -71,25 +49,18 @@ final class DataBuffer {
      Helper value that returns `size` when `size > 0` and `Int.max` when `size == 0`.
      */
     private var effectiveMemorySize: Int {
-        switch storageType {
-        case .memory(size: let size):
-            if size == 0 {
-                return .max
-            }
-            else {
-                return size
-            }
-        case .hybrid(memorySize: let memorySize, persistentStorageLocation: _):
-            return memorySize
+        if size == 0 {
+            return .max
+        }
+        else {
+            return size
         }
     }
 
     var attachedToTextField = false
 
     private let baseContents: [Double]
-
-    private let storageType: StorageType
-
+    
     private var lazyStateToken: UUID?
 
     /**
@@ -111,13 +82,13 @@ final class DataBuffer {
     /**
      Notifications are sent in order, first registered, first notified.
      */
-    func addObserver(_ observer: DataBufferObserver, alwaysNotify: Bool) {
+    func addObserver(_ observer: DataBufferObserver) {
         let alreadyRegistered = observerCaptures.contains(where: { capture in
-            return capture().observer === observer
+            return capture() === observer
         })
 
         if !alreadyRegistered {
-            let capture = weakObserverCapture(observer, alwaysNotify: alwaysNotify)
+            let capture = weakObserverCapture(observer)
             observerCaptures.append(capture)
         }
     }
@@ -131,15 +102,21 @@ final class DataBuffer {
 
         DispatchQueue.main.async {
             for observerCapture in self.observerCaptures {
-                let (observer, alwaysNotify) = observerCapture()
-
-                if self.isOpen || alwaysNotify {
-                    observer?.dataBufferUpdated(self)
-                }
+                let observer = observerCapture()
+                observer?.dataBufferUpdated(self)
             }
         }
     }
 
+    func triggerUserInput() {
+        DispatchQueue.main.async {
+            for observerCapture in self.observerCaptures {
+                let observer = observerCapture()
+                observer?.userInputTriggered(self)
+            }
+        }
+    }
+    
     let staticBuffer: Bool
     private var written: Bool = false
 
@@ -154,23 +131,16 @@ final class DataBuffer {
      Total number of values stored in buffer. The number of values in memory is always at most equal to this value. Values not stored in memory are not accessible via Collection or Sequence methods.
      */
     var count: Int {
-        return Swift.max(persistentStorageSize, memoryCount)
+        return memoryCount
     }
 
     private let lockingQueue = DispatchQueue(label: "de.j-gessner.queue.lock", qos: .userInteractive, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
 
     private var contents: [Double]
 
-    init(name: String, storage: StorageType, baseContents: [Double], static staticBuffer: Bool) throws {
-        switch storage {
-        case .memory(size: let size):
-            self.size = size
-        case .hybrid(memorySize: _, persistentStorageLocation: _):
-            self.size = 0
-        }
-
+    init(name: String, size: Int, baseContents: [Double], static staticBuffer: Bool) throws {
+        self.size = size
         self.name = name
-        self.storageType = storage
         self.baseContents = baseContents
 
         contents = []
@@ -182,81 +152,6 @@ final class DataBuffer {
         }
 
         appendFromArray(baseContents)
-    }
-
-    private var persistentStorageFileHandle: FileHandle?
-    private(set) var persistentStorageSize = 0
-
-    private var isOpen = false
-
-    /**
-     Opening a buffer starts notifying all observers. In case of a hybrid buffer the file handle for writing data to the persistent storage is opened and the current contents of the buffer are written to the persistent storage.
-     */
-    func open() {
-        syncWrite {
-            guard !isOpen else { return }
-
-            isOpen = true
-
-            switch storageType {
-            case .hybrid(memorySize: _, persistentStorageLocation: let url):
-                if !FileManager.default.fileExists(atPath: url.path) {
-                    FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
-                }
-
-                let handle = try? FileHandle(forWritingTo: url)
-                handle?.truncateFile(atOffset: 0)
-                persistentStorageSize = 0
-
-                persistentStorageFileHandle = handle
-            case .memory(size: _):
-                break
-            }
-
-            autoreleasepool {
-                // Write current contents
-                if let handle = persistentStorageFileHandle {
-                    enumerateDataEncodedElements { data in
-                        handle.write(data)
-                    }
-
-                    persistentStorageSize += memoryCount
-                }
-            }
-        }
-    }
-
-    /**
-     Closing a buffer stops notifying all observers (observers that explicitly want constant updates excluded), closes the persistent storage file handle in case of a hybrid buffer and deletes the persistent storage file.
-     */
-    func close() {
-        syncWrite {
-            guard isOpen else { return }
-
-            isOpen = false
-
-            switch storageType {
-            case .hybrid(memorySize: _, persistentStorageLocation: let url):
-                persistentStorageFileHandle?.synchronizeFile()
-                persistentStorageFileHandle?.closeFile()
-                persistentStorageFileHandle = nil
-
-                try? FileManager.default.removeItem(at: url)
-
-                persistentStorageSize = 0
-            case .memory(size: _):
-                break
-            }
-        }
-    }
-
-    private var hybrid: Bool {
-        switch storageType {
-        case .memory(size: _):
-            return false
-        case .hybrid(memorySize: _, persistentStorageLocation: _):
-            return true
-        }
     }
 
     private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
@@ -286,10 +181,6 @@ final class DataBuffer {
     }
 
     func removeFirst(_ n: Int) {
-        if hybrid {
-            print("Truncating a hybrid buffer is not supported.")
-        }
-
         syncWrite {
             contents.removeFirst(n)
         }
@@ -300,11 +191,6 @@ final class DataBuffer {
             guard !staticBuffer || !written else { return }
 
             willWrite()
-
-            if isOpen, let handle = persistentStorageFileHandle {
-                handle.truncateFile(atOffset: 0)
-                persistentStorageSize = 0
-            }
 
             contents = baseContents
 
@@ -320,15 +206,6 @@ final class DataBuffer {
 
             autoreleasepool {
                 var cutValues = values
-
-                if isOpen, let handle = persistentStorageFileHandle {
-                    handle.truncateFile(atOffset: 0)
-                    values.enumerateDataEncodedElements { data in
-                        handle.write(data)
-                    }
-
-                    persistentStorageSize = values.count
-                }
 
                 let effectiveSize = effectiveMemorySize
 
@@ -349,12 +226,6 @@ final class DataBuffer {
 
             willWrite()
 
-            if isOpen, let handle = persistentStorageFileHandle {
-                handle.write(value.encode())
-
-                persistentStorageSize += 1
-            }
-
             contents.append(value)
 
             if memoryCount > effectiveMemorySize {
@@ -374,13 +245,6 @@ final class DataBuffer {
             willWrite()
 
             autoreleasepool {
-                if isOpen, let handle = persistentStorageFileHandle {
-                    values.enumerateDataEncodedElements { data in
-                        handle.write(data)
-                    }
-
-                    persistentStorageSize += values.count
-                }
 
                 let sizeAfterAppend = memoryCount + values.count
 
@@ -452,19 +316,7 @@ extension DataBuffer {
         try syncWrite {
             let atomicFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
 
-            switch storageType {
-            case .hybrid(memorySize: _, persistentStorageLocation: let persistentFileLocation):
-                if FileManager.default.fileExists(atPath: persistentFileLocation.path) {
-                    try FileManager.default.copyItem(at: persistentFileLocation, to: url)
-                }
-                else {
-                    FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
-                }
-
-                return
-            case .memory(size: _):
-                FileManager.default.createFile(atPath: atomicFile.path, contents: nil, attributes: nil)
-            }
+            FileManager.default.createFile(atPath: atomicFile.path, contents: nil, attributes: nil)
 
             let handle = try FileHandle(forWritingTo: atomicFile)
             handle.seekToEndOfFile()
@@ -535,26 +387,7 @@ extension DataBuffer {
             }
         }
 
-        try syncWrite {
-            switch storageType {
-            case .hybrid(memorySize: _, persistentStorageLocation: let persistentFileLocation):
-                // Close current file handle, copy buffer file to persistent storage location and reopen file handle at EOF
-                persistentStorageFileHandle?.closeFile()
-                persistentStorageFileHandle = nil
-
-                if FileManager.default.fileExists(atPath: persistentFileLocation.path) {
-                    try FileManager.default.removeItem(at: persistentFileLocation)
-                }
-                try FileManager.default.copyItem(at: url, to: persistentFileLocation)
-
-                let handle = try? FileHandle(forWritingTo: url)
-                handle?.seekToEndOfFile()
-
-                persistentStorageFileHandle = handle
-            case .memory(size: _):
-                break
-            }
-
+        syncWrite {
             willWrite()
 
             contents = values
@@ -566,7 +399,6 @@ extension DataBuffer {
 
 extension DataBuffer: Equatable {
     static func ==(lhs: DataBuffer, rhs: DataBuffer) -> Bool {
-        return lhs.storageType == rhs.storageType &&
-            lhs.toArray() == rhs.toArray()
+        return lhs.toArray() == rhs.toArray()
     }
 }

@@ -260,6 +260,18 @@ final class FormulaParser {
         }
     }
     
+    class HeavisideFunction: FormulaFunction1 {
+        func apply(_ x: Double) -> Double {
+            if x.isNaN {
+                return Double.nan
+            } else if x >= 0 {
+                return 1
+            } else {
+                return 0
+            }
+        }
+    }
+    
     class RoundFunction: FormulaFunction1 {
         func apply(_ x: Double) -> Double {
             return round(x)
@@ -275,6 +287,32 @@ final class FormulaParser {
     class FloorFunction: FormulaFunction1 {
         func apply(_ x: Double) -> Double {
             return floor(x)
+        }
+    }
+    
+    class MinFunction: FormulaFunction2 {
+        func apply(_ x: Double, _ y: Double) -> Double {
+            if x.isNaN || y.isNaN {
+                return Double.nan
+            }
+            if x > y {
+                return y
+            } else {
+                return x
+            }
+        }
+    }
+    
+    class MaxFunction: FormulaFunction2 {
+        func apply(_ x: Double, _ y: Double) -> Double {
+            if x.isNaN || y.isNaN {
+                return Double.nan
+            }
+            if x < y {
+                return y
+            } else {
+                return x
+            }
         }
     }
     
@@ -484,9 +522,12 @@ final class FormulaParser {
                             case "log": function = LogFunction()
                             case "abs": function = AbsFunction()
                             case "sign": function = SignFunction()
+                            case "heaviside": function = HeavisideFunction()
                             case "round": function = RoundFunction()
                             case "ceil": function = CeilFunction()
                             case "floor": function = FloorFunction()
+                            case "min": function = MinFunction()
+                            case "max": function = MaxFunction()
                             default: break;
                         }
                     }

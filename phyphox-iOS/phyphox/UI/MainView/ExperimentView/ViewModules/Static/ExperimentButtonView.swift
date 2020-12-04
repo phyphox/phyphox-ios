@@ -8,7 +8,8 @@
 
 import UIKit
 
-private let spacing: CGFloat = 20.0
+private let spacing: CGFloat = 5.0
+private let padding: CGFloat = 20.0
 
 protocol ButtonViewTriggerCallback {
     func finished()
@@ -61,7 +62,7 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let w = button.sizeThatFits(self.bounds.size).width + 2*spacing
+        let w = button.sizeThatFits(self.bounds.size).width + 2*padding
         
         button.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width-w)/2.0, y: spacing), size: CGSize(width: w, height: self.bounds.height-2*spacing))
     }

@@ -1130,7 +1130,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 labelText += "\n    \(abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1])))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             labelText += "\n" + localize("graph_slope_label")
-            labelText += "\n    \(((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+            labelText += "\n    \(((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))) " + descriptor.localizedYXUnit
             setMarkerLabel(labelText)
         } else if showLinearFit {
             if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
@@ -1148,7 +1148,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 self.markerOverlayView.markers = relativeCoordinates
                 
                 var labelText = localize("graph_fit_label")
-                labelText += "\na = \(a) " + (descriptor.localizedYUnit != "" ? descriptor.localizedYUnit : "") + " / " + (descriptor.localizedXUnit != "" ? descriptor.localizedXUnit : "")
+                labelText += "\na = \(a) " + descriptor.localizedYXUnit
                 labelText += "\nb = \(b)" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
                 setMarkerLabel(labelText)
             } else {

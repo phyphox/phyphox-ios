@@ -137,6 +137,8 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
             }
         }
         
+        beforeWrite()
+        
         switch outX! {
         case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
             if clear {

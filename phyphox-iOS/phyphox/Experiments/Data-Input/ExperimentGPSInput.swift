@@ -27,9 +27,10 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     private var startTime: TimeInterval = 0.0
     private var startTimestamp: TimeInterval?
     
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.gpsQueue", attributes: [])
+    private var queue: DispatchQueue?
     
     init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?) {
+        
         self.latBuffer = latBuffer
         self.lonBuffer = lonBuffer
         self.zBuffer = zBuffer
@@ -73,7 +74,9 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         
     }
     
-    func start() {
+    func start(queue: DispatchQueue) {
+        self.queue = queue
+        
         startTime = Date.timeIntervalSinceReferenceDate //This is only used to filter cached data from the location manager
         
         startTimestamp = nil
@@ -124,7 +127,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     
     private func dataIn(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
         
-        queue.async {
+        queue?.async {
             autoreleasepool(invoking: {
                 self.writeToBuffers(lat, lon: lon, z: z, zWgs84: zWgs84, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
             })

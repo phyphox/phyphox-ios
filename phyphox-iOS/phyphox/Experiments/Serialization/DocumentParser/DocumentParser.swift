@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import zlib
 
 // MARK: - Attributes
 /// KeyedAttributeContainer and AttributeContainer are defined in the same file as DocumentParser to allow their initializers to be fileprivate. This makes it possible for DocumentParser to initialize AttributeContainer but makes it impossible to initialize AttributeContainer from outside this file.

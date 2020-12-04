@@ -37,12 +37,12 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
 
     private var outputList: [BluetoothOutput] = []
 
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.bluetoothQueue", attributes: [])
+    private var queue: DispatchQueue?
     
     var timer = Timer()
     
     init(device: ExperimentBluetoothDevice, mode: BluetoothMode, outputList: [BluetoothOutput], configList: [BluetoothConfigDescriptor], subscribeOnStart: Bool, rate: Double?) {
-        
+                
         self.outputList = outputList
         self.configList = configList
         
@@ -54,13 +54,14 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         self.device.attachDelegate(self)
     }
     
-    func start(){
+    func start(queue: DispatchQueue){
+        self.queue = queue
         running = true
         startTimestamp = nil
         switch mode {
         case .poll:
             timer = Timer.scheduledTimer(timeInterval: (1.0/rate), target: self, selector: #selector(pollData), userInfo: nil, repeats: true)
-        case .notification:
+        case .notification, .indication:
             if subscribeOnStart {
                 do {
                     for char in Set(outputList.map({$0.char})) {
@@ -75,8 +76,6 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
                     return
                 }
             }
-        default:
-            print("default")
         }
         
     }
@@ -99,7 +98,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     func stop(){
         running = false
         switch mode {
-        case .notification:
+        case .notification, .indication:
             if subscribeOnStart {
                 do {
                     for char in Set(outputList.map({$0.char})) {
@@ -116,8 +115,6 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             }
         case .poll:
             timer.invalidate()
-        default:
-            print("default stop message")
         }
     }
     
@@ -180,7 +177,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         }
         
         
-        queue.async {
+        queue?.async {
             autoreleasepool(invoking: {
                 dataInSync(value, t: t, dataBufferIn: dataBufferIn)
             })

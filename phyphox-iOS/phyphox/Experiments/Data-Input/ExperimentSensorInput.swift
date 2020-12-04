@@ -94,7 +94,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     private(set) var motionSession: MotionSession
     
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.sensorQueue", attributes: [])
+    private var queue: DispatchQueue?
     
     private class Averaging {
         /**
@@ -223,7 +223,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         averaging.numberOfUpdates = 0
     }
     
-    func start() {
+    func start(queue: DispatchQueue) {
+        self.queue = queue
         
         do {
             try verifySensorAvailibility()
@@ -449,11 +450,15 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             tBuffer.append(t)
         }
         
-        if let x = x, let y = y, let z = z, let absBuffer = absBuffer {
+        if let absBuffer = absBuffer {
             if let abs = abs {
                 absBuffer.append(abs)
-            } else {
-                absBuffer.append(sqrt(x*x + y*y + z*z))
+            } else if let x = x {
+                if let y = y, let z = z {
+                    absBuffer.append(sqrt(x*x + y*y + z*z))
+                } else {
+                    absBuffer.append(x)
+                }
             }
         }
     }
@@ -549,7 +554,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             }
         }
         
-        queue.async {
+        queue?.async {
             autoreleasepool(invoking: {
                 dataInSync(x, y: y, z: z, abs: abs, accuracy: accuracy, t: t, error: error)
             })

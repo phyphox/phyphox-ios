@@ -136,6 +136,8 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             textField.text = formattedValue(rawValue)
 
             descriptor.buffer.replaceValues([value])
+            
+            descriptor.buffer.triggerUserInput()
         }
     }
 

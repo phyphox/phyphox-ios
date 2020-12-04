@@ -114,6 +114,8 @@ final class MinAnalysis: ExperimentAnalysisModule {
             
             vDSP_minvD(inArray, 1, &min, vDSP_Length(inArray.count))
             
+            beforeWrite()
+            
             if let minOut = minOut {
                 switch minOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
@@ -152,6 +154,8 @@ final class MinAnalysis: ExperimentAnalysisModule {
                     thisX = xIn?.objectAtIndex(i) ?? Double(i)
                 }
             }
+            
+            beforeWrite()
             
             if let minOut = minOut {
                 switch minOut {
@@ -200,6 +204,8 @@ final class MinAnalysis: ExperimentAnalysisModule {
             else {
                 x = Double(index)
             }
+            
+            beforeWrite()
             
             if let minOut = minOut {
                 switch minOut {

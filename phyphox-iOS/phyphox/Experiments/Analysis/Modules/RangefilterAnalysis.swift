@@ -122,6 +122,8 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(out)
         #endif
         
+        beforeWrite()
+        
         for (i, output) in outputs.enumerated() {
             switch output {
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
