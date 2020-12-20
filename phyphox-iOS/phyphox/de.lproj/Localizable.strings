@@ -135,6 +135,7 @@
 "graph_tools_pan_and_zoom" = "Ziehen/Zoom";
 "graph_tools_pick" = "Punkte wählen";
 "graph_tools_more" = "Mehr Werkzeuge";
+"graph_tools_system_time" = "In Systemzeit umrechnen";
 "graph_tools_reset" = "Zoom zurücksetzen";
 "graph_tools_follow" = "Neuen Daten folgen";
 "graph_tools_linear_fit" = "Ausgleichsgerade";

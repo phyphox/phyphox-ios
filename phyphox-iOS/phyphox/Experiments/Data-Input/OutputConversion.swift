@@ -78,7 +78,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = UInt16(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -86,23 +86,23 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = Int16(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
         case .uInt24LittleEndian:
             var mutable = UInt32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
-            return leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: mutable)))
+            return leData.subdata(in: (1..<MemoryLayout.size(ofValue: mutable)))
         case .int24LittleEndian:
             var mutable = Int32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
-            return leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: mutable)))
+            return leData.subdata(in: (1..<MemoryLayout.size(ofValue: mutable)))
         case .uInt24BigEndian:
             var mutable = UInt32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (1..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -110,7 +110,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = Int32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (1..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -124,7 +124,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = UInt32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -132,7 +132,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = Int32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -143,7 +143,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = Float32(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data
@@ -154,7 +154,7 @@ class SimpleOutputConversion: OutputConversion {
             var mutable = Float64(value)
             let leData = Data(bytes: &mutable, count: MemoryLayout.size(ofValue: mutable))
             var data = Data(capacity: MemoryLayout.size(ofValue: mutable))
-            for byte in leData.subdata(in: Range(0..<MemoryLayout.size(ofValue: mutable))).reversed() {
+            for byte in leData.subdata(in: (0..<MemoryLayout.size(ofValue: mutable))).reversed() {
                 data.append(byte)
             }
             return data

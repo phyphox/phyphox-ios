@@ -27,10 +27,10 @@ final class TextFieldTableViewCell: UITableViewCell {
     var editingEndedCallback: (() -> Void)?
     var editingChangedCallback: (() -> Void)?
     
-    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        textField.addTarget(self, action: #selector(didEndOnExit), for: UIControlEvents(rawValue: UIControlEvents.editingDidEndOnExit.rawValue | UIControlEvents.editingDidEnd.rawValue))
+        textField.addTarget(self, action: #selector(didEndOnExit), for: UIControl.Event(rawValue: UIControl.Event.editingDidEndOnExit.rawValue | UIControl.Event.editingDidEnd.rawValue))
         textField.addTarget(self, action: #selector(editingChanged), for: .editingChanged)
         
         textField.borderStyle = .none

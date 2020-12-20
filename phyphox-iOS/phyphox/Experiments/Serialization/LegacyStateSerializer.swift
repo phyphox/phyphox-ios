@@ -93,6 +93,11 @@ final class LegacyStateSerializer {
             with: "",
             options: .regularExpression
         )
+        sourceStr = sourceStr.replacingOccurrences(
+            of: "<events>.*<\\/events>",
+            with: "",
+            options: .regularExpression
+        )
         let dataContainersBlockStart = sourceStr.range(of: "<data-containers>", options: .caseInsensitive)
         let dataContainersBlockStop = sourceStr.range(of: "</data-containers>", options: .caseInsensitive)
         if dataContainersBlockStop == nil || dataContainersBlockStart == nil {
@@ -122,6 +127,11 @@ final class LegacyStateSerializer {
         }
         let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
         let color = "<color>blue</color>"
-        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + color + "\n" + "</phyphox>"
+        var events = "<events>"
+        for event in experiment.timeReference.timeMappings {
+            events += "<\(event.event.rawValue.lowercased()) experimentTime=\"\(event.experimentTime)\" systemTime=\"\(Int64(event.systemTime.timeIntervalSince1970*1000))\" />"
+        }
+        events += "</events>"
+        return sourceStr[..<dataContainersBlockStart!.upperBound] + "\n" + newBlock + "\n" + sourceStr[dataContainersBlockStop!.lowerBound..<endLocation!.lowerBound] + "\n" + customTitle + "\n" + color + "\n" + events + "\n" + "</phyphox>"
     }
 }

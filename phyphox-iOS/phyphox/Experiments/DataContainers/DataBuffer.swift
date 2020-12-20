@@ -333,20 +333,20 @@ extension DataBuffer {
             if isLittleEndian {
                 // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
                 withExtendedLifetime(contents, { values in
-                    let pointer = UnsafePointer(values)
-                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
-
-                    writeDataFromPointer(rawDataPointer)
+                    values.withUnsafeBytes{ pointer in
+                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
+                        writeDataFromPointer(rawDataPointer)
+                    }
                 })
             }
             else {
                 let values = contents.map { $0.bitPattern.littleEndian }
 
                 withExtendedLifetime(values, { values in
-                    let pointer = UnsafePointer(values)
-                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
-
-                    writeDataFromPointer(rawDataPointer)
+                    values.withUnsafeBytes{ pointer in
+                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
+                        writeDataFromPointer(rawDataPointer)
+                    }
                 })
             }
 
@@ -354,47 +354,6 @@ extension DataBuffer {
         }
     }
 
-    func readState(from url: URL) throws {
-        let handle = try FileHandle(forReadingFrom: url)
-
-        let singleValueSize = MemoryLayout<Double>.size
-
-        let fileSize = Int(handle.seekToEndOfFile())
-        let readingSize = Swift.min(fileSize, effectiveMemorySize * singleValueSize)
-        let readingStart = UInt64(fileSize - readingSize)
-
-        handle.seek(toFileOffset: readingStart)
-
-        let data = handle.readData(ofLength: readingSize)
-        handle.closeFile()
-
-        let count = data.count / singleValueSize
-
-        let values: [Double]
-
-        if isLittleEndian {
-            values = data.withUnsafeBytes { (pointer: UnsafePointer<Double>) -> [Double] in
-                let buffer = UnsafeBufferPointer(start: pointer, count: count)
-
-                return Array(buffer)
-            }
-        }
-        else {
-            values = data.withUnsafeBytes { (pointer: UnsafePointer<UInt64>) -> [Double] in
-                let buffer = UnsafeBufferPointer(start: pointer, count: count)
-
-                return buffer.map { Double(bitPattern: UInt64(littleEndian: $0)) }
-            }
-        }
-
-        syncWrite {
-            willWrite()
-
-            contents = values
-
-            didWrite()
-        }
-    }
 }
 
 extension DataBuffer: Equatable {

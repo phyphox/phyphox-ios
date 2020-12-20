@@ -17,6 +17,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private let zUnit: String?
     private let yxUnit: String?
     
+    let timeReference: ExperimentTimeReference
+    let timeOnX: Bool
+    let timeOnY: Bool
+    let systemTime: Bool
+    
     private var legacyXLabel: String? = nil
     private var legacyXUnit: String? = nil
     private var legacyYLabel: String? = nil
@@ -32,6 +37,14 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         }
     }
     
+    var localizedXLabelWithTimezone: String {
+        let offset = TimeZone.current.secondsFromGMT()
+        let hours = offset / (60*60)
+        let minutes = abs(offset / 60) % 60
+        let offsetStr = String(format: "%+d:%02d", hours, minutes)
+        return localizedXLabel + " (UTC" + offsetStr + ")"
+    }
+    
     var localizedYLabelWithUnit: String {
         let label = legacyYLabel ?? localizedYLabel
         let unit = legacyYUnit ?? localizedYUnit
@@ -40,6 +53,14 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         } else {
             return label
         }
+    }
+    
+    var localizedYLabelWithTimezone: String {
+        let offset = TimeZone.current.secondsFromGMT()
+        let hours = offset / (60*60)
+        let minutes = abs(offset / 60) % 60
+        let offsetStr = String(format: "%+d:%02d", hours, minutes)
+        return localizedYLabel + " (UTC" + offsetStr + ")"
     }
     
     var localizedZLabelWithUnit: String {
@@ -148,7 +169,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: UInt, yPrecision: UInt, zPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor]) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: UInt, yPrecision: UInt, zPrecision: UInt, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor]) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         self.zLabel = zLabel
@@ -156,6 +177,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         self.yUnit = yUnit
         self.zUnit = zUnit
         self.yxUnit = yxUnit
+        
+        self.timeReference = timeReference
+        self.timeOnX = timeOnX
+        self.timeOnY = timeOnY
+        self.systemTime = systemTime
         
         //Parse units from old experiments, where the unit is part of the label
         if xUnit == nil {

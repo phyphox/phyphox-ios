@@ -12,18 +12,18 @@ final class KeyboardTracker {
     static var keyboardFrame = CGRect.zero
 
     static func startTracking() {
-        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: .UIKeyboardWillChangeFrame, object: nil)
-        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name: .UIKeyboardDidChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameWillChange(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self.self, selector: #selector(keyboardFrameDidChange(_:)), name: UIResponder.keyboardDidChangeFrameNotification, object: nil)
     }
 
     @objc private static func keyboardFrameWillChange(_ notification: Notification) {
-        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
+        keyboardFrame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
         if (keyboardFrame.isEmpty) {
-            keyboardFrame = (notification.userInfo![UIKeyboardFrameBeginUserInfoKey]! as AnyObject).cgRectValue;
+            keyboardFrame = (notification.userInfo![UIResponder.keyboardFrameBeginUserInfoKey]! as AnyObject).cgRectValue;
         }
     }
 
     @objc private static func keyboardFrameDidChange(_ notification: Notification) {
-        keyboardFrame = (notification.userInfo![UIKeyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
+        keyboardFrame = (notification.userInfo![UIResponder.keyboardFrameEndUserInfoKey]! as AnyObject).cgRectValue;
     }
 }

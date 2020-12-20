@@ -38,7 +38,7 @@ enum ExperimentIcon: Equatable {
         case .image(let imageL):
             switch rhs {
             case .image(let imageR):
-                return UIImagePNGRepresentation(imageL) == UIImagePNGRepresentation(imageR)
+                return imageL.pngData() == imageR.pngData()
             default:
                 return false
             }

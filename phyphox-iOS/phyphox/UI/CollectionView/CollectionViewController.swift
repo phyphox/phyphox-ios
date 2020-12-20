@@ -31,8 +31,8 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
     init() {
         super.init(nibName: nil, bundle: nil)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)), name:UIResponder.keyboardDidChangeFrameNotification, object: nil)
     }
     
     override func loadView() {
@@ -50,13 +50,13 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         
         if let headers = type(of: self).customHeaders {
             for (key, headerClass) in headers {
-                selfView.collectionView.register(headerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: key)
+                selfView.collectionView.register(headerClass, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: key)
             }
         }
         
         if let footers = type(of: self).customFooters {
             for (key, footerClass) in footers {
-                selfView.collectionView.register(footerClass, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: key)
+                selfView.collectionView.register(footerClass, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: key)
             }
         }
         
@@ -80,19 +80,19 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         //MARK: - Keyboard handler
     
     @objc private func keyboardFrameChanged(_ notification: Notification) {
-        func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIViewAnimationCurve) -> UIViewAnimationOptions  {
-            let testOptions = UInt(UIViewAnimationCurve.linear.rawValue << 16);
+        func UIViewAnimationOptionsFromUIViewAnimationCurve(_ curve: UIView.AnimationCurve) -> UIView.AnimationOptions  {
+            let testOptions = UInt(UIView.AnimationCurve.linear.rawValue << 16);
             
-            if (testOptions != UIViewAnimationOptions.curveLinear.rawValue) {
+            if (testOptions != UIView.AnimationOptions.curveLinear.rawValue) {
                 NSLog("Unexpected implementation of UIViewAnimationOptionCurveLinear");
             }
             
-            return UIViewAnimationOptions(rawValue: UInt(curve.rawValue << 16));
+            return UIView.AnimationOptions(rawValue: UInt(curve.rawValue << 16));
         }
         
-        let duration = (notification.userInfo![UIKeyboardAnimationDurationUserInfoKey]! as AnyObject).doubleValue!
+        let duration = (notification.userInfo![UIResponder.keyboardAnimationDurationUserInfoKey]! as AnyObject).doubleValue!
         
-        let curve = UIViewAnimationCurve(rawValue: (notification.userInfo![UIKeyboardAnimationCurveUserInfoKey]! as AnyObject).intValue!)!
+        let curve = UIView.AnimationCurve(rawValue: (notification.userInfo![UIResponder.keyboardAnimationCurveUserInfoKey]! as AnyObject).intValue!)!
         
         var bottomInset: CGFloat = 0.0
         
@@ -106,7 +106,7 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         contentInset.bottom = bottomInset
         scrollInset.bottom = bottomInset
         
-        UIView.animate(withDuration: duration, delay: 0.0, options: [UIViewAnimationOptions.beginFromCurrentState, UIViewAnimationOptionsFromUIViewAnimationCurve(curve)], animations: { () -> Void in
+        UIView.animate(withDuration: duration, delay: 0.0, options: [UIView.AnimationOptions.beginFromCurrentState, UIViewAnimationOptionsFromUIViewAnimationCurve(curve)], animations: { () -> Void in
             self.selfView.collectionView.contentInset = contentInset
             self.selfView.collectionView.scrollIndicatorInsets = scrollInset
             }, completion: nil)

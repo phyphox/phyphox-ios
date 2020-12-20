@@ -23,7 +23,7 @@ final class GraphGridView: UIView {
         super.init(frame: frame)
         
         borderView.layer.borderColor = UIColor(white: 1.0, alpha: 1.0).cgColor
-        borderView.layer.borderWidth = 1.0/UIScreen.main.scale
+        borderView.layer.borderWidth = 2.0/UIScreen.main.scale
         
         addSubview(borderView)
     }
@@ -69,6 +69,15 @@ final class GraphGridView: UIView {
     
     private var lineViews: [GraphGridLineView] = []
     private var labels: [UILabel] = []
+
+    var pauseMarkers: PauseRanges? {
+        didSet {
+            updatePauseMarkerViews()
+            setNeedsLayout()
+        }
+    }
+    
+    private var pauseMarkerViews: [GraphPauseMarkerView] = []
     
     private func updateLineViews() {
         var neededViews = 0
@@ -86,7 +95,7 @@ final class GraphGridView: UIView {
         
         func makeLabel() -> UILabel {
             let label = UILabel()
-            let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            let defaultFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
             label.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
             
             addSubview(label)
@@ -134,6 +143,42 @@ final class GraphGridView: UIView {
         }
     }
     
+    private func updatePauseMarkerViews() {
+        var neededViews = 0
+        
+        if let pauseMarkers = pauseMarkers {
+            neededViews += pauseMarkers.xPauseRanges.count
+            neededViews += pauseMarkers.yPauseRanges.count
+        }
+        
+        let delta = pauseMarkerViews.count-neededViews
+        
+        
+        if delta > 0 {
+            var index = 0
+            
+            pauseMarkerViews = pauseMarkerViews.filter({ (view) -> Bool in
+                if index < neededViews {
+                    index += 1
+                    return true
+                }
+                else {
+                    view.removeFromSuperview()
+                    return false
+                }
+            })
+            
+            index = 0
+        }
+        else if delta < 0 {
+            for _ in delta..<0 {
+                let view = GraphPauseMarkerView()
+                addSubview(view)
+                pauseMarkerViews.append(view)
+            }
+        }
+    }
+    
     override func layoutSubviews() {
         let spacing = 1.0/UIScreen.main.scale
         super.layoutSubviews()
@@ -146,28 +191,43 @@ final class GraphGridView: UIView {
         formatterY.usesSignificantDigits = true
         formatterY.minimumSignificantDigits = Int(descriptor?.yPrecision ?? 3)
         
-        func format(_ n: Double, formatter: NumberFormatter) -> String {
-            let expThreshold = max(formatter.minimumSignificantDigits, 3)
-            if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
-                formatter.numberStyle = .decimal
-                return formatter.string(from: NSNumber(value: n as Double))!
+        func format(_ n: Double, formatter: NumberFormatter, isTime: Bool, systemTimeOffset: Double) -> String {
+            if isTime && systemTimeOffset > 0 {
+                let alignedOffset = systemTimeOffset + Double(TimeZone.current.secondsFromGMT())
+                let t = Date(timeIntervalSince1970: systemTimeOffset + n)
+                let dateFormatter = DateFormatter()
+                let day = 24*60*60
+                if Int(round(n + alignedOffset)) % day == 0 {
+                    dateFormatter.dateStyle = .medium
+                    dateFormatter.timeStyle = .none
+                } else {
+                    dateFormatter.dateStyle = .none
+                    dateFormatter.timeStyle = .medium
+                }
+                return dateFormatter.string(from: t)
             } else {
-                formatter.numberStyle = .scientific
-                return formatter.string(from: NSNumber(value: n as Double))!
+                let expThreshold = max(formatter.minimumSignificantDigits, 3)
+                if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
+                    formatter.numberStyle = .decimal
+                    return formatter.string(from: NSNumber(value: n as Double))!
+                } else {
+                    formatter.numberStyle = .scientific
+                    return formatter.string(from: NSNumber(value: n as Double))!
+                }
             }
         }
         
         var xSpace = CGFloat(0.0)
         var ySpace = CGFloat(0.0)
         var index = 0
-
+        
         if let grid = grid {
             let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
             for line in horizontalGridLines {
                 let label = labels[index]
                 label.textColor = kTextColor
 
-                label.text = format(line.absoluteValue, formatter: formatterX)
+                label.text = format(line.absoluteValue, formatter: formatterX, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
                 label.sizeToFit()
 
                 ySpace = max(ySpace, label.frame.size.height)
@@ -180,7 +240,7 @@ final class GraphGridView: UIView {
                     let label = labels[index]
                     label.textColor = kTextColor
 
-                    label.text = format(line.absoluteValue, formatter: formatterY)
+                    label.text = format(line.absoluteValue, formatter: formatterY, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
                     label.sizeToFit()
 
                     xSpace = max(xSpace, label.frame.size.width)
@@ -243,5 +303,25 @@ final class GraphGridView: UIView {
                 }
             }
         }
+        
+        index = 0
+        if let pauseMarkers = pauseMarkers {
+            for pauseRange in pauseMarkers.xPauseRanges {
+                let view = pauseMarkerViews[index]
+
+                view.frame = CGRect(x: pauseRange.relativeBegin * insetRect.size.width+insetRect.origin.x, y: insetRect.origin.y, width: (pauseRange.relativeEnd - pauseRange.relativeBegin)*insetRect.size.width, height: insetRect.size.height)
+
+                index += 1
+            }
+            for pauseRange in pauseMarkers.yPauseRanges {
+                let view = pauseMarkerViews[index]
+
+                view.frame = CGRect(x: insetRect.origin.x, y: pauseRange.relativeBegin * insetRect.size.height + insetRect.origin.y, width: insetRect.size.width, height: (pauseRange.relativeEnd - pauseRange.relativeBegin)*insetRect.size.height)
+
+                index += 1
+            }
+        }
+        
+        bringSubviewToFront(borderView)
     }
 }

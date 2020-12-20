@@ -54,7 +54,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
                 l.text = descriptor.localizedUnit
                 l.textColor = kTextColor
                 
-                l.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.subheadline)
+                l.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.subheadline)
                 
                 return l
             }()

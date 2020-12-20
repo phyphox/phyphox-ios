@@ -23,10 +23,10 @@ class ScalableViewController: UIViewController {
         
         super.init(nibName: nil, bundle: nil)
         
-        addChildViewController(vc)
+        addChild(vc)
         vc.view.frame = view.bounds
         view.addSubview(vc.view)
-        vc.didMove(toParentViewController: self)
+        vc.didMove(toParent: self)
     }
     
     @available(*, unavailable)

@@ -49,43 +49,43 @@ class SimpleInputConversion: InputConversion {
         if length < 1 || data.count < offset + length {
             return Double.nan
         }
-        let subdata = data.subdata(in: Range(offset..<offset+length))
+        let subdata = data.subdata(in: (offset..<offset+length))
         switch function {
         case .uInt8:
             if subdata.count < 1 {
                 return Double.nan
             }
-            let result: UInt8 = subdata.withUnsafeBytes{$0.pointee}
+            let result: UInt8 = subdata.withUnsafeBytes{$0.load(as: UInt8.self)}
             return Double(result)
         case .int8:
             if subdata.count < 1 {
                 return Double.nan
             }
-            let result: Int8 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Int8 = subdata.withUnsafeBytes{$0.load(as: Int8.self)}
             return Double(result)
         case .uInt16LittleEndian:
             if subdata.count < 2 {
                 return Double.nan
             }
-            let result: UInt16 = subdata.withUnsafeBytes{$0.pointee}
+            let result: UInt16 = subdata.withUnsafeBytes{$0.load(as: UInt16.self)}
             return Double(result)
         case .int16LittleEndian:
             if subdata.count < 2 {
                 return Double.nan
             }
-            let result: Int16 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Int16 = subdata.withUnsafeBytes{$0.load(as: Int16.self)}
             return Double(result)
         case .uInt16BigEndian:
             if subdata.count < 2 {
                 return Double.nan
             }
-            let result: UInt16 = UInt16(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: UInt16 = UInt16(bigEndian: subdata.withUnsafeBytes{$0.load(as: UInt16.self)})
             return Double(result)
         case .int16BigEndian:
             if subdata.count < 2 {
                 return Double.nan
             }
-            let result: Int16 = Int16(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: Int16 = Int16(bigEndian: subdata.withUnsafeBytes{$0.load(as: Int16.self)})
             return Double(result)
         case .uInt24LittleEndian:
             if subdata.count < 3 {
@@ -98,13 +98,13 @@ class SimpleInputConversion: InputConversion {
                 extendedData.append(0x00)
             }
             extendedData.append(subdata)
-            let result: UInt32 = subdata.withUnsafeBytes{$0.pointee}
+            let result: UInt32 = subdata.withUnsafeBytes{$0.load(as: UInt32.self)}
             return Double(result)
         case .int24LittleEndian:
             if subdata.count < 3 {
                 return Double.nan
             }
-            let result: Int32 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Int32 = subdata.withUnsafeBytes{$0.load(as: Int32.self)}
             return Double(result)
         case .uInt24BigEndian:
             if subdata.count < 3 {
@@ -112,7 +112,7 @@ class SimpleInputConversion: InputConversion {
             }
             var extendedData = subdata
             extendedData.append(0x00)
-            let result: UInt32 = UInt32(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: UInt32 = UInt32(bigEndian: subdata.withUnsafeBytes{$0.load(as: UInt32.self)})
             return Double(result)
         case .int24BigEndian:
             if subdata.count < 3 {
@@ -125,55 +125,55 @@ class SimpleInputConversion: InputConversion {
             } else {
                 extendedData.append(0x00)
             }
-            let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.load(as: Int32.self)})
             return Double(result)
         case .uInt32LittleEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: UInt32 = subdata.withUnsafeBytes{$0.pointee}
+            let result: UInt32 = subdata.withUnsafeBytes{$0.load(as: UInt32.self)}
             return Double(result)
         case .int32LittleEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: Int32 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Int32 = subdata.withUnsafeBytes{$0.load(as: Int32.self)}
             return Double(result)
         case .uInt32BigEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: UInt32 = UInt32(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: UInt32 = UInt32(bigEndian: subdata.withUnsafeBytes{$0.load(as: UInt32.self)})
             return Double(result)
         case .int32BigEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.pointee})
+            let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.load(as: Int32.self)})
             return Double(result)
         case .float32LittleEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: Float32 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Float32 = subdata.withUnsafeBytes{$0.load(as: Float32.self)}
             return Double(result)
         case .float32BigEndian:
             if subdata.count < 4 {
                 return Double.nan
             }
-            let result: Float32 = CFConvertFloat32SwappedToHost(subdata.withUnsafeBytes{$0.pointee})
+            let result: Float32 = CFConvertFloat32SwappedToHost(subdata.withUnsafeBytes{$0.load(as: CFSwappedFloat32.self)})
             return Double(result)
         case .float64LittleEndian:
             if subdata.count < 8 {
                 return Double.nan
             }
-            let result: Float64 = subdata.withUnsafeBytes{$0.pointee}
+            let result: Float64 = subdata.withUnsafeBytes{$0.load(as: Float64.self)}
             return Double(result)
         case .float64BigEndian:
             if subdata.count < 8 {
                 return Double.nan
             }
-            let result: Float64 = CFConvertFloat64SwappedToHost(subdata.withUnsafeBytes{$0.pointee})
+            let result: Float64 = CFConvertFloat64SwappedToHost(subdata.withUnsafeBytes{$0.load(as: CFSwappedFloat64.self)})
             return Double(result)
         }
     }
@@ -195,7 +195,7 @@ class StringInputConversion: InputConversion {
         if length < 1 || data.count < offset + length {
             return Double.nan
         }
-        let subdata = data.subdata(in: Range(offset..<offset+length))
+        let subdata = data.subdata(in: (offset..<offset+length))
         guard var str: String = String(data: subdata, encoding: .utf8) else {
             return Double.nan
         }

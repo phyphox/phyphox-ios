@@ -23,7 +23,7 @@ private final class GraphGridLineLayer: CAShapeLayer {
     
     func commonInit() {
         lineDashPattern = [NSNumber(value: 6.0 as Double), NSNumber(value: 5.0 as Double)]
-        lineCap = kCALineCapRound
+        lineCap = CAShapeLayerLineCap.round
         
         strokeColor = UIColor(white: 1.0, alpha: 0.3).cgColor
         fillColor = UIColor.clear.cgColor

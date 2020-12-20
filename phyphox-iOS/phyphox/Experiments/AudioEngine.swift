@@ -65,13 +65,13 @@ final class AudioEngine {
         
         let avSession = AVAudioSession.sharedInstance()
         if playbackOut != nil && recordIn != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker)
         } else if playbackOut != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayback)
+            try avSession.setCategory(AVAudioSession.Category.playback)
         } else if recordIn != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
-        try avSession.setMode(AVAudioSessionModeMeasurement)
+        try avSession.setMode(AVAudioSession.Mode.measurement)
         if (avSession.isInputGainSettable) {
             try avSession.setInputGain(1.0)
         }

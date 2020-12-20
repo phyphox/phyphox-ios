@@ -19,10 +19,6 @@ protocol ExperimentAnalysisDelegate: class {
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }
 
-protocol ExperimentAnalysisTimestampSource: class {
-    func getCurrentTimestamp() -> TimeInterval
-}
-
 final class ExperimentAnalysis {
     private let modules: [ExperimentAnalysisModule]
     
@@ -38,12 +34,12 @@ final class ExperimentAnalysis {
     
     var running = false
     
-    weak var timestampSource: ExperimentAnalysisTimestampSource?
+    let timeReference: ExperimentTimeReference
     weak var delegate: ExperimentAnalysisDelegate?
 
     public var queue: DispatchQueue?
     
-    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double) {
+    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference) {
         self.modules = modules
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
@@ -52,6 +48,8 @@ final class ExperimentAnalysis {
         self.timedRun = timedRun
         self.timedRunStartDelay = timedRunStartDelay
         self.timedRunStopDelay = timedRunStopDelay
+        
+        self.timeReference = timeReference
         
         if onUserInput {
             for module in modules {
@@ -132,7 +130,7 @@ final class ExperimentAnalysis {
         
         let c = modulesInCycle.count - 1
 
-        let timestamp = timestampSource?.getCurrentTimestamp() ?? 0.0
+        let timestamp = timeReference.getExperimentTime()
 
         if (c >= 0) {
             for (i, analysis) in modulesInCycle.enumerated() {

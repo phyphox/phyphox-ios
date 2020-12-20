@@ -26,7 +26,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
     
-    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.horizontal, options: nil)
+    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewController.TransitionStyle.scroll, navigationOrientation: UIPageViewController.NavigationOrientation.horizontal, options: nil)
     
     var serverLabel: UILabel? = nil
     var serverLabelBackground: UIView? = nil
@@ -139,7 +139,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationItem.title = experiment.displayTitle
         
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
-        backButton.setTitleTextAttributes([NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
+        backButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
         navigationItem.leftBarButtonItem = backButton
         
         webServer.delegate = self
@@ -174,7 +174,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        if isMovingToParentViewController {
+        if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
                     self.navigationController?.popToRootViewController(animated: true)
@@ -254,7 +254,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [AnyHashable : Any] = [NSAttributedStringKey.foregroundColor : kTextColor, NSAttributedStringKey.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
             segControl!.setTitleTextAttributes(font, for: .normal)
             segControl!.setTitleTextAttributes(font, for: .selected)
             segControl!.tintColor = kTextColor
@@ -307,10 +307,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateLayout()
         
-        self.addChildViewController(pageViewControler)
+        self.addChild(pageViewControler)
         self.view.addSubview(pageViewControler.view)
         
-        pageViewControler.didMove(toParentViewController: self)
+        pageViewControler.didMove(toParent: self)
         
         updateSelectedViewCollection()
         
@@ -435,7 +435,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
         
-        if isMovingFromParentViewController {
+        if isMovingFromParent {
             tearDownWebServer()
         
             experimentStartTimer?.invalidate()
@@ -450,7 +450,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func switchToCollection(_ sender: UISegmentedControl) {
-        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewControllerNavigationDirection.forward : UIPageViewControllerNavigationDirection.reverse
+        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewController.NavigationDirection.forward : UIPageViewController.NavigationDirection.reverse
         pageViewControler.setViewControllers([experimentViewControllers[sender.selectedSegmentIndex]], direction: direction, animated: true, completion: nil)
         selectedViewCollection = sender.selectedSegmentIndex
     }
@@ -539,7 +539,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel = UILabel()
             self.serverLabel!.lineBreakMode = .byWordWrapping
             self.serverLabel!.numberOfLines = 0
-            self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
             self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
@@ -589,7 +589,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let HUD = JGProgressHUD(style: .dark)
         HUD.interactionType = .blockTouchesOnHUDView
-        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         
         HUD.show(in: navigationController!.view)
         
@@ -616,7 +616,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle) { (errorMessage, fileURL) in
+        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -690,7 +690,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let HUD = JGProgressHUD(style: .dark)
                 HUD.interactionType = .blockTouchesOnHUDView
-                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 
                 HUD.show(in: self.navigationController!.view)
                 
@@ -730,7 +730,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
             
             HUD.show(in: self.navigationController!.view)
             
@@ -780,7 +780,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if timerEnabled {
                 //...but it should be
                 let label = UILabel()
-                label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 label.textColor = kTextColor
                 label.text = "\(self.timerDelay)s"
                 label.sizeToFit()
@@ -859,11 +859,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             w.drawHierarchy(in: w.frame, afterScreenUpdates: false)
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
-            let png = UIImagePNGRepresentation(img!)!
+            let png = img!.pngData()!
             
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
             
             HUD.show(in: self.navigationController!.view)
             
@@ -1065,8 +1065,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showError(message: String) {
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default))
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default))
         present(alert, animated: true)
     }
     
@@ -1118,7 +1118,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func leaveExperiment() {
-        if experiment.getCurrentTimestamp() > 10 {
+        if experiment.timeReference.getExperimentTime() > 10 {
             let al = UIAlertController(title: localize("leave_experiment"), message: localize("leave_experiment_question"), preferredStyle: .alert)
             
             al.addAction(UIAlertAction(title: localize("leave"), style: .default, handler: { [unowned self] action in

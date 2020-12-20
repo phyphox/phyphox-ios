@@ -69,17 +69,21 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         
         let count = input.count
         
+        
         let outputData = UnsafeMutablePointer<Float>.allocate(capacity: count)
-        
-        var inImg = vImage_Buffer(data: &input, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
-        var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
-        
-        vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageTruncateKernel))
-        
-        let result = Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, to: UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
 
+        let result = input.withUnsafeMutableBufferPointer{input -> [Double] in
+            var inImg = vImage_Buffer(data: input.baseAddress!, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
+            var outImg = vImage_Buffer(data: outputData, height: 1, width: vImagePixelCount(count), rowBytes: count*MemoryLayout<Float>.size)
+            
+            vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageTruncateKernel))
+            
+            return Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, to: UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)
+        }
         outputData.deinitialize(count: count)
         outputData.deallocate()
+
+        
 
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)

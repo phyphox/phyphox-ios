@@ -16,7 +16,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
+    let timeReference: ExperimentTimeReference
     var logX, logY, logZ: Bool
+    
+    var systemTime: Bool {
+        didSet {
+            glGraph.systemTime = systemTime
+            if descriptor.timeOnX {
+                xLabel.text = systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit
+            } else if descriptor.timeOnY {
+                yLabel.text = systemTime ? descriptor.localizedYLabelWithTimezone : descriptor.localizedYLabelWithUnit
+            }
+            setNeedsLayout()
+            setNeedsUpdate()
+        }
+    }
     
     var exportDelegate: ExportDelegate? = nil
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
@@ -84,9 +98,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
-    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])] = []
+    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
     
-    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])]) {
+    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
         if descriptor.history > 1 {
             if dataSets.count >= Int(descriptor.history) {
                 dataSets.removeFirst()
@@ -98,7 +112,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     private var max: GraphPoint3D<Double> {
-        if dataSets.count > 1 {
+        if dataSets.count > 0 {
             var maxX = -Double.infinity
             var maxY = -Double.infinity
             var maxZ = -Double.infinity
@@ -110,7 +124,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 maxY = Swift.max(maxY, maxPoint.y)
                 maxZ = Swift.max(maxZ, maxPoint.z)
             }
-            
+          
             return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
         else {
@@ -119,7 +133,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     private var min: GraphPoint3D<Double> {
-        if dataSets.count > 1 {
+        if dataSets.count > 0{
             var minX = Double.infinity
             var minY = Double.infinity
             var minZ = Double.infinity
@@ -135,7 +149,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return GraphPoint3D(x: minX, y: minY, z: minZ)
         }
         else {
-            return dataSets.first?.bounds.min ?? GraphPoint3D.zero
+            return GraphPoint3D.zero
         }
     }
     
@@ -145,6 +159,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private var points3D: [[GraphPoint3D<GLfloat>]] {
         return dataSets.map { $0.data3D }
+    }
+    
+    private var timeReferenceSets: [[TimeReferenceSet]] {
+        return dataSets.map { $0.timeReferenceSets }
     }
     
     required init?(descriptor: GraphViewDescriptor) {
@@ -193,7 +211,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             let x1y1z1 = GraphPoint3D<GLfloat>(x: 1.0, y: 1.0, z: 1.0)
             let min = GraphPoint3D<Double>(x: 0.0, y: 0.0, z: 0.0)
             let max = GraphPoint3D<Double>(x: 1.0, y: 1.0, z: 1.0)
-            glZScale?.setPoints(points2D: [[]], points3D: [[x0y0z0, x1y0z1, x0y1z0, x1y1z1]], min: min, max: max)
+            glZScale?.setPoints(points2D: [[]], points3D: [[x0y0z0, x1y0z1, x0y1z0, x1y1z1]], min: min, max: max, timeReferenceSets: [[]])
             
             zGridView = GraphGridView(descriptor: descriptor, isZScale: true)
             zGridView?.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -207,7 +225,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             let l = UILabel()
             l.text = text
             
-            let defaultFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            let defaultFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
             l.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
             
             return l
@@ -218,8 +236,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = kTextColor
         
-        xLabel = makeLabel(descriptor.localizedXLabelWithUnit)
-        yLabel = makeLabel(descriptor.localizedYLabelWithUnit)
+        xLabel = makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
+        yLabel = makeLabel(descriptor.systemTime ? descriptor.localizedYLabelWithTimezone : descriptor.localizedYLabelWithUnit)
         xLabel.textColor = kTextColor
         yLabel.textColor = kTextColor
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
@@ -233,6 +251,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
         unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        
+        timeReference = descriptor.timeReference
+        systemTime = descriptor.systemTime
+        
+        glGraph.timeOnX = descriptor.timeOnX
+        glGraph.timeOnY = descriptor.timeOnY
+        glGraph.systemTime = systemTime
         
         super.init(frame: .zero)
         
@@ -338,7 +363,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
-            if (zoomFollows || zoomMax != nil) {
+            if (zoomFollows || zoomMax != nil || systemTime) {
                 let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
                 dialog.resultDelegate = self
                 dialog.show()
@@ -374,10 +399,35 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return maxY - (maxY-minY) * (y/h)
         }
         
-        let searchRangeMaxX = Swift.max(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
-        let searchRangeMinX = Swift.min(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
-        let searchRangeMaxY = Swift.max(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
-        let searchRangeMinY = Swift.min(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        func offsetFromExperimentTime(v: Double) -> Double {
+            if systemTime {
+                return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: v))
+            }
+            return 0.0
+        }
+        
+        func offsetFromGappedExperimentTime(v: Double) -> Double {
+            if systemTime {
+                return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromGappedExperimentTime(t: v))
+            }
+            return 0.0
+        }
+        
+        var searchRangeMaxX = Swift.max(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        var searchRangeMinX = Swift.min(viewXtoDataX(at.x + searchRange), viewXtoDataX(at.x - searchRange))
+        var searchRangeMaxY = Swift.max(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        var searchRangeMinY = Swift.min(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
+        
+        if descriptor.timeOnX {
+            let offset = offsetFromGappedExperimentTime(v: Double(at.x))
+            searchRangeMinX -= CGFloat(offset)
+            searchRangeMaxX -= CGFloat(offset)
+        }
+        if descriptor.timeOnY {
+            let offset = offsetFromGappedExperimentTime(v: Double(at.y))
+            searchRangeMinY -= CGFloat(offset)
+            searchRangeMaxY -= CGFloat(offset)
+        }
         
         for (i, dataSet) in dataSets.enumerated() {
             
@@ -388,11 +438,20 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                         continue
                     }
                 }
-                let x = CGFloat(hasZData ? dataSet.data3D[j].x : dataSet.data2D[j].x)
-                let y = CGFloat(hasZData ? dataSet.data3D[j].y : dataSet.data2D[j].y)
+                var x = CGFloat(hasZData ? dataSet.data3D[j].x : dataSet.data2D[j].x)
+                var y = CGFloat(hasZData ? dataSet.data3D[j].y : dataSet.data2D[j].y)
                 
                 if x < searchRangeMinX || x > searchRangeMaxX || y < searchRangeMinY || y > searchRangeMaxY {
                     continue
+                }
+                
+                if descriptor.timeOnX {
+                    let offset = offsetFromExperimentTime(v: Double(x))
+                    x += CGFloat(offset)
+                }
+                if descriptor.timeOnY {
+                    let offset = offsetFromExperimentTime(v: Double(y))
+                    y += CGFloat(offset)
                 }
                 
                 let vx = (x - minX) / (maxX-minX) * w
@@ -447,7 +506,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
         
-        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y))
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
         if (applyToX != .this || applyToY != .this) {
             let targetX: String?
             let targetY: String?
@@ -470,11 +529,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 targetY = nil
             }
 
-            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y))
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
         }
     }
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
         var applyX = false
         var applyY = false
@@ -528,6 +587,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             case .none:
                 break
             }
+            if descriptor.timeOnX {
+                self.systemTime = systemTime
+            }
         }
         
         if applyY {
@@ -540,6 +602,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
             default:
                 break
+            }
+            if descriptor.timeOnY {
+                self.systemTime = systemTime
             }
         }
         
@@ -891,18 +956,33 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
 
-        var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>])] = []
+        var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
         for i in 0..<count.count {
             var xOrderOK = true
             var valuesOK = true
             var lastX = -Double.infinity
             var lastY = Double.nan
             
+            var timeReferenceSets = [TimeReferenceSet]()
+            var lastReferenceIndex = -1
+            var lastChange = 0
+            
             for j in 0..<count[i] {
                 let rawX = xValues[i][j]
                 let rawY = yValues[i][j]
                 let rawZ = zValues[i].count > j ? zValues[i][j] : Double.nan
 
+                if descriptor.timeOnX || descriptor.timeOnY {
+                    let referenceIndex = timeReference.getReferenceIndexFromExperimentTime(t: descriptor.timeOnX ? rawX : rawY)
+                    if lastReferenceIndex < 0 {
+                        lastReferenceIndex = referenceIndex
+                    } else if lastReferenceIndex != referenceIndex {
+                        timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: j-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex)))
+                        lastChange = j
+                        lastReferenceIndex = referenceIndex
+                    }
+                }
+                
                 let x = (logX ? log(rawX) : rawX)
                 let y = (logY ? log(rawY) : rawY)
                 let z = (logZ ? log(rawZ) : rawZ)
@@ -983,6 +1063,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 lastX = x
                 lastY = y
             }
+            
+            if descriptor.timeOnX || descriptor.timeOnY {
+                timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: count[i]-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex)))
+            }
 
             if !xOrderOK && descriptor.style[i] != .map {
                 print("x values are not ordered!")
@@ -993,20 +1077,31 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 //print("Tried drawing NaN or inf")
             }
             
-            dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i]))
+            dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i], timeReferenceSets: timeReferenceSets))
         }
         
-        if !logX && !xMinStrict && !xMaxStrict && !hasZData {
+        if systemTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
+            minX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minX))
+            maxX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxX))
+        } else if !logX && !xMinStrict && !xMaxStrict && !hasZData && !descriptor.timeOnX {
             let extraX = (maxX-minX)*0.05;
             maxX += extraX
             minX -= extraX
         }
         
-        if !logY && !yMinStrict && !yMaxStrict && !hasZData {
+        if systemTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
+            minY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minY))
+            maxY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxY))
+        } else if !logY && !yMinStrict && !yMaxStrict && !hasZData && !descriptor.timeOnY {
             let extraY = (maxY-minY)*0.05;
             maxY += extraY
             minY -= extraY
         }
+        
+        if descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
+            minX = Swift.min(minX, timeReference.getExperimentTimeReferenceByIndex(i: 0))
+        }
+
         
         for i in 0..<dataSets.count {
             dataSets[i].bounds = (min: GraphPoint3D(x: minX, y: minY, z: minZ), max: GraphPoint3D(x: maxX, y: maxY, z: maxZ))
@@ -1015,17 +1110,20 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         addDataSets(dataSets)
 
         let grid = generateGrid(logX: logX, logY: logY, logZ: logZ)
-
+        let pauseMarkers = generatePauseMarkers()
+        
         let finalPoints2D = self.points2D
         let finalPoints3D = self.points3D
+        let finalTimeReferenceSets = self.timeReferenceSets
 
         let min = self.min
         let max = self.max
 
         mainThread {
             self.gridView.grid = grid
+            self.gridView.pauseMarkers = pauseMarkers
             self.zGridView?.grid = grid
-            self.glGraph.setPoints(points2D: finalPoints2D, points3D: finalPoints3D, min: min, max: max)
+            self.glGraph.setPoints(points2D: finalPoints2D, points3D: finalPoints3D, min: min, max: max, timeReferenceSets: finalTimeReferenceSets)
             self.refreshMarkers()
         }
     }
@@ -1071,8 +1169,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var n = 0
         
         func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
-            let rx = CGFloat((Double(x) - min.x) / (max.x-min.x))
-            let ry = CGFloat((max.y - Double(y)) / (max.y-min.y))
+            let offsetX = descriptor.timeOnX && systemTime ? timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(x))) : 0.0
+            let offsetY = descriptor.timeOnY && systemTime ? timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(y))) : 0.0
+            let rx = CGFloat((Double(x) + offsetX - min.x) / (max.x-min.x))
+            let ry = CGFloat((max.y - Double(y) - offsetY) / (max.y-min.y))
             
             xlist.append(x)
             ylist.append(y)
@@ -1200,6 +1300,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         return (a, b)
     }
     
+    private func systemTimeOffset(timeOnAxis: Bool) -> Double {
+        if let first = timeReference.timeMappings.first, systemTime && timeOnAxis {
+            return first.systemTime.timeIntervalSince1970 - first.experimentTime
+        }
+        return 0.0
+    }
+    
     private func generateGrid(logX: Bool, logY: Bool, logZ: Bool) -> GraphGrid {
         let min = self.min
         let max = self.max
@@ -1217,9 +1324,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let yRange = maxY - minY
         let zRange = maxZ - minZ
 
-        let xTicks = ExperimentGraphUtilities.getTicks(minX, max: maxX, maxTicks: 6, log: logX)
-        let yTicks = ExperimentGraphUtilities.getTicks(minY, max: maxY, maxTicks: 6, log: logY)
-        let zTicks = ExperimentGraphUtilities.getTicks(minZ, max: maxZ, maxTicks: 6, log: logZ)
+        let xTicks = ExperimentGraphUtilities.getTicks(minX, max: maxX, maxTicks: descriptor.timeOnX && systemTime ? 4 : 5, log: logX, isTime: descriptor.timeOnX, systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnX))
+        let yTicks = ExperimentGraphUtilities.getTicks(minY, max: maxY, maxTicks: 5, log: logY, isTime: descriptor.timeOnY, systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnY))
+        let zTicks = ExperimentGraphUtilities.getTicks(minZ, max: maxZ, maxTicks: 5, log: logZ, isTime: false, systemTimeOffset: 0.0)
 
         let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
             return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val) - minX) / xRange))
@@ -1233,7 +1340,65 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logZ ? log(val) : val) - minZ) / zRange))
         })
 
-        return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks, zGridLines: mappedZTicks)
+        return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks, zGridLines: mappedZTicks, systemTimeOffsetX: systemTimeOffset(timeOnAxis: descriptor.timeOnX), systemTimeOffsetY: systemTimeOffset(timeOnAxis: descriptor.timeOnY))
+    }
+    
+    func generatePauseMarkers() -> PauseRanges {
+        let min = self.min
+        let max = self.max
+
+        let minX = min.x
+        let maxX = max.x
+
+        let minY = min.y
+        let maxY = max.y
+        
+        let xRange = maxX - minX
+        let yRange = maxY - minY
+        
+        if descriptor.timeOnX {
+            var pauseRanges: [PauseRange] = []
+            var rangeStart: CGFloat? = nil
+            for i in 0..<timeReference.timeMappings.count {
+                let t = timeReference.getExperimentTimeReferenceByIndex(i: i) + (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
+                let relativeT = CGFloat((t - minX) / xRange)
+                if t < minX || t > maxX {
+                    continue
+                }
+                if timeReference.timeMappings[i].event == .PAUSE {
+                    rangeStart = relativeT
+                } else {
+                    pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))
+                    rangeStart = nil
+                }
+            }
+            if let openEnded = rangeStart {
+                pauseRanges.append(PauseRange(relativeBegin: CGFloat(openEnded), relativeEnd: 1.0))
+            }
+            return PauseRanges(xPauseRanges: pauseRanges, yPauseRanges: [])
+        } else if descriptor.timeOnY {
+            var pauseRanges: [PauseRange] = []
+            var rangeStart: CGFloat? = nil
+            for i in 0..<timeReference.timeMappings.count {
+                let t = timeReference.getExperimentTimeReferenceByIndex(i: i) + (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
+                let relativeT = CGFloat((t - minY) / yRange)
+                if t < minY || t > maxY {
+                    continue
+                }
+                if timeReference.timeMappings[i].event == .START {
+                    rangeStart = relativeT
+                } else {
+                    pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))
+                    rangeStart = nil
+                }
+            }
+            if let openEnded = rangeStart {
+                pauseRanges.append(PauseRange(relativeBegin: CGFloat(openEnded), relativeEnd: 1.0))
+            }
+            return PauseRanges(xPauseRanges: [], yPauseRanges: pauseRanges)
+        } else {
+            return PauseRanges(xPauseRanges: [], yPauseRanges: [])
+        }
     }
 
     private var wantsUpdate = false
@@ -1269,7 +1434,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         lastIndexXArray = nil
         
-        glGraph.setPoints(points2D: [], points3D: [], min: .zero, max: .zero)
+        glGraph.setPoints(points2D: [], points3D: [], min: .zero, max: .zero, timeReferenceSets: [])
     }
     
     //Mark - Toolbar and interaction
@@ -1342,6 +1507,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     func getMenuElements() -> [(String, Bool, () -> ())] {
         //returns [label, checked, action when clicked]
         var elements: [(String, Bool, () -> ())] = []
+        
+        if (descriptor.timeOnX || descriptor.timeOnY) && !hasZData {
+            elements.append((localize("graph_tools_system_time"), systemTime, toggleSystemTime))
+        }
         
         elements.append((localize("graph_tools_reset"), false, resetZoom))
         if (descriptor.partialUpdate) {
@@ -1428,6 +1597,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         menuAlertController?.dismiss(animated: true, completion: {() -> Void in
             self.exportDelegate?.showExport(export, singleSet: true)
             })
+    }
+    
+    func toggleSystemTime() {
+        systemTime = !systemTime
     }
     
     func toggleLogX() {
