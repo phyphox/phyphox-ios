@@ -208,6 +208,9 @@ final class AudioEngine {
                 data[i] += Float(a)*sineLookup[lookupIndex]
                 phase += phaseStep
             }
+            while phase > 100000 {
+                phase -= 100000
+            }
             phases[i] = phase
         }
 
