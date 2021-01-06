@@ -166,6 +166,8 @@ private final class BluetoothOutputElementHandler: ResultElementHandler, Childle
         case extra
         case conversion
         case offset
+        case repeating
+        case stride
         case length
         case decimalPoint
         case separator
@@ -192,8 +194,9 @@ private final class BluetoothOutputElementHandler: ResultElementHandler, Childle
             case "string":
                 let decimalPoint: String? = attributes.optionalString(for: .decimalPoint)
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
+                let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
-                conversion = StringInputConversion(decimalPoint: decimalPoint, offset: offset, length: length)
+                conversion = StringInputConversion(decimalPoint: decimalPoint, offset: offset, repeating: repeating, length: length)
             case "formattedString":
                 let separator: String? = attributes.optionalString(for: .separator)
                 let label: String? = attributes.optionalString(for: .label)
@@ -201,13 +204,15 @@ private final class BluetoothOutputElementHandler: ResultElementHandler, Childle
                 conversion = FormattedStringInputConversion(separator: separator, label: label, index: index)
             case "singleByte":
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
+                let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
-                conversion = SimpleInputConversion(function: .uInt8, offset: offset, length: length)
+                conversion = SimpleInputConversion(function: .uInt8, offset: offset, repeating: repeating, length: length)
             default:
                 let conversionFunction: SimpleInputConversion.ConversionFunction = try attributes.value(for: .conversion)
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
+                let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
-                conversion = SimpleInputConversion(function: conversionFunction, offset: offset, length: length)
+                conversion = SimpleInputConversion(function: conversionFunction, offset: offset, repeating: repeating, length: length)
             }
         } else {
             conversion = nil

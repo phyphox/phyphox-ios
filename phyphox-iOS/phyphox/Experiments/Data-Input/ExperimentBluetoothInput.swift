@@ -143,9 +143,9 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             if item.char.uuid128String == uuid.uuid128String {
                 
                 if item.extra == .time {
-                    self.dataIn(timeReference.getExperimentTime(), dataBufferIn: item.buffer)
+                    self.dataIn([timeReference.getExperimentTime()], dataBufferIn: item.buffer)
                 } else {
-                    if let newDataConverted = item.conversion?.convert(data: data), newDataConverted.isFinite {
+                    if let newDataConverted = item.conversion?.convert(data: data) {
                         self.dataIn(newDataConverted, dataBufferIn: item.buffer)
                     }
                 }
@@ -153,28 +153,28 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         }
     }
    
-    private func writeToBuffers(_ value: Double?,dataBufferIn: DataBuffer) {
+    private func writeToBuffers(_ values: [Double],dataBufferIn: DataBuffer) {
         
-        func tryAppend(myValue: Double?, to buffer: DataBuffer?) {
-            guard let myValue = myValue, let buffer = buffer else { return }
+        func tryAppend(myValues: [Double], to buffer: DataBuffer?) {
+            guard let buffer = buffer else { return }
             
-            buffer.append(myValue)
+            buffer.appendFromArray(myValues)
         }
         
-        tryAppend(myValue: value, to: dataBufferIn)
+        tryAppend(myValues: values, to: dataBufferIn)
     }
    
-    private func dataIn(_ value: Double?, dataBufferIn: DataBuffer) {
+    private func dataIn(_ values: [Double], dataBufferIn: DataBuffer) {
         
         
-        func dataInSync(_ value: Double?, dataBufferIn: DataBuffer) {
-            writeToBuffers(value, dataBufferIn: dataBufferIn )
+        func dataInSync(_ values: [Double], dataBufferIn: DataBuffer) {
+            writeToBuffers(values, dataBufferIn: dataBufferIn )
         }
         
         
         queue?.async {
             autoreleasepool(invoking: {
-                dataInSync(value, dataBufferIn: dataBufferIn)
+                dataInSync(values, dataBufferIn: dataBufferIn)
             })
         }
     }
