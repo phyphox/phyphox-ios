@@ -21,6 +21,8 @@ protocol ExperimentController {
 
 final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
     
+    private let willBeFirstViewForUser: Bool //Set to false if phyphox is launched with a specific experiment URL. In this case, the ExperimentCollectionViewController will be instantiated, but it will be asked to launch that experiment right away before the user has a chance to interact with the experiment list. So, any dialogs corresponding to the experiment list (like the do-not-risk-your-phone dialog) should be suppressed if the user will not stop at that list
+    
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
@@ -138,7 +140,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
-        if (!defaults.bool(forKey: key)) {
+        if (willBeFirstViewForUser && !defaults.bool(forKey: key)) {
             let alert = UIAlertController(title: localize("warning"), message: localize("damageWarning"), preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: localize("donotshowagain"), style: .default, handler: { _ in
                 defaults.set(true, forKey: key)
@@ -240,6 +242,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     @objc func reload() {
         collections = ExperimentManager.shared.experimentCollections
         selfView.collectionView.reloadData()
+    }
+    
+    init(willBeFirstViewForUser: Bool) {
+        self.willBeFirstViewForUser = willBeFirstViewForUser
+        super.init()
     }
     
     deinit {
