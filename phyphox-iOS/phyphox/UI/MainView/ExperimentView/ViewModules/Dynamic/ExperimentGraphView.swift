@@ -258,6 +258,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.timeOnX = descriptor.timeOnX
         glGraph.timeOnY = descriptor.timeOnY
         glGraph.systemTime = systemTime
+        glGraph.linearTime = descriptor.linearTime
         
         super.init(frame: .zero)
         
@@ -399,16 +400,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             return maxY - (maxY-minY) * (y/h)
         }
         
-        func offsetFromExperimentTime(v: Double) -> Double {
-            if systemTime {
+        func offsetFromDataTime(v: Double) -> Double {
+            if systemTime && !descriptor.linearTime {
                 return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: v))
+            } else if !systemTime && descriptor.linearTime {
+                return -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: v))
             }
             return 0.0
         }
         
-        func offsetFromGappedExperimentTime(v: Double) -> Double {
-            if systemTime {
+        func offsetFromViewTime(v: Double) -> Double {
+            if systemTime && !descriptor.linearTime {
                 return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromGappedExperimentTime(t: v))
+            } else if !systemTime && descriptor.linearTime {
+                print("Index: \(timeReference.getReferenceIndexFromExperimentTime(t: v)) from \(v)")
+                return -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: v))
             }
             return 0.0
         }
@@ -419,15 +425,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var searchRangeMinY = Swift.min(viewYtoDataY(at.y + searchRange), viewYtoDataY(at.y - searchRange))
         
         if descriptor.timeOnX {
-            let offset = offsetFromGappedExperimentTime(v: Double(at.x))
+            let offset = offsetFromViewTime(v: Double(viewXtoDataX(at.x)))
             searchRangeMinX -= CGFloat(offset)
             searchRangeMaxX -= CGFloat(offset)
         }
         if descriptor.timeOnY {
-            let offset = offsetFromGappedExperimentTime(v: Double(at.y))
+            let offset = offsetFromViewTime(v: Double(viewYtoDataY(at.y)))
             searchRangeMinY -= CGFloat(offset)
             searchRangeMaxY -= CGFloat(offset)
         }
+        
+        print("Suche in \(searchRangeMinX) bis \(searchRangeMaxX)")
         
         for (i, dataSet) in dataSets.enumerated() {
             
@@ -446,11 +454,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 }
                 
                 if descriptor.timeOnX {
-                    let offset = offsetFromExperimentTime(v: Double(x))
+                    let offset = offsetFromDataTime(v: Double(x))
                     x += CGFloat(offset)
                 }
                 if descriptor.timeOnY {
-                    let offset = offsetFromExperimentTime(v: Double(y))
+                    let offset = offsetFromDataTime(v: Double(y))
                     y += CGFloat(offset)
                 }
                 
@@ -973,11 +981,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 let rawZ = zValues[i].count > j ? zValues[i][j] : Double.nan
 
                 if descriptor.timeOnX || descriptor.timeOnY {
-                    let referenceIndex = timeReference.getReferenceIndexFromExperimentTime(t: descriptor.timeOnX ? rawX : rawY)
+                    let t = descriptor.timeOnX ? rawX : rawY
+                    let referenceIndex = descriptor.linearTime ? timeReference.getReferenceIndexFromLinearTime(t: t) : timeReference.getReferenceIndexFromExperimentTime(t: t)
                     if lastReferenceIndex < 0 {
                         lastReferenceIndex = referenceIndex
                     } else if lastReferenceIndex != referenceIndex {
-                        timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: j-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex)))
+                        timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: j-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex), isPaused: timeReference.getPausedByIndex(i: lastReferenceIndex)))
                         lastChange = j
                         lastReferenceIndex = referenceIndex
                     }
@@ -1065,7 +1074,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             
             if descriptor.timeOnX || descriptor.timeOnY {
-                timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: count[i]-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex)))
+                timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: count[i]-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex), isPaused: timeReference.getPausedByIndex(i: lastReferenceIndex)))
             }
 
             if !xOrderOK && descriptor.style[i] != .map {
@@ -1080,25 +1089,31 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i], timeReferenceSets: timeReferenceSets))
         }
         
-        if systemTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
+        if systemTime && !descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
             minX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minX))
             maxX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxX))
+        } else if !systemTime && descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
+            minX -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: minX))
+            maxX -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: maxX))
         } else if !logX && !xMinStrict && !xMaxStrict && !hasZData && !descriptor.timeOnX {
             let extraX = (maxX-minX)*0.05;
             maxX += extraX
             minX -= extraX
         }
         
-        if systemTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
+        if systemTime && !descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
             minY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minY))
             maxY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxY))
+        } else if !systemTime && descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
+            minY -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minY))
+            maxY -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxY))
         } else if !logY && !yMinStrict && !yMaxStrict && !hasZData && !descriptor.timeOnY {
             let extraY = (maxY-minY)*0.05;
             maxY += extraY
             minY -= extraY
         }
         
-        if descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
+        if descriptor.timeOnX && !descriptor.linearTime && !xMinStrict && !xMaxStrict && !hasZData {
             minX = Swift.min(minX, timeReference.getExperimentTimeReferenceByIndex(i: 0))
         }
 
@@ -1169,8 +1184,22 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var n = 0
         
         func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
-            let offsetX = descriptor.timeOnX && systemTime ? timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(x))) : 0.0
-            let offsetY = descriptor.timeOnY && systemTime ? timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(y))) : 0.0
+            let offsetX: Double
+            let offsetY: Double
+            if descriptor.timeOnX && systemTime && !descriptor.linearTime {
+                offsetX = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(x)))
+            } else if descriptor.timeOnX && !systemTime && descriptor.linearTime {
+                offsetX = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(x)))
+            } else {
+                offsetX = 0.0
+            }
+            if descriptor.timeOnY && systemTime && !descriptor.linearTime {
+                offsetY = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(y)))
+            } else if descriptor.timeOnY && !systemTime && descriptor.linearTime {
+                offsetY = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(y)))
+            } else {
+                offsetY = 0.0
+            }
             let rx = CGFloat((Double(x) + offsetX - min.x) / (max.x-min.x))
             let ry = CGFloat((max.y - Double(y) - offsetY) / (max.y-min.y))
             

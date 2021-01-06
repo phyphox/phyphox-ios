@@ -85,6 +85,13 @@ final class ExperimentTimeReference: Equatable {
         return getExperimentTimeFromEvent(eventTime: ProcessInfo.processInfo.systemUptime)
     }
     
+    public func getLinearTime() -> Double {
+        guard let first = timeMappings.first else {
+            return 0.0
+        }
+        return Date().timeIntervalSinceReferenceDate - first.systemTime.timeIntervalSinceReferenceDate
+    }
+    
     public func getReferenceIndexFromExperimentTime(t: Double) -> Int {
         var i = 0
         while timeMappings.count > i+1 && timeMappings[i+1].experimentTime <= t {
@@ -101,12 +108,24 @@ final class ExperimentTimeReference: Equatable {
         return i
     }
     
+    public func getReferenceIndexFromLinearTime(t: Double) -> Int {
+        var i = 0
+        while timeMappings.count > i+1 && timeMappings[i+1].systemTime.timeIntervalSinceReferenceDate - timeMappings[0].systemTime.timeIntervalSinceReferenceDate <= t {
+            i += 1
+        }
+        return i
+    }
+    
     public func getSystemTimeReferenceByIndex(i: Int) -> Date {
         return timeMappings.count > i ? timeMappings[i].systemTime : Date()
     }
     
     public func getExperimentTimeReferenceByIndex(i: Int) -> Double {
         return timeMappings.count > i ? timeMappings[i].experimentTime : 0.0
+    }
+    
+    public func getPausedByIndex(i: Int) -> Bool {
+        return timeMappings.count > i ? timeMappings[i].event == .PAUSE : true
     }
     
     public func getTotalGapByIndex(i: Int) -> Double {

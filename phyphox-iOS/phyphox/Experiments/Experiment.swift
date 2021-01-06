@@ -198,7 +198,6 @@ final class Experiment {
         if requiredPermissions != .none {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
-
         analysis.queue = queue
         analysis.setNeedsUpdate(isPreRun: true)
         

@@ -130,12 +130,15 @@ final class ExperimentAnalysis {
         
         let c = modulesInCycle.count - 1
 
-        let timestamp = timeReference.getExperimentTime()
+        let experimentTime = timeReference.getExperimentTime()
+        let linearTime = timeReference.getLinearTime()
+        let experimentOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: experimentTime)).timeIntervalSince1970
+        let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
 
         if (c >= 0) {
             for (i, analysis) in modulesInCycle.enumerated() {
                 queue?.async(execute: {
-                    analysis.setNeedsUpdate(timestamp)
+                    analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
                     if i == c {
                         mainThread {
                             self.cycle += 1

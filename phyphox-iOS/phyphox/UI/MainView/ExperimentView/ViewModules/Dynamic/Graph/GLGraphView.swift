@@ -76,6 +76,12 @@ final class GLGraphView: GLKView {
         }
     }
     
+    var linearTime: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {
@@ -307,12 +313,34 @@ final class GLGraphView: GLKView {
                 }
                 if timeOnX {
                     for timeReferenceSet in timeReferenceSets[i] {
-                        shader.setTranslation(xTranslation + (systemTime ? Float(timeReferenceSet.totalPauseGap) : 0.0), yTranslation)
+                        let xOffset: Float
+                        if systemTime && !linearTime {
+                            xOffset = Float(timeReferenceSet.totalPauseGap)
+                        } else if !systemTime && linearTime {
+                            if timeReferenceSet.isPaused {
+                                continue
+                            }
+                            xOffset = -Float(timeReferenceSet.totalPauseGap)
+                        } else {
+                            xOffset = 0.0
+                        }
+                        shader.setTranslation(xTranslation + xOffset, yTranslation)
                         shader.drawPositions(mode: renderMode, start: timeReferenceSet.index, count: timeReferenceSet.count, strideFactor: 1)
                     }
                 } else if timeOnY {
                     for timeReferenceSet in timeReferenceSets[i] {
-                        shader.setTranslation(xTranslation, yTranslation + (systemTime ? Float(timeReferenceSet.totalPauseGap) : 0.0))
+                        let yOffset: Float
+                        if systemTime && !linearTime {
+                            yOffset = Float(timeReferenceSet.totalPauseGap)
+                        } else if !systemTime && linearTime {
+                            if timeReferenceSet.isPaused {
+                                continue
+                            }
+                            yOffset = -Float(timeReferenceSet.totalPauseGap)
+                        } else {
+                            yOffset = 0.0
+                        }
+                        shader.setTranslation(xTranslation, yTranslation + yOffset)
                         shader.drawPositions(mode: renderMode, start: timeReferenceSet.index, count: timeReferenceSet.count, strideFactor: 1)
                     }
                 } else {

@@ -69,6 +69,7 @@ struct TimeReferenceSet {
     let experimentTime: Double
     let systemTime: Date
     let totalPauseGap: Double
+    let isPaused: Bool
 }
 
 struct ExperimentGraphUtilities {
