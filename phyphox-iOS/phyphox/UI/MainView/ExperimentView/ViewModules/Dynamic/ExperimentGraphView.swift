@@ -967,7 +967,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
         for i in 0..<count.count {
             var xOrderOK = true
-            var valuesOK = true
             var lastX = -Double.infinity
             var lastY = Double.nan
             
@@ -996,20 +995,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 let y = (logY ? log(rawY) : rawY)
                 let z = (logZ ? log(rawZ) : rawZ)
                 
-                if x < lastX {
+                if x.isFinite && x < lastX {
                     xOrderOK = false
                 }
-
-                guard x.isFinite && y.isFinite && (descriptor.style[0] != .map || z.isFinite) else {
-                    valuesOK = false
-                    continue
-                }
-
-                if x < minX && !xMinStrict {
+                    
+                if x.isFinite && x < minX && !xMinStrict {
                     minX = x
                 }
 
-                if x > maxX {
+                if x.isFinite && x > maxX {
                     if !xMaxStrict {
                         maxX = x
                     } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
@@ -1021,19 +1015,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     }
                 }
 
-                if y < minY && !yMinStrict {
+                if y.isFinite && y < minY && !yMinStrict {
                     minY = y
                 }
 
-                if y > maxY && !yMaxStrict {
+                if y.isFinite && y > maxY && !yMaxStrict {
                     maxY = y
                 }
                 
-                if z < minZ && !zMinStrict {
+                if z.isFinite && z < minZ && !zMinStrict {
                     minZ = z
                 }
                 
-                if z > maxZ && !zMaxStrict {
+                if z.isFinite && z > maxZ && !zMaxStrict {
                     maxZ = z
                 }
 
@@ -1066,7 +1060,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     points3D[i].append(GraphPoint3D(x: GLfloat(x), y: GLfloat(y), z: GLfloat(z)))
                     //Note: The only difference is that we are storing 3D data. To actually render this as a map, we will use an index buffer to create the corresponding triangles. Also, it should be mentioned, that we do not use points3D for all the other graphs as storing z = NaN for each point would lead to excessive memory waste.
                 default:
-                    points2D[i].append(GraphPoint2D(x: GLfloat(x), y: GLfloat(y)))
+                    if !(x.isFinite && y.isFinite) {
+                        points2D[i].append(GraphPoint2D(x: GLfloat.nan, y: GLfloat.nan))
+                    } else {
+                        points2D[i].append(GraphPoint2D(x: GLfloat(x), y: GLfloat(y)))
+                    }
                 }
                 
                 lastX = x
@@ -1079,11 +1077,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
             if !xOrderOK && descriptor.style[i] != .map {
                 print("x values are not ordered!")
-            }
-
-            if !valuesOK {
-                //No need to worry. NaN and especially inf may occur and is just skipped.
-                //print("Tried drawing NaN or inf")
             }
             
             dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i], timeReferenceSets: timeReferenceSets))
