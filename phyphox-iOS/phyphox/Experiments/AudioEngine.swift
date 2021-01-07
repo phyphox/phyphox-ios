@@ -35,6 +35,7 @@ final class AudioEngine {
     
     enum AudioEngineError: Error {
         case RateMissmatch
+        case NoInput
     }
     
     init(audioOutput: ExperimentAudioOutput?, audioInput: ExperimentAudioInput?) {
@@ -69,6 +70,9 @@ final class AudioEngine {
         } else if playbackOut != nil {
             try avSession.setCategory(AVAudioSession.Category.playback)
         } else if recordIn != nil {
+            if !avSession.isInputAvailable {
+                throw AudioEngineError.NoInput
+            }
             try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSession.Mode.measurement)

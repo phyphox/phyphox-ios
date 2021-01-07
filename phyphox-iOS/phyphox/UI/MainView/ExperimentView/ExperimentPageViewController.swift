@@ -1073,8 +1073,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func actuallyStartExperiment() {
         do {
             try experiment.start()
-        }
-        catch {
+        } catch AudioEngine.AudioEngineError.NoInput {
+            showError(message: "Could not start experiment: No microphone available.")
+            experiment.stop()
+            return
+        } catch {
             showError(message: "Could not start experiment \(error).")
             experiment.stop()
             return
