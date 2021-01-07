@@ -124,6 +124,11 @@ final class DataBuffer {
      Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
      */
     var memoryCount: Int {
+        return syncRead{contents.count}
+    }
+    
+    //Only to be used from within a locking queue to avoid crash
+    private var directMemoryCount: Int {
         return contents.count
     }
 
@@ -228,7 +233,7 @@ final class DataBuffer {
 
             contents.append(value)
 
-            if memoryCount > effectiveMemorySize {
+            if directMemoryCount > effectiveMemorySize {
                 contents.removeFirst()
             }
 
@@ -246,12 +251,12 @@ final class DataBuffer {
 
             autoreleasepool {
 
-                let sizeAfterAppend = memoryCount + values.count
+                let sizeAfterAppend = directMemoryCount + values.count
 
                 let cutSize = sizeAfterAppend - effectiveMemorySize
                 let shouldCut = cutSize > 0 && sizeAfterAppend > 0
 
-                let cutAfterAppend = cutSize > memoryCount
+                let cutAfterAppend = cutSize > directMemoryCount
 
                 if shouldCut && !cutAfterAppend {
                     contents.removeFirst(cutSize)
@@ -275,7 +280,8 @@ final class DataBuffer {
 
 extension DataBuffer: Sequence {
     func makeIterator() -> IndexingIterator<[Double]> {
-        return contents.makeIterator()
+        let buffered: [Double] = syncRead{contents}
+        return buffered.makeIterator()
     }
 
     var last: Double? {
@@ -324,7 +330,7 @@ extension DataBuffer {
             let byteSize = MemoryLayout<Double>.size
 
             func writeDataFromPointer(_ pointer: UnsafeMutableRawPointer) {
-                let data = Data(bytesNoCopy: pointer, count: memoryCount * byteSize, deallocator: .none)
+                let data = Data(bytesNoCopy: pointer, count: directMemoryCount * byteSize, deallocator: .none)
 
                 handle.write(data)
                 handle.closeFile()
