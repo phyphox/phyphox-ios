@@ -77,6 +77,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
     
+    //Keeping track of old max/min for extend zoom strategy
+    private var historicMinX = +Double.infinity
+    private var historicMaxX = -Double.infinity
+    private var historicMinY = +Double.infinity
+    private var historicMaxY = -Double.infinity
+    private var historicMinZ = +Double.infinity
+    private var historicMaxZ = -Double.infinity
+    
     private var zoomMin: GraphPoint3D<Double>?
     private var zoomMax: GraphPoint3D<Double>?
     private var zoomFollows = false
@@ -125,6 +133,28 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 maxZ = Swift.max(maxZ, maxPoint.z)
             }
           
+            if descriptor.scaleMaxX == .extend {
+                if maxX < historicMaxX {
+                    maxX = historicMaxX
+                } else {
+                    historicMaxX = maxX
+                }
+            }
+            if descriptor.scaleMaxY == .extend {
+                if maxY < historicMaxY {
+                    maxY = historicMaxY
+                } else {
+                    historicMaxY = maxY
+                }
+            }
+            if descriptor.scaleMaxZ == .extend {
+                if maxZ < historicMaxZ {
+                    maxZ = historicMaxZ
+                } else {
+                    historicMaxZ = maxZ
+                }
+            }
+            
             return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
         else {
@@ -144,6 +174,28 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 minX = Swift.min(minX, minPoint.x)
                 minY = Swift.min(minY, minPoint.y)
                 minZ = Swift.min(minZ, minPoint.z)
+            }
+            
+            if descriptor.scaleMinX == .extend {
+                if minX > historicMinX {
+                    minX = historicMinX
+                } else {
+                    historicMinX = minX
+                }
+            }
+            if descriptor.scaleMinY == .extend {
+                if minY > historicMinY {
+                    minY = historicMinY
+                } else {
+                    historicMinY = minY
+                }
+            }
+            if descriptor.scaleMinZ == .extend {
+                if minZ > historicMinZ {
+                    minZ = historicMinZ
+                } else {
+                    historicMinZ = minZ
+                }
             }
             
             return GraphPoint3D(x: minX, y: minY, z: minZ)
@@ -1447,6 +1499,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     func clearData() {
         dataSets.removeAll()
+        historicMinX = +Double.infinity
+        historicMaxX = -Double.infinity
+        historicMinY = +Double.infinity
+        historicMaxY = -Double.infinity
+        historicMinZ = +Double.infinity
+        historicMaxZ = -Double.infinity
         clearGraph()
     }
     
