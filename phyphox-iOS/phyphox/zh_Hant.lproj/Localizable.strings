@@ -140,10 +140,10 @@
 "applyZoomTitle" = "套用此大小設定";
 "applyZoomExplanation" = "當關閉該圖形的互動模式時，您可以選擇是否維持您的縮放。";
 "applyZoomAdvanced" = "進階選項";
-"applyZoomApply" = "套用此…";
-"applyZoomReset" = "套用成默認值";
-"applyZoomKeep" = "維持您目前的設定";
-"applyZoomFollow" = "畫面保持並跟蹤新數據";
+"applyZoomApply" = "套用至…";
+"applyZoomReset" = "套用預設值";
+"applyZoomKeep" = "維持目前的設定";
+"applyZoomFollow" = "保持畫面並追蹤新數據";
 "applyZoomThis" = "只有這個圖形";
 "applyZoomSameVariable" = "其他圖表：相同變量";
 "applyZoomSameUnit" = "其他圖表：相同單位";
@@ -171,7 +171,7 @@
 "bt_scanning_generic" = "掃描藍芽設備中..…";
 "bt_scanning_specific1" = "正在掃描以下藍牙裝置";
 "bt_scanning_specific2" = "掃描的設備名稱為...…";
-"bt_device_not_supported" = "沒有匹配的實驗";
+"bt_device_not_supported" = "沒有可用的實驗。";
 "bt_location_explanation" = "Android需要一個藍牙掃描的定位許可來獲取位置信息。現在我們將請求這些權限。您需要授權來掃描藍牙設備。";
 "bt_exception_uuid" = "具有UUID的特徵";
 "bt_exception_uuid2" = "沒有找到";
@@ -209,3 +209,4 @@
 "networkPrivacySensorLocation" = "位置數據（GPS數據或類似數據）。";
 "networkPrivacyDeviceInfo" = "有關您的手機型號或手機物理實作版本的詳細信息。";
 "networkPrivacySensorInfo" = "有關以下感應器的技術細節：";
+"apple_ban" = "本實驗已無法使用。";
