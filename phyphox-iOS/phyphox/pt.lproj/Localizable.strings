@@ -110,9 +110,9 @@
 "sensorHumidity" = "Umidade";
 "sensorVendor" = "Fornecedor específico";
 "tryagain" = "Tentar novamente";
-"doContinue" = "Continue";
+"doContinue" = "Continuar";
 "rename" = "Renomear";
-"loadingBluetoothConnectionText" = "Conectado ao dispositivo Bluetooth…";
+"loadingBluetoothConnectionText" = "Conectando ao dispositivo Bluetooth…";
 "remoteServerNoNetwork" = "Você precisa configurar uma conexão WIFI para o dispositivo remoto primeiro. Por favor, habilite o WIFI ou crie um ponto de acesso móvel.";
 "fontSize" = "Tamanho da fonte";
 "start_hint" = "Toque no triângulo para iniciar o experimento.";
