@@ -43,7 +43,7 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
-        var maxNonScalarCount = 0 //Scalar and an empty vector should give an empty result
+        var maxNonScalarCount = -1 //Scalar and an empty vector should give an empty result
         
         for input in inputs {
             switch input {
