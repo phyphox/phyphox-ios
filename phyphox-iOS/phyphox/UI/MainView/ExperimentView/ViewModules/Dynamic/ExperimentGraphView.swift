@@ -1431,6 +1431,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let yRange = maxY - minY
         
         if descriptor.timeOnX {
+            if xRange == 0 {
+                return PauseRanges(xPauseRanges: [], yPauseRanges: [])
+            }
             var pauseRanges: [PauseRange] = []
             var rangeStart: CGFloat? = nil
             for i in 0..<timeReference.timeMappings.count {
@@ -1451,6 +1454,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             return PauseRanges(xPauseRanges: pauseRanges, yPauseRanges: [])
         } else if descriptor.timeOnY {
+            if yRange == 0 {
+                return PauseRanges(xPauseRanges: [], yPauseRanges: [])
+            }
             var pauseRanges: [PauseRange] = []
             var rangeStart: CGFloat? = nil
             for i in 0..<timeReference.timeMappings.count {
