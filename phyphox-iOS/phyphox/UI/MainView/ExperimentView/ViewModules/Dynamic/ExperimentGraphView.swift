@@ -1766,14 +1766,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         updatePlotArea()
     }
     
-    func animateFrame(_ frame: CGRect) {
-        layoutIfNeeded()
-        UIView.animate(withDuration: 0.15, animations: {
-            self.frame = frame
-            self.layoutIfNeeded()
-        })
-    }
-    
 }
 
 extension ExperimentGraphView: GraphGridDelegate {

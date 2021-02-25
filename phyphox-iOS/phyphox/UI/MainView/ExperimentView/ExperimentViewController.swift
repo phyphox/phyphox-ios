@@ -112,7 +112,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         self.modules = modules
 
         super.init(style: .grouped)
-        
+                
         for module in modules {
             if let resizableViewModule = module as? ResizableViewModule {
                 resizableViewModule.layoutDelegate = self
@@ -121,13 +121,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
                 zoomableViewModule.zoomDelegate = self
             }
         }
-
+        
         tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
 
         tableView.backgroundColor = kBackgroundColor
         tableView.separatorStyle = .none
 
         tableView.alwaysBounceVertical = false
+        tableView.estimatedRowHeight = min(view.frame.width, view.frame.height)
         
     }
 
