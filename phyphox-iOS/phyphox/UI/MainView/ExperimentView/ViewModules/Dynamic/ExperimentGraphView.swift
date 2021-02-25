@@ -132,29 +132,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 maxY = Swift.max(maxY, maxPoint.y)
                 maxZ = Swift.max(maxZ, maxPoint.z)
             }
-          
-            if descriptor.scaleMaxX == .extend {
-                if maxX < historicMaxX {
-                    maxX = historicMaxX
-                } else {
-                    historicMaxX = maxX
-                }
-            }
-            if descriptor.scaleMaxY == .extend {
-                if maxY < historicMaxY {
-                    maxY = historicMaxY
-                } else {
-                    historicMaxY = maxY
-                }
-            }
-            if descriptor.scaleMaxZ == .extend {
-                if maxZ < historicMaxZ {
-                    maxZ = historicMaxZ
-                } else {
-                    historicMaxZ = maxZ
-                }
-            }
-            
+
             return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
         else {
@@ -175,29 +153,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 minY = Swift.min(minY, minPoint.y)
                 minZ = Swift.min(minZ, minPoint.z)
             }
-            
-            if descriptor.scaleMinX == .extend {
-                if minX > historicMinX {
-                    minX = historicMinX
-                } else {
-                    historicMinX = minX
-                }
-            }
-            if descriptor.scaleMinY == .extend {
-                if minY > historicMinY {
-                    minY = historicMinY
-                } else {
-                    historicMinY = minY
-                }
-            }
-            if descriptor.scaleMinZ == .extend {
-                if minZ > historicMinZ {
-                    minZ = historicMinZ
-                } else {
-                    historicMinZ = minZ
-                }
-            }
-            
+
             return GraphPoint3D(x: minX, y: minY, z: minZ)
         }
         else {
@@ -1053,11 +1009,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     
                 if x.isFinite && x < minX && !xMinStrict {
                     minX = x
+                    if minX < historicMinX {
+                        historicMinX = minX
+                    } else if descriptor.scaleMinX == .extend {
+                        minX = historicMinX
+                    }
                 }
 
                 if x.isFinite && x > maxX {
                     if !xMaxStrict {
                         maxX = x
+                        if maxX > historicMinX {
+                            historicMaxX = maxX
+                        } else if descriptor.scaleMaxX == .extend {
+                            maxX = historicMaxX
+                        }
                     } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
                         let w = zoomMax!.x - zoomMin!.x
                         zoomMin = GraphPoint3D(x: x - w, y: zoomMin!.y, z: zoomMin!.z)
@@ -1069,18 +1035,37 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
                 if y.isFinite && y < minY && !yMinStrict {
                     minY = y
+                    if minY < historicMinY {
+                        historicMinY = minY
+                    } else if descriptor.scaleMinY == .extend {
+                        minY = historicMinY
+                    }
                 }
 
                 if y.isFinite && y > maxY && !yMaxStrict {
                     maxY = y
+                    if maxY > historicMaxY {
+                        historicMaxY = maxY
+                    } else if descriptor.scaleMaxY == .extend {
+                        maxY = historicMaxY
+                    }
                 }
-                
                 if z.isFinite && z < minZ && !zMinStrict {
                     minZ = z
+                    if minZ < historicMinZ {
+                        historicMinZ = minZ
+                    } else if descriptor.scaleMinZ == .extend {
+                        minZ = historicMinZ
+                    }
                 }
                 
                 if z.isFinite && z > maxZ && !zMaxStrict {
                     maxZ = z
+                    if maxZ > historicMaxZ {
+                        historicMaxZ = maxZ
+                    } else if descriptor.scaleMaxZ == .extend {
+                        maxZ = historicMaxZ
+                    }
                 }
 
                 switch descriptor.style[i] {
