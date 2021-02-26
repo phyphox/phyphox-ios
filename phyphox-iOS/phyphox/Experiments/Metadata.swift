@@ -9,7 +9,7 @@
 import Foundation
 import CommonCrypto
 
-enum NetworkSensorMetadata: String, LosslessStringConvertible {
+enum SensorMetadata: String, LosslessStringConvertible, CaseIterable {
     case name
     case vendor
     case range
@@ -20,7 +20,8 @@ enum NetworkSensorMetadata: String, LosslessStringConvertible {
     case version
 }
 
-enum NetworkMetadata {
+enum Metadata: CaseIterable {
+    
     case uniqueId
     case version
     case build
@@ -32,7 +33,50 @@ enum NetworkMetadata {
     case deviceBaseOS
     case deviceCodename
     case deviceRelease
-    case sensor(SensorType, NetworkSensorMetadata)
+    case sensor(SensorType, SensorMetadata)
+    
+    static var allCases: [Metadata] {
+        var list = allNonSensorCases
+        for sensorType in SensorType.allCases {
+            for sensorMeta in SensorMetadata.allCases {
+                list.append(.sensor(sensorType, sensorMeta))
+            }
+        }
+        return list
+    }
+    
+    static var allNonSensorCases: [Metadata] {
+        return [.uniqueId, .version, .build, .fileFormat, .deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease]
+    }
+    
+    var identifier: String {
+        switch self {
+        case .uniqueId:
+            return "uniqueId"
+        case .version:
+            return "version"
+        case .build:
+            return "build"
+        case .fileFormat:
+            return "fileFormat"
+        case .deviceModel:
+            return "deviceModel"
+        case .deviceBrand:
+            return "deviceBrand"
+        case .deviceBoard:
+            return "deviceBoard"
+        case .deviceManufacturer:
+            return "deviceManufacturer"
+        case .deviceBaseOS:
+            return "deviceBaseOS"
+        case .deviceCodename:
+            return "deviceCodename"
+        case .deviceRelease:
+            return "deviceRelease"
+        case .sensor(let sensorType, let sensorMeta):
+            return sensorType.rawValue + sensorMeta.rawValue.capitalized
+        }
+    }
     
     func get(hash: String) -> String? {
         switch self {

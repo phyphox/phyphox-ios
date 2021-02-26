@@ -91,7 +91,7 @@ final class InterpolateAnalysis: ExperimentAnalysisModule {
         
         var j = 0
         for xi in xOut {
-            if incount == 0 {
+            if incount == 0 {
                 result.append(Double.nan)
                 continue
             } else if incount == 1 {

@@ -112,7 +112,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         self.modules = modules
 
         super.init(style: .grouped)
-        
+                
         for module in modules {
             if let resizableViewModule = module as? ResizableViewModule {
                 resizableViewModule.layoutDelegate = self
@@ -121,13 +121,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
                 zoomableViewModule.zoomDelegate = self
             }
         }
-
+        
         tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
 
         tableView.backgroundColor = kBackgroundColor
         tableView.separatorStyle = .none
 
         tableView.alwaysBounceVertical = false
+        tableView.estimatedRowHeight = min(view.frame.width, view.frame.height)
         
     }
 
@@ -162,11 +163,11 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         present(dialog, animated: true, completion: nil)
     }
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
         for module in modules {
             if let zoomableViewModule = module as? ZoomableViewModule {
-                zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, modeY: modeY, applyToY: applyToY, targetY: targetY, zoomMin: zoomMin, zoomMax: zoomMax)
+                zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, modeY: modeY, applyToY: applyToY, targetY: targetY, zoomMin: zoomMin, zoomMax: zoomMax, systemTime: systemTime)
             }
         }
     }

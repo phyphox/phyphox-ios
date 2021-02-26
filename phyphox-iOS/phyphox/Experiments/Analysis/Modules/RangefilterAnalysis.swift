@@ -85,7 +85,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
                     continue
                 }
                 
-                if !range.inBounds(value) {
+                if value.isFinite && !range.inBounds(value) {
                     delete.insert(i)
                     
                     let delIdx = i-deleteCount

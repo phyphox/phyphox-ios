@@ -60,18 +60,18 @@ final class CreditsView: UIView {
         creditsGPL.textColor = kRWTHTextColor
         
         closeButton = UIButton()
-        closeButton.setTitle(localize("close"), for: UIControlState())
+        closeButton.setTitle(localize("close"), for: UIControl.State())
         closeButton.backgroundColor = kRWTHBackgroundColor
-        closeButton.setTitleColor(kRWTHTextColor, for: UIControlState.normal)
-        closeButton.setTitleColor(kRWTHBlue, for: UIControlState.highlighted)
+        closeButton.setTitleColor(kRWTHTextColor, for: UIControl.State.normal)
+        closeButton.setTitleColor(kRWTHBlue, for: UIControl.State.highlighted)
         closeButton.layer.borderColor = UIColor(white: 0.5, alpha: 1.0).cgColor
         closeButton.layer.borderWidth = 0.5
         
         licenceButton = UIButton()
-        licenceButton.setTitle("Open Source Licences", for: UIControlState())
+        licenceButton.setTitle("Open Source Licences", for: UIControl.State())
         licenceButton.backgroundColor = kRWTHBackgroundColor
-        licenceButton.setTitleColor(kRWTHTextColor, for: UIControlState.normal)
-        licenceButton.setTitleColor(kRWTHBlue, for: UIControlState.highlighted)
+        licenceButton.setTitleColor(kRWTHTextColor, for: UIControl.State.normal)
+        licenceButton.setTitleColor(kRWTHBlue, for: UIControl.State.highlighted)
         licenceButton.layer.borderColor = UIColor(white: 0.5, alpha: 1.0).cgColor
         licenceButton.layer.borderWidth = 0.5
         
@@ -111,7 +111,7 @@ final class CreditsView: UIView {
     }
     
     func formatNames(raw: String) -> NSAttributedString {
-        let str = NSMutableAttributedString(string: raw, attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: fontSize), NSAttributedStringKey.foregroundColor: kRWTHBackgroundColor])
+        let str = NSMutableAttributedString(string: raw, attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: fontSize), NSAttributedString.Key.foregroundColor: kRWTHBackgroundColor])
         var searchIndex = raw.startIndex
         while true {
             let searchString = String(raw[searchIndex...])
@@ -130,7 +130,7 @@ final class CreditsView: UIView {
             
             let range = NSMakeRange(raw.distance(from: raw.startIndex, to: searchIndex), raw.distance(from: searchIndex, to: end))
 
-            str.setAttributes([NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: fontSize), NSAttributedStringKey.foregroundColor: kRWTHBackgroundColor], range: range)
+            str.setAttributes([NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: fontSize), NSAttributedString.Key.foregroundColor: kRWTHBackgroundColor], range: range)
 
             if end < raw.endIndex {
                 searchIndex = raw.index(end, offsetBy: 1)

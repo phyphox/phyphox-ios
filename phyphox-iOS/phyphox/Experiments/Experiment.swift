@@ -13,7 +13,7 @@ import CoreLocation
 private struct ExperimentRequiredPermission: OptionSet {
     let rawValue: Int
     
-    static let none = ExperimentRequiredPermission(rawValue: 0)
+    static let none = ExperimentRequiredPermission([])
     static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
     static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
@@ -94,11 +94,12 @@ final class Experiment {
     var appleBan: Bool
     var invalid = false
     
+    let timeReference: ExperimentTimeReference
+    
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translation: ExperimentTranslationCollection?
 
-    let sensorInputTimeReference: SensorInputTimeReference
     let sensorInputs: [ExperimentSensorInput]
     let gpsInputs: [ExperimentGPSInput]
     let audioInputs: [ExperimentAudioInput]
@@ -120,15 +121,12 @@ final class Experiment {
     
     private(set) var running = false
     private(set) var hasStarted = false
-    
-    private(set) var startTimestamp: TimeInterval?
-    private var pauseBegin: TimeInterval = 0.0
 
     private var audioEngine: AudioEngine?
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], sensorInputTimeReference:SensorInputTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -146,8 +144,9 @@ final class Experiment {
         
         self.translation = translation
 
+        self.timeReference = timeReference
+        
         self.buffers = buffers
-        self.sensorInputTimeReference = sensorInputTimeReference
         self.sensorInputs = sensorInputs
         self.gpsInputs = gpsInputs
         self.audioInputs = audioInputs
@@ -177,11 +176,10 @@ final class Experiment {
         }
         
         analysis.delegate = self
-        analysis.timestampSource = self
     }
 
     convenience init(file: String, error: String) {
-        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, translation: nil, buffers: [:], sensorInputTimeReference: SensorInputTimeReference(), sensorInputs: [], gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0), export: nil)
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference()), export: nil)
         invalid = true;
     }
     
@@ -200,7 +198,6 @@ final class Experiment {
         if requiredPermissions != .none {
             checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
         }
-
         analysis.queue = queue
         analysis.setNeedsUpdate(isPreRun: true)
         
@@ -344,16 +341,9 @@ final class Experiment {
                 return
             }
         }
-        
-        if pauseBegin > 0 {
-            startTimestamp! += CFAbsoluteTimeGetCurrent()-pauseBegin
-            pauseBegin = 0.0
-        }
-        
-        if startTimestamp == nil {
-            startTimestamp = CFAbsoluteTimeGetCurrent()
-        }
-        
+
+        timeReference.registerEvent(event: .START)
+
         running = true
 
         hasStarted = true
@@ -362,7 +352,6 @@ final class Experiment {
         
         try startAudio()
         
-        sensorInputTimeReference.t0 = nil
         sensorInputs.forEach { $0.start(queue: queue) }
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
@@ -379,9 +368,7 @@ final class Experiment {
         }
         
         analysis.running = false
-        
-        pauseBegin = CFAbsoluteTimeGetCurrent()
-        
+                
         sensorInputs.forEach { $0.stop() }
         gpsInputs.forEach { $0.stop() }
         bluetoothInputs.forEach { $0.stop() }
@@ -392,12 +379,13 @@ final class Experiment {
         UIApplication.shared.isIdleTimerDisabled = false
         
         running = false
+        
+        timeReference.registerEvent(event: .PAUSE)
     }
     
     func clear(byUser: Bool) {
         stop()
-        pauseBegin = 0.0
-        startTimestamp = nil
+        timeReference.reset()
         hasStarted = false
 
         for buffer in buffers.values {
@@ -432,18 +420,6 @@ extension Experiment: ExperimentAnalysisDelegate {
                 networkConnection.pushDataToBuffers()
                 networkConnection.doExecute()
             }
-        }
-    }
-}
-
-extension Experiment: ExperimentAnalysisTimestampSource {
-    func getCurrentTimestamp() -> TimeInterval {
-        guard let startTimestamp = startTimestamp else { return 0.0 }
-
-        if pauseBegin > 0 {
-            return pauseBegin - startTimestamp
-        } else {
-            return CFAbsoluteTimeGetCurrent() - startTimestamp
         }
     }
 }

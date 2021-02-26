@@ -17,7 +17,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     let mode: BluetoothMode
     let subscribeOnStart: Bool
     
-    private var startTimestamp: TimeInterval?
+    let timeReference: ExperimentTimeReference
     var configList: [BluetoothConfigDescriptor] = []
     
     var running: Bool = false
@@ -41,7 +41,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     
     var timer = Timer()
     
-    init(device: ExperimentBluetoothDevice, mode: BluetoothMode, outputList: [BluetoothOutput], configList: [BluetoothConfigDescriptor], subscribeOnStart: Bool, rate: Double?) {
+    init(device: ExperimentBluetoothDevice, mode: BluetoothMode, outputList: [BluetoothOutput], configList: [BluetoothConfigDescriptor], subscribeOnStart: Bool, rate: Double?, timeReference: ExperimentTimeReference) {
                 
         self.outputList = outputList
         self.configList = configList
@@ -50,6 +50,8 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
         self.rate = rate ?? 0.0
         self.subscribeOnStart = subscribeOnStart
         
+        self.timeReference = timeReference
+        
         self.device = device
         self.device.attachDelegate(self)
     }
@@ -57,7 +59,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     func start(queue: DispatchQueue){
         self.queue = queue
         running = true
-        startTimestamp = nil
+
         switch mode {
         case .poll:
             timer = Timer.scheduledTimer(timeInterval: (1.0/rate), target: self, selector: #selector(pollData), userInfo: nil, repeats: true)
@@ -137,49 +139,42 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             return
         }
         
-        let t = CFAbsoluteTimeGetCurrent()
         for item in outputList{
             if item.char.uuid128String == uuid.uuid128String {
                 
                 if item.extra == .time {
-                    if startTimestamp == nil {
-                        startTimestamp = t - (item.buffer.last ?? 0.0)
-                    }
-                    
-                    let relativeT = t-startTimestamp!
-                    
-                    self.dataIn(relativeT, t: t, dataBufferIn: item.buffer)
+                    self.dataIn([timeReference.getExperimentTime()], dataBufferIn: item.buffer)
                 } else {
-                    if let newDataConverted = item.conversion?.convert(data: data), newDataConverted.isFinite {
-                        self.dataIn(newDataConverted, t: t, dataBufferIn: item.buffer)
+                    if let newDataConverted = item.conversion?.convert(data: data) {
+                        self.dataIn(newDataConverted, dataBufferIn: item.buffer)
                     }
                 }
             }
         }
     }
    
-    private func writeToBuffers(_ value: Double?,t: TimeInterval, dataBufferIn: DataBuffer) {
+    private func writeToBuffers(_ values: [Double],dataBufferIn: DataBuffer) {
         
-        func tryAppend(myValue: Double?, to buffer: DataBuffer?) {
-            guard let myValue = myValue, let buffer = buffer else { return }
+        func tryAppend(myValues: [Double], to buffer: DataBuffer?) {
+            guard let buffer = buffer else { return }
             
-            buffer.append(myValue)
+            buffer.appendFromArray(myValues)
         }
         
-        tryAppend(myValue: value, to: dataBufferIn)
+        tryAppend(myValues: values, to: dataBufferIn)
     }
    
-    private func dataIn(_ value: Double?, t: TimeInterval, dataBufferIn: DataBuffer) {
+    private func dataIn(_ values: [Double], dataBufferIn: DataBuffer) {
         
         
-        func dataInSync(_ value: Double?, t: TimeInterval?, dataBufferIn: DataBuffer) {
-            writeToBuffers(value, t: t!, dataBufferIn: dataBufferIn )
+        func dataInSync(_ values: [Double], dataBufferIn: DataBuffer) {
+            writeToBuffers(values, dataBufferIn: dataBufferIn )
         }
         
         
         queue?.async {
             autoreleasepool(invoking: {
-                dataInSync(value, t: t, dataBufferIn: dataBufferIn)
+                dataInSync(values, dataBufferIn: dataBufferIn)
             })
         }
     }

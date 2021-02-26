@@ -16,7 +16,7 @@ class MainNavigationViewController: UINavigationController {
         hidesBarsOnSwipe = false
         
         self.navigationBar.tintColor = kTextColor
-        self.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor: kTextColor]
+        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
         
         self.interactivePopGestureRecognizer?.isEnabled = false
         

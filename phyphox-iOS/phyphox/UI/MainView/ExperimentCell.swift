@@ -22,13 +22,13 @@ class ExperimentCell: UICollectionViewCell {
             if showsOptionsButton {
                 if optionsButton == nil {
                     optionsButton = PTButton()
-                    optionsButton!.setImage(generateDots(15.0), for: UIControlState())
+                    optionsButton!.setImage(generateDots(15.0), for: UIControl.State())
                     optionsButton!.accessibilityLabel = localize("actions")
                     optionsButton!.addTarget(self, action: #selector(optionsButtonPressed(_:)), for: .touchUpInside)
                     
                     let expColor = experiment?.color ?? kHighlightColor
                     let color = expColor.luminance > 0.1 ? expColor : kHighlightColor
-                    optionsButton!.setTintColor(color, for: UIControlState())
+                    optionsButton!.setTintColor(color, for: UIControl.State())
                     optionsButton!.setTintColor(color.interpolating(to: UIColor.black, byFraction: 0.5), for: .highlighted)
                     contentView.addSubview(optionsButton!)
                 }
@@ -112,8 +112,8 @@ class ExperimentCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
-        subtitleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1)
+        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
+        subtitleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
         
         separator.backgroundColor = UIColor.white
         separator.alpha = 0.1

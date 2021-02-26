@@ -379,7 +379,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     override func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        if let index = servicesToBeDiscovered.index(of: service) {
+        if let index = servicesToBeDiscovered.firstIndex(of: service) {
             servicesToBeDiscovered.remove(at: index)
         } else {
             return

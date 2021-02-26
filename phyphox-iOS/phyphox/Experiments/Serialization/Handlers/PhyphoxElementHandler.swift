@@ -17,7 +17,7 @@ private extension SensorDescriptor {
 }
 
 private extension ExperimentSensorInput {
-    convenience init(descriptor: SensorInputDescriptor, sensorInputTimeReference: SensorInputTimeReference, buffers: [String: DataBuffer]) {
+    convenience init(descriptor: SensorInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
         let xBuffer = descriptor.buffer(for: "x", from: buffers)
         let yBuffer = descriptor.buffer(for: "y", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
@@ -25,12 +25,12 @@ private extension ExperimentSensorInput {
         let absBuffer = descriptor.buffer(for: "abs", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
 
-        self.init(sensorType: descriptor.sensor, sensorInputTimeReference: sensorInputTimeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
+        self.init(sensorType: descriptor.sensor, timeReference: timeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
     }
 }
 
 private extension ExperimentGPSInput {
-    convenience init(descriptor: LocationInputDescriptor, buffers: [String: DataBuffer]) {
+    convenience init(descriptor: LocationInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
         let latBuffer = descriptor.buffer(for: "lat", from: buffers)
         let lonBuffer = descriptor.buffer(for: "lon", from: buffers)
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
@@ -43,7 +43,7 @@ private extension ExperimentGPSInput {
         let statusBuffer = descriptor.buffer(for: "status", from: buffers)
         let satellitesBuffer = descriptor.buffer(for: "satellites", from: buffers)
 
-        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, zWgs84Buffer: zWgs84Buffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer)
+        self.init(latBuffer: latBuffer, lonBuffer: lonBuffer, zBuffer: zBuffer, zWgs84Buffer: zWgs84Buffer, vBuffer: vBuffer, dirBuffer: dirBuffer, accuracyBuffer: accuracyBuffer, zAccuracyBuffer: zAccuracyBuffer, tBuffer: tBuffer, statusBuffer: statusBuffer, satellitesBuffer: satellitesBuffer, timeReference: timeReference)
     }
 }
 
@@ -60,7 +60,7 @@ private extension ExperimentAudioInput {
 }
 
 private extension ExperimentBluetoothInput {
-    convenience init(device: ExperimentBluetoothDevice, descriptor: BluetoothInputBlockDescriptor, buffers: [String: DataBuffer]) throws {
+    convenience init(device: ExperimentBluetoothDevice, descriptor: BluetoothInputBlockDescriptor, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference) throws {
         
         var outputs: [BluetoothOutput] = []
         for output in descriptor.outputs {
@@ -70,7 +70,7 @@ private extension ExperimentBluetoothInput {
             outputs.append(BluetoothOutput(char: output.char, conversion: output.conversion, buffer: outBuffer, extra: output.extra))
         }
         
-        self.init(device: device, mode: descriptor.mode, outputList: outputs, configList: descriptor.configs, subscribeOnStart: descriptor.subscribeOnStart, rate: descriptor.rate)
+        self.init(device: device, mode: descriptor.mode, outputList: outputs, configList: descriptor.configs, subscribeOnStart: descriptor.subscribeOnStart, rate: descriptor.rate, timeReference: timeReference)
     }
 }
 
@@ -90,7 +90,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 11, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 12, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -115,9 +115,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private let analysisHandler = AnalysisElementHandler()
     private let viewsHandler = ViewsElementHandler()
     private let exportHandler = ExportElementHandler()
+    private let eventsHandler = EventsElementHandler()
 
     init() {
-        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "color": colorHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "network": networkHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler]
+        childHandlers = ["title": titleHandler, "state-title": stateTitleHandler, "category": categoryHandler, "description": descriptionHandler, "icon": iconHandler, "color": colorHandler, "link": linkHandler, "data-containers": dataContainersHandler, "translations": translationsHandler, "input": inputHandler, "output": outputHandler, "network": networkHandler, "analysis": analysisHandler, "views": viewsHandler, "export": exportHandler, "events": eventsHandler]
     }
 
     private enum Attribute: String, AttributeKey {
@@ -178,16 +179,21 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             buffers = [String : DataBuffer]()
         }
 
+        let timeReference = ExperimentTimeReference()
+        if let eventsDescriptor = try eventsHandler.expectOptionalResult() {
+            for (type, event) in zip(eventsDescriptor.types, eventsDescriptor.events) {
+                timeReference.timeMappings.append(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
+            }
+        }
+        
         let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
-        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay)
+        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference)
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
-        let networkDescriptor = try networkHandler.expectOptionalResult()
 
-        let sensorInputTimeReference = SensorInputTimeReference()
-        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, sensorInputTimeReference: sensorInputTimeReference, buffers: buffers) } ?? []
-        let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, buffers: buffers) } ?? []
+        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
+        let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
         let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
@@ -217,7 +223,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         if let descriptors = inputDescriptor?.bluetooth {
             for descriptor in descriptors {
                 let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
-                bluetoothInputs.append(try ExperimentBluetoothInput(device: device, descriptor: descriptor, buffers: buffers) )
+                bluetoothInputs.append(try ExperimentBluetoothInput(device: device, descriptor: descriptor, buffers: buffers, timeReference: timeReference) )
             }
         }
         if let descriptors = outputDescriptor?.bluetooth {
@@ -257,7 +263,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                                 if name.starts(with: sensor) {
                                     let sensorMetadata = name.dropFirst(sensor.count)
                                     let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
-                                    guard let sensorMeta = NetworkSensorMetadata(rawValue: String(sensorMetadataMatch)) else {
+                                    guard let sensorMeta = SensorMetadata(rawValue: String(sensorMetadataMatch)) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
                                     return .Metadata(.sensor(SensorType.accelerometer, sensorMeta))
@@ -289,6 +295,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                             }
                         }
                         send[item.id] = NetworkSendableData(source: metadata, additionalAttributes: item.additionalAttributes)
+                    case .time:
+                        send[item.id] = NetworkSendableData(source: .Time(timeReference), additionalAttributes: item.additionalAttributes)
                     }
                     
                 }
@@ -299,7 +307,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     }
                     receive[item.id] = NetworkReceivableData(buffer: buffer, clear: item.clear)
                 }
-                networkConnections.append(NetworkConnection(id: descriptor.id, privacyURL: descriptor.privacyURL, address: descriptor.address, discovery: descriptor.discovery, autoConnect: descriptor.autoConnect, service: descriptor.service, conversion: descriptor.conversion, send: send, receive: receive, interval: descriptor.interval, autoPush: analysis == nil))
+                networkConnections.append(NetworkConnection(id: descriptor.id, privacyURL: descriptor.privacyURL, address: descriptor.address, discovery: descriptor.discovery, autoConnect: descriptor.autoConnect, service: descriptor.service, conversion: descriptor.conversion, send: send, receive: receive, interval: descriptor.interval))
             }
         }
 
@@ -308,16 +316,16 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewCollectionDescriptors = try viewsHandler.expectOptionalResult()
 
-        let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, buffers: buffers, translations: translations) })  }
+        let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, translation: translations, buffers: buffers, sensorInputTimeReference: sensorInputTimeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
 
     /// MARK: - Helpers required for the initialization of an `Experiment` instance and for the creation of properties of `Experiment` from intermediate element handler results.
 
-    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
+    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
         switch descriptor {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
@@ -395,7 +403,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return buffer
             })
 
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
         }
     }
 

@@ -35,6 +35,7 @@ final class AudioEngine {
     
     enum AudioEngineError: Error {
         case RateMissmatch
+        case NoInput
     }
     
     init(audioOutput: ExperimentAudioOutput?, audioInput: ExperimentAudioInput?) {
@@ -65,23 +66,26 @@ final class AudioEngine {
         
         let avSession = AVAudioSession.sharedInstance()
         if playbackOut != nil && recordIn != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker)
         } else if playbackOut != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayback)
+            try avSession.setCategory(AVAudioSession.Category.playback)
         } else if recordIn != nil {
-            try avSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: AVAudioSessionCategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
+            if !avSession.isInputAvailable {
+                throw AudioEngineError.NoInput
+            }
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
-        try avSession.setMode(AVAudioSessionModeMeasurement)
+        try avSession.setMode(AVAudioSession.Mode.measurement)
         if (avSession.isInputGainSettable) {
             try avSession.setInputGain(1.0)
         }
         
-        let sampleRate = recordIn?.sampleRate ?? playbackOut?.sampleRate ?? 0
+        let sampleRate =  playbackOut?.sampleRate ?? recordIn?.sampleRate ?? 0
         try avSession.setPreferredSampleRate(Double(sampleRate))
         
         try avSession.setActive(true)
         
-        var audioDescription = monoFloatFormatWithSampleRate(avSession.sampleRate)
+        var audioDescription = monoFloatFormatWithSampleRate(Double(sampleRate))
         format = AVAudioFormat(streamDescription: &audioDescription)
         
         self.engine = AVAudioEngine()
@@ -97,13 +101,13 @@ final class AudioEngine {
         if (recordIn != nil) {
             self.recordInput = engine!.inputNode
             
-            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: format!, block: {(buffer, time) in
+            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: self.recordInput?.outputFormat(forBus: 0), block: {(buffer, time) in
                 audioInputQueue.async {
                     autoreleasepool {
                         let channels = UnsafeBufferPointer(start: buffer.floatChannelData, count: Int(buffer.format.channelCount))
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
                         
-                        self.recordIn?.sampleRateInfoBuffer?.append(AVAudioSession.sharedInstance().sampleRate)
+                        self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
                         self.recordIn?.outBuffer.appendFromArray(data.map { Double($0) })
                     }
                 }
@@ -118,6 +122,9 @@ final class AudioEngine {
         guard let playbackOut = playbackOut else {
             return
         }
+        guard let format = format else {
+            return
+        }
         
         if !playing {
             playing = true
@@ -130,10 +137,10 @@ final class AudioEngine {
                 endIndex = max(endIndex, inBuffer.count);
             }
             for tone in playbackOut.tones {
-                endIndex = max(endIndex, Int(tone.duration.getValue() ?? 0.0 * AVAudioSession.sharedInstance().sampleRate))
+                endIndex = max(endIndex, Int((tone.duration.getValue() ?? 0.0) * format.sampleRate))
             }
             if let noise = playbackOut.noise {
-                endIndex = max(endIndex, Int(noise.duration.getValue() ?? 0.0 * AVAudioSession.sharedInstance().sampleRate))
+                endIndex = max(endIndex, Int((noise.duration.getValue() ?? 0.0) * format.sampleRate))
             }
             
             appendBufferToPlayback()
@@ -148,6 +155,9 @@ final class AudioEngine {
     func appendBufferToPlayback() {
 
         guard let playbackOut = playbackOut else {
+            return
+        }
+        guard let format = format else {
             return
         }
         
@@ -195,18 +205,21 @@ final class AudioEngine {
             if playbackOut.loop {
                 end = Int(bufferFrameCount)
             } else {
-                end = min(Int(bufferFrameCount), Int(d * AVAudioSession.sharedInstance().sampleRate)-frameIndex)
+                end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
             }
             if end < 1 {
                 continue
             }
             //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
-            let phaseStep = f / (Double)(AVAudioSession.sharedInstance().sampleRate)
+            let phaseStep = f / (Double)(format.sampleRate)
             var phase = phases[i]
             for i in 0..<end {
                 let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
                 data[i] += Float(a)*sineLookup[lookupIndex]
                 phase += phaseStep
+            }
+            while phase > 100000 {
+                phase -= 100000
             }
             phases[i] = phase
         }
@@ -223,7 +236,7 @@ final class AudioEngine {
             if playbackOut.loop {
                 end = Int(bufferFrameCount)
             } else {
-                end = min(Int(bufferFrameCount), Int(d * AVAudioSession.sharedInstance().sampleRate)-frameIndex)
+                end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
             }
             if end < 1 {
                 break addNoise

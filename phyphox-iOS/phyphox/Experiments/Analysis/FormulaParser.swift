@@ -405,7 +405,7 @@ final class FormulaParser {
             if brackets == 0 {
                 switch formula[i] {
                 case "+":
-                    if previousPriority >= 1 && cmd != "e" {
+                    if previousPriority >= 1 && (i == s || formula[formula.index(before: i)] != "e") {
                         previousPriority = 1
                         function = AddFunction()
                         s1 = s
@@ -415,7 +415,7 @@ final class FormulaParser {
                     }
                 case "-":
                     let prev = formula[formula.index(before: i)]
-                    if previousPriority >= 1 && cmd != "e" && prev != "+" && prev != "*" && prev != "-" && prev != "/" && prev != "%" && prev != "^" {
+                    if previousPriority >= 1 && prev != "e" && prev != "+" && prev != "*" && prev != "-" && prev != "/" && prev != "%" && prev != "^" {
                         previousPriority = 1
                         function = SubtractFunction()
                         s1 = s
@@ -462,8 +462,18 @@ final class FormulaParser {
                 default: break
                 }
             }
-            
-            if (formula[i] >= "a" && formula[i] <= "z") || (cmd != "" && formula[i] >= "0" && formula[i] <= "9") {
+            let numberContinuation: Bool
+            if (i == s) {
+                numberContinuation = false
+            } else {
+                let prev = formula[formula.index(before: i)]
+                if cmd == "" && prev >= "0" && prev <= "9" {
+                    numberContinuation = true
+                } else {
+                    numberContinuation = false
+                }
+            }
+            if (!numberContinuation) && ((formula[i] >= "a" && formula[i] <= "z") || (cmd != "" && formula[i] >= "0" && formula[i] <= "9")) {
                 if brackets == 0 {
                     cmd += String(formula[i])
                 } else {
@@ -471,10 +481,6 @@ final class FormulaParser {
                 }
             } else {
                 if cmd != "" {
-                    if cmd == "e" {
-                        cmd = ""
-                        continue
-                    }
                     
                     if formula[i] != "(" {
                         throw FormulaError.parseError("Function " + cmd  + " needs a parameter.")

@@ -19,7 +19,8 @@ protocol NetworkConnectionDataPolicyInfoDelegate {
 struct NetworkSendableData {
     enum Source {
     case Buffer(DataBuffer)
-    case Metadata(NetworkMetadata)
+    case Metadata(Metadata)
+    case Time(ExperimentTimeReference)
     }
     let source: Source
     
@@ -45,7 +46,6 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     let send: [String: NetworkSendableData]
     let receive: [String: NetworkReceivableData]
     let interval: Double
-    let autoPush: Bool
     
     var executeRequested = false
     var dataReady = false
@@ -55,7 +55,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     let hud: JGProgressHUD
     var feedbackViewController: UIViewController?
     
-    init(id: String?, privacyURL: String?, address: String, discovery: NetworkDiscovery?, autoConnect: Bool, service: NetworkService, conversion: NetworkConversion, send: [String: NetworkSendableData], receive: [String: NetworkReceivableData], interval: Double, autoPush: Bool) {
+    init(id: String?, privacyURL: String?, address: String, discovery: NetworkDiscovery?, autoConnect: Bool, service: NetworkService, conversion: NetworkConversion, send: [String: NetworkSendableData], receive: [String: NetworkReceivableData], interval: Double) {
         self.id = id
         self.privacyURL = privacyURL
         self.address = address
@@ -66,7 +66,6 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         self.send = send
         self.receive = receive
         self.interval = interval
-        self.autoPush = autoPush
         
         self.hud = JGProgressHUD(style: .dark)
         hud.interactionType = .blockNoTouches
@@ -199,9 +198,6 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     func execute(requestCallbacks: [NetworkServiceRequestCallback]) {
         executeRequested = true
         self.requestCallbacks.append(contentsOf: requestCallbacks)
-        if autoPush {
-            doExecute()
-        }
     }
     
     func doExecute() {
@@ -228,9 +224,6 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
                 do {
                     try conversion.prepare(data: data)
                     dataReady = true
-                    if autoPush {
-                        pushDataToBuffers()
-                    }
                 } catch (let error as NetworkConversionError) {
                     switch error {
                     case .emptyInput: showError(msg: "Network error: Failed to prepare the data conversion. Empty input.")

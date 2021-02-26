@@ -139,6 +139,7 @@
 "graph_tools_pan_and_zoom" = "Pan and zoom";
 "graph_tools_pick" = "Pick data";
 "graph_tools_more" = "More tools";
+"graph_tools_system_time" = "Convert to system time";
 "graph_tools_reset" = "Reset zoom";
 "graph_tools_follow" = "Follow new data";
 "graph_tools_linear_fit" = "Linear fit";

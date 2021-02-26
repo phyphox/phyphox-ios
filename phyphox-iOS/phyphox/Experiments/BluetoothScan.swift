@@ -238,7 +238,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         guard let controlCharacteristic = service.characteristics?.first(where: {$0.uuid.uuid128String == phyphoxExperimentControlCharacteristicUUID.uuidString}) else {
             return
         }
-        peripheral.writeValue(Data(bytes: [value]), for: controlCharacteristic, type: controlCharacteristic.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
+        peripheral.writeValue(Data([value]), for: controlCharacteristic, type: controlCharacteristic.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
     }
     
     func loadExperimentFromPeripheralConnect() {
@@ -338,12 +338,11 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     centralManager?.cancelPeripheralConnection(peripheral)
                     loadHud?.dismiss()
                     
-                    let transmittedExperimentData = currentBluetoothData!.subdata(in: Range(0..<Int(currentBluetoothDataSize)))
+                    let transmittedExperimentData = currentBluetoothData!.subdata(in: (0..<Int(currentBluetoothDataSize)))
                     
                     var receivedCRC32: uLong = 0
-                    transmittedExperimentData.withUnsafeBytes{(uint8Ptr: UnsafePointer<UInt8>) in
-                        let ptr = UnsafePointer<UInt8>(uint8Ptr)
-                        receivedCRC32 = crc32(uLong(0), ptr, UInt32(transmittedExperimentData.count))
+                    transmittedExperimentData.withUnsafeBytes{(ptr: UnsafeRawBufferPointer) in
+                        receivedCRC32 = crc32(uLong(0), ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), UInt32(transmittedExperimentData.count))
                     }
                     //print("\(transmittedExperimentData.count), \(currentBluetoothData?.count), \(currentBluetoothDataSize)")
                     //print("\(String(format: "%02x", receivedCRC32)) == \(String(format: "%02x", currentBluetoothDataCRC32)) -> \(receivedCRC32 == currentBluetoothDataCRC32)")
@@ -372,10 +371,10 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 if !newData.starts(with: "phyphox".data(using: .utf8)!) {
                     self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
                 } else {
-                    let sizeData = newData.subdata(in: Range(7..<7+4))
-                    currentBluetoothDataSize = UInt32(bigEndian: sizeData.withUnsafeBytes{$0.pointee})
-                    let crcData = newData.subdata(in: Range(11..<11+4))
-                    currentBluetoothDataCRC32 = UInt32(bigEndian: crcData.withUnsafeBytes{$0.pointee})
+                    let sizeData = newData.subdata(in: (7..<7+4))
+                    currentBluetoothDataSize = UInt32(bigEndian: sizeData.withUnsafeBytes{$0.load(as: UInt32.self)})
+                    let crcData = newData.subdata(in: (11..<11+4))
+                    currentBluetoothDataCRC32 = UInt32(bigEndian: crcData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     currentBluetoothData = Data()
                 }
             }

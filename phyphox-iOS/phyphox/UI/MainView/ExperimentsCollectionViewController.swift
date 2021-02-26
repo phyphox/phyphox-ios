@@ -21,6 +21,8 @@ protocol ExperimentController {
 
 final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
     
+    private let willBeFirstViewForUser: Bool //Set to false if phyphox is launched with a specific experiment URL. In this case, the ExperimentCollectionViewController will be instantiated, but it will be asked to launch that experiment right away before the user has a chance to interact with the experiment list. So, any dialogs corresponding to the experiment list (like the do-not-risk-your-phone dialog) should be suppressed if the user will not stop at that list
+    
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
@@ -138,7 +140,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
-        if (!defaults.bool(forKey: key)) {
+        if (willBeFirstViewForUser && !defaults.bool(forKey: key)) {
             let alert = UIAlertController(title: localize("warning"), message: localize("damageWarning"), preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: localize("donotshowagain"), style: .default, handler: { _ in
                 defaults.set(true, forKey: key)
@@ -242,6 +244,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         selfView.collectionView.reloadData()
     }
     
+    init(willBeFirstViewForUser: Bool) {
+        self.willBeFirstViewForUser = willBeFirstViewForUser
+        super.init()
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -316,7 +323,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         cellsPerRow = Int(cells)
         
-        let h = ceil(UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1).lineHeight + 12)
+        let h = ceil(UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1).lineHeight + 12)
         
         return CGSize(width: width, height: h)
     }
@@ -449,7 +456,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        if kind == UICollectionElementKindSectionHeader {
+        if kind == UICollectionView.elementKindSectionHeader {
             let view = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "Header", for: indexPath) as! ExperimentHeaderView
 
             let collection = collections[indexPath.section]
@@ -604,57 +611,57 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         var data = Data()
         
         //Local file header
-        data.append(Data(bytes: [0x50, 0x4b, 0x03, 0x04])) //Local file header signature
-        data.append(Data(bytes: [0x0a, 0x00])) //Version
-        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
-        data.append(Data(bytes: [0x00, 0x00])) //Compression method
-        data.append(Data(bytes: [0x00, 0x00])) //modification time
-        data.append(Data(bytes: [0x00, 0x00])) //modification date
-        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //CRC32
-        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Compressed size
-        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Uncompressed size
-        data.append(Data(bytes: [0x09, 0x00])) //File name length
-        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
+        data.append(Data([0x50, 0x4b, 0x03, 0x04])) //Local file header signature
+        data.append(Data([0x0a, 0x00])) //Version
+        data.append(Data([0x08, 0x00])) //General purpose flag
+        data.append(Data([0x00, 0x00])) //Compression method
+        data.append(Data([0x00, 0x00])) //modification time
+        data.append(Data([0x00, 0x00])) //modification date
+        data.append(Data([0x00, 0x00, 0x00, 0x00])) //CRC32
+        data.append(Data([0x00, 0x00, 0x00, 0x00])) //Compressed size
+        data.append(Data([0x00, 0x00, 0x00, 0x00])) //Uncompressed size
+        data.append(Data([0x09, 0x00])) //File name length
+        data.append(Data([0x00, 0x00])) //Extra field length
         data.append("a.phyphox".data(using: .utf8)!) //File name
         
         //Data (including data descriptor)
         data.append(try Data(contentsOf: url))
         
         let i = data.count - 16 //Offset of possible data descriptor
-        let crc32 = data.subdata(in: Range(i+4..<i+8))
-        let compressedSize = data.subdata(in: Range(i+8..<i+12))
-        let uncompressedSize = data.subdata(in: Range(i+12..<i+16))
+        let crc32 = data.subdata(in: (i+4..<i+8))
+        let compressedSize = data.subdata(in: (i+8..<i+12))
+        let uncompressedSize = data.subdata(in: (i+12..<i+16))
         
         //Central directory
         var startIndex = UInt32(data.count)
-        data.append(Data(bytes: [0x50, 0x4b, 0x01, 0x02])) //signature
-        data.append(Data(bytes: [0x0a, 0x00])) //Version made by
-        data.append(Data(bytes: [0x0a, 0x00])) //Version needed
-        data.append(Data(bytes: [0x08, 0x00])) //General purpose flag
-        data.append(Data(bytes: [0x00, 0x00])) //Compression method
-        data.append(Data(bytes: [0x00, 0x00])) //modification time
-        data.append(Data(bytes: [0x00, 0x00])) //modification date
+        data.append(Data([0x50, 0x4b, 0x01, 0x02])) //signature
+        data.append(Data([0x0a, 0x00])) //Version made by
+        data.append(Data([0x0a, 0x00])) //Version needed
+        data.append(Data([0x08, 0x00])) //General purpose flag
+        data.append(Data([0x00, 0x00])) //Compression method
+        data.append(Data([0x00, 0x00])) //modification time
+        data.append(Data([0x00, 0x00])) //modification date
         data.append(crc32) //CRC32
         data.append(compressedSize) //Compressed size
         data.append(uncompressedSize) //Uncompressed size
-        data.append(Data(bytes: [0x09, 0x00])) //File name length
-        data.append(Data(bytes: [0x00, 0x00])) //Extra field length
-        data.append(Data(bytes: [0x00, 0x00])) //File comment length
-        data.append(Data(bytes: [0x00, 0x00])) //Disk number
-        data.append(Data(bytes: [0x00, 0x00])) //Internal file attributes
-        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //External file attributes
-        data.append(Data(bytes: [0x00, 0x00, 0x00, 0x00])) //Relative offset of local header
+        data.append(Data([0x09, 0x00])) //File name length
+        data.append(Data([0x00, 0x00])) //Extra field length
+        data.append(Data([0x00, 0x00])) //File comment length
+        data.append(Data([0x00, 0x00])) //Disk number
+        data.append(Data([0x00, 0x00])) //Internal file attributes
+        data.append(Data([0x00, 0x00, 0x00, 0x00])) //External file attributes
+        data.append(Data([0x00, 0x00, 0x00, 0x00])) //Relative offset of local header
         data.append("a.phyphox".data(using: .utf8)!) //File name
         
         //End of central directory
-        data.append(Data(bytes: [0x50, 0x4b, 0x05, 0x06])) //signature
-        data.append(Data(bytes: [0x00, 0x00])) //Disk number
-        data.append(Data(bytes: [0x00, 0x00])) //Start disk number
-        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories on disk
-        data.append(Data(bytes: [0x01, 0x00])) //Number of central directories in total
-        data.append(Data(bytes: [0x37, 0x00, 0x00, 0x00])) //Size of central directory
+        data.append(Data([0x50, 0x4b, 0x05, 0x06])) //signature
+        data.append(Data([0x00, 0x00])) //Disk number
+        data.append(Data([0x00, 0x00])) //Start disk number
+        data.append(Data([0x01, 0x00])) //Number of central directories on disk
+        data.append(Data([0x01, 0x00])) //Number of central directories in total
+        data.append(Data([0x37, 0x00, 0x00, 0x00])) //Size of central directory
         data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
-        data.append(Data(bytes: [0x00, 0x00])) //Comment length
+        data.append(Data([0x00, 0x00])) //Comment length
         
         
         try data.write(to: tmp, options: .atomic)
@@ -761,7 +768,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
         }
         
-        _ = url.stopAccessingSecurityScopedResource()
+        url.stopAccessingSecurityScopedResource()
         
         if experimentLoadingError != nil {
             let message: String
