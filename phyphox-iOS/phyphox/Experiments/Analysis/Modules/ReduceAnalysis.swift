@@ -126,6 +126,7 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
                 resX.append(newX)
                 resY.append(newY)
                 i += 1
+                index = i*ifac
             }
         } else if fac > 0 {
             let ifac = Int(round(1.0/fac))
