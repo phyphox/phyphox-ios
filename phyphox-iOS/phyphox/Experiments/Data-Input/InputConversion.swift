@@ -90,28 +90,12 @@ class SimpleInputConversion: InputConversion {
             case .uInt24LittleEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
-                    if subdata[0] & 0x80 > 0 {
-                        extendedData.append(0xff)
-                    } else {
-                        extendedData.append(0x00)
-                    }
                     extendedData.append(subdata)
-                    let result: UInt32 = extendedData.withUnsafeBytes{$0.load(as: UInt32.self)}
+                    extendedData.append(0x00)
+                    let result: UInt32 = UInt32(littleEndian: extendedData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     out.append(Double(result))
                 }
             case .int24LittleEndian:
-                if subdata.count >= 3 {
-                    let result: Int32 = subdata.withUnsafeBytes{$0.load(as: Int32.self)}
-                    out.append(Double(result))
-                }
-            case .uInt24BigEndian:
-                if subdata.count >= 3 {
-                    var extendedData = subdata
-                    extendedData.append(0x00)
-                    let result: UInt32 = UInt32(bigEndian: subdata.withUnsafeBytes{$0.load(as: UInt32.self)})
-                    out.append(Double(result))
-                }
-            case .int24BigEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
                     extendedData.append(subdata)
@@ -120,6 +104,26 @@ class SimpleInputConversion: InputConversion {
                     } else {
                         extendedData.append(0x00)
                     }
+                    let result: UInt32 = extendedData.withUnsafeBytes{$0.load(as: UInt32.self)}
+                    out.append(Double(result))
+                }
+            case .uInt24BigEndian:
+                if subdata.count >= 3 {
+                    var extendedData = Data()
+                    extendedData.append(0x00)
+                    extendedData.append(subdata)
+                    let result: UInt32 = UInt32(bigEndian: extendedData.withUnsafeBytes{$0.load(as: UInt32.self)})
+                    out.append(Double(result))
+                }
+            case .int24BigEndian:
+                if subdata.count >= 3 {
+                    var extendedData = Data()
+                    if subdata[0] & 0x80 > 0 {
+                        extendedData.append(0xff)
+                    } else {
+                        extendedData.append(0x00)
+                    }
+                    extendedData.append(subdata)
                     let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.load(as: Int32.self)})
                     out.append(Double(result))
                 }
