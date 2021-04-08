@@ -11,7 +11,8 @@ import ZipZap
 import CoreBluetooth
 
 private let minCellWidth: CGFloat = 320.0
-
+private let phyphoxCatHintRelease = "1.1.9" //If this is updated to the current version, the hint bubble for the support menu is shown again
+private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
@@ -19,13 +20,15 @@ protocol ExperimentController {
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
 
-final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate {
+final class ExperimentsCollectionViewController: CollectionViewController, ExperimentController, DeviceIsChosenDelegate, UIPopoverPresentationControllerDelegate {
     
     private let willBeFirstViewForUser: Bool //Set to false if phyphox is launched with a specific experiment URL. In this case, the ExperimentCollectionViewController will be instantiated, but it will be asked to launch that experiment right away before the user has a chance to interact with the experiment list. So, any dialogs corresponding to the experiment list (like the do-not-risk-your-phone dialog) should be suppressed if the user will not stop at that list
     
     private var cellsPerRow: Int = 1
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
+    
+    private var hintBubble: HintBubbleViewController? = nil
     
     private var collections: [ExperimentCollection] = []
 
@@ -46,6 +49,20 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         self.navigationController?.navigationBar.barTintColor = kBackgroundColor
         self.navigationController?.navigationBar.isTranslucent = true
+        
+        let defaults = UserDefaults.standard
+        if defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
+            hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.9), onDismiss: {() -> Void in
+            })
+            guard let hintBubble = hintBubble else {
+                return
+            }
+            hintBubble.popoverPresentationController?.delegate = self
+            hintBubble.popoverPresentationController?.sourceView = self.navigationController!.view
+            hintBubble.popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: self.navigationController!.view.frame.midX, y: self.navigationController!.view.frame.maxY), size: CGSize(width: 1, height: 1))
+            
+            navigationController!.present(hintBubble, animated: true, completion: nil)
+        }
     }
     
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
@@ -149,6 +166,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
         
             navigationController!.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    //Force iPad-style popups (for the hint to the menu)
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if (indexPath.section == collections.count - 1 ) {
+            UserDefaults.standard.set(phyphoxCatHintRelease, forKey: hintReleaseKey)
         }
     }
     
@@ -515,6 +543,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             
             present(controller, animated: true, completion: nil)
             
+            return
+        } else if experiment.experiment.isLink {
+            guard let url = experiment.experiment.localizedLinks.first?.url else {
+                let controller = UIAlertController(title: "Invalid URL", message: "This experiment is just a link, but no valid URL was found.", preferredStyle: .alert)
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
+                present(controller, animated: true, completion: nil)
+                return
+            }
+            UIApplication.shared.openURL(url)
             return
         }
         

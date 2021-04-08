@@ -67,7 +67,9 @@ class ExperimentCell: UICollectionViewCell {
 
                 if let experiment = experiment {
                     titleLabel.text = experiment.displayTitle
-                    if experiment.stateTitle != nil {
+                    if experiment.isLink {
+                        subtitleLabel.text = "Link: \(experiment.localizedLinks.first?.url.absoluteString ?? "Invalid")"
+                    } else if experiment.stateTitle != nil {
                         subtitleLabel.text = experiment.localizedTitle
                     } else {
                         subtitleLabel.text = experiment.localizedDescription

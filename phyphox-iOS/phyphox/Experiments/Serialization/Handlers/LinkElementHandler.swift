@@ -24,7 +24,7 @@ final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let label = try attributes.nonEmptyString(for: .label)
+        let label = attributes.optionalString(for: .label) ?? "default"
 
         guard let url = URL(string: text) else { throw ElementHandlerError.unexpectedAttributeValue("url") }
 

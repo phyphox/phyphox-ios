@@ -26,6 +26,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
     
+    var hintBubble: HintBubbleViewController? = nil
+    
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewController.TransitionStyle.scroll, navigationOrientation: UIPageViewController.NavigationOrientation.horizontal, options: nil)
     
     var serverLabel: UILabel? = nil
@@ -364,7 +366,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showOptionalDialogsAndHints() {
-        var hintShown = false
         
         //Ask to save the experiment locally if it has been loaded from a remote source
         if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
@@ -384,32 +385,36 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             //Show a hint for the experiment info
         } else {
-            if let playItem = playItem, !hintShown {
+            if let playItem = playItem, hintBubble == nil {
                 let defaults = UserDefaults.standard
                 let key = "experiment_start_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
-                    let bubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
+                    hintBubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
                     })
-                    bubble.popoverPresentationController?.delegate = self
-                    bubble.popoverPresentationController?.barButtonItem = playItem
+                    guard let hintBubble = hintBubble else {
+                        return
+                    }
+                    hintBubble.popoverPresentationController?.delegate = self
+                    hintBubble.popoverPresentationController?.barButtonItem = playItem
                     
-                    self.present(bubble, animated: true, completion: nil)
-                    hintShown = true
+                    self.present(hintBubble, animated: true, completion: nil)
                 }
             }
             
-            if let actionItem = actionItem, !hintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+            if let actionItem = actionItem, hintBubble == nil && (experiment.localizedCategory != localize("categoryRawSensor")) {
                 let defaults = UserDefaults.standard
                 let key = "experiment_info_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
-                    let bubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
+                    hintBubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
                         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
                     })
-                    bubble.popoverPresentationController?.delegate = self
-                    bubble.popoverPresentationController?.barButtonItem = actionItem
+                    guard let hintBubble = hintBubble else {
+                        return
+                    }
+                    hintBubble.popoverPresentationController?.delegate = self
+                    hintBubble.popoverPresentationController?.barButtonItem = actionItem
                     
-                    self.present(bubble, animated: true, completion: nil)
-                    hintShown = true
+                    self.present(hintBubble, animated: true, completion: nil)
                 }
             }
         }
@@ -830,6 +835,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func action(_ item: UIBarButtonItem) {
+        hintBubble?.dismiss(animated: true, completion: nil)
         let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
@@ -1136,6 +1142,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func toggleExperiment() {
+        hintBubble?.dismiss(animated: true, completion: nil)
         if experiment.running {
             stopExperiment()
         }
@@ -1145,6 +1152,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func clearDataDialog() {
+        hintBubble?.dismiss(animated: true, completion: nil)
+        
         let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
         
         al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
