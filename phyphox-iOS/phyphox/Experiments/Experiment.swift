@@ -123,7 +123,7 @@ final class Experiment {
     private(set) var running = false
     private(set) var hasStarted = false
 
-    private var audioEngine: AudioEngine?
+    public var audioEngine: AudioEngine?
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
@@ -322,9 +322,14 @@ final class Experiment {
         }
     }
     
-    private func startAudio() throws {
-        if audioOutput != nil || !audioInputs.isEmpty {
-            audioEngine = AudioEngine(audioOutput: audioOutput, audioInput: audioInputs.first)
+    public func startAudio(countdown: Bool) throws {
+        if audioEngine != nil { //Do not start twice. It could have been already started for a beeping countdown.
+            audioEngine?.beepOnly = countdown
+            return
+        }
+        if audioOutput != nil || !audioInputs.isEmpty || countdown {
+            audioEngine = AudioEngine(audioOutput: audioOutput ?? (countdown ? ExperimentAudioOutput(sampleRate: 48000, loop: false, normalize: true, directSource: nil, tones: [], noise: nil) : nil), audioInput: audioInputs.first)
+            audioEngine?.beepOnly = countdown
             try audioEngine?.startEngine()
         }
     }
@@ -353,7 +358,7 @@ final class Experiment {
 
         UIApplication.shared.isIdleTimerDisabled = true
         
-        try startAudio()
+        try startAudio(countdown: false)
         
         sensorInputs.forEach { $0.start(queue: queue) }
         gpsInputs.forEach { $0.start(queue: queue) }

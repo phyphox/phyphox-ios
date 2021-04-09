@@ -52,11 +52,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private var timerDelay: Double
     private var timerDuration: Double
     private var timerEnabled = false
+    private struct TimerBeep {
+        var countdown = false
+        var start = false
+        var running = false
+        var stop = false
+    }
+    private var timerBeep = TimerBeep()
     
     private var experimentStartTimer: Timer?
     private var experimentRunTimer: Timer?
     
     private var exportSelectionView: ExperimentExportSetSelectionView?
+    private var timedRunDialogView: ExperimentTimedRunDialogView?
     
     var selectedViewCollection: Int {
         didSet {
@@ -777,7 +785,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 self.navigationItem.rightBarButtonItems = items
             } else {
                 //...and that is correct. Let's make sure it is up to date
-                label.text = "\(self.timerDelay)s"
+                label.text = String(format: "%.1f", self.timerDelay)
                 label.sizeToFit()
             }
         } else {
@@ -787,7 +795,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 let label = UILabel()
                 label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 label.textColor = kTextColor
-                label.text = "\(self.timerDelay)s"
+                label.text = String(format: "%.1f", self.timerDelay)
                 label.sizeToFit()
             
                 items.append(UIBarButtonItem(customView: label))
@@ -799,34 +807,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func showTimerOptions() {
         let alert = UIAlertController(title: localize("timedRunDialogTitle"), message: nil, preferredStyle: .alert)
         
-        alert.addTextField { [unowned self] textField in
-            textField.keyboardType = .decimalPad
-            textField.placeholder = localize("timedRunStartDelay")
-            
-            textField.text = String(self.timerDelay)
+        if timedRunDialogView == nil {
+            timedRunDialogView = ExperimentTimedRunDialogView(delay: self.timerDelay, duration: self.timerDuration, countdown: timerBeep.countdown, start: timerBeep.start, running: timerBeep.running, stop: timerBeep.stop)
         }
         
-        alert.addTextField { [unowned self] textField in
-            textField.keyboardType = .decimalPad
-            textField.placeholder = localize("timedRunStopDelay")
-            
-            textField.text = String(self.timerDuration)
-        }
+        alert.__pt__setAccessoryView(timedRunDialogView!)
         
-        alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self] action in
             
             self.timerEnabled = true
-            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
-            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
             
             self.updateTimerInBar()
             }))
         
-        alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self] action in
             
             self.timerEnabled = false
-            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
-            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
             
             self.updateTimerInBar()
             }))
@@ -956,23 +964,30 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     @objc func stopTimerFired() {
+        if timerBeep.stop {
+            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
+        }
         stopExperiment()
     }
 
     @objc func startTimerFired() {
+        if timerBeep.start {
+            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
+        }
         actuallyStartExperiment()
         
         experimentStartTimer?.invalidate()
         experimentStartTimer = nil
         
         let d = timerDuration
-        let i = Int(d)
+        let i = String(format: "%.1f", d)
+        var nextBeep = floor(d-0.6)
         
         var items = navigationItem.rightBarButtonItems
         
         guard let label = items?.last?.customView as? UILabel else { return }
         
-        label.text = "\(i)s"
+        label.text = "\(i)"
         label.sizeToFit()
         
         items?.removeLast()
@@ -983,13 +998,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         func updateT() {
             guard let experimentRunTimer = experimentRunTimer else { return }
 
-            let t = Int(round(experimentRunTimer.fireDate.timeIntervalSinceNow))
+            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
+            if dt <= nextBeep && nextBeep > 0 {
+                nextBeep -= 1
+                if timerBeep.running {
+                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
+                }
+            }
+            let t = String(format: "%.1f", dt)
 
-            after(1.0) {
+            after(0.02) {
                 updateT()
             }
 
-            label.text = "\(t)s"
+            label.text = "\(t)"
             label.sizeToFit()
 
             var items = navigationItem.rightBarButtonItems
@@ -1000,7 +1022,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             navigationItem.rightBarButtonItems = items
         }
         
-        after(1.0) {
+        after(0.02) {
             updateT()
         }
         
@@ -1024,14 +1046,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             if timerEnabled {
+                if timerBeep.countdown || timerBeep.start || timerBeep.stop || timerBeep.running {
+                    do {
+                        try experiment.startAudio(countdown: true)
+                    } catch {
+                        showError(message: "Could not start experiment \(error).")
+                        experiment.stop()
+                        return
+                    }
+                }
+                
                 let d = timerDelay
-                let i = Int(d)
+                var nextBeep = floor(d-0.5)
+                let i = String(format: "%.1f", d)
 
                 var items = navigationItem.rightBarButtonItems
 
                 guard let label = items?.last?.customView as? UILabel else { return }
 
-                label.text = "\(i)s"
+                label.text = "\(i)"
                 label.sizeToFit()
 
                 items?.removeLast()
@@ -1041,13 +1074,22 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
-                    let t = Int(round(experimentStartTimer.fireDate.timeIntervalSinceNow))
 
-                    after(1.0) {
+                    let dt = experimentStartTimer.fireDate.timeIntervalSinceNow
+                    if dt <= nextBeep && nextBeep > 0 {
+                        nextBeep -= 1
+                        if timerBeep.countdown {
+                            experiment.audioEngine?.beep(frequency: 800, duration: 0.1)
+                        }
+                    }
+
+                    let t = String(format: "%.1f", dt)
+
+                    after(0.02) {
                         updateT()
                     }
 
-                    label.text = "\(t)s"
+                    label.text = "\(t)"
                     label.sizeToFit()
 
                     var items = navigationItem.rightBarButtonItems
@@ -1058,7 +1100,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     navigationItem.rightBarButtonItems = items
                 }
 
-                after(1.0) {
+                after(0.2) {
                     updateT()
                 }
 
@@ -1110,7 +1152,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let label = items.last!.customView! as! UILabel
                 
-                label.text = "\(self.timerDelay)s"
+                let d = String(format: "%.1f", self.timerDelay)
+                label.text = "\(d)"
                 label.sizeToFit()
                 
                 items.removeLast()

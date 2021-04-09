@@ -247,3 +247,9 @@
 "networkPrivacySensorLocation" = "Location data (GPS data or similar).";
 "networkPrivacyDeviceInfo" = "Detailed information about the model of your device and/or the version of phyphox.";
 "networkPrivacySensorInfo" = "Technical details about the following sensors:";
+
+"timedRunBeeps" = "Acoustic signals";
+"beeperCountdown" = "Countdown sounds";
+"beeperStart" = "Start sound";
+"beeperRunning" = "Running sounds";
+"beeperStop" = "Stop sound";
