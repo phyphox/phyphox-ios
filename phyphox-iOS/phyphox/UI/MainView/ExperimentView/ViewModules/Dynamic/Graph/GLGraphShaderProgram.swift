@@ -21,19 +21,23 @@ final class GLGraphShaderProgram {
         let vertexStr = try! String(contentsOfFile: Bundle.main.path(forResource: "VertexShader", ofType: "glsl")!)
         let fragmentStr = try! String(contentsOfFile: Bundle.main.path(forResource: "FragmentShader", ofType: "glsl")!)
 
+        var vertexShader: GLuint = 0
+        var fragmentShader: GLuint = 0
+        
         let vertexShady = vertexStr.cString(using: String.Encoding.utf8)!
-        var vertexPointer: UnsafePointer<GLchar>? = UnsafePointer(vertexShady)
-
         let fragmentShady = fragmentStr.cString(using: String.Encoding.utf8)!
-        var fragmentPointer: UnsafePointer<GLchar>? = UnsafePointer(fragmentShady)
-
-        let vertexShader = glCreateShader(GLenum(GL_VERTEX_SHADER))
-        glShaderSource(vertexShader, GLsizei(1), &vertexPointer, nil)
-        glCompileShader(vertexShader)
-
-        let fragmentShader = glCreateShader(GLenum(GL_FRAGMENT_SHADER))
-        glShaderSource(fragmentShader, GLsizei(1), &fragmentPointer, nil)
-        glCompileShader(fragmentShader)
+        vertexShady.withUnsafeBufferPointer{vertexPointer in
+            var vertexBasePointer = vertexPointer.baseAddress
+            vertexShader = glCreateShader(GLenum(GL_VERTEX_SHADER))
+            glShaderSource(vertexShader, GLsizei(1), &vertexBasePointer, nil)
+            glCompileShader(vertexShader)
+            fragmentShady.withUnsafeBufferPointer{fragmentPointer in
+                var fragmentBasePointer = fragmentPointer.baseAddress
+                fragmentShader = glCreateShader(GLenum(GL_FRAGMENT_SHADER))
+                glShaderSource(fragmentShader, GLsizei(1), &fragmentBasePointer, nil)
+                glCompileShader(fragmentShader)
+            }
+        }
 
         var compileSuccess: GLint = 0
 
@@ -91,7 +95,7 @@ final class GLGraphShaderProgram {
 
         glVertexAttribPointer(positionAttributeHandle, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GraphPoint2D<GLfloat>>.stride * strideFactor), nil)
 
-        glDrawArrays(GLenum(mode), GLint(start * MemoryLayout<GLuint>.stride), GLsizei(count))
+        glDrawArrays(GLenum(mode), GLint(start), GLsizei(count))
     }
 
     private func bufferOffset<I: BinaryInteger>(_ i: I) -> UnsafeRawPointer? {

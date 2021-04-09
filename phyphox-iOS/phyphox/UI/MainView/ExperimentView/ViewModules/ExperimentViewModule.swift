@@ -73,7 +73,7 @@ extension ResizableViewModule {
 }
 
 protocol ApplyZoomDelegate {
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>)
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool)
 }
 
 protocol ZoomableViewModule : AnyObject, ApplyZoomDelegate {
@@ -110,7 +110,7 @@ final class DisplayLink {
         }
 
         displayLink.isPaused = true
-        displayLink.add(to: .main, forMode: .commonModes)
+        displayLink.add(to: .main, forMode: RunLoop.Mode.common)
     }
 
     var active = false {

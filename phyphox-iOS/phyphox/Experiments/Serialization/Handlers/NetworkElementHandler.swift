@@ -13,6 +13,7 @@ struct NetworkConnectionSendDescriptor {
     enum SendableType: String, AttributeKey, LosslessStringConvertible {
         case meta
         case buffer
+        case time
     }
     let type: SendableType
     let name: String
@@ -31,8 +32,6 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        guard !text.isEmpty else { throw ElementHandlerError.missingText }
-
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let id = try attributes.nonEmptyString(for: .id)
@@ -41,6 +40,9 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         if let datatype = attributes.optionalString(for: .datatype) {
             additionalAttributes[Attribute.datatype.rawValue] = datatype
         }
+        
+        guard !(text.isEmpty && type != .time) else { throw ElementHandlerError.missingText }
+        
         results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text, additionalAttributes: additionalAttributes))
     }
 

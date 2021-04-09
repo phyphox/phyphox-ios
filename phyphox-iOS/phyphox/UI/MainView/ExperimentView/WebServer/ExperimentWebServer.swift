@@ -58,7 +58,6 @@ final class ExperimentWebServer {
         
         (path, htmlId2ViewElement) = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
         
-        let startTime = Date()
         sessionID = String(Int64(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
         
         server = GCDWebServer()
@@ -68,7 +67,7 @@ final class ExperimentWebServer {
         server!.addHandler(forMethod: "GET", pathRegex: "/logo", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
             let file = Bundle.main.path(forResource: "phyphox-webinterface/phyphox_orange", ofType: "png")
             let image = UIImage.init(contentsOfFile: file!)
-            let response = GCDWebServerDataResponse(data: UIImagePNGRepresentation(image!)!, contentType: "image/png")
+            let response = GCDWebServerDataResponse(data: image!.pngData()!, contentType: "image/png")
             
             completionBlock(response)
         })
@@ -79,15 +78,11 @@ final class ExperimentWebServer {
                 
                 completionBlock(response)
             }
-            
-            let result: String
-            
+                        
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
             let query = queryDictionary(components?.query ?? "")
             
             if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
-                var sets = [ExperimentExportSet]()
-                
                 self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
                     if error == nil {
                         self.temporaryFiles.append(URL!.path)
@@ -116,9 +111,7 @@ final class ExperimentWebServer {
                 
                 completionBlock(response)
             }
-            
-            let result: String
-            
+                        
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)!
             let query = queryDictionary(components.query ?? "")
             
@@ -385,6 +378,51 @@ final class ExperimentWebServer {
                 }
             }
             json["export"] = export as AnyObject
+            
+            let response = GCDWebServerDataResponse(jsonObject: json)
+            
+            completionBlock(response)
+        })
+        
+        server!.addHandler(forMethod: "GET", pathRegex: "/meta", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            func returnErrorResponse() {
+                let response = GCDWebServerResponse(statusCode: 400)
+                
+                completionBlock(response)
+            }
+            
+            var json = [String: AnyObject]()
+            
+            for metadata in Metadata.allNonSensorCases {
+                switch metadata {
+                case .uniqueId:
+                    continue
+                default:
+                    json[metadata.identifier] = metadata.get(hash: "") as AnyObject
+                }
+            }
+            
+            let response = GCDWebServerDataResponse(jsonObject: json)
+            
+            completionBlock(response)
+        })
+        
+        server!.addHandler(forMethod: "GET", pathRegex: "/time", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            func returnErrorResponse() {
+                let response = GCDWebServerResponse(statusCode: 400)
+                
+                completionBlock(response)
+            }
+            
+            var json = [AnyObject]()
+            
+            for mapping in experiment.timeReference.timeMappings {
+                var eventJson = [String: AnyObject]()
+                eventJson["event"] = mapping.event.rawValue as AnyObject
+                eventJson["experimentTime"] = mapping.experimentTime as AnyObject
+                eventJson["systemTime"] = mapping.systemTime.timeIntervalSince1970 as AnyObject
+                json.append(eventJson as AnyObject)
+            }
             
             let response = GCDWebServerDataResponse(jsonObject: json)
             

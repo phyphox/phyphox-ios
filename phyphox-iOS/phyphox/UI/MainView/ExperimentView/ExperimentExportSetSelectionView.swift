@@ -45,7 +45,7 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             
             
             let la = UILabel()
-            la.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1)
+            la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             
             la.text = string
             

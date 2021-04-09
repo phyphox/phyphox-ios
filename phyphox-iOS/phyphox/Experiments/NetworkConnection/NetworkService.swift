@@ -60,6 +60,8 @@ class HttpGetService: NetworkService {
                 queryItems.append(URLQueryItem(name: item, value: String(buffer.last ?? Double.nan)))
             case .Metadata(let metadata):
                 queryItems.append(URLQueryItem(name: item, value: metadata.get(hash: address)))
+            case .Time:
+                queryItems.append(URLQueryItem(name: item, value: "\(Date().timeIntervalSince1970)"))
             default:
                 break
             }
@@ -148,6 +150,19 @@ class HttpPostService: NetworkService {
                     }
                 case .Metadata(let metadata):
                     json[item] = metadata.get(hash: address)
+                case .Time(let timeReference):
+                    var timeJson = [String:AnyObject]()
+                    timeJson["now"] = Date().timeIntervalSince1970 as AnyObject
+                    var eventsJson = [AnyObject]()
+                    for mapping in timeReference.timeMappings {
+                        var eventJson = [String:AnyObject]()
+                        eventJson["event"] = mapping.event.rawValue as AnyObject
+                        eventJson["experimentTime"] = mapping.experimentTime as AnyObject
+                        eventJson["systemTime"] = mapping.systemTime.timeIntervalSince1970 as AnyObject
+                        eventsJson.append(eventJson as AnyObject)
+                    }
+                    timeJson["events"] = eventsJson as AnyObject
+                    json[item] = timeJson
                 case .none: break
                 }
             }
@@ -347,6 +362,8 @@ class MqttCsvService: NetworkService {
                     continue
                 }
                 payload = metadata.get(hash: address) ?? "null"
+            case .Time(_):
+                payload = "\(Date().timeIntervalSince1970)"
             case .none: continue
             }
             
@@ -407,6 +424,19 @@ class MqttJsonService: NetworkService {
                     continue
                 }
                 json[item] = metadata.get(hash: address)
+            case .Time(let timeReference):
+                var timeJson = [String:AnyObject]()
+                timeJson["now"] = Date().timeIntervalSince1970 as AnyObject
+                var eventsJson = [AnyObject]()
+                for mapping in timeReference.timeMappings {
+                    var eventJson = [String:AnyObject]()
+                    eventJson["event"] = mapping.event.rawValue as AnyObject
+                    eventJson["experimentTime"] = mapping.experimentTime as AnyObject
+                    eventJson["systemTime"] = mapping.systemTime.timeIntervalSince1970 as AnyObject
+                    eventsJson.append(eventJson as AnyObject)
+                }
+                timeJson["events"] = eventsJson as AnyObject
+                json[item] = timeJson
             case .none: break
             }
         }

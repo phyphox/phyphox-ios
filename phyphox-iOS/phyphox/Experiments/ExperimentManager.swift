@@ -118,8 +118,6 @@ final class ExperimentManager {
     }
     
     private func registerExperiment(_ experiment: Experiment, custom: Bool, hidden: Bool) {
-        experiment.delegate = self
-
         if hidden {
             registerExperimentToCollections(experiment, custom: custom, collections: &hiddenExperimentCollections)
         } else {
@@ -286,15 +284,3 @@ final class ExperimentManager {
     }
 }
 
-extension ExperimentManager: ExperimentDelegate {
-    func experimentWillBecomeActive(_ experiment: Experiment) {
-        guard let url = experiment.source, url.pathExtension == experimentStateFileExtension else { return }
-
-        experiment.buffers.forEach { name, buffer in
-            let bufferURL = url.appendingPathComponent(name).appendingPathExtension(bufferContentsFileExtension)
-            if FileManager.default.fileExists(atPath: bufferURL.path) {
-                try? buffer.readState(from: bufferURL)
-            }
-        }
-    }
-}

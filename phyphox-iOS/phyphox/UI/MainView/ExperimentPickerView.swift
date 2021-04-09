@@ -55,7 +55,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(cancelDialog)))
         addSubview(backgroundView)
         
-        let titleFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        let titleFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = title
@@ -68,7 +68,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         separatorView.backgroundColor = UIColor.groupTableViewBackground
         dialogView.addSubview(separatorView)
         
-        let messageFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+        let messageFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
         let messageLabel = UILabel()
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         messageLabel.text = message
@@ -151,9 +151,11 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         dialogView.addConstraint(NSLayoutConstraint(item: messageLabel, attribute: .left, relatedBy: .equal, toItem: separatorView, attribute: .left, multiplier: 1, constant: margin))
         dialogView.addConstraint(NSLayoutConstraint(item: messageLabel, attribute: .right, relatedBy: .equal, toItem: separatorView, attribute: .right, multiplier: 1, constant: -margin))
         
-        dialogView.addConstraint(NSLayoutConstraint(item: experimentPicker.view, attribute: .top, relatedBy: .equal, toItem: messageLabel, attribute: .bottom, multiplier: 1, constant: margin))
-        dialogView.addConstraint(NSLayoutConstraint(item: experimentPicker.view, attribute: .left, relatedBy: .equal, toItem: messageLabel, attribute: .left, multiplier: 1, constant: 0))
-        dialogView.addConstraint(NSLayoutConstraint(item: experimentPicker.view, attribute: .right, relatedBy: .equal, toItem: messageLabel, attribute: .right, multiplier: 1, constant: 0))
+        if let epview = experimentPicker.view {
+            dialogView.addConstraint(NSLayoutConstraint(item: epview, attribute: .top, relatedBy: .equal, toItem: messageLabel, attribute: .bottom, multiplier: 1, constant: margin))
+            dialogView.addConstraint(NSLayoutConstraint(item: epview, attribute: .left, relatedBy: .equal, toItem: messageLabel, attribute: .left, multiplier: 1, constant: 0))
+            dialogView.addConstraint(NSLayoutConstraint(item: epview, attribute: .right, relatedBy: .equal, toItem: messageLabel, attribute: .right, multiplier: 1, constant: 0))
+        }
         
         dialogView.addConstraint(NSLayoutConstraint(item: saveButton, attribute: .top, relatedBy: .equal, toItem: experimentPicker.view, attribute: .bottom, multiplier: 1, constant: margin))
         dialogView.addConstraint(NSLayoutConstraint(item: saveButton, attribute: .left, relatedBy: .equal, toItem: experimentPicker.view, attribute: .left, multiplier: 1, constant: 0))
@@ -194,14 +196,14 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
                 rootController = presentedVC
             }
             rootController.view.addSubview(self)
-            rootController.addChildViewController(experimentPicker)
-            experimentPicker.didMove(toParentViewController: rootController)
+            rootController.addChild(experimentPicker)
+            experimentPicker.didMove(toParent: rootController)
         }
         if animated {
             UIView.animate(withDuration: 0.3, animations: {
                 self.backgroundView.alpha = 0.66
             })
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: UIViewAnimationOptions(rawValue: 0), animations: {
+            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: UIView.AnimationOptions(rawValue: 0), animations: {
                 self.dialogView.center = self.center
             }, completion: nil)
         } else {
@@ -232,14 +234,14 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             UIView.animate(withDuration: 0.3, animations: {
                 self.backgroundView.alpha = 0
             })
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 10, options: UIViewAnimationOptions(rawValue: 0), animations: {
+            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 10, options: UIView.AnimationOptions(rawValue: 0), animations: {
                 self.dialogView.center = CGPoint(x: self.center.x, y: self.frame.height + self.dialogView.frame.height/2)
             }, completion: { (completed) in
                 self.removeFromSuperview()
                 completion?()
             })
         } else {
-            experimentPicker.removeFromParentViewController()
+            experimentPicker.removeFromParent()
             self.removeFromSuperview()
         }
     }

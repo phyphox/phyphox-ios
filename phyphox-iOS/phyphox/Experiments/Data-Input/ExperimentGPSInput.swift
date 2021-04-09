@@ -24,12 +24,11 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     private(set) var statusBuffer: DataBuffer?
     private(set) var satellitesBuffer: DataBuffer?
     
-    private var startTime: TimeInterval = 0.0
-    private var startTimestamp: TimeInterval?
+    private let timeReference: ExperimentTimeReference
     
     private var queue: DispatchQueue?
     
-    init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?) {
+    init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?, timeReference: ExperimentTimeReference) {
         
         self.latBuffer = latBuffer
         self.lonBuffer = lonBuffer
@@ -44,6 +43,8 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         self.statusBuffer = statusBuffer
         self.satellitesBuffer = satellitesBuffer
         
+        self.timeReference = timeReference
+        
         super.init()
         
         locationManager.delegate = self
@@ -52,7 +53,10 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         for location in locations {
-            if location.timestamp.timeIntervalSinceReferenceDate < startTime {
+            guard let lastTimeReference = timeReference.timeMappings.last else {
+                continue
+            }
+            if location.timestamp < lastTimeReference.systemTime {
                 continue //Skip old data points, which have been acquired before the start of the measurement
             }
             let lat = location.coordinate.latitude
@@ -63,7 +67,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             let dir = location.course
             let accuracy = location.horizontalAccuracy
             let zAccuracy = location.horizontalAccuracy
-            let t = location.timestamp.timeIntervalSinceReferenceDate
+            let t = location.timestamp
             let status = location.horizontalAccuracy > 0 ? 1.0 : 0.0
             let satellites = 0.0
             self.dataIn(lat, lon: lon, z: z, zWgs84: zWgs84, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
@@ -76,17 +80,12 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     
     func start(queue: DispatchQueue) {
         self.queue = queue
-        
-        startTime = Date.timeIntervalSinceReferenceDate //This is only used to filter cached data from the location manager
-        
-        startTimestamp = nil
-        
+                        
         if CLLocationManager.locationServicesEnabled() {
             locationManager.startUpdatingLocation()
         } else {
             let status = -1.0
             self.dataIn(nil, lon: nil, z:nil, zWgs84: nil, v: nil, dir: nil, accuracy: nil, zAccuracy: nil, t: nil, status: status, satellites: nil)
-
         }
     }
     
@@ -94,7 +93,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         locationManager.stopUpdatingLocation()
     }
     
-    private func writeToBuffers(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
+    private func writeToBuffers(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: Date?, status: Double?, satellites: Double?) {
 
         func tryAppend(value: Double?, to buffer: DataBuffer?) {
             guard let value = value, let buffer = buffer else { return }
@@ -112,12 +111,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         tryAppend(value: zAccuracy, to: zAccuracyBuffer)
 
         if let t = t, let tBuffer = tBuffer {
-            if startTimestamp == nil {
-                startTimestamp = t - (self.tBuffer?.last ?? 0.0)
-            }
-            
-            let relativeT = t - self.startTimestamp!
-            
+            let relativeT = timeReference.getExperimentTimeFromSystem(systemTime: t)
             tBuffer.append(relativeT)
         }
 
@@ -125,7 +119,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         tryAppend(value: satellites, to: satellitesBuffer)
     }
     
-    private func dataIn(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: TimeInterval?, status: Double?, satellites: Double?) {
+    private func dataIn(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: Date?, status: Double?, satellites: Double?) {
         
         queue?.async {
             autoreleasepool(invoking: {

@@ -12,7 +12,7 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
     let callback: () -> Void
     let label: UILabel
     
-    init(text: String, onDismiss: @escaping () -> Void) {
+    init(text: String, maxWidth: Int = 250, onDismiss: @escaping () -> Void) {
         self.callback = onDismiss
         label = UILabel()
         
@@ -23,12 +23,10 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
         label.text = text
         label.lineBreakMode = .byWordWrapping
         label.numberOfLines = 0
-        label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+        label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
         label.textColor = kDarkBackgroundColor
-        let maxSize = CGSize(width: 250, height: 250)
+        let maxSize = CGSize(width: maxWidth, height: 250)
         label.frame.size = label.sizeThatFits(maxSize)
-        label.frame = label.frame.offsetBy(dx: 10, dy: 10)
-        
         let paddedFrame = label.frame.insetBy(dx: -10, dy: -10)
         
         self.view.addSubview(label)
@@ -50,8 +48,13 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        //The following line was needed to fix label alignment when built with XCode 11. My impression was that the little arrow of the bubble then was also part of self.view.
-        label.frame = CGRect.init(x: 10, y: self.view.frame.maxY-label.frame.height-10, width: label.frame.width, height: label.frame.height)
+        if self.popoverPresentationController!.arrowDirection == .up {
+            label.frame = CGRect.init(x: 10, y: self.view.frame.maxY-label.frame.height-10, width: label.frame.width, height: label.frame.height)
+        } else if self.popoverPresentationController!.arrowDirection == .left {
+            label.frame = CGRect.init(x: self.view.frame.maxX-label.frame.width-10, y: 10, width: label.frame.width, height: label.frame.height)
+        } else {
+            label.frame = CGRect.init(x: 10, y: 10, width: label.frame.width, height: label.frame.height)
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {

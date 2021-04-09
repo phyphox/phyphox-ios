@@ -14,7 +14,7 @@ enum ExportFileFormat {
     
     func isCSV() -> Bool {
         switch self {
-        case .csv(_):
+        case .csv(_, _):
             return true
         default:
             return false

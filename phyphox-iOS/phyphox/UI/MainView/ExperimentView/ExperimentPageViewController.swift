@@ -26,7 +26,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var tabBar: UIScrollView? = nil
     let tabBarHeight : CGFloat = 30
     
-    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewControllerTransitionStyle.scroll, navigationOrientation: UIPageViewControllerNavigationOrientation.horizontal, options: nil)
+    var hintBubble: HintBubbleViewController? = nil
+    
+    let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewController.TransitionStyle.scroll, navigationOrientation: UIPageViewController.NavigationOrientation.horizontal, options: nil)
     
     var serverLabel: UILabel? = nil
     var serverLabelBackground: UIView? = nil
@@ -50,11 +52,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private var timerDelay: Double
     private var timerDuration: Double
     private var timerEnabled = false
+    private struct TimerBeep {
+        var countdown = false
+        var start = false
+        var running = false
+        var stop = false
+    }
+    private var timerBeep = TimerBeep()
     
     private var experimentStartTimer: Timer?
     private var experimentRunTimer: Timer?
     
     private var exportSelectionView: ExperimentExportSetSelectionView?
+    private var timedRunDialogView: ExperimentTimedRunDialogView?
     
     var selectedViewCollection: Int {
         didSet {
@@ -139,7 +149,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationItem.title = experiment.displayTitle
         
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
-        backButton.setTitleTextAttributes([NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
+        backButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
         navigationItem.leftBarButtonItem = backButton
         
         webServer.delegate = self
@@ -174,7 +184,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        if isMovingToParentViewController {
+        if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
                     self.navigationController?.popToRootViewController(animated: true)
@@ -254,7 +264,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [AnyHashable : Any] = [NSAttributedStringKey.foregroundColor : kTextColor, NSAttributedStringKey.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
             segControl!.setTitleTextAttributes(font, for: .normal)
             segControl!.setTitleTextAttributes(font, for: .selected)
             segControl!.tintColor = kTextColor
@@ -307,10 +317,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateLayout()
         
-        self.addChildViewController(pageViewControler)
+        self.addChild(pageViewControler)
         self.view.addSubview(pageViewControler.view)
         
-        pageViewControler.didMove(toParentViewController: self)
+        pageViewControler.didMove(toParent: self)
         
         updateSelectedViewCollection()
         
@@ -364,7 +374,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showOptionalDialogsAndHints() {
-        var hintShown = false
         
         //Ask to save the experiment locally if it has been loaded from a remote source
         if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
@@ -384,32 +393,36 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             //Show a hint for the experiment info
         } else {
-            if let playItem = playItem, !hintShown {
+            if let playItem = playItem, hintBubble == nil {
                 let defaults = UserDefaults.standard
                 let key = "experiment_start_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
-                    let bubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
+                    hintBubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
                     })
-                    bubble.popoverPresentationController?.delegate = self
-                    bubble.popoverPresentationController?.barButtonItem = playItem
+                    guard let hintBubble = hintBubble else {
+                        return
+                    }
+                    hintBubble.popoverPresentationController?.delegate = self
+                    hintBubble.popoverPresentationController?.barButtonItem = playItem
                     
-                    self.present(bubble, animated: true, completion: nil)
-                    hintShown = true
+                    self.present(hintBubble, animated: true, completion: nil)
                 }
             }
             
-            if let actionItem = actionItem, !hintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+            if let actionItem = actionItem, hintBubble == nil && (experiment.localizedCategory != localize("categoryRawSensor")) {
                 let defaults = UserDefaults.standard
                 let key = "experiment_info_hint_dismiss_count"
                 if (defaults.integer(forKey: key) < 3) {
-                    let bubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
+                    hintBubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
                         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
                     })
-                    bubble.popoverPresentationController?.delegate = self
-                    bubble.popoverPresentationController?.barButtonItem = actionItem
+                    guard let hintBubble = hintBubble else {
+                        return
+                    }
+                    hintBubble.popoverPresentationController?.delegate = self
+                    hintBubble.popoverPresentationController?.barButtonItem = actionItem
                     
-                    self.present(bubble, animated: true, completion: nil)
-                    hintShown = true
+                    self.present(hintBubble, animated: true, completion: nil)
                 }
             }
         }
@@ -435,7 +448,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
         
-        if isMovingFromParentViewController {
+        if isMovingFromParent {
             tearDownWebServer()
         
             experimentStartTimer?.invalidate()
@@ -450,7 +463,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func switchToCollection(_ sender: UISegmentedControl) {
-        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewControllerNavigationDirection.forward : UIPageViewControllerNavigationDirection.reverse
+        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewController.NavigationDirection.forward : UIPageViewController.NavigationDirection.reverse
         pageViewControler.setViewControllers([experimentViewControllers[sender.selectedSegmentIndex]], direction: direction, animated: true, completion: nil)
         selectedViewCollection = sender.selectedSegmentIndex
     }
@@ -539,7 +552,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel = UILabel()
             self.serverLabel!.lineBreakMode = .byWordWrapping
             self.serverLabel!.numberOfLines = 0
-            self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+            self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
             self.serverLabel!.textColor = kTextColor
             self.serverLabel!.backgroundColor = kLightBackgroundColor
             self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
@@ -589,7 +602,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let HUD = JGProgressHUD(style: .dark)
         HUD.interactionType = .blockTouchesOnHUDView
-        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         
         HUD.show(in: navigationController!.view)
         
@@ -616,7 +629,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle) { (errorMessage, fileURL) in
+        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -690,7 +703,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let HUD = JGProgressHUD(style: .dark)
                 HUD.interactionType = .blockTouchesOnHUDView
-                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 
                 HUD.show(in: self.navigationController!.view)
                 
@@ -730,7 +743,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
             
             HUD.show(in: self.navigationController!.view)
             
@@ -772,7 +785,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 self.navigationItem.rightBarButtonItems = items
             } else {
                 //...and that is correct. Let's make sure it is up to date
-                label.text = "\(self.timerDelay)s"
+                label.text = String(format: "%.1f", self.timerDelay)
                 label.sizeToFit()
             }
         } else {
@@ -780,9 +793,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if timerEnabled {
                 //...but it should be
                 let label = UILabel()
-                label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+                label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 label.textColor = kTextColor
-                label.text = "\(self.timerDelay)s"
+                label.text = String(format: "%.1f", self.timerDelay)
                 label.sizeToFit()
             
                 items.append(UIBarButtonItem(customView: label))
@@ -794,34 +807,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func showTimerOptions() {
         let alert = UIAlertController(title: localize("timedRunDialogTitle"), message: nil, preferredStyle: .alert)
         
-        alert.addTextField { [unowned self] textField in
-            textField.keyboardType = .decimalPad
-            textField.placeholder = localize("timedRunStartDelay")
-            
-            textField.text = String(self.timerDelay)
+        if timedRunDialogView == nil {
+            timedRunDialogView = ExperimentTimedRunDialogView(delay: self.timerDelay, duration: self.timerDuration, countdown: timerBeep.countdown, start: timerBeep.start, running: timerBeep.running, stop: timerBeep.stop)
         }
         
-        alert.addTextField { [unowned self] textField in
-            textField.keyboardType = .decimalPad
-            textField.placeholder = localize("timedRunStopDelay")
-            
-            textField.text = String(self.timerDuration)
-        }
+        alert.__pt__setAccessoryView(timedRunDialogView!)
         
-        alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("enableTimedRun"), style: .default, handler: { [unowned self] action in
             
             self.timerEnabled = true
-            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
-            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
             
             self.updateTimerInBar()
             }))
         
-        alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self, unowned alert] action in
+        alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self] action in
             
             self.timerEnabled = false
-            self.timerDelay = Double(alert.textFields!.first!.text ?? "0.0") ?? 0.0
-            self.timerDuration = Double(alert.textFields!.last!.text ?? "0.0") ?? 0.0
+            self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
             
             self.updateTimerInBar()
             }))
@@ -830,6 +843,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func action(_ item: UIBarButtonItem) {
+        hintBubble?.dismiss(animated: true, completion: nil)
         let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
@@ -859,11 +873,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             w.drawHierarchy(in: w.frame, afterScreenUpdates: false)
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
-            let png = UIImagePNGRepresentation(img!)!
+            let png = img!.pngData()!
             
             let HUD = JGProgressHUD(style: .dark)
             HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
             
             HUD.show(in: self.navigationController!.view)
             
@@ -950,23 +964,30 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     @objc func stopTimerFired() {
+        if timerBeep.stop {
+            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
+        }
         stopExperiment()
     }
 
     @objc func startTimerFired() {
+        if timerBeep.start {
+            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
+        }
         actuallyStartExperiment()
         
         experimentStartTimer?.invalidate()
         experimentStartTimer = nil
         
         let d = timerDuration
-        let i = Int(d)
+        let i = String(format: "%.1f", d)
+        var nextBeep = floor(d-0.6)
         
         var items = navigationItem.rightBarButtonItems
         
         guard let label = items?.last?.customView as? UILabel else { return }
         
-        label.text = "\(i)s"
+        label.text = "\(i)"
         label.sizeToFit()
         
         items?.removeLast()
@@ -977,13 +998,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         func updateT() {
             guard let experimentRunTimer = experimentRunTimer else { return }
 
-            let t = Int(round(experimentRunTimer.fireDate.timeIntervalSinceNow))
+            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
+            if dt <= nextBeep && nextBeep > 0 {
+                nextBeep -= 1
+                if timerBeep.running {
+                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
+                }
+            }
+            let t = String(format: "%.1f", dt)
 
-            after(1.0) {
+            after(0.02) {
                 updateT()
             }
 
-            label.text = "\(t)s"
+            label.text = "\(t)"
             label.sizeToFit()
 
             var items = navigationItem.rightBarButtonItems
@@ -994,7 +1022,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             navigationItem.rightBarButtonItems = items
         }
         
-        after(1.0) {
+        after(0.02) {
             updateT()
         }
         
@@ -1018,14 +1046,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             if timerEnabled {
+                if timerBeep.countdown || timerBeep.start || timerBeep.stop || timerBeep.running {
+                    do {
+                        try experiment.startAudio(countdown: true)
+                    } catch {
+                        showError(message: "Could not start experiment \(error).")
+                        experiment.stop()
+                        return
+                    }
+                }
+                
                 let d = timerDelay
-                let i = Int(d)
+                var nextBeep = floor(d-0.5)
+                let i = String(format: "%.1f", d)
 
                 var items = navigationItem.rightBarButtonItems
 
                 guard let label = items?.last?.customView as? UILabel else { return }
 
-                label.text = "\(i)s"
+                label.text = "\(i)"
                 label.sizeToFit()
 
                 items?.removeLast()
@@ -1035,13 +1074,22 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
-                    let t = Int(round(experimentStartTimer.fireDate.timeIntervalSinceNow))
 
-                    after(1.0) {
+                    let dt = experimentStartTimer.fireDate.timeIntervalSinceNow
+                    if dt <= nextBeep && nextBeep > 0 {
+                        nextBeep -= 1
+                        if timerBeep.countdown {
+                            experiment.audioEngine?.beep(frequency: 800, duration: 0.1)
+                        }
+                    }
+
+                    let t = String(format: "%.1f", dt)
+
+                    after(0.02) {
                         updateT()
                     }
 
-                    label.text = "\(t)s"
+                    label.text = "\(t)"
                     label.sizeToFit()
 
                     var items = navigationItem.rightBarButtonItems
@@ -1052,7 +1100,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     navigationItem.rightBarButtonItems = items
                 }
 
-                after(1.0) {
+                after(0.2) {
                     updateT()
                 }
 
@@ -1065,16 +1113,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showError(message: String) {
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default))
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default))
         present(alert, animated: true)
     }
     
     func actuallyStartExperiment() {
         do {
             try experiment.start()
-        }
-        catch {
+        } catch AudioEngine.AudioEngineError.NoInput {
+            showError(message: "Could not start experiment: No microphone available.")
+            experiment.stop()
+            return
+        } catch {
             showError(message: "Could not start experiment \(error).")
             experiment.stop()
             return
@@ -1101,7 +1152,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let label = items.last!.customView! as! UILabel
                 
-                label.text = "\(self.timerDelay)s"
+                let d = String(format: "%.1f", self.timerDelay)
+                label.text = "\(d)"
                 label.sizeToFit()
                 
                 items.removeLast()
@@ -1118,7 +1170,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func leaveExperiment() {
-        if experiment.getCurrentTimestamp() > 10 {
+        if experiment.timeReference.getExperimentTime() > 10 {
             let al = UIAlertController(title: localize("leave_experiment"), message: localize("leave_experiment_question"), preferredStyle: .alert)
             
             al.addAction(UIAlertAction(title: localize("leave"), style: .default, handler: { [unowned self] action in
@@ -1133,6 +1185,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func toggleExperiment() {
+        hintBubble?.dismiss(animated: true, completion: nil)
         if experiment.running {
             stopExperiment()
         }
@@ -1142,6 +1195,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func clearDataDialog() {
+        hintBubble?.dismiss(animated: true, completion: nil)
+        
         let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
         
         al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in

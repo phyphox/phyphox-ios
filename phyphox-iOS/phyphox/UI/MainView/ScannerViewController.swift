@@ -104,7 +104,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     func showMessage(title: String, msg: String, endScanner: Bool) {
         avCaptureSession.stopRunning()
         let alertController = UIAlertController(title: title, message: msg, preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: endScanner ? dismissScanner : {(_ action: UIAlertAction) in _ = self.avCaptureSession.startRunning()}))
+        alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: endScanner ? dismissScanner : {(_ action: UIAlertAction) in self.avCaptureSession.startRunning()}))
         present(alertController, animated: true)
     }
     
@@ -180,9 +180,8 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 data.append(dataPacket!)
             }
             var receivedCRC32: uLong = 0
-            data.withUnsafeBytes{(uint8Ptr: UnsafePointer<UInt8>) in
-                let ptr = UnsafePointer<UInt8>(uint8Ptr)
-                receivedCRC32 = crc32(uLong(0), ptr, UInt32(data.count))
+            data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                receivedCRC32 = crc32(uLong(0), ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), UInt32(data.count))
             }
             
             guard thisCRC32 == receivedCRC32 else {
@@ -266,10 +265,10 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             var data: Data
             if shiftedData.subdata(in: 1..<8) == "phyphox".data(using: .utf8) {
                 let length = Int(shiftedData[0])
-                data = shiftedData.subdata(in: Range((1+7)..<(length+1)))
+                data = shiftedData.subdata(in: ((1+7)..<(length+1)))
             } else if shiftedData.subdata(in: 2..<9) == "phyphox".data(using: .utf8) {
                 let length = (Int(shiftedData[0]) << 8) | Int(shiftedData[1])
-                data = shiftedData.subdata(in: Range((2+7)..<(length+2)))
+                data = shiftedData.subdata(in: ((2+7)..<(length+2)))
             } else {
                 showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRNoExperiment"), endScanner: true)
                 return

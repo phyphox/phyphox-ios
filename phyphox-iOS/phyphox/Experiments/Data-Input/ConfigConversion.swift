@@ -93,16 +93,16 @@ class SimpleConfigConversion: ConfigConversion {
         case .uInt24LittleEndian:
             var value = UInt32(data)
             let uInt32 = Data(bytes: &value, count: MemoryLayout.size(ofValue: value))
-            return uInt32.subdata(in: Range(1..<MemoryLayout.size(ofValue: value)))
+            return uInt32.subdata(in: (1..<MemoryLayout.size(ofValue: value)))
         case .int24LittleEndian:
             var value = Int32(data)
             let Int32 = Data(bytes: &value, count: MemoryLayout.size(ofValue: value))
-            return Int32.subdata(in: Range(1..<MemoryLayout.size(ofValue: value)))
+            return Int32.subdata(in: (1..<MemoryLayout.size(ofValue: value)))
         case .uInt24BigEndian:
             var value = UInt32(data)
             let leData = Data(bytes: &value, count: MemoryLayout.size(ofValue: value))
             var data = Data(capacity: MemoryLayout.size(ofValue: value)-1)
-            for byte in leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: value))).reversed() {
+            for byte in leData.subdata(in: (1..<MemoryLayout.size(ofValue: value))).reversed() {
                 data.append(byte)
             }
             return data
@@ -110,7 +110,7 @@ class SimpleConfigConversion: ConfigConversion {
             var value = Int32(data)
             let leData = Data(bytes: &value, count: MemoryLayout.size(ofValue: value))
             var data = Data(capacity: MemoryLayout.size(ofValue: value)-1)
-            for byte in leData.subdata(in: Range(1..<MemoryLayout.size(ofValue: value))).reversed() {
+            for byte in leData.subdata(in: (1..<MemoryLayout.size(ofValue: value))).reversed() {
                 data.append(byte)
             }
             return data

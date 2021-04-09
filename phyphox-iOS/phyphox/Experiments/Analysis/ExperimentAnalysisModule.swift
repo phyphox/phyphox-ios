@@ -17,7 +17,10 @@ class ExperimentAnalysisModule {
     
     var cycles: [(Int,Int)] = []
     
-    var timestamp: TimeInterval = 0.0
+    var analysisTime: TimeInterval = 0.0
+    var analysisLinearTime: TimeInterval = 0.0
+    var analysisTimeOffset1970: TimeInterval = 0.0
+    var analysisLinearTimeOffset1970: TimeInterval = 0.0
 
     let attributeContainer: AttributeContainer
 
@@ -34,11 +37,14 @@ class ExperimentAnalysisModule {
     /**
      Updates immediately.
      */
-    func setNeedsUpdate(_ timestamp: TimeInterval) {
+    func setNeedsUpdate(experimentTime: TimeInterval, linearTime: TimeInterval, experimentReference1970: TimeInterval, linearReference1970: TimeInterval) {
         if Thread.isMainThread {
             print("Analysis should run in the background!")
         }
-        self.timestamp = timestamp
+        self.analysisTime = experimentTime
+        self.analysisLinearTime = linearTime
+        self.analysisTimeOffset1970 = experimentReference1970
+        self.analysisLinearTimeOffset1970 = linearReference1970
         willUpdate()
         update()
         didUpdate()

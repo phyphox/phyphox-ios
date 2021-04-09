@@ -58,6 +58,30 @@ final class GLGraphView: GLKView {
         }
     }
     
+    var timeOnX: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
+    var timeOnY: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
+    var systemTime: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
+    var linearTime: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {
@@ -105,6 +129,7 @@ final class GLGraphView: GLKView {
         
         self.points2D = []
         self.points3D = []
+        self.timeReferenceSets = []
         
         super.init(frame: frame, context: context)
         
@@ -125,10 +150,12 @@ final class GLGraphView: GLKView {
     
     private var points2D: [[GraphPoint2D<GLfloat>]]
     private var points3D: [[GraphPoint3D<GLfloat>]]
+    private var timeReferenceSets: [[TimeReferenceSet]]
     
-    func setPoints(points2D: [[GraphPoint2D<GLfloat>]], points3D: [[GraphPoint3D<GLfloat>]], min: GraphPoint3D<Double>, max: GraphPoint3D<Double>) {
+    func setPoints(points2D: [[GraphPoint2D<GLfloat>]], points3D: [[GraphPoint3D<GLfloat>]], min: GraphPoint3D<Double>, max: GraphPoint3D<Double>, timeReferenceSets: [[TimeReferenceSet]]) {
         self.points2D = points2D
         self.points3D = points3D
+        self.timeReferenceSets = timeReferenceSets
 
         xScale = GLfloat(2.0/(max.x-min.x))
         yScale = GLfloat(2.0/(max.y-min.y))
@@ -246,7 +273,6 @@ final class GLGraphView: GLKView {
             shader.use()
             
             shader.setScale(xScale, yScale)
-            shader.setTranslation(xTranslation, yTranslation)
             
             for i in (0..<points2D.count).reversed() {
                 
@@ -259,6 +285,7 @@ final class GLGraphView: GLKView {
                 
                 glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint2D<GLfloat>>.size), p, GLenum(GL_DYNAMIC_DRAW))
                 
+                let renderMode: Int32
                 if historyLength > 1 {
                     shader.setPointSize(lineWidth[0])
                     glLineWidth(lineWidth[0])
@@ -267,25 +294,57 @@ final class GLGraphView: GLKView {
                     } else {
                         shader.setColor(1.0, 1.0, 1.0, (Float(i)+1.0)*0.6/Float(historyLength))
                     }
-                    let renderMode: Int32
                     switch style[0] {
                         case .dots: renderMode = GL_POINTS
                         case .vbars: renderMode = GL_TRIANGLE_STRIP
                         case .hbars: renderMode = GL_TRIANGLE_STRIP
                         default: renderMode = GL_LINE_STRIP
                     }
-                    shader.drawPositions(mode: renderMode, start: 0, count: length, strideFactor: 1)
                 } else {
                     shader.setPointSize(lineWidth[i])
                     glLineWidth(lineWidth[i])
                     shader.setColor(lineColor[i].r, lineColor[i].g, lineColor[i].b, lineColor[i].a)
-                    let renderMode: Int32
                     switch style[i] {
                         case .dots: renderMode = GL_POINTS
                         case .vbars: renderMode = GL_TRIANGLES
                         case .hbars: renderMode = GL_TRIANGLES
                         default: renderMode = GL_LINE_STRIP
                     }
+                }
+                if timeOnX {
+                    for timeReferenceSet in timeReferenceSets[i] {
+                        let xOffset: Float
+                        if systemTime && !linearTime {
+                            xOffset = Float(timeReferenceSet.totalPauseGap)
+                        } else if !systemTime && linearTime {
+                            if timeReferenceSet.isPaused {
+                                continue
+                            }
+                            xOffset = -Float(timeReferenceSet.totalPauseGap)
+                        } else {
+                            xOffset = 0.0
+                        }
+                        shader.setTranslation(xTranslation + xOffset, yTranslation)
+                        shader.drawPositions(mode: renderMode, start: timeReferenceSet.index, count: timeReferenceSet.count, strideFactor: 1)
+                    }
+                } else if timeOnY {
+                    for timeReferenceSet in timeReferenceSets[i] {
+                        let yOffset: Float
+                        if systemTime && !linearTime {
+                            yOffset = Float(timeReferenceSet.totalPauseGap)
+                        } else if !systemTime && linearTime {
+                            if timeReferenceSet.isPaused {
+                                continue
+                            }
+                            yOffset = -Float(timeReferenceSet.totalPauseGap)
+                        } else {
+                            yOffset = 0.0
+                        }
+                        shader.setTranslation(xTranslation, yTranslation + yOffset)
+                        shader.drawPositions(mode: renderMode, start: timeReferenceSet.index, count: timeReferenceSet.count, strideFactor: 1)
+                    }
+                } else {
+                    shader.setTranslation(xTranslation, yTranslation)
                     shader.drawPositions(mode: renderMode, start: 0, count: length, strideFactor: 1)
                 }
             }

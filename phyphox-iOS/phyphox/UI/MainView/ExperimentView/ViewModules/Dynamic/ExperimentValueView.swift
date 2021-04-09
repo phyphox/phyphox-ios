@@ -47,7 +47,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         
         unitLabel.text = descriptor.localizedUnit
         unitLabel.textColor = descriptor.color
-        unitLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline)
+        unitLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         unitLabel.textAlignment = .left
         
         addSubview(valueLabel)

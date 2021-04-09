@@ -100,7 +100,7 @@ final class ExperimentPickerViewController: CollectionViewController {
     override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = self.view.frame.size.width
         
-        let h = ceil(UIFont.preferredFont(forTextStyle: UIFontTextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption1).lineHeight + 12)
+        let h = ceil(UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline).lineHeight + UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1).lineHeight + 12)
         
         return CGSize(width: width, height: h)
     }
@@ -122,7 +122,7 @@ final class ExperimentPickerViewController: CollectionViewController {
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        if kind == UICollectionElementKindSectionHeader {
+        if kind == UICollectionView.elementKindSectionHeader {
             let view = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "Header", for: indexPath) as! ExperimentHeaderView
             
             let collection = collections[indexPath.section]

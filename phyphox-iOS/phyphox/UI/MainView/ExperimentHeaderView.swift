@@ -49,7 +49,7 @@ final class ExperimentHeaderView: UICollectionReusableView {
         background.backgroundColor = kHighlightColor
         addSubview(background)
         
-        label.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body)
+        label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
         addSubview(label)
         
         label.textColor = kTextColor

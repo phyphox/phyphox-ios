@@ -9,7 +9,7 @@
 import Foundation
 import CoreMotion
 
-enum SensorType: String, LosslessStringConvertible, Equatable {
+enum SensorType: String, LosslessStringConvertible, Equatable, CaseIterable {
     case accelerometer
     case gyroscope
     case linearAcceleration = "linear_acceleration"
@@ -55,16 +55,12 @@ enum SensorError : Error {
     case sensorUnavailable(SensorType)
 }
 
-class SensorInputTimeReference {
-    public var t0: TimeInterval? = nil
-}
-
 private let kG = -9.81
 
 final class ExperimentSensorInput: MotionSessionReceiver {
     let sensorType: SensorType
-    let sensorInputTimeReference: SensorInputTimeReference
-    var localInputTimeReference: TimeInterval?
+    
+    let timeReference: ExperimentTimeReference
     
     let sqrt12 = sqrt(0.5)
     
@@ -136,9 +132,9 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             return averaging != nil
     }
     
-    init(sensorType: SensorType, sensorInputTimeReference: SensorInputTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, ignoreUnavailable: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
+    init(sensorType: SensorType, timeReference: ExperimentTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, ignoreUnavailable: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
         self.sensorType = sensorType
-        self.sensorInputTimeReference = sensorInputTimeReference
+        self.timeReference = timeReference
         self.rate = rate
         self.calibrated = calibrated
         
@@ -166,7 +162,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
-    func verifySensorAvailibility() throws {
+    static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
         //The following line is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and we will then ignore sensor tests as otherwise the generated screenshots in the simulator will show almost all sensors as missing
         if ProcessInfo.processInfo.arguments.contains("screenshot") {
             if sensorType != .light {
@@ -208,6 +204,10 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
+    func verifySensorAvailibility() throws {
+        return try ExperimentSensorInput.verifySensorAvailibility(sensorType: self.sensorType, motionSession: motionSession)
+    }
+    
     private func resetValuesForAveraging() {
         guard let averaging = averaging else {
             return
@@ -232,14 +232,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             return
         } catch {}
         
-        localInputTimeReference = nil
         resetValuesForAveraging()
         
         switch sensorType {
         case .accelerometer:
             _ = motionSession.getAccelerometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                 guard let accelerometerData = data else {
-                    self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -259,7 +257,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .gyroscope:
             _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
-                    self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -280,7 +277,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             if calibrated {
                 _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                     guard let motion = deviceMotion else {
-                        self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                         return
                     }
                     
@@ -292,6 +288,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     case .low: accuracy = 1.0
                     case .medium: accuracy = 2.0
                     case .high: accuracy = 3.0
+                    @unknown default:
+                        accuracy = -2.0
                     }
                     
                     let x = field.x
@@ -310,7 +308,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             } else {
                 _ = motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
                     guard let magnetometerData = data else {
-                        self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                         return
                     }
                     
@@ -329,7 +326,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .linearAcceleration:
             _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
-                    self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -349,7 +345,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .pressure:
             _ = motionSession.getAltimeterData(self, interval: effectiveRate, handler: { [unowned self] (data, error) -> Void in
                 guard let altimeterData = data else {
-                    self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -366,13 +361,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 let distance = state ? 0.0 : 5.0 //Estimate in cm
                 
                 self.ready = true
-                self.dataIn(distance, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: nil)
+                self.dataIn(distance, y: nil, z: nil, abs: nil, accuracy: nil, t: timeReference.getExperimentTime(), error: nil)
                 })
             
         case .attitude:
             _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
-                    self.dataIn(nil, y: nil, z: nil, abs: nil, accuracy: nil, t: nil, error: error)
                     return
                 }
                 
@@ -463,41 +457,26 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
-    private func dataIn(_ x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
+    private func dataIn(_ x: Double, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval, error: NSError?) {
         
-        func dataInSync(_ x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval?, error: NSError?) {
+        func dataInSync(_ x: Double, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval, error: NSError?) {
             guard error == nil else {
                 print("Sensor error: \(error!.localizedDescription)")
                 return
             }
             
-            let relativeT: TimeInterval
-            if let t = t {
-                if sensorInputTimeReference.t0 == nil {
-                    sensorInputTimeReference.t0 = t - (tBuffer?.last ?? 0.0)
-                }
-                
-                relativeT = t-(sensorInputTimeReference.t0 ?? 0.0)
-            } else {
-                let localT = CFAbsoluteTimeGetCurrent()
-                if localInputTimeReference == nil {
-                    localInputTimeReference = localT - (tBuffer?.last ?? 0.0)
-                }
-                relativeT = localT-(localInputTimeReference ?? 0.0)
-            }
+            let relativeT = timeReference.getExperimentTimeFromEvent(eventTime: t)
             
             if let av = averaging {
                 if av.iterationStartTimestamp == nil {
                     av.iterationStartTimestamp = relativeT
                 }
                 
-                if x != nil {
-                    if av.x == nil {
-                        av.x = x!
-                    }
-                    else {
-                        av.x! += x!
-                    }
+                if av.x == nil {
+                    av.x = x
+                }
+                else {
+                    av.x! += x
                 }
                 
                 if y != nil {

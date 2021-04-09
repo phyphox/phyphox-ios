@@ -124,6 +124,11 @@ final class DataBuffer {
      Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
      */
     var memoryCount: Int {
+        return syncRead{contents.count}
+    }
+    
+    //Only to be used from within a locking queue to avoid crash
+    private var directMemoryCount: Int {
         return contents.count
     }
 
@@ -228,7 +233,7 @@ final class DataBuffer {
 
             contents.append(value)
 
-            if memoryCount > effectiveMemorySize {
+            if directMemoryCount > effectiveMemorySize {
                 contents.removeFirst()
             }
 
@@ -246,12 +251,12 @@ final class DataBuffer {
 
             autoreleasepool {
 
-                let sizeAfterAppend = memoryCount + values.count
+                let sizeAfterAppend = directMemoryCount + values.count
 
                 let cutSize = sizeAfterAppend - effectiveMemorySize
                 let shouldCut = cutSize > 0 && sizeAfterAppend > 0
 
-                let cutAfterAppend = cutSize > memoryCount
+                let cutAfterAppend = cutSize > directMemoryCount
 
                 if shouldCut && !cutAfterAppend {
                     contents.removeFirst(cutSize)
@@ -275,7 +280,8 @@ final class DataBuffer {
 
 extension DataBuffer: Sequence {
     func makeIterator() -> IndexingIterator<[Double]> {
-        return contents.makeIterator()
+        let buffered: [Double] = syncRead{contents}
+        return buffered.makeIterator()
     }
 
     var last: Double? {
@@ -324,7 +330,7 @@ extension DataBuffer {
             let byteSize = MemoryLayout<Double>.size
 
             func writeDataFromPointer(_ pointer: UnsafeMutableRawPointer) {
-                let data = Data(bytesNoCopy: pointer, count: memoryCount * byteSize, deallocator: .none)
+                let data = Data(bytesNoCopy: pointer, count: directMemoryCount * byteSize, deallocator: .none)
 
                 handle.write(data)
                 handle.closeFile()
@@ -333,20 +339,20 @@ extension DataBuffer {
             if isLittleEndian {
                 // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
                 withExtendedLifetime(contents, { values in
-                    let pointer = UnsafePointer(values)
-                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
-
-                    writeDataFromPointer(rawDataPointer)
+                    values.withUnsafeBytes{ pointer in
+                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
+                        writeDataFromPointer(rawDataPointer)
+                    }
                 })
             }
             else {
                 let values = contents.map { $0.bitPattern.littleEndian }
 
                 withExtendedLifetime(values, { values in
-                    let pointer = UnsafePointer(values)
-                    let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer)
-
-                    writeDataFromPointer(rawDataPointer)
+                    values.withUnsafeBytes{ pointer in
+                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
+                        writeDataFromPointer(rawDataPointer)
+                    }
                 })
             }
 
@@ -354,47 +360,6 @@ extension DataBuffer {
         }
     }
 
-    func readState(from url: URL) throws {
-        let handle = try FileHandle(forReadingFrom: url)
-
-        let singleValueSize = MemoryLayout<Double>.size
-
-        let fileSize = Int(handle.seekToEndOfFile())
-        let readingSize = Swift.min(fileSize, effectiveMemorySize * singleValueSize)
-        let readingStart = UInt64(fileSize - readingSize)
-
-        handle.seek(toFileOffset: readingStart)
-
-        let data = handle.readData(ofLength: readingSize)
-        handle.closeFile()
-
-        let count = data.count / singleValueSize
-
-        let values: [Double]
-
-        if isLittleEndian {
-            values = data.withUnsafeBytes { (pointer: UnsafePointer<Double>) -> [Double] in
-                let buffer = UnsafeBufferPointer(start: pointer, count: count)
-
-                return Array(buffer)
-            }
-        }
-        else {
-            values = data.withUnsafeBytes { (pointer: UnsafePointer<UInt64>) -> [Double] in
-                let buffer = UnsafeBufferPointer(start: pointer, count: count)
-
-                return buffer.map { Double(bitPattern: UInt64(littleEndian: $0)) }
-            }
-        }
-
-        syncWrite {
-            willWrite()
-
-            contents = values
-
-            didWrite()
-        }
-    }
 }
 
 extension DataBuffer: Equatable {

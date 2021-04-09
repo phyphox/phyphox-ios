@@ -126,10 +126,10 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
     }
     
     func pickTarget(isY: Bool) {
-        let actionsheet = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertControllerStyle.actionSheet)
+        let actionsheet = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertController.Style.actionSheet)
         
         for target in ApplyZoomTarget.allCases {
-            actionsheet.addAction(UIAlertAction(title: target.description, style: UIAlertActionStyle.default, handler: { (action) -> Void in
+            actionsheet.addAction(UIAlertAction(title: target.description, style: UIAlertAction.Style.default, handler: { (action) -> Void in
                 if isY {
                     self.zoomTargetY = target
                 } else {
@@ -139,7 +139,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
             }))
         }
         
-        actionsheet.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: { (action) -> Void in
+        actionsheet.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: { (action) -> Void in
         }))
         
         present(actionsheet, animated: true, completion: nil)

@@ -80,12 +80,12 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             
             switch arrayIn {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                
-                let thisEnd = min(end, buffer.memoryCount)
+                let data = buffer.toArray()
+                let thisEnd = min(end, data.count)
                 if thisEnd < start {
                     results.append([])
                 } else {
-                    results.append(Array(buffer.toArray()[start..<thisEnd]))
+                    results.append(Array(data[start..<thisEnd]))
                 }
                 
             case .value(value: _, usedAs: _):

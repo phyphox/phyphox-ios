@@ -11,7 +11,7 @@ import UIKit
 struct MapSensorType: OptionSet {
     let rawValue: Int
     
-    static let None = MapSensorType(rawValue: 0)
+    static let None = MapSensorType([])
     
     static let Accelerometer = MapSensorType(rawValue: 1 << 0) //1
     static let LinearAccelerometer = MapSensorType(rawValue: 1 << 1) //2

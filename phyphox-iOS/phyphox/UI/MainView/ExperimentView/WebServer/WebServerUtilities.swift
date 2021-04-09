@@ -26,7 +26,7 @@ final class WebServerUtilities {
     }
     
     class func genPlaceHolderBase64Image() -> String {
-        return UIImagePNGRepresentation(genPlaceHolderImage())!.base64EncodedString(options: [])
+        return genPlaceHolderImage().pngData()!.base64EncodedString(options: [])
     }
     
     private class func prepareStyleFile(backgroundColor: UIColor, lightBackgroundColor: UIColor, lightBackgroundHoverColor: UIColor, mainColor: UIColor, highlightColor: UIColor) -> String {

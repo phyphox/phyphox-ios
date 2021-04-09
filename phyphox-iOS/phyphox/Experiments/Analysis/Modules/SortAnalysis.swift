@@ -59,7 +59,8 @@ final class SortAnalysis: ExperimentAnalysisModule {
 
             switch bufferIn {
             case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                results.append(offsets.map{buffer.toArray()[$0]})
+                let inArray = buffer.toArray()
+                results.append(offsets.map{$0 < inArray.count ? inArray[$0] : Double.nan})
             case .value(value: _, usedAs: _):
                 results.append([])
             }
