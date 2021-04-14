@@ -489,7 +489,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
             let collection = collections[indexPath.section]
 
-            view.title = collection.title
+            if collection.type == .phyphoxOrg {
+                view.title = localize("categoryPhyphoxOrg")
+            } else {
+                view.title = collection.title
+            }
             var colorsInCollection = [UIColor : (Int, UIColor)]()
             for experiment in collection.experiments {
                 if let count = colorsInCollection[experiment.experiment.color]?.0 {
