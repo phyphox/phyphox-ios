@@ -116,7 +116,7 @@
 "noDrawableData" = "No drawable data.";
 "categoryNewExperiment" = "Simple custom experiments";
 "categoryRawSensor" = "Raw Sensors";
-"categoryPhyphoxOrg" = "Support phyphox";
+"categoryPhyphoxOrg" = "Contribute to phyphox";
 "categoryPhyphoxOrgHint" = "There are new options to support phyphox at the bottom of the list.";
 "experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";
 "start_hint" = "Touch the triangle to start the experiment.";
@@ -226,7 +226,6 @@
 "networkPrivacySensorLocation" = "Location data (GPS data or similar).";
 "networkPrivacyDeviceInfo" = "Detailed information about the model of your device and/or the version of phyphox.";
 "networkPrivacySensorInfo" = "Technical details about the following sensors:";
-
 "timedRunBeeps" = "Acoustic signals";
 "beeperCountdown" = "Countdown sounds";
 "beeperStart" = "Start sound";
