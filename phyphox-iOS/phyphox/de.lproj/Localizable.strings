@@ -227,3 +227,8 @@
 "leave_experiment" = "Experiment verlassen";
 "leave_experiment_question" = "Experiment verlassen und aufgezeichnete Daten verwerfen?";
 "leave" = "Verlassen";
+"timedRunBeeps" = "Akustische Signale";
+"beeperCountdown" = "Countdown-Töne";
+"beeperStart" = "Start-Ton";
+"beeperRunning" = "Töne während Messung";
+"beeperStop" = "Stop-Ton";
