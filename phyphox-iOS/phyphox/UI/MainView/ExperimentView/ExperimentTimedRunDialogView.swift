@@ -16,8 +16,13 @@ private let textfieldSize = CGSize(width: 60.0, height: 30.0)
 
 final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
     
-    public struct BeeperSwitch {
+    public struct AllSwitch {
         let sw: BEMCheckBox
+        let la: UILabel
+    }
+    
+    public struct BeeperSwitch {
+        let sw: UISwitch
         let la: UILabel
     }
     
@@ -26,7 +31,7 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         let la: UILabel
     }
 
-    public let beeperAll: BeeperSwitch
+    public let beeperAll: AllSwitch
     public let beeperCountdown: BeeperSwitch
     public let beeperStart: BeeperSwitch
     public let beeperRunning: BeeperSwitch
@@ -37,7 +42,7 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
     
     init(delay: Double, duration: Double, countdown: Bool, start: Bool, running: Bool, stop: Bool) {
                 
-        func setupBeeperSwitch(on: Bool, label: String) -> BeeperSwitch {
+        func setupAllSwitch(on: Bool, label: String) -> AllSwitch {
             let sw = BEMCheckBox()
             sw.boxType = .square
             sw.offAnimationType = .bounce
@@ -46,17 +51,32 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
             sw.lineWidth = 1.0
             sw.onTintColor = kHighlightColor
             sw.onCheckColor = kHighlightColor
+            sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
+
+
+            let la = UILabel()
+            la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
+            
+            la.text = label
+            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
+            
+            return AllSwitch(sw: sw, la: la)
+        }
+        
+        func setupBeeperSwitch(on: Bool, label: String) -> BeeperSwitch {
+            let sw = UISwitch()
+            sw.setOn(on, animated: false)
             
             let la = UILabel()
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             
             la.text = label
-            la.textColor = kTextColor
+            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
             
             return BeeperSwitch(sw: sw, la: la)
         }
         
-        beeperAll = setupBeeperSwitch(on: countdown || start || running || stop, label: localize("timedRunBeeps"))
+        beeperAll = setupAllSwitch(on: countdown || start || running || stop, label: localize("timedRunBeeps"))
         beeperCountdown = setupBeeperSwitch(on: countdown, label: localize("beeperCountdown"))
         beeperStart = setupBeeperSwitch(on: start, label: localize("beeperStart"))
         beeperRunning = setupBeeperSwitch(on: running, label: localize("beeperRunning"))
@@ -68,13 +88,13 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
             tf.borderStyle = .roundedRect
             tf.keyboardType = .decimalPad
             tf.text = String(value)
-            tf.textColor = kTextColor
-            tf.backgroundColor = kBackgroundColor
+            tf.textColor = UIColor.init(white: 0.0, alpha: 1.0)
+            tf.backgroundColor = UIColor.init(white: 1.0, alpha: 1.0)
             
             let la = UILabel()
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             la.text = label
-            la.textColor = kTextColor
+            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
             
             return TimerField(tf: tf, la: la)
         }
@@ -83,26 +103,25 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         self.duration = setupTimerField(value: duration, label: localize("timedRunStopDelay"))
         
         super.init(frame: .zero)
-        
-        self.backgroundColor = UIColor(white: 0.0, alpha: 0.8)
-        
+                
         beeperAll.sw.delegate = self
         addSubview(beeperAll.sw)
         addSubview(beeperAll.la)
         
-        beeperCountdown.sw.delegate = self
+        beeperCountdown.sw.addTarget(self, action: #selector(beeperSwitchChanged), for: UIControl.Event.valueChanged)
+
         addSubview(beeperCountdown.sw)
         addSubview(beeperCountdown.la)
 
-        beeperStart.sw.delegate = self
+        beeperStart.sw.addTarget(self, action: #selector(beeperSwitchChanged), for: UIControl.Event.valueChanged)
         addSubview(beeperStart.sw)
         addSubview(beeperStart.la)
             
-        beeperRunning.sw.delegate = self
+        beeperRunning.sw.addTarget(self, action: #selector(beeperSwitchChanged), for: UIControl.Event.valueChanged)
         addSubview(beeperRunning.sw)
         addSubview(beeperRunning.la)
             
-        beeperStop.sw.delegate = self
+        beeperStop.sw.addTarget(self, action: #selector(beeperSwitchChanged), for: UIControl.Event.valueChanged)
         addSubview(beeperStop.sw)
         addSubview(beeperStop.la)
         
@@ -114,25 +133,25 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
     }
     
     func didTap(_ checkBox: BEMCheckBox) {
-        if checkBox == beeperAll.sw {
-            beeperAll.sw.offFillColor = UIColor.init(white: 0, alpha: 0)
-            beeperCountdown.sw.setOn(beeperAll.sw.on, animated: true)
-            beeperStart.sw.setOn(beeperAll.sw.on, animated: true)
-            beeperRunning.sw.setOn(beeperAll.sw.on, animated: true)
-            beeperStop.sw.setOn(beeperAll.sw.on, animated: true)
-        } else {
-            if beeperStart.sw.on == beeperStop.sw.on && beeperStart.sw.on == beeperRunning.sw.on && beeperStart.sw.on == beeperCountdown.sw.on {
-                if beeperStart.sw.on {
-                    beeperAll.sw.offFillColor = UIColor.init(white: 0, alpha: 0)
-                    beeperAll.sw.setOn(true, animated: true)
-                } else {
-                    beeperAll.sw.offFillColor = UIColor.init(white: 0, alpha: 0)
-                    beeperAll.sw.setOn(false, animated: true)
-                }
+        beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
+        beeperCountdown.sw.setOn(beeperAll.sw.on, animated: true)
+        beeperStart.sw.setOn(beeperAll.sw.on, animated: true)
+        beeperRunning.sw.setOn(beeperAll.sw.on, animated: true)
+        beeperStop.sw.setOn(beeperAll.sw.on, animated: true)
+    }
+    
+    @objc func beeperSwitchChanged(switch: UISwitch) {
+        if beeperStart.sw.isOn == beeperStop.sw.isOn && beeperStart.sw.isOn == beeperRunning.sw.isOn && beeperStart.sw.isOn == beeperCountdown.sw.isOn {
+            if beeperStart.sw.isOn {
+                beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
+                beeperAll.sw.setOn(true, animated: true)
             } else {
-                beeperAll.sw.offFillColor = kHighlightColor.withAlphaComponent(0.5)
+                beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
                 beeperAll.sw.setOn(false, animated: true)
             }
+        } else {
+            beeperAll.sw.offFillColor = kHighlightColor.withAlphaComponent(0.5)
+            beeperAll.sw.setOn(false, animated: true)
         }
     }
     
@@ -154,7 +173,11 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
             h += 2*ySpacing+max(s.height, switchSize.height)
         }
         
-        for beeper in [beeperAll, beeperCountdown, beeperStart, beeperRunning, beeperStop] {
+        let s = beeperAll.la.sizeThatFits(size)
+        w = max(xSpacing+s.width+xSpacing+switchSize.width+xSpacing, w)
+        h += 2*ySpacing+max(s.height, switchSize.height)
+        
+        for beeper in [beeperCountdown, beeperStart, beeperRunning, beeperStop] {
             let s = beeper.la.sizeThatFits(size)
             
             w = max(xSpacing+s.width+xSpacing+switchSize.width+xSpacing, w)
@@ -187,20 +210,27 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         
         h += 4*ySpacing
         
-        var first = true
-        for beeper in [beeperAll, beeperCountdown, beeperStart, beeperRunning, beeperStop] {
+        let s = beeperAll.la.sizeThatFits(bounds.size)
+        let sw = beeperAll.sw
+        let heightDelta = (switchSize.height-s.height)/2.0
+        beeperAll.la.frame = CGRect(x: xSpacing, y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
+        sw.frame = CGRect(x: self.bounds.size.width-switchSize.width-xSpacing, y: beeperAll.la.center.y-switchSize.height/2.0, width: switchSize.width, height: switchSize.height)
+        
+        h += 2*ySpacing+max(s.height, switchSize.height)
+        
+        for beeper in [beeperCountdown, beeperStart, beeperRunning, beeperStop] {
             let s = beeper.la.sizeThatFits(bounds.size)
             let sw = beeper.sw
             
-            let heightDelta = (switchSize.height-s.height)/2.0
+            let sws = beeper.sw.sizeThatFits(bounds.size)
+
+            let heightDelta = (sws.height-s.height)/2.0
             
-            beeper.la.frame = CGRect(x: xSpacing * (first ? 1 : 4), y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
+            beeper.la.frame = CGRect(x: xSpacing * 4, y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
             
-            sw.frame = CGRect(x: self.bounds.size.width-switchSize.width-xSpacing, y: beeper.la.center.y-switchSize.height/2.0, width: switchSize.width, height: switchSize.height)
+            sw.frame = CGRect(x: self.bounds.size.width-sws.width-xSpacing, y: beeper.la.center.y-sws.height/2.0, width: sws.width, height: sws.height)
             
-            h += 2*ySpacing+max(s.height, switchSize.height)
-            
-            first = false
+            h += 2*ySpacing+max(s.height, sws.height)
         }
     }
 }

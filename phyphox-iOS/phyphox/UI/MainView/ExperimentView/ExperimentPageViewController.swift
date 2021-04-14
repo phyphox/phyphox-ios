@@ -818,10 +818,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerEnabled = true
             self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
             self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
-            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
-            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
-            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
-            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.isOn ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.isOn ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
             self.updateTimerInBar()
             }))
@@ -831,10 +831,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerEnabled = false
             self.timerDelay = Double(timedRunDialogView?.delay.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
             self.timerDuration = Double(timedRunDialogView?.duration.tf.text?.replacingOccurrences(of: ",", with: ".") ?? "0.0") ?? 0.0
-            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.on ?? false
-            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.on ?? false
-            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.on ?? false
-            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.on ?? false
+            self.timerBeep.countdown = timedRunDialogView?.beeperCountdown.sw.isOn ?? false
+            self.timerBeep.start = timedRunDialogView?.beeperStart.sw.isOn ?? false
+            self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
+            self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
             self.updateTimerInBar()
             }))
