@@ -1501,7 +1501,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     private func clearGraph() {
         gridView.grid = nil
+        gridView.pauseMarkers = nil
         zGridView?.grid = nil
+        zGridView?.pauseMarkers = nil
         
         lastIndexXArray = nil
         
