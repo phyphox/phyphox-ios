@@ -101,7 +101,7 @@
 "noDrawableData" = "Keine darstellbaren Daten.";
 "categoryNewExperiment" = "Einfache eigene Experimente";
 "categoryRawSensor" = "Sensoren";
-"categoryPhyphoxOrg" = "Unterstütze phyphox";
+"categoryPhyphoxOrg" = "Unterstütze phyphoxa";
 "categoryPhyphoxOrgHint" = "Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.";
 "experimentinfo_hint" = "Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.";
 "help" = "Hilfe und Infos";
