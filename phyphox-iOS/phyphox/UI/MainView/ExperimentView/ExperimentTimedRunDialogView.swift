@@ -11,13 +11,22 @@ import Foundation
 private let ySpacing: CGFloat = 3.0
 private let xSpacing: CGFloat = 10.0
 
-private let checkboxSize = CGSize(width: 30.0, height: 30.0)
 private let textfieldSize = CGSize(width: 60.0, height: 30.0)
 
-final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
+final class ExperimentTimedRunDialogView: UIView {
     
     public struct AllSwitch {
-        let sw: BEMCheckBox
+        let bt: UIButton
+        var onState: Bool
+        var on: Bool {
+            set {
+                self.onState = newValue
+                self.bt.setTitle(self.onState ? localize("deactivate_all") : localize("activate_all"), for: .normal)
+            }
+            get {
+                return onState
+            }
+        }
         let la: UILabel
     }
     
@@ -31,7 +40,7 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         let la: UILabel
     }
 
-    public let beeperAll: AllSwitch
+    public var beeperAll: AllSwitch
     public let beeperCountdown: BeeperSwitch
     public let beeperStart: BeeperSwitch
     public let beeperRunning: BeeperSwitch
@@ -43,16 +52,11 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
     init(delay: Double, duration: Double, countdown: Bool, start: Bool, running: Bool, stop: Bool) {
                 
         func setupAllSwitch(on: Bool, label: String) -> AllSwitch {
-            let sw = BEMCheckBox()
-            sw.boxType = .square
-            sw.offAnimationType = .bounce
-            sw.onAnimationType = .bounce
-            sw.on = on
-            sw.lineWidth = 1.0
-            sw.onTintColor = kHighlightColor
-            sw.onCheckColor = kHighlightColor
-            sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
-
+            let bt = UIButton()
+            bt.setTitleColor(UIColor.black, for: .normal)
+            bt.layer.borderWidth = 1
+            bt.layer.cornerRadius = 5
+            bt.titleLabel?.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
 
             let la = UILabel()
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
@@ -60,7 +64,10 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
             la.text = label
             la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
             
-            return AllSwitch(sw: sw, la: la)
+            var sw = AllSwitch(bt: bt, onState: on, la: la)
+            sw.on = on
+            
+            return sw
         }
         
         func setupBeeperSwitch(on: Bool, label: String) -> BeeperSwitch {
@@ -104,8 +111,8 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         
         super.init(frame: .zero)
                 
-        beeperAll.sw.delegate = self
-        addSubview(beeperAll.sw)
+        beeperAll.bt.addTarget(self, action: #selector(allSwitchPressed), for: UIControl.Event.touchUpInside)
+        addSubview(beeperAll.bt)
         addSubview(beeperAll.la)
         
         beeperCountdown.sw.addTarget(self, action: #selector(beeperSwitchChanged), for: UIControl.Event.valueChanged)
@@ -132,27 +139,18 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         addSubview(self.duration.la)
     }
     
-    func didTap(_ checkBox: BEMCheckBox) {
-        beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
-        beeperCountdown.sw.setOn(beeperAll.sw.on, animated: true)
-        beeperStart.sw.setOn(beeperAll.sw.on, animated: true)
-        beeperRunning.sw.setOn(beeperAll.sw.on, animated: true)
-        beeperStop.sw.setOn(beeperAll.sw.on, animated: true)
+    @objc func allSwitchPressed(_ target: UIButton) {
+        beeperAll.on = !beeperAll.on
+        beeperCountdown.sw.setOn(beeperAll.on, animated: true)
+        beeperStart.sw.setOn(beeperAll.on, animated: true)
+        beeperRunning.sw.setOn(beeperAll.on, animated: true)
+        beeperStop.sw.setOn(beeperAll.on, animated: true)
+        setNeedsLayout()
     }
     
     @objc func beeperSwitchChanged(switch: UISwitch) {
-        if beeperStart.sw.isOn == beeperStop.sw.isOn && beeperStart.sw.isOn == beeperRunning.sw.isOn && beeperStart.sw.isOn == beeperCountdown.sw.isOn {
-            if beeperStart.sw.isOn {
-                beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
-                beeperAll.sw.setOn(true, animated: true)
-            } else {
-                beeperAll.sw.offFillColor = UIColor.init(white: 1.0, alpha: 0.5)
-                beeperAll.sw.setOn(false, animated: true)
-            }
-        } else {
-            beeperAll.sw.offFillColor = kHighlightColor.withAlphaComponent(0.5)
-            beeperAll.sw.setOn(false, animated: true)
-        }
+        beeperAll.on = (beeperStart.sw.isOn || beeperStop.sw.isOn || beeperRunning.sw.isOn || beeperCountdown.sw.isOn)
+        setNeedsLayout()
     }
     
     @available(*, unavailable)
@@ -164,24 +162,24 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         var w: CGFloat = 0.0
         var h: CGFloat = 0.0
         
-        let switchSize = checkboxSize
-        
         for timer in [delay, duration] {
             let s = timer.la.sizeThatFits(size)
             
-            w = max(xSpacing+s.width+xSpacing+switchSize.width+xSpacing, w)
-            h += 2*ySpacing+max(s.height, switchSize.height)
+            w = max(xSpacing+s.width+xSpacing+textfieldSize.width+xSpacing, w)
+            h += 2*ySpacing+max(s.height, textfieldSize.height)
         }
         
         let s = beeperAll.la.sizeThatFits(size)
-        w = max(xSpacing+s.width+xSpacing+switchSize.width+xSpacing, w)
-        h += 2*ySpacing+max(s.height, switchSize.height)
+        let bts = beeperAll.bt.sizeThatFits(size)
+        w = max(xSpacing+s.width+xSpacing+bts.width+xSpacing, w)
+        h += 2*ySpacing+max(s.height, bts.height)
         
         for beeper in [beeperCountdown, beeperStart, beeperRunning, beeperStop] {
             let s = beeper.la.sizeThatFits(size)
+            let sws = beeper.sw.sizeThatFits(size)
             
-            w = max(xSpacing+s.width+xSpacing+switchSize.width+xSpacing, w)
-            h += 2*ySpacing+max(s.height, switchSize.height)
+            w = max(xSpacing+s.width+xSpacing+sws.width+xSpacing, w)
+            h += 2*ySpacing+max(s.height, sws.height)
         }
         h += 4 * ySpacing
         
@@ -193,8 +191,6 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
         
         var h: CGFloat = 0.0
         
-        let switchSize = checkboxSize
-        
         for timer in [delay, duration] {
             let s = timer.la.sizeThatFits(bounds.size)
             let tf = timer.tf
@@ -205,18 +201,20 @@ final class ExperimentTimedRunDialogView: UIView, BEMCheckBoxDelegate {
             
             tf.frame = CGRect(x: self.bounds.size.width-textfieldSize.width-xSpacing, y: timer.la.center.y-textfieldSize.height/2.0, width: textfieldSize.width, height: textfieldSize.height)
             
-            h += 2*ySpacing+max(s.height, switchSize.height)
+            h += 2*ySpacing+max(s.height, textfieldSize.height)
         }
         
         h += 4*ySpacing
         
         let s = beeperAll.la.sizeThatFits(bounds.size)
-        let sw = beeperAll.sw
-        let heightDelta = (switchSize.height-s.height)/2.0
+        let bt = beeperAll.bt
+        let bts = beeperAll.bt.sizeThatFits(bounds.size)
+
+        let heightDelta = (bts.height-s.height)/2.0
         beeperAll.la.frame = CGRect(x: xSpacing, y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
-        sw.frame = CGRect(x: self.bounds.size.width-switchSize.width-xSpacing, y: beeperAll.la.center.y-switchSize.height/2.0, width: switchSize.width, height: switchSize.height)
+        bt.frame = CGRect(x: self.bounds.size.width-bts.width-3*xSpacing, y: beeperAll.la.center.y-bts.height/2.0, width: bts.width + 2*xSpacing, height: bts.height)
         
-        h += 2*ySpacing+max(s.height, switchSize.height)
+        h += 2*ySpacing+max(s.height, bts.height)
         
         for beeper in [beeperCountdown, beeperStart, beeperRunning, beeperStop] {
             let s = beeper.la.sizeThatFits(bounds.size)

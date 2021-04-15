@@ -231,3 +231,5 @@
 "beeperStart" = "Start sound";
 "beeperRunning" = "Running sounds";
 "beeperStop" = "Stop sound";
+"activate_all" = "Activate all";
+"deactivate_all" = "Deactivate all";
