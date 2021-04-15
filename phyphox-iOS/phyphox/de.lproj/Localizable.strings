@@ -232,3 +232,5 @@
 "beeperStart" = "Start-Ton";
 "beeperRunning" = "Töne während Messung";
 "beeperStop" = "Stop-Ton";
+"activate_all" = "Alle aktivieren";
+"deactivate_all" = "Alle deaktivieren";
