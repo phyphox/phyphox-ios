@@ -56,7 +56,7 @@ final class ExperimentTimedRunDialogView: UIView {
             bt.setTitleColor(UIColor.black, for: .normal)
             bt.layer.borderWidth = 1
             bt.layer.cornerRadius = 5
-            bt.titleLabel?.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
+            bt.titleLabel?.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
 
             let la = UILabel()
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
