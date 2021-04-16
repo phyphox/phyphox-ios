@@ -198,6 +198,7 @@
 		C07B53092294267400BA085A /* ExperimentBluetoothInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */; };
 		C07B530B229426AD00BA085A /* ExperimentBluetoothOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */; };
 		C07B530D22942CC300BA085A /* InputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530C22942CC300BA085A /* InputConversion.swift */; };
+		C07BBC1F26209CAC0097C57A /* ExperimentTimedRunDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */; };
 		C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
@@ -650,6 +651,7 @@
 		C07B53082294267400BA085A /* ExperimentBluetoothInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothInput.swift; sourceTree = "<group>"; };
 		C07B530A229426AD00BA085A /* ExperimentBluetoothOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentBluetoothOutput.swift; sourceTree = "<group>"; };
 		C07B530C22942CC300BA085A /* InputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConversion.swift; sourceTree = "<group>"; };
+		C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentTimedRunDialogView.swift; sourceTree = "<group>"; };
 		C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRC32InputStream.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
@@ -1078,6 +1080,7 @@
 				C065AB9224CAE08300919670 /* UIExperimentTabControl.swift */,
 				6BFE376620447B0600301CA3 /* WebServer */,
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
+				C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */,
 				6B2E0F9E20593A01008FAA91 /* ViewModules */,
 			);
 			path = ExperimentView;
@@ -1659,6 +1662,7 @@
 				C07B53092294267400BA085A /* ExperimentBluetoothInput.swift in Sources */,
 				6B63199B1C4969DA0038BE22 /* MainNavigationBar.swift in Sources */,
 				6B63196A1C4849900038BE22 /* CollectionView.swift in Sources */,
+				C07BBC1F26209CAC0097C57A /* ExperimentTimedRunDialogView.swift in Sources */,
 				6B7BF80F1C147244007408FB /* TanAnalysis.swift in Sources */,
 				6BE3209A1CB19A5D00DCC1ED /* CreateExperimentViewController.swift in Sources */,
 				C05CD4A0258D030500662BDF /* GraphPauseMarkerView.swift in Sources */,
@@ -2088,7 +2092,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.8;
+				MARKETING_VERSION = 1.1.9;
 				OTHER_LDFLAGS = "";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
@@ -2146,7 +2150,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.8;
+				MARKETING_VERSION = 1.1.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -90,7 +90,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 12, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 13, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -125,6 +125,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         case locale
         case version
         case appleBan
+        case isLink
     }
 
     func startElement(attributes: AttributeContainer) throws {}
@@ -137,6 +138,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let versionString = try attributes.string(for: .version)
         
         let appleBan = try attributes.optionalValue(for: .appleBan) ?? false
+        
+        let isLink = try attributes.optionalValue(for: .isLink) ?? false
 
         guard let version = SemanticVersion(string: versionString) else {
             throw ElementHandlerError.unexpectedAttributeValue("version")
@@ -318,7 +321,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }

@@ -55,7 +55,7 @@
 "share" = "Compartir captura de pantalla";
 "share_subject" = "Captura de pantalla de phyphox";
 "share_pick_share" = "Elige un medio para compartir";
-"remoteServerWarning" = "Estás por permitir acceso remoto a la información recolectada. ¡Sólo deberías hacer esto en conexiones en las que confías!. Ten en cuenta además, que el acceso directo entre dispositivos podría no estar permitido en redes corporativas o universitarias.\n\nPara un mejor desempeño y una mayor seguridad, deberías realizar la conexión a este dispositivo mediante la opción de anclaje a red (punto de acceso móvil).\n\nDespués de presionar \"Aceptar\",  podrás acceder a tu información desde cualquier navegador conectado en la misma red.";
+"remoteServerWarning" = "Estás por permitir acceso remoto a la información recolectada. ¡Sólo deberías hacer esto en conexiones en las que confías!. Ten en cuenta además, que el acceso directo entre dispositivos podría no estar permitido en redes corporativas o universitarias.\n\nPara un mejor desempeño y una mayor seguridad, deberías realizar la conexión a este dispositivo mediante la opción de anclaje a red (punto de acceso móvil).\n\nDespués de presionar \"Aceptar\", podrás acceder a tu información desde cualquier navegador conectado en la misma red.";
 "remoteServerWarningTitle" = "¡Advertencia de seguridad!";
 "hotspotSettings" = "Ajustes de Punto de Acceso";
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
@@ -139,7 +139,7 @@
 "newExperimentQRNoExperiment" = "No se pudo encontrar un código QR que contenga un experimento de phyphox.";
 "newExperimentQRcrcMismatch" = "El código QR que acabas de escanear no parece coincidir con los códigos anteriores. Asegúrate de escanear únicamente los códigos que pertenecen al mismo experimento.";
 "newExperimentQRCodesMissing1" = "El código QR que acabas de escanear es parte de un conjunto de";
-"newExperimentQRBadCRC" = "Comprobación  no válida. Esto significa que el código QR esta dañado o que algo salió mal al escanearlo.";
+"newExperimentQRBadCRC" = "Comprobación no válida. Esto significa que el código QR esta dañado o que algo salió mal al escanearlo.";
 "newExperimentBTReadErrorTitle" = "Error de Bluetooth en el experimento.";
 "newExperimentBTReadErrorCorrupted" = "La información transmitida por el experimento está dañada.";
 "generalErrorDialog" = "Se ha producido un error.";
@@ -164,7 +164,7 @@
 "translationText" = "Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".";
 "remoteColorMapWarning" = "El gráfico en la interfaz remota es sólo una aproximación. Al contrario de la gráfica en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x e y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.";
 "newExperimentBluetoothLoadFromDeviceInfo" = "Este dispositivo proporciona su propio experimento phyphox. Selecciona cargar desde dispositivo para abrirlo.";
-"newExperimentQRCodesMissing2" = "códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan: ";
+"newExperimentQRCodesMissing2" = "códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan:";
 "bluetooth" = "Bluetooth LE";
 "bt_pick_device" = "Por favor selecciona un dispositivo.";
 "bt_scanning_generic" = "Buscando dispositivos Bluetooth…";
@@ -211,3 +211,7 @@
 "networkPrivacySensorLocation" = "Datos de ubicación (datos de GPS o similares).";
 "networkPrivacyDeviceInfo" = "Información detallada sobre el modelo de su dispositivo y / o la versión de phyphox.";
 "networkPrivacySensorInfo" = "Detalles técnicos sobre los siguientes sensores:";
+"sensorAttitude" = "Actitud";
+"leave_experiment" = "Abandonar experimento";
+"leave_experiment_question" = "¿Salir del experimento y descartar los datos grabados?";
+"leave" = "Salir";

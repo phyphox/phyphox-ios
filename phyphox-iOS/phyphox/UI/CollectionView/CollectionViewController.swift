@@ -158,6 +158,10 @@ class CollectionViewController: UIViewController, UICollectionViewDataSource, UI
         return 0.0
     }
     
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        
+    }
+    
     //MARK: -
     
     deinit {

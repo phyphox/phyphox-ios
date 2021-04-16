@@ -85,4 +85,8 @@ struct ExperimentTranslationCollection: Equatable {
     func localize(_ string: String) -> String {
         return selectedTranslation?.translatedStrings[string] ?? string
     }
+    
+    func localizeLink(_ string: String, fallback: URL) -> URL {
+        return selectedTranslation?.translatedLinks[string] ?? fallback
+    }
 }

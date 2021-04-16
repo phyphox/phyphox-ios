@@ -101,6 +101,8 @@
 "noDrawableData" = "Keine darstellbaren Daten.";
 "categoryNewExperiment" = "Einfache eigene Experimente";
 "categoryRawSensor" = "Sensoren";
+"categoryPhyphoxOrg" = "Unterstütze phyphoxa";
+"categoryPhyphoxOrgHint" = "Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.";
 "experimentinfo_hint" = "Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.";
 "help" = "Hilfe und Infos";
 "experimentsPhyphoxOrg" = "Experiment-Ideen und Anleitungen";
@@ -185,7 +187,7 @@
 "bt_scanning_specific2" = "im Namen…";
 "bt_device_not_supported" = "Keine Experimente verfügbar.";
 "bt_location_explanation" = "Android benötigt Standort-Rechte für Bluetooth-Scans, da die Ergebnisse genutzt werden könnten um einen Standort abzuleiten. Wir werden diese Rechte nun anfragen. Du musst die Rechte bestätigen um nach Bluetooth-Geräten suchen zu können.";
-"bt_exception_uuid" = "Die Characteristic mit der UUID ";
+"bt_exception_uuid" = "Die Characteristic mit der UUID";
 "bt_exception_uuid2" = "wurde nicht gefunden.";
 "bt_exception_disabled" = "Bluetooth ist deaktiviert. Bitte aktiviere Bluetooth und versuche es noch einmal.";
 "bt_exception_connection" = "Es konnte keine Bluetooth-Verbindung hergestellt werden.";
@@ -225,3 +227,10 @@
 "leave_experiment" = "Experiment verlassen";
 "leave_experiment_question" = "Experiment verlassen und aufgezeichnete Daten verwerfen?";
 "leave" = "Verlassen";
+"timedRunBeeps" = "Akustische Signale";
+"beeperCountdown" = "Countdown-Töne";
+"beeperStart" = "Start-Ton";
+"beeperRunning" = "Töne während Messung";
+"beeperStop" = "Stop-Ton";
+"activate_all" = "Alle aktivieren";
+"deactivate_all" = "Alle deaktivieren";
