@@ -71,7 +71,7 @@
 "remotePhyphoxOrg" = "Απομακρυσμένος Έλεγχος";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "translationInfo" = "Γλώσσες";
-"translationToWebsite" = "Ιστοσελίδα";
+"translationToWebsite" = "Επίσκεψη στην ιστοσελίδα";
 "translationToWebsiteURL" = "http://phyphox.org/languages#el";
 "remoteServerActive" = "Ενεργοποιήθηκε απομακρυσμένη πρόσβαση. Εκτελέσετε το πείραμα αυτό από το ακόλουθο URL:";
 "switchToPhoneLayout" = "Όψη: περιορισμένη";
@@ -119,7 +119,7 @@
 "translationToSettings" = "Ρυθμίσεις";
 "deviceInfo" = "Πληροφορίες συσκευής";
 "copyToClipboard" = "Αντιγραφή στο πρόχειρο";
-"deviceInfoCopied" = "Οι πληροφορίες της συσκευής αντιστράφηκαν στο πρόχειρο.";
+"deviceInfoCopied" = "Οι πληροφορίες της συσκευής αντιγράφηκαν στο πρόχειρο.";
 "graph_tools_pan_and_zoom" = "Μετακίνηση και μεγέθυνση";
 "graph_tools_pick" = "Επιλογή δεδομένων";
 "graph_tools_more" = "Περισσότερα εργαλεία";
@@ -127,7 +127,7 @@
 "graph_tools_follow" = "Παρακολούθηση νέων δεδομένων";
 "graph_tools_linear_fit" = "Γραμμική παλινδρόμηση";
 "graph_tools_export" = "Εξαγωγή δεδομένων";
-"graph_tools_log_x" = "Λογαριθμικός x άξονας";
+"graph_tools_log_x" = "Λογαριθμικός άξονας x";
 "graph_tools_log_y" = "Λογαριθμικός άξονας y";
 "graph_point_label" = "Σημείο";
 "graph_slope_label" = "Κλίση";
@@ -157,7 +157,7 @@
 "newExperimentQRCodesMissing1" = "Ο κωδικός QR που σκανάρατε είναι μέρος μιας ομάδας";
 "newExperimentQRCodesMissing2" = "κωδικών. Πατήστε συνέχεια για να σκανάρετε τους υπόλοιπους κωδικούς. Κωδικοί που απομένουν ακόμη:";
 "newExperimentQRBadCRC" = "Άκυρο άθροισμα ελέγχου. Αυτό σημαίνει είτε εσφαλμένος κωδικός QR είτε ότι συνέβη κάποιο σφάλμα κατά το σκανάρισμα.";
-"newExperimentBTReadErrorTitle" = "Λανθασμένο πείραμα Bluetooth.";
+"newExperimentBTReadErrorTitle" = "Λάθος κατά τη διάρκεια πειράματος Bluetooth.";
 "newExperimentBTReadErrorCorrupted" = "Tα πειραματικά δεδομένα που παραλήφθηκαν ήταν κατεστραμμένα.";
 "generalErrorDialog" = "Συνέβη κάποιο λάθος.";
 "open_zip_title" = "Άνοιγμα ομάδας πειραμάτων";
@@ -219,7 +219,7 @@
 "categoryPhyphoxOrgHint" = "Υπάρχουν νέοι τρόποι υποστήριξης του phyphox στο τέλος της λίστας.";
 "graph_tools_system_time" = "Χρήση του χρόνου συστήματος";
 "timedRunBeeps" = "Ακουστικά σήματα";
-"beeperCountdown" = "Ήχος αντίστροφης μέτρησης";
+"beeperCountdown" = "Ήχοι αντίστροφης μέτρησης";
 "beeperStart" = "Ήχος έναρξης";
 "beeperRunning" = "Ήχοι κατά τη διάρκεια της μέτρησης";
 "beeperStop" = "Ήχος λήξης";
