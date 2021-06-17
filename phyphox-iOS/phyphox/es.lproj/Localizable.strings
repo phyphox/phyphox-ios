@@ -215,3 +215,4 @@
 "leave_experiment" = "Abandonar experimento";
 "leave_experiment_question" = "¿Salir del experimento y descartar los datos grabados?";
 "leave" = "Salir";
+"common_quantity_short_sound_pressure_level" = "NPS";
