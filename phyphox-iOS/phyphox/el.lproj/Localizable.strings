@@ -225,3 +225,13 @@
 "beeperStop" = "Ήχος λήξης";
 "activate_all" = "Ενεργοποίηση όλων";
 "deactivate_all" = "Απενεργοποίηση όλων";
+"common_unit_short_arbitrary_unit" = "α.μ";
+"common_quantity_short_acceleration" = "α";
+"common_direction_short_north" = "Β";
+"common_direction_short_south" = "Ν";
+"common_direction_short_east" = "Α";
+"common_direction_short_west" = "Δ";
+"common_direction_short_north_east" = "ΒΑ";
+"common_direction_short_south_east" = "ΝΑ";
+"common_direction_short_north_west" = "ΒΔ";
+"common_direction_short_south_west" = "ΝΔ";
