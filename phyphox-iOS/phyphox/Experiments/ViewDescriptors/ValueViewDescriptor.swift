@@ -32,7 +32,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         if unit == nil {
             return nil
         }
-        return translation?.localize(unit!) ?? unit!
+        return translation?.localizeString(unit!) ?? unit!
     }
     
     init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
@@ -43,7 +43,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         self.buffer = buffer
         self.size = size
 
-        let translatedMappings = mappings.compactMap { map in (translation?.localize(map.replacement) ?? map.replacement).map { ValueViewMap(range: map.range, replacement: $0) } }
+        let translatedMappings = mappings.compactMap { map in (translation?.localizeString(map.replacement) ?? map.replacement).map { ValueViewMap(range: map.range, replacement: $0) } }
         
         self.mappings = translatedMappings
 

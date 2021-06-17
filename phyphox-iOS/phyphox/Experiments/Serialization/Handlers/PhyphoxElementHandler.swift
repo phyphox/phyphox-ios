@@ -90,7 +90,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 13, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 14, patch: 0)
 
 // Mark: - Phyphox Element Handler
 

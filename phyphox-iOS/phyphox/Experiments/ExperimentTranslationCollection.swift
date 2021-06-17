@@ -82,8 +82,16 @@ struct ExperimentTranslationCollection: Equatable {
         selectedTranslation = translations[selectedLanguageCode]
     }
     
-    func localize(_ string: String) -> String {
-        return selectedTranslation?.translatedStrings[string] ?? string
+    func localizeString(_ string: String) -> String {
+        if let translated = selectedTranslation?.translatedStrings[string] {
+            return translated
+        }
+        if string.hasPrefix("[[") && string.hasSuffix("]]") {
+            let start = string.index(string.startIndex, offsetBy: 2)
+            let stop = string.index(string.endIndex, offsetBy: -2)
+            return localize("common_" + string[start ..< stop])
+        }
+        return string
     }
     
     func localizeLink(_ string: String, fallback: URL) -> URL {

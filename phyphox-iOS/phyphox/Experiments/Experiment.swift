@@ -138,7 +138,7 @@ final class Experiment {
         self.description = description
         self.links = links
 
-        self.localizedLinks = links.map { ExperimentLink(label: translation?.localize($0.label) ?? $0.label, url: translation?.localizeLink($0.label, fallback: $0.url) ?? $0.url, highlighted: $0.highlighted) }
+        self.localizedLinks = links.map { ExperimentLink(label: translation?.localizeString($0.label) ?? $0.label, url: translation?.localizeLink($0.label, fallback: $0.url) ?? $0.url, highlighted: $0.highlighted) }
 
         self.category = category
         

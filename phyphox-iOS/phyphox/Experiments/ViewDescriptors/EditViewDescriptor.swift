@@ -25,7 +25,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
         if unit == nil {
             return nil
         }
-        return translation?.localize(unit!) ?? unit!
+        return translation?.localizeString(unit!) ?? unit!
     }
     
     var value: Double {

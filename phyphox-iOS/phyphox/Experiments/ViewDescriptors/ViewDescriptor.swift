@@ -19,7 +19,7 @@ protocol ViewDescriptor {
 
 extension ViewDescriptor {
     var localizedLabel: String {
-        return translation?.localize(label) ?? label
+        return translation?.localizeString(label) ?? label
     }
 
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {

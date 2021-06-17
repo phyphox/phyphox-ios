@@ -78,41 +78,41 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         if legacyXLabel != nil {
             return legacyXLabel!
         }
-        return translation?.localize(xLabel) ?? xLabel
+        return translation?.localizeString(xLabel) ?? xLabel
     }
     
     var localizedYLabel: String {
         if legacyYLabel != nil {
             return legacyYLabel!
         }
-        return translation?.localize(yLabel) ?? yLabel
+        return translation?.localizeString(yLabel) ?? yLabel
     }
     
     var localizedZLabel: String {
-        return translation?.localize(zLabel ?? "") ?? zLabel ?? ""
+        return translation?.localizeString(zLabel ?? "") ?? zLabel ?? ""
     }
     
     var localizedXUnit: String {
         if legacyXUnit != nil {
             return legacyXUnit!
         }
-        return translation?.localize(xUnit ?? "") ?? xUnit ?? ""
+        return translation?.localizeString(xUnit ?? "") ?? xUnit ?? ""
     }
     
     var localizedYUnit: String {
         if legacyYUnit != nil {
             return legacyYUnit!
         }
-        return translation?.localize(yUnit ?? "") ?? yUnit ?? ""
+        return translation?.localizeString(yUnit ?? "") ?? yUnit ?? ""
     }
     
     var localizedZUnit: String {
-        return translation?.localize(zUnit ?? "") ?? zUnit ?? ""
+        return translation?.localizeString(zUnit ?? "") ?? zUnit ?? ""
     }
     
     var localizedYXUnit: String {
         if let yxUnit = yxUnit {
-            return translation?.localize(yxUnit) ?? yxUnit
+            return translation?.localizeString(yxUnit) ?? yxUnit
         }
         return (localizedYUnit != "" ? localizedYUnit : "") + " / " + (localizedXUnit != "" ? localizedXUnit : "")
     }
@@ -189,7 +189,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         if xUnit == nil {
             let pattern = "^(.+)\\ \\((.+)\\)$"
             let regex = try? NSRegularExpression(pattern: pattern)
-            let source = translation?.localize(xLabel) ?? xLabel
+            let source = translation?.localizeString(xLabel) ?? xLabel
             if let match = regex?.firstMatch(in: source, range: NSRange(location: 0, length: source.count)) {
                 if let labelRange = Range(match.range(at: 1), in: source), let unitRange = Range(match.range(at: 2), in: source) {
                     let newLabel = source[labelRange]
@@ -202,7 +202,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         if yUnit == nil {
             let pattern = "^(.+)\\ \\((.+)\\)$"
             let regex = try? NSRegularExpression(pattern: pattern)
-            let source = translation?.localize(yLabel) ?? yLabel
+            let source = translation?.localizeString(yLabel) ?? yLabel
             if let match = regex?.firstMatch(in: source, range: NSRange(location: 0, length: source.count)) {
                 if let labelRange = Range(match.range(at: 1), in: source), let unitRange = Range(match.range(at: 2), in: source) {
                     let newLabel = source[labelRange]
