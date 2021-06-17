@@ -199,3 +199,8 @@
 "bt_more_info_link_text" = "Als je apparaat niet ondersteund wordt, klik dan op \"meer info\" om meer te leren over de flexibele Bluetooth Low Energy ondersteuning in phyphox op onze website.";
 "bt_more_info_link_button" = "Meer informatie";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
+"common_direction_short_south" = "Z";
+"common_direction_short_east" = "O";
+"common_direction_short_north_east" = "NO";
+"common_direction_short_south_east" = "ZO";
+"common_direction_short_south_west" = "ZW";
