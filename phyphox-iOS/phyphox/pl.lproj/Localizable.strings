@@ -199,3 +199,4 @@
 "bt_more_info_link_text" = "Jeśli twoje urządzenie nie jest obsługiwane, wybierz \"więcej informacji\", aby dowiedzieć się więcej o obsłudze technologii Bluetooth Low Energy w aplikacji phyphox na naszej stronie.";
 "bt_more_info_link_button" = "Więcej informacji";
 "bt_more_info_link_url" = "https://phyphox.org/ble-pl";
+"common_unit_short_arbitrary_unit" = "j.u.";
