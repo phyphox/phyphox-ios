@@ -200,3 +200,12 @@
 "bt_more_info_link_text" = "Nếu thiết bị của bạn không hỗ trợ, chọn \"thông tin thêm\" để tìm hiểu thêm hỗ trợ về Bluetooth Năng Lượng Thấp trong phyphox trên trang web của chúng tôi.";
 "bt_more_info_link_button" = "Thông tin thêm";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
+"common_unit_short_arbitrary_unit" = "đ.v.t.y";
+"common_direction_short_north" = "B";
+"common_direction_short_south" = "N";
+"common_direction_short_east" = "Đ";
+"common_direction_short_west" = "T";
+"common_direction_short_north_east" = "ĐB";
+"common_direction_short_south_east" = "ĐN";
+"common_direction_short_north_west" = "TB";
+"common_direction_short_south_west" = "TN";
