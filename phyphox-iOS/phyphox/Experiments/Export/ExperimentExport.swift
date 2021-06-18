@@ -159,7 +159,7 @@ struct ExperimentExport: Equatable {
                             timeSheet?.setCellAtRow(0, column: 0, to: "event")
                             timeSheet?.setCellAtRow(0, column: 1, to: "experiment time")
                             timeSheet?.setCellAtRow(0, column: 2, to: "system time")
-                            timeSheet?.setCellAtRow(0, column: 3, to: "syste time text")
+                            timeSheet?.setCellAtRow(0, column: 3, to: "system time text")
                             
                             i = 1
                             for mapping in reference.timeMappings {
