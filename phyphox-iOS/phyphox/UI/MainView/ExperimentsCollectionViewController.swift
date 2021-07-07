@@ -141,10 +141,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         super.viewDidLoad()
         
         self.title = "phyphox"
-
+        
         reload()
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        
+        ExperimentManager.shared.reloadUserExperiments()
 
         infoButton = UIButton(type: .infoDark)
         infoButton!.addTarget(self, action: #selector(showHelpMenu(_:)), for: .touchUpInside)

@@ -144,30 +144,58 @@ final class ExperimentManager {
     }
 
     func loadSavedExperiments() {
+        let timestamp = CFAbsoluteTimeGetCurrent()
+
         guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: savedExperimentStatesURL.path) else { return }
-
-        for file in experiments {
-            let url = savedExperimentStatesURL.appendingPathComponent(file)
-
-            guard url.pathExtension == experimentStateFileExtension
-                || url.pathExtension == experimentFileExtension
-                else { continue }
-
-            do {
-                let experiment = try ExperimentSerialization.readExperimentFromURL(url)
-                experiment.local = true
-
-                registerExperiment(experiment, custom: true, hidden: false)
-            }
-            catch {
-                showLoadingError(for: file, error: error, local: true, custom: true, src: url)
-            }
+        
+        let loadHud = JGProgressHUD()
+        loadHud.indicatorView = JGProgressHUDPieIndicatorView()
+        loadHud.interactionType = .blockAllTouches
+        loadHud.textLabel.text = localize("loadingTitle")
+        loadHud.setProgress(0.0, animated: true)
+        (UIApplication.shared.keyWindow?.rootViewController?.view).map {
+            loadHud.show(in: $0)
         }
 
-        NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        DispatchQueue.global(qos: .userInitiated).async {
+
+            
+            for (i, file) in experiments.enumerated() {
+                let url = savedExperimentStatesURL.appendingPathComponent(file)
+
+                guard url.pathExtension == experimentStateFileExtension
+                    || url.pathExtension == experimentFileExtension
+                    else { continue }
+
+                do {
+                    let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+                    experiment.local = true
+
+                    self.registerExperiment(experiment, custom: true, hidden: false)
+                }
+                catch {
+                    DispatchQueue.main.async {
+                        self.showLoadingError(for: file, error: error, local: true, custom: true, src: url)
+                    }
+                }
+                DispatchQueue.main.async {
+                    loadHud.setProgress(Float(i) / Float(experiments.count), animated: true)
+                }
+            }
+            DispatchQueue.main.async {
+                loadHud.dismiss()
+                NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+            }
+            #if DEBUG
+            let time = CFAbsoluteTimeGetCurrent() - timestamp
+            print("Load saved experiments took \(time * 1000) ms")
+            #endif
+        }
     }
 
     func loadCustomExperiments() {
+        let timestamp = CFAbsoluteTimeGetCurrent()
+
         guard let experiments = try? FileManager.default.contentsOfDirectory(atPath: customExperimentsURL.path) else { return }
 
         for file in experiments {
@@ -187,6 +215,11 @@ final class ExperimentManager {
         }
 
         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        
+        #if DEBUG
+        let time = CFAbsoluteTimeGetCurrent() - timestamp
+        print("Load custom experiments took \(time * 1000) ms")
+        #endif
     }
 
     private func loadExperiments() {
@@ -249,6 +282,8 @@ final class ExperimentManager {
         }
         loadCustomExperiments()
         loadSavedExperiments()
+        
+        
     }
     
     func experimentInCollection(crc32: UInt?) -> Bool {
@@ -269,8 +304,6 @@ final class ExperimentManager {
         let timestamp = CFAbsoluteTimeGetCurrent()
 
         loadExperiments()
-        loadCustomExperiments()
-        loadSavedExperiments()
         loadHiddenBluetoothExperiments()
 
         #if DEBUG
