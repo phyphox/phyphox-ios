@@ -36,10 +36,12 @@ final class ExperimentAnalysis {
     
     let timeReference: ExperimentTimeReference
     weak var delegate: ExperimentAnalysisDelegate?
+    
+    let sensorInputs: [ExperimentSensorInput]
 
     public var queue: DispatchQueue?
     
-    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference) {
+    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput]) {
         self.modules = modules
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
@@ -50,6 +52,8 @@ final class ExperimentAnalysis {
         self.timedRunStopDelay = timedRunStopDelay
         
         self.timeReference = timeReference
+        
+        self.sensorInputs = sensorInputs
         
         if onUserInput {
             for module in modules {
@@ -93,7 +97,7 @@ final class ExperimentAnalysis {
             }
 
             self.delegate?.analysisWillUpdate(self)
-
+            
             self.update {
                 let didRequestUpdateWhileBusy = self.requestedUpdateWhileBusy
 
@@ -134,7 +138,11 @@ final class ExperimentAnalysis {
         let linearTime = timeReference.getLinearTime()
         let experimentOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: experimentTime)).timeIntervalSince1970
         let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
-
+        
+        for sensorInput in sensorInputs {
+            sensorInput.updateGeneratedRate()
+        }
+        
         if (c >= 0) {
             for (i, analysis) in modulesInCycle.enumerated() {
                 queue?.async(execute: {

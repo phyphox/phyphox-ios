@@ -63,19 +63,34 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     let timeReference: ExperimentTimeReference
     
     let sqrt12 = sqrt(0.5)
+
+    enum RateStrategy: String, LosslessStringConvertible {
+        case auto
+        case request
+        case generate
+        case limit
+    }
+    
+    var rateStrategy: RateStrategy
+    
+    var lastEventTooFast: Bool = false
+    var lastEventT: TimeInterval? = nil
+    var lastResult: (x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?)? = nil
+    
+    let stride: Int
+    var strideCount: Int = 0
     
     /**
      The update frequency of the sensor.
      */
     private(set) var rate: TimeInterval //in s
     
-    var effectiveRate: TimeInterval {
-            if averaging != nil {
-                return 0.0
-            }
-            else {
-                return rate
-            }
+    var hardwareRate: TimeInterval {
+        if rateStrategy == .generate || rateStrategy == .limit {
+            return 0.0
+        } else {
+            return rate
+        }
     }
     
     var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
@@ -92,11 +107,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     private var queue: DispatchQueue?
     
-    private class Averaging {
+    private class ValueBuffer {
         /**
          The duration of averaging intervals.
          */
-        var averagingInterval: TimeInterval
+        var interval: TimeInterval
+        var average: Bool
         
         /**
          Start of current average mesurement.
@@ -112,30 +128,101 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         
         var numberOfUpdates: UInt = 0
         
-        init(averagingInterval: TimeInterval) {
-            self.averagingInterval = averagingInterval
+        init(interval: TimeInterval, average: Bool) {
+            self.interval = interval
+            self.average = average
+        }
+        
+        func addValue(x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?, timestamp: TimeInterval) {
+            if iterationStartTimestamp == nil {
+                iterationStartTimestamp = timestamp
+            }
+            
+            if x != nil {
+                if self.x == nil || !average {
+                    self.x = x!
+                } else {
+                    self.x! += x!
+                }
+            }
+            
+            if y != nil {
+                if self.y == nil || !average {
+                    self.y = y!
+                }
+                else {
+                    self.y! += y!
+                }
+            }
+            
+            if z != nil {
+                if self.z == nil || !average {
+                    self.z = z!
+                }
+                else {
+                    self.z! += z!
+                }
+            }
+            
+            if abs != nil {
+                if self.abs == nil || !average {
+                    self.abs = abs!
+                }
+                else {
+                    self.abs! += abs!
+                }
+            }
+            
+            if accuracy != nil {
+                if self.accuracy == nil || !average {
+                    self.accuracy = accuracy!
+                }
+                else {
+                    self.accuracy! = min(accuracy!, self.accuracy!)
+                }
+            }
+            
+            numberOfUpdates += 1
+        }
+        
+        func getResult() -> (x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?) {
+            if average {
+                let u: Double = Double(numberOfUpdates)
+                return (x: (x != nil ? x!/u : nil), y: (y != nil ? y!/u : nil), z: (z != nil ? z!/u : nil), abs: (abs != nil ? abs!/u : nil), accuracy: accuracy)
+            } else {
+                return (x: x, y: y, z: z, abs: abs, accuracy: accuracy)
+            }
         }
         
         func requiresFlushing(_ currentT: TimeInterval) -> Bool {
-            return iterationStartTimestamp != nil && iterationStartTimestamp! + averagingInterval <= currentT
+            return numberOfUpdates > 0 && iterationStartTimestamp != nil && iterationStartTimestamp! + interval <= currentT
+        }
+        
+        func reset(nextIntervalStart: TimeInterval?) {
+            iterationStartTimestamp = nextIntervalStart
+            
+            x = nil
+            y = nil
+            z = nil
+            accuracy = nil
+            
+            numberOfUpdates = 0
         }
     }
     
     /**
      Information on averaging. Set to `nil` to disable averaging.
      */
-    private var averaging: Averaging?
+    private var valueBuffer: ValueBuffer
     
     let ignoreUnavailable: Bool
     
-    var recordingAverages: Bool {
-            return averaging != nil
-    }
-    
-    init(sensorType: SensorType, timeReference: ExperimentTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, average: Bool, ignoreUnavailable: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
+    init(sensorType: SensorType, timeReference: ExperimentTimeReference, calibrated: Bool, motionSession: MotionSession, rate: TimeInterval, rateStrategy: RateStrategy, average: Bool, stride: Int, ignoreUnavailable: Bool, xBuffer: DataBuffer?, yBuffer: DataBuffer?, zBuffer: DataBuffer?, tBuffer: DataBuffer?, absBuffer: DataBuffer?, accuracyBuffer: DataBuffer?) {
         self.sensorType = sensorType
         self.timeReference = timeReference
         self.rate = rate
+        self.rateStrategy = rateStrategy
+        self.stride = stride
         self.calibrated = calibrated
         
         self.ignoreUnavailable = ignoreUnavailable
@@ -157,9 +244,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             self.motionSession.attitude = true
         }
         
-        if average {
-            self.averaging = Averaging(averagingInterval: rate)
-        }
+        self.valueBuffer = ValueBuffer(interval: rate, average: average)
     }
     
     static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
@@ -208,21 +293,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         return try ExperimentSensorInput.verifySensorAvailibility(sensorType: self.sensorType, motionSession: motionSession)
     }
     
-    private func resetValuesForAveraging() {
-        guard let averaging = averaging else {
-            return
-        }
-        
-        averaging.iterationStartTimestamp = nil
-        
-        averaging.x = nil
-        averaging.y = nil
-        averaging.z = nil
-        averaging.accuracy = nil
-        
-        averaging.numberOfUpdates = 0
-    }
-    
     func start(queue: DispatchQueue) {
         self.queue = queue
         
@@ -232,11 +302,15 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             return
         } catch {}
         
-        resetValuesForAveraging()
+        strideCount = 0
+        lastEventTooFast = false
+        lastEventT = nil
+        lastResult = nil
+        valueBuffer.reset(nextIntervalStart: nil)
         
         switch sensorType {
         case .accelerometer:
-            _ = motionSession.getAccelerometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
+            _ = motionSession.getAccelerometerData(self, interval: hardwareRate, handler: { [unowned self] (data, error) in
                 guard let accelerometerData = data else {
                     return
                 }
@@ -255,7 +329,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 })
             
         case .gyroscope:
-            _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     return
                 }
@@ -275,7 +349,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             
         case .magneticField:
             if calibrated {
-                _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+                _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
                     guard let motion = deviceMotion else {
                         return
                     }
@@ -306,7 +380,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     self.dataIn(x, y: y, z: z, abs: nil, accuracy: accuracy, t: t, error: error)
                     })
             } else {
-                _ = motionSession.getMagnetometerData(self, interval: effectiveRate, handler: { [unowned self] (data, error) in
+                _ = motionSession.getMagnetometerData(self, interval: hardwareRate, handler: { [unowned self] (data, error) in
                     guard let magnetometerData = data else {
                         return
                     }
@@ -324,7 +398,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     })
             }
         case .linearAcceleration:
-            _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     return
                 }
@@ -343,7 +417,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 })
             
         case .pressure:
-            _ = motionSession.getAltimeterData(self, interval: effectiveRate, handler: { [unowned self] (data, error) -> Void in
+            _ = motionSession.getAltimeterData(self, interval: hardwareRate, handler: { [unowned self] (data, error) -> Void in
                 guard let altimeterData = data else {
                     return
                 }
@@ -356,16 +430,16 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 self.dataIn(pressure, y: nil, z: nil, abs: nil, accuracy: nil, t: t, error: error)
                 })
         case .proximity:
-            _ = motionSession.getProximityData(self, interval: effectiveRate, handler: { [unowned self] (state) -> Void in
+            _ = motionSession.getProximityData(self, interval: hardwareRate, handler: { [unowned self] (state) -> Void in
                 
                 let distance = state ? 0.0 : 5.0 //Estimate in cm
                 
                 self.ready = true
-                self.dataIn(distance, y: nil, z: nil, abs: nil, accuracy: nil, t: timeReference.getExperimentTime(), error: nil)
+                self.dataIn(distance, y: nil, z: nil, abs: nil, accuracy: nil, t: ProcessInfo.processInfo.systemUptime, error: nil)
                 })
             
         case .attitude:
-            _ = motionSession.getDeviceMotion(self, interval: effectiveRate, handler: { [unowned self] (deviceMotion, error) in
+            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
                 guard let motion = deviceMotion else {
                     return
                 }
@@ -457,6 +531,14 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
+    private func flush(t: TimeInterval, data: (x: Double?, y: Double?, z: Double?, abs: Double?, accuracy: Double?)) {
+        strideCount += 1
+        if strideCount >= stride {
+            writeToBuffers(data.x, y: data.y, z: data.z, abs: data.abs, accuracy: data.accuracy, t: t)
+            strideCount = 0
+        }
+    }
+    
     private func dataIn(_ x: Double, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval, error: NSError?) {
         
         func dataInSync(_ x: Double, y: Double?, z: Double?, abs: Double?, accuracy: Double?, t: TimeInterval, error: NSError?) {
@@ -466,77 +548,64 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             }
             
             let relativeT = timeReference.getExperimentTimeFromEvent(eventTime: t)
-            
-            if let av = averaging {
-                if av.iterationStartTimestamp == nil {
-                    av.iterationStartTimestamp = relativeT
+                        
+            switch rateStrategy {
+            case .auto:
+                valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
+                flush(t: relativeT, data: valueBuffer.getResult())
+                if let lastT = lastEventT, relativeT - lastT < rate * 0.9 {
+                    if lastEventTooFast {
+                        rateStrategy = .generate
+                    }
+                    lastEventTooFast = true
+                } else {
+                    lastEventTooFast = false
                 }
-                
-                if av.x == nil {
-                    av.x = x
+                lastEventT = relativeT
+            case .generate:
+                if lastResult == nil {
+                    valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
+                    lastResult = valueBuffer.getResult()
+                } else if valueBuffer.iterationStartTimestamp != nil && (valueBuffer.iterationStartTimestamp! + rate < relativeT) {
+                    while (valueBuffer.iterationStartTimestamp! + 2*rate < relativeT) {
+                        flush(t: valueBuffer.iterationStartTimestamp! + rate, data: lastResult!)
+                        valueBuffer.iterationStartTimestamp! += rate
+                    }
+                    if valueBuffer.numberOfUpdates > 0 {
+                        lastResult = valueBuffer.getResult()
+                        flush(t: valueBuffer.iterationStartTimestamp! + rate, data: lastResult!)
+                        valueBuffer.reset(nextIntervalStart: valueBuffer.iterationStartTimestamp! + rate)
+                    }
+                    valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
                 }
-                else {
-                    av.x! += x
+            case .limit:
+                valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
+                if (valueBuffer.requiresFlushing(relativeT)) {
+                    flush(t: relativeT, data: valueBuffer.getResult())
+                    valueBuffer.reset(nextIntervalStart: relativeT)
                 }
-                
-                if y != nil {
-                    if av.y == nil {
-                        av.y = y!
-                    }
-                    else {
-                        av.y! += y!
-                    }
-                }
-                
-                if z != nil {
-                    if av.z == nil {
-                        av.z = z!
-                    }
-                    else {
-                        av.z! += z!
-                    }
-                }
-                
-                if abs != nil {
-                    if av.abs == nil {
-                        av.abs = abs!
-                    }
-                    else {
-                        av.abs! += abs!
-                    }
-                }
-                
-                if accuracy != nil {
-                    if av.accuracy == nil {
-                        av.accuracy = accuracy!
-                    }
-                    else {
-                        av.accuracy! = min(accuracy!, av.accuracy!)
-                    }
-                }
-                
-                av.numberOfUpdates += 1
+            case .request:
+                valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
+                flush(t: relativeT, data: valueBuffer.getResult())
             }
-            else {
-                writeToBuffers(x, y: y, z: z, abs: abs, accuracy: accuracy, t: relativeT)
-            }
-            
-            if let av = averaging {
-                if av.requiresFlushing(relativeT) && av.numberOfUpdates > 0 {
-                    let u = Double(av.numberOfUpdates)
-                    
-                    writeToBuffers((av.x != nil ? av.x!/u : nil), y: (av.y != nil ? av.y!/u : nil), z: (av.z != nil ? av.z!/u : nil), abs: (av.abs != nil ? av.abs!/u : nil), accuracy: av.accuracy, t: relativeT)
-                    
-                    resetValuesForAveraging()
-                    av.iterationStartTimestamp = relativeT
-                }
-            }
+ 
         }
         
         queue?.async {
             autoreleasepool(invoking: {
                 dataInSync(x, y: y, z: z, abs: abs, accuracy: accuracy, t: t, error: error)
             })
+        }
+    }
+    
+    public func updateGeneratedRate() {
+        if valueBuffer.iterationStartTimestamp == nil || lastResult == nil || rateStrategy != .generate {
+            return
+        }
+        let now = timeReference.getExperimentTime()
+        while (valueBuffer.iterationStartTimestamp! + 2*rate <= now) {
+            flush(t: valueBuffer.iterationStartTimestamp! + rate, data: lastResult!)
+            valueBuffer.iterationStartTimestamp! += rate
         }
     }
 }

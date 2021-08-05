@@ -68,10 +68,26 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
 struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
+    let rateStrategy: ExperimentSensorInput.RateStrategy?
     let average: Bool
+    let stride: Int
     let ignoreUnavailable: Bool
 
     let outputs: [SensorOutputDescriptor]
+    
+    func defaults(forVersion version: SemanticVersion) -> SensorInputDescriptor {
+        let strategy: ExperimentSensorInput.RateStrategy
+        if let rateStrategy = rateStrategy {
+            strategy = rateStrategy
+        } else {
+            if version >= SemanticVersion(major: 1, minor: 14, patch: 0) {
+                strategy = .auto
+            } else {
+                strategy = .limit
+            }
+        }
+        return SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: strategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs)
+    }
 }
 
 private final class SensorElementHandler: ResultElementHandler, LookupElementHandler {
@@ -90,7 +106,9 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
     private enum Attribute: String, AttributeKey {
         case type
         case rate
+        case rateStrategy
         case average
+        case stride
         case ignoreUnavailable
     }
 
@@ -100,7 +118,9 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let sensor: SensorType = try attributes.value(for: .type)
 
         let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
+        let rateStrategy: ExperimentSensorInput.RateStrategy? = try? attributes.value(for: .rateStrategy)
         let average = try attributes.optionalValue(for: .average) ?? false
+        let stride = try attributes.optionalValue(for: .stride) ?? 1
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
@@ -109,7 +129,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
             throw ElementHandlerError.message("Averaging is enabled but rate is 0")
         }
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, average: average, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
     }
 }
 

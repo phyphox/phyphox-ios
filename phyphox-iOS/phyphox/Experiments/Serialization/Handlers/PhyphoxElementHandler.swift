@@ -25,7 +25,7 @@ private extension ExperimentSensorInput {
         let absBuffer = descriptor.buffer(for: "abs", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
 
-        self.init(sensorType: descriptor.sensor, timeReference: timeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, average: descriptor.average, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
+        self.init(sensorType: descriptor.sensor, timeReference: timeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, rateStrategy: descriptor.rateStrategy!, average: descriptor.average, stride: descriptor.stride, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
     }
 }
 
@@ -188,18 +188,18 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 timeReference.timeMappings.append(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
             }
         }
-        
-        let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
-        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference)
 
         let inputDescriptor = try inputHandler.expectOptionalResult()
         let outputDescriptor = try outputHandler.expectOptionalResult()
 
-        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
+        let sensorInputs = inputDescriptor?.sensors.map { ExperimentSensorInput(descriptor: $0.defaults(forVersion: version), timeReference: timeReference, buffers: buffers) } ?? []
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
         let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
+        
+        let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
+        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs)
         
         var bluetoothDevices: [ExperimentBluetoothDevice] = []
         var bluetoothInputs: [ExperimentBluetoothInput] = []
