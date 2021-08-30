@@ -134,7 +134,7 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let discoveryStr = attributes.optionalString(for: .discovery)
         let discovery: NetworkDiscovery?
         let sendTopic = attributes.optionalString(for: .sendTopic)
-        let receiveTopic = attributes.optionalString(for: .receiveTopic) ?? ""
+        let receiveTopic = attributes.optionalString(for: .receiveTopic)
         
         switch discoveryStr {
         case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))

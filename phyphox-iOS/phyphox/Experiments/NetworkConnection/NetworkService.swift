@@ -215,7 +215,7 @@ class MqttService: CocoaMQTTDelegate {
     var subscribed = false
     var data: [Data] = []
     
-    func connect(address: String, receiveTopic: String) {
+    func connect(address: String, receiveTopic: String?) {
         self.address = address
         self.receiveTopic = receiveTopic
         
@@ -307,7 +307,7 @@ class MqttService: CocoaMQTTDelegate {
         if !connected {
             return NetworkServiceResult.noConnection
         }
-        if !subscribed {
+        if !subscribed && receiveTopic != nil {
             return NetworkServiceResult.genericError(message: "Not subscribed.")
         }
         return NetworkServiceResult.success
@@ -321,9 +321,9 @@ class MqttService: CocoaMQTTDelegate {
 class MqttCsvService: NetworkService {
     var address: String? = nil
     let mqttService = MqttService()
-    let receiveTopic: String
+    let receiveTopic: String?
     
-    init(receiveTopic: String) {
+    init(receiveTopic: String?) {
         self.receiveTopic = receiveTopic
     }
     
@@ -366,7 +366,6 @@ class MqttCsvService: NetworkService {
                 payload = "\(Date().timeIntervalSince1970)"
             case .none: continue
             }
-            
             mqttService.publish(topic: item, payload: payload)
         }
         
@@ -381,10 +380,10 @@ class MqttCsvService: NetworkService {
 class MqttJsonService: NetworkService {
     var address: String? = nil
     let mqttService = MqttService()
-    let receiveTopic: String
+    let receiveTopic: String?
     let sendTopic: String
     
-    init(receiveTopic: String, sendTopic: String) {
+    init(receiveTopic: String?, sendTopic: String) {
         self.receiveTopic = receiveTopic
         self.sendTopic = sendTopic
     }
