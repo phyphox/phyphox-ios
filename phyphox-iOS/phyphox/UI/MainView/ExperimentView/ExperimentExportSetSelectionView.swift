@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import BEMCheckBox
 
 private let ySpacing: CGFloat = 3.0
 private let xSpacing: CGFloat = 10.0

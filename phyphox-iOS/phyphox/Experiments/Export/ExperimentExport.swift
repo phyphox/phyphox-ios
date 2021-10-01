@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ZipZap
 
 struct ExperimentExport: Equatable {
     let sets: [ExperimentExportSet]

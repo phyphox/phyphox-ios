@@ -7,8 +7,8 @@
 //
 
 import UIKit
-import ZipZap
 import CoreBluetooth
+import ZipZap
 
 private let minCellWidth: CGFloat = 320.0
 private let phyphoxCatHintRelease = "1.1.9" //If this is updated to the current version, the hint bubble for the support menu is shown again

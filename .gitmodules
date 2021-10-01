@@ -4,3 +4,12 @@
 [submodule "phyphox-webinterface"]
 	path = phyphox-webinterface
 	url = https://github.com/Kuhlen/phyphox-webinterface
+[submodule "phyphox-iOS/CocoaMQTT"]
+	path = phyphox-iOS/CocoaMQTT
+	url = https://github.com/phyphox/CocoaMQTT.git
+[submodule "phyphox-iOS/ZipZap"]
+	path = phyphox-iOS/ZipZap
+	url = https://github.com/pixelglow/ZipZap.git
+[submodule "phyphox-iOS/JXLS"]
+	path = phyphox-iOS/JXLS
+	url = https://github.com/JanX2/JXLS.git

@@ -47,19 +47,9 @@
 				<string>phyphox</string>
 			</array>
 		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>CFBundleURLName</key>
-			<string>de.rwth-aachen.physics.phyphox</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>eduroom.phyphox</string>
-			</array>
-		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>9563</string>
+	<string>9588</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
