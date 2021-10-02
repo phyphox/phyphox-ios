@@ -47,8 +47,21 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        self.navigationController?.navigationBar.barTintColor = kBackgroundColor
-        self.navigationController?.navigationBar.isTranslucent = true
+        guard let navBar = self.navigationController?.navigationBar else {
+            return
+        }
+        if #available(iOS 13, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = kBackgroundColor
+            appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
+            navBar.standardAppearance = appearance;
+            navBar.scrollEdgeAppearance = navBar.standardAppearance
+        } else {
+            navBar.barTintColor = kBackgroundColor
+            navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
+            navBar.isTranslucent = true
+        }
         
         let defaults = UserDefaults.standard
         if defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {

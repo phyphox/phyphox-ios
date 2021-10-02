@@ -192,8 +192,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
 
-        self.navigationController?.navigationBar.barTintColor = kHighlightColor
-        self.navigationController?.navigationBar.isTranslucent = false
+        guard let navBar = self.navigationController?.navigationBar else {
+            return
+        }
+        if #available(iOS 13, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = kHighlightColor
+            appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
+            navBar.standardAppearance = appearance;
+            navBar.scrollEdgeAppearance = navBar.standardAppearance
+        } else {
+            navBar.barTintColor = kHighlightColor
+            navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
+            navBar.isTranslucent = false
+        }
     }
     
     func updateLayout() {
