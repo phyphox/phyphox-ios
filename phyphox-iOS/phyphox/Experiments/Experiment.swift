@@ -435,7 +435,15 @@ extension Experiment: ExperimentAnalysisDelegate {
 extension Experiment {
     func metadataEqual(to rhs: Experiment?) -> Bool {
         guard let rhs = rhs else { return false }
-        return title == rhs.title && category == rhs.category && description == rhs.description
+        return localizedTitle == rhs.localizedTitle &&
+            localizedCategory == rhs.localizedCategory &&
+            localizedDescription == rhs.localizedDescription &&
+            icon == rhs.icon &&
+            color == rhs.color &&
+            stateTitle == rhs.stateTitle &&
+            appleBan == rhs.appleBan &&
+            isLink == rhs.isLink &&
+            localizedLinks == rhs.localizedLinks
     }
 }
 
@@ -464,7 +472,8 @@ extension Experiment: Equatable {
             lhs.analysis == rhs.analysis &&
             lhs.export == rhs.export &&
             lhs.stateTitle == rhs.stateTitle &&
-            lhs.appleBan == rhs.appleBan
+            lhs.appleBan == rhs.appleBan &&
+            lhs.isLink == rhs.isLink
     }
 }
 
