@@ -29,6 +29,13 @@ let exportTypes = [("Excel", ExportFileFormat.excel),
                    ("CSV (Tabulator, decimal comma)", ExportFileFormat.csv(separator: "\t", decimalPoint: ",")),
                    ("CSV (Semicolon, decimal comma)", ExportFileFormat.csv(separator: ";", decimalPoint: ","))]
 
+func getSecureName(_ name: String) -> String {
+    if name.starts(with: "=") || name.starts(with: "+") || name.starts(with: "-") || name.starts(with: "@") {
+        return "'" + name
+    }
+    return name
+}
+
 struct ExperimentExportSet {
     let name: String
     let data: [(name: String, buffer: DataBuffer)]
@@ -71,10 +78,10 @@ struct ExperimentExportSet {
             if index == 0 {
                 for (j, entry) in data.enumerated() {
                     if j == 0 {
-                        line += "\"\(entry.name)\""
+                        line += "\"\(getSecureName(entry.name))\""
                     }
                     else {
-                        line += separator + "\"\(entry.name)\""
+                        line += separator + "\"\(getSecureName(entry.name))\""
                     }
                 }
                 
@@ -123,7 +130,7 @@ struct ExperimentExportSet {
             if i == 0 {
                 addedValue = true
                 for (j, entry) in data.enumerated() {
-                    _ = sheet?.setCellAtRow(0, column: UInt32(j), to: entry.name)
+                    _ = sheet?.setCellAtRow(0, column: UInt32(j), to: getSecureName(entry.name))
                 }
             }
             else {
