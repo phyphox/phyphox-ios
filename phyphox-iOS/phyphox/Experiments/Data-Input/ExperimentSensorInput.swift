@@ -551,8 +551,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                         
             switch rateStrategy {
             case .auto:
-                valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
-                flush(t: relativeT, data: valueBuffer.getResult())
+                flush(t: relativeT, data: (x: x, y: y, z: z, abs: abs, accuracy: accuracy))
                 if let lastT = lastEventT, relativeT - lastT < rate * 0.9 {
                     if lastEventTooFast {
                         rateStrategy = .generate
@@ -585,8 +584,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     valueBuffer.reset(nextIntervalStart: relativeT)
                 }
             case .request:
-                valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
-                flush(t: relativeT, data: valueBuffer.getResult())
+                flush(t: relativeT, data: (x: x, y: y, z: z, abs: abs, accuracy: accuracy))
             }
  
         }
