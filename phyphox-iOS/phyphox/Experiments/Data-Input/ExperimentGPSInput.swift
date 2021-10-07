@@ -69,7 +69,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             let zAccuracy = location.horizontalAccuracy
             let t = location.timestamp
             let status = location.horizontalAccuracy > 0 ? 1.0 : 0.0
-            let satellites = 0.0
+            let satellites = -1.0
             self.dataIn(lat, lon: lon, z: z, zWgs84: zWgs84, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
         }
     }
