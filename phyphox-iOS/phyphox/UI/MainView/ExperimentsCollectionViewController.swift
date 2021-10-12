@@ -44,9 +44,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return ["Header" : ExperimentHeaderView.self]
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
+    func setupNavbar() {
         guard let navBar = self.navigationController?.navigationBar else {
             return
         }
@@ -62,6 +60,16 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
             navBar.isTranslucent = true
         }
+    }
+    
+    override func willMove(toParent parent: UIViewController?) {
+        super.willMove(toParent: parent)
+        setupNavbar()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setupNavbar()
         
         let defaults = UserDefaults.standard
         if defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
