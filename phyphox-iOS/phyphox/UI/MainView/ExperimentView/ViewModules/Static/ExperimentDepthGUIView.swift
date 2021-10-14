@@ -114,6 +114,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentDepthGUIView.tapped(_:)))
         arView.addGestureRecognizer(tapGesture)
+        self.addGestureRecognizer(tapGesture)
         
         arView.delegate = self
         
