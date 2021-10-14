@@ -94,6 +94,16 @@ class ExperimentCell: UICollectionViewCell {
                         }
                         catch {}
                     }
+                    
+                    if let depthInput = experiment.depthInput {
+                        do {
+                            try depthInput.verifySensorAvailibility()
+                        }
+                        catch DepthInputError.sensorUnavailable {
+                            available = false
+                        }
+                        catch {}
+                    }
 
                     let iconView = experiment.icon.generateResizableRepresentativeView(color: experiment.color, fontColor: experiment.fontColor)
                     self.iconView = iconView

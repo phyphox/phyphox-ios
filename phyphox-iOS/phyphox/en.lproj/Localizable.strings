@@ -37,6 +37,7 @@
 "sensorHumidity" = "Humidity";
 "sensorAttitude" = "Attitude";
 "sensorVendor" = "Vendor specific";
+"sensorDepth" = "Depth (LiDAR)";
 "location" = "Location";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
 "sensorNotAvailableWarningText1" = "The sensor";
