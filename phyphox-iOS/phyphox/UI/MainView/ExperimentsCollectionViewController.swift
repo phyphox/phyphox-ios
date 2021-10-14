@@ -602,6 +602,25 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             catch {}
         }
+        
+        if let depthInput = experiment.experiment.depthInput {
+            do {
+                try depthInput.verifySensorAvailibility()
+            }
+            catch DepthInputError.sensorUnavailable {
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
+                
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                }))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
+                
+                present(controller, animated: true, completion: nil)
+                
+                return
+            }
+            catch {}
+        }
 
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
@@ -891,6 +910,25 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 }))
                 controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 navigationController?.present(controller, animated: true, completion: nil)
+                return false
+            }
+            catch {}
+        }
+        
+        if let depthInput = loadedExperiment.depthInput {
+            do {
+                try depthInput.verifySensorAvailibility()
+            }
+            catch DepthInputError.sensorUnavailable {
+                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
+                
+                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
+                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                }))
+                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
+                
+                present(controller, animated: true, completion: nil)
+                
                 return false
             }
             catch {}
