@@ -7,4 +7,6 @@
 #import <JXLS/JXLS.h>
 #import "UIColor+Expanded.h"
 #import <ifaddrs.h>
+#import "ShaderTypes.h"
+
 @import JGProgressHUD;

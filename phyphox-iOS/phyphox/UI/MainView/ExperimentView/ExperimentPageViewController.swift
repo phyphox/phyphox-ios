@@ -442,6 +442,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        if #available(iOS 14.0, *) {
+            for vc in experimentViewControllers {
+                for view in vc.modules {
+                    if let depthGUI = view as? ExperimentDepthGUIView {
+                        experiment.depthInput?.session.attachDelegate(delegate: depthGUI)
+                        depthGUI.depthGUISelectionDelegate = experiment.depthInput?.session
+                    }
+                }
+            }
+        }
         if let networkConnection = experiment.networkConnections.first {
             var sensorList: [String] = []
             for sensorInput in experiment.sensorInputs {
@@ -458,6 +468,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
+        if #available(iOS 14.0, *) {
+            experiment.depthInput?.session.stopSession()
+        }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
         

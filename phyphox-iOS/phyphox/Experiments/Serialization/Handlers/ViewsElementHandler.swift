@@ -17,6 +17,7 @@ enum ViewElementDescriptor {
     case edit(EditViewElementDescriptor)
     case button(ButtonViewElementDescriptor)
     case graph(GraphViewElementDescriptor)
+    case depthGUI(DepthGUIViewElementDescriptor)
 }
 
 protocol ViewComponentElementHandler: ElementHandler {
@@ -37,6 +38,7 @@ private final class ViewElementHandler: ResultElementHandler {
     private let editHandler = EditViewElementHandler()
     private let buttonhandler = ButtonViewElementHandler()
     private let graphHandler = GraphViewElementHandler()
+    private let depthGUIHandler = DepthGUIViewElementHandler()
 
     private var elementOrder = [ViewComponentElementHandler]()
 
@@ -58,6 +60,8 @@ private final class ViewElementHandler: ResultElementHandler {
             handler = buttonhandler
         case "graph":
             handler = graphHandler
+        case "depth-gui":
+            handler = depthGUIHandler
         default:
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }
@@ -90,6 +94,7 @@ private final class ViewElementHandler: ResultElementHandler {
         editHandler.clear()
         buttonhandler.clear()
         graphHandler.clear()
+        depthGUIHandler.clear()
     }
 }
 

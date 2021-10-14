@@ -18,7 +18,7 @@ protocol ModuleExclusiveLayoutDelegate {
 
 final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate, ApplyZoomDelegate {
     
-    private let modules: [UIView]
+    let modules: [UIView]
     var exclusiveView: UIView? = nil
     
     private let insetTop: CGFloat = 10

@@ -151,6 +151,7 @@
 "graph_difference_label" = "Difference";
 "graph_fit_label" = "Linear fit: y = a x + b";
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
+"remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
 "applyZoomTitle" = "Apply zoom";
 "applyZoomExplanation" = "As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.";
 "applyZoomAdvanced" = "Advanced options";
@@ -233,6 +234,10 @@
 "beeperStop" = "Stop sound";
 "activate_all" = "Activate all";
 "deactivate_all" = "Deactivate all";
+"depthAggregationMode" = "Aggregation mode";
+"depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";
+"depthAggregationModeClosest" = "Closest";
+"depthAggregationModeAverage" = "Average";
 
 "common_unit_short_arbitrary_unit" = "a.u.";
 "common_unit_short_second" = "s";

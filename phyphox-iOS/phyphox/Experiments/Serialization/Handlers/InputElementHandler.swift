@@ -65,6 +65,50 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
     }
 }
 
+struct DepthInputDescriptor: SensorDescriptor {
+    let mode: ExperimentDepthInput.DepthExtractionMode
+    let x1: Float
+    let x2: Float
+    let y1: Float
+    let y2: Float
+    let outputs: [SensorOutputDescriptor]
+}
+
+private final class DepthElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [DepthInputDescriptor]()
+
+    private let outputHandler = SensorOutputElementHandler()
+
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["output": outputHandler]
+    }
+
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    private enum Attribute: String, AttributeKey {
+        case mode
+        case x1
+        case x2
+        case y1
+        case y2
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let mode: ExperimentDepthInput.DepthExtractionMode = try attributes.optionalValue(for: .mode) ?? .closest
+        let x1: Float = try attributes.optionalValue(for: .x1) ?? 0.4
+        let x2: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+        let y1: Float = try attributes.optionalValue(for: .x1) ?? 0.4
+        let y2: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+
+        
+        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, outputs: outputHandler.results))
+    }
+}
+
 struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
@@ -356,11 +400,12 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
 }
 
 final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = (sensors: [SensorInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
+    typealias Result = (sensors: [SensorInputDescriptor], depth: [DepthInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
 
     var results = [Result]()
 
     private let sensorHandler = SensorElementHandler()
+    private let depthHandler = DepthElementHandler()
     private let audioHandler = AudioElementHandler()
     private let locationHandler = LocationElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
@@ -368,16 +413,17 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
     var childHandlers: [String: ElementHandler]
 
     init() {
-        childHandlers = ["sensor": sensorHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["sensor": sensorHandler, "depth": depthHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let audio = audioHandler.results
         let location = locationHandler.results
         let sensors = sensorHandler.results
+        let depth = depthHandler.results
         let bluetooth = bluetoothHandler.results
 
-        results.append((sensors, audio, location, bluetooth))
+        results.append((sensors, depth, audio, location, bluetooth))
     }
 }
 
