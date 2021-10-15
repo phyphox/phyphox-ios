@@ -1074,7 +1074,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if timerEnabled {
                 if timerBeep.countdown || timerBeep.start || timerBeep.stop || timerBeep.running {
                     do {
-                        try experiment.startAudio(countdown: true)
+                        try experiment.startAudio(countdown: true, stopExperimentDelegate: self)
                     } catch {
                         showError(message: "Could not start experiment \(error).")
                         experiment.stop()
@@ -1146,7 +1146,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func actuallyStartExperiment() {
         do {
-            try experiment.start()
+            try experiment.start(stopExperimentDelegate: self)
         } catch AudioEngine.AudioEngineError.NoInput {
             showError(message: "Could not start experiment: No microphone available.")
             experiment.stop()

@@ -324,13 +324,14 @@ final class Experiment {
         }
     }
     
-    public func startAudio(countdown: Bool) throws {
+    public func startAudio(countdown: Bool, stopExperimentDelegate: StopExperimentDelegate) throws {
         if audioEngine != nil { //Do not start twice. It could have been already started for a beeping countdown.
             audioEngine?.beepOnly = countdown
             return
         }
         if audioOutput != nil || !audioInputs.isEmpty || countdown {
             audioEngine = AudioEngine(audioOutput: audioOutput ?? (countdown ? ExperimentAudioOutput(sampleRate: 48000, loop: false, normalize: true, directSource: nil, tones: [], noise: nil) : nil), audioInput: audioInputs.first)
+            audioEngine?.stopExperimentDelegate = stopExperimentDelegate
             audioEngine?.beepOnly = countdown
             try audioEngine?.startEngine()
         }
@@ -341,7 +342,7 @@ final class Experiment {
         audioEngine = nil
     }
     
-    func start() throws {
+    func start(stopExperimentDelegate: StopExperimentDelegate) throws {
         guard !running else {
             return
         }
@@ -360,7 +361,7 @@ final class Experiment {
 
         UIApplication.shared.isIdleTimerDisabled = true
         
-        try startAudio(countdown: false)
+        try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
         
         sensorInputs.forEach { $0.start(queue: queue) }
         depthInput?.start(queue: queue)
