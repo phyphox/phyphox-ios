@@ -124,6 +124,8 @@ final class AudioEngine {
         if (recordIn != nil) {
             self.recordInput = engine!.inputNode
             
+            self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
+            
             self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: self.recordInput?.outputFormat(forBus: 0), block: {(buffer, time) in
                 audioInputQueue.async {
                     autoreleasepool {
