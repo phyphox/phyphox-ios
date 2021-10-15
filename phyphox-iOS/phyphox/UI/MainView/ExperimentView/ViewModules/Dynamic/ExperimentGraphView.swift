@@ -1109,6 +1109,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             
             if descriptor.timeOnX || descriptor.timeOnY {
+                if lastReferenceIndex < 0 {
+                    lastReferenceIndex = 0
+                }
                 timeReferenceSets.append(TimeReferenceSet(index: lastChange, count: count[i]-lastChange, referenceIndex: lastReferenceIndex, experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex), systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex), totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex), isPaused: timeReference.getPausedByIndex(i: lastReferenceIndex)))
             }
 
