@@ -71,6 +71,7 @@ struct DepthInputDescriptor: SensorDescriptor {
     let x2: Float
     let y1: Float
     let y2: Float
+    let smooth: Bool
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -93,6 +94,7 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
         case x2
         case y1
         case y2
+        case smooth
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -104,8 +106,9 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
         let y1: Float = try attributes.optionalValue(for: .x1) ?? 0.4
         let y2: Float = try attributes.optionalValue(for: .x2) ?? 0.6
 
+        let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
         
-        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, outputs: outputHandler.results))
+        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
     }
 }
 

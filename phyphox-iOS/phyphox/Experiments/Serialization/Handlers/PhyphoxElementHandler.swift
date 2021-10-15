@@ -34,7 +34,7 @@ private extension ExperimentDepthInput {
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
         let tBuffer = descriptor.buffer(for: "t", from: buffers)
 
-        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, mode: descriptor.mode, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2)
+        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, mode: descriptor.mode, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth)
     }
 }
 

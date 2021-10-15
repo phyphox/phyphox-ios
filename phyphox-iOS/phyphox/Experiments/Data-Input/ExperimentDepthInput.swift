@@ -26,6 +26,8 @@ final class ExperimentDepthInput {
     let inity1: Float
     let inity2: Float
     
+    let smooth: Bool
+    
     let timeReference: ExperimentTimeReference?
     let zBuffer: DataBuffer?
     let tBuffer: DataBuffer?
@@ -35,7 +37,7 @@ final class ExperimentDepthInput {
     
     private var queue: DispatchQueue?
     
-    init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, mode: DepthExtractionMode, x1: Float, x2: Float, y1: Float, y2: Float) {
+    init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, mode: DepthExtractionMode, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool) {
         self.mode = mode
         self.initx1 = x1
         self.initx2 = x2
@@ -43,6 +45,7 @@ final class ExperimentDepthInput {
         self.inity2 = y2
         self.zBuffer = zBuffer
         self.tBuffer = tBuffer
+        self.smooth = smooth
         self.timeReference = timeReference
         
         if #available(iOS 14.0, *) {
@@ -54,6 +57,7 @@ final class ExperimentDepthInput {
             session.zBuffer = zBuffer
             session.tBuffer = tBuffer
             session.timeReference = timeReference
+            session.smooth = smooth
         }
     }
     
@@ -98,6 +102,7 @@ extension ExperimentDepthInput: Equatable {
                 lhs.inity2 == rhs.inity2 &&
                 lhs.timeReference == rhs.timeReference &&
                 lhs.zBuffer == rhs.zBuffer &&
-                lhs.tBuffer == rhs.tBuffer
+                lhs.tBuffer == rhs.tBuffer &&
+                lhs.smooth == rhs.smooth
     }
 }

@@ -23,6 +23,7 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     var tBuffer: DataBuffer?
 
     var session = ARSession()
+    var smooth: Bool = true
     
     var delegate: DepthGUIDelegate?
     
@@ -37,7 +38,11 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     
     func runSession() -> CGSize {
         let conf = ARWorldTrackingConfiguration()
-        conf.frameSemantics = .sceneDepth
+        if smooth && ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
+            conf.frameSemantics = .smoothedSceneDepth
+        } else {
+            conf.frameSemantics = .sceneDepth
+        }
         session.run(conf)
         return conf.videoFormat.imageResolution
     }
@@ -65,7 +70,7 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         if measuring {
-            guard let depthMapRaw = frame.sceneDepth?.depthMap else {
+            guard let depthMapRaw = smooth ? (frame.smoothedSceneDepth?.depthMap ?? frame.sceneDepth?.depthMap) : frame.sceneDepth?.depthMap else {
                 print("Error: No depth map.")
                 return
             }
