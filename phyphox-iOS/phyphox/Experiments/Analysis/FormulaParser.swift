@@ -494,12 +494,12 @@ final class FormulaParser {
                         
                         var innerBracket = 0
                         var j = formula.index(after: i)
-                        while j != end {
+                        while j != e {
                             if (formula[j] == ",") {
                                 if innerBracket == 0 {
                                     e1 = j
                                     s2 = formula.index(after: j)
-                                    e2 = formula.index(before: end)
+                                    e2 = formula.index(before: e)
                                 }
                             } else if formula[j] == "(" {
                                 innerBracket += 1
@@ -509,7 +509,7 @@ final class FormulaParser {
                             
                             j = formula.index(after: j)
                         }
-                        
+                                                
                         previousPriority = 4
                         
                         switch(cmd) {
