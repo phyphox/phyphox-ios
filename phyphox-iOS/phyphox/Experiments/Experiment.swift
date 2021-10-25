@@ -403,7 +403,7 @@ final class Experiment {
 
         for buffer in buffers.values {
             if !buffer.attachedToTextField {
-                buffer.clear()
+                buffer.clear(reset: true)
             }
         }
 

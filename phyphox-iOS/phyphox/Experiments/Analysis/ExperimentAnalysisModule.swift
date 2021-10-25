@@ -71,7 +71,7 @@ class ExperimentAnalysisModule {
                 break
             case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
                 if clear && !buffer.staticBuffer && !buffer.attachedToTextField {
-                    buffer.clear()
+                    buffer.clear(reset: false)
                 }
             }
         }

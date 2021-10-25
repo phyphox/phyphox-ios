@@ -191,13 +191,17 @@ final class DataBuffer {
         }
     }
 
-    func clear() {
+    func clear(reset: Bool) {
         syncWrite {
             guard !staticBuffer || !written else { return }
 
             willWrite()
 
-            contents = baseContents
+            if reset {
+                contents = baseContents
+            } else {
+                contents = []
+            }
 
             didWrite()
         }

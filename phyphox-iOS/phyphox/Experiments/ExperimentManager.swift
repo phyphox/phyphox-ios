@@ -12,7 +12,7 @@ import CoreBluetooth
 
 let emptyBuffer: DataBuffer = {
     let buffer = try! DataBuffer(name: "empty", size: 0, baseContents: [], static: true)
-    buffer.clear()
+    buffer.clear(reset: false)
     return buffer
 }()
 
