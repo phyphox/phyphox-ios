@@ -32,7 +32,7 @@ class ExperimentCell: UICollectionViewCell {
                 }
             
                 let expColor = experiment?.color ?? kHighlightColor
-                let color = expColor.luminance > 0.1 ? expColor : kHighlightColor
+                let color = expColor.linearLuminance > 0.1 ? expColor : kTextColor
                 optionsButton.setTintColor(color, for: UIControl.State())
                 optionsButton.setTintColor(color.interpolating(to: UIColor.black, byFraction: 0.5), for: .highlighted)
             }

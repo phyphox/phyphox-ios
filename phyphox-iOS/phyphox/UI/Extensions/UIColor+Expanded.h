@@ -102,6 +102,7 @@ OBJC_EXTERN void HSPtoRGB(CGFloat  H, CGFloat  S, CGFloat  P, CGFloat *R, CGFloa
 
 @property (nonatomic, readonly) CGFloat white;
 @property (nonatomic, readonly) CGFloat luminance;
+@property (nonatomic, readonly) CGFloat linearLuminance;
 
 @property (nonatomic, readonly) CGFloat hue;
 @property (nonatomic, readonly) CGFloat saturation;
