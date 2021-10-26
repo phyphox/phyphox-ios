@@ -545,6 +545,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         else {
             var url = webServer.server!.serverURL?.absoluteString
+            if url?.last == "/" {
+                url = String(url!.dropLast())
+                print(url)
+            }
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == nil || url == "nil" {
                 print("Fallback to generate URL from IP.")
@@ -569,7 +573,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     }
                 }
                 if ip != nil {
-                    url = "http://\(ip!)/"
+                    url = "http://\(ip!)"
                 } else {
                     url = "Error: No active network."
                 }
