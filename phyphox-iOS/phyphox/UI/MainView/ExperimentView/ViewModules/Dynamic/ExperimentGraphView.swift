@@ -627,6 +627,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         update()
     }
     
+    func limitRange(_ v: Double?, isLog: Bool) -> Double {
+        guard let v = v, v.isFinite else {
+            return Double.nan
+        }
+        let limit = isLog ? log(1e38) : 1e38
+        return Swift.max(Swift.min(v, limit), -limit)
+    }
+    
     var panStartMin: GraphPoint2D<Double>?
     var panStartMax: GraphPoint2D<Double>?
     
@@ -651,8 +659,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             let dx = Double(offset.x / glGraph.frame.width) * (max.x - min.x)
             let dy = Double(offset.y / glGraph.frame.height) * (min.y - max.y)
             
-            zoomMin = GraphPoint3D(x: startMin.x - dx, y: startMin.y - dy, z: zoomMin?.z ?? Double.nan)
-            zoomMax = GraphPoint3D(x: startMax.x - dx, y: startMax.y - dy, z: zoomMax?.z ?? Double.nan)
+            zoomMin = GraphPoint3D(x: limitRange(startMin.x - dx, isLog: logX), y: limitRange(startMin.y - dy, isLog: logY), z: limitRange(zoomMin?.z, isLog: logZ))
+            zoomMax = GraphPoint3D(x: limitRange(startMax.x - dx, isLog: logX), y: limitRange(startMax.y - dy, isLog: logY), z: limitRange(zoomMax?.z, isLog: logZ))
             
             self.update()
         } else if mode == .pick {
@@ -737,8 +745,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let zoomMaxX = zoomMinX + scaleX
         let zoomMaxY = origin.y + Double(centerY-glGraph.frame.minY)/Double(glGraph.frame.height) * scaleY
         let zoomMinY = zoomMaxY - scaleY
-        zoomMin = GraphPoint3D(x: zoomMinX, y: zoomMinY, z: zoomMin?.z ?? Double.nan)
-        zoomMax = GraphPoint3D(x: zoomMaxX, y: zoomMaxY, z: zoomMax?.z ?? Double.nan)
+        zoomMin = GraphPoint3D(x: limitRange(zoomMinX, isLog: logX), y: limitRange(zoomMinY, isLog: logY), z: limitRange(zoomMin?.z, isLog: logZ))
+        zoomMax = GraphPoint3D(x: limitRange(zoomMaxX, isLog: logX), y: limitRange(zoomMaxY, isLog: logY), z: limitRange(zoomMax?.z, isLog: logZ))
         
         self.update()
     }
