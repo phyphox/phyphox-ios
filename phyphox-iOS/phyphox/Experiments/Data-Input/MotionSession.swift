@@ -249,11 +249,18 @@ final class MotionSession {
 
     //MARK: - Proximity sensor
 
+    var proximityAvailableChecked: Bool? = nil
+    
     var proximityAvailable: Bool {
+        if let oldAvailable = proximityAvailableChecked {
+            return oldAvailable //Do not check again as these frequent checks interfere with turning on the sensor for the actual measurement.
+        }
+
         let device = UIDevice.current
         device.isProximityMonitoringEnabled = true
         let available = device.isProximityMonitoringEnabled
         device.isProximityMonitoringEnabled = false
+        proximityAvailableChecked = available //Remember result for next time
         return available
     }
 
@@ -285,9 +292,7 @@ final class MotionSession {
 
     func stopProximityUpdates(_ receiver: MotionSessionReceiver) {
         proximityReceivers.removeValue(forKey: receiver)
-        print("Stopping")
         if proximityReceivers.count == 0 && proximityRunning {
-            print("Full stop")
             proximityRunning = false
             NotificationCenter.default.removeObserver(self)
             UIDevice.current.isProximityMonitoringEnabled = false
