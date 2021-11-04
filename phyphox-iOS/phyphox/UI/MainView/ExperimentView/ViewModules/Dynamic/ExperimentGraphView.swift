@@ -267,6 +267,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.timeOnY = descriptor.timeOnY
         glGraph.systemTime = systemTime
         glGraph.linearTime = descriptor.linearTime
+        glGraph.hideTimeMarkers = descriptor.hideTimeMarkers
         
         super.init(frame: .zero)
         
@@ -1166,7 +1167,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         addDataSets(dataSets)
 
         let grid = generateGrid(logX: logX, logY: logY, logZ: logZ)
-        let pauseMarkers = generatePauseMarkers()
+        let pauseMarkers = glGraph.hideTimeMarkers ? nil : generatePauseMarkers()
         
         let finalPoints2D = self.points2D
         let finalPoints3D = self.points3D
