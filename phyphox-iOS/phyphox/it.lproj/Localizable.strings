@@ -49,7 +49,7 @@
 "sensorGyroscope" = "Giroscopio";
 "switchToPhoneLayout" = "Vista: compatta";
 "sensorProximity" = "Prossimità";
-"unknown" = "ignoto";
+"unknown" = "sconosciuto";
 "next" = "Sucessivo";
 "start" = "Start";
 "switch_to_calibrated_magnetometer" = "Usa magnetometro calibrato";
