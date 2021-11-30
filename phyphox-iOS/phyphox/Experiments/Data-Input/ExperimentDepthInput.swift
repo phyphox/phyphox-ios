@@ -18,6 +18,7 @@ final class ExperimentDepthInput {
     enum DepthExtractionMode: String, LosslessStringConvertible, CaseIterable {
         case average
         case closest
+        case weighted
     }
 
     let mode: ExperimentDepthInput.DepthExtractionMode

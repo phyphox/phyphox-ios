@@ -75,7 +75,15 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
                 return
             }
             guard CVPixelBufferGetPixelFormatType(depthMapRaw) == kCVPixelFormatType_DepthFloat32 else {
-                print("Error: Unexpected depth map format")
+                print("Error: Unexpected depth map format \(CVPixelBufferGetPixelFormatType(depthMapRaw))")
+                return
+            }
+            guard let confidenceMapRaw = smooth ? (frame.smoothedSceneDepth?.confidenceMap ?? frame.sceneDepth?.confidenceMap) : frame.sceneDepth?.confidenceMap else {
+                print("Error: No confidence map.")
+                return
+            }
+            guard CVPixelBufferGetPixelFormatType(confidenceMapRaw) == kCVPixelFormatType_OneComponent8 else {
+                print("Error: Unexpected confidence map format \(CVPixelBufferGetPixelFormatType(confidenceMapRaw))")
                 return
             }
 
@@ -84,6 +92,9 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
             
             CVPixelBufferLockBaseAddress(depthMapRaw, .readOnly)
             let depthMap = unsafeBitCast(CVPixelBufferGetBaseAddress(depthMapRaw), to: UnsafeMutablePointer<Float32>.self)
+
+            CVPixelBufferLockBaseAddress(depthMapRaw, .readOnly)
+            let confidenceMap = unsafeBitCast(CVPixelBufferGetBaseAddress(depthMapRaw), to: UnsafeMutablePointer<UInt8>.self)
             
             let xp1 = Int(round(Float(w) * x1))
             let xp2 = Int(round(Float(w) * x2))
@@ -95,8 +106,9 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
             let yi2 = min(max(yp1, yp2, 0), h)
             
             var z: Double
+            var sum = 0.0
             switch mode {
-            case .average:
+            case .average, .weighted:
                 z = 0.0
             case .closest:
                 z = Double.infinity
@@ -104,19 +116,35 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
             for x in xi1...xi2 {
                 for y in yi1...yi2 {
                     let zi = Double(depthMap[x + y*w])
+                    let confidence = confidenceMap[x + y*w]
+                    if confidence <= ARConfidenceLevel.low.rawValue {
+                        continue
+                    }
                     switch mode {
                     case .average:
                         z += zi
+                        sum += 1
                     case .closest:
                         z = min(z, zi)
+                    case .weighted:
+                        z += zi * Double(confidence)
+                        sum += Double(confidence)
                     }
                 }
             }
-            if mode == .average {
-                z /= Double((xi2-xi1+1)*(yi2-yi1+1))
+            if mode == .average || mode == .weighted {
+                if sum > 0 {
+                    z /= sum
+                } else {
+                    z = Double.nan
+                }
+            }
+            if z.isInfinite {
+                z = Double.nan
             }
             
             CVPixelBufferUnlockBaseAddress(depthMapRaw, .readOnly)
+            CVPixelBufferUnlockBaseAddress(confidenceMapRaw, .readOnly)
             
             dataIn(z: z, time: frame.timestamp)
         }
