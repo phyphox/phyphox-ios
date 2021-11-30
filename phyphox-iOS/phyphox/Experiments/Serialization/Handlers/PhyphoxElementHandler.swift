@@ -276,36 +276,36 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "deviceCodename": metadata = .Metadata(.deviceCodename)
                         case "deviceRelease": metadata = .Metadata(.deviceRelease)
                         default:
-                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData.Source? {
-                                if name.starts(with: sensor) {
-                                    let sensorMetadata = name.dropFirst(sensor.count)
+                            func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
+                                if name.starts(with: sensor.description) {
+                                    let sensorMetadata = name.dropFirst(sensor.description.count)
                                     let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
                                     guard let sensorMeta = SensorMetadata(rawValue: String(sensorMetadataMatch)) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
-                                    return .Metadata(.sensor(SensorType.accelerometer, sensorMeta))
+                                    return .Metadata(.sensor(sensor, sensorMeta))
                                 }
                                 return nil
                             }
-                            if let res = try matchSensor(name: item.name, sensor: SensorType.accelerometer.description) {
+                            if let res = try matchSensor(name: item.name, sensor: SensorType.accelerometer) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gyroscope.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gyroscope) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.humidity.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.humidity) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.light.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.light) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.linearAcceleration.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.linearAcceleration) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.magneticField.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.magneticField) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.pressure.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.pressure) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.proximity.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.proximity) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.temperature.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.temperature) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.attitude.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.attitude) {
                                 metadata = res
                             } else {
                                 throw ElementHandlerError.message("Unknown metadata name \(item.name)")
