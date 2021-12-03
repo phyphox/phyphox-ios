@@ -62,7 +62,7 @@ final class ExperimentDepthInput {
         }
     }
     
-    func verifySensorAvailibility() throws {
+    static func verifySensorAvailibility() throws {
         guard #available(iOS 14.0, *) else {
             throw DepthInputError.sensorUnavailable
         }

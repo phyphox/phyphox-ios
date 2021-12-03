@@ -97,7 +97,7 @@ class ExperimentCell: UICollectionViewCell {
                     
                     if let depthInput = experiment.depthInput {
                         do {
-                            try depthInput.verifySensorAvailibility()
+                            try ExperimentDepthInput.verifySensorAvailibility()
                         }
                         catch DepthInputError.sensorUnavailable {
                             available = false

@@ -107,6 +107,11 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
                 case .sensor(let type, _):
                     infoSensorInfo = true
                     infoSensorInfoList.insert(type.getLocalizedName())
+                case .depthFrontSensor, .depthBackSensor, .depthFrontResolution, .depthBackResolution, .depthFrontRate, .depthBackRate:
+                    infoSensorInfo = true
+                    infoSensorInfoList.insert(localize("sensorDepth"))
+                case .camera2api, .camera2apiFull:
+                    break //These are Android specific
                 }
             default:
                 break
