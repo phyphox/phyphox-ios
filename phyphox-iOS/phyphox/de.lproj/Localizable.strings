@@ -345,4 +345,4 @@
 "depthAggregationModeClosest" = "Nächste";
 "depthAggregationModeAverage" = "Mittelwert";
 "depthAggregationModeWeighted" = "Gewichtet";
-"sensorDepth" = "Tiefe (LiDAR)";
+"sensorDepth" = "Tiefe (LiDAR/ToF)";
