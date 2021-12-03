@@ -88,7 +88,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 switch minOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
                     if clear {
-                        buffer.clear()
+                        buffer.clear(reset: false)
                     }
                 case .value(value: _, usedAs: _):
                     break
@@ -99,7 +99,7 @@ final class MinAnalysis: ExperimentAnalysisModule {
                 switch positionOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
                     if clear {
-                        buffer.clear()
+                        buffer.clear(reset: false)
                     }
                 case .value(value: _, usedAs: _):
                     break

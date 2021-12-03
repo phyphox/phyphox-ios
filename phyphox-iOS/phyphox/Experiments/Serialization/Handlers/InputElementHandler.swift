@@ -71,6 +71,7 @@ struct DepthInputDescriptor: SensorDescriptor {
     let x2: Float
     let y1: Float
     let y2: Float
+    let smooth: Bool
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -93,19 +94,27 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
         case x2
         case y1
         case y2
+        case smooth
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let mode: ExperimentDepthInput.DepthExtractionMode = try attributes.optionalValue(for: .mode) ?? .closest
-        let x1: Float = try attributes.optionalValue(for: .x1) ?? 0.4
-        let x2: Float = try attributes.optionalValue(for: .x2) ?? 0.6
-        let y1: Float = try attributes.optionalValue(for: .x1) ?? 0.4
-        let y2: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+        let x1user: Float = try attributes.optionalValue(for: .x1) ?? 0.4
+        let x2user: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+        let y1user: Float = try attributes.optionalValue(for: .y1) ?? 0.4
+        let y2user: Float = try attributes.optionalValue(for: .y2) ?? 0.6
 
+        //Careful: We will now switch from the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+        let x1 = 1.0-y1user
+        let x2 = 1.0-y2user
+        let y1 = 1.0-x1user
+        let y2 = 1.0-x2user
         
-        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, outputs: outputHandler.results))
+        let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
+        
+        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
     }
 }
 

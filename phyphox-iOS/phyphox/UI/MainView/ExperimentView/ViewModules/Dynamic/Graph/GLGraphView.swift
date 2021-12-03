@@ -82,6 +82,12 @@ final class GLGraphView: GLKView {
         }
     }
     
+    var hideTimeMarkers: Bool = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {

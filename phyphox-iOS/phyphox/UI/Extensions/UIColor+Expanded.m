@@ -508,6 +508,27 @@ void YUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloat 
     return r * 0.2126f + g * 0.7152f + b * 0.0722f;
 }
 
+//This version linearizes the rgb values
+- (CGFloat) linearLuminance
+{
+    NSAssert(self.canProvideRGBComponents, @"Must be a RGB color to use -luminance");
+    
+    CGFloat r, g, b;
+    if (![self getRed: &r green: &g blue: &b alpha:nil]) {
+        //white color?
+        if (![self getWhite:&r alpha:nil]) {
+            return 0.0f;
+        }
+        
+        g = r;
+        b = r;
+    }
+    
+    // http://en.wikipedia.org/wiki/Luma_(video)
+    // Y = 0.2126 R + 0.7152 G + 0.0722 B
+    return pow((r+0.055f)/1.055f,2.4f) * 0.2126f + pow((g+0.055f)/1.055f,2.4f) * 0.7152f + pow((b+0.055f)/1.055f,2.4f) * 0.0722f;
+}
+
 - (CGFloat) premultipliedRed { return self.red * self.alpha; }
 - (CGFloat) premultipliedGreen { return self.green * self.alpha; }
 - (CGFloat) premultipliedBlue {return self.blue * self.alpha; }

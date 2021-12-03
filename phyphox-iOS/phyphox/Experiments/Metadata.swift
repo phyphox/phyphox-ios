@@ -34,6 +34,14 @@ enum Metadata: CaseIterable {
     case deviceCodename
     case deviceRelease
     case sensor(SensorType, SensorMetadata)
+    case depthFrontSensor
+    case depthBackSensor
+    case depthFrontResolution
+    case depthBackResolution
+    case depthFrontRate
+    case depthBackRate
+    case camera2api
+    case camera2apiFull
     
     static var allCases: [Metadata] {
         var list = allNonSensorCases
@@ -46,7 +54,7 @@ enum Metadata: CaseIterable {
     }
     
     static var allNonSensorCases: [Metadata] {
-        return [.uniqueId, .version, .build, .fileFormat, .deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease]
+        return [.uniqueId, .version, .build, .fileFormat, .deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease, depthFrontSensor, depthFrontResolution, depthFrontRate, depthBackSensor, depthBackResolution, depthBackRate]
     }
     
     var identifier: String {
@@ -75,6 +83,22 @@ enum Metadata: CaseIterable {
             return "deviceRelease"
         case .sensor(let sensorType, let sensorMeta):
             return sensorType.rawValue + sensorMeta.rawValue.capitalized
+        case .depthFrontSensor:
+            return "depthFrontSensor"
+        case .depthFrontResolution:
+            return "depthFrontResolution"
+        case .depthFrontRate:
+            return "depthFrontRate"
+        case .depthBackSensor:
+            return "depthBackSensor"
+        case .depthBackResolution:
+            return "depthBackResolution"
+        case .depthBackRate:
+            return "depthBackRate"
+        case .camera2api:
+            return "camera2api"
+        case .camera2apiFull:
+            return "camera2apiFull"
         }
     }
     
@@ -112,6 +136,13 @@ enum Metadata: CaseIterable {
             return "Apple"
         case .deviceRelease:
             return UIDevice.current.systemVersion
+        case .depthBackSensor:
+            do {
+                try ExperimentDepthInput.verifySensorAvailibility()
+            } catch {
+                return "0"
+            }
+            return "1"
         default:
             return nil
         }

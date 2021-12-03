@@ -239,6 +239,7 @@
 "depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";
 "depthAggregationModeClosest" = "Closest";
 "depthAggregationModeAverage" = "Average";
+"depthAggregationModeWeighted" = "Weighted";
 
 "common_unit_short_arbitrary_unit" = "a.u.";
 "common_unit_short_second" = "s";

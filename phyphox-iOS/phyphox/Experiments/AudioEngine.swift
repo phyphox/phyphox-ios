@@ -13,6 +13,8 @@ private let audioInputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audio
 private let audioOutputQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.audioOutput", qos: .userInteractive, attributes: [])
 
 final class AudioEngine {
+    var stopExperimentDelegate: StopExperimentDelegate? = nil
+    
     let bufferFrameCount: AVAudioFrameCount = 2048
     
     private var engine: AVAudioEngine? = nil
@@ -61,6 +63,18 @@ final class AudioEngine {
         }
     }
     
+    @objc func audioInterrupted(_ notification: Notification) -> Void {
+        guard let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+                return
+        }
+
+        if type == .began {
+            stopExperimentDelegate?.stopExperiment()
+        }
+    }
+    
     func startEngine() throws {
         if playbackOut == nil && recordIn == nil {
             return
@@ -99,6 +113,7 @@ final class AudioEngine {
         self.engine = AVAudioEngine()
         
         NotificationCenter.default.addObserver(self, selector: #selector(audioEngineConfigurationChange), name: NSNotification.Name.AVAudioEngineConfigurationChange, object: self.engine)
+        NotificationCenter.default.addObserver(self, selector: #selector(audioInterrupted), name: AVAudioSession.interruptionNotification, object: avSession)
         
         if (playbackOut != nil) {
             self.playbackPlayer = AVAudioPlayerNode()
@@ -108,6 +123,8 @@ final class AudioEngine {
         
         if (recordIn != nil) {
             self.recordInput = engine!.inputNode
+            
+            self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
             
             self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: self.recordInput?.outputFormat(forBus: 0), block: {(buffer, time) in
                 audioInputQueue.async {

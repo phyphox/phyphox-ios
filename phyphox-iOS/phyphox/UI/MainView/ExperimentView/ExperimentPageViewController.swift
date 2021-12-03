@@ -545,6 +545,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         else {
             var url = webServer.server!.serverURL?.absoluteString
+            if url?.last == "/" {
+                url = String(url!.dropLast())
+            }
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == nil || url == "nil" {
                 print("Fallback to generate URL from IP.")
@@ -569,7 +572,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     }
                 }
                 if ip != nil {
-                    url = "http://\(ip!)/"
+                    url = "http://\(ip!)"
                 } else {
                     url = "Error: No active network."
                 }
@@ -1074,7 +1077,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if timerEnabled {
                 if timerBeep.countdown || timerBeep.start || timerBeep.stop || timerBeep.running {
                     do {
-                        try experiment.startAudio(countdown: true)
+                        try experiment.startAudio(countdown: true, stopExperimentDelegate: self)
                     } catch {
                         showError(message: "Could not start experiment \(error).")
                         experiment.stop()
@@ -1146,7 +1149,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func actuallyStartExperiment() {
         do {
-            try experiment.start()
+            try experiment.start(stopExperimentDelegate: self)
         } catch AudioEngine.AudioEngineError.NoInput {
             showError(message: "Could not start experiment: No microphone available.")
             experiment.stop()

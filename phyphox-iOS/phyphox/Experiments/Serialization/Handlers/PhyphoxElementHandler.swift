@@ -34,7 +34,7 @@ private extension ExperimentDepthInput {
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
         let tBuffer = descriptor.buffer(for: "t", from: buffers)
 
-        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, mode: descriptor.mode, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2)
+        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, mode: descriptor.mode, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth)
     }
 }
 
@@ -275,37 +275,43 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "deviceBaseOS": metadata = .Metadata(.deviceBaseOS)
                         case "deviceCodename": metadata = .Metadata(.deviceCodename)
                         case "deviceRelease": metadata = .Metadata(.deviceRelease)
+                        case "depthFrontSensor": metadata = .Metadata(.depthFrontSensor)
+                        case "depthFrontResolution": metadata = .Metadata(.depthFrontResolution)
+                        case "depthFrontRate": metadata = .Metadata(.depthFrontRate)
+                        case "depthBackSensor": metadata = .Metadata(.depthBackSensor)
+                        case "depthBackResolution": metadata = .Metadata(.depthBackResolution)
+                        case "depthBackRate": metadata = .Metadata(.depthBackRate)
                         default:
-                            func matchSensor(name: String, sensor: String) throws -> NetworkSendableData.Source? {
-                                if name.starts(with: sensor) {
-                                    let sensorMetadata = name.dropFirst(sensor.count)
+                            func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
+                                if name.starts(with: sensor.description) {
+                                    let sensorMetadata = name.dropFirst(sensor.description.count)
                                     let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
                                     guard let sensorMeta = SensorMetadata(rawValue: String(sensorMetadataMatch)) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
-                                    return .Metadata(.sensor(SensorType.accelerometer, sensorMeta))
+                                    return .Metadata(.sensor(sensor, sensorMeta))
                                 }
                                 return nil
                             }
-                            if let res = try matchSensor(name: item.name, sensor: SensorType.accelerometer.description) {
+                            if let res = try matchSensor(name: item.name, sensor: SensorType.accelerometer) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gyroscope.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gyroscope) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.humidity.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.humidity) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.light.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.light) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.linearAcceleration.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.linearAcceleration) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.magneticField.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.magneticField) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.pressure.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.pressure) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.proximity.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.proximity) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.temperature.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.temperature) {
                                 metadata = res
-                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.attitude.description) {
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.attitude) {
                                 metadata = res
                             } else {
                                 throw ElementHandlerError.message("Unknown metadata name \(item.name)")
@@ -420,7 +426,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return buffer
             })
 
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
         case .depthGUI(let descriptor):
             return DepthGUIViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, translation: translations)
         }

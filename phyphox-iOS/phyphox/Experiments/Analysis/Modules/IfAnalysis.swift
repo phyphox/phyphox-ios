@@ -92,6 +92,8 @@ final class IfAnalysis: ExperimentAnalysisModule {
             out = inFalse
         }
         
+        beforeWrite()
+        
         guard let output = out else { return }
 
         let outputValues: [Double]
@@ -102,8 +104,6 @@ final class IfAnalysis: ExperimentAnalysisModule {
         case .value(value: let value, usedAs: _):
             outputValues = [value]
         }
-
-        beforeWrite()
 
         switch firstOutput {
         case .buffer(buffer: let buffer, usedAs: _, clear: let clear):

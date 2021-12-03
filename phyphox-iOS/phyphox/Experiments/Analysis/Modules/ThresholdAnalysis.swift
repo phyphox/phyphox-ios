@@ -79,7 +79,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
                 switch output {
                 case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
                     if clear {
-                        buffer.clear()
+                        buffer.clear(reset: false)
                     }
                 case .value(value: _, usedAs: _):
                     break

@@ -344,4 +344,5 @@
 "depthAggregationModePrompt" = "Wähle die Methode, mit welcher die Tiefenwerte im gewählten Bereich zusammengefasst werden.";
 "depthAggregationModeClosest" = "Nächste";
 "depthAggregationModeAverage" = "Mittelwert";
+"depthAggregationModeWeighted" = "Gewichtet";
 "sensorDepth" = "Tiefe (LiDAR)";

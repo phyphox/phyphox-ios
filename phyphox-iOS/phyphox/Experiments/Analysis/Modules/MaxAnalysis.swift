@@ -86,7 +86,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             if let maxOut = maxOut {
                 switch maxOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    buffer.clear()
+                    buffer.clear(reset: false)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -95,7 +95,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             if let positionOut = positionOut {
                 switch positionOut {
                 case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    buffer.clear()
+                    buffer.clear(reset: false)
                 case .value(value: _, usedAs: _):
                     break
                 }
