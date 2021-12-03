@@ -330,3 +330,10 @@
 "common_musical_note_gb7" = "Φα#7/Σολb7";
 "common_musical_note_g7" = "Σολ 7";
 "common_musical_note_ab7" = "Σολ#7/Λαb7";
+"remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
+"depthAggregationMode" = "Aggregation mode";
+"depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";
+"depthAggregationModeClosest" = "Closest";
+"depthAggregationModeAverage" = "Average";
+"sensorDepth" = "Depth (LiDAR)";
+"depthAggregationModeWeighted" = "Weighted";
