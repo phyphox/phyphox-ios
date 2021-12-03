@@ -18,8 +18,8 @@
 "confirmDelete" = "Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?";
 "confirmDeleteTitle" = "Löschen bestätigen?";
 "credits" = "Credits";
-"creditsNames" = "Entwicklung und Konzept: \nDr. Sebastian Staacks \nKonzept: \nProf. Christoph Stampfer \nProgrammierung: \nDominik Dorsel \nJonas Gessner \nCamilla Lummerzheim";
-"creditsRWTH" = "Phyphox wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.";
+"creditsNames" = "Entwicklung und Konzept:\nDr. Sebastian Staacks\nKonzept:\nProf. Christoph Stampfer\nProgrammierung:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsRWTH" = "Phyphox® wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.";
 "damageWarning" = "Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.";
 "delete" = "Löschen";
 "disableRemoteServer" = "Fernzugriff deaktivieren";
@@ -113,7 +113,7 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/fernsteuerung";
 "AudioRateMissmatch" = "Fehler: Falsche Abtastrate. Bitte deaktiviere alle Apps oder Dienste (wie AirPlay), die eine andere Audiorate vorgeben.";
 "translationInfo" = "Sprachen";
-"translationText" = "Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen in deinen Systemeinstellungen benutzen. Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".";
+"translationText" = "Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehe in die iOS System-Einstellungen. Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".";
 "translationToWebsite" = "Zur Webseite";
 "translationToWebsiteURL" = "http://phyphox.org/languages#de";
 "newExperimentSimple" = "Neues einfaches Experiment";
@@ -345,4 +345,4 @@
 "depthAggregationModeClosest" = "Nächste";
 "depthAggregationModeAverage" = "Mittelwert";
 "depthAggregationModeWeighted" = "Gewichtet";
-"sensorDepth" = "Tiefe (LiDAR)";
+"sensorDepth" = "Tiefe (LiDAR/ToF)";
