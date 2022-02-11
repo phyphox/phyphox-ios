@@ -363,6 +363,8 @@ final class Experiment {
         
         try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
         
+        MotionSession.sharedSession().resetConfig()
+        sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
         depthInput?.start(queue: queue)
         gpsInputs.forEach { $0.start(queue: queue) }

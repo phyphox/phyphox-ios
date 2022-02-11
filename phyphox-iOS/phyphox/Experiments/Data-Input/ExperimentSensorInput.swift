@@ -236,14 +236,6 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         
         self.motionSession = motionSession
         
-        if (sensorType == .magneticField) {
-            self.motionSession.calibratedMagnetometer = calibrated
-        }
-        
-        if (sensorType == .attitude) {
-            self.motionSession.attitude = true
-        }
-        
         self.valueBuffer = ValueBuffer(interval: rate, average: average)
     }
     
@@ -291,6 +283,16 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     func verifySensorAvailibility() throws {
         return try ExperimentSensorInput.verifySensorAvailibility(sensorType: self.sensorType, motionSession: motionSession)
+    }
+    
+    func configureMotionSession() {
+        if (sensorType == .magneticField) {
+            self.motionSession.calibratedMagnetometer = calibrated
+        }
+        
+        if (sensorType == .attitude) {
+            self.motionSession.attitude = true
+        }
     }
     
     func start(queue: DispatchQueue) {

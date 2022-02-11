@@ -25,7 +25,7 @@ final class MotionSession {
     private lazy var motionManager = CMMotionManager()
     private lazy var altimeter = CMAltimeter()
 
-    var calibratedMagnetometer = true
+    var calibratedMagnetometer = false
     var attitude = false
 
     private(set) var altimeterRunning = false
@@ -41,6 +41,11 @@ final class MotionSession {
     private var magnetometerReceivers: [MotionSessionReceiver: (_ data: CMMagnetometerData?, _ error: NSError?) -> Void] = [:]
     private var deviceMotionReceivers: [MotionSessionReceiver: (_ deviceMotion: CMDeviceMotion?, _ error: NSError?) -> Void] = [:]
     private var proximityReceivers: [MotionSessionReceiver: (_ proximityState: Bool) -> Void] = [:]
+    
+    public func resetConfig() {
+        calibratedMagnetometer = false
+        attitude = false
+    }
 
     private func makeQueue() -> OperationQueue {
         let q = OperationQueue()
