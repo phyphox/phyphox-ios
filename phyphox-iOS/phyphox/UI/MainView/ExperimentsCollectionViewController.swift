@@ -72,7 +72,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         setupNavbar()
         
         let defaults = UserDefaults.standard
-        if defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
+        if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
             hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.9), onDismiss: {() -> Void in
             })
             guard let hintBubble = hintBubble else {
