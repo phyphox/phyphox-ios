@@ -125,7 +125,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         }
     }
     
-    func pickTarget(isY: Bool) {
+    func pickTarget(isY: Bool, sourceRect: CGRect, sourceView: UIView) {
         let actionsheet = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertController.Style.actionSheet)
         
         for target in ApplyZoomTarget.allCases {
@@ -142,13 +142,19 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         actionsheet.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: { (action) -> Void in
         }))
         
+        if let controller = actionsheet.popoverPresentationController {
+            controller.sourceRect = sourceRect
+            controller.sourceView = sourceView
+        }
+        
         present(actionsheet, animated: true, completion: nil)
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
         if (advanced && ((indexPath.section == 0 && indexPath.row == 3) || (indexPath.section == 1 && indexPath.row == 2))) {
-            pickTarget(isY: indexPath.section == 1)
+            let sourceView = tableView.cellForRow(at: indexPath)?.detailTextLabel ?? tableView
+            pickTarget(isY: indexPath.section == 1, sourceRect: sourceView.bounds, sourceView: sourceView)
         } else {
             if advanced {
                 if indexPath.section == 0 {
