@@ -171,10 +171,10 @@ final class MapAnalysis: ExperimentAnalysisModule {
         guard let mapHeight = self.mapHeight.getSingleValueAsInt() else {
             return
         }
-        guard let minY = self.minX.getSingleValue() else {
+        guard let minY = self.minY.getSingleValue() else {
             return
         }
-        guard let maxY = self.maxX.getSingleValue() else {
+        guard let maxY = self.maxY.getSingleValue() else {
             return
         }
         let x = self.x.toArray()
@@ -186,13 +186,16 @@ final class MapAnalysis: ExperimentAnalysisModule {
             n = min(n, nz)
         }
         
-        var zSumOut = [Double]()
-        var nOut = [Int]()
+        var zSumOut = [Double](repeating: 0, count: mapWidth*mapHeight)
+        var nOut = [Int](repeating: 0, count: mapWidth*mapHeight)
         
         for i in 0..<n {
             let thisX = x[i]
             let thisY = y[i]
             let thisZ = z?[i] ?? 0.0
+            if !(thisX.isFinite && thisY.isFinite && thisZ.isFinite) {
+                continue
+            }
             let xd = Double(mapWidth-1)*(thisX-minX)/(maxX-minX)
             let xi = Int(round(xd))
             let yd = Double(mapHeight-1)*(thisY-minY)/(maxY-minY)
