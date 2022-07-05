@@ -8,14 +8,14 @@
 
 import Foundation
 
-final class ReduceAnalysis: ExperimentAnalysisModule {
+final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
     private var averageX = false
     private var averageY = false
     private var sumY = false
     
     private var factor: ExperimentAnalysisDataIO? = nil
-    private var inX: DataBuffer? = nil
-    private var inY: DataBuffer? = nil
+    private var inX: MutableDoubleArray? = nil
+    private var inY: MutableDoubleArray? = nil
     
     private var outX: ExperimentAnalysisDataIO? = nil
     private var outY: ExperimentAnalysisDataIO? = nil
@@ -30,16 +30,16 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                    case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                        inX = buffer
+                    case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                        inX = data
                     default:
                         throw SerializationError.genericError(message: "Error: Input x for reduce module has to be a buffer.")
                 }
             }
             else if input.asString == "y" {
                 switch input {
-                    case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                        inY = buffer
+                    case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                        inY = data
                     default:
                         throw SerializationError.genericError(message: "Error: Input y for reduce module has to be a buffer.")
                 }
@@ -86,8 +86,8 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
             return
         }
         
-        let x = inX!.toArray()
-        let y = inY?.toArray()
+        let x = inX!.data
+        let y = inY?.data
         
         var resX = [Double]()
         var resY = [Double]()
@@ -137,30 +137,18 @@ final class ReduceAnalysis: ExperimentAnalysisModule {
                 }
             }
         }
-        
-        beforeWrite()
-        
+                
         switch outX! {
-        case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-            if clear {
-                buffer.replaceValues(resX)
-            }
-            else {
-                buffer.appendFromArray(resX)
-            }
+        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            buffer.appendFromArray(resX)
         default:
             break
         }
         
         if let yOut = outY {
             switch yOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(resY)
-                }
-                else {
-                    buffer.appendFromArray(resY)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(resY)
             default:
                 break
             }

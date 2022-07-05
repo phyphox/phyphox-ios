@@ -68,9 +68,9 @@ func nextFFTSize(_ c: Int, minN: Int = 3) -> Int {
     return selectedOption
 }
 
-final class FFTAnalysis: ExperimentAnalysisModule {
-    private var realInput: DataBuffer!
-    private var imagInput: DataBuffer?
+final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
+    private var realInput: MutableDoubleArray!
+    private var imagInput: MutableDoubleArray?
     
     private let hasImagInBuffer: Bool
     
@@ -81,16 +81,16 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "im" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    imagInput = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    imagInput = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             }
             else {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    realInput = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    realInput = data
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -115,10 +115,10 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         let bufferCount: Int
 
         if let imagInput = imagInput {
-            bufferCount = min(realInput.memoryCount, imagInput.memoryCount)
+            bufferCount = min(realInput.data.count, imagInput.data.count)
         }
         else {
-            bufferCount = realInput.memoryCount
+            bufferCount = realInput.data.count
         }
 
         var realOutputArray: [Double]
@@ -132,8 +132,8 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             let count = vDSP_Length(nextFFTSize(bufferCount))
             let countI = Int(count)
             
-            var realInputArray = realInput.toArray()
-            var imagInputArray = (hasImagInBuffer ? imagInput!.toArray() : [Double](repeating: 0.0, count: countI))
+            var realInputArray = realInput.data
+            var imagInputArray = (hasImagInBuffer ? imagInput!.data : [Double](repeating: 0.0, count: countI))
             
             //Fill arrays if needed
             let realOffset = countI-realInputArray.count
@@ -166,17 +166,10 @@ final class FFTAnalysis: ExperimentAnalysisModule {
             }
         }
 
-        beforeWrite()
-
         if let realOutput = realOutput {
             switch realOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(realOutputArray)
-                }
-                else {
-                    buffer.appendFromArray(realOutputArray)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(realOutputArray)
             case .value(value: _, usedAs: _):
                 break
             }
@@ -184,13 +177,8 @@ final class FFTAnalysis: ExperimentAnalysisModule {
         
         if let imagOutput = imagOutput {
             switch imagOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(imagOutputArray)
-                }
-                else {
-                    buffer.appendFromArray(imagOutputArray)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(imagOutputArray)
             case .value(value: _, usedAs: _):
                 break
             }

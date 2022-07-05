@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class FormulaAnalysis: ExperimentAnalysisModule {
+final class FormulaAnalysis: AutoClearingExperimentAnalysisModule {
     let parser: FormulaParser
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
@@ -27,25 +27,19 @@ final class FormulaAnalysis: ExperimentAnalysisModule {
         var inArrays: [[Double]] = []
         for input in inputs {
             switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                inArrays.append(buffer.toArray())
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                inArrays.append(data.data)
             case .value(value: let value, usedAs: _):
                 inArrays.append([value])
             }
         }
         
         let result = parser.execute(buffers: inArrays)
-
-        beforeWrite()
         
         if let output = outputs.first {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                } else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             default: break
             }
         }

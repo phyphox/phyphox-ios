@@ -8,10 +8,11 @@
 
 import Foundation
 
-final class AppendAnalysis: ExperimentAnalysisModule {
+final class AppendAnalysis: AutoClearingExperimentAnalysisModule {
     private let inputElements: [ExperimentAnalysisDataIO]
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        
         var inputElements = [ExperimentAnalysisDataIO]()
         
         for input in inputs {
@@ -31,8 +32,8 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         #endif
         for input in inputElements {
             switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                result.append(contentsOf: buffer.toArray())
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                result.append(contentsOf: data.data)
             case .value(value: let value, usedAs: _):
                 result.append(value)
             }
@@ -41,18 +42,11 @@ final class AppendAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
         #endif
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

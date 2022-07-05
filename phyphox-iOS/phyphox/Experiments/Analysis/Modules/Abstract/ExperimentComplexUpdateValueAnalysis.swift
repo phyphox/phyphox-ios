@@ -39,7 +39,7 @@ final class ValueSource: CustomStringConvertible {
     }
 }
 
-class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
+class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule {
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
@@ -47,8 +47,8 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
         
         for input in inputs {
             switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                let array = buffer.toArray()
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                let array = data.data
 
                 let src = ValueSource(vector: array)
 
@@ -109,18 +109,11 @@ class ExperimentComplexUpdateValueAnalysis: ExperimentAnalysisModule {
             
             result = (out.scalar != nil ? [out.scalar!] : out.vector!)
         }
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

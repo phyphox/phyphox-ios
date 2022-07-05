@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class PeriodicityAnalysis: ExperimentAnalysisModule {
+final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
     //Calculate the periodicity over time by doing autocorrelations on a series of subsets of the input data
     //input1 is x values
     //input2 is y values
@@ -19,8 +19,8 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     //input6 is the precision in samples (optional, default: 1)
     
     //output1 is the periodicity in units of input1
-    private var xInput: DataBuffer!
-    private var yInput: DataBuffer!
+    private var xInput: MutableDoubleArray!
+    private var yInput: MutableDoubleArray!
     private var dxInput: ExperimentAnalysisDataIO!
     private var overlapInput: ExperimentAnalysisDataIO?
     private var minInput: ExperimentAnalysisDataIO?
@@ -33,16 +33,16 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    xInput = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    xInput = data
                 case .value(value: _, usedAs: _):
                     throw SerializationError.genericError(message: "x input can only be a buffer")
                 }
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    yInput = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    yInput = data
                 case .value(value: _, usedAs: _):
                     throw SerializationError.genericError(message: "y input can only be a buffer")
                 }
@@ -80,8 +80,8 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        let x: [Double] = xInput.toArray()
-        let y: [Double] = yInput.toArray()
+        let x: [Double] = xInput.data
+        let y: [Double] = yInput.data
 
         let n = y.count
         
@@ -184,17 +184,10 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
             periodOut.append(xMax)
         }
         
-        beforeWrite()
-
         if let timeOutput = timeOutput {
             switch timeOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(timeOut)
-                }
-                else {
-                    buffer.appendFromArray(timeOut)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(timeOut)
             case .value(value: _, usedAs: _):
                 break
             }
@@ -202,13 +195,8 @@ final class PeriodicityAnalysis: ExperimentAnalysisModule {
         
         if let periodOutput = periodOutput {
             switch periodOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(periodOut)
-                }
-                else {
-                    buffer.appendFromArray(periodOut)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(periodOut)
             case .value(value: _, usedAs: _):
                 break
             }

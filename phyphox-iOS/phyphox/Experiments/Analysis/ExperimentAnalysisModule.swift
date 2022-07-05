@@ -23,7 +23,7 @@ class ExperimentAnalysisModule {
     var analysisLinearTimeOffset1970: TimeInterval = 0.0
 
     let attributeContainer: AttributeContainer
-
+    
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         self.inputs = inputs
         self.outputs = outputs
@@ -45,9 +45,16 @@ class ExperimentAnalysisModule {
         self.analysisLinearTime = linearTime
         self.analysisTimeOffset1970 = experimentReference1970
         self.analysisLinearTimeOffset1970 = linearReference1970
+        retainData()
         willUpdate()
         update()
         didUpdate()
+    }
+    
+    func retainData() {
+        for input in inputs {
+            input.retainData()
+        }
     }
     
     #if DEBUG
@@ -64,25 +71,32 @@ class ExperimentAnalysisModule {
         
     }
     
-    func beforeWrite() {
-        for input in inputs {
-            switch input {
-            case .value(value: _, usedAs: _):
-                break
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear && !buffer.staticBuffer && !buffer.attachedToTextField {
-                    buffer.clear(reset: false)
-                }
-            }
-        }
-    }
-    
     func didUpdate() {
-        
+
     }
     
     func update() {
         
+    }
+    
+    func clearOutputs() {
+        for output in outputs {
+            output.clear()
+        }
+    }
+    
+    func clearInputs() {
+        for input in inputs {
+            input.clear()
+        }
+    }
+    
+}
+
+class AutoClearingExperimentAnalysisModule : ExperimentAnalysisModule {
+    override func willUpdate() {
+        clearInputs()
+        clearOutputs()
     }
 }
 

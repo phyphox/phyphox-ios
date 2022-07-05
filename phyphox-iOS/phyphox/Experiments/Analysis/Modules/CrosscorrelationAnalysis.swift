@@ -9,38 +9,38 @@
 import Foundation
 import Accelerate
 
-final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
+final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         var a: [Double]
         var b: [Double]
         
-        let firstBuffer: DataBuffer
-        let secondBuffer: DataBuffer
+        let firstBuffer: [Double]
+        let secondBuffer: [Double]
 
         guard inputs.count == 2 else { return }
 
         switch inputs[0] {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            firstBuffer = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            firstBuffer = data.data
         case .value(value: _, usedAs: _):
             return
         }
 
         switch inputs[1] {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            secondBuffer = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            secondBuffer = data.data
         case .value(value: _, usedAs: _):
             return
         }
         
         //Put the larger input in a and the smaller one in b
         if firstBuffer.count > secondBuffer.count {
-            a = firstBuffer.toArray()
-            b = secondBuffer.toArray()
+            a = firstBuffer
+            b = secondBuffer
         }
         else {
-            b = firstBuffer.toArray()
-            a = secondBuffer.toArray()
+            b = firstBuffer
+            a = secondBuffer
         }
         
         let compRange = a.count-b.count
@@ -62,17 +62,10 @@ final class CrosscorrelationAnalysis: ExperimentAnalysisModule {
             debug_noteOutputs(result)
         #endif
 
-        beforeWrite()
-
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

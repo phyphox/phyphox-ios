@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MatchAnalysis: ExperimentAnalysisModule {
+final class MatchAnalysis: AutoClearingExperimentAnalysisModule {
     
     override func update() {
         var out = [[Double]](repeating: [], count: inputs.count)
@@ -20,8 +20,9 @@ final class MatchAnalysis: ExperimentAnalysisModule {
             var values = [Double]()
             for input in inputs {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    if let value = buffer.objectAtIndex(i) {
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    if i < data.data.count {
+                        let value = data.data[i]
                         if !value.isFinite {
                             allOK = false
                             break
@@ -43,20 +44,13 @@ final class MatchAnalysis: ExperimentAnalysisModule {
                 }
             }
         }
-        
-        beforeWrite()
-        
+                
         for (i, output) in outputs.enumerated() {
             switch output {
             case .value(value: _, usedAs: _):
                 break
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(out[i])
-                }
-                else {
-                    buffer.appendFromArray(out[i])
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(out[i])
             }
         }
     }

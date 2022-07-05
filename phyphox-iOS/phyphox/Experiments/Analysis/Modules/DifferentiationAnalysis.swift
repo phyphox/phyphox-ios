@@ -9,7 +9,7 @@
 import Foundation
 import Accelerate
 
-final class DifferentiationAnalysis: ExperimentAnalysisModule {
+final class DifferentiationAnalysis: AutoClearingExperimentAnalysisModule {
     
     override func update() {
         guard let firstInput = inputs.first else { return }
@@ -17,8 +17,8 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
         let inputValues: [Double]
 
         switch firstInput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            inputValues = buffer.toArray()
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            inputValues = data.data
         case .value(value: _, usedAs: _):
             return
         }
@@ -56,17 +56,10 @@ final class DifferentiationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        beforeWrite()
-
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

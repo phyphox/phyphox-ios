@@ -11,15 +11,15 @@ import Foundation
 /**
 An abstract analysis module that takes one input and one output, writing each value of the input into the output (and clearing the output beforehand), after allowing a closure to update the value.
 */
-class UpdateValueAnalysis: ExperimentAnalysisModule {
+class UpdateValueAnalysis: AutoClearingExperimentAnalysisModule {
     func updateAllWithMethod(_ method: ([Double]) -> [Double]) {
         guard let input = inputs.first else { return }
         
         let process: [Double]
 
         switch input {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            process = buffer.toArray()
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            process = data.data
         case .value(value: let value, usedAs: _):
             process = [value]
         }
@@ -33,18 +33,11 @@ class UpdateValueAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
 //            debug_noteOutputs(append)
         #endif
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

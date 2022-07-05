@@ -9,7 +9,7 @@
 import Foundation
 import Accelerate
 
-final class RampGeneratorAnalysis: ExperimentAnalysisModule {
+final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     private var startInput: ExperimentAnalysisDataIO!
     private var stopInput: ExperimentAnalysisDataIO!
     private var lengthInput: ExperimentAnalysisDataIO?
@@ -54,7 +54,7 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
 
         if length == 0 {
             switch firstOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
                 length = buffer.size
             case .value(value: _, usedAs: _):
                 break
@@ -74,18 +74,11 @@ final class RampGeneratorAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
         #endif
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

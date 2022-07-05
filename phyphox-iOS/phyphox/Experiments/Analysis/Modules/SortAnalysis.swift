@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class SortAnalysis: ExperimentAnalysisModule {
+final class SortAnalysis: AutoClearingExperimentAnalysisModule {
     
     private var ins: [ExperimentAnalysisDataIO] = []
     let descending: Bool;
@@ -40,8 +40,8 @@ final class SortAnalysis: ExperimentAnalysisModule {
     override func update() {
         let mainArray: [Double]
         switch ins[0] {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            mainArray = buffer.toArray()
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            mainArray = data.data
         case .value(value: _, usedAs: _):
             return
         }
@@ -58,27 +58,20 @@ final class SortAnalysis: ExperimentAnalysisModule {
             guard i < outputs.count else { break }
 
             switch bufferIn {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                let inArray = buffer.toArray()
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                let inArray = data.data
                 results.append(offsets.map{$0 < inArray.count ? inArray[$0] : Double.nan})
             case .value(value: _, usedAs: _):
                 results.append([])
             }
         }
-        
-        beforeWrite()
-        
+                
         for (i, result) in results.enumerated() {
             let output = outputs[i]
 
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

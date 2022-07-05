@@ -9,7 +9,7 @@
 
 import Foundation
 
-final class SubrangeAnalysis: ExperimentAnalysisModule {
+final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
     
     private var from: ExperimentAnalysisDataIO? = nil
     private var to: ExperimentAnalysisDataIO? = nil
@@ -66,8 +66,8 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
         if end < 0 {
             for arrayIn in arrayIns {
                 switch arrayIn {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    end = max(end, buffer.memoryCount)
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    end = max(end, data.data.count)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -79,8 +79,8 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             guard i < outputs.count else { break }
             
             switch arrayIn {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                let data = buffer.toArray()
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                let data = data.data
                 let thisEnd = min(end, data.count)
                 if thisEnd < start {
                     results.append([])
@@ -93,21 +93,14 @@ final class SubrangeAnalysis: ExperimentAnalysisModule {
             }
             
         }
-            
-        beforeWrite()
-         
+                     
         for (i, result) in results.enumerated() {
 
             let output = outputs[i]
 
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

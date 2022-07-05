@@ -8,31 +8,24 @@
 
 import Foundation
 
-final class CountAnalysis: ExperimentAnalysisModule {
+final class CountAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         var result: [Double] = []
         
         for input in inputs {
             switch input {
-            case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                let val = buffer.memoryCount
+            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                let val = data.data.count
                 result.append(Double(val))
             case .value(value: _, usedAs: _):
                 result.append(1.0)
             }
         }
         
-        beforeWrite()
-
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

@@ -58,7 +58,7 @@ final class ExperimentAnalysis {
         for module in modules {
             for input in module.inputs {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
                     buffer.addObserver(self)
                 case .value(value: _, usedAs: _):
                     continue

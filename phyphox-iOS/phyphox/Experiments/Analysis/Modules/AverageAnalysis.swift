@@ -8,11 +8,11 @@
 
 import Foundation
 
-final class AverageAnalysis: ExperimentAnalysisModule {
+final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
     private var avgOutput: ExperimentAnalysisDataIO?
     private var stdOutput: ExperimentAnalysisDataIO?
     
-    private let input: DataBuffer
+    private let input: MutableDoubleArray
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
         var avg: ExperimentAnalysisDataIO? = nil
@@ -33,8 +33,8 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         }
 
         switch firstInput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            input = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            input = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Average needs a buffer as input.")
         }
@@ -47,7 +47,7 @@ final class AverageAnalysis: ExperimentAnalysisModule {
         var sum = 0.0
         var count = 0
         
-        let x = input.toArray()
+        let x = input.data
         
         for v in x {
             if v.isFinite {
@@ -61,17 +61,10 @@ final class AverageAnalysis: ExperimentAnalysisModule {
 
         let avg = sum/Double(count)
         
-        beforeWrite()
-
         if let avgOutput = avgOutput {
             switch avgOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues([avg])
-                }
-                else {
-                    buffer.appendFromArray([avg])
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray([avg])
             case .value(value: _, usedAs: _):
                 break
             }
@@ -94,13 +87,8 @@ final class AverageAnalysis: ExperimentAnalysisModule {
             }
 
             switch stdOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues([std])
-                }
-                else {
-                    buffer.appendFromArray([std])
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray([std])
             case .value(value: _, usedAs: _):
                 break
             }

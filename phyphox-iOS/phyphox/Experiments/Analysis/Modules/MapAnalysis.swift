@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MapAnalysis: ExperimentAnalysisModule {
+final class MapAnalysis: AutoClearingExperimentAnalysisModule {
     enum ZMode {
         case count
         case sum
@@ -22,9 +22,9 @@ final class MapAnalysis: ExperimentAnalysisModule {
     private var mapHeight: ExperimentAnalysisDataIO
     private var minY: ExperimentAnalysisDataIO
     private var maxY: ExperimentAnalysisDataIO
-    private var x: DataBuffer
-    private var y: DataBuffer
-    private var z: DataBuffer? = nil
+    private var x: MutableDoubleArray
+    private var y: MutableDoubleArray
+    private var z: MutableDoubleArray? = nil
     
     private var outX: ExperimentAnalysisDataIO? = nil
     private var outY: ExperimentAnalysisDataIO? = nil
@@ -52,8 +52,8 @@ final class MapAnalysis: ExperimentAnalysisModule {
         var mapHeight: ExperimentAnalysisDataIO? = nil
         var minY: ExperimentAnalysisDataIO? = nil
         var maxY: ExperimentAnalysisDataIO? = nil
-        var x: DataBuffer? = nil
-        var y: DataBuffer? = nil
+        var x: MutableDoubleArray? = nil
+        var y: MutableDoubleArray? = nil
         
         for input in inputs {
             if input.asString == "mapWidth" {
@@ -76,24 +76,24 @@ final class MapAnalysis: ExperimentAnalysisModule {
             }
             else if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    x = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    x = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
                 }
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    y = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    y = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
                 }
             }
             else if input.asString == "z" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    z = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    z = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input z for map module has to be a buffer.")
                 }
@@ -177,9 +177,9 @@ final class MapAnalysis: ExperimentAnalysisModule {
         guard let maxY = self.maxY.getSingleValue() else {
             return
         }
-        let x = self.x.toArray()
-        let y = self.y.toArray()
-        let z = self.z?.toArray()
+        let x = self.x.data
+        let y = self.y.data
+        let z = self.z?.data
         
         var n = min(x.count, y.count)
         if let nz = z?.count {
@@ -225,18 +225,11 @@ final class MapAnalysis: ExperimentAnalysisModule {
                 }
             }
         }
-        
-        beforeWrite()
-        
+                
         if let xOut = outX {
             switch xOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(resX)
-                }
-                else {
-                    buffer.appendFromArray(resX)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(resX)
             default:
                 break
             }
@@ -244,13 +237,8 @@ final class MapAnalysis: ExperimentAnalysisModule {
         
         if let yOut = outY {
             switch yOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(resY)
-                }
-                else {
-                    buffer.appendFromArray(resY)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(resY)
             default:
                 break
             }
@@ -258,13 +246,8 @@ final class MapAnalysis: ExperimentAnalysisModule {
         
         if let zOut = outZ {
             switch zOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(resZ)
-                }
-                else {
-                    buffer.appendFromArray(resZ)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(resZ)
             default:
                 break
             }

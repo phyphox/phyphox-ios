@@ -9,11 +9,11 @@
 import Foundation
 import Accelerate
 
-final class GaussSmoothAnalysis: ExperimentAnalysisModule {
+final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
     private var calcWidth: Int = 0
     private var kernel: [Float] = []
 
-    private let inputBuffer: DataBuffer
+    private let inputBuffer: MutableDoubleArray
 
     private var sigma: Double = 0.0 {
         didSet {
@@ -45,8 +45,8 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         guard let firstInput = inputs.first else { throw SerializationError.genericError(message: "Input must be a buffer") }
 
         switch firstInput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            inputBuffer = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            inputBuffer = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Input must be a buffer")
         }
@@ -65,7 +65,7 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
             debug_noteInputs(["sigma" : sigma, "calcWidth" : calcWidth, "kernel" : kernel])
         #endif
         
-        var input = inputBuffer.toArray().map { Float($0) }
+        var input = inputBuffer.data.map { Float($0) }
         
         let count = input.count
         
@@ -88,18 +88,11 @@ final class GaussSmoothAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
         #endif
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
+final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     private var lengthInput: ExperimentAnalysisDataIO?
     private var valueInput: ExperimentAnalysisDataIO?
     
@@ -43,7 +43,7 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         if length == 0 {
             outputs.first.map {
                 switch $0 {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
                     length = buffer.size
                 case .value(value: _, usedAs: _):
                     break
@@ -60,20 +60,13 @@ final class ConstGeneratorAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
         #endif
-        
-        beforeWrite()
-        
+                
         for output in outputs {
             switch output {
             case .value(value: _, usedAs: _):
                 break
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             }
         }
     }

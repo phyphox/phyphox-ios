@@ -8,11 +8,11 @@
 
 import Foundation
 
-final class ThresholdAnalysis: ExperimentAnalysisModule {
+final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
     private let falling: Bool
     
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
+    private var xIn: MutableDoubleArray?
+    private var yIn: MutableDoubleArray!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
@@ -26,16 +26,16 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    yIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             }
             else if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    xIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -58,11 +58,11 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         var x: Double?
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
         
-        for (i, value) in yIn.enumerated() {
+        for (i, value) in yIn.data.enumerated() {
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
-                    if let v = xIn?.objectAtIndex(i) {
-                        x = v
+                    if let xIn = xIn, i < xIn.data.count {
+                        x = xIn.data[i]
                     }
                     else {
                         x = Double(i)
@@ -77,7 +77,7 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
         guard let xValue = x else {
             for output in outputs {
                 switch output {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: let clear):
                     if clear {
                         buffer.clear(reset: false)
                     }
@@ -89,17 +89,10 @@ final class ThresholdAnalysis: ExperimentAnalysisModule {
             return
         }
         
-        beforeWrite()
-
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues([xValue])
-                }
-                else {
-                    buffer.append(xValue)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.append(xValue)
             case .value(value: _, usedAs: _):
                 break
             }

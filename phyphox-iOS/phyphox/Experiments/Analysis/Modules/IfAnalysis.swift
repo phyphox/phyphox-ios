@@ -27,6 +27,7 @@ final class IfAnalysis: ExperimentAnalysisModule {
         greater = try attributes.optionalValue(for: "greater") ?? false
 
         for input in inputs {
+            print(input)
             if input.asString == "a" {
                 in1 = input
             }
@@ -75,11 +76,13 @@ final class IfAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
+        clearInputs()
+        
         guard let firstOutput = outputs.first else { return }
 
         let v1 = in1!.getSingleValue()
         let v2 = in2!.getSingleValue()
-
+        
         if v1 == nil || v2 == nil {
             return
         }
@@ -91,22 +94,20 @@ final class IfAnalysis: ExperimentAnalysisModule {
         } else {
             out = inFalse
         }
-        
-        beforeWrite()
-        
+                
         guard let output = out else { return }
 
         let outputValues: [Double]
 
         switch output {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            outputValues = buffer.toArray()
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            outputValues = data.data
         case .value(value: let value, usedAs: _):
             outputValues = [value]
         }
 
         switch firstOutput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
+        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: let clear):
             if clear {
                 buffer.replaceValues(outputValues)
             }

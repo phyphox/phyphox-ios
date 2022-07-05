@@ -9,21 +9,20 @@
 import Foundation
 import Accelerate
 
-final class IntegrationAnalysis: ExperimentAnalysisModule {
+final class IntegrationAnalysis: AutoClearingExperimentAnalysisModule {
     
     override func update() {
         guard let firstInput = inputs.first else { return }
 
-        let inputBuffer: DataBuffer
+        let inArray: [Double]
 
         switch firstInput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            inputBuffer = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            inArray = data.data
         case .value(value: _, usedAs: _):
             return
         }
 
-        let inArray = inputBuffer.toArray()
         let count = inArray.count
         
         var result: [Double]
@@ -44,17 +43,10 @@ final class IntegrationAnalysis: ExperimentAnalysisModule {
             }
         }
         
-        beforeWrite()
-
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(result)
-                }
-                else {
-                    buffer.appendFromArray(result)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(result)
             case .value(value: _, usedAs: _):
                 break
             }

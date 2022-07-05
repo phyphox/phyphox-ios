@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class TimerAnalysis: ExperimentAnalysisModule {
+final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
     let linearTime: Bool;
     
     private var outOutput: ExperimentAnalysisDataIO?
@@ -37,29 +37,18 @@ final class TimerAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        beforeWrite()
         if let output = outOutput {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues([linearTime ? analysisLinearTime : analysisTime])
-                }
-                else {
-                    buffer.append(linearTime ? analysisLinearTime : analysisTime)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.append(linearTime ? analysisLinearTime : analysisTime)
             case .value(value: _, usedAs: _):
                 break
             }
         }
         if let output = offset1970Output {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues([linearTime ? analysisLinearTimeOffset1970 : analysisTimeOffset1970])
-                }
-                else {
-                    buffer.append(linearTime ? analysisLinearTimeOffset1970 : analysisTimeOffset1970)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.append(linearTime ? analysisLinearTimeOffset1970 : analysisTimeOffset1970)
             case .value(value: _, usedAs: _):
                 break
             }

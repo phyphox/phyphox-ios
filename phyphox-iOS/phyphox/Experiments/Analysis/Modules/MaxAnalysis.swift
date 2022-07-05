@@ -9,9 +9,9 @@
 import Foundation
 import Accelerate
 
-final class MaxAnalysis: ExperimentAnalysisModule {
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
+final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
+    private var xIn: MutableDoubleArray?
+    private var yIn: MutableDoubleArray!
     private var thresholdIn: ExperimentAnalysisDataIO?
     
     private var maxOut: ExperimentAnalysisDataIO?
@@ -20,6 +20,7 @@ final class MaxAnalysis: ExperimentAnalysisModule {
     private var multiple: Bool
     
     required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+        
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         multiple = try attributes.optionalValue(for: "multiple") ?? false
@@ -27,16 +28,16 @@ final class MaxAnalysis: ExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    xIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    yIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -80,46 +81,17 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             }
         #endif
         
-        let inArray = yIn.toArray()
-        
-        if inArray.count == 0 {
-            if let maxOut = maxOut {
-                switch maxOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    buffer.clear(reset: false)
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-
-            if let positionOut = positionOut {
-                switch positionOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    buffer.clear(reset: false)
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            
-            return
-        }
+        let inArray = yIn.data
         
         if positionOut == nil && !multiple {
             var max = 0.0
             
             vDSP_maxvD(inArray, 1, &max, vDSP_Length(inArray.count))
-            
-            beforeWrite()
-            
+                        
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.replaceValues([max])
-                    }
-                    else {
-                        buffer.append(max)
-                    }
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                    buffer.append(max)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -147,21 +119,14 @@ final class MaxAnalysis: ExperimentAnalysisModule {
                     }
                 } else if v > thisMax {
                     thisMax = v
-                    thisX = xIn?.objectAtIndex(i) ?? Double(i)
+                    thisX = xIn?.data[i] ?? Double(i)
                 }
             }
-            
-            beforeWrite()
-            
+                        
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.replaceValues(max)
-                    }
-                    else {
-                        buffer.appendFromArray(max)
-                    }
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                    buffer.appendFromArray(max)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -169,13 +134,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
             if let positionOut = positionOut {
                 switch positionOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.replaceValues(x)
-                    }
-                    else {
-                        buffer.appendFromArray(x)
-                    }
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                    buffer.appendFromArray(x)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -189,29 +149,17 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
             let x: Double
             
-            if xIn != nil {
-                guard let n = xIn!.objectAtIndex(Int(index)) else {
-                    print("[Max analysis]: Index \(Int(index)) is out of bounds of x value array \(xIn!)")
-                    return
-                }
-                
-                x = n
+            if let xIn = xIn, Int(index) < xIn.data.count {
+                x = xIn.data[Int(index)]
             }
             else {
                 x = Double(index)
             }
-            
-            beforeWrite()
-            
+                        
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.replaceValues([max])
-                    }
-                    else {
-                        buffer.append(max)
-                    }
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                    buffer.append(max)
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -219,13 +167,8 @@ final class MaxAnalysis: ExperimentAnalysisModule {
             
             if let positionOut = positionOut {
                 switch positionOut {
-                case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.replaceValues([x])
-                    }
-                    else {
-                        buffer.append(x)
-                    }
+                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                    buffer.append(x)
                 case .value(value: _, usedAs: _):
                     break
                 }

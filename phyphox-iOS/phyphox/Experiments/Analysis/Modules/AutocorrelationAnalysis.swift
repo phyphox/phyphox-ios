@@ -9,12 +9,12 @@
 import Foundation
 import Accelerate
 
-final class AutocorrelationAnalysis: ExperimentAnalysisModule {
+final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
     private var minXIn: ExperimentAnalysisDataIO?
     private var maxXIn: ExperimentAnalysisDataIO?
     
-    private var xIn: DataBuffer?
-    private var yIn: DataBuffer!
+    private var xIn: MutableDoubleArray?
+    private var yIn: MutableDoubleArray!
     
     private var xOut: ExperimentAnalysisDataIO?
     private var yOut: ExperimentAnalysisDataIO?
@@ -23,16 +23,16 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    xIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
-                    yIn = buffer
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
@@ -79,7 +79,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             needsFiltering = true
         }
         
-        let y = yIn.toArray()
+        let y = yIn.data
         var count = y.count
         
         var xValues: [Double] = []
@@ -87,7 +87,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         
         if count > 0 {
             if let xIn = xIn {
-                count = min(xIn.memoryCount, count);
+                count = min(xIn.data.count, count);
             }
             
             var x: [Double]!
@@ -96,7 +96,7 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
                 if xIn != nil {
                     x = [Double](repeating: 0.0, count: count)
                     
-                    let xRaw = xIn!.toArray()
+                    let xRaw = xIn!.data
                     
                     let first = xRaw.first
                     
@@ -189,18 +189,11 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
             xValues = minimizedX
             yValues = minimizedY
         }
-        
-        beforeWrite()
-        
+                
         if let yOut = yOut {
             switch yOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(yValues)
-                }
-                else {
-                    buffer.appendFromArray(yValues)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(yValues)
             case .value(value: _, usedAs: _):
                 break
             }
@@ -208,13 +201,8 @@ final class AutocorrelationAnalysis: ExperimentAnalysisModule {
         
         if let xOut = xOut {
             switch xOut {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(xValues)
-                }
-                else {
-                    buffer.appendFromArray(xValues)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(xValues)
             case .value(value: _, usedAs: _):
                 break
             }

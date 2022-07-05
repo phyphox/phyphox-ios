@@ -8,8 +8,8 @@
 
 import Foundation
 
-final class BinningAnalysis: ExperimentAnalysisModule {
-    private let inputBuffer: DataBuffer
+final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
+    private let inputBuffer: MutableDoubleArray
     private let x0Input: ExperimentAnalysisDataIO?
     private let dxInput: ExperimentAnalysisDataIO?
     
@@ -53,8 +53,8 @@ final class BinningAnalysis: ExperimentAnalysisModule {
         }
 
         switch tInput {
-        case .buffer(buffer: let buffer, usedAs: _, clear: _):
-            inputBuffer = buffer
+        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            inputBuffer = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
         }
@@ -77,7 +77,7 @@ final class BinningAnalysis: ExperimentAnalysisModule {
         var binStarts = [Double]()
         var binCounts = [Double]()
         
-        for v in inputBuffer {
+        for v in inputBuffer.data {
             if !v.isFinite {
                 continue
             }
@@ -101,18 +101,11 @@ final class BinningAnalysis: ExperimentAnalysisModule {
                 binCounts[binIndex-firstBinIndex] += 1
             }
         }
-        
-        beforeWrite()
-        
+                
         if let binStartsOutput = binStartsOutput {
             switch binStartsOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(binStarts)
-                }
-                else {
-                    buffer.appendFromArray(binStarts)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(binStarts)
             case .value(value: _, usedAs: _):
                 break
             }
@@ -120,13 +113,8 @@ final class BinningAnalysis: ExperimentAnalysisModule {
         
         if let binCountsOutput = binCountsOutput {
             switch binCountsOutput {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(binCounts)
-                }
-                else {
-                    buffer.appendFromArray(binCounts)
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(binCounts)
             case .value(value: _, usedAs: _):
                 break
             }

@@ -18,11 +18,11 @@ private extension ExperimentAnalysisDataIO {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            self = .buffer(buffer: buffer, usedAs: usedAs, clear: clear)
+            self = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, clear: clear)
         case .value(value: let value, usedAs: let usedAs):
             self = .value(value: value, usedAs: usedAs)
         case .empty(let asString):
-            self = .buffer(buffer: emptyBuffer, usedAs: asString, clear: false)
+            self = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: asString, clear: false)
         }
     }
 }

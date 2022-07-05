@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class RangefilterAnalysis: ExperimentAnalysisModule {
+final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
     private final class Range: CustomStringConvertible {
         let min: Double
         let max: Double
@@ -30,9 +30,9 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
     }
     
     override func update() {
-        var iterators: [(Range, DataBuffer)] = []
+        var iterators: [(Range, MutableDoubleArray)] = []
         
-        var currentIn: DataBuffer? = nil
+        var currentIn: MutableDoubleArray? = nil
         var currentMax: Double = Double.infinity
         var currentMin: Double = -Double.infinity
         
@@ -49,12 +49,12 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
             }
             else {
                 switch input {
-                case .buffer(buffer: let buffer, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
                     if let currentInput = currentIn {
                         iterators.append((Range(min: currentMin, max: currentMax), currentInput))
                     }
 
-                    currentIn = buffer
+                    currentIn = data
                     currentMax = Double.infinity
                     currentMin = -Double.infinity
                 case .value(value: _, usedAs: _):
@@ -80,7 +80,7 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         #endif
         
         for (index, (range, buffer)) in iterators.enumerated() {
-            for (i, value) in buffer.enumerated() {
+            for (i, value) in buffer.data.enumerated() {
                 if delete.contains(i) {
                     continue
                 }
@@ -121,18 +121,11 @@ final class RangefilterAnalysis: ExperimentAnalysisModule {
         #if DEBUG_ANALYSIS
             debug_noteOutputs(out)
         #endif
-        
-        beforeWrite()
-        
+                
         for (i, output) in outputs.enumerated() {
             switch output {
-            case .buffer(buffer: let buffer, usedAs: _, clear: let clear):
-                if clear {
-                    buffer.replaceValues(out[i])
-                }
-                else {
-                    buffer.appendFromArray(out[i])
-                }
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                buffer.appendFromArray(out[i])
             case .value(value: _, usedAs: _):
                 break
             }

@@ -386,11 +386,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         throw ElementHandlerError.missingElement("data-container")
                     }
 
-                    input = .buffer(buffer: buffer, usedAs: "", clear: true)
+                    input = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "", clear: true)
                 case .value(let value):
                     input = .value(value: value, usedAs: "")
                 case .clear:
-                    input = .buffer(buffer: emptyBuffer, usedAs: "", clear: true)
+                    input = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: "", clear: true)
                 }
 
                 return (input, outputBuffer)
