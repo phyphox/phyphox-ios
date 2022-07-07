@@ -99,7 +99,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 14, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 15, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -260,7 +260,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         guard let buffer = buffers[item.name] else {
                             throw ElementHandlerError.missingElement("data-container")
                         }
-                        send[item.id] = NetworkSendableData(source: .Buffer(buffer), additionalAttributes: item.additionalAttributes)
+                        send[item.id] = NetworkSendableData(source: .Buffer(buffer, clear: item.clear), additionalAttributes: item.additionalAttributes)
                     case .meta:
                         let metadata: NetworkSendableData.Source
                         switch (item.name) {

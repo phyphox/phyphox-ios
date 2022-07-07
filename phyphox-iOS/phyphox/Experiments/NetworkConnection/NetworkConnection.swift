@@ -18,7 +18,7 @@ protocol NetworkConnectionDataPolicyInfoDelegate {
 
 struct NetworkSendableData {
     enum Source {
-    case Buffer(DataBuffer)
+    case Buffer(DataBuffer, clear: Bool)
     case Metadata(Metadata)
     case Time(ExperimentTimeReference)
     }
@@ -209,6 +209,16 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         if executeRequested {
             self.requestCallbacks.append(self)
             service.execute(send: send, requestCallbacks: requestCallbacks)
+            for (_, item) in send {
+                switch item.source {
+                case .Buffer(let buffer, clear: let clear):
+                    if clear {
+                        buffer.clear(reset: false)
+                    }
+                default:
+                    break
+                }
+            }
             self.requestCallbacks = []
             executeRequested = false
         }
