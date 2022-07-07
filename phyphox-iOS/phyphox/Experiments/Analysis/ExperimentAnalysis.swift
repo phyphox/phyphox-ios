@@ -86,7 +86,7 @@ final class ExperimentAnalysis {
 
         busy = true
 
-        let delay = cycle > 0 ? max(1/50.0, dynamicSleep?.last ?? sleep) : 0
+        let delay = cycle > 1 ? max(1/50.0, dynamicSleep?.last ?? sleep) : 0
 
         after(delay) {
             if !self.running && self.cycle > 0 { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
