@@ -10,13 +10,14 @@ import UIKit
 
 private let spacing: CGFloat = 10.0
 
-final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewModule {
+final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
     let descriptor: ValueViewDescriptor
 
     private let label = UILabel()
     private let valueLabel = UILabel()
     private let unitLabel = UILabel()
 
+    var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 0)
 
     var active = false {
@@ -127,7 +128,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
 
 extension ExperimentValueView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
-        if wantsUpdate {
+        if wantsUpdate && !analysisRunning {
             wantsUpdate = false
             update()
         }

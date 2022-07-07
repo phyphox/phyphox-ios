@@ -153,6 +153,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         navigationItem.leftBarButtonItem = backButton
         
         webServer.delegate = self
+        experiment.analysisDelegate = self
         
         defer {
             NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
@@ -1318,6 +1319,24 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             connectToBluetoothDevices()
         } else {
             connectToNetworkDevices()
+        }
+    }
+}
+
+extension ExperimentPageViewController: ExperimentAnalysisDelegate {
+    func analysisWillUpdate(_: ExperimentAnalysis) {
+        for module in viewModules.flatMap({ $0 }) {
+            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+                analysisLimitedViewModule.analysisRunning = true
+            }
+        }
+    }
+
+    func analysisDidUpdate(_: ExperimentAnalysis) {
+        for module in viewModules.flatMap({ $0 }) {
+            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+                analysisLimitedViewModule.analysisRunning = false
+            }
         }
     }
 }

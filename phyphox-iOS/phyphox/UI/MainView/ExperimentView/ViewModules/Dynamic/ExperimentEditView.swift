@@ -11,9 +11,10 @@ import UIKit
 private let spacing: CGFloat = 10.0
 private let textFieldWidth: CGFloat = 100.0
 
-final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewModule, UITextFieldDelegate {
+final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewModule, UITextFieldDelegate, AnalysisLimitedViewModule {
     let descriptor: EditViewDescriptor
 
+    var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 5)
 
     var active = false {
@@ -203,7 +204,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
 extension ExperimentEditView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
-        if wantsUpdate {
+        if wantsUpdate && !analysisRunning {
             wantsUpdate = false
             update()
         }

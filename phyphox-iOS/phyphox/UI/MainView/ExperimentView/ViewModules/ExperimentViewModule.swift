@@ -127,3 +127,7 @@ final class DisplayLink {
 protocol ExportingViewModule : AnyObject {
     var exportDelegate: ExportDelegate? { get set }
 }
+
+protocol AnalysisLimitedViewModule : AnyObject {
+    var analysisRunning: Bool { get set }
+}

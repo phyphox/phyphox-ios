@@ -18,10 +18,6 @@ private struct ExperimentRequiredPermission: OptionSet {
     static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
 }
 
-protocol ExperimentDelegate: class {
-    func experimentWillBecomeActive(_ experiment: Experiment)
-}
-
 struct ExperimentLink: Equatable {
     let label: String
     let url: URL
@@ -65,7 +61,7 @@ final class Experiment {
         return translation?.selectedTranslation?.categoryString ?? category
     }
 
-    weak var delegate: ExperimentDelegate?
+    weak var analysisDelegate: ExperimentAnalysisDelegate?
 
     let icon: ExperimentIcon
     
@@ -205,8 +201,6 @@ final class Experiment {
         }
         analysis.queue = queue
         analysis.setNeedsUpdate(isPreRun: true)
-        
-        delegate?.experimentWillBecomeActive(self)
     }
     
     /**
@@ -420,13 +414,15 @@ final class Experiment {
 }
 
 extension Experiment: ExperimentAnalysisDelegate {
-    func analysisWillUpdate(_: ExperimentAnalysis) {
+    func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
+        analysisDelegate?.analysisWillUpdate(analysis)
         for networkConnection in networkConnections {
             networkConnection.pushDataToBuffers()
         }
     }
 
-    func analysisDidUpdate(_: ExperimentAnalysis) {
+    func analysisDidUpdate(_ analysis: ExperimentAnalysis) {
+        analysisDelegate?.analysisDidUpdate(analysis)
         if running {
             audioEngine?.play()
             for bluetoothOutput in bluetoothOutputs {

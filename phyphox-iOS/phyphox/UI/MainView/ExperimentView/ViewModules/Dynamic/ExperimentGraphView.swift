@@ -8,8 +8,8 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate {
-    
+final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate, AnalysisLimitedViewModule {
+        
     let unfoldMoreImageView: UIImageView
     let unfoldLessImageView: UIImageView
     
@@ -37,6 +37,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     var zoomDelegate: ApplyZoomDelegate? = nil
     var resizableState: ResizableViewModuleState = .normal
 
+    var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 0)
 
     private var graphTools: UITabBar?
@@ -1797,7 +1798,7 @@ extension ExperimentGraphView: GraphGridDelegate {
 
 extension ExperimentGraphView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
-        if wantsUpdate {
+        if wantsUpdate && !analysisRunning {
             update()
         }
     }
