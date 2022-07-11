@@ -36,6 +36,7 @@
 "sensorTemperature" = "Temperature";
 "sensorHumidity" = "Humidity";
 "sensorAttitude" = "Attitude";
+"sensorGravity" = "Gravity";
 "sensorVendor" = "Vendor specific";
 "sensorDepth" = "Depth (LiDAR/ToF)";
 "location" = "Location";

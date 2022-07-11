@@ -20,6 +20,7 @@ enum SensorType: String, LosslessStringConvertible, Equatable, CaseIterable {
     case temperature
     case humidity
     case attitude
+    case gravity
 }
 
 extension SensorType {
@@ -45,6 +46,8 @@ extension SensorType {
             return localize("sensorTemperature")
         case .attitude:
             return localize("sensorAttitude")
+        case .gravity:
+            return localize("sensorGravity")
         }
     }
 }
@@ -274,7 +277,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             }
         case .light, .temperature, .humidity:
             throw SensorError.sensorUnavailable(sensorType)
-        case .attitude, .linearAcceleration:
+        case .attitude, .linearAcceleration, .gravity:
             guard motionSession.deviceMotionAvailable else {
                 throw SensorError.sensorUnavailable(sensorType)
             }
@@ -292,6 +295,9 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         
         if (sensorType == .attitude) {
             self.motionSession.attitude = true
+        }
+        if (sensorType == .gravity) {
+            self.motionSession.gravity = true
         }
     }
     
@@ -460,6 +466,24 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 self.dataIn(x, y: y, z: z, abs: w, accuracy: nil, t: t, error: error)
                 })
             
+        case .gravity:
+            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
+                guard let motion = deviceMotion else {
+                    return
+                }
+                
+                let gravity = motion.gravity
+                
+                let x = gravity.x*kG
+                let y = gravity.y*kG
+                let z = gravity.z*kG
+                
+                let t = motion.timestamp
+                
+                self.ready = true
+                self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
+                })
+            
         default:
             break
         }
@@ -495,6 +519,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .light, .temperature, .humidity:
             break
         case .attitude:
+            motionSession.stopDeviceMotionUpdates(self)
+        case .gravity:
             motionSession.stopDeviceMotionUpdates(self)
         }
     }

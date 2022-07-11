@@ -27,6 +27,7 @@ final class MotionSession {
 
     var calibratedMagnetometer = false
     var attitude = false
+    var gravity = false
 
     private(set) var altimeterRunning = false
     private(set) var accelerometerRunning = false
@@ -45,6 +46,7 @@ final class MotionSession {
     public func resetConfig() {
         calibratedMagnetometer = false
         attitude = false
+        gravity = false
     }
 
     private func makeQueue() -> OperationQueue {
@@ -222,7 +224,7 @@ final class MotionSession {
 
                 motionManager.deviceMotionUpdateInterval = interval
                 motionManager.showsDeviceMovementDisplay = true
-                if motionManager.isMagnetometerAvailable && (calibratedMagnetometer || attitude) {
+                if motionManager.isMagnetometerAvailable && (calibratedMagnetometer || attitude || gravity) {
                     motionManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical, to: makeQueue(), withHandler: { [unowned self] (motion, error) in
                         for (_, h) in self.deviceMotionReceivers {
                             h(motion, error as NSError?)

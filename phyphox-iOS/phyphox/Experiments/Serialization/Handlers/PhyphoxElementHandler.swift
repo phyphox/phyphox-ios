@@ -313,6 +313,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                                 metadata = res
                             } else if let res = try matchSensor(name: item.name, sensor: SensorType.attitude) {
                                 metadata = res
+                            } else if let res = try matchSensor(name: item.name, sensor: SensorType.gravity) {
+                                metadata = res
                             } else {
                                 throw ElementHandlerError.message("Unknown metadata name \(item.name)")
                             }
