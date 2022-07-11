@@ -272,6 +272,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         super.init(frame: .zero)
         
+        zoomFollows = descriptor.followX
+        if descriptor.followX {
+            zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
+            zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
+        }
+        
         gridView.delegate = self
         zGridView?.delegate = self
         
@@ -593,8 +599,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if applyX {
             switch modeX {
             case .reset:
-                self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                zoomFollows = descriptor.followX
+                if descriptor.followX {
+                    self.zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
+                    self.zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
+                } else {
+                    self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                    self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                }
             case .keep:
                 self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
                 self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
@@ -933,8 +945,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var minZ = Double.infinity
         var maxZ = -Double.infinity
 
-        var xMinStrict = descriptor.scaleMinX == .fixed
-        var xMaxStrict = descriptor.scaleMaxX == .fixed
+        var xMinStrict = (descriptor.scaleMinX == .fixed && !zoomFollows)
+        var xMaxStrict = (descriptor.scaleMaxX == .fixed && !zoomFollows)
         var yMinStrict = descriptor.scaleMinY == .fixed
         var yMaxStrict = descriptor.scaleMaxY == .fixed
         var zMinStrict = descriptor.scaleMinZ == .fixed
@@ -960,7 +972,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
         
         if let zMin = zoomMin, let zMax = zoomMax {
-            if zMin.x.isFinite && zMax.x.isFinite && zMin.x < zMax.x {
+            if zMin.x.isFinite && zMax.x.isFinite && zMin.x < zMax.x && !zoomFollows {
                 minX = zMin.x
                 maxX = zMax.x
                 xMinStrict = true
@@ -1026,20 +1038,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     }
                 }
 
-                if x.isFinite && x > maxX {
-                    if !xMaxStrict {
-                        maxX = x
-                        if maxX > historicMinX {
-                            historicMaxX = maxX
-                        } else if descriptor.scaleMaxX == .extend {
-                            maxX = historicMaxX
-                        }
-                    } else if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
-                        let w = zoomMax!.x - zoomMin!.x
-                        zoomMin = GraphPoint3D(x: x - w, y: zoomMin!.y, z: zoomMin!.z)
-                        zoomMax = GraphPoint3D(x: x, y: zoomMax!.y, z: zoomMax!.z)
-                        minX = zoomMin!.x
-                        maxX = zoomMax!.x
+                if x.isFinite && x > maxX && !xMaxStrict {
+                    maxX = x
+                    if maxX > historicMaxX {
+                        historicMaxX = maxX
+                    } else if descriptor.scaleMaxX == .extend {
+                        maxX = historicMaxX
                     }
                 }
 
@@ -1130,6 +1134,16 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
             
             dataSets.append((bounds: (min: .zero, max: .zero), data2D: points2D[i], data3D: points3D[i], timeReferenceSets: timeReferenceSets))
+        }
+        
+        if zoomFollows && zoomMin != nil && zoomMax != nil && zoomMin!.x.isFinite && zoomMax!.x.isFinite {
+            let w = zoomMax!.x - zoomMin!.x
+            zoomMin = GraphPoint3D(x: maxX - w, y: zoomMin!.y, z: zoomMin!.z)
+            zoomMax = GraphPoint3D(x: maxX, y: zoomMax!.y, z: zoomMax!.z)
+            minX = zoomMin!.x
+            maxX = zoomMax!.x
+            xMaxStrict = true
+            xMinStrict = true
         }
         
         if systemTime && !descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
@@ -1646,8 +1660,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     func resetZoom() {
-        zoomMin = nil
-        zoomMax = nil
+        zoomFollows = descriptor.followX
+        if descriptor.followX {
+            zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
+            zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
+        } else {
+            zoomMin = nil
+            zoomMax = nil
+        }
         update()
     }
     

@@ -100,6 +100,8 @@ struct GraphViewElementDescriptor {
     let scaleMinZ: GraphViewDescriptor.ScaleMode
     let scaleMaxZ: GraphViewDescriptor.ScaleMode
     
+    let followX: Bool
+    
     let mapWidth: UInt
     let colorMap: [UIColor]
 
@@ -167,6 +169,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case maxY
         case minZ
         case maxZ
+        case followX
         case mapWidth
         case mapColor1
         case mapColor2
@@ -199,7 +202,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         let style = GraphViewDescriptor.GraphStyle(attributes.optionalString(for: .style) ?? "") ?? .lines
-        let partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
+        var partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
         let color = mapColorString(attributes.optionalString(for: .color))
@@ -223,8 +226,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let yPrecision: UInt = try attributes.optionalValue(for: .yPrecision) ?? 3
         let zPrecision: UInt = try attributes.optionalValue(for: .zPrecision) ?? 3
 
-        let scaleMinX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinX) ?? .auto
-        let scaleMaxX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxX) ?? .auto
+        var scaleMinX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinX) ?? .auto
+        var scaleMaxX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxX) ?? .auto
         let scaleMinY: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinY) ?? .auto
         let scaleMaxY: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxY) ?? .auto
         let scaleMinZ: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinZ) ?? .auto
@@ -237,6 +240,13 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let minZ: CGFloat = try attributes.optionalValue(for: .minZ) ?? 0
         let maxZ: CGFloat = try attributes.optionalValue(for: .maxZ) ?? 0
 
+        let followX: Bool = try attributes.optionalValue(for: .followX) ?? false
+        if followX {
+            scaleMinX = .fixed
+            scaleMaxX = .fixed
+            partialUpdate = true
+        }
+        
         let inputBuffers = inputHandler.results
         guard inputBuffers.count > 0 else {
             throw ElementHandlerError.missingElement("input")
@@ -292,7 +302,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
         
-        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles)))
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {
