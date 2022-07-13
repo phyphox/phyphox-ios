@@ -25,6 +25,8 @@ final class ExperimentWebServer {
         return server != nil
     }
     
+    var port: UInt = 80
+    
     private(set) var path: String = ""
     
     private(set) var server: GCDWebServer?
@@ -429,10 +431,13 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        if server!.start(withPort: 80, bonjourName: nil){
+        port = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
+        
+        if server!.start(withPort: port, bonjourName: nil){
             print("Webserver running on \(String(describing: server!.serverURL))")
             return true
         } else if server!.start(withPort: 8080, bonjourName: nil) {
+            port = 8080
             print("Webserver running on \(String(describing: server!.serverURL))")
             return true
         }

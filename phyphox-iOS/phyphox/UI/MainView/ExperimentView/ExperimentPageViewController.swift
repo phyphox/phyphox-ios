@@ -573,7 +573,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     }
                 }
                 if ip != nil {
-                    url = "http://\(ip!)"
+                    if webServer.port != 80 {
+                        url = "http://\(ip!):\(webServer.port)"
+                    } else {
+                        url = "http://\(ip!)"
+                    }
                 } else {
                     url = "Error: No active network."
                 }
