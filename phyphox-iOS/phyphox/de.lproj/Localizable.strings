@@ -343,3 +343,4 @@
 "depthAggregationModeWeighted" = "Gewichtet";
 "sensorDepth" = "Tiefe (LiDAR/ToF)";
 "sensorGravity" = "Gravitation";
+"settings" = "Einstellungen";
