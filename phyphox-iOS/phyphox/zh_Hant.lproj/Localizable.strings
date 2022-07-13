@@ -1,5 +1,4 @@
 "action_settings" = "設定";
-"translationInfo" = "語言";
 "app_name" = "手機物理實作";
 "title_activity_experiment" = "手機物理實作";
 "newExperimentPhyphoxInfo" = "參考phyphox.org網站資訊，創建更好的手機物理實作實驗，包括數據分析，可與同事，學生和朋友分享。";
@@ -50,8 +49,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "遠程控制協助說明";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationToWebsite" = "拜訪網站";
-"translationToWebsiteURL" = "http://phyphox.org/languages#zh_Hant";
 "export" = "匯出數據";
 "pick_exportFormat" = "選擇數據格式";
 "newExperiment" = "新增實驗";
@@ -89,7 +86,6 @@
 "pick_exportSets" = "匯出挑選的數據組";
 "noDrawableData" = "無可繪製的數據";
 "AudioRateMissmatch" = "錯誤：取樣率不合。請停用會強行使用不同音頻取樣率的任何app或其它服務(如 AirPlay)。";
-"translationText" = "Phyphox 將使用系統設定中語言偏好裡的第一選項。要知悉哪種語言可用及如何協助，請選擇\"拜訪網頁\"。";
 "save_state_subject" = "手機物理實作的實驗狀態";
 "timedRunDialogTitle" = "時程設定";
 "timedRunStartDelay" = "延遲啟動(秒)";
@@ -104,7 +100,6 @@
 "info" = "訊息";
 "sensorTemperature" = "溫度計";
 "sensorHumidity" = "濕度計";
-"translationToSettings" = "設定";
 "newExperimentSimple" = "新建簡易實驗";
 "sensorAttitude" = "高度";
 "sensorVendor" = "特定供應商";

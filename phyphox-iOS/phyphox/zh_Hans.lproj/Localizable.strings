@@ -15,9 +15,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "远程控制帮助";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "语言";
-"translationToWebsite" = "访问网站";
-"translationToWebsiteURL" = "http://phyphox.org/languages#zh_Hans";
 "credits" = "创立团队";
 "creditsRWTH" = "Phyphox是由亚琛工业大学第二物理研究所开发。";
 "damageWarning" = "进行实验时，请注意不要损坏手机。尤其需要注意避免手机掉落在坚硬的表面上，并且不要将手机暴露在过强的磁场中。Phyphox的作者对于您手机的任何损坏概不负责。";
@@ -102,7 +99,6 @@
 "categoryRawSensor" = "原始传感器";
 "experimentinfo_hint" = "查看实验信息，了解如何使用该实验。";
 "AudioRateMissmatch" = "错误：采样率不匹配。请关闭驱动不同音频采样率的任何应用或服务（如Airplay）。";
-"translationText" = "Phyphox将使用你的系统设定中的语言偏好的第一选项。欲了解哪些语言可用及其你可以如何协助，请选择“访问网页”。";
 "newExperimentSimple" = "新建简易实验";
 "info" = "信息";
 "gpl" = "Phyphox是在GNU通用公共许可证下发布的开源软件。请访问http://phyphox.org获取更多信息和访问源代码。但，“phyphox”和“RWTH Aachen”是已注册商标。";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "你首先需要建立一个wifi连接至远程设备。请启动wifi或创建一个移动热点。";
 "fontSize" = "字体大小";
 "start_hint" = "触摸三角图标来开始实验。";
-"translationToSettings" = "设置";
 "deviceInfo" = "设备信息";
 "copyToClipboard" = "复制到剪贴板";
 "deviceInfoCopied" = "该设备信息已复制到你的剪贴板。";

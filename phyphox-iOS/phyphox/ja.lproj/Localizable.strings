@@ -85,9 +85,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "遠隔操作ヘルプ";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "言語";
-"translationToWebsite" = "ウェブサイトへ移行";
-"translationToWebsiteURL" = "http://phyphox.org/languages#ja";
 "actions" = "実行";
 "newExperiment" = "実験の追加";
 "creditsNames" = "開発とコンセプト:\nDr. Sebastian Staacks\nコンセプト:\nProf. Christoph Stampfer\nプログラミング:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
@@ -99,7 +96,6 @@
 "disableRemoteServer" = "リモートアクセスを無効にする";
 "remoteServerActive" = "リモートアクセスは有効です．下記のURLから本実験にアクセスしてください．URL：";
 "AudioRateMissmatch" = "エラー: サンプリングレートが一致しません．異なる音声サンプリングレートにするその他のアプリやサービス (Airplayなど) を無効にしてください．";
-"translationText" = "phyphoxはあなたのシステム設定の優先言語リストから第一可能言語を使用します．どの言語が使用可能か，どのように解決するかを知るためには \"ウェブサイトへ\" を選択してください．";
 "apple_ban" = "本実験は現在iOSでは利用できません．";
 "appleBanWarningMoreInfo" = "より詳細な情報";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "リモートデバイスに接続するためにWifi接続を行う必要があります。Wifiを有効にして、モバイルホットスポットを構成してください。";
 "fontSize" = "フォントサイズ";
 "start_hint" = "矢印にタッチして実験を開始.";
-"translationToSettings" = "設定";
 "deviceInfo" = "デバイス情報";
 "copyToClipboard" = "クリップボードにコピー";
 "deviceInfoCopied" = "デバイス情報はクリップボードにコピーされました。";

@@ -63,9 +63,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Aide pour le contrôle à distance";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Langues";
-"translationToWebsite" = "Visiter le site web";
-"translationToWebsiteURL" = "http://phyphox.org/languages#fr";
 "sensorLinearAcceleration" = "Accélération linéaire";
 "timed_stop" = "Arrêt de la mesure";
 "timed_start" = "Début de la mesure";
@@ -102,7 +99,6 @@
 "pick_exportSets" = "Choisir le jeu de données à exporter.";
 "experimentinfo_hint" = "Regardez les informations sur l'expérience pour apprendre comment l'utiliser.";
 "AudioRateMissmatch" = "Erreur : taux d'échantillonnage incorrect. Essayer de désactiver les applications (comme AirPlay) qui modifient le taux d'échantillonnage.";
-"translationText" = "Phyphox utilisera la première langue disponible dans votre liste de langues préférées dans les paramètres de votre système. Pour savoir quelles langues sont disponibles et comment vous pouvez aider, sélectionnez \"visiter le site Web\".";
 "newExperimentSimple" = "Ajouter une expérience simple";
 "info" = "Info";
 "gpl" = "Phyphox est un logiciel open source distribué sous licence GNU General Public License. Veuillez visiter http://phyphox.org pour plus d'informations et pour accéder à son code source. Cependant, les noms \"phyphox\" et \"RWTH Aachen\" sont des marques déposées.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Vous devez d'abord établir une connexion Wifi avec le périphérique distant. Veuillez activer le Wifi ou créer un point d'accès mobile.";
 "fontSize" = "taille de la police";
 "start_hint" = "Appuyez sur le triangle pour commencer l'expérience.";
-"translationToSettings" = "Paramètres";
 "deviceInfo" = "Information sur l'appareil";
 "copyToClipboard" = "Copier dans le presse-papiers";
 "deviceInfoCopied" = "Les informations de votre appareil ont été copiées dans le presse-papiers.";

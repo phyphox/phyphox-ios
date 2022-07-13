@@ -99,10 +99,6 @@
 "remotePhyphoxOrg" = "Trợ gúp điều khiển từ xa";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "AudioRateMissmatch" = "Lỗi: Tốc độ lấy mẫu không khớp. Vui lòng tắt mọi ứng dụng hoặc dịch vụ (như AirPlay) có tốc độ lấy mẫu âm thanh khác nhau.";
-"translationInfo" = "Ngôn ngữ";
-"translationText" = "Phyphox sẽ sử dụng ngôn ngữ đầu tiên có sẵn từ danh sách ngôn ngữ ưa thích trong cài đặt hệ thống của bạn. Để tìm hiểu những ngôn ngữ có sẵn và cách bạn có thể được giúp đỡ, chọn \"vào trang web\".";
-"translationToWebsite" = "Vào trang web";
-"translationToWebsiteURL" = "http://phyphox.org/languages#vi";
 "newExperimentSimple" = "Thêm thí nghiệm đơn giản";
 "info" = "Thông tin";
 "gpl" = "Phyphox là phần mềm mã nguồn mở được mở nguồn bởi the GNU General Public License. Vui lòng vào trang phyphox.org để có thêm thông tin và lấy mã nguồn mở. Tuy nhiên, tên \"phyphox\" và \"RWTH Aachen\" đã được đăng ký thương hiệu.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Bạn cần cài đặt kết nối không dây với thiết bị khác trước. Vui lòng bật Wifi hoặc bật Điểm phát sóng di động.";
 "fontSize" = "Cỡ chữ";
 "start_hint" = "Chạm vào hình tam giác để bắt đầu thí nghiệm.";
-"translationToSettings" = "Cài đặt";
 "deviceInfo" = "Thông tin thiết bị";
 "copyToClipboard" = "Lưu vào bộ nhớ";
 "deviceInfoCopied" = "Thông tin thiết bị đã được lưu trong bộ nhớ.";

@@ -70,9 +70,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Απομακρυσμένος Έλεγχος";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Γλώσσες";
-"translationToWebsite" = "Επίσκεψη στην ιστοσελίδα";
-"translationToWebsiteURL" = "http://phyphox.org/languages#el";
 "remoteServerActive" = "Ενεργοποιήθηκε απομακρυσμένη πρόσβαση. Εκτελέσετε το πείραμα αυτό από το ακόλουθο URL:";
 "switchToPhoneLayout" = "Όψη: περιορισμένη";
 "switchColumns1" = "Όψη: 1 στήλη";
@@ -99,7 +96,6 @@
 "categoryRawSensor" = "Αισθητήρες";
 "experimentinfo_hint" = "Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.";
 "AudioRateMissmatch" = "Σφάλμα: Aσυμφωνία στο ρυθμό δειγματοληψίας. Παρακαλώ απενεργοποιείστε εφαρμογές ή υπηρεσίες (π.χ AirPlay) που απαιτούν διαφορετικό ρυθμό δειγματοληψίας στον ήχο.";
-"translationText" = "H εφαρμογή θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από την λίστα των προτιμώμενων γλωσσών που βρίσκεται στις ρυθμίσεις συστήματος. Για να μάθετε σχετικά με τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"Ιστοσελίδα\".";
 "actions" = "Actions";
 "categoryNewExperiment" = "Απλά πειράματα χρήστη";
 "apple_ban" = "Το πείραμα αυτό δεν είναι πλέον διαθέσιμο.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Αρχικά θα πρέπει να δημιουργήσετε μια σύνδεση Wifi με την κινητή συσκευή. Παρακαλώ ενεργοποιήστε το Wifi ή δημιουργήστε ένα hotspot.";
 "fontSize" = "Μέγεθος γραμματοσειράς";
 "start_hint" = "Πατήστε το τρίγωνο για να ξεκινήσετε το πείραμα.";
-"translationToSettings" = "Ρυθμίσεις";
 "deviceInfo" = "Πληροφορίες συσκευής";
 "copyToClipboard" = "Αντιγραφή στο πρόχειρο";
 "deviceInfoCopied" = "Οι πληροφορίες της συσκευής αντιγράφηκαν στο πρόχειρο.";

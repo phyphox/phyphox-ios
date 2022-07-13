@@ -87,9 +87,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Afstandsbediening: help";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Talen";
-"translationToWebsite" = "Bezoek website";
-"translationToWebsiteURL" = "http://phyphox.org/languages#nl";
 "actions" = "Acties";
 "newExperiment" = "Voeg experiment toe";
 "creditsNames" = "Concept en uitwerking:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgrammering:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
@@ -101,7 +98,6 @@
 "disableRemoteServer" = "Beëindig besturing op afstand";
 "remoteServerActive" = "Besturing op afstand ingeschakeld. Krijg toegang tot dit experiment via volgende URL:";
 "AudioRateMissmatch" = "Fout: Samplesnelheden komen niet overeen. Gelieve apps of diensten (zoals AirPlay) die een andere audiosamplesnelheid afdwingen uit te schakelen.";
-"translationText" = "Phyphox zal de eerste taal gebruiken uit uw gekozen talenlijst in uw systeeminstellingen als deze beschikbaar is. Om te weten te komen welke talen beschikbaar zijn en hoe u kunt helpen, selecteer \"bezoek website\".";
 "newExperimentSimple" = "Voeg een eenvoudig experiment toe";
 "info" = "Info";
 "gpl" = "Phyphox is open source software vrijgegeven onder de GNU General Public Licence. Bezoekt http://phyphox.org voor meer informatie en toegang tot de broncode. Niettemin zijn \"phyphox\" en \"RWTH Aachen\" geregistreerde merknamen.";
@@ -115,7 +111,6 @@
 "remoteServerNoNetwork" = "Je moet eerst een Wifiverbinding maken met je apparaat. Schakel Wifi in of maak een mobiele hotspot.";
 "fontSize" = "Lettergroote";
 "start_hint" = "Tik op de driehoek om het experiment te starten.";
-"translationToSettings" = "Instellingen";
 "deviceInfo" = "Apparaatinfo";
 "copyToClipboard" = "Kopieer naar klembord";
 "deviceInfoCopied" = "Het apparaat heeft info gekopieerd naar je klembord.";

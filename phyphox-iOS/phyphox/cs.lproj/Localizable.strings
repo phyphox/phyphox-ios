@@ -99,10 +99,6 @@
 "experimentsPhyphoxOrg" = "Nápady a návody k experimentům";
 "save_state_share" = "Sdílet";
 "AudioRateMissmatch" = "Chyba: Neshoda ve vzorkovací frekvenci. Prosím vypněte aplikace nebo služby, které si vynucují jinou vzorkovací frekvenci zvuku (např. AirPlay).";
-"translationInfo" = "Volba jazyka";
-"translationText" = "Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému vašeho zařízení. Chcete-li jej změnit, proveďte to tam. Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".";
-"translationToWebsite" = "Navštivte internetovou stránku";
-"translationToWebsiteURL" = "http://phyphox.org/languages#cs";
 "newExperimentSimple" = "Přidat experiment";
 "info" = "Informace";
 "gpl" = "Phyphox je otevřený software vydaný pod GNU Všeobecnou veřejnou licencí. Pro více informací čí přístup ke zdrojovému kódu prosím navštivte http://phyphox.org. Nicméně, název \"phyphox\" a \"RWTH Aachen\" jsou chráněné.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Nejdříve je třeba nastavit Wifi připojení ke vzdálenému zařízení. Prosím povolte Wifi nebo vytvořte mobilní hotspot.";
 "fontSize" = "Velikost písma.";
 "start_hint" = "Dotkněte se trojúhelníku pro spuštění experimentu.";
-"translationToSettings" = "Nastavení";
 "deviceInfo" = "Informace o zařízení";
 "copyToClipboard" = "Zkopírovat do schránky";
 "deviceInfoCopied" = "Informace o zařízení byly zkopírovány do schránky.";

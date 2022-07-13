@@ -19,8 +19,6 @@
 "experimentsPhyphoxOrg" = "Ideas para experimentos e instrucciones";
 "faqPhyphoxOrg" = "Preguntas más frecuentes";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Idiomas";
-"translationToWebsite" = "Visitar sitio web";
 "app_name" = "phyphox";
 "title_activity_experiment" = "phyphox";
 "sensorProximity" = "Proximidad";
@@ -61,7 +59,6 @@
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Ayuda con control remoto";
-"translationToWebsiteURL" = "http://phyphox.org/languages#es";
 "switchToPhoneLayout" = "Vista: Estrecha";
 "switchColumns1" = "Vista: 1 columna";
 "switchColumns2" = "Vista: 2 columnas";
@@ -82,7 +79,6 @@
 "rename" = "Cambiar nombre";
 "loadingBluetoothConnectionText" = "Conectando a dispositivo Bluetooth…";
 "remoteServerNoNetwork" = "Debes establecer primero una conexión WiFi con el dispositivo remoto. Por favor habilita el WiFi o crea un punto de acceso móvil.";
-"translationToSettings" = "Ajustes";
 "deviceInfo" = "Información del dispositivo";
 "copyToClipboard" = "Copiar al portapapeles";
 "deviceInfoCopied" = "La información del dispositivo ha sido copiada al portapapeles.";
@@ -161,7 +157,6 @@
 "experimentinfo_hint" = "Revisa la información del experimento para aprender cómo utilizarlo.";
 "start_hint" = "Toca el triángulo para comenzar el experimento.";
 "AudioRateMissmatch" = "Error: No coincide la tasa de muestreo. Por favor deshabilita cualquier aplicación o servicio (como AirPlay) que pudiera forzar una tasa de muestreo de audio diferente.";
-"translationText" = "Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".";
 "remoteColorMapWarning" = "El gráfico en la interfaz remota es sólo una aproximación. Al contrario de la gráfica en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x e y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.";
 "newExperimentBluetoothLoadFromDeviceInfo" = "Este dispositivo proporciona su propio experimento phyphox. Selecciona cargar desde dispositivo para abrirlo.";
 "newExperimentQRCodesMissing2" = "códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan:";

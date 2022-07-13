@@ -112,10 +112,6 @@
 "remotePhyphoxOrg" = "Hilfe zum Fernzugriff";
 "remotePhyphoxOrgURL" = "http://phyphox.org/fernsteuerung";
 "AudioRateMissmatch" = "Fehler: Falsche Abtastrate. Bitte deaktiviere alle Apps oder Dienste (wie AirPlay), die eine andere Audiorate vorgeben.";
-"translationInfo" = "Sprachen";
-"translationText" = "Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehe in die iOS System-Einstellungen. Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".";
-"translationToWebsite" = "Zur Webseite";
-"translationToWebsiteURL" = "http://phyphox.org/languages#de";
 "newExperimentSimple" = "Neues einfaches Experiment";
 "info" = "Info";
 "gpl" = "Phyphox ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.";
