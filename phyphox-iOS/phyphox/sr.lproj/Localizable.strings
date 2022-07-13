@@ -50,9 +50,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Pomoć za daljinsko upravljanje";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Jezik";
-"translationToWebsite" = "Poseti vebsajt";
-"translationToWebsiteURL" = "http://phyphox.org/languages#sr";
 "apple_ban" = "Ovaj eksperiment nije više dostupan.";
 "actions" = "Akcija";
 "newExperiment" = "Dodaj eksperiment";
@@ -102,12 +99,10 @@
 "categoryRawSensor" = "Senzori";
 "experimentinfo_hint" = "Pogledaj uputstvo za eksperiment kako bi ga izvršio.";
 "AudioRateMissmatch" = "Greška: Neusklađenost uzorkovanja. Molimo vas da onemogućite aplikacije ili servise (kao AirPlay) koji traže drugačije uzorkovanje.";
-"translationText" = "Phyhox će koristiti prvi mogući jezik iz liste omiljenih jezika u vašem sistemskom podešavanju. Da vidite koji jezici su mogući i kako možete pomoći, izaberite \"poseti vebsajt\".";
 "newExperimentSimple" = "Dodaj jednostavan eksperiment";
 "info" = "Info";
 "sensorTemperature" = "Temperatura";
 "sensorHumidity" = "Vlažnost";
-"translationToSettings" = "Podešavanja";
 "deviceInfo" = "Informacije o uređaju";
 "copyToClipboard" = "Kopiraj u klipbord";
 "deviceInfoCopied" = "Informacije o uređaju su kopirane u vaš klipbord.";

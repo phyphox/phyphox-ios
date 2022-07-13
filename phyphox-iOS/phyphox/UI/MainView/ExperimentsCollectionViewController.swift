@@ -103,16 +103,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
         }))
         
-        alert.addAction(UIAlertAction(title: localize("translationInfo"), style: .default, handler:{ _ in
-            let al = UIAlertController(title: localize("translationInfo"), message: localize("translationText"), preferredStyle: .alert)
-            
-            al.addAction(UIAlertAction(title: localize("translationToWebsite"), style: .default, handler: { _ in
-                UIApplication.shared.openURL(URL(string: localize("translationToWebsiteURL"))!)
-            }))
-            
-            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-            
-            self.navigationController!.present(al, animated: true, completion: nil)
+        alert.addAction(UIAlertAction(title: localize("settings"), style: .default, handler:{ _ in
+            guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else {
+                return
+            }
+            UIApplication.shared.openURL(settingsUrl)
         }))
         
         alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in

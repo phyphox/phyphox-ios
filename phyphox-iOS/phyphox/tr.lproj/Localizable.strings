@@ -56,8 +56,6 @@
 "experimentsPhyphoxOrg" = "Deney fikirleri ve eğitimleri";
 "faqPhyphoxOrg" = "Sıkça sorulan sorular";
 "remotePhyphoxOrg" = "Uzaktan yardım";
-"translationInfo" = "Diller";
-"translationToWebsite" = "Siteyi ziyaret edin";
 "newExperimentPhyphoxInfo" = "Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.";
 "newExperimentInputBufferSize" = "Ara bellek boyutu (depolanacak değerlerin sayısı)";
 "newExperimentInputRate" = "Sensör oranı (Hertz, 0 = mümkün olduğunca hızlı)";
@@ -79,7 +77,6 @@
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationToWebsiteURL" = "http://phyphox.org/languages#tr";
 "credits" = "Emeği geçenler";
 "save_state_subject" = "Phyphox için deney durumları";
 "timedRun" = "Zamanlı deneme";
@@ -102,7 +99,6 @@
 "switch_to_calibrated_magnetometer" = "Kalibre edilmiş manyetometreye geçin";
 "switch_to_raw_magnetometer" = "Ham manyetometreye geçin";
 "AudioRateMissmatch" = "Hata: Örnekleme oranı uyuşmazlığı. Lütfen farklı ses örnekleme oranını zorlayan tüm uygulamaları veya hizmetleri (AirPlay gibi) devre dışı bırakın.";
-"translationText" = "Phyphox, sistem ayarlarınızda tercih ettiğiniz diller listesindeki ilk dili kullanacaktır. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.";
 "newExperimentSimple" = "Basit deney ekle";
 "info" = "Bilgi";
 "gpl" = "Phyphox, GNU Genel Kamu Lisansı kapsamında yayınlanan açık kaynaklı bir yazılımdır. Daha fazla bilgi ve kaynak koduna erişmek için lütfen http://phyphox.org adresini ziyaret edin. Ayrıca, \"phyphox\" ve \"RWTH Aachen\" adları tescilli ticari markalardır.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Önce uzak cihaza bir Wifi bağlantısı kurmanız gerekiyor. Lütfen Wifi'yi etkinleştirin veya bir mobil hotspot oluşturun.";
 "fontSize" = "Yazı boyutu";
 "start_hint" = "Deneyi başlatmak için üçgene dokunun.";
-"translationToSettings" = "Ayarlar";
 "deviceInfo" = "Cihaz bilgisi";
 "copyToClipboard" = "Panoya kopyala";
 "deviceInfoCopied" = "Cihaz bilgisi panoya kopyalandı.";

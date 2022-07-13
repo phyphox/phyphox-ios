@@ -98,10 +98,6 @@
 "remotePhyphoxOrg" = "Pomoc zdalnego dostępu";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "AudioRateMissmatch" = "Błąd: Niezgodna częstotliwość próbkowania. Wyłącz aplikacje lub serwisy (np. AirPlay), które wymuszają inną częstotliwość próbkowania audio.";
-"translationInfo" = "Języki";
-"translationToWebsite" = "Odwiedź stronę";
-"translationToWebsiteURL" = "http://phyphox.org/languages#pl";
-"translationText" = "Phyphox użyje pierwszego języka z listy języków preferowanych w ustawieniach systemu. Aby dowiedzieć się więcej o dostępnych językach oraz możliwościach współpracy wybierz \"odwiedź stronę\".";
 "newExperimentSimple" = "Dodaj prosty eksperyment";
 "info" = "Info";
 "gpl" = "Phyphox to oprogramowanie open source wydane na licencji GNU General Public Licence. Odwiedź stronę http://phyphox.org w celu uzyskania dalszych informacji w tym dostępu do kodu źródłowego. Jednak nazwa \"phyphox\" i \"RWTH Aachen\" są zastrzeżonymi znakami towarowymi.";
@@ -115,7 +111,6 @@
 "remoteServerNoNetwork" = "Najpierw musisz skonfigurować połączenie Wi-Fi z urządzeniem zdalnym. Włącz Wi-Fi lub utwórz mobilny punkt dostępowy.";
 "fontSize" = "Wielkość czcionki";
 "start_hint" = "Naciśnij trójkąt by rozpocząć pomiar.";
-"translationToSettings" = "Ustawienia";
 "deviceInfo" = "Informacje o urządzeniu";
 "copyToClipboard" = "Skopiuj do schowka";
 "deviceInfoCopied" = "Informacje o urządzeniu zostały skopiowane do schowka.";

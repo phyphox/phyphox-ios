@@ -96,13 +96,9 @@
 "save_state_subject" = "Stato dell'esperimento";
 "save_state_default_title" = "Misura";
 "save_state_success" = "Lo stato è stato salvato nella tua collezione.";
-"translationInfo" = "Lingue";
-"translationToWebsite" = "Vai al sito";
 "creditsRWTH" = "phyphox è un prodotto del secondo istituto di fisica RWTH Aachen.";
 "location" = "Posizione";
-"translationToWebsiteURL" = "http://phyphox.org/languages#it";
 "AudioRateMissmatch" = "Errore nel campionamento. Per favore disattivare qualsiasi altra applicazione o servizio (come AirPlay) che utilizza il microfono.";
-"translationText" = "Phyphox userà la prima lingua disponibile che compare come preferita nella tua lista nelle opzioni. Per imparare quali lingue sono disponibili  e come ti possiamo aiutare, seleziona ”visita sito web“.";
 "apple_ban" = "Questo esperimento non è più disponibile.";
 "newExperimentSimple" = "Aggiungi esperimento semplice";
 "info" = "Info";
@@ -117,7 +113,6 @@
 "remoteServerNoNetwork" = "Prima è necessario configurare una connessione Wifi al dispositivo. Abilita il Wifi o attiva un hotspot portatile.";
 "fontSize" = "Dimensioni carattere";
 "start_hint" = "Fai click sul triangolino per avviare la misura.";
-"translationToSettings" = "Impostazioni";
 "deviceInfo" = "Informazioni dispositivo";
 "copyToClipboard" = "Copia negli appunti";
 "deviceInfoCopied" = "Le informazioni sul dispositivo sono state copiate negli appunti.";

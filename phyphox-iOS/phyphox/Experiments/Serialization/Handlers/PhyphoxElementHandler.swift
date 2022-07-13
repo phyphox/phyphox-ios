@@ -158,19 +158,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("File version \(versionString) is not supported")
         }
 
-        let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) }
+        let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
-        guard let title = try titleHandler.expectOptionalResult() ?? translations?.selectedTranslation?.titleString else {
+        guard let title = try titleHandler.expectOptionalResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
         
         let stateTitle = try stateTitleHandler.expectOptionalResult()
 
-        guard let category = try categoryHandler.expectOptionalResult() ?? translations?.selectedTranslation?.categoryString else {
+        guard let category = try categoryHandler.expectOptionalResult() ?? translations.selectedTranslation?.categoryString else {
             throw ElementHandlerError.missingElement("category")
         }
 
-        let description = try descriptionHandler.expectOptionalResult() ?? translations?.selectedTranslation?.descriptionString ?? ""
+        let description = try descriptionHandler.expectOptionalResult() ?? translations.selectedTranslation?.descriptionString ?? ""
         
         let maxIndex = title.index(title.startIndex, offsetBy: min(2, title.count))
         let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<maxIndex]).uppercased())

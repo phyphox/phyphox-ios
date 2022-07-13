@@ -51,9 +51,6 @@
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
 "remotePhyphoxOrg" = "Ajuda do acesso remoto (em Inglês)";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
-"translationInfo" = "Idiomas";
-"translationToWebsite" = "Visitar website (em inglês)";
-"translationToWebsiteURL" = "http://phyphox.org/languages#pt";
 "newExperimentInputBufferSize" = "Tamanho do buffer (número de valores guardados)";
 "warning" = "Aviso";
 "damageWarning" = "Tome cuidado para não danificar o seu telefone durante os experimentos. Tenha muita atenção para evitar deixar cair sobre superfícies duras e não expor a campos magnéticos fortes. Os autores de phyphox não são responsáveis por qualquer dano ao seu telefone.";
@@ -102,7 +99,6 @@
 "remoteServerActive" = "Acesso remoto habilitado. Acesse este experimento a partir do seguinte endereço URL:";
 "switchToPhoneLayout" = "Visão: Estreito";
 "AudioRateMissmatch" = "Erro: Taxa de amostragem incompatível. Por favor desabilite outros apps ou serviços (tal qual AirPlay) que requer uma taxa de amostragem de som diferente.";
-"translationText" = "Phyphox irá utilizar a primeira língua disponível das linguagens preferidas nas suas configurações do sistema. Para saber quais línguas estão disponíveis e como você pode ajudar, selecione \"visitar website\" (em inglês).";
 "newExperimentSimple" = "Adicionar experimento simples";
 "info" = "Informações";
 "gpl" = "Phyphox é um programa de código aberto e liberado sob a licença GNU General Public License. Por favor, visite http://phyphox.org para mais informações e para ter acesso ao código. O nome \"phyphox\" e \"RWTH Aachen\" são marcas registradas.";
@@ -116,7 +112,6 @@
 "remoteServerNoNetwork" = "Você precisa configurar uma conexão WIFI para o dispositivo remoto primeiro. Por favor, habilite o WIFI ou crie um ponto de acesso móvel.";
 "fontSize" = "Tamanho da fonte";
 "start_hint" = "Toque no triângulo para iniciar o experimento.";
-"translationToSettings" = "Configurações";
 "deviceInfo" = "Informações do aparelho";
 "copyToClipboard" = "Copiar para o clipboard";
 "deviceInfoCopied" = "As informações do aparelho foram copiadas para o clipboard.";

@@ -533,7 +533,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func launchWebServer() {
-        UIApplication.shared.isIdleTimerDisabled = true
+        experiment.setKeepScreenOn(true)
         if !webServer.start() {
             let hud = JGProgressHUD(style: .dark)
             hud.interactionType = .blockTouchesOnHUDView
@@ -607,7 +607,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.serverLabelBackground = nil
         updateLayout()
         if (!self.experiment.running) {
-            UIApplication.shared.isIdleTimerDisabled = false
+            experiment.setKeepScreenOn(false)
         }
     }
     
@@ -1065,7 +1065,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
         
         if !experiment.running {
-            UIApplication.shared.isIdleTimerDisabled = true
+            experiment.setKeepScreenOn(true)
             
             if experimentStartTimer != nil {
                 experimentStartTimer!.invalidate()
@@ -1171,7 +1171,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func stopExperiment() {
         if experiment.running {
             if (!self.webServer.running) {
-                UIApplication.shared.isIdleTimerDisabled = false
+                experiment.setKeepScreenOn(false)
             }
             
             var items = navigationItem.rightBarButtonItems!

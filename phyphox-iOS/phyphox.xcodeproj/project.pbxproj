@@ -187,6 +187,7 @@
 		C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C06BCD4B2707B07100B29595 /* MobileCoreServices.framework */; };
 		C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C06BCD262707AADC00B29595 /* ImageIO.framework */; };
 		C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C06BCD342707AAE900B29595 /* Foundation.framework */; };
+		C075DCBE287EA33E001CBE5E /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = C075DCBD287EA33E001CBE5E /* Settings.bundle */; };
 		C079BC6A2260D2B40018D6A5 /* localizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C079BC692260D2B40018D6A5 /* localizationHelper.swift */; };
 		C07B53032294264200BA085A /* BluetoothScanResultsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */; };
 		C07B53062294265800BA085A /* BluetoothDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B53042294265800BA085A /* BluetoothDevice.swift */; };
@@ -548,6 +549,7 @@
 		C06D0E7622AEAFB400B2BDF1 /* zh_Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hant; path = zh_Hant.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C06D0E7722AEAFC100B2BDF1 /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C06D0E7822AEAFC100B2BDF1 /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C075DCBD287EA33E001CBE5E /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		C079BC692260D2B40018D6A5 /* localizationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = localizationHelper.swift; sourceTree = "<group>"; };
 		C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothScanResultsTableViewController.swift; sourceTree = "<group>"; };
 		C07B53042294265800BA085A /* BluetoothDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothDevice.swift; sourceTree = "<group>"; };
@@ -733,6 +735,7 @@
 				6BFE374D2044718300301CA3 /* Experiments */,
 				6B7BF7AC1C130457007408FB /* Assets */,
 				6B0C71561C1C708F00500FEE /* Dependencies */,
+				C075DCBD287EA33E001CBE5E /* Settings.bundle */,
 			);
 			path = phyphox;
 			sourceTree = "<group>";
@@ -1399,6 +1402,7 @@
 			files = (
 				6B7BF7881C130425007408FB /* LaunchScreen.storyboard in Resources */,
 				C0601DEF23840ECE0033FFF6 /* egm84_30.pgm in Resources */,
+				C075DCBE287EA33E001CBE5E /* Settings.bundle in Resources */,
 				C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */,
 				C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,

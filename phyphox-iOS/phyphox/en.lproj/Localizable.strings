@@ -130,11 +130,6 @@
 "remotePhyphoxOrg" = "Remote control help";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "AudioRateMissmatch" = "Error: Sampling rate mismatch. Please disable any apps or services (like AirPlay) which force a different audio sampling rate.";
-"translationInfo" = "Languages";
-"translationText" = "Phyphox will use the first language available from your preferred languages list in your system settings. To learn which languages are available and how you can help, select \"visit website\".";
-"translationToSettings" = "Settings";
-"translationToWebsite" = "Visit website";
-"translationToWebsiteURL" = "http://phyphox.org/languages#en";
 "deviceInfo" = "Device info";
 "copyToClipboard" = "Copy to clipboard";
 "deviceInfoCopied" = "The device info has been copied to your clipboard.";
@@ -241,6 +236,7 @@
 "depthAggregationModeClosest" = "Closest";
 "depthAggregationModeAverage" = "Average";
 "depthAggregationModeWeighted" = "Weighted";
+"settings" = "Settings";
 "common_unit_short_arbitrary_unit" = "a.u.";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";

@@ -336,6 +336,14 @@ final class Experiment {
         audioEngine = nil
     }
     
+    func setKeepScreenOn(_ keepOn: Bool) {
+        UIApplication.shared.isIdleTimerDisabled = keepOn
+        if UserDefaults.standard.bool(forKey: "proximityLock") {
+            (UIApplication.shared.delegate as! AppDelegate).lockPortrait = keepOn
+            UIDevice.current.isProximityMonitoringEnabled = keepOn
+        }
+    }
+    
     func start(stopExperimentDelegate: StopExperimentDelegate) throws {
         guard !running else {
             return
@@ -353,7 +361,7 @@ final class Experiment {
 
         hasStarted = true
 
-        UIApplication.shared.isIdleTimerDisabled = true
+        setKeepScreenOn(true)
         
         try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
         
@@ -385,7 +393,7 @@ final class Experiment {
         
         stopAudio()
         
-        UIApplication.shared.isIdleTimerDisabled = false
+        setKeepScreenOn(false)
         
         running = false
         
