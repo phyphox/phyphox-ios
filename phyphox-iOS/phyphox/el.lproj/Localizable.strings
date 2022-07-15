@@ -332,3 +332,5 @@
 "depthAggregationModeAverage" = "Μέσες τιμές";
 "sensorDepth" = "Βάθος(LiDAR/ToF)";
 "depthAggregationModeWeighted" = "Σταθμισμένα";
+"sensorGravity" = "Βαρύτητα";
+"settings" = "Ρυθμίσεις";
