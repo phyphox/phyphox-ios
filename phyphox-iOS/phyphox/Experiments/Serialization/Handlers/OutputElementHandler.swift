@@ -149,6 +149,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
 struct BluetoothInputDescriptor {
     let char: CBUUID
     let conversion: OutputConversion?
+    let offset: UInt16
     let bufferName: String
 }
 
@@ -160,6 +161,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
     private enum Attribute: String, AttributeKey {
         case char
         case conversion
+        case offset
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -173,6 +175,8 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
         let conversion: OutputConversion?
         let conversionName = try attributes.nonEmptyString(for: .conversion)
         
+        let offset: UInt16 = try attributes.optionalValue(for: .offset) ?? 0
+        
         switch conversionName {
         case "byteArray":
             conversion = ByteArrayOutputConversion()
@@ -183,7 +187,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
             conversion = SimpleOutputConversion(function: conversionFunction)
         }
         
-        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, bufferName: text))
+        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, offset: offset, bufferName: text))
     }
     
     func clear() {
