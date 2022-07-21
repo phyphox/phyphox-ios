@@ -1427,15 +1427,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let zTicks = ExperimentGraphUtilities.getTicks(minZ, max: maxZ, maxTicks: 5, log: logZ, isTime: false, systemTimeOffset: 0.0)
 
         let mappedXTicks = xTicks.map({ (val) -> GraphGridLine in
-            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logX ? log(val) : val) - minX) / xRange))
+            return GraphGridLine(absoluteValue: val.value, relativeValue: CGFloat(((logX ? log(val.value) : val.value) - minX) / xRange), precision: val.precision)
         })
 
         let mappedYTicks = yTicks.map({ (val) -> GraphGridLine in
-            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logY ? log(val) : val) - minY) / yRange))
+            return GraphGridLine(absoluteValue: val.value, relativeValue: CGFloat(((logY ? log(val.value) : val.value) - minY) / yRange), precision: val.precision)
         })
         
         let mappedZTicks = zTicks.map({ (val) -> GraphGridLine in
-            return GraphGridLine(absoluteValue: val, relativeValue: CGFloat(((logZ ? log(val) : val) - minZ) / zRange))
+            return GraphGridLine(absoluteValue: val.value, relativeValue: CGFloat(((logZ ? log(val.value) : val.value) - minZ) / zRange), precision: val.precision)
         })
 
         return GraphGrid(xGridLines: mappedXTicks, yGridLines: mappedYTicks, zGridLines: mappedZTicks, systemTimeOffsetX: systemTimeOffset(timeOnAxis: descriptor.timeOnX), systemTimeOffsetY: systemTimeOffset(timeOnAxis: descriptor.timeOnY))

@@ -82,9 +82,9 @@ struct GraphViewElementDescriptor {
     let logY: Bool
     let logZ: Bool
 
-    let xPrecision: UInt
-    let yPrecision: UInt
-    let zPrecision: UInt
+    let xPrecision: Int
+    let yPrecision: Int
+    let zPrecision: Int
 
     let minX: CGFloat
     let maxX: CGFloat
@@ -222,9 +222,9 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let logX = try attributes.optionalValue(for: .logX) ?? false
         let logY = try attributes.optionalValue(for: .logY) ?? false
         let logZ = try attributes.optionalValue(for: .logZ) ?? false
-        let xPrecision: UInt = try attributes.optionalValue(for: .xPrecision) ?? 3
-        let yPrecision: UInt = try attributes.optionalValue(for: .yPrecision) ?? 3
-        let zPrecision: UInt = try attributes.optionalValue(for: .zPrecision) ?? 3
+        let xPrecision: Int = try attributes.optionalValue(for: .xPrecision) ?? -1
+        let yPrecision: Int = try attributes.optionalValue(for: .yPrecision) ?? -1
+        let zPrecision: Int = try attributes.optionalValue(for: .zPrecision) ?? -1
 
         var scaleMinX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMinX) ?? .auto
         var scaleMaxX: GraphViewDescriptor.ScaleMode = try attributes.optionalValue(for: .scaleMaxX) ?? .auto
