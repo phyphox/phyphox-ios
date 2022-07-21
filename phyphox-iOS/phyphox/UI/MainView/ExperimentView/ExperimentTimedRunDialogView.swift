@@ -94,7 +94,11 @@ final class ExperimentTimedRunDialogView: UIView {
             tf.returnKeyType = .done
             tf.borderStyle = .roundedRect
             tf.keyboardType = .decimalPad
-            tf.text = String(value)
+                      
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.minimumFractionDigits = 1
+            tf.text = formatter.string(from: value as NSNumber)
             tf.textColor = UIColor.init(white: 0.0, alpha: 1.0)
             tf.backgroundColor = UIColor.init(white: 1.0, alpha: 1.0)
             

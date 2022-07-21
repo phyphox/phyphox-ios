@@ -50,6 +50,7 @@ struct GraphGrid {
 struct GraphGridLine {
     let absoluteValue: Double
     let relativeValue: CGFloat
+    let precision: Int
 }
 
 struct PauseRanges {
@@ -124,12 +125,12 @@ struct ExperimentGraphUtilities {
         return step
     }
     
-    static func getTicks(_ min: Double, max: Double, maxTicks: Int, log: Bool, isTime: Bool, systemTimeOffset: Double) -> [Double] {
+    static func getTicks(_ min: Double, max: Double, maxTicks: Int, log: Bool, isTime: Bool, systemTimeOffset: Double) -> [(value: Double, precision: Int)] {
         guard max > min && min.isFinite && max.isFinite else {
             return []
         }
 
-        var tickLocations = [Double]()
+        var tickLocations: [(value: Double, precision: Int)] = []
         tickLocations.reserveCapacity(maxTicks)
 
         if log {
@@ -154,13 +155,14 @@ struct ExperimentGraphUtilities {
                 magStep += 1
             }
             let magFactor: Double = pow(10.0, Double(magStep))
+            var precision: Int = -Int(floor(logMin))
 
             for _ in 0..<digitRange {
                 if first > expMax || tickLocations.count >= maxTicks {
                     break
                 }
                 if first > expMin {
-                    tickLocations.append(Double(first))
+                    tickLocations.append((value: Double(first), precision: precision))
                 }
 
                 if digitRange < 4 {
@@ -168,7 +170,7 @@ struct ExperimentGraphUtilities {
                         break
                     }
                     if 2*first > expMin {
-                        tickLocations.append(Double(2*first))
+                        tickLocations.append((value: Double(2*first), precision: precision))
                     }
                 }
 
@@ -177,11 +179,12 @@ struct ExperimentGraphUtilities {
                         break
                     }
                     if 5*first > expMin {
-                        tickLocations.append(Double(5*first))
+                        tickLocations.append((value: Double(5*first), precision: precision))
                     }
                 }
 
                 first *= magFactor
+                precision -= magStep
             }
             return tickLocations
         }
@@ -189,45 +192,47 @@ struct ExperimentGraphUtilities {
         let range = max-min
 
         var step = 1.0
+        var precision: Int = 0
         if isTime && systemTimeOffset > 0 {
             step = getTimeStepFromRange(range: range, maxTics: maxTicks)
         } else {
-        
-            let stepFactor = pow(10.0, floor(log10(range))-1)
+            let exponent: Int = Int(floor(log10(range))-1)
+            let stepFactor = pow(10.0, Double(exponent))
             let steps = Int(range/stepFactor)
 
             if steps <= maxTicks {
                 step = 1*stepFactor
-            }
-            else if steps <= maxTicks * 2 {
+                precision = -exponent
+            } else if steps <= maxTicks * 2 {
                 step = 2*stepFactor
-            }
-            else if steps <= maxTicks * 5 {
+                precision = -exponent
+            } else if steps <= maxTicks * 5 {
                 step = 5*stepFactor
-            }
-            else if steps <= maxTicks * 10 {
+                precision = -exponent
+            } else if steps <= maxTicks * 10 {
                 step = 10*stepFactor
-            }
-            else if steps <= maxTicks * 20 {
+                precision = -exponent-1
+            } else if steps <= maxTicks * 20 {
                 step = 20*stepFactor
-            }
-            else if steps <= maxTicks * 50 {
+                precision = -exponent-1
+            } else if steps <= maxTicks * 50 {
                 step = 50*stepFactor
-            }
-            else if steps <= maxTicks * 100 {
+                precision = -exponent-1
+            } else if steps <= maxTicks * 100 {
                 step = 100*stepFactor
-            }
-            else if steps <= maxTicks * 250 {
+                precision = -exponent-2
+            } else if steps <= maxTicks * 250 {
                 step = 250*stepFactor
-            }
-            else if steps <= maxTicks * 500 {
+                precision = -exponent-2
+            } else if steps <= maxTicks * 500 {
                 step = 500*stepFactor
-            }
-            else if steps <= maxTicks * 1000 {
+                precision = -exponent-2
+            } else if steps <= maxTicks * 1000 {
                 step = 1000*stepFactor
-            }
-            else if steps <= maxTicks * 2000 {
+                precision = -exponent-3
+            } else if steps <= maxTicks * 2000 {
                 step = 2000*stepFactor
+                precision = -exponent-3
             }
         }
 
@@ -248,7 +253,7 @@ struct ExperimentGraphUtilities {
                 break
             }
 
-            tickLocations.append(s)
+            tickLocations.append((value: s, precision: precision))
             i += 1
         }
 

@@ -13,6 +13,7 @@ let baseUUID: UUID = UUID(uuidString: "00000000-0000-1000-8000-00805f9b34fb")!
 let phyphoxServiceUUID: UUID = UUID(uuidString: "cddf0001-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxExperimentCharacteristicUUID: UUID = UUID(uuidString: "cddf0002-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxExperimentControlCharacteristicUUID: UUID = UUID(uuidString: "cddf0003-30f7-4671-8b43-5e40ba53514a")!
+let phyphoxEventCharacteristicUUID: UUID = UUID(uuidString: "cddf0004-30f7-4671-8b43-5e40ba53514a")!
 
 public extension CBUUID {
     convenience init(uuidString: String) throws {
@@ -93,6 +94,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     private var characteristics_map: [String: CBCharacteristic] = [:]
     private var servicesToBeDiscovered: [CBService] = []
+    
+    private var eventCharacteristic: CBCharacteristic? = nil
     
     let hud: JGProgressHUD
     var feedbackViewController: UIViewController?
@@ -388,7 +391,11 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         guard let characteristics = service.characteristics else {
             return
         }
+        
         for characteristic in characteristics {
+            if characteristic.uuid.uuid128String == phyphoxEventCharacteristicUUID.uuidString {
+                eventCharacteristic = characteristic
+            }
             characteristics_map[characteristic.uuid.uuid128String] = characteristic
         }
         
@@ -398,8 +405,10 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         
         print("Service discovery completed. Writing config data to device.")
-        
+                
         do {
+            writeEventCharacteristic(timeMapping: nil)
+
             for delegate in delegates {
                 try delegate.writeConfigData()
             }
@@ -419,6 +428,47 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         hud.dismiss()
         
+    }
+    
+    func writeEventCharacteristic(timeMapping: ExperimentTimeReference.TimeMapping?) {
+        if let char = eventCharacteristic {
+            var out: Data = Data(capacity: 17)
+            var experimentTime: Int64
+            var systemTime: Int64
+            
+            if let timeMapping = timeMapping {
+                switch timeMapping.event {
+                case .PAUSE:
+                    out.append(0x00)
+                case .START:
+                    out.append(0x01)
+                }
+                experimentTime = Int64(timeMapping.experimentTime * 1000)
+                systemTime = Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000)
+            } else {
+                out.append(0xff)
+                experimentTime = -1
+                systemTime = Int64(Date().timeIntervalSince1970 * 1000)
+            }
+            
+            let leExpTimeData = Data(bytes: &experimentTime, count: MemoryLayout.size(ofValue: experimentTime))
+            for byte in leExpTimeData.subdata(in: (0..<MemoryLayout.size(ofValue: experimentTime))).reversed() {
+                out.append(byte)
+            }
+            
+            let leSysTimeData = Data(bytes: &systemTime, count: MemoryLayout.size(ofValue: systemTime))
+            for byte in leSysTimeData.subdata(in: (0..<MemoryLayout.size(ofValue: systemTime))).reversed() {
+                out.append(byte)
+            }
+            
+            do {
+                try writeCharacteristic(uuid: char.uuid, data: out)
+            } catch BluetoothDeviceError.generic(let msg) {
+                showError(msg: "Could not write event. \(msg)")
+            } catch {
+                showError(msg: "Could not write event. Unknown error.")
+            }
+        }
     }
     
 }

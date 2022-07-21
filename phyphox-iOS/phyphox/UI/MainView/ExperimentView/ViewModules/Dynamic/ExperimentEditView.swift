@@ -31,6 +31,8 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     private let textField: UITextField
     private let unitLabel: UILabel?
     private let label = UILabel()
+    
+    let formatter = NumberFormatter()
 
     required init?(descriptor: EditViewDescriptor) {
         self.descriptor = descriptor
@@ -41,6 +43,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         label.textColor = kTextColor
         label.textAlignment = .right
 
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ""
+        
         textField = UITextField()
         textField.backgroundColor = kLightBackgroundColor
         textField.textColor = kTextColor
@@ -48,6 +53,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         textField.returnKeyType = .done
         
         textField.borderStyle = .roundedRect
+        textField.keyboardType = .decimalPad
         
         if descriptor.unit != nil {
             unitLabel = {
@@ -65,6 +71,25 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         }
         
         super.init(frame: .zero)
+        
+        
+        let toolbar = UIToolbar()
+        toolbar.sizeToFit()
+        toolbar.barTintColor = kBackgroundColor
+        let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let doneButton = UIBarButtonItem(title: localize("ok"), style: .done, target: self, action: #selector(hideKeyboard(_:)))
+        doneButton.width = UIScreen.main.bounds.width / 3
+        doneButton.tintColor = kHighlightColor
+        if descriptor.signed {
+            let pmButton = UIBarButtonItem(title: "+/-", style: .done, target: self, action: #selector(changeSign))
+            pmButton.tintColor = kTextColor
+            pmButton.width = UIScreen.main.bounds.width / 3
+            toolbar.items = [pmButton, space, doneButton]
+        } else {
+            toolbar.items = [space, doneButton]
+        }
+        textField.inputAccessoryView = toolbar
+
 
         registerForUpdatesFromBuffer(descriptor.buffer)
         descriptor.buffer.attachedToTextField = true
@@ -91,7 +116,8 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     }
 
     private func formattedValue(_ raw: Double) -> String {
-        return (descriptor.decimal ? String(raw) : String(Int(raw)))
+        let value = descriptor.decimal ? (raw as NSNumber) : (Int(raw) as NSNumber)
+        return formatter.string(from: value) ?? "0"
     }
     
     @objc func hideKeyboard(_: UITextField) {
@@ -102,26 +128,36 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         edited = true
     }
     
+    @objc func changeSign() {
+        let text = textField.text ?? ""
+        if text.hasPrefix("-") {
+            textField.text = String(text.suffix(text.count - 1))
+        } else {
+            textField.text = "-\(text)"
+        }
+    }
+    
     func textFieldDidEndEditing(_: UITextField) {
         if edited {
             edited = false
 
+            let text = textField.text?.replacingOccurrences(of: ",", with: ".")
             let rawValue: Double
 
             if descriptor.decimal {
                 if descriptor.signed {
-                    rawValue = Double(textField.text ?? "") ?? 0
+                    rawValue = Double(text ?? "") ?? 0
                 }
                 else {
-                    rawValue = abs(Double(textField.text ?? "") ?? 0)
+                    rawValue = abs(Double(text ?? "") ?? 0)
                 }
             }
             else {
                 if descriptor.signed {
-                    rawValue = floor(Double(textField.text ?? "") ?? 0)
+                    rawValue = floor(Double(text ?? "") ?? 0)
                 }
                 else {
-                    rawValue = floor(abs(Double(textField.text ?? "") ?? 0))
+                    rawValue = floor(abs(Double(text ?? "") ?? 0))
                 }
             }
 

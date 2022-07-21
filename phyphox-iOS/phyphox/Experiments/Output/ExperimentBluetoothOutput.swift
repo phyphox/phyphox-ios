@@ -18,11 +18,13 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
     struct BluetoothInput: Equatable {
         let char: CBUUID
         let conversion: OutputConversion?
+        let offset: UInt16
         let buffer: DataBuffer
         
         static func ==(lhs: BluetoothInput, rhs: BluetoothInput) -> Bool {
             return lhs.char == rhs.char &&
-                lhs.buffer == rhs.buffer
+                lhs.buffer == rhs.buffer &&
+                lhs.offset == rhs.offset
         }
     }
     
@@ -61,11 +63,21 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
     
     func send() {
         do {
+            var out: [CBUUID:Data] = [:]
             for input in inputList {
                 if let dataConverted = input.conversion?.convert(data: input.buffer) {
-                    if dataConverted.count > 0 {
-                        try device.writeCharacteristic(uuid: input.char, data: dataConverted)
+                    if !out.keys.contains(input.char) {
+                        out[input.char] = Data()
                     }
+                    
+                    let start = min(Int(input.offset), out[input.char]!.count)
+                    let end = min(Int(input.offset)+dataConverted.count, out[input.char]!.count)
+                    out[input.char]!.replaceSubrange(start..<end, with: dataConverted)
+                }
+            }
+            for uuid in out.keys {
+                if let outBuffer = out[uuid], outBuffer.count > 0 {
+                    try device.writeCharacteristic(uuid: uuid, data: outBuffer)
                 }
             }
         } catch BluetoothDeviceError.generic(let msg) {
@@ -90,6 +102,7 @@ extension ExperimentBluetoothOutput: Equatable {
 extension BluetoothInputDescriptor: Equatable {
     static func ==(lhs: BluetoothInputDescriptor, rhs: BluetoothInputDescriptor) -> Bool {
         return lhs.bufferName == rhs.bufferName &&
-            lhs.char == rhs.char
+            lhs.char == rhs.char &&
+            lhs.offset == rhs.offset
     }
 }

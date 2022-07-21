@@ -91,7 +91,7 @@ private extension ExperimentBluetoothOutput {
             guard let inBuffer = buffers[input.bufferName] else {
                 throw ElementHandlerError.message("No such buffer: \(input.bufferName)")
             }
-            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, buffer: inBuffer))
+            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, offset: input.offset, buffer: inBuffer))
         }
         
         self.init(device: device, inputList: inputs, configList: descriptor.configs)

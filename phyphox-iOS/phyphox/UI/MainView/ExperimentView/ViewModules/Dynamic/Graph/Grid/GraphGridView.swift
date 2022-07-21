@@ -184,12 +184,24 @@ final class GraphGridView: UIView {
         super.layoutSubviews()
         
         let formatterX = NumberFormatter()
-        formatterX.usesSignificantDigits = true
-        formatterX.minimumSignificantDigits = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? 3)
+        let descPrecisionX = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? -1)
+        if descPrecisionX >= 0 {
+            formatterX.usesSignificantDigits = true
+            formatterX.minimumSignificantDigits = descPrecisionX
+        }
         
         let formatterY = NumberFormatter()
-        formatterY.usesSignificantDigits = true
-        formatterY.minimumSignificantDigits = Int(descriptor?.yPrecision ?? 3)
+        let descPrecisionY = Int(descriptor?.yPrecision ?? -1)
+        if descPrecisionY >= 0 {
+            formatterY.usesSignificantDigits = true
+            formatterY.minimumSignificantDigits = descPrecisionY
+        }
+        
+        let expFormatter = NumberFormatter()
+        expFormatter.numberStyle = .scientific
+        expFormatter.usesSignificantDigits = true
+        expFormatter.minimumSignificantDigits = 2
+        expFormatter.maximumSignificantDigits = 3
         
         func format(_ n: Double, formatter: NumberFormatter, isTime: Bool, systemTimeOffset: Double) -> String {
             if isTime && systemTimeOffset > 0 {
@@ -206,13 +218,18 @@ final class GraphGridView: UIView {
                 }
                 return dateFormatter.string(from: t)
             } else {
-                let expThreshold = max(formatter.minimumSignificantDigits, 3)
+                let expThreshold = formatter.usesSignificantDigits ? max(formatter.minimumSignificantDigits, 3) : 4
                 if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
                     formatter.numberStyle = .decimal
                     return formatter.string(from: NSNumber(value: n as Double))!
                 } else {
-                    formatter.numberStyle = .scientific
-                    return formatter.string(from: NSNumber(value: n as Double))!
+                    if formatter.usesSignificantDigits {
+                        formatter.numberStyle = .scientific
+                        return formatter.string(from: NSNumber(value: n as Double))!
+                    } else {
+                        return expFormatter.string(from: NSNumber(value: n as Double))!
+                    }
+                    
                 }
             }
         }
@@ -227,6 +244,11 @@ final class GraphGridView: UIView {
                 let label = labels[index]
                 label.textColor = kTextColor
 
+                if descPrecisionX < 0 {
+                    formatterX.minimumFractionDigits = max(line.precision, 0)
+                    formatterX.maximumFractionDigits = max(line.precision, 0)
+                }
+                
                 label.text = format(line.absoluteValue, formatter: formatterX, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
                 label.sizeToFit()
 
@@ -239,6 +261,13 @@ final class GraphGridView: UIView {
                 for line in grid.yGridLines {
                     let label = labels[index]
                     label.textColor = kTextColor
+                                        
+                    if descPrecisionY < 0 {
+                        formatterY.usesSignificantDigits = false
+                        formatterY.minimumFractionDigits = max(line.precision, 0)
+                        formatterY.maximumFractionDigits = max(line.precision, 0)
+
+                    }
 
                     label.text = format(line.absoluteValue, formatter: formatterY, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
                     label.sizeToFit()
