@@ -1294,15 +1294,23 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
         
+        let formatter = NumberFormatter()
+        formatter.usesSignificantDigits = true
+        formatter.minimumSignificantDigits = 4
+        formatter.maximumSignificantDigits = 8
+        
         if n == 1 {
             self.markerOverlayView.showMarkers = true
             self.markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_point_label")
-            labelText += "\n    \(logX ? exp(xlist[0]) : xlist[0])" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            labelText += "\n    \(logY ? exp(ylist[0]) : ylist[0])" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            let x = (logX ? exp(xlist[0]) : xlist[0])
+            labelText += "\n    "+(formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            let y = (logY ? exp(ylist[0]) : ylist[0])
+            labelText += "\n    "+(formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                labelText += "\n    \(logZ ? exp(zlist[0]) : zlist[0])" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                let z = (logZ ? exp(zlist[0]) : zlist[0])
+                labelText += "\n    "+(formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             setMarkerLabel(labelText)
         } else if n == 2 {
@@ -1310,13 +1318,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             self.markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_difference_label")
-            labelText += "\n    \(abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1])))" + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            labelText += "\n    \(abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1])))" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+            let dx = abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
+            labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+            let dy = abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))
+            labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                labelText += "\n    \(abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1])))" + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                let dz = abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1]))
+                labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             labelText += "\n" + localize("graph_slope_label")
-            labelText += "\n    \(((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))) " + descriptor.localizedYXUnit
+            let slope = ((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
+            labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
             setMarkerLabel(labelText)
         } else if showLinearFit {
             if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
@@ -1334,8 +1346,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 self.markerOverlayView.markers = relativeCoordinates
                 
                 var labelText = localize("graph_fit_label")
-                labelText += "\na = \(a) " + descriptor.localizedYXUnit
-                labelText += "\nb = \(b)" + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                labelText += "\na = " + (formatter.string(from: a as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
+                labelText += "\nb = " + (formatter.string(from: b as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
                 setMarkerLabel(labelText)
             } else {
                 setMarkerLabel(nil)

@@ -59,6 +59,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         var stop = false
     }
     private var timerBeep = TimerBeep()
+    private let countdownFormatter = NumberFormatter()
     
     private var experimentStartTimer: Timer?
     private var experimentRunTimer: Timer?
@@ -154,6 +155,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         webServer.delegate = self
         experiment.analysisDelegate = self
+        
+        countdownFormatter.minimumFractionDigits = 1
         
         defer {
             NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
@@ -819,7 +822,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 self.navigationItem.rightBarButtonItems = items
             } else {
                 //...and that is correct. Let's make sure it is up to date
-                label.text = String(format: "%.1f", self.timerDelay)
+                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
                 label.sizeToFit()
             }
         } else {
@@ -829,7 +832,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 let label = UILabel()
                 label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
                 label.textColor = kTextColor
-                label.text = String(format: "%.1f", self.timerDelay)
+                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
                 label.sizeToFit()
             
                 items.append(UIBarButtonItem(customView: label))
@@ -1014,14 +1017,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentStartTimer = nil
         
         let d = timerDuration
-        let i = String(format: "%.1f", d)
         var nextBeep = floor(d-0.6)
         
         var items = navigationItem.rightBarButtonItems
         
         guard let label = items?.last?.customView as? UILabel else { return }
         
-        label.text = "\(i)"
+        label.text = countdownFormatter.string(from: d as NSNumber)
         label.sizeToFit()
         
         items?.removeLast()
@@ -1039,13 +1041,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
                 }
             }
-            let t = String(format: "%.1f", dt)
 
             after(0.02) {
                 updateT()
             }
 
-            label.text = "\(t)"
+            label.text = countdownFormatter.string(from: dt as NSNumber)
             label.sizeToFit()
 
             var items = navigationItem.rightBarButtonItems
@@ -1092,20 +1093,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
-                let i = String(format: "%.1f", d)
 
                 var items = navigationItem.rightBarButtonItems
 
                 guard let label = items?.last?.customView as? UILabel else { return }
 
-                label.text = "\(i)"
+                label.text = countdownFormatter.string(from: d as NSNumber)
                 label.sizeToFit()
 
                 items?.removeLast()
                 items?.append(UIBarButtonItem(customView: label))
 
                 navigationItem.rightBarButtonItems = items
-
+                
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
 
@@ -1117,13 +1117,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         }
                     }
 
-                    let t = String(format: "%.1f", dt)
-
                     after(0.02) {
                         updateT()
                     }
 
-                    label.text = "\(t)"
+                    label.text = countdownFormatter.string(from: dt as NSNumber)
                     label.sizeToFit()
 
                     var items = navigationItem.rightBarButtonItems
@@ -1186,8 +1184,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let label = items.last!.customView! as! UILabel
                 
-                let d = String(format: "%.1f", self.timerDelay)
-                label.text = "\(d)"
+                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
                 label.sizeToFit()
                 
                 items.removeLast()
