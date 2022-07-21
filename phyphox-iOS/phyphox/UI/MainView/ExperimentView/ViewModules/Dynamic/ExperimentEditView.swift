@@ -81,7 +81,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         doneButton.width = UIScreen.main.bounds.width / 3
         doneButton.tintColor = kHighlightColor
         if descriptor.signed {
-            let pmButton = UIBarButtonItem(title: "+/-", style: .done, target: self, action: #selector(changeSign))
+            let pmButton = UIBarButtonItem(title: "+/−", style: .done, target: self, action: #selector(changeSign))
             pmButton.tintColor = kTextColor
             pmButton.width = UIScreen.main.bounds.width / 3
             toolbar.items = [pmButton, space, doneButton]
