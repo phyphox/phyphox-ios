@@ -20,6 +20,11 @@ final class ExperimentDepthInput {
         case closest
         case weighted
     }
+    
+    enum CameraOrientation: String, LosslessStringConvertible, CaseIterable {
+        case front
+        case back
+    }
 
     let mode: ExperimentDepthInput.DepthExtractionMode
     let initx1: Float
@@ -62,13 +67,21 @@ final class ExperimentDepthInput {
         }
     }
     
-    static func verifySensorAvailibility() throws {
+    static func verifySensorAvailibility(cameraOrientation: CameraOrientation?) throws {
         guard #available(iOS 14.0, *) else {
             throw DepthInputError.sensorUnavailable
         }
-        if !ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            throw DepthInputError.sensorUnavailable
+        if cameraOrientation == nil || cameraOrientation == .front {
+            if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+                return
+            }
         }
+        if cameraOrientation == nil || cameraOrientation == .back {
+            if ARFaceTrackingConfiguration.isSupported {
+                return
+            }
+        }
+        throw DepthInputError.sensorUnavailable
     }
     
     func start(queue: DispatchQueue) {

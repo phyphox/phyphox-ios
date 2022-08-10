@@ -26,6 +26,7 @@ protocol DepthGUISelectionDelegate {
     var x2: Float { get set }
     var y1: Float { get set }
     var y2: Float { get set }
+    var frontCamera: Bool { get set }
 }
 
 extension MTKView: RenderDestinationProvider {
@@ -76,6 +77,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     private let arView = MTKView()
     let renderer: ExperimentDepthGUIRenderer
     private let aggregationBtn = UIButton()
+    private let cameraBtn = UIButton()
     
     var panGestureRecognizer: UIPanGestureRecognizer? = nil
     
@@ -93,6 +95,10 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         aggregationBtn.backgroundColor = kLightBackgroundColor
         aggregationBtn.setTitle(localize("depthAggregationMode"), for: UIControl.State())
         aggregationBtn.isHidden = true
+        
+        cameraBtn.backgroundColor = kLightBackgroundColor
+        cameraBtn.setTitle(localize("sensorCamera"), for: UIControl.State())
+        cameraBtn.isHidden = true
         
         super.init(frame: .zero)
         
@@ -119,9 +125,11 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         arView.delegate = self
         
         aggregationBtn.addTarget(self, action: #selector(ExperimentDepthGUIView.aggregationBtnPressed), for: .touchUpInside)
+        cameraBtn.addTarget(self, action: #selector(ExperimentDepthGUIView.cameraBtnPressed), for: .touchUpInside)
         
         addSubview(arView)
         addSubview(aggregationBtn)
+        addSubview(cameraBtn)
         
         renderer.drawRectResized(size: arView.bounds.size)
     }
@@ -157,9 +165,15 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
         let buttonH = resizableState == .exclusive ? buttonS.height + 2*spacing : 0
         
+        var button2S = resizableState == .exclusive ? cameraBtn.sizeThatFits(frame.size) : CGSize(width: 0, height: 0)
+        if button2S.width > 0 {
+            button2S.width += 2*buttonPadding
+        }
+        let button2H = resizableState == .exclusive ? button2S.height + 2*spacing : 0
+        
         let h, w: CGFloat
         if let resolution = resolution {
-            let actualAspect = (frame.width - 2*sideMargins) / (frame.height - 2*spacing - s.height - buttonH)
+            let actualAspect = (frame.width - 2*sideMargins) / (frame.height - 2*spacing - s.height - buttonH - button2H)
             let aspect: CGFloat
             if orientation == .landscapeRight || orientation == .landscapeLeft {
                 aspect = resolution.width / resolution.height
@@ -170,16 +184,17 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
                 w = frame.width - 2*sideMargins
                 h = w / aspect
             } else {
-                h = frame.height - 2*spacing - s.height - buttonH
+                h = frame.height - 2*spacing - s.height - buttonH - button2H
                 w = h * aspect
             }
         } else {
             w = frame.width - 2*sideMargins
-            h = frame.height - 2*spacing - s.height - buttonH
+            h = frame.height - 2*spacing - s.height - buttonH - button2H
         }
         arView.frame = CGRect(x: (frame.width - w)/2, y: 2*spacing + s.height, width: w, height: h)
         if resizableState == .exclusive {
             aggregationBtn.frame = CGRect(x: (frame.width - buttonS.width)/2, y: 2*spacing + s.height + h + 2*spacing, width: buttonS.width, height: buttonS.height)
+            cameraBtn.frame = CGRect(x: (frame.width - button2S.width)/2, y: 2*spacing + s.height + h + 2*spacing + buttonS.height + 2*spacing, width: button2S.width, height: button2S.height)
         }
     }
     
@@ -187,8 +202,10 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         if newState == .exclusive {
             if let del = depthGUISelectionDelegate {
                 aggregationBtn.setTitle(localize("depthAggregationMode") + ": " + localize("depthAggregationMode" + del.mode.rawValue.capitalized), for: UIControl.State())
+                cameraBtn.setTitle(localize("sensorCamera") + ": " + localize(del.frontCamera ? "cameraFrontFacing" : "cameraBackFacing"), for: UIControl.State())
             }
             aggregationBtn.isHidden = false
+            cameraBtn.isHidden = false
             unfoldMoreImageView.isHidden = true
             unfoldLessImageView.isHidden = false
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentDepthGUIView.panned(_:)))
@@ -199,6 +216,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
             unfoldMoreImageView.isHidden = false
             unfoldLessImageView.isHidden = true
             aggregationBtn.isHidden = true
+            cameraBtn.isHidden = true
             if let gr = panGestureRecognizer {
                 arView.removeGestureRecognizer(gr)
             }
@@ -277,6 +295,43 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         if let popover = al.popoverPresentationController {
             popover.sourceView = aggregationBtn
             popover.sourceRect = aggregationBtn.bounds
+            popover.permittedArrowDirections = .any
+        }
+                
+        layoutDelegate?.presentDialog(al)
+    }
+    
+    @objc private func cameraBtnPressed() {
+        let al = UIAlertController(title: localize("sensorCamera"), message: nil, preferredStyle: .actionSheet)
+        
+        
+        do {
+            try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: .back)
+            al.addAction(UIAlertAction(title: localize("cameraBackFacing"), style: .default, handler: { _ in
+                if var del = self.depthGUISelectionDelegate {
+                    del.frontCamera = false
+                    self.cameraBtn.setTitle(localize("sensorCamera") + ": " + localize("cameraBackFacing"), for: UIControl.State())
+                }
+            }))
+        } catch {
+            //Not available. Just don't offer it.
+        }
+        
+        do {
+            try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: .front)
+            al.addAction(UIAlertAction(title: localize("cameraFrontFacing"), style: .default, handler: { _ in
+                if var del = self.depthGUISelectionDelegate {
+                    del.frontCamera = true
+                    self.cameraBtn.setTitle(localize("sensorCamera") + ": " + localize("cameraFrontFacing"), for: UIControl.State())
+                }
+            }))
+        } catch {
+            //Not available. Just don't offer it.
+        }
+        
+        if let popover = al.popoverPresentationController {
+            popover.sourceView = cameraBtn
+            popover.sourceRect = cameraBtn.bounds
             popover.permittedArrowDirections = .any
         }
                 

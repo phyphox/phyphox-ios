@@ -600,7 +600,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         if let depthInput = experiment.experiment.depthInput {
             do {
-                try ExperimentDepthInput.verifySensorAvailibility()
+                try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
@@ -912,7 +912,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         if let depthInput = loadedExperiment.depthInput {
             do {
-                try ExperimentDepthInput.verifySensorAvailibility()
+                try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)

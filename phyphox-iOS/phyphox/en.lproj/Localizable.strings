@@ -39,6 +39,7 @@
 "sensorGravity" = "Gravity";
 "sensorVendor" = "Vendor specific";
 "sensorDepth" = "Depth (LiDAR/ToF)";
+"sensorCamera" = "Camera";
 "location" = "Location";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
 "sensorNotAvailableWarningText1" = "The sensor";
@@ -230,6 +231,8 @@
 "beeperRunning" = "Running sounds";
 "beeperStop" = "Stop sound";
 "activate_all" = "Activate all";
+"cameraFrontFacing" = "Front facing camera";
+"cameraBackFacing" = "Back facing camera";
 "deactivate_all" = "Deactivate all";
 "depthAggregationMode" = "Aggregation mode";
 "depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";

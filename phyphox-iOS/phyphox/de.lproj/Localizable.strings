@@ -342,5 +342,8 @@
 "depthAggregationModeAverage" = "Mittelwert";
 "depthAggregationModeWeighted" = "Gewichtet";
 "sensorDepth" = "Tiefe (LiDAR/ToF)";
+"sensorCamera" = "Kamera";
 "sensorGravity" = "Gravitation";
 "settings" = "Einstellungen";
+"cameraFrontFacing" = "Vordere Kamera";
+"cameraBackFacing" = "Hintere Kamera";

@@ -138,7 +138,14 @@ enum Metadata: CaseIterable {
             return UIDevice.current.systemVersion
         case .depthBackSensor:
             do {
-                try ExperimentDepthInput.verifySensorAvailibility()
+                try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: .back)
+            } catch {
+                return "0"
+            }
+            return "1"
+        case .depthFrontSensor:
+            do {
+                try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: .front)
             } catch {
                 return "0"
             }

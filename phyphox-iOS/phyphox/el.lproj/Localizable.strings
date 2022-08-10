@@ -331,6 +331,9 @@
 "depthAggregationModeClosest" = "Πλησιέστερα";
 "depthAggregationModeAverage" = "Μέσες τιμές";
 "sensorDepth" = "Βάθος(LiDAR/ToF)";
+"sensorCamera" = "Κάμερα";
 "depthAggregationModeWeighted" = "Σταθμισμένα";
 "sensorGravity" = "Βαρύτητα";
 "settings" = "Ρυθμίσεις";
+"cameraFrontFacing" = "Μπροστινή κάμερα";
+"cameraBackFacing" = "Οπίσθια κάμερα";
