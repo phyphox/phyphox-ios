@@ -84,11 +84,11 @@ final class ExperimentDepthInput {
         throw DepthInputError.sensorUnavailable
     }
     
-    func start(queue: DispatchQueue) {
+    func start(queue: DispatchQueue) throws {
         guard #available(iOS 14.0, *) else {
             return
         }
-        session.start(queue: queue)
+        try session.start(queue: queue)
     }
     
     func stop() {

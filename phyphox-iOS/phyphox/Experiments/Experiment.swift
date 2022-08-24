@@ -370,7 +370,7 @@ final class Experiment {
         MotionSession.sharedSession().resetConfig()
         sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
-        depthInput?.start(queue: queue)
+        try depthInput?.start(queue: queue)
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }

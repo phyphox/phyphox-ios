@@ -18,9 +18,18 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     var y1: Float = 0.4
     var y2: Float = 0.6
     
+    var running = false
+    
     var frontCamera: Bool {
         didSet {
-            _ = runSession()
+            if running {
+                do {
+                    stopSession()
+                    _ = try runSession()
+                } catch {
+                    print("No camera available while switching cameras.")
+                }
+            }
         }
     }
     
@@ -42,8 +51,25 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
         super.init()
         arSession.delegate = self
     }
+    
+    func ensureAvailableCamera() throws {
+        do {
+            try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: frontCamera ? .front : .back)
+        } catch {
+            print("\(frontCamera ? "front" : "back") camera not available. Switching.")
+            self.frontCamera = !frontCamera
+            try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: frontCamera ? .front : .back)
+        }
+    }
 
-    func runSession() -> CGSize {
+    func runSession() throws -> CGSize {
+        if running {
+            return arSession.configuration?.videoFormat.imageResolution ?? CGSize(width: 0,height: 0)
+        }
+        
+        try ensureAvailableCamera()
+        
+        print("Starting depth session with \(frontCamera ? "front" : "back") camera")
         let conf: ARConfiguration
         if frontCamera {
             conf = ARFaceTrackingConfiguration()
@@ -56,23 +82,19 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
             }
         }
         arSession.run(conf)
+        running = true
         return conf.videoFormat.imageResolution
     }
     
     func stopSession() {
+        running = false
         arSession.pause()
     }
     
-    func start(queue: DispatchQueue) {
-        do {
-            try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: frontCamera ? .front : .back)
-        } catch {
-            self.frontCamera = !frontCamera
-        }
-        
+    func start(queue: DispatchQueue) throws {
         self.queue = queue
         measuring = true
-        _ = runSession()
+        _ = try runSession()
     }
     
     func stop() {
@@ -192,8 +214,9 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     
     public func attachDelegate(delegate: DepthGUIDelegate) {
         self.delegate = delegate
-        let res = runSession()
-        delegate.updateResolution(resolution: res)
+        if let res = try? runSession() {
+            delegate.updateResolution(resolution: res)
+        }
     }
     
     private func writeToBuffers(z: Double, t: TimeInterval) {
