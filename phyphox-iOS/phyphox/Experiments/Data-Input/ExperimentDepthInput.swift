@@ -71,12 +71,12 @@ final class ExperimentDepthInput {
         guard #available(iOS 14.0, *) else {
             throw DepthInputError.sensorUnavailable
         }
-        if cameraOrientation == nil || cameraOrientation == .front {
+        if cameraOrientation == nil || cameraOrientation == .back {
             if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
                 return
             }
         }
-        if cameraOrientation == nil || cameraOrientation == .back {
+        if cameraOrientation == nil || cameraOrientation == .front {
             if ARFaceTrackingConfiguration.isSupported {
                 return
             }
