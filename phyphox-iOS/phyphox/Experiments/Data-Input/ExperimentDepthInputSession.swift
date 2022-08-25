@@ -109,6 +109,7 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        delegate?.updateFrame(frame: frame)
         if measuring {
             guard let depthMapRaw = (smooth ? (frame.smoothedSceneDepth?.depthMap ?? frame.sceneDepth?.depthMap) : frame.sceneDepth?.depthMap) ?? frame.capturedDepthData?.depthDataMap else {
                 if !frontCamera {
@@ -141,7 +142,6 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
             } else {
                 confidenceMap = nil
             }
-                
             frameIn(depthMap: depthMap, confidenceMap: confidenceMap, w: w, h: h, t: frame.timestamp)
             
             CVPixelBufferUnlockBaseAddress(depthMapRaw, .readOnly)
@@ -149,11 +149,10 @@ final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISe
                 CVPixelBufferUnlockBaseAddress(confidenceMapRaw, .readOnly)
             }
         }
-        delegate?.updateFrame(frame: frame)
     }
     
     func frameIn(depthMap: UnsafeMutablePointer<Float32>, confidenceMap: UnsafeMutablePointer<UInt8>?, w: Int, h: Int, t: TimeInterval) {
-        
+
         let xp1 = Int(round(Float(w) * x1))
         let xp2 = Int(round(Float(w) * x2))
         let yp1 = Int(round(Float(h) * y1))
