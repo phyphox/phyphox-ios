@@ -9,4 +9,3 @@
 "NSMicrophoneUsageDescription" = "phyphox像其他传感器一样，从麦克风记录声音，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
 "NSLocationWhenInUseUsageDescription" = "phyphox像其他传感器一样，记录GPS的位置数据，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
 "NSPhotoLibraryAddUsageDescription" = "如果您在实验菜单中选择“分享截图”，phyphox可以将截图添加到您的照片库中。";
-"NSCameraUsageDescription" = "phyphox使用相机扫描二维码，可用于添加自定义实验配置。";

@@ -9,5 +9,4 @@
 "NSLocationWhenInUseUsageDescription" = "phyphox snima podatke o lokaciji iz GPS-a kao iz drugih senzora i analizira ih prema odabranom eksperimentu. Podaci će biti izvezeni iz aplikacije samo ako korisnik to uradi koristeći funkciju izvoza.";
 "NSPhotoLibraryAddUsageDescription" = "phyphox može dodati slike ekrana u vašu biblioteku fotografija ako odaberete \"podeli sliku ekrana\" iz izbornika eksperimenta.";
 "NSMotionUsageDescription" = "phyphox čita senzore vašeg telefona kako bi omogućila njihovo korišćenje u eksperimentima fizike.";
-"NSCameraUsageDescription" = "phyphox uses the camera to scan QR codes, which can be used to add custom experiment configurations.";
 "NSBluetoothPeripheralUsageDescription" = "phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.";
