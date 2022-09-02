@@ -337,3 +337,4 @@
 "depthAggregationModeAverage" = "Average";
 "sensorDepth" = "Depth (LiDAR)";
 "depthAggregationModeWeighted" = "Weighted";
+"settings" = "सेटिंग्स";
