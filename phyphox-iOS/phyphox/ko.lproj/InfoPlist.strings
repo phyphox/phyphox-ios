@@ -1,1 +1,16 @@
 
+
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox는 다른 센서와 마찬가지로 마이크의 오디오를 녹음하고 선택한 실험에 따라 분석합니다. 데이터는 사용자가 '내보내기' 기능을 사용하여 데이터를 내보내도록 선택한 경우에만 앱에서 데이터를 내보냅니다.";
+"NSLocationWhenInUseUsageDescription" = "phyphox는 다른 센서와 마찬가지로 GPS에서 위치 데이터를 기록하고 선택한 실험에 따라 분석합니다. 데이터는 사용자가 '내보내기' 기능을 사용하여 데이터를 내보내도록 선택한 경우에만 앱에서 데이터를 내보냅니다.";
+"NSPhotoLibraryAddUsageDescription" = "실험 메뉴에서 \"스크린샷 공유\"를 선택하면 사진 보관함에 스크린샷을 추가할 수 있습니다.";
+"NSMotionUsageDescription" = "phyphox는 스마트 폰의 센서들을 사용함으로써 물리 실험에서 데이터를 읽습니다.";
+"NSCameraUsageDescription" = "phyphox는 사용자 맞춤형 실험 구성을 추가하는 데 사용할 수 있는 QR 코드를 스캔하기 위해 카메라를 사용합니다. 또한 거리 측정 실험이나 측정 영역을 표시하기 위해 심도 센서(LiDAR/ToF)가 사용됩니다.";
+"NSBluetoothPeripheralUsageDescription" = "phyphox는 외부의 블루투스 센서를 이용하여 데이터를 읽거나 쓸 수 있는 기능이 있습니다. http://phyphox.org/ble에서 해당 기능과 이를 지원되는 장치에 대해 자세히 알아볼 수 있습니다.";
+"NSBluetoothAlwaysUsageDescription" = "phyphox는 외부의 블루투스 센서를 이용하여 데이터를 읽거나 쓸 수 있는 기능이 있습니다. http://phyphox.org/ble에서 해당 기능과 이를 지원되는 장치에 대해 자세히 알아볼 수 있습니다.";
