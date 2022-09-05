@@ -11,3 +11,4 @@
 "NSMotionUsageDescription" = "phyphox, telefonunuzun sensörlerini fizik deneylerinde kullanmaya izin verecek şekilde okur.";
 "NSBluetoothPeripheralUsageDescription" = "Phyphox harici Bluetooth sensörlerinden veri okuma ve harici Bluetooth cihazlarına veri yazma özelliğine sahiptir. Bu özellik ve desteklenen cihazlar hakkında daha fazla bilgiyi http://phyphox.org/ble adresinde bulabilirsiniz.";
 "NSBluetoothAlwaysUsageDescription" = "Phyphox harici Bluetooth sensörlerinden veri okuma ve harici Bluetooth cihazlarına veri yazma özelliğine sahiptir. Bu özellik ve desteklenen cihazlar hakkında daha fazla bilgiyi http://phyphox.org/ble adresinde bulabilirsiniz.";
+"NSCameraUsageDescription" = "phyphox, özel deney konfigürasyonları eklemek için kullanılabilen QR kodlarını taramak için kamerayı kullanır. Ayrıca derinlik sensörü deneylerinde (LiDAR/ToF) mesafe ölçümleri sağlamak ve ilgilenilen bölgenin önizlemesini göstermek için kullanılır.";
