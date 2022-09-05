@@ -11,3 +11,4 @@
 "NSMotionUsageDescription" = "phyphox čita senzore vašeg telefona kako bi omogućila njihovo korišćenje u eksperimentima fizike.";
 "NSBluetoothPeripheralUsageDescription" = "phyphox ima mogućnost čitanja sa spoljnih Bluetooth senzora i pisanje podataka na spoljne Bluetooth uređaje. Možete saznati više o ovoj funkciji i podržanim uređajima na http://phiphok.org/ble.";
 "NSBluetoothAlwaysUsageDescription" = "phyphox ima mogućnost čitanja sa spoljnih Bluetooth senzora i pisanje podataka na spoljne Bluetooth uređaje. Možete saznati više o ovoj funkciji i podržanim uređajima na http://phiphok.org/ble.";
+"NSCameraUsageDescription" = "phyphox koristi kameru za skeniranje KR kodova, koji se mogu koristiti za dodavanje prilagođenih konfiguracija eksperimenta. Takođe se koristi u eksperimentima sa senzorom dubine (LiDAR/ToF) da obezbedi merenje udaljenosti i da prikaže pregled regiona od interesa.";
