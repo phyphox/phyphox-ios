@@ -5,7 +5,10 @@
   Created by Sebastian Kuhlen on 17.09.16.
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
-"NSMicrophoneUsageDescription" = "phyphoxは他のセンサーのようなものやマイクロフォンから音声を記録し，選択された実験に応じて解析を行います．使用者がエクスポート機能を用いてデータをエクスポートする場合はアプリからデータがエクスポートされます．";
-"NSLocationWhenInUseUsageDescription" = "phyphoxはその他のセンサーやGPSからの位置データを記録し，選択された実験によって解析します．エクスポート機能を用いて使用者はアプリからデータをエクスポートすることができます．";
-"NSPhotoLibraryAddUsageDescription" = "phyphoxでは実験から \"スクリーンショットを共有する\" を選択するとあなたのフォトライブラリーにスクリーンショットを追加することができます．";
-"NSMotionUsageDescription" = "phyphoxは物理実験でスマートフォンのセンサー使用することを許可し，読み取ります．";
+"NSMicrophoneUsageDescription" = "phyphoxは他のセンサーのようなものやマイクロフォンから音声を記録し，選択された実験に応じて解析を行います．使用者がエクスポート機能を用いてデータをエクスポートする場合はアプリからデータがエクスポートされます。";
+"NSLocationWhenInUseUsageDescription" = "phyphoxはその他のセンサーやGPSからの位置データを記録し，選択された実験によって解析します．エクスポート機能を用いて使用者はアプリからデータをエクスポートすることができます。";
+"NSPhotoLibraryAddUsageDescription" = "phyphoxでは実験から \"スクリーンショットを共有する\" を選択するとあなたのフォトライブラリーにスクリーンショットを追加することができます。";
+"NSMotionUsageDescription" = "phyphoxは物理実験でスマートフォンのセンサー使用することを許可し，読み取ります。";
+"NSCameraUsageDescription" = "phyphoxは、カメラを使ってQRコードを読み取り、カスタム実験の設定を追加することができます。また、深度センサー実験（LiDAR/ToF）において、距離測定や関心領域のプレビュー表示にも使用されます。";
+"NSBluetoothPeripheralUsageDescription" = "phyphoxは、外部Bluetoothセンサーからの読み込みと、外部Bluetoothデバイスへのデータ書き込み機能を備えています。この機能と対応デバイスの詳細は、http://phyphox.org/ble。";
+"NSBluetoothAlwaysUsageDescription" = "phyphoxは、外部Bluetoothセンサーからの読み込みと、外部Bluetoothデバイスへのデータ書き込み機能を備えています。この機能と対応デバイスの詳細は、http://phyphox.org/ble。";
