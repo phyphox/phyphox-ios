@@ -9,3 +9,6 @@
 "NSMicrophoneUsageDescription" = "phyphox像其他传感器一样，从麦克风记录声音，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
 "NSLocationWhenInUseUsageDescription" = "phyphox像其他传感器一样，记录GPS的位置数据，并根据所选的实验进行分析。只有当用户选择使用导出功能时，数据才会从应用程序中导出。";
 "NSPhotoLibraryAddUsageDescription" = "如果您在实验菜单中选择“分享截图”，phyphox可以将截图添加到您的照片库中。";
+"NSCameraUsageDescription" = "phyphox使用相机扫描二维码，可用于添加自定义实验配置。它也被用于深度传感器实验（LiDAR/ToF），以提供距离测量并显示感兴趣区域的预览。";
+"NSBluetoothPeripheralUsageDescription" = "phyphox具有从外部蓝牙传感器读取数据和向外部蓝牙设备写入数据的能力。你可以在http://phyphox.org/ble，了解更多关于这个功能和支持的设备。";
+"NSBluetoothAlwaysUsageDescription" = "phyphox具有从外部蓝牙传感器读取数据和向外部蓝牙设备写入数据的能力。你可以在http://phyphox.org/ble，了解更多关于这个功能和支持的设备。";
