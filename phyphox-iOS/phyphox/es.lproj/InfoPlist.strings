@@ -5,9 +5,10 @@
   Created by Sebastian Kuhlen on 17.09.16.
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
-"NSMicrophoneUsageDescription" = "phyphox snima zvuk iz mikrofona kao kod drugih senzora i analizira ga prema odabranom eksperimentu. Podaci će biti izvezeni iz aplikacije samo ako korisnik to uradi koristeći funkciju izvoza.";
-"NSLocationWhenInUseUsageDescription" = "phyphox snima podatke o lokaciji iz GPS-a kao iz drugih senzora i analizira ih prema odabranom eksperimentu. Podaci će biti izvezeni iz aplikacije samo ako korisnik to uradi koristeći funkciju izvoza.";
-"NSPhotoLibraryAddUsageDescription" = "phyphox može dodati slike ekrana u vašu biblioteku fotografija ako odaberete \"podeli sliku ekrana\" iz izbornika eksperimenta.";
-"NSMotionUsageDescription" = "phyphox čita senzore vašeg telefona kako bi omogućila njihovo korišćenje u eksperimentima fizike.";
-"NSBluetoothPeripheralUsageDescription" = "phyphox tiene la capacidad de leer sensores externos  por medio de Bluetooth y escribir datos en dispositivos externos por Bluetooth. Puede obtener más información sobre esta función y de dispositivos compatibles en http://phyphox.org/ble.";
-"NSBluetoothAlwaysUsageDescription" = "phyphox tiene la capacidad de leer sensores externos por medio del Bluetooth y escribir datos en dispositivos  externos por Bluetooth. Puede obtener más información sobre esta función y los dispositivos compatibles en http://phyphox.org/ble.";
+"NSMicrophoneUsageDescription" = "Phyphox graba audios con el micrófono y con otros sensores y los analiza de acuerdo con el experimento seleccionado. Los datos serán exportados desde el app solamente si el usuario elige hacerlo, usando la función \"exportar\".";
+"NSLocationWhenInUseUsageDescription" = "Phyphox graba información de localización del GPS como de otros sensores y los analiza de acuerdo con el experimento seleccionado. Los datos serán exportados desde el app solamente si el usuario elige hacerlo, usando la función \"exportar\".";
+"NSPhotoLibraryAddUsageDescription" = "Phyphox puede agregar imágenes de pantalla a la galería de fotos si usted selecciona \"compartir imagen\" en las opciones del experimento.";
+"NSMotionUsageDescription" = "Phyphox accede a los sensores del teléfono para que puedan ser usados en experimentos de física.";
+"NSBluetoothPeripheralUsageDescription" = "Phyphox tiene la capacidad de leer información de sensores Bluetooth periféricos y de mandar datos a dispositivos Bluetooth. Para saber más acerca de esto y los dispositivos incluidos en: http://phyphox.org/ble.";
+"NSBluetoothAlwaysUsageDescription" = "Phyphox tiene la capacidad de leer información de sensores Bluetooth periféricos y de mandar datos a dispositivos Bluetooth. Para saber más acerca de esto y los dispositivos incluidos en: http://phyphox.org/ble.";
+"NSCameraUsageDescription" = "Phyphox usa la cámara fotográfica para escanear códigos QR, los cuales pueden ser usados para agregar configuraciones de experimentos personalizados. También se usa en experimentos de profundidad (LiDAR/ToF) para suministrar medidas de distancia y mostrar áreas medidas.";
