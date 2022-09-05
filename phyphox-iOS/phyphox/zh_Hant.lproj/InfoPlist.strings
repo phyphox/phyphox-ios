@@ -9,3 +9,6 @@
 "NSLocationWhenInUseUsageDescription" = "phyphox如同其它感應器一樣，會從GPS記錄位置資訊，並根據所選的實驗進行分析。若使用者選擇使用匯出功能，數據將會從app被匯出。";
 "NSPhotoLibraryAddUsageDescription" = "若你從選單挑選\"分享螢幕截圖\"，phyphox會將圖片加到你的圖庫。";
 "NSMotionUsageDescription" = "phyphox會讀取你手機裡的感應器，以便用在物理實驗中。";
+"NSCameraUsageDescription" = "phyphox 使用攝像頭掃描二維碼，可用於添加自定義實驗配置。 它還用於深度傳感器實驗 (LiDAR/ToF)，以提供距離測量並顯示感興趣區域的預覽。";
+"NSBluetoothPeripheralUsageDescription" = "phyphox 能夠從外部藍牙傳感器讀取數據並將數據寫入外部藍牙設備。 您可以在 http://phyphox.org/ble 上了解有關此功能和支持的設備的更多信息。";
+"NSBluetoothAlwaysUsageDescription" = "phyphox 能夠從外部藍牙傳感器讀取數據並將數據寫入外部藍牙設備。 您可以在 http://phyphox.org/ble 上了解有關此功能和支持的設備的更多信息。";
