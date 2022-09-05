@@ -7,5 +7,8 @@
 */
 "NSMicrophoneUsageDescription" = "phyphox ghi âm từ micro giống như các các cảm biến khác và phân tích dữ liệu cho thí nghiệm được chọn. Dữ liệu này sẽ chỉ được xuất ra từ phần mềm nếu người dùng chọn làm như vậy bằng cách dùng chức năng xuất dữ liệu.";
 "NSLocationWhenInUseUsageDescription" = "phyphox ghi lại dữ liệu vị trí giống như các các cảm biến khác và phân tích nó cho thí nghiệm được chọn. Dữ liệu này sẽ chỉ được xuất ra từ phần mềm nếu người dùng chọn làm như vậy bằng cách dùng chức năng xuất dữ liệu.";
-"NSPhotoLibraryAddUsageDescription" = "phyphox có thể lưu ảnh chụp màn hình vào thư viện ảnh nếu bạn chọn \"Chia sẻ  ảnh chụp màn hình\" từ bảng chọn trong thí nghiệm.";
+"NSPhotoLibraryAddUsageDescription" = "phyphox có thể lưu ảnh chụp màn hình vào thư viện ảnh nếu bạn chọn \"Chia sẻ ảnh chụp màn hình\" từ bảng chọn trong thí nghiệm.";
 "NSMotionUsageDescription" = "phyphox đọc các cảm biến của điện thoại để sử dụng chúng cho thí nghiệm vật lý.";
+"NSCameraUsageDescription" = "phyphox sử dụng máy ảnh để quét mã QR, mã này có thể được sử dụng để thêm cấu hình thử nghiệm tùy chỉnh. Nó cũng được sử dụng trong các thí nghiệm cảm biến độ sâu (LiDAR / ToF) để cung cấp các phép đo khoảng cách và hiển thị bản xem trước của vùng quan tâm.";
+"NSBluetoothPeripheralUsageDescription" = "phyphox có khả năng đọc từ các cảm biến Bluetooth bên ngoài và ghi dữ liệu vào các thiết bị Bluetooth bên ngoài. Bạn có thể tìm hiểu thêm về tính năng này và các thiết bị được hỗ trợ trên http://phyphox.org/ble.";
+"NSBluetoothAlwaysUsageDescription" = "phyphox có khả năng đọc từ các cảm biến Bluetooth bên ngoài và ghi dữ liệu vào các thiết bị Bluetooth bên ngoài. Bạn có thể tìm hiểu thêm về tính năng này và các thiết bị được hỗ trợ trên http://phyphox.org/ble.";
