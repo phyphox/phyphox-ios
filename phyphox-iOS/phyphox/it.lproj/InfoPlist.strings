@@ -2,3 +2,6 @@
 "NSLocationWhenInUseUsageDescription" = "phyphox registra i dati relativi alla posizione dal GPS e li analizza secondo l'esperimento selezionato. I dati verranno esportati dalla app solo se l'utente seleziona la funzione \"Esporta\".";
 "NSPhotoLibraryAddUsageDescription" = "phyphox può aggiungere screenshots alla tua galleria fotografica selezionando \"Condividi screenshot\" nel menu dell'esperimento.";
 "NSMotionUsageDescription" = "phyphox legge i sensori del tuo telefono per utilizzarli in esperimenti di fisica.";
+"NSCameraUsageDescription" = "Phyphox usa la fotocamera per leggere codici QR, che possono essere usati per aggiungere all'esperimento configurazioni personalizzate, e negli esperimenti con i sensori di profondità (LiDAR/ToF) per fornire misurazioni di distanza e visualizzare l'area misurata.";
+"NSBluetoothPeripheralUsageDescription" = "Phyphox può leggere da sensori Bluetooth esterni e scrivere dati su periferiche Bluetooth esterne. Puoi sapere di più riguardo questa funzione e le periferiche supportate in http://phyphox.org/ble.";
+"NSBluetoothAlwaysUsageDescription" = "Phyphox può leggere da sensori Bluetooth esterni e scrivere dati su periferiche Bluetooth esterne. Puoi sapere di più riguardo questa funzione e le periferiche supportate in http://phyphox.org/ble.";
