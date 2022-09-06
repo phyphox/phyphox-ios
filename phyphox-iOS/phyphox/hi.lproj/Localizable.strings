@@ -4,8 +4,8 @@
 "title_activity_experiment" = "फाईफॉक्स";
 "graph_tools_pan_and_zoom" = "ऊँगली से ज़ूम";
 "graph_tools_pick" = "डाटा उठाएं";
-"graph_tools_more" = "और अधिक  टूल्स";
-"graph_tools_reset" = "ज़ूम रिसेट करें";
+"graph_tools_more" = "और अधिक टूल्स";
+"graph_tools_reset" = "ज़ूम रीसेट करें";
 "graph_tools_follow" = "नए डाटा को फॉलो करें";
 "graph_tools_linear_fit" = "रैखिक फिट";
 "graph_tools_export" = "इस डेटासेट का निर्यात करें";
@@ -15,9 +15,9 @@
 "graph_slope_label" = "ढाल";
 "graph_difference_label" = "अंतर";
 "graph_fit_label" = "रैखिक फिट: y = a x + b";
-"applyZoomTitle" = "ज़ूम लागू करें";
-"applyZoomExplanation" = "आप इस ग्राफ़ के इंटरएक्टिव मोड को बंद कर रहे हैं | अगर आप अपना ज़ूम रखना चाहते हैं, तो विकल्प चुनें |";
-"applyZoomAdvanced" = "विकसित विकल्प";
+"applyZoomTitle" = "ज़ूम करें";
+"applyZoomExplanation" = "आप इस ग्राफ़ के इंटरैक्टिव मोड को बंद कर रहे हैं | अगर आप अपना ज़ूम रखना चाहते हैं, तो विकल्प चुनें |";
+"applyZoomAdvanced" = "उन्नत (Advanced) विकल्प";
 "actions" = "Actions";
 "newExperiment" = "Add experiment";
 "newExperimentSimple" = "सरल प्रयोग जोड़ें";
@@ -25,7 +25,7 @@
 "newExperimentInputTitle" = "शीर्षक";
 "newExperimentInputBufferSize" = "बफर आकार (संग्रहीत किए जाने वाले मानों की संख्या)";
 "newExperimentInputRate" = "सेंसर दर (हर्ट्ज में, 0 = जितनी जल्दी हो सके)";
-"newExperimentInputSensors" = "Active sensors";
+"newExperimentInputSensors" = "सक्रिय सेंसर";
 "warning" = "Warning";
 "donotshowagain" = "Do not show again";
 "damageWarning" = "Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.";
@@ -149,10 +149,10 @@
 "applyZoomFollow" = "नया डेटा रखें और उसका पालन करें";
 "applyZoomThis" = "केवल यह ग्राफ";
 "applyZoomSameVariable" = "अन्य ग्राफ : वही चर";
-"applyZoomSameUnit" = "अन्य ग्राफ वही इकाई";
+"applyZoomSameUnit" = "अन्य ग्राफ: वही इकाई";
 "applyZoomSameAxis" = "अन्य ग्राफ: वही अक्ष";
-"newExperimentBluetooth" = "Add experiment for Bluetooth device";
-"newExperimentBluetoothErrorTitle" = "Bluetooth scan error";
+"newExperimentBluetooth" = "ब्लूटूथ उपकरण के लिए प्रयोग जोड़ें";
+"newExperimentBluetoothErrorTitle" = "ब्लूटूथ स्कैन त्रुटि";
 "newExperimentBluetoothLoadFromDevice" = "Load from device";
 "newExperimentBluetoothLoadFromDeviceInfo" = "This device provides its own phyphox experiment. Select \"load from device\" to open it.";
 "newExperimentQR" = "Add experiment from QR code";
