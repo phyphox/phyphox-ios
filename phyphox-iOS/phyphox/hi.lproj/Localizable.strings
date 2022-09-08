@@ -127,11 +127,11 @@
 "experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";
 "start_hint" = "Touch the triangle to start the experiment.";
 "help" = "Help and info";
-"experimentsPhyphoxOrg" = "Experiment ideas and instructions";
+"experimentsPhyphoxOrg" = "प्रायोगिक विचार एवं अनुदेश";
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
-"faqPhyphoxOrg" = "Frequently asked questions";
+"faqPhyphoxOrg" = "बार बार पूंछे जाने वाले प्रश्न";
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
-"remotePhyphoxOrg" = "Remote control help";
+"remotePhyphoxOrg" = "रिमोट कण्ट्रोल सहायता";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "AudioRateMissmatch" = "Error: Sampling rate mismatch. Please disable any apps or services (like AirPlay) which force a different audio sampling rate.";
 "translationInfo" = "Languages";
@@ -139,8 +139,8 @@
 "translationToSettings" = "Settings";
 "translationToWebsite" = "Visit website";
 "translationToWebsiteURL" = "http://phyphox.org/languages#en";
-"deviceInfo" = "Device info";
-"copyToClipboard" = "Copy to clipboard";
+"deviceInfo" = "युक्ति (डिवाइस) का विवरण";
+"copyToClipboard" = "क्लिप बोर्ड पर कॉपी करें";
 "deviceInfoCopied" = "The device info has been copied to your clipboard.";
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
 "applyZoomApply" = "पर लागू";
