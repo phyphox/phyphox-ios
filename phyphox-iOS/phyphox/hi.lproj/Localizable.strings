@@ -53,7 +53,7 @@
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
 "appleBanWarningMoreInfo" = "More info";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
-"ok" = "OK";
+"ok" = "ठीक है";
 "tryagain" = "Try again";
 "doContinue" = "Continue";
 "close" = "Close";
