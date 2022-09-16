@@ -334,7 +334,7 @@
 "depthAggregationMode" = "Aggregation mode";
 "depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";
 "depthAggregationModeClosest" = "Closest";
-"depthAggregationModeAverage" = "Average";
+"depthAggregationModeAverage" = "औसत";
 "sensorDepth" = "गहराई (LiDAR/ToF)";
 "depthAggregationModeWeighted" = "Weighted";
 "settings" = "सेटिंग्स";
