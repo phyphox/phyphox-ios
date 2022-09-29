@@ -61,12 +61,12 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             }
             let lat = location.coordinate.latitude
             let lon = location.coordinate.longitude
-            let z = location.altitude
+            let z = location.verticalAccuracy > 0.0 ? location.altitude : Double.nan
             let zWgs84 = z + GpsGeoid.shared.height(latitude: lat, longitude: lon)
-            let v = location.speed
-            let dir = location.course
+            let v = location.speed >= 0.0 ? location.speed : Double.nan
+            let dir = location.course >= 0.0 ? location.course : Double.nan
             let accuracy = location.horizontalAccuracy
-            let zAccuracy = location.horizontalAccuracy
+            let zAccuracy = location.verticalAccuracy
             let t = location.timestamp
             let status = location.horizontalAccuracy > 0 ? 1.0 : 0.0
             let satellites = -1.0
