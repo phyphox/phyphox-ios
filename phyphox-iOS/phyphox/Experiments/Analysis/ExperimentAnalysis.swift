@@ -14,7 +14,7 @@ extension String: AttributeKey {
     }
 }
 
-protocol ExperimentAnalysisDelegate: class {
+protocol ExperimentAnalysisDelegate: AnyObject {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis)
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }

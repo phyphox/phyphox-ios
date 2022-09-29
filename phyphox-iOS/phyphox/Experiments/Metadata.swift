@@ -131,7 +131,7 @@ enum Metadata: CaseIterable {
                     ptr in String.init(validatingUTF8: ptr)
                 }
             }
-            return String.init(validatingUTF8: modelCode!)!
+            return modelCode! as String
         case .deviceBrand:
             return "Apple"
         case .deviceRelease:

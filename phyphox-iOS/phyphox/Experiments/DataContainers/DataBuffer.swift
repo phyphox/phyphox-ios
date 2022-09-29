@@ -9,7 +9,7 @@
 import Foundation
 import Dispatch
 
-protocol DataBufferObserver: class {
+protocol DataBufferObserver: AnyObject {
     func dataBufferUpdated(_ buffer: DataBuffer)
     func userInputTriggered(_ buffer: DataBuffer)
 }

@@ -88,7 +88,7 @@ protocol DescriptorBoundViewModule {
     init?(descriptor: Descriptor)
 }
 
-protocol DisplayLinkListener: class {
+protocol DisplayLinkListener: AnyObject {
     func display(_ displayLink: DisplayLink)
 }
 

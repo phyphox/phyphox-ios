@@ -156,7 +156,6 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
-		C018C9AC2707A98300E9E14B /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C018C9AB2707A98300E9E14B /* BEMCheckBox */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
 		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C034B0112716F9E500C0EF00 /* ExperimentDepthGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034B0102716F9E500C0EF00 /* ExperimentDepthGUIView.swift */; };
@@ -214,10 +213,11 @@
 		C0AD8552229EA1CF00421738 /* HintBubbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */; };
 		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
 		C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C086C6EA270755E100348772 /* CocoaMQTT.framework */; };
-		C0BD4DF027079C490020A5AF /* GCDWebServers in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DEF27079C490020A5AF /* GCDWebServers */; };
 		C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DF527079C600020A5AF /* JGProgressHUD */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
+		C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C228E5A16D00BC98DE /* GCDWebServers */; };
+		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
 		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
 		C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; };
 		C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -596,12 +596,12 @@
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
 				C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */,
-				C018C9AC2707A98300E9E14B /* BEMCheckBox in Frameworks */,
 				C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */,
+				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
 				C0FC14872707C16300512064 /* libJXLS.a in Frameworks */,
 				C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */,
-				C0BD4DF027079C490020A5AF /* GCDWebServers in Frameworks */,
+				C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */,
 				C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1196,9 +1196,9 @@
 			);
 			name = phyphox;
 			packageProductDependencies = (
-				C0BD4DEF27079C490020A5AF /* GCDWebServers */,
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
-				C018C9AB2707A98300E9E14B /* BEMCheckBox */,
+				C0F430C228E5A16D00BC98DE /* GCDWebServers */,
+				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1280,9 +1280,9 @@
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
-				C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
-				C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
+				C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */,
+				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -1849,7 +1849,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1871,13 +1871,13 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.11;
+				MARKETING_VERSION = 1.1.12;
 				OTHER_LDFLAGS = "";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
@@ -1914,7 +1914,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
@@ -1931,13 +1931,13 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.11;
+				MARKETING_VERSION = 1.1.12;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2046,22 +2046,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox";
-			requirement = {
-				kind = revision;
-				revision = a3292ebae9f0c2737b0c90281219dced2ce51ac8;
-			};
-		};
-		C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/phyphox/GCDWebServer";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JonasGessner/JGProgressHUD";
@@ -2070,23 +2054,39 @@
 				kind = branch;
 			};
 		};
+		C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JacobHearst/GCDWebServer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
+		C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C018C9AB2707A98300E9E14B /* BEMCheckBox */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */;
-			productName = BEMCheckBox;
-		};
-		C0BD4DEF27079C490020A5AF /* GCDWebServers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */;
-			productName = GCDWebServers;
-		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */;
 			productName = JGProgressHUD;
+		};
+		C0F430C228E5A16D00BC98DE /* GCDWebServers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */;
+			productName = GCDWebServers;
+		};
+		C0F430C528E5A2DB00BC98DE /* BEMCheckBox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */;
+			productName = BEMCheckBox;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

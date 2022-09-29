@@ -92,22 +92,22 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
         
         alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("experimentsPhyphoxOrgURL"))!)
+            UIApplication.shared.open(URL(string: localize("experimentsPhyphoxOrgURL"))!)
         }))
         
         alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("faqPhyphoxOrgURL"))!)
+            UIApplication.shared.open(URL(string: localize("faqPhyphoxOrgURL"))!)
         }))
         
         alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.openURL(URL(string: localize("remotePhyphoxOrgURL"))!)
+            UIApplication.shared.open(URL(string: localize("remotePhyphoxOrgURL"))!)
         }))
         
         alert.addAction(UIAlertAction(title: localize("settings"), style: .default, handler:{ _ in
             guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else {
                 return
             }
-            UIApplication.shared.openURL(settingsUrl)
+            UIApplication.shared.open(settingsUrl)
         }))
         
         alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in
@@ -123,10 +123,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                     ptr in String.init(validatingUTF8: ptr)
                 }
             }
-            let model = String.init(validatingUTF8: modelCode!)!
             
             msg += "Device\n"
-            msg += "Model: \(model)\n"
+            msg += "Model: \(modelCode!)\n"
             msg += "Brand: Apple\n"
             msg += "iOS version: \(UIDevice.current.systemVersion)"
             
@@ -215,7 +214,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
 
         let infoAction = UIAlertAction(title: localize("bt_more_info_link_button"), style: .default) { (action) in
-            UIApplication.shared.openURL(URL(string: localize("bt_more_info_link_url"))!)
+            UIApplication.shared.open(URL(string: localize("bt_more_info_link_url"))!)
         }
         alertController.addAction(infoAction)
         
@@ -573,7 +572,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 present(controller, animated: true, completion: nil)
                 return
             }
-            UIApplication.shared.openURL(url)
+            UIApplication.shared.open(url)
             return
         }
         
@@ -587,7 +586,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
                 controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
                 controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 
@@ -606,7 +605,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
                 controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
                 controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 
@@ -901,7 +900,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
                 controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
                 controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 navigationController?.present(controller, animated: true, completion: nil)
@@ -918,7 +917,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
                 controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.openURL(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
                 }))
                 controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
                 

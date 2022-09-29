@@ -450,8 +450,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             for vc in experimentViewControllers {
                 for view in vc.modules {
                     if let depthGUI = view as? ExperimentDepthGUIView {
-                        experiment.depthInput?.session.attachDelegate(delegate: depthGUI)
-                        depthGUI.depthGUISelectionDelegate = experiment.depthInput?.session
+                        guard let session = experiment.depthInput?.session as? ExperimentDepthInputSession else {
+                            continue
+                        }
+                        session.attachDelegate(delegate: depthGUI)
+                        depthGUI.depthGUISelectionDelegate = session
                     }
                 }
             }
@@ -473,7 +476,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.viewDidDisappear(animated)
         
         if #available(iOS 14.0, *) {
-            experiment.depthInput?.session.stopSession()
+            if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
+                session.stopSession()
+            }
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
@@ -889,7 +894,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             for link in self.experiment.localizedLinks {
                 al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
-                    UIApplication.shared.openURL(link.url)
+                    UIApplication.shared.open(link.url)
                 }))
             }
             al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
@@ -950,7 +955,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         for link in experiment.localizedLinks where link.highlighted {
             alert.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
-                UIApplication.shared.openURL(link.url)
+                UIApplication.shared.open(link.url)
             }))
         }
         

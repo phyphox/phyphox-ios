@@ -8,7 +8,7 @@
 
 import UIKit
 
-protocol GraphGridDelegate: class {
+protocol GraphGridDelegate: AnyObject {
     func updatePlotArea()
 }
 

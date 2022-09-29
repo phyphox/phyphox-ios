@@ -38,8 +38,7 @@ final class ExperimentDepthInput {
     let zBuffer: DataBuffer?
     let tBuffer: DataBuffer?
     
-    @available(iOS 14.0, *)
-    lazy var session = ExperimentDepthInputSession()
+    lazy var session: Any? = nil
     
     private var queue: DispatchQueue?
     
@@ -55,6 +54,10 @@ final class ExperimentDepthInput {
         self.timeReference = timeReference
         
         if #available(iOS 14.0, *) {
+            session = ExperimentDepthInputSession()
+            guard let session = session as? ExperimentDepthInputSession else {
+                return
+            }
             session.mode = mode
             session.x1 = x1
             session.x2 = x2
@@ -88,6 +91,9 @@ final class ExperimentDepthInput {
         guard #available(iOS 14.0, *) else {
             return
         }
+        guard let session = session as? ExperimentDepthInputSession else {
+            return
+        }
         try session.start(queue: queue)
     }
     
@@ -95,11 +101,17 @@ final class ExperimentDepthInput {
         guard #available(iOS 14.0, *) else {
             return
         }
+        guard let session = session as? ExperimentDepthInputSession else {
+            return
+        }
         session.stop()
     }
     
     func clear() {
         guard #available(iOS 14.0, *) else {
+            return
+        }
+        guard let session = session as? ExperimentDepthInputSession else {
             return
         }
         session.clear()
