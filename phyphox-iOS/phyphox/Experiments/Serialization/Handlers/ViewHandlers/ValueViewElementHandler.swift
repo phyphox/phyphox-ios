@@ -30,7 +30,9 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
         let min = try attributes.optionalValue(for: .min) ?? -Double.infinity
         let max = try attributes.optionalValue(for: .max) ?? Double.infinity
 
-        results.append(ValueViewMap(range: min...max, replacement: text))
+        if max >= min {
+            results.append(ValueViewMap(range: min...max, replacement: text))
+        }
     }
 }
 
