@@ -356,8 +356,7 @@ final class Experiment {
         }
 
         timeReference.registerEvent(event: .START)
-        bluetoothInputs.forEach { $0.device.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
-        bluetoothOutputs.forEach { $0.device.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
 
         running = true
 
@@ -400,8 +399,7 @@ final class Experiment {
         running = false
         
         timeReference.registerEvent(event: .PAUSE)
-        bluetoothInputs.forEach { $0.device.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
-        bluetoothOutputs.forEach { $0.device.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
     }
     
     func clear(byUser: Bool) {
