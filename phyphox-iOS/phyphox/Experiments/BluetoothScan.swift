@@ -251,7 +251,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     }
     
     func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?) {
-        if let char = characteristic {
+        if let char = characteristic, char.properties.contains(.notify) {
             peripheral.setNotifyValue(false, for: char)
         }
         setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
@@ -308,11 +308,19 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
             return
         }
-        loadFromBluetoothDeviceStage = .subscribing
-        peripheral.setNotifyValue(true, for: characteristic)
+        if characteristic.properties.contains(.notify) {
+            loadFromBluetoothDeviceStage = .subscribing
+            peripheral.setNotifyValue(true, for: characteristic)
+        }
         setControlCharacteristicIfPresent(value: 0x01, peripheral: peripheral)
+        if !characteristic.properties.contains(.notify) {
+            print("Polling experiment data.")
+            loadFromBluetoothDeviceStage = .transmitting
+            peripheral.readValue(for: characteristic)
+        }
         after(30) {
             if self.loadFromBluetoothDeviceStage != .done && self.loadFromBluetoothDeviceStage != .failed {
+                print("Timeout.")
                 self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
             }
         }
@@ -333,7 +341,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
 
                 if currentBluetoothData!.count >= currentBluetoothDataSize {
                     loadFromBluetoothDeviceStage = .done
-                    peripheral.setNotifyValue(false, for: characteristic)
+                    if characteristic.properties.contains(.notify) {
+                        peripheral.setNotifyValue(false, for: characteristic)
+                    }
                     setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
                     centralManager?.cancelPeripheralConnection(peripheral)
                     loadHud?.dismiss()
@@ -349,6 +359,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     //print("\(currentBluetoothData!.map{String(format: "%02hhx", $0)}.joined(separator: " "))")
                     //print("\(transmittedExperimentData.map{String(format: "%02hhx", $0)}.joined(separator: " "))")
                     guard receivedCRC32 == currentBluetoothDataCRC32 else {
+                        print("CRC32 mismatch")
                         self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
                         return
                     }
@@ -366,9 +377,13 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     
                 } else {
                     loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: true)
+                    if !characteristic.properties.contains(.notify) {
+                        peripheral.readValue(for: characteristic)
+                    }
                 }
             } else {
                 if !newData.starts(with: "phyphox".data(using: .utf8)!) {
+                    print("Bad header: \(newData.map{ String(format: "%02d", $0)}.joined()) from \(characteristic.uuid)")
                     self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
                 } else {
                     let sizeData = newData.subdata(in: (7..<7+4))
@@ -376,8 +391,14 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     let crcData = newData.subdata(in: (11..<11+4))
                     currentBluetoothDataCRC32 = UInt32(bigEndian: crcData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     currentBluetoothData = Data()
+                    if !characteristic.properties.contains(.notify) {
+                        peripheral.readValue(for: characteristic)
+                    }
                 }
             }
+        } else {
+            print("No data.")
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
         }
     }
 }
