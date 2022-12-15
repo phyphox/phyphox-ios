@@ -219,7 +219,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         alertController.addAction(infoAction)
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
+        let height : NSLayoutConstraint = NSLayoutConstraint(item: alertController.view!, attribute: NSLayoutConstraint.Attribute.height, relatedBy: NSLayoutConstraint.Relation.equal, toItem: nil, attribute: NSLayoutConstraint.Attribute.notAnAttribute, multiplier: 1, constant: 550)
         alertController.addAction(cancelAction)
+        alertController.view.addConstraint(height)
 
         bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
