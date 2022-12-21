@@ -198,7 +198,7 @@ class StringInputConversion: InputConversion {
         }
         var index = offset
         var out: [Double] = []
-        while index + length < data.count {
+        while index < data.count {
             length = self.length ?? data.count - index
             let subdata = data.subdata(in: (index..<index+length))
             guard var str: String = String(data: subdata, encoding: .utf8) else {
@@ -211,7 +211,6 @@ class StringInputConversion: InputConversion {
             if let v = Double(str) {
                 out.append(v)
             }
-            
             if repeating > 0 {
                 index += repeating
             } else {
