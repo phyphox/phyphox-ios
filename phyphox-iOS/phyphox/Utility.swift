@@ -10,7 +10,7 @@ import Foundation
 
 class Utility{
     
-    static  func measureHeightofLabelString(line: String) -> CGFloat {
+    static  func measureHeightofUILabelOnString(line: String) -> CGFloat {
         let textView = UITextView()
         let maxwidth = UIScreen.main.bounds.width
         textView.frame = CGRect(x:0,y: 0,width: maxwidth,height: CGFloat(MAXFLOAT))
