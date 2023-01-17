@@ -211,32 +211,17 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             height = max(height, s3.height)
         }
 
-        dynamicLabelHeight = measureHeightofLabelString(line: label.text ?? "empty") * 2.5
+        dynamicLabelHeight = Utility.measureHeightofLabelString(line: label.text ?? "-") * 2.5
         let width = min(2.0 * max(left, right), size.width)
         
         
         return CGSize(width: width, height: dynamicLabelHeight)
-    }
-    
-    
-    func measureHeightofLabelString(line: String) -> CGFloat {
-        let textView = UITextView()
-        let maxwidth = UIScreen.main.bounds.width
-        textView.frame = CGRect(x:0,y: 0,width: maxwidth,height: CGFloat(MAXFLOAT))
-        textView.textContainerInset = UIEdgeInsets.zero
-        textView.textContainer.lineFragmentPadding = 0
-        textView.font = UIFont.preferredFont(forTextStyle: .body)
-        textView.text = line
-        textView.isScrollEnabled = false
-        textView.sizeToFit()
-        return textView.frame.size.height
     }
 
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let h = label.sizeThatFits(self.bounds.size).height
         let h2 = textField.sizeThatFits(self.bounds.size).height
         let w = (bounds.width - spacing)/2.0
         
