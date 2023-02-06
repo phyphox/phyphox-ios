@@ -31,6 +31,8 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         }
     }
     
+    var dynamicLabelHeight = 0.0
+    
     required init?(descriptor: ValueViewDescriptor) {
         self.descriptor = descriptor
 
@@ -122,46 +124,12 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         let hangOver = (bounds.width - 2*spacing)/2.0 - s2.width - s3.width - spacing
         let push = hangOver < 0 ? hangOver : 0.0
         
-        label.frame = CGRect(x: push, y: (bounds.height - s1.height)/2.0, width: bounds.width/2.0 - spacing, height: s1.height)
+        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
+        
+        label.frame = CGRect(x: push, y: (bounds.height - dynamicLabelHeight)/2.0, width: bounds.width/2.0 - spacing, height: dynamicLabelHeight)
         valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
         unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (bounds.height - s3.height)/2.0, width: s3.width, height: s3.height)
-
-        fitLabelsOnScreen(_label: s1, _valueLabel: s2, _unitLabel: s3)
-
-    }
-
-    /** Checks which part of the sub screen is out of bound and fix as per the requirement */
-    private func fitLabelsOnScreen(_label: CGSize, _valueLabel: CGSize, _unitLabel: CGSize) {
-
-        let fullScreenWidth = bounds.width
-        let halfScreenWidth = fullScreenWidth/2.0 - spacing
-        let allLabelsWidth = (_label.width + _valueLabel.width + _unitLabel.width )
-        let onlyValUnitWidth = (_valueLabel.width + _unitLabel.width)
-
-        let labelNotInScreenBound : Bool =  halfScreenWidth < _label.width ||  fullScreenWidth < allLabelsWidth
-        let valueNotInScreenBound : Bool = halfScreenWidth < onlyValUnitWidth
-
-        if(labelNotInScreenBound){
-            //Increase height and decrease width and font and set multiline if required
-            label.frame = CGRect(x: 0, y: (bounds.height - _valueLabel.height)/2.0, width: onlyValUnitWidth, height: _valueLabel.height)
-            label.font = UIFont.preferredFont(forTextStyle: .caption1)
-
-            if(labelOutOfBoundDict[label.text!] != nil){
-                labelOutOfBoundDict[label.text!] = true
-            }
-
-        } else if(valueNotInScreenBound){
-            //Decrease width with respect to other labels and decrease font size
-            valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - _valueLabel.height)/2.0,
-                    width: fullScreenWidth - _label.width - _unitLabel.width, height: _valueLabel.height)
-            let smallFont = UIFont.preferredFont(forTextStyle: .caption1)
-            valueLabel.font = UIFont.init(descriptor: smallFont.fontDescriptor, size: CGFloat(descriptor.size) * smallFont.pointSize)
-
-        } else {
-            if(labelOutOfBoundDict[label.text!] == false){
-                label.font = UIFont.preferredFont(forTextStyle: .body)
-            }
-        }
+       
     }
 }
 

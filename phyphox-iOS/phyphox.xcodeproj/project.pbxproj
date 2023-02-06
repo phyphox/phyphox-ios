@@ -156,6 +156,7 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
+		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
 		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C034B0112716F9E500C0EF00 /* ExperimentDepthGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034B0102716F9E500C0EF00 /* ExperimentDepthGUIView.swift */; };
@@ -496,6 +497,7 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
 		C025FC0623D9D45800AE13B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -736,6 +738,7 @@
 				6B7BF7AC1C130457007408FB /* Assets */,
 				6B0C71561C1C708F00500FEE /* Dependencies */,
 				C075DCBD287EA33E001CBE5E /* Settings.bundle */,
+				A1A6A72E297685DF00090309 /* Utility.swift */,
 			);
 			path = phyphox;
 			sourceTree = "<group>";
@@ -1580,6 +1583,7 @@
 				6B7BF7F61C132722007408FB /* ExperimentSensorInput.swift in Sources */,
 				6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */,
 				4B47B0331DA6A87A00CCBA6E /* CountAnalysis.swift in Sources */,
+				A1A6A72F297685DF00090309 /* Utility.swift in Sources */,
 				6B7BF81F1C147CE0007408FB /* DifferentiationAnalysis.swift in Sources */,
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6BEA9457207FF8CE0077274A /* GraphViewElementHandler.swift in Sources */,
