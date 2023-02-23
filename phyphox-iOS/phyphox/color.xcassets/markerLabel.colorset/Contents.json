@@ -16,16 +16,30 @@
       "appearances" : [
         {
           "appearance" : "luminosity",
+          "value" : "light"
+        }
+      ],
+      "color" : {
+        "color-space" : "gray-gamma-22",
+        "components" : {
+          "alpha" : "0.800",
+          "white" : "0"
+        }
+      },
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
           "value" : "dark"
         }
       ],
       "color" : {
-        "color-space" : "srgb",
+        "color-space" : "gray-gamma-22",
         "components" : {
-          "alpha" : "1.000",
-          "blue" : "255",
-          "green" : "255",
-          "red" : "255"
+          "alpha" : "0.800",
+          "white" : "1.000"
         }
       },
       "idiom" : "universal"

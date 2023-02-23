@@ -243,17 +243,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = kTextColor
+        label.textColor = UIColor(named: "textColor")
         
         xLabel = makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
         yLabel = makeLabel(descriptor.systemTime ? descriptor.localizedYLabelWithTimezone : descriptor.localizedYLabelWithUnit)
-        xLabel.textColor = kTextColor
-        yLabel.textColor = kTextColor
+        xLabel.textColor = UIColor(named: "textColor")
+        yLabel.textColor = UIColor(named: "textColor")
         yLabel.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
         
         if hasZData {
             zLabel = makeLabel(descriptor.localizedZLabelWithUnit)
-            zLabel?.textColor = kTextColor
+            zLabel?.textColor = UIColor(named: "textColor")
         } else {
             zLabel = nil
         }
@@ -1204,10 +1204,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if let text = text {
             if markerLabel == nil {
                 markerLabel = UILabel()
-                markerLabel?.textColor = UIColor.black
+                markerLabel?.textColor = UIColor(named: "textColor")
                 markerLabel?.numberOfLines = 0
                 markerLabelFrame = UIView()
-                markerLabelFrame?.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
+                markerLabelFrame?.backgroundColor = UIColor(named: "markerLabel")
                 markerLabelFrame?.layer.cornerRadius = 5.0
                 markerLabelFrame?.layer.masksToBounds = true
                 markerLabelFrame?.addSubview(markerLabel!)
@@ -1564,7 +1564,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         graphTools.backgroundColor = UIColor(name: "mainBackground")
         graphTools.tintColor = kHighlightColor
         if #available(iOS 10, *) {
-            graphTools.unselectedItemTintColor = kTextColor
+            graphTools.unselectedItemTintColor = UIColor(named: "textColor")
         }
         
         graphTools.delegate = self

@@ -77,7 +77,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
+        let color = (mapColorString(attributes.optionalString(for: .color)) ?? UIColor(named: "textColor"))!
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()
