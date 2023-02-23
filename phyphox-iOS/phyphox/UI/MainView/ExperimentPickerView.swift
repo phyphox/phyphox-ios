@@ -46,11 +46,11 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         dialogView.clipsToBounds = true
         dialogView.translatesAutoresizingMaskIntoConstraints = false
-        dialogView.backgroundColor = UIColor.white
+        //dialogView.backgroundColor = UIColor.white
         dialogView.layer.cornerRadius = 6
         
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
-        backgroundView.backgroundColor = UIColor.black
+        //backgroundView.backgroundColor = UIColor.black
         backgroundView.alpha = 0.6
         backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(cancelDialog)))
         addSubview(backgroundView)
@@ -65,7 +65,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         
         let separatorView = UIView()
         separatorView.translatesAutoresizingMaskIntoConstraints = false
-        separatorView.backgroundColor = UIColor.groupTableViewBackground
+        //separatorView.backgroundColor = UIColor.groupTableViewBackground
         dialogView.addSubview(separatorView)
         
         let messageFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
@@ -81,19 +81,19 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         let saveButton = UIButton()
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.setTitle(localize("open_save_all"), for: .normal)
-        saveButton.setTitleColor(UIColor.black, for: .normal)
+        //saveButton.setTitleColor(UIColor.black, for: .normal)
         saveButton.addTarget(self, action: #selector(saveAll), for: .touchUpInside)
         dialogView.addSubview(saveButton)
         
         let separatorView2 = UIView()
         separatorView2.translatesAutoresizingMaskIntoConstraints = false
-        separatorView2.backgroundColor = UIColor.groupTableViewBackground
+        //separatorView2.backgroundColor = UIColor.groupTableViewBackground
         dialogView.addSubview(separatorView2)
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.setTitle(localize("cancel"), for: .normal)
-        cancelButton.setTitleColor(UIColor.black, for: .normal)
+        //cancelButton.setTitleColor(UIColor.black, for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)
         
@@ -102,13 +102,13 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
         if onDevice {
             separatorView3 = UIView()
             separatorView3?.translatesAutoresizingMaskIntoConstraints = false
-            separatorView3?.backgroundColor = UIColor.groupTableViewBackground
+            //separatorView3?.backgroundColor = UIColor.groupTableViewBackground
             dialogView.addSubview(separatorView3!)
             
             fromDeviceButton = UIButton()
             fromDeviceButton?.translatesAutoresizingMaskIntoConstraints = false
             fromDeviceButton?.setTitle(localize("newExperimentBluetoothLoadFromDevice"), for: .normal)
-            fromDeviceButton?.setTitleColor(UIColor.black, for: .normal)
+            //fromDeviceButton?.setTitleColor(UIColor.black, for: .normal)
             fromDeviceButton?.addTarget(self, action: #selector(loadFromDevice), for: .touchUpInside)
             dialogView.addSubview(fromDeviceButton!)
         } else {
@@ -199,6 +199,13 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             rootController.addChild(experimentPicker)
             experimentPicker.didMove(toParent: rootController)
         }
+        
+        if #available(iOS 13.0, *) {
+            self.overrideUserInterfaceStyle = .light
+        } else {
+            // Fallback on earlier versions
+        }
+        
         if animated {
             UIView.animate(withDuration: 0.3, animations: {
                 self.backgroundView.alpha = 0.66

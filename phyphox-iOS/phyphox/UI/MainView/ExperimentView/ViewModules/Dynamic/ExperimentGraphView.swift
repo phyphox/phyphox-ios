@@ -1561,7 +1561,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         graphTools.shadowImage = UIImage()
         graphTools.backgroundImage = UIImage()
-        graphTools.backgroundColor = kBackgroundColor
+        graphTools.backgroundColor = UIColor(name: "mainBackground")
         graphTools.tintColor = kHighlightColor
         if #available(iOS 10, *) {
             graphTools.unselectedItemTintColor = kTextColor

@@ -107,6 +107,8 @@
 "save_state" = "Save experiment state";
 "save_state_category" = "Saved experiment states";
 "save_state_message" = "You can save the state of this experiment including your data to your collection or share it with a third-party app.";
+"url_invalid" = "Invalid URL";
+"url_invalid_msg" =  "This experiment is just a link, but no valid URL was found.";
 "save_state_title" = "Title";
 "save_state_save" = "To collection";
 "save_state_share" = "Share";

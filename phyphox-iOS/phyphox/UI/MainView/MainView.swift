@@ -40,6 +40,6 @@ final class MainView: CollectionContainerView {
     override init(frame: CGRect) {
      super.init(frame: frame)
         
-        collectionView.backgroundColor = kBackgroundColor
+        collectionView.backgroundColor = UIColor(named: "mainBackground")
     }
 }

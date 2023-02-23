@@ -281,11 +281,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : UIColor(named: "textColor") ?? kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
             segControl!.setTitleTextAttributes(font, for: .normal)
             segControl!.setTitleTextAttributes(font, for: .selected)
-            segControl!.tintColor = kTextColor
-            segControl!.backgroundColor = kTextColor
+            segControl!.tintColor = UIColor(named: "textColor")
+            segControl!.backgroundColor = UIColor(named: "textColor")
             
             //Generate new background and divider images for the segControl
             let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
@@ -293,12 +293,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let ctx = UIGraphicsGetCurrentContext()
             
             //Background
-            ctx!.setFillColor(kLightBackgroundColor.cgColor)
+            ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
             ctx!.fill(rect)
             let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
             //Higlighted image, bg with underline
-            ctx!.setFillColor(kHighlightColor.cgColor)
+            ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
             ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
             let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
@@ -320,7 +320,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tabBar!.contentSize = segControl!.frame.size
             tabBar!.showsHorizontalScrollIndicator = false
             tabBar!.autoresizingMask = .flexibleWidth
-            tabBar!.backgroundColor = kLightBackgroundColor
+            tabBar!.backgroundColor = UIColor(named: "lightBackgroundColor")
             tabBar!.addSubview(segControl!)
             
             self.view.addSubview(tabBar!)
@@ -595,11 +595,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.lineBreakMode = .byWordWrapping
             self.serverLabel!.numberOfLines = 0
             self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
-            self.serverLabel!.textColor = kTextColor
-            self.serverLabel!.backgroundColor = kLightBackgroundColor
+            self.serverLabel!.textColor = UIColor(named: "textColor") ?? kTextColor
+            self.serverLabel!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
             self.serverLabelBackground = UIView()
-            self.serverLabelBackground!.backgroundColor = kLightBackgroundColor
+            self.serverLabelBackground!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             

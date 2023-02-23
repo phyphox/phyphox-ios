@@ -13,6 +13,28 @@
 			<string>settingsProximityLockDetail</string>
 		</dict>
 		<dict>
+			<key>Titles</key>
+			<array>
+				<string>appModeDark</string>
+				<string>appModeLight</string>
+				<string>appModeSystem</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+			</array>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>appMode</string>
+			<key>Key</key>
+			<string>appModeKey</string>
+			<key>DefaultValue</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>

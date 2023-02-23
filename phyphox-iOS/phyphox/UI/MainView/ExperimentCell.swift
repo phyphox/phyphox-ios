@@ -56,9 +56,64 @@ class ExperimentCell: UICollectionViewCell {
     override var isHighlighted: Bool {
         didSet {
             UIView.animate(withDuration: 0.1, animations: {
-                self.contentView.backgroundColor = self.isHighlighted ? kLightBackgroundColor : kBackgroundColor
-            }) 
+                self.contentView.backgroundColor = self.isHighlighted ? UIColor(named: "lightBackgroundColor") : UIColor(named: "mainBackground")
+            })
         }
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        let s1 = CGSize(width: bounds.size.height-4.0, height: bounds.size.height-4.0)
+        
+        iconView?.frame = CGRect(x: 8.0, y: 2.0, width: s1.width, height: s1.height)
+        
+        let x = (iconView != nil ? iconView!.frame.maxX : 0.0)
+        
+        var maxLabelSize = CGSize(width: contentView.bounds.size.width-x-16.0, height: contentView.bounds.height)
+        
+        if let op = optionsButton {
+            let size = CGSize(width: contentView.bounds.height, height: contentView.bounds.height)
+            
+            op.frame = CGRect(origin: CGPoint(x: self.contentView.bounds.width-size.width, y: (contentView.bounds.height-size.height)/2.0), size: size)
+            
+            maxLabelSize.width -= size.width+5.0
+        }
+        
+        var s2 = titleLabel.sizeThatFits(maxLabelSize)
+        s2.width = min(maxLabelSize.width, s2.width)
+        
+        titleLabel.frame = CGRect(x: x+8.0, y: 5.0, width: s2.width, height: s2.height)
+        
+        var s3 = subtitleLabel.sizeThatFits(maxLabelSize)
+        s3.width = min(maxLabelSize.width, s3.width)
+        
+        subtitleLabel.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-s3.height-5.0, width: s3.width, height: s3.height)
+        
+        
+        
+        let separatorHeight = 1.0/UIScreen.main.scale
+        
+        separator.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-separatorHeight, width: contentView.bounds.size.width-x-16.0, height: separatorHeight)
+        
+
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
+        subtitleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
+        
+        separator.backgroundColor = UIColor.white
+        separator.alpha = 0.1
+        
+        contentView.backgroundColor =  UIColor(named: "mainBackground")
+        
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(subtitleLabel)
+        
+        contentView.addSubview(separator)
     }
     
     weak var experiment: Experiment? {
@@ -112,11 +167,11 @@ class ExperimentCell: UICollectionViewCell {
                 }
 
                 if (available) {
-                    titleLabel.textColor = kTextColor
-                    subtitleLabel.textColor = kText2Color
+                    titleLabel.textColor = UIColor(named: "textColor")
+                    subtitleLabel.textColor = UIColor(named: "textSecondaryColor")
                 } else {
-                    titleLabel.textColor = kTextColorDeactivated
-                    subtitleLabel.textColor = kTextColorDeactivated
+                    titleLabel.textColor = UIColor(named: "textColorDeactivated")
+                    subtitleLabel.textColor = UIColor(named: "textColorDeactivated")
                 }
                 
                 setNeedsLayout()
@@ -124,22 +179,6 @@ class ExperimentCell: UICollectionViewCell {
         }
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
-        subtitleLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
-        
-        separator.backgroundColor = UIColor.white
-        separator.alpha = 0.1
-        
-        contentView.backgroundColor = kBackgroundColor
-        
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(subtitleLabel)
-        
-        contentView.addSubview(separator)
-    }
 
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
@@ -152,41 +191,5 @@ class ExperimentCell: UICollectionViewCell {
         }
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        
-        let s1 = CGSize(width: bounds.size.height-4.0, height: bounds.size.height-4.0)
-        
-        iconView?.frame = CGRect(x: 8.0, y: 2.0, width: s1.width, height: s1.height)
-        
-        let x = (iconView != nil ? iconView!.frame.maxX : 0.0)
-        
-        var maxLabelSize = CGSize(width: contentView.bounds.size.width-x-16.0, height: contentView.bounds.height)
-        
-        if let op = optionsButton {
-            let size = CGSize(width: contentView.bounds.height, height: contentView.bounds.height)
-            
-            op.frame = CGRect(origin: CGPoint(x: self.contentView.bounds.width-size.width, y: (contentView.bounds.height-size.height)/2.0), size: size)
-            
-            maxLabelSize.width -= size.width+5.0
-        }
-        
-        var s2 = titleLabel.sizeThatFits(maxLabelSize)
-        s2.width = min(maxLabelSize.width, s2.width)
-        
-        titleLabel.frame = CGRect(x: x+8.0, y: 5.0, width: s2.width, height: s2.height)
-        
-        var s3 = subtitleLabel.sizeThatFits(maxLabelSize)
-        s3.width = min(maxLabelSize.width, s3.width)
-        
-        subtitleLabel.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-s3.height-5.0, width: s3.width, height: s3.height)
-        
-        
-        
-        let separatorHeight = 1.0/UIScreen.main.scale
-        
-        separator.frame = CGRect(x: x+8.0, y: contentView.bounds.size.height-separatorHeight, width: contentView.bounds.size.width-x-16.0, height: separatorHeight)
-        
-
-    }
+    
 }
