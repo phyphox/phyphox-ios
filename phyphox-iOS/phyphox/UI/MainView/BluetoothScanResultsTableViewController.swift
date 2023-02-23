@@ -68,9 +68,9 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     }
     
     func formatCell(_ cell: UITableViewCell, withEntry entry: BluetoothScan.ScanResult) {
-        cell.backgroundColor = kBackgroundColor
+        cell.backgroundColor = UIColor(named: "mainBackground")
         cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
-        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : kTextColor)
+        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(named: "textUnavailableColor")! : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : UIColor(named: "textColor"))
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
         cell.detailTextLabel?.textColor = kHighlightColor
         let signal_i: Int

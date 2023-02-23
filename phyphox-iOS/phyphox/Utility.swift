@@ -10,7 +10,7 @@ import Foundation
 
 class Utility{
     
-    public static var appMode: String  = UserDefaults.standard.string(forKey: "appModeKey") ?? "2"
+    public static var appMode: String  = UserDefaults.standard.string(forKey: "appModeKey") ?? "1"
     
     public static var DARK_MODE: String  = "1"
     public static var LIGHT_MODE: String  = "2"
