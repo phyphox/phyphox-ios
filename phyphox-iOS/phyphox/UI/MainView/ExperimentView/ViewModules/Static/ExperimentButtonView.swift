@@ -28,7 +28,6 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
         button = UIButton()
         button.backgroundColor = UIColor(name: "lightBackgroundColor")
         button.setTitle(descriptor.localizedLabel, for: UIControl.State())
-      
         super.init(frame: .zero)
         
         button.addTarget(self, action: #selector(ExperimentButtonView.buttonPressed), for: .touchUpInside)
