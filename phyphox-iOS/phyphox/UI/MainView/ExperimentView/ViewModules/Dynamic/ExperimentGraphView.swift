@@ -1219,7 +1219,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 markerLabel?.textColor = UIColor(named: "textColor")
                 markerLabel?.numberOfLines = 0
                 markerLabelFrame = UIView()
-                markerLabelFrame?.backgroundColor = UIColor(named: "markerLabel")
+                markerLabelFrame?.backgroundColor = UIColor(named: "secondaryBackground")
                 markerLabelFrame?.layer.cornerRadius = 5.0
                 markerLabelFrame?.layer.masksToBounds = true
                 markerLabelFrame?.addSubview(markerLabel!)
@@ -1573,7 +1573,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         graphTools.shadowImage = UIImage()
         graphTools.backgroundImage = UIImage()
-        graphTools.backgroundColor = UIColor(name: "mainBackground")
+        graphTools.backgroundColor = UIColor(named: "mainBackground")!
         graphTools.tintColor = kHighlightColor
         if #available(iOS 10, *) {
             graphTools.unselectedItemTintColor = UIColor(named: "textColor")
