@@ -26,7 +26,7 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
         self.descriptor = descriptor
         
         button = UIButton()
-        button.backgroundColor = UIColor(name: "lightBackgroundColor")
+        button.backgroundColor = UIColor(named: "lightBackgroundColor")
         button.setTitle(descriptor.localizedLabel, for: UIControl.State())
         super.init(frame: .zero)
         
