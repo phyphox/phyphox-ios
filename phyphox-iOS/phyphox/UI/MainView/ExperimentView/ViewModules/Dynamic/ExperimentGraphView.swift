@@ -258,8 +258,19 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             zLabel = nil
         }
         
-        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        var tintedunfoldLessImage = UIImage(named: "unfold_less")
+        var tintedunfoldMoreImage = UIImage(named: "unfold_more")
+        
+        if(Utility.appMode == Utility.LIGHT_MODE){
+            if #available(iOS 13.0, *){
+                tintedunfoldLessImage = UIImage(named: "unfold_less")?.withTintColor(.black, renderingMode: .alwaysOriginal)
+                tintedunfoldMoreImage = UIImage(named: "unfold_more")?.withTintColor(.black, renderingMode: .alwaysOriginal)
+            }
+        }
+        
+        unfoldLessImageView = UIImageView(image: tintedunfoldLessImage)
+        unfoldMoreImageView = UIImageView(image: tintedunfoldMoreImage)
+        
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
@@ -271,6 +282,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.hideTimeMarkers = descriptor.hideTimeMarkers
         
         super.init(frame: .zero)
+        
         
         zoomFollows = descriptor.followX
         if descriptor.followX {
