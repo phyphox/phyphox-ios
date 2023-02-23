@@ -24,7 +24,7 @@ class HintBubbleViewController: UIViewController, UIPopoverPresentationControlle
         label.lineBreakMode = .byWordWrapping
         label.numberOfLines = 0
         label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
-        label.textColor = kDarkBackgroundColor
+        label.textColor = UIColor(named: "textColor")
         let maxSize = CGSize(width: maxWidth, height: 250)
         label.frame.size = label.sizeThatFits(maxSize)
         let paddedFrame = label.frame.insetBy(dx: -10, dy: -10)
