@@ -33,7 +33,7 @@ class MenuTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.backgroundColor = UIColor(name: "mainBackground")
+        tableView.backgroundColor = UIColor(named: "mainBackground")!
         
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "menu")
         view.addSubview(tableView)

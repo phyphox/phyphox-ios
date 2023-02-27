@@ -34,7 +34,10 @@ extension UIAlertController {
         private var alertValueKey: String = ""
         
         private var textFieldValue: UITextField?
-
+        
+        private var accessoryViewProvided: Bool = false
+        private var accessoryView: UIView?
+        
         
         override init() {}
         
@@ -90,6 +93,12 @@ extension UIAlertController {
         
         func getTextFieldValue() -> UITextField {
             return self.textFieldValue!
+        }
+        
+        func setAccessoryView(accessoryView: UIView) -> PhyphoxUIAlertBuilder {
+            accessoryViewProvided = true
+            self.accessoryView = accessoryView
+            return self
         }
         
         
@@ -189,13 +198,69 @@ extension UIAlertController {
                 alert.addTextField(configurationHandler: self.configHandler)
                 textFieldValue = (alert.textFields?[0])! as UITextField
             }
-               
-           
+            
+            
+            
+            if(self.accessoryViewProvided){
+                alert.__pt__setAccessoryView(accessoryView!)
+            }
+            
+            
             return alert
         }
         
     }
     
     
+    
+    func base64Decode(_ str: String) -> String? {
+        guard let decodedData = Data(base64Encoded: str) else { return nil }
+        return String(data: decodedData, encoding: .utf8)
+    }
+    
+    
+    func __pt__setAccessoryView(_ accessoryView: UIView) {
+        let key = base64Decode("Y29udGVudFZpZXdDb250cm9sbGVy") ?? ""
+        
+        let vc = JGAlertAccessoryViewController(view: accessoryView)
+        
+        do {
+            try self.setValue(vc, forKey: key)
+        } catch let exception {
+            print("Failed setting content view controller: \(exception)")
+        }
+    }
+
 }
+
+class JGAlertAccessoryViewController: UIViewController {
+    private var customView: UIView
+    
+    init(view: UIView) {
+        self.customView = view
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func loadView() {
+        self.view = self.customView
+    }
+    
+    
+    override var preferredContentSize: CGSize {
+            get {
+                // adjust the height as per the number of element in export data
+                return CGSize(width:self.view.frame.width,
+                              height: 35.0 * Double(exportTypes.count))
+            }
+        
+            set {super.preferredContentSize = newValue}
+        }
+}
+
+
+
 
