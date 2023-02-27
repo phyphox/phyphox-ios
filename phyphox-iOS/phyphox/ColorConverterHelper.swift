@@ -22,22 +22,20 @@ class ColorConverterHelper {
         var value: Double
     }
     
-    public func adjustableColor(colorName: UIColor) -> UIColor {
-        print("3")
-        let r = colorName.cgColor.components?[0]
-         let g = colorName.cgColor.components?[1]
-         let b = colorName.cgColor.components?[2]
+    public func adjustColorForLightTheme(colorName: UIColor) -> UIColor {
+        let r = (colorName.cgColor.components?[0] ?? 1.0) * 255.0
+        let g = (colorName.cgColor.components?[1] ?? 1.0 ) * 255.0
+        let b = (colorName.cgColor.components?[2] ?? 1.0 ) * 255.0
+        
         
         if r == 0x40 && g == 0x40 && b == 0x40 {
             return UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
         }
         
-        print("4")
-        
-        var hsv = rbgToHsv(rgb: RGB(red: r!, green: g!, blue: b!))
+        var hsv = rbgToHsv(rgb: RGB(red: r, green: g, blue: b))
         
         var l = (2.0 - hsv.saturation) * hsv.value / 2.0
-        var s = l > 0 && l < 1 ? hsv.saturation * hsv.value / (l < 0.5 ? l * 2.0 : 2.0 - l * 2.0) : 0.0
+        let s = l > 0 && l < 1 ? hsv.saturation * hsv.value / (l < 0.5 ? l * 2.0 : 2.0 - l * 2.0) : 0.0
         l = 1.0 - l
         let t = s * (l < 0.5 ? l : 1.0 - l)
         hsv.value = l + t
@@ -45,8 +43,10 @@ class ColorConverterHelper {
         
         let newRgb =  hsvToRgb(hsv: HSV(heu: hsv.heu, saturation: hsv.saturation, value: hsv.value))
         
+        let adjustedUIColor = UIColor.init(red: CGFloat(newRgb.red)/255.0, green: CGFloat(newRgb.green)/255.0, blue: CGFloat(newRgb.blue)/255.0, alpha: 1.0)
         
-        return UIColor.init(red: CGFloat(newRgb.red), green: CGFloat(newRgb.green), blue: CGFloat(newRgb.blue), alpha: 0.0)
+        return adjustedUIColor
+        
     }
     
     func stringToRgb(colorString: String) -> RGB {
@@ -146,6 +146,5 @@ class ColorConverterHelper {
         
         
     }
-    
     
 }

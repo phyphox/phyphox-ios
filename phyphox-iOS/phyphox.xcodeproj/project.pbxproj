@@ -159,6 +159,7 @@
 		A1FA9A00299FCFBC00E0FDBF /* color.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1FA99FF299FCFBC00E0FDBF /* color.xcassets */; };
 		A1FA9A0229A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */; };
 		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
+		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
 		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C034B0112716F9E500C0EF00 /* ExperimentDepthGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034B0102716F9E500C0EF00 /* ExperimentDepthGUIView.swift */; };
@@ -227,6 +228,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
 		C051CFB122AEEB4100355864 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
@@ -501,6 +509,8 @@
 		A1FA99FF299FCFBC00E0FDBF /* color.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = color.xcassets; sourceTree = "<group>"; };
 		A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhyphoxUIAlertBuilder.swift; sourceTree = "<group>"; };
 		A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorConverterHelper.swift; sourceTree = "<group>"; };
+		A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
 		C025FC0623D9D45800AE13B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -611,6 +621,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1FA9A0929ACC5F800E0FDBF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C051CFA922AEEB4000355864 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -711,6 +728,7 @@
 			children = (
 				6B7BF77C1C130425007408FB /* phyphox */,
 				C051CFAD22AEEB4100355864 /* phyphox screenshots */,
+				A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */,
 				6B7BF77B1C130425007408FB /* Products */,
 				C075AA7B2232CC0500DE86D8 /* Frameworks */,
 			);
@@ -721,6 +739,7 @@
 			children = (
 				6B7BF77A1C130425007408FB /* phyphox.app */,
 				C051CFAC22AEEB4000355864 /* phyphox screenshots.xctest */,
+				A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1106,6 +1125,14 @@
 			path = "Complex-Update-Value";
 			sourceTree = "<group>";
 		};
+		A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
+			);
+			path = phyphoxTests;
+			sourceTree = "<group>";
+		};
 		C034B02227171E0100C0EF00 /* DepthGUI */ = {
 			isa = PBXGroup;
 			children = (
@@ -1211,6 +1238,24 @@
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1FA9A1229ACC5F800E0FDBF /* Build configuration list for PBXNativeTarget "phyphoxTests" */;
+			buildPhases = (
+				A1FA9A0829ACC5F800E0FDBF /* Sources */,
+				A1FA9A0929ACC5F800E0FDBF /* Frameworks */,
+				A1FA9A0A29ACC5F800E0FDBF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */,
+			);
+			name = phyphoxTests;
+			productName = phyphoxTests;
+			productReference = A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C051CFAB22AEEB4000355864 /* phyphox screenshots */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C051CFC322AEEB4100355864 /* Build configuration list for PBXNativeTarget "phyphox screenshots" */;
@@ -1235,7 +1280,7 @@
 		6B7BF7721C130425007408FB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1020;
+				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 0930;
 				ORGANIZATIONNAME = "RWTH Aachen";
 				TargetAttributes = {
@@ -1248,6 +1293,10 @@
 								enabled = 1;
 							};
 						};
+					};
+					A1FA9A0B29ACC5F800E0FDBF = {
+						CreatedOnToolsVersion = 14.2;
+						TestTargetID = 6B7BF7791C130425007408FB;
 					};
 					C051CFAB22AEEB4000355864 = {
 						CreatedOnToolsVersion = 10.2.1;
@@ -1310,6 +1359,7 @@
 			targets = (
 				6B7BF7791C130425007408FB /* phyphox */,
 				C051CFAB22AEEB4000355864 /* phyphox screenshots */,
+				A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1420,6 +1470,13 @@
 				4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */,
 				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
 				6B0D69302055C59B0044A4CE /* phyphox-experiments in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1FA9A0A29ACC5F800E0FDBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1644,6 +1701,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1FA9A0829ACC5F800E0FDBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C051CFA822AEEB4000355864 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1656,6 +1721,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */;
+		};
 		C051CFB222AEEB4100355864 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
@@ -1898,6 +1968,7 @@
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TREAT_MISSING_BASELINES_AS_TEST_FAILURES = NO;
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;
 			};
@@ -1958,6 +2029,65 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;
+			};
+			name = Release;
+		};
+		A1FA9A1329ACC5F800E0FDBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/phyphox";
+			};
+			name = Debug;
+		};
+		A1FA9A1429ACC5F800E0FDBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/phyphox";
 			};
 			name = Release;
 		};
@@ -2039,6 +2169,15 @@
 			buildConfigurations = (
 				6B7BF7A31C130425007408FB /* Debug */,
 				6B7BF7A41C130425007408FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1FA9A1229ACC5F800E0FDBF /* Build configuration list for PBXNativeTarget "phyphoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1FA9A1329ACC5F800E0FDBF /* Debug */,
+				A1FA9A1429ACC5F800E0FDBF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

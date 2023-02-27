@@ -60,7 +60,6 @@ func mapColorString(_ string: String?) -> UIColor? {
     }
     
     if let color = namedColors[colorString.lowercased()] {
-        print("1")
         return  getRequiredColor(uiColor: color)
     } else if let color = UIColor(named: colorString) {
         return color
@@ -71,8 +70,7 @@ func mapColorString(_ string: String?) -> UIColor? {
 
 func getRequiredColor(uiColor: UIColor) -> UIColor? {
     if(Utility.appMode == Utility.LIGHT_MODE){
-        print("2")
-        return ColorConverterHelper().adjustableColor(colorName: uiColor)
+        return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
     } else {
         return uiColor
     }
