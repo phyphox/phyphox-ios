@@ -69,7 +69,7 @@ func mapColorString(_ string: String?) -> UIColor? {
 }
 
 func getRequiredColor(uiColor: UIColor) -> UIColor? {
-    if(Utility.appMode == Utility.LIGHT_MODE){
+    if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
         return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
     } else {
         return uiColor

@@ -3,6 +3,26 @@
     {
       "filename" : "unfold_more.pdf",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "light"
+        }
+      ],
+      "filename" : "arrow.up.left.and.arrow.down.right 1.svg",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "arrow.up.left.and.arrow.down.right.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

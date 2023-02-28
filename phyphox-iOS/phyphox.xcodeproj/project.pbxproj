@@ -156,6 +156,7 @@
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
+		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1FA9A00299FCFBC00E0FDBF /* color.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1FA99FF299FCFBC00E0FDBF /* color.xcassets */; };
 		A1FA9A0229A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */; };
 		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
@@ -506,6 +507,7 @@
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
+		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1FA99FF299FCFBC00E0FDBF /* color.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = color.xcassets; sourceTree = "<group>"; };
 		A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhyphoxUIAlertBuilder.swift; sourceTree = "<group>"; };
 		A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorConverterHelper.swift; sourceTree = "<group>"; };
@@ -760,6 +762,7 @@
 				C075DCBD287EA33E001CBE5E /* Settings.bundle */,
 				A1A6A72E297685DF00090309 /* Utility.swift */,
 				A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */,
+				A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */,
 			);
 			path = phyphox;
 			sourceTree = "<group>";
@@ -1559,6 +1562,7 @@
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
 				6BEA944A207FC5280077274A /* ExportElementHandler.swift in Sources */,
 				6B612FE6207E5A8B001DA8D9 /* PhyphoxDocumentHandler.swift in Sources */,
+				A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */,
 				4BE7CAE01E4CD20F00C31090 /* SeparatorViewDescriptor.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,

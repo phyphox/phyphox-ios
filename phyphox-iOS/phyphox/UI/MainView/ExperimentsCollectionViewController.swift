@@ -288,9 +288,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         var menuElements: [MenuTableViewController.MenuElement] = []
         
         if #available(iOS 13.0, *) {
-            if(Utility.appMode == Utility.LIGHT_MODE){
+            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
                 menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner))
-            } else if(Utility.appMode == Utility.DARK_MODE){
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
                 menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: (UIImage(named: "new_experiment_qr")?.withTintColor(.white, renderingMode: .alwaysOriginal))!, callback: launchScanner))
             }
             

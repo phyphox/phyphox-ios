@@ -162,17 +162,6 @@ extension UIAlertController {
         
         private func build() -> UIAlertController {
             let alert = UIAlertController(title: alertTitle, message: alertMessage, preferredStyle: alertStyle)
-            if #available(iOS 13.0, *) {
-                if(Utility.appMode ==  Utility.DARK_MODE){
-                    alert.overrideUserInterfaceStyle = .dark
-                } else if(Utility.appMode == Utility.LIGHT_MODE) {
-                    alert.overrideUserInterfaceStyle = .light
-                }
-            } else {
-                // Fallback on earlier versions
-            }
-            
-            
             
             if let popover = alert.popoverPresentationController {
                 popover.sourceView = popoverSourceView

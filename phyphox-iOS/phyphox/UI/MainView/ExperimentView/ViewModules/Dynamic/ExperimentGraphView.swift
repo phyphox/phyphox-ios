@@ -258,19 +258,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             zLabel = nil
         }
         
-        var tintedunfoldLessImage = UIImage(named: "unfold_less")
-        var tintedunfoldMoreImage = UIImage(named: "unfold_more")
-        
-        if(Utility.appMode == Utility.LIGHT_MODE){
-            if #available(iOS 13.0, *){
-                tintedunfoldLessImage = UIImage(named: "unfold_less")?.withTintColor(.black, renderingMode: .alwaysOriginal)
-                tintedunfoldMoreImage = UIImage(named: "unfold_more")?.withTintColor(.black, renderingMode: .alwaysOriginal)
-            }
-        }
-        
-        unfoldLessImageView = UIImageView(image: tintedunfoldLessImage)
-        unfoldMoreImageView = UIImageView(image: tintedunfoldMoreImage)
-        
+        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
