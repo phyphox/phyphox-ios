@@ -287,16 +287,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     @objc func addExperiment() {
         var menuElements: [MenuTableViewController.MenuElement] = []
         
-        if #available(iOS 13.0, *) {
-            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
-                menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner))
-            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
-                menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: (UIImage(named: "new_experiment_qr")?.withTintColor(.white, renderingMode: .alwaysOriginal))!, callback: launchScanner))
-            }
-            
-        } else {
-            // Fallback on earlier versions
-        }
+        menuElements.append(getAdustedQRCodeIconAsAppMode())
+        
         menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentBluetooth"), icon: UIImage(named: "new_experiment_bluetooth")!, callback: scanForBLEDevices))
         menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentSimple"), icon: UIImage(named: "new_experiment_simple")!, callback: createSimpleExperiment))
         
@@ -1019,6 +1011,27 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         msg += "iOS version: \(UIDevice.current.systemVersion)"
         
         return msg
+        
+    }
+    
+    func getAdustedQRCodeIconAsAppMode() -> MenuTableViewController.MenuElement{
+        let lightModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner)
+        guard #available(iOS 13.0, *) else {
+            return lightModeMenuElement
+        }
+        let darkModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: (UIImage(named: "new_experiment_qr")?.withTintColor(.white, renderingMode: .alwaysOriginal))!, callback: launchScanner)
+        
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            return lightModeMenuElement
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+            return darkModeMenuElement
+        } else {
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
+                return darkModeMenuElement
+            } else {
+                return lightModeMenuElement
+            }
+        }
         
     }
 }
