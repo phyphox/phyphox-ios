@@ -249,6 +249,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
+        refreshTheAdjustedGraphColorForLightMode()
+        
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem?.accessibilityLabel = localize("actions")
         let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
@@ -1344,6 +1346,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             connectToBluetoothDevices()
         } else {
             connectToNetworkDevices()
+        }
+    }
+    
+    func refreshTheAdjustedGraphColorForLightMode(){
+        if #available(iOS 12.0, *) {
+            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
+               UIScreen.main.traitCollection.userInterfaceStyle == .light){
+                if #available(iOS 13.0, *) {
+                    view.overrideUserInterfaceStyle = .light
+                } else {
+                    // Fallback on earlier versions
+                }
+            }
+        } else {
+            // Fallback on earlier versions
         }
     }
 }
