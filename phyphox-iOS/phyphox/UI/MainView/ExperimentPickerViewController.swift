@@ -146,6 +146,7 @@ final class ExperimentPickerViewController: CollectionViewController {
                     catFontColor = fontColor
                 }
             }
+            view.backgroundColor = catColor
             view.color = catColor
             view.fontColor = catFontColor
             

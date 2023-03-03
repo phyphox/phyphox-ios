@@ -40,5 +40,19 @@ class SettingBundleHelper {
         }
     }
     
+    static func setAppModeInView(view: UIView?){
+        if #available(iOS 13.0, *) {
+            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+                view?.overrideUserInterfaceStyle = .light
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+                view?.overrideUserInterfaceStyle = .dark
+            } else {
+                view?.overrideUserInterfaceStyle = .unspecified
+            }
+        } else {
+            // Fallback on earlier versions
+        }
+    }
+    
 
 }
