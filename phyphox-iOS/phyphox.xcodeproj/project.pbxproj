@@ -952,6 +952,7 @@
 		6BFE377020447BC900301CA3 /* ExperimentView */ = {
 			isa = PBXGroup;
 			children = (
+				A1E03A8029B61CB300CE93A6 /* ExperimentPageView */,
 				4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */,
 				C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */,
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
@@ -1129,6 +1130,13 @@
 				4B47B0301DA6A2F900CCBA6E /* Atan2Analysis.swift */,
 			);
 			path = "Complex-Update-Value";
+			sourceTree = "<group>";
+		};
+		A1E03A8029B61CB300CE93A6 /* ExperimentPageView */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ExperimentPageView;
 			sourceTree = "<group>";
 		};
 		A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */ = {

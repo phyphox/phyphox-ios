@@ -32,7 +32,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     var serverLabel: UITextView? = nil
     var serverLabelBackground: UIView? = nil
-    var serverQRIcon: UIImageView? = nil
+    var serverQRIcon: UIButton? = nil
     
     let experiment: Experiment
     
@@ -566,7 +566,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 url = String(url.dropLast())
             }
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
-            if url == nil || url == "nil" {
+            if url == "" {
                 print("Fallback to generate URL from IP.")
                 var ip: String? = nil
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
@@ -616,33 +616,32 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.inputView = UIView()
             self.serverLabel!.inputAccessoryView = UIView()
             
-            let button = UIButton(type: .system)
-            let image = UIImage(named: "new_experiment_qr")
-            button.setImage(image, for: .normal)
-            button.addTarget(self, action: #selector(handleTap), for: .touchUpInside)
-            self.serverLabelBackground = UIView()
+            self.serverQRIcon = UIButton(type: .system)
+            let image = UIImage(named: "new_experiment_qr")!.resize(size: CGSize(width: 30, height: 30))
+            self.serverQRIcon?.setImage(image, for: .normal)
+            self.serverQRIcon?.addTarget(self, action: #selector(showQr), for: .touchUpInside)
+            self.serverQRIcon?.imageView?.contentMode = .scaleAspectFit
+           
             
+            self.serverLabelBackground = UIView()
             self.serverLabelBackground!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
-            self.view.addSubview(button)
+            self.view.addSubview(self.serverQRIcon!)
             
             // set view1 constraints
-            button.translatesAutoresizingMaskIntoConstraints = false
+            self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                button.widthAnchor.constraint(equalToConstant: 100),
-                button.heightAnchor.constraint(equalToConstant: 100),
-                button.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -5.0),
-                button.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -10.0)
+                self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -20.0),
+                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -25.0)
             
             ])
-            
             
             updateLayout()
         }
     }
     
-    @objc func handleTap(){
+    @objc func showQr(){
         let data = remoteUrl.data(using: .utf8)
         let qrFilter = CIFilter(name: "CIQRCodeGenerator")
         
@@ -655,32 +654,27 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let imageView = UIImageView(image: displayImage)
         
-        showDialog(imageView: imageView)
+        showQrInDialog(imageView: imageView)
         
         
     }
     
-    @objc func showDialog(imageView: UIImageView) {
-        // Create an image view
+    @objc func showQrInDialog(imageView: UIImageView) {
         imageView.contentMode = .scaleAspectFit
         
-        // Create an alert controller with the image view
-        let alertController = UIAlertController(title: "QR code to access the URL", message: nil, preferredStyle: .alert)
+        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
         alertController.view.addSubview(imageView)
         
         // Set the image view's constraints
-        
         alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
         alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
         imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
        
-        // Create a "Close" button
-        let closeButton = UIAlertAction(title: "Close", style: .default, handler: nil)
+        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
         alertController.addAction(closeButton)
         
-        // Present the alert controller
         present(alertController, animated: true, completion: nil)
     }
     
@@ -692,8 +686,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if let labelBackground = self.serverLabelBackground {
             labelBackground.removeFromSuperview()
         }
+        if let button = self.serverQRIcon {
+            button.removeFromSuperview()
+        }
         self.serverLabel = nil
         self.serverLabelBackground = nil
+        self.serverQRIcon = nil
         updateLayout()
         if (!self.experiment.running) {
             experiment.setKeepScreenOn(false)

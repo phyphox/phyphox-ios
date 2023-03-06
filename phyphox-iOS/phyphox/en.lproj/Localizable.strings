@@ -177,6 +177,7 @@
 "newExperimentQRBadCRC" = "Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.";
 "newExperimentBTReadErrorTitle" = "Bluetooth experiment error.";
 "newExperimentBTReadErrorCorrupted" = "The transmitted experiment data is corrupted.";
+"showQRCodeForRemoteURL" = "QR code to access the URL";
 "generalErrorDialog" = "An error has occurred.";
 "open_zip_title" = "Opening a set of experiments";
 "open_zip_dialog_instructions" = "This resource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.";
