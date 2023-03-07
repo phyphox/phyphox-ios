@@ -23,7 +23,7 @@ final class GraphGridView: UIView {
         super.init(frame: frame)
         
         borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
-        borderView.layer.borderWidth = 2.0/UIScreen.main.scale
+        borderView.layer.borderWidth = DynamicTextSizeHelper.getGraphBorderWidth()
         
         addSubview(borderView)
     }

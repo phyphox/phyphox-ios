@@ -249,7 +249,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         self.history = history
         
         self.style = style
-        self.lineWidth = lineWidth
+        self.lineWidth = lineWidth //width of the curve
         self.color = color
 
         self.mapWidth = mapWidth

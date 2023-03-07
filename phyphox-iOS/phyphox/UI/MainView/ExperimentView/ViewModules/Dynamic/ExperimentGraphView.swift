@@ -187,7 +187,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.lineColor = []
         
         for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : 2.0)))
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : DynamicTextSizeHelper.getGlGraphDynamicLineWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
             descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
