@@ -257,9 +257,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         } else {
             zLabel = nil
         }
-        
-        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        if #available(iOS 13.0, *) {
+            let config = UIImage.SymbolConfiguration(
+                pointSize: 25, weight: .medium, scale: .default)
+            unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+            unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
+                                                             withConfiguration: config))
+        } else {
+            unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+            unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+            // Fallback on earlier versions
+        }
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
@@ -322,6 +330,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
 
     @available(*, unavailable)
@@ -1812,6 +1822,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
         
         updatePlotArea()
+    }
+    
+    @objc func reload(){
+        self.layoutSubviews()
     }
     
 }
