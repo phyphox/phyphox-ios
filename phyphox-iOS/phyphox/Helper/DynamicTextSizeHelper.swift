@@ -36,6 +36,7 @@ class DynamicTextSizeHelper {
         case Empty
     }
     
+    
     static func getGlGraphDynamicLineWidth() -> Double{
         switch getSystemTextSize() {
         case TextSize.XS:
@@ -66,7 +67,6 @@ class DynamicTextSizeHelper {
         case TextSize.M:
             return 1.5/UIScreen.main.scale
         case TextSize.L:
-            print(2.0/UIScreen.main.scale)
             return 2.0/UIScreen.main.scale
         case TextSize.XL:
             return 3.0/UIScreen.main.scale
@@ -79,4 +79,89 @@ class DynamicTextSizeHelper {
         }
      
     }
+    
+    static func getGraphSettingBorderWidth() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return 1.0/UIScreen.main.scale
+            
+        case 2:
+            return 2.0/UIScreen.main.scale
+            
+        case 3:
+            return 3.5/UIScreen.main.scale
+            
+        case 4:
+            return 5.5/UIScreen.main.scale
+            
+        default:
+            return 2.0/UIScreen.main.scale
+        }
+    }
+    
+    
+    static func getGraphSettingCurveWidth() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return 1.75
+            
+        case 2:
+            return 2.0
+            
+        case 3:
+            return 3.5
+            
+        case 4:
+            return 5.5
+            
+        default:
+            return 2.0
+        }
+    }
+    
+    static func getGraphSettingXYLabelSize() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return 17.5
+            
+        case 2:
+            return 20.0
+            
+        case 3:
+            return 25.5
+            
+        case 4:
+            return 30.5
+            
+        default:
+            return 20.0
+        }
+    }
+    
+    static func getGraphSettingTitleLableSize() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return 15.0
+            
+        case 2:
+            return 20.0
+            
+        case 3:
+            return 25.0
+            
+        case 4:
+            return 30.5
+            
+        default:
+            return 20.0
+        }
+    }
+    
+    
+    
+    
 }

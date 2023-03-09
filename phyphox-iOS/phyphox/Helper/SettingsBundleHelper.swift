@@ -18,7 +18,7 @@ class SettingBundleHelper {
     static func registerDefaults(){
         var appDefaults = Dictionary<String, Any>()
         appDefaults[UserDefaultKeys.APP_MODE.rawValue] = "1"
-        appDefaults[UserDefaultKeys.GRAPH_SIZE.rawValue] = 1
+        appDefaults[UserDefaultKeys.GRAPH_SIZE.rawValue] = 2
         UserDefaults.standard.register(defaults: appDefaults)
         UserDefaults.standard.synchronize()
         

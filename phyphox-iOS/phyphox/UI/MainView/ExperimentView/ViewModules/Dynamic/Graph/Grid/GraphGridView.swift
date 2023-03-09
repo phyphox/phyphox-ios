@@ -23,7 +23,7 @@ final class GraphGridView: UIView {
         super.init(frame: frame)
         
         borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
-        borderView.layer.borderWidth = DynamicTextSizeHelper.getGraphBorderWidth()
+        borderView.layer.borderWidth = DynamicTextSizeHelper.getGraphSettingBorderWidth()
         
         addSubview(borderView)
     }
@@ -250,6 +250,7 @@ final class GraphGridView: UIView {
                 }
                 
                 label.text = format(line.absoluteValue, formatter: formatterX, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
+                label.font = label.font.withSize(DynamicTextSizeHelper.getGraphSettingXYLabelSize() * 0.8)
                 label.sizeToFit()
 
                 ySpace = max(ySpace, label.frame.size.height)
@@ -270,6 +271,7 @@ final class GraphGridView: UIView {
                     }
 
                     label.text = format(line.absoluteValue, formatter: formatterY, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
+                    label.font = label.font.withSize(DynamicTextSizeHelper.getGraphSettingXYLabelSize() * 0.8)
                     label.sizeToFit()
 
                     xSpace = max(xSpace, label.frame.size.width)
