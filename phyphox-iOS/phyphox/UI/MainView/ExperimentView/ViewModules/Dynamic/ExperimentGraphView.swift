@@ -187,7 +187,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.lineColor = []
         
         for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : DynamicTextSizeHelper.getGraphSettingCurveWidth())))
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : DynamicTextSizeHelper.getGraphSettingWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
             descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
@@ -235,14 +235,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             l.text = text
             
             let defaultFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
-            l.font = defaultFont.withSize(DynamicTextSizeHelper.getGraphSettingXYLabelSize() * 0.8)
+            l.font = defaultFont.withSize(DynamicTextSizeHelper.getGraphSettingLabelSize() * 0.8)
             
             return l
         }
         
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(DynamicTextSizeHelper.getGraphSettingTitleLableSize())
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(DynamicTextSizeHelper.getGraphSettingLabelSize())
         label.textColor = UIColor(named: "textColor")
         
         xLabel = makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)

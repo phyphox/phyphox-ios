@@ -10,6 +10,18 @@ import Foundation
 
 class DynamicTextSizeHelper {
     
+    
+    private static let SMALL_WIDTH: Double  = 1.0
+    private static let MEDIUM_WIDTH: Double = 2.0
+    private static let BIG_WIDTH: Double  = 4.0
+    private static let EXTRA_BIG_WIDTH: Double = 6.0
+    
+    private static let SMALL_LABEL: Double = 45.0/UIScreen.main.scale
+    private static let MEDIUM_LABEL: Double = 50.0/UIScreen.main.scale
+    private static let BIG_LABEL: Double = 55.0/UIScreen.main.scale
+    private static let EXTRA_BIG_LABEL: Double  = 60.0/UIScreen.main.scale
+    
+    
     static func getSystemTextSize() -> TextSize{
         let key = UIScreen.main.traitCollection.preferredContentSizeCategory.rawValue.description
         let textSizeDictionary: Dictionary = [
@@ -37,127 +49,43 @@ class DynamicTextSizeHelper {
     }
     
     
-    static func getGlGraphDynamicLineWidth() -> Double{
-        switch getSystemTextSize() {
-        case TextSize.XS:
-            return 1.5
-        case TextSize.S:
-            return 1.75
-        case TextSize.M:
-            return 1.9
-        case TextSize.L:
-            return 2.0
-        case TextSize.XL:
-            return 3.0
-        case TextSize.XXL:
-            return 4.0
-        case TextSize.XXXL:
-            return 5.0
-        default:
-            return 2.0
-        }
-    }
-    
-    static func getGraphBorderWidth() -> Double {
-        switch getSystemTextSize() {
-        case TextSize.XS:
-            return 1.0/UIScreen.main.scale
-        case TextSize.S:
-            return 1.0/UIScreen.main.scale
-        case TextSize.M:
-            return 1.5/UIScreen.main.scale
-        case TextSize.L:
-            return 2.0/UIScreen.main.scale
-        case TextSize.XL:
-            return 3.0/UIScreen.main.scale
-        case TextSize.XXL:
-            return 4.0/UIScreen.main.scale
-        case TextSize.XXXL:
-            return 5.0/UIScreen.main.scale
-        default:
-            return 2.0/UIScreen.main.scale
-        }
-     
-    }
-    
-    static func getGraphSettingBorderWidth() -> Double {
+    static func getGraphSettingWidth() -> Double {
         switch SettingBundleHelper.getGraphSize() {
             
         case 1:
-            return 1.0/UIScreen.main.scale
+            return SMALL_WIDTH
             
         case 2:
-            return 2.0/UIScreen.main.scale
+            return MEDIUM_WIDTH
             
         case 3:
-            return 3.5/UIScreen.main.scale
+            return BIG_WIDTH
             
         case 4:
-            return 5.5/UIScreen.main.scale
+            return EXTRA_BIG_WIDTH
             
         default:
-            return 2.0/UIScreen.main.scale
+            return MEDIUM_WIDTH
         }
     }
     
-    
-    static func getGraphSettingCurveWidth() -> Double {
+    static func getGraphSettingLabelSize() -> Double {
         switch SettingBundleHelper.getGraphSize() {
             
         case 1:
-            return 1.75
+            return SMALL_LABEL
             
         case 2:
-            return 2.0
+            return MEDIUM_LABEL
             
         case 3:
-            return 3.5
+            return BIG_LABEL
             
         case 4:
-            return 5.5
+            return EXTRA_BIG_LABEL
             
         default:
-            return 2.0
-        }
-    }
-    
-    static func getGraphSettingXYLabelSize() -> Double {
-        switch SettingBundleHelper.getGraphSize() {
-            
-        case 1:
-            return 17.5
-            
-        case 2:
-            return 20.0
-            
-        case 3:
-            return 25.5
-            
-        case 4:
-            return 30.5
-            
-        default:
-            return 20.0
-        }
-    }
-    
-    static func getGraphSettingTitleLableSize() -> Double {
-        switch SettingBundleHelper.getGraphSize() {
-            
-        case 1:
-            return 15.0
-            
-        case 2:
-            return 20.0
-            
-        case 3:
-            return 25.0
-            
-        case 4:
-            return 30.5
-            
-        default:
-            return 20.0
+            return MEDIUM_LABEL
         }
     }
     
