@@ -10,6 +10,10 @@ import Foundation
 
 class Utility{
     
+    public static var DARK_MODE: String  = "1"
+    public static var LIGHT_MODE: String  = "2"
+    public static var SYSTEM_MODE: String  = "3"
+    
     static  func measureHeightofUILabelOnString(line: String) -> CGFloat {
         let textView = UITextView()
         let maxwidth = UIScreen.main.bounds.width
@@ -22,6 +26,8 @@ class Utility{
         textView.sizeToFit()
         return textView.frame.size.height
     }
+    
+    
     
 }
 

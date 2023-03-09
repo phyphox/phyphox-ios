@@ -54,7 +54,7 @@ final class MarkerOverlayView: UIView {
             let shapeLayer = CAShapeLayer()
             shapeLayer.path = path
             shapeLayer.fillColor = UIColor.clear.cgColor
-            shapeLayer.strokeColor = UIColor.white.cgColor
+            shapeLayer.strokeColor = UIColor(named: "textColor")?.cgColor
             shapeLayer.lineWidth = 1.0
             return shapeLayer
         }

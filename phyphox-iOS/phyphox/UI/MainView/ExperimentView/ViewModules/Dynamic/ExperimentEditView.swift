@@ -42,15 +42,15 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = kTextColor
+        label.textColor = UIColor(named: "textColor")
         label.textAlignment = .right
 
         formatter.numberStyle = .decimal
         formatter.groupingSeparator = ""
         
         textField = UITextField()
-        textField.backgroundColor = kLightBackgroundColor
-        textField.textColor = kTextColor
+        textField.backgroundColor = UIColor(named: "lightBackgroundColor")
+        textField.textColor = UIColor(named: "textColor")
         
         textField.returnKeyType = .done
         
@@ -61,7 +61,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             unitLabel = {
                 let l = UILabel()
                 l.text = descriptor.localizedUnit
-                l.textColor = kTextColor
+                l.textColor = UIColor(named: "textColor")
                 
                 l.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.subheadline)
                 
@@ -77,14 +77,14 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
-        toolbar.barTintColor = kBackgroundColor
+        toolbar.barTintColor = UIColor(named: "mainBackground")
         let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let doneButton = UIBarButtonItem(title: localize("ok"), style: .done, target: self, action: #selector(hideKeyboard(_:)))
         doneButton.width = UIScreen.main.bounds.width / 3
         doneButton.tintColor = kHighlightColor
         if descriptor.signed {
             let pmButton = UIBarButtonItem(title: "+/−", style: .done, target: self, action: #selector(changeSign))
-            pmButton.tintColor = kTextColor
+            pmButton.tintColor = UIColor(named: "textColor")
             pmButton.width = UIScreen.main.bounds.width / 3
             toolbar.items = [pmButton, space, doneButton]
         } else {

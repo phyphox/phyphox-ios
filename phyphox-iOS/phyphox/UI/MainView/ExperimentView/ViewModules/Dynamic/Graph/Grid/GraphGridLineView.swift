@@ -25,7 +25,7 @@ private final class GraphGridLineLayer: CAShapeLayer {
         lineDashPattern = [NSNumber(value: 6.0 as Double), NSNumber(value: 5.0 as Double)]
         lineCap = CAShapeLayerLineCap.round
         
-        strokeColor = UIColor(white: 1.0, alpha: 0.3).cgColor
+        strokeColor = UIColor(named: "graphLinesWithAlpha")!.cgColor
         fillColor = UIColor.clear.cgColor
         backgroundColor = UIColor.clear.cgColor
     }

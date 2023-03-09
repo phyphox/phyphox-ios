@@ -16,7 +16,13 @@ enum ExperimentIcon: Equatable {
         switch self {
         case .image(let image):
             let imageView = UIImageView(image: image)
-            imageView.backgroundColor = color
+            // It is fix for the icon background for contribution section header. When not used "if else case", then the icon is rendered as black
+            // It renders black because when opening the app in light mode, it converts and adjust all the "white" color into black, as expected.
+            if(color == UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)){
+                imageView.backgroundColor = .white
+            } else {
+                imageView.backgroundColor = color
+            }
             return imageView
         case .string(let string):
             let label = UILabel()

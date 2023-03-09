@@ -87,69 +87,49 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
-        let alert = UIAlertController(title: localize("help"), message: nil, preferredStyle: .actionSheet)
-        
-        alert.addAction(UIAlertAction(title: localize("credits"), style: .default, handler: infoPressed))
-        
-        alert.addAction(UIAlertAction(title: localize("experimentsPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.open(URL(string: localize("experimentsPhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.open(URL(string: localize("faqPhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("remotePhyphoxOrg"), style: .default, handler:{ _ in
-            UIApplication.shared.open(URL(string: localize("remotePhyphoxOrgURL"))!)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("settings"), style: .default, handler:{ _ in
-            guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else {
-                return
-            }
-            UIApplication.shared.open(settingsUrl)
-        }))
-        
-        alert.addAction(UIAlertAction(title: localize("deviceInfo"), style: .default,  handler:{ _ in
-            var msg = "phyphox\n"
-            msg += "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")\n"
-            msg += "Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")\n"
-            msg += "File format: \(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)\n\n"
-            
-            var systemInfo = utsname()
-            uname(&systemInfo)
-            let modelCode = withUnsafePointer(to: &systemInfo.machine) {
-                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
-                    ptr in String.init(validatingUTF8: ptr)
+    
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("help"))
+            .message(message: nil)
+            .preferredStyle(style: .actionSheet)
+            .addActionWithTitle(localize("credits"), style: .default, handler: infoPressed)
+            .addActionWithTitle(localize("experimentsPhyphoxOrg"), style: .default, handler: { _ in
+                UIApplication.shared.open(URL(string: localize("experimentsPhyphoxOrgURL"))!)
+            })
+            .addActionWithTitle(localize("faqPhyphoxOrg"), style: .default, handler:{ _ in
+                UIApplication.shared.open(URL(string: localize("faqPhyphoxOrgURL"))!)
+            })
+            .addActionWithTitle(localize("remotePhyphoxOrg"), style: .default, handler: { _ in
+                UIApplication.shared.open(URL(string: localize("remotePhyphoxOrgURL"))!)
+            })
+            .addActionWithTitle(localize("settings"), style: .default, handler: { _ in
+                guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else {
+                    return
                 }
-            }
-            
-            msg += "Device\n"
-            msg += "Model: \(modelCode!)\n"
-            msg += "Brand: Apple\n"
-            msg += "iOS version: \(UIDevice.current.systemVersion)"
-            
-            
-            let al = UIAlertController(title: localize("deviceInfo"), message: msg, preferredStyle: .alert)
-            
-            al.addAction(UIAlertAction(title: localize("copyToClipboard"), style: .default, handler: { _ in
-                UIPasteboard.general.string = msg
-                self.dismiss(animated: true, completion: nil)
-            }))
-            
-            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-            
-            self.navigationController!.present(al, animated: true, completion: nil)
-        }))
-
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+                UIApplication.shared.open(settingsUrl)
+            })
+            .addActionWithTitle(localize("deviceInfo"), style: .default, handler: { _ in
+                
+                let msg =  self.buildDeviceInfoMessage()
+                
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("deviceInfo"))
+                    .message(message: msg)
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("copyToClipboard"), style: .default, handler: { _ in
+                        UIPasteboard.general.string = msg
+                        self.dismiss(animated: true, completion: nil)
+                    })
+                    .addCancelAction()
+                    .show(in: self.navigationController!, animated: true, completion: nil)
+                
+            })
+            .sourceView(popoverSourceView: infoButton)
+            .sourceRect(popoverSourceRect: infoButton!.frame)
+            .addCancelAction()
+            .show(in: self, animated: true)
         
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = infoButton!
-            popover.sourceRect = infoButton!.frame
-        }
-        
-        present(alert, animated: true, completion: nil)
+         
     }
     
     override func viewDidLoad() {
@@ -175,14 +155,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
         if (willBeFirstViewForUser && !defaults.bool(forKey: key)) {
-            let alert = UIAlertController(title: localize("warning"), message: localize("damageWarning"), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: localize("donotshowagain"), style: .default, handler: { _ in
-                defaults.set(true, forKey: key)
-            }))
-        
-            alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
-        
-            navigationController!.present(alert, animated: true, completion: nil)
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("warning"))
+                .message(message: localize("damageWarning"))
+                .preferredStyle(style: .alert)
+                .addActionWithTitle(localize("donotshowagain"), style: .default, handler: { _ in
+                    defaults.set(true, forKey: key)
+                })
+                .addCancelAction()
+                .show(in: navigationController!, animated: true)
         }
     }
     
@@ -198,42 +179,43 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     private func showOpenSourceLicenses() {
-        let alert = UIAlertController(title: "Open Source Licenses", message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!), preferredStyle: .alert)
-        
-        alert.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
-        
-        navigationController!.present(alert, animated: true, completion: nil)
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: "Open Source Licenses")
+            .message(message: PTFile.stringWithContentsOfFile(Bundle.main.path(forResource: "Licenses", ofType: "ptf")!))
+            .preferredStyle(style: .alert)
+            .addCloseAction()
+            .show(in: navigationController!, animated: true, completion: nil)
     }
 
     var bluetoothScanResultsTableViewController: BluetoothScanResultsTableViewController? = nil
     
     private func scanForBLEDevices() {
         
-        let alertController = UIAlertController(title: localize("bt_pick_device"),
-        message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"),
-        preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
-
         let infoAction = UIAlertAction(title: localize("bt_more_info_link_button"), style: .default) { (action) in
             UIApplication.shared.open(URL(string: localize("bt_more_info_link_url"))!)
         }
-        alertController.addAction(infoAction)
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
-        let height : NSLayoutConstraint = NSLayoutConstraint(item: alertController.view!, attribute: NSLayoutConstraint.Attribute.height, relatedBy: NSLayoutConstraint.Relation.equal, toItem: nil, attribute: NSLayoutConstraint.Attribute.notAnAttribute, multiplier: 1, constant: 550)
-        alertController.addAction(cancelAction)
-        alertController.view.addConstraint(height)
-
+        
         bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
         bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
-        alertController.setValue(bluetoothScanResultsTableViewController, forKey: "contentViewController")
-        if let popover = alertController.popoverPresentationController {
-            popover.sourceView = self.view
-            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
+        
+        
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("bt_pick_device"))
+            .message(message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"))
+            .preferredStyle(style:  UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
+            .setAlertDialogHeight(height: 550)
+            .addDefinedAction(action: infoAction)
+            .addDefinedAction(action: cancelAction)
+            .sourceView(popoverSourceView: self.view)
+            .sourceRect(popoverSourceRect: CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0))
+            .permittedArrowDir(popoverPermittedArrowDir: [])
+            .setAlertValue(value: bluetoothScanResultsTableViewController, key: "contentViewController")
+            .show(in: navigationController!, animated: true)
+        
 
-        }
-        navigationController!.present(alertController, animated: true)
     }
     
     func useChosenBLEDevice(chosenDevice: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
@@ -305,7 +287,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     @objc func addExperiment() {
         var menuElements: [MenuTableViewController.MenuElement] = []
         
-        menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner))
+        menuElements.append(getAdustedQRCodeIconAsAppMode())
+        
         menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentBluetooth"), icon: UIImage(named: "new_experiment_bluetooth")!, callback: scanForBLEDevices))
         menuElements.append(MenuTableViewController.MenuElement(label: localize("newExperimentSimple"), icon: UIImage(named: "new_experiment_simple")!, callback: createSimpleExperiment))
         
@@ -376,102 +359,111 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     private func showStateTitleEditForExperiment(_ experiment: Experiment, button: UIButton, oldTitle: String) {
-        let alert = UIAlertController(title: localize("rename"), message: nil, preferredStyle: .alert)
         
-        alert.addTextField(configurationHandler: {(textfield: UITextField!) -> Void in
-            textfield.placeholder = localize("newExperimentInputTitle")
-            textfield.text = oldTitle
-        })
         
-        alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
-            do {
-                let textField = alert.textFields![0] as UITextField
-                if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
-                    try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("rename"))
+            .message(message: "")
+            .preferredStyle(style: .alert)
+            .addTextField(configHandler: {(textfield: UITextField!) -> Void in
+                textfield.placeholder = localize("newExperimentInputTitle")
+                textfield.text = oldTitle
+            })
+            .addActionWithTitle(localize("rename"), style: .default, handler: { [unowned self] action in
+                do {
+                    let textField = UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue()
+                
+                    if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
+                        try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)
+                    }
                 }
-            }
-            catch let error as NSError {
-                let hud = JGProgressHUD(style: .dark)
-                hud.interactionType = .blockTouchesOnHUDView
-                hud.indicatorView = JGProgressHUDErrorIndicatorView()
-                hud.textLabel.text = "Failed to rename experiment: \(error.localizedDescription)"
-                
-                hud.show(in: self.view)
-                
-                hud.dismiss(afterDelay: 3.0)
-            }
-        }))
+                catch let error as NSError {
+                    let hud = JGProgressHUD(style: .dark)
+                    hud.interactionType = .blockTouchesOnHUDView
+                    hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                    hud.textLabel.text = "Failed to rename experiment: \(error.localizedDescription)"
+                    
+                    hud.show(in: self.view)
+                    
+                    hud.dismiss(afterDelay: 3.0)
+                }
+            })
+            .addCancelAction()
+            .sourceView(popoverSourceView: self.navigationController!.view)
+            .sourceRect(popoverSourceRect: button.convert(button.bounds, to: self.navigationController!.view))
+            .show(in: self, animated: true)
         
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = self.navigationController!.view
-            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
-        }
-        
-        present(alert, animated: true, completion: nil)
     }
     
     private func showDeleteConfirmationForExperiment(_ experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: localize("confirmDeleteTitle"), message: localize("confirmDelete"), preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: localize("delete") + " " + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
-            do {
-                try ExperimentManager.shared.deleteExperiment(experiment)
-            }
-            catch let error as NSError {
-                let hud = JGProgressHUD(style: .dark)
-                hud.interactionType = .blockTouchesOnHUDView
-                hud.indicatorView = JGProgressHUDErrorIndicatorView()
-                hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("confirmDeleteTitle"))
+            .message(message: localize("confirmDelete"))
+            .preferredStyle(style: .actionSheet)
+            .addActionWithTitle(localize("delete") + " " + experiment.displayTitle, style: .destructive, handler: { [unowned self] action in
+                do {
+                    try ExperimentManager.shared.deleteExperiment(experiment)
+                }
+                catch let error as NSError {
+                    let hud = JGProgressHUD(style: .dark)
+                    hud.interactionType = .blockTouchesOnHUDView
+                    hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                    hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+                    
+                    hud.show(in: self.view)
+                    
+                    hud.dismiss(afterDelay: 3.0)
+                }
+                })
+            .addCancelAction()
+            .sourceView(popoverSourceView: self.navigationController!.view)
+            .sourceRect(popoverSourceRect:  button.convert(button.bounds, to: self.navigationController!.view))
+            .show(in: self, animated: true, completion: nil)
                 
-                hud.show(in: self.view)
-                
-                hud.dismiss(afterDelay: 3.0)
-            }
-            }))
-        
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = self.navigationController!.view
-            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
-        }
-        
-        present(alert, animated: true, completion: nil)
     }
     
     private func showOptionsForExperiment(_ experiment: Experiment, button: UIButton) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        if let source = experiment.source {
-            alert.addAction(UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
-                let vc = UIActivityViewController(activityItems: [source], applicationActivities: nil)
-                vc.popoverPresentationController?.sourceView = self.navigationController!.view
-                vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
-                self.navigationController!.present(vc, animated: true)
-                
-            }))
+        var isExpSourceNull = false
+        if experiment.source != nil {
+            isExpSourceNull = false
+        } else {
+            isExpSourceNull = true
         }
         
-        if let stateTitle = experiment.stateTitle {
-            alert.addAction(UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
-                self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: stateTitle)
-            }))
+        var isStateTitleNull = false
+        if experiment.stateTitle != nil {
+            isStateTitleNull = false
+        } else {
+            isStateTitleNull = true
         }
         
-        alert.addAction(UIAlertAction(title: localize("delete"), style: .destructive, handler: { [unowned self] action in
-            self.showDeleteConfirmationForExperiment(experiment, button: button)
-        }))
+        var saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
+            let vc = UIActivityViewController(activityItems: [experiment.source!], applicationActivities: nil)
+            vc.popoverPresentationController?.sourceView = self.navigationController!.view
+            vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
+            self.navigationController!.present(vc, animated: true)
+        })
         
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+        var renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+            self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: experiment.stateTitle!)
+        })
         
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = self.navigationController!.view
-            popover.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
-        }
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: "")
+            .message(message: "")
+            .preferredStyle(style: .actionSheet)
+            .addAlertWithCondition(isValueNull: isExpSourceNull, action: saveStateAlert)
+            .addAlertWithCondition(isValueNull: isStateTitleNull, action: renameAlert)
+            .addDeleteAction(handler: { [unowned self] action in
+                self.showDeleteConfirmationForExperiment(experiment, button: button)
+            })
+            .addCancelAction()
+            .sourceView(popoverSourceView: self.navigationController!.view)
+            .sourceRect(popoverSourceRect: button.convert(button.bounds, to: self.navigationController!.view))
+            .show(in: self)
         
-        present(alert, animated: true, completion: nil)
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -523,7 +515,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             var max = 0
             var catColor = kHighlightColor
-            var catFontColor = UIColor.white
+            var catFontColor = UIColor(named: "textColor")
             for (color, (count, fontColor)) in colorsInCollection {
                 if count > max {
                     max = count
@@ -533,6 +525,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             view.color = catColor
             view.fontColor = catFontColor
+            
+            if(collection.type == .phyphoxOrg){
+                view.color = kLightGrayColor
+            }
 
             return view
         }
@@ -546,32 +542,42 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let experiment = collections[indexPath.section].experiments[indexPath.row]
 
         if experiment.experiment.invalid {
-            let controller = UIAlertController(title: localize("warning"), message: experiment.experiment.localizedDescription, preferredStyle: .alert)
-
-            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-            
-            present(controller, animated: true, completion: nil)
-            
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("warning"))
+                .message(message: experiment.experiment.localizedDescription)
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self, animated: true)
+    
             return
+            
         } else if experiment.experiment.appleBan {
-            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
             
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
              controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
              UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
-
-            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
-            present(controller, animated: true, completion: nil)
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("warning"))
+                .message(message: localize("apple_ban"))
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self, animated: true)
             
             return
+            
         } else if experiment.experiment.isLink {
             guard let url = experiment.experiment.localizedLinks.first?.url else {
-                let controller = UIAlertController(title: "Invalid URL", message: "This experiment is just a link, but no valid URL was found.", preferredStyle: .alert)
-                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-                present(controller, animated: true, completion: nil)
+                
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("url_invalid"))
+                    .message(message: localize("url_invalid_msg"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction()
+                    .show(in: self, animated: true)
+                
                 return
             }
             UIApplication.shared.open(url)
@@ -585,15 +591,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 }
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                }))
-                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-                
-                present(controller, animated: true, completion: nil)
-                
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("sensorNotAvailableWarningTitle"))
+                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    })
+                    .addOkAction()
+                    .show(in: self, animated: true)
+           
                 return
             }
             catch {}
@@ -604,14 +612,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
-                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                }))
-                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-                
-                present(controller, animated: true, completion: nil)
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title:localize("sensorNotAvailableWarningTitle"))
+                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    })
+                    .addOkAction()
+                    .show(in: self, animated: true)
+           
                 
                 return
             }
@@ -869,25 +880,33 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             } else {
                 message = String(describing: experimentLoadingError!)
             }
-            let controller = UIAlertController(title: "Experiment error", message: "Could not load experiment: \(message)", preferredStyle: .alert)
-            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-            navigationController?.present(controller, animated: true, completion: nil)
+            
+            
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("exp_error"))
+                .message(message: "Could not load experiment: \(message)")
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: (navigationController)!, animated: true)
+            
             return false
         }
         
         guard let loadedExperiment = experiment else { return false }
         
         if loadedExperiment.appleBan {
-            let controller = UIAlertController(title: localize("warning"), message: localize("apple_ban"), preferredStyle: .alert)
-            
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
              controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
              UIApplication.shared.openURL(URL(string: localize("appleBanWarningMoreInfoURL"))!)
              }))
              */
-            controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
             
-            navigationController?.present(controller, animated: true, completion: nil)
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("warning"))
+                .message(message: localize("apple_ban"))
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self, animated: true)
             
             return false
         }
@@ -899,13 +918,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 }
             }
             catch SensorError.sensorUnavailable(let type) {
-                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " \(type) " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                }))
-                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-                navigationController?.present(controller, animated: true, completion: nil)
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title:localize("sensorNotAvailableWarningTitle"))
+                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type) " +  localize("sensorNotAvailableWarningText2"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    })
+                    .addOkAction()
+                    .show(in: navigationController!, animated: true)
+           
                 return false
             }
             catch {}
@@ -916,14 +939,16 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
-                let controller = UIAlertController(title: localize("sensorNotAvailableWarningTitle"), message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"), preferredStyle: .alert)
                 
-                controller.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler:{ _ in
-                    UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                }))
-                controller.addAction(UIAlertAction(title: localize("ok"), style: .cancel, handler:nil))
-                
-                present(controller, animated: true, completion: nil)
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title:localize("sensorNotAvailableWarningTitle"))
+                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+                    })
+                    .addOkAction()
+                    .show(in: self, animated: true)
                 
                 return false
             }
@@ -963,6 +988,50 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         ExperimentManager.shared.reloadUserExperiments()
 
+        
+    }
+    
+    func buildDeviceInfoMessage() -> String{
+        var msg = "phyphox\n"
+        msg += "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")\n"
+        msg += "Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")\n"
+        msg += "File format: \(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)\n\n"
+        
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                ptr in String.init(validatingUTF8: ptr)
+            }
+        }
+        
+        msg += "Device\n"
+        msg += "Model: \(modelCode!)\n"
+        msg += "Brand: Apple\n"
+        msg += "iOS version: \(UIDevice.current.systemVersion)"
+        
+        return msg
+        
+    }
+    
+    func getAdustedQRCodeIconAsAppMode() -> MenuTableViewController.MenuElement{
+        let lightModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner)
+        guard #available(iOS 13.0, *) else {
+            return lightModeMenuElement
+        }
+        let darkModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: (UIImage(named: "new_experiment_qr")?.withTintColor(.white, renderingMode: .alwaysOriginal))!, callback: launchScanner)
+        
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            return lightModeMenuElement
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+            return darkModeMenuElement
+        } else {
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
+                return darkModeMenuElement
+            } else {
+                return lightModeMenuElement
+            }
+        }
         
     }
 }

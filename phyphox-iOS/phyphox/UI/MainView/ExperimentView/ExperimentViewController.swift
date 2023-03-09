@@ -124,7 +124,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         
         tableView.register(ExperimentViewModuleTableViewCell.self, forCellReuseIdentifier: moduleCellID)
 
-        tableView.backgroundColor = kBackgroundColor
+        tableView.backgroundColor = UIColor(named: "mainBackground")
         tableView.separatorStyle = .none
 
         tableView.alwaysBounceVertical = false

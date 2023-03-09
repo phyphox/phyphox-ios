@@ -38,7 +38,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var experimentViewControllers: [ExperimentViewController] = []
     
     let webServer: ExperimentWebServer
-
+    
     private let viewModules: [[UIView]]
     
     var timerRunning: Bool {
@@ -130,11 +130,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         viewModules = modules
         
         selectedViewCollection = 0
-
+        
         super.init(nibName: nil, bundle: nil)
-
+        
         experimentViewControllers.first?.active = true
-
+        
         for module in viewModules.flatMap({ $0 }) {
             if let button = module as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
@@ -146,7 +146,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 exportingViewModule.exportDelegate = self
             }
         }
-
+        
         self.navigationItem.title = experiment.displayTitle
         
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
@@ -187,7 +187,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-
+        
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -195,7 +195,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
             }
         }
-
+        
         guard let navBar = self.navigationController?.navigationBar else {
             return
         }
@@ -249,6 +249,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
+        refreshTheAdjustedGraphColorForLightMode()
+        
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem?.accessibilityLabel = localize("actions")
         let deleteItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearDataDialog))
@@ -261,7 +263,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ]
         
         updateTimerInBar()
-
+        
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
         }
@@ -269,7 +271,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         for connection in experiment.networkConnections {
             connection.feedbackViewController = self
         }
-
+        
         //TabBar to switch collections
         if (experiment.viewDescriptors!.count > 1) {
             var buttons: [String] = []
@@ -281,11 +283,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
             segControl!.setTitleTextAttributes(font, for: .normal)
             segControl!.setTitleTextAttributes(font, for: .selected)
-            segControl!.tintColor = kTextColor
-            segControl!.backgroundColor = kTextColor
+            segControl!.tintColor = UIColor(named: "textColor")
+            segControl!.backgroundColor = UIColor(named: "textColor")
             
             //Generate new background and divider images for the segControl
             let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
@@ -293,12 +295,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let ctx = UIGraphicsGetCurrentContext()
             
             //Background
-            ctx!.setFillColor(kLightBackgroundColor.cgColor)
+            ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
             ctx!.fill(rect)
             let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
             //Higlighted image, bg with underline
-            ctx!.setFillColor(kHighlightColor.cgColor)
+            ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
             ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
             let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
             
@@ -320,11 +322,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tabBar!.contentSize = segControl!.frame.size
             tabBar!.showsHorizontalScrollIndicator = false
             tabBar!.autoresizingMask = .flexibleWidth
-            tabBar!.backgroundColor = kLightBackgroundColor
+            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
             tabBar!.addSubview(segControl!)
             
             self.view.addSubview(tabBar!)
-           
+            
         }
         
         pageViewControler.delegate = self
@@ -342,7 +344,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         updateSelectedViewCollection()
         
     }
-
+    
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
         let callback: ButtonViewTriggerCallback
         init(callback: ButtonViewTriggerCallback) {
@@ -394,19 +396,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         //Ask to save the experiment locally if it has been loaded from a remote source
         if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
-            let al = UIAlertController(title: localize("save_locally"), message: localize("save_locally_message"), preferredStyle: .alert)
-            
-            al.addAction(UIAlertAction(title: localize("save_locally_button"), style: .default, handler: { _ in
-                do {
-                    try self.saveLocally()
-                }
-                catch {
-                    print(error)
-                }
-            }))
-            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-            
-            self.navigationController!.present(al, animated: true, completion: nil)
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("save_locally"))
+                .message(message: localize("save_locally_message"))
+                .preferredStyle(style: .alert)
+                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: { _ in
+                    do {
+                        try self.saveLocally()
+                    }
+                    catch {
+                        print(error)
+                    }
+                })
+                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: {_ in } )
+                .addCancelAction()
+                .show(in: self.navigationController!, animated: true)
             
             //Show a hint for the experiment info
         } else {
@@ -485,13 +489,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if isMovingFromParent {
             tearDownWebServer()
-        
+            
             experimentStartTimer?.invalidate()
             experimentStartTimer = nil
-        
+            
             experimentRunTimer?.invalidate()
             experimentRunTimer = nil
-        
+            
             experiment.stop()
             experiment.didBecomeInactive()
         }
@@ -595,11 +599,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.lineBreakMode = .byWordWrapping
             self.serverLabel!.numberOfLines = 0
             self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
-            self.serverLabel!.textColor = kTextColor
-            self.serverLabel!.backgroundColor = kLightBackgroundColor
+            self.serverLabel!.textColor = UIColor(named: "textColor") ?? kTextColor
+            self.serverLabel!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
             self.serverLabelBackground = UIView()
-            self.serverLabelBackground!.backgroundColor = kLightBackgroundColor
+            self.serverLabelBackground!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             
@@ -628,14 +632,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tearDownWebServer()
         }
         else {
-            let al = UIAlertController(title: localize("remoteServerWarningTitle"), message: localize("remoteServerWarning"), preferredStyle: .alert)
-            
-            al.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: { [unowned self] action in
-                self.launchWebServer()
-                }))
-            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-            
-            self.navigationController!.present(al, animated: true, completion: nil)
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("remoteServerWarningTitle"))
+                .message(message: localize("remoteServerWarning"))
+                .preferredStyle(style: .alert)
+                .addActionWithTitle(localize("ok"), style: .default, handler: { [unowned self] action in
+                    self.launchWebServer()
+                })
+                .addCancelAction()
+                .show(in: self.navigationController!, animated: true)
         }
     }
     
@@ -656,9 +661,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             else {
                 let vc = UIActivityViewController(activityItems: [URL!], applicationActivities: nil)
-
+                
                 vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
-
+                
                 self.navigationController!.present(vc, animated: true) {
                     HUD.dismiss()
                 }
@@ -682,143 +687,159 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     internal func showExport(_ export: ExperimentExport, singleSet: Bool) {
-        let alert: UIAlertController
         if export.sets.count > 0 {
-            alert = UIAlertController(title: localize("export"), message: localize("pick_exportFormat"), preferredStyle: .alert)
-            
             let exportAction = UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
                 self.runExportFromActionSheet(export, singleSet: singleSet)
-                })
+            })
             
             if exportSelectionView == nil {
                 exportSelectionView = ExperimentExportSetSelectionView()
             }
             
-            alert.addAction(exportAction)
             
-            alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("export"))
+                .message(message: localize("pick_exportFormat"))
+                .preferredStyle(style: .alert)
+                .addDefinedAction(action: exportAction)
+                .addCancelAction()
+                .setAccessoryView(accessoryView: exportSelectionView!)
+                .show(in: self.navigationController!, animated: true)
             
-            alert.__pt__setAccessoryView(exportSelectionView!)
         } else {
-            alert = UIAlertController(title: localize("export"), message: localize("export_empty"), preferredStyle: .alert)
             
-            alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("export"))
+                .message(message: localize("export_empty"))
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self.navigationController!, animated: true)
+            
         }
         
-        self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
     private func showSaveState() {
         self.stopExperiment()
         
-        let alert = UIAlertController(title: localize("save_state"), message: localize("save_state_message"), preferredStyle: .alert)
-        
-        alert.addTextField(configurationHandler: { (textField) in
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateStyle = .short
-            dateFormatter.timeStyle = .short
-            
-            let fileNameDefault = localize("save_state_default_title")
-            textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
-        })
-        
-        alert.addAction(UIAlertAction(title: localize("save_state_save"), style: .default, handler: { [unowned self] action in
-            do {
-                if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
-                    try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
-                }
-
-                guard let title = alert.textFields?.first?.text else {
-                    return
-                }
-
-                //For now, we disable the new state serializer (saving buffers to a separate binary file)
-                //until the Android version has caught up and can offer the same function
-                //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
-                
-                //Instead use the legacy state serializer for now:
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("save_state"))
+            .message(message: localize("save_state_message"))
+            .preferredStyle(style: .alert)
+            .addTextField(configHandler: { (textField) in
                 let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-                let fileNameDefault = self.experiment.cleanedFilenameTitle
-                let filename = "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
-                let target = savedExperimentStatesURL.appendingPathComponent(filename)
+                dateFormatter.dateStyle = .short
+                dateFormatter.timeStyle = .short
                 
-                let HUD = JGProgressHUD(style: .dark)
-                HUD.interactionType = .blockTouchesOnHUDView
-                HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
-                
-                HUD.show(in: self.navigationController!.view)
-                
-                LegacyStateSerializer.writeStateFile(customTitle: title, target: target.path, experiment: self.experiment, callback: {(error, file) in
-                    if (error != nil) {
-                        self.showError(message: error!)
-                        return
-                    }
-
-                    ExperimentManager.shared.reloadUserExperiments()
-
-                    HUD.dismiss()
-                    
-                    let confirmation = UIAlertController(title: localize("save_state"), message: localize("save_state_success"), preferredStyle: .alert)
-                    
-                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
-                    self.navigationController!.present(confirmation, animated: true, completion: nil)
-                })
-            }
-            catch {
-                self.showError(message: error.localizedDescription)
-                return
-            }
-        }))
+                let fileNameDefault = localize("save_state_default_title")
+                textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
+            })
+            .addActionWithTitle(localize("save_state_save"), style: .default, handler: { [unowned self] action in
+                saveTheState()
+            })
+            .addActionWithTitle(localize("save_state_share"), style: .default, handler: { [unowned self] action in
+                shareTheState()
+            })
+            .addCancelAction()
+            .show(in: self.navigationController!, animated: true)
         
-        alert.addAction(UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
-
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+    }
+    
+    private func showHUDProgressWidget() -> JGProgressHUD{
+        let HUD = JGProgressHUD(style: .dark)
+        HUD.interactionType = .blockTouchesOnHUDView
+        HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
+        HUD.show(in: self.navigationController!.view)
+        return HUD
+    }
+    
+    private func createTimeStampedFileNameWith(fileNameDefault: String) -> String
+    {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+        return "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
+    }
+    
+    private func saveTheState(){
+        do {
+            if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
+                try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
+            }
             
-            let fileNameDefault = localize("save_state_default_title")
-            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox")
-            
-            guard let title = alert.textFields?.first?.text else {
+            guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
                 return
             }
             
-            let HUD = JGProgressHUD(style: .dark)
-            HUD.interactionType = .blockTouchesOnHUDView
-            HUD.textLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
+            //For now, we disable the new state serializer (saving buffers to a separate binary file)
+            //until the Android version has caught up and can offer the same function
+            //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
             
-            HUD.show(in: self.navigationController!.view)
+            //Instead use the legacy state serializer for now:
+            let fileName = createTimeStampedFileNameWith(fileNameDefault: self.experiment.cleanedFilenameTitle)
+            let target = savedExperimentStatesURL.appendingPathComponent(fileName)
             
-            LegacyStateSerializer.writeStateFile(customTitle: title, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
+            let HUD = showHUDProgressWidget()
+            
+            LegacyStateSerializer.writeStateFile(customTitle: title, target: target.path, experiment: self.experiment, callback: {(error, file) in
                 if (error != nil) {
                     self.showError(message: error!)
                     return
                 }
-
-                let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
-
-                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
-
-                self.navigationController!.present(vc, animated: true) {
-                    HUD.dismiss()
-                }
-
-                vc.completionWithItemsHandler = { _, _, _, _ in
-                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
-                }
+                
+                ExperimentManager.shared.reloadUserExperiments()
+                
+                HUD.dismiss()
+                
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("save_state"))
+                    .message(message: localize("save_state_success"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction()
+                    .show(in: self.navigationController!, animated: true)
             })
-        }))
-            
-        alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+        }
+        catch {
+            self.showError(message: error.localizedDescription)
+            return
+        }
+    }
+    
+    private func shareTheState(){
+        let fileName = createTimeStampedFileNameWith(fileNameDefault: localize("save_state_default_title"))
+        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
         
-        self.navigationController!.present(alert, animated: true, completion: nil)
+        guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
+            return
+        }
+        
+        let HUD = showHUDProgressWidget()
+        
+        
+        LegacyStateSerializer.writeStateFile(customTitle: title, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
+            if (error != nil) {
+                self.showError(message: error!)
+                return
+            }
+            
+            let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
+            
+            vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+            
+            self.navigationController!.present(vc, animated: true) {
+                HUD.dismiss()
+            }
+            
+            vc.completionWithItemsHandler = { _, _, _, _ in
+                do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+            }
+        })
     }
     
     private func updateTimerInBar() {
         guard var items = self.navigationItem.rightBarButtonItems else {
             return
         }
-
+        
         if let label = items.last?.customView as? UILabel {
             //The timer label is visible
             if !timerEnabled {
@@ -839,7 +860,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 label.textColor = kTextColor
                 label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
                 label.sizeToFit()
-            
+                
                 items.append(UIBarButtonItem(customView: label))
                 self.navigationItem.rightBarButtonItems = items
             }
@@ -866,7 +887,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
             self.updateTimerInBar()
-            }))
+        }))
         
         alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self] action in
             
@@ -879,7 +900,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
             self.updateTimerInBar()
-            }))
+        }))
         
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
@@ -901,7 +922,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             self.navigationController!.present(al, animated: true, completion: nil)
         }))
-            
+        
         if experiment.export != nil {
             alert.addAction(UIAlertAction(title: localize("export"), style: .default, handler: { [unowned self] action in
                 self.showExport(self.experiment.export!, singleSet: false)
@@ -944,22 +965,22 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
         }))
-            
+        
         alert.addAction(UIAlertAction(title: localize("timedRun"), style: .default, handler: { [unowned self] action in
             self.showTimerOptions()
-            }))
+        }))
         
         alert.addAction(UIAlertAction(title: (webServer.running ? localize("disableRemoteServer") : localize("enableRemoteServer")), style: .default, handler: { [unowned self] action in
             self.toggleWebServer()
-            }))
-
+        }))
+        
         for link in experiment.localizedLinks where link.highlighted {
             alert.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
                 UIApplication.shared.open(link.url)
             }))
         }
         
-
+        
         for sensor in experiment.sensorInputs {
             if sensor.sensorType == SensorType.magneticField {
                 if sensor.calibrated {
@@ -973,7 +994,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         sensor.calibrated = true
                     }))
                 }
-
+                
                 break
             }
         }
@@ -1004,14 +1025,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         try experiment.saveLocally(quiet: false, presenter: self.navigationController)
         ExperimentManager.shared.reloadUserExperiments()
     }
-
+    
     @objc func stopTimerFired() {
         if timerBeep.stop {
             experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
         }
         stopExperiment()
     }
-
+    
     @objc func startTimerFired() {
         if timerBeep.start {
             experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
@@ -1038,7 +1059,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         func updateT() {
             guard let experimentRunTimer = experimentRunTimer else { return }
-
+            
             let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
             if dt <= nextBeep && nextBeep > 0 {
                 nextBeep -= 1
@@ -1046,19 +1067,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
                 }
             }
-
+            
             after(0.02) {
                 updateT()
             }
-
+            
             label.text = countdownFormatter.string(from: dt as NSNumber)
             label.sizeToFit()
-
+            
             var items = navigationItem.rightBarButtonItems
-
+            
             items?.removeLast()
             items?.append(UIBarButtonItem(customView: label))
-
+            
             navigationItem.rightBarButtonItems = items
         }
         
@@ -1098,22 +1119,22 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
-
+                
                 var items = navigationItem.rightBarButtonItems
-
+                
                 guard let label = items?.last?.customView as? UILabel else { return }
-
+                
                 label.text = countdownFormatter.string(from: d as NSNumber)
                 label.sizeToFit()
-
+                
                 items?.removeLast()
                 items?.append(UIBarButtonItem(customView: label))
-
+                
                 navigationItem.rightBarButtonItems = items
                 
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
-
+                    
                     let dt = experimentStartTimer.fireDate.timeIntervalSinceNow
                     if dt <= nextBeep && nextBeep > 0 {
                         nextBeep -= 1
@@ -1121,26 +1142,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                             experiment.audioEngine?.beep(frequency: 800, duration: 0.1)
                         }
                     }
-
+                    
                     after(0.02) {
                         updateT()
                     }
-
+                    
                     label.text = countdownFormatter.string(from: dt as NSNumber)
                     label.sizeToFit()
-
+                    
                     var items = navigationItem.rightBarButtonItems
-
+                    
                     items?.removeLast()
                     items?.append(UIBarButtonItem(customView: label))
-
+                    
                     navigationItem.rightBarButtonItems = items
                 }
-
+                
                 after(0.2) {
                     updateT()
                 }
-
+                
                 experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
             }
             else {
@@ -1194,7 +1215,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 items.removeLast()
                 items.append(UIBarButtonItem(customView: label))
-
+                
             }
             
             experiment.stop()
@@ -1257,7 +1278,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
     }
-
+    
     func connectToBluetoothDevices() {
         
         if experiment.bluetoothDevices.count == 1, let input = experiment.bluetoothDevices.first {
@@ -1327,6 +1348,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             connectToNetworkDevices()
         }
     }
+    
+    func refreshTheAdjustedGraphColorForLightMode(){
+        if #available(iOS 12.0, *) {
+            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
+               UIScreen.main.traitCollection.userInterfaceStyle == .light){
+                if #available(iOS 13.0, *) {
+                    view.overrideUserInterfaceStyle = .light
+                } else {
+                    // Fallback on earlier versions
+                }
+            }
+        } else {
+            // Fallback on earlier versions
+        }
+    }
 }
 
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {
@@ -1337,7 +1373,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
             }
         }
     }
-
+    
     func analysisDidUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
             if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
