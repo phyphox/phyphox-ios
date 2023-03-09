@@ -10,6 +10,16 @@ import Foundation
 
 class SettingBundleHelper {
     
+    private static let SMALL_WIDTH: Double  = 1.0
+    private static let MEDIUM_WIDTH: Double = 2.0
+    private static let BIG_WIDTH: Double  = 4.0
+    private static let EXTRA_BIG_WIDTH: Double = 6.0
+    
+    private static let SMALL_LABEL: Double = 45.0/UIScreen.main.scale
+    private static let MEDIUM_LABEL: Double = 50.0/UIScreen.main.scale
+    private static let BIG_LABEL: Double = 55.0/UIScreen.main.scale
+    private static let EXTRA_BIG_LABEL: Double  = 60.0/UIScreen.main.scale
+    
     enum UserDefaultKeys: String {
         case APP_MODE = "appModeKey"
         case GRAPH_SIZE = "graphSizeKey"
@@ -99,6 +109,48 @@ class SettingBundleHelper {
             }
         }
     }
+    
+    
+    static func getGraphSettingWidth() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return SMALL_WIDTH
+            
+        case 2:
+            return MEDIUM_WIDTH
+            
+        case 3:
+            return BIG_WIDTH
+            
+        case 4:
+            return EXTRA_BIG_WIDTH
+            
+        default:
+            return MEDIUM_WIDTH
+        }
+    }
+    
+    static func getGraphSettingLabelSize() -> Double {
+        switch SettingBundleHelper.getGraphSize() {
+            
+        case 1:
+            return SMALL_LABEL
+            
+        case 2:
+            return MEDIUM_LABEL
+            
+        case 3:
+            return BIG_LABEL
+            
+        case 4:
+            return EXTRA_BIG_LABEL
+            
+        default:
+            return MEDIUM_LABEL
+        }
+    }
+    
     
 
 }
