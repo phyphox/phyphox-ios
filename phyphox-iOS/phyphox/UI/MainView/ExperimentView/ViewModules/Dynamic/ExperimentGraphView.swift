@@ -187,7 +187,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.lineColor = []
         
         for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : 2.0)))
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
             descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
@@ -235,14 +235,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             l.text = text
             
             let defaultFont = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
-            l.font = defaultFont.withSize(defaultFont.pointSize * 0.8)
+            l.font = defaultFont.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
             
             return l
         }
         
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .body)
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
         label.textColor = UIColor(named: "textColor")
         
         xLabel = makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
@@ -257,9 +257,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         } else {
             zLabel = nil
         }
-        
-        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        if #available(iOS 13.0, *) {
+            let config = UIImage.SymbolConfiguration(
+                pointSize: 25, weight: .medium, scale: .default)
+            unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+            unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
+                                                             withConfiguration: config))
+        } else {
+            unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+            unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+            // Fallback on earlier versions
+        }
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
@@ -322,6 +330,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
 
     @available(*, unavailable)
@@ -1812,6 +1822,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
         
         updatePlotArea()
+    }
+    
+    @objc func reload(){
+        self.layoutSubviews()
     }
     
 }

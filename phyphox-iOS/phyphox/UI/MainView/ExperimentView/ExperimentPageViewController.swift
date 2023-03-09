@@ -284,7 +284,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : UIColor(named: "textColor") ?? kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
             segControl!.setTitleTextAttributes(font, for: .normal)
             segControl!.setTitleTextAttributes(font, for: .selected)
             segControl!.tintColor = UIColor(named: "textColor")
@@ -323,7 +323,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             tabBar!.contentSize = segControl!.frame.size
             tabBar!.showsHorizontalScrollIndicator = false
             tabBar!.autoresizingMask = .flexibleWidth
-            tabBar!.backgroundColor = UIColor(named: "lightBackgroundColor")
+            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
             tabBar!.addSubview(segControl!)
             
             self.view.addSubview(tabBar!)

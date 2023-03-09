@@ -21,6 +21,7 @@ let iPad = UI_USER_INTERFACE_IDIOM() == .pad
 let kBackgroundColor = UIColor(white: 32.0/255.0, alpha: 1.0)
 let kDarkBackgroundColor = UIColor(white: 16.0/255.0, alpha: 1.0)
 let kLightBackgroundColor = UIColor(white: 64.0/255.0, alpha: 1.0)
+let kLightBackgroundColorForLight = UIColor(white: 191.0/255.0, alpha: 1.0)
 let kFullWhiteColor = UIColor(white: 255.0/255.0, alpha: 1.0)
 let kLightGrayColor = UIColor(white: 0.8, alpha: 1.0)
 let kLightBackgroundHoverColor = UIColor(white: 0.5, alpha: 1.0)

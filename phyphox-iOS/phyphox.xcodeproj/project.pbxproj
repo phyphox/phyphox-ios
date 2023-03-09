@@ -752,6 +752,7 @@
 		6B7BF77C1C130425007408FB /* phyphox */ = {
 			isa = PBXGroup;
 			children = (
+				A1E03AA129B779A400CE93A6 /* Helper */,
 				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
 				6B0C71541C1C706A00500FEE /* Constants.swift */,
 				C079BC692260D2B40018D6A5 /* localizationHelper.swift */,
@@ -763,9 +764,6 @@
 				6B7BF7AC1C130457007408FB /* Assets */,
 				6B0C71561C1C708F00500FEE /* Dependencies */,
 				C075DCBD287EA33E001CBE5E /* Settings.bundle */,
-				A1A6A72E297685DF00090309 /* Utility.swift */,
-				A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */,
-				A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */,
 			);
 			path = phyphox;
 			sourceTree = "<group>";
@@ -1132,11 +1130,22 @@
 			path = "Complex-Update-Value";
 			sourceTree = "<group>";
 		};
+
 		A1E03A8029B61CB300CE93A6 /* ExperimentPageView */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = ExperimentPageView;
+      sourceTree = "<group>";
+    };
+		A1E03AA129B779A400CE93A6 /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				A1A6A72E297685DF00090309 /* Utility.swift */,
+				A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */,
+				A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */,
+			);
+			path = Helper;
 			sourceTree = "<group>";
 		};
 		A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */ = {
