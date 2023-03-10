@@ -1130,14 +1130,13 @@
 			path = "Complex-Update-Value";
 			sourceTree = "<group>";
 		};
-
 		A1E03A8029B61CB300CE93A6 /* ExperimentPageView */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = ExperimentPageView;
-      sourceTree = "<group>";
-    };
+			sourceTree = "<group>";
+		};
 		A1E03AA129B779A400CE93A6 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
