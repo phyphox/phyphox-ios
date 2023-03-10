@@ -8,6 +8,7 @@
 
 import Foundation
 import GCDWebServers
+import SwiftUI
 
 protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)
@@ -16,7 +17,6 @@ protocol ExportDelegate {
 protocol StopExperimentDelegate {
     func stopExperiment()
 }
-
 final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate {
     
     var actionItem: UIBarButtonItem?
@@ -30,8 +30,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewController.TransitionStyle.scroll, navigationOrientation: UIPageViewController.NavigationOrientation.horizontal, options: nil)
     
-    var serverLabel: UILabel? = nil
+    var serverLabel: UITextView? = nil
     var serverLabelBackground: UIView? = nil
+    var serverQRIcon: UIButton? = nil
     
     let experiment: Experiment
     
@@ -544,6 +545,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    private var remoteUrl: String = ""
+    
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
         if !webServer.start() {
@@ -557,12 +560,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             hud.dismiss(afterDelay: 3.0)
         }
         else {
-            var url = webServer.server!.serverURL?.absoluteString
-            if url?.last == "/" {
-                url = String(url!.dropLast())
+            remoteUrl = webServer.server!.serverURL?.absoluteString ?? ""
+            var url = remoteUrl
+            if url.last == "/" {
+                url = String(url.dropLast())
             }
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
-            if url == nil || url == "nil" {
+            if url == "" {
                 print("Fallback to generate URL from IP.")
                 var ip: String? = nil
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
@@ -595,20 +599,83 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
             }
             
-            self.serverLabel = UILabel()
-            self.serverLabel!.lineBreakMode = .byWordWrapping
-            self.serverLabel!.numberOfLines = 0
+            //UITextView is used instead of UILabel as it doesnot support select and copy feature in text
+            self.serverLabel = UITextView()
             self.serverLabel!.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body)
             self.serverLabel!.textColor = UIColor(named: "textColor") ?? kTextColor
             self.serverLabel!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
-            self.serverLabel!.text = localize("remoteServerActive")+"\n\(url!)"
+            self.serverLabel!.text = localize("remoteServerActive")+"\n\(url)"
+            self.serverLabel?.isEditable = false
+            
+            //To force textlabel to fit its size as per its length and no. of lines
+            self.serverLabel!.translatesAutoresizingMaskIntoConstraints = true
+            self.serverLabel!.sizeToFit()
+            self.serverLabel!.isScrollEnabled = false
+            
+            //To hide keyboard on touch
+            self.serverLabel!.inputView = UIView()
+            self.serverLabel!.inputAccessoryView = UIView()
+            
+            self.serverQRIcon = UIButton(type: .system)
+            let image = UIImage(named: "new_experiment_qr")!.resize(size: CGSize(width: 30, height: 30))
+            self.serverQRIcon?.setImage(image, for: .normal)
+            self.serverQRIcon?.addTarget(self, action: #selector(showQr), for: .touchUpInside)
+            self.serverQRIcon?.imageView?.contentMode = .scaleAspectFit
+           
+            
             self.serverLabelBackground = UIView()
             self.serverLabelBackground!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
+            self.view.addSubview(self.serverQRIcon!)
+            
+            // set view1 constraints
+            self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -20.0),
+                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -25.0)
+            
+            ])
             
             updateLayout()
         }
+    }
+    
+    @objc func showQr(){
+        let data = remoteUrl.data(using: .utf8)
+        let qrFilter = CIFilter(name: "CIQRCodeGenerator")
+        
+        qrFilter?.setValue(data, forKey: "inputMessage")
+        qrFilter?.setValue("Q", forKey: "inputCorrectionLevel")
+        
+        let qrImage = qrFilter?.outputImage
+        
+        let displayImage = UIImage(ciImage: qrImage!).resize(size: CGSize(width: 150, height: 150))
+        
+        let imageView = UIImageView(image: displayImage)
+        
+        showQrInDialog(imageView: imageView)
+        
+        
+    }
+    
+    @objc func showQrInDialog(imageView: UIImageView) {
+        imageView.contentMode = .scaleAspectFit
+        
+        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
+        alertController.view.addSubview(imageView)
+        
+        // Set the image view's constraints
+        alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
+        alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
+        imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
+       
+        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
+        alertController.addAction(closeButton)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
     private func tearDownWebServer() {
@@ -619,8 +686,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if let labelBackground = self.serverLabelBackground {
             labelBackground.removeFromSuperview()
         }
+        if let button = self.serverQRIcon {
+            button.removeFromSuperview()
+        }
         self.serverLabel = nil
         self.serverLabelBackground = nil
+        self.serverQRIcon = nil
         updateLayout()
         if (!self.experiment.running) {
             experiment.setKeepScreenOn(false)
@@ -1382,3 +1453,4 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
         }
     }
 }
+
