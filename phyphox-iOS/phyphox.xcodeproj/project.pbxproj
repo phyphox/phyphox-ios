@@ -155,6 +155,7 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
+		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */; };
@@ -507,6 +508,7 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExt.swift; sourceTree = "<group>"; };
@@ -960,6 +962,7 @@
 				6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */,
 				C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */,
 				6B2E0F9E20593A01008FAA91 /* ViewModules */,
+				A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */,
 			);
 			path = ExperimentView;
 			sourceTree = "<group>";
@@ -1684,6 +1687,7 @@
 				C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */,
 				C0A97FF92477E39000A630EE /* InterpolateAnalysis.swift in Sources */,
 				6B612FE9207E5ABC001DA8D9 /* LinkElementHandler.swift in Sources */,
+				A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */,
 				C05CD336258BA0DF00662BDF /* ExperimentTimeReference.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,
 				6B7BF8001C139649007408FB /* DivisionAnalysis.swift in Sources */,

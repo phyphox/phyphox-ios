@@ -229,6 +229,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let titleView = UILabel()
         titleView.translatesAutoresizingMaskIntoConstraints = false
         titleView.text = localize("applyZoomTitle")
+        titleView.textColor = UIColor(named: "textColor")
         titleView.font = UIFont.preferredFont(forTextStyle: .headline)
         dialogView.addSubview(titleView)
         
@@ -244,6 +245,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let explView = UILabel()
         explView.translatesAutoresizingMaskIntoConstraints = false
         explView.text = localize("applyZoomExplanation")
+        explView.textColor = UIColor(named: "textColor")
         explView.lineBreakMode = .byWordWrapping
         explView.numberOfLines = 0
         scrollContentView.addSubview(explView)
@@ -266,25 +268,26 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let advancedSwitchLabel = UILabel()
         advancedSwitchLabel.translatesAutoresizingMaskIntoConstraints = false
         advancedSwitchLabel.text = localize("applyZoomAdvanced")
+        advancedSwitchLabel.textColor = UIColor(named: "textColor")
         dialogView.addSubview(advancedSwitchLabel)
         
         let okButton = UIButton()
         okButton.translatesAutoresizingMaskIntoConstraints = false
         okButton.setTitle(localize("ok"), for: .normal)
-        okButton.setTitleColor(UIColor(named: "mainBackground"), for: .normal)
+        okButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         okButton.addTarget(self, action: #selector(confirmDialog), for: .touchUpInside)
         dialogView.addSubview(okButton)
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.setTitle(localize("cancel"), for: .normal)
-        cancelButton.setTitleColor(UIColor(named: "mainBackground"), for: .normal)
+        cancelButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)
         
         //...........
         
-        dialogView.backgroundColor = UIColor.white
+        dialogView.backgroundColor = UIColor(named: "mainBackground")
         dialogView.layer.cornerRadius = 6
         self.view.addSubview(dialogView)
         

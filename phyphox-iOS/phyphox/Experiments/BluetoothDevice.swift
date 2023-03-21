@@ -76,6 +76,10 @@ protocol BluetoothDeviceDelegate {
     func dataFromCharacteristic(uuid: CBUUID, data: Data)
 }
 
+protocol UpdateConnectedDeviceDelegate {
+    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel])
+}
+
 enum BluetoothDeviceError: Error {
     case generic(String)
 }
@@ -99,6 +103,21 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     let hud: JGProgressHUD
     var feedbackViewController: UIViewController?
+    
+    static var updateDelegate: UpdateConnectedDeviceDelegate?
+    
+    init(delegate: UpdateConnectedDeviceDelegate) {
+        ExperimentBluetoothDevice.updateDelegate = delegate
+        
+        self.id = ""
+        self.deviceName = ""
+        self.advertiseUUID = nil
+        
+        self.hud = JGProgressHUD(style: .dark)
+        
+        super.init(scanDirectly: false, filterByName: "", filterByUUID: nil, checkExperiments: false, autoConnect: false)
+    }
+    
     
     init(id: String?, name: String?, uuid: CBUUID?, autoConnect: Bool) {
         self.id = id
@@ -129,7 +148,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         let alert = UIAlertController(title: localize("warning"), message: msg, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .default, handler: { _ in
-
+            
         }))
         if retry {
             alert.addAction(UIAlertAction(title: localize("tryagain"), style: .default, handler: { _ in
@@ -288,7 +307,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     override func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected: \(peripheral.name ?? "No Name")")
-        
+        peripheral.readRSSI()
         peripheral.discoverServices(nil)
         after(10) {
             if self.characteristics_map.count == 0 {
@@ -297,6 +316,39 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                 self.showError(msg: localize("bt_exception_services"))
             }
         }
+    }
+    
+    var batteryLevel = 100
+    var connectedDeviceName: String = ""
+    var signalLevel = 100
+    var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
+
+    func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
+        signalLevel = Int(RSSI)
+        connectedDeviceName = peripheral.name ?? ""
+        let  connectedDevice = ConnectedDevicesDataModel(signalStrength: signalLevel,
+                                                         batteryLabel: batteryLevel,
+                                                         deviceName: connectedDeviceName)
+  
+        if(connectedDevices.isEmpty){
+            connectedDevices.append(connectedDevice)
+           
+        } else  if(connectedDevices.count > 0){
+            if(connectedDevices.filter { $0.getDeviceName() == connectedDeviceName
+            }.isEmpty){
+                    connectedDevices.append(connectedDevice)
+                } else{
+                    if let row = connectedDevices.firstIndex(where: {
+                        $0.getDeviceName() == connectedDeviceName}){
+                        connectedDevices[row] = connectedDevice
+                    }
+            }
+
+        }
+        ExperimentBluetoothDevice
+            .updateDelegate?
+            .showUpdatedConnectedDevices(connectedDevice: connectedDevices)
+        
     }
     
     override func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -365,8 +417,20 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     override func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        peripheral.readRSSI()
         if let newData = characteristic.value {
             for delegate in delegates {
+                if(characteristic.uuid.uuidString == "2A19"){
+                    guard let newBatteryLevel = characteristic.value?.first else {
+                        return
+                    }
+                    if(batteryLevel != newBatteryLevel) {
+                        batteryLevel = Int(newBatteryLevel)
+                        print("read Battery: ", newBatteryLevel)
+                        peripheral.readValue(for: characteristic)
+                    }
+                    
+                }
                 delegate.dataFromCharacteristic(uuid: characteristic.uuid, data: newData)
             }
         }
@@ -374,10 +438,10 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         /* We ignore errors because it seems possible that devices do not set up a proper config descriptor while still working as expected.
-        if let error = error {
-            self.disconnect()
-            self.showError(msg: localize("bt_exception_notification_fail_enable") + " \(characteristic.uuid) " + localize("bt_exception_notification_fail") + " (\(error.localizedDescription))")
-        }
+         if let error = error {
+         self.disconnect()
+         self.showError(msg: localize("bt_exception_notification_fail_enable") + " \(characteristic.uuid) " + localize("bt_exception_notification_fail") + " (\(error.localizedDescription))")
+         }
          */
     }
     
@@ -393,9 +457,18 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         
         for characteristic in characteristics {
+            
             if characteristic.uuid.uuid128String == phyphoxEventCharacteristicUUID.uuidString {
                 eventCharacteristic = characteristic
             }
+            
+            if(characteristic.uuid.uuidString == "2A19"){
+                //Battery Label
+                peripheral.readValue(for: characteristic)
+                
+            }
+            
+            
             characteristics_map[characteristic.uuid.uuid128String] = characteristic
         }
         
@@ -405,10 +478,10 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         
         print("Service discovery completed. Writing config data to device.")
-                
+        
         do {
             writeEventCharacteristic(timeMapping: nil)
-
+            
             for delegate in delegates {
                 try delegate.writeConfigData()
             }
@@ -472,4 +545,35 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
 }
+
+class ConnectedDevicesDataModel {
+    private  var signalStrength: Int?
+    private  var batteryLabel: Int?
+    private  var deviceName: String?
+    
+    init(signalStrength: Int, batteryLabel: Int,  deviceName: String) {
+        self.signalStrength = signalStrength
+        self.batteryLabel = batteryLabel
+        self.deviceName = deviceName
+    }
+    
+    init(signalStrength: Int) {
+        self.signalStrength = signalStrength
+    }
+    
+    func getSignalStrength() -> Int{
+        return signalStrength ?? 100
+    }
+    
+    func getBatteryLabel() -> Int{
+        return batteryLabel ?? 100
+    }
+    
+    func getDeviceName() -> String{
+        return deviceName ?? ""
+    }
+    
+}
+
+
 

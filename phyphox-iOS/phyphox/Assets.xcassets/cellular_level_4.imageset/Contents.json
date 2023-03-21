@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "cellularbars.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
