@@ -22,7 +22,7 @@ final class GraphGridView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
+        borderView.layer.borderColor = getAdjustedBorderColor()
         borderView.layer.borderWidth = SettingBundleHelper.getGraphSettingWidth()/UIScreen.main.scale
         
         addSubview(borderView)
@@ -354,5 +354,19 @@ final class GraphGridView: UIView {
         }
         
         bringSubviewToFront(borderView)
+    }
+    
+    private func getAdjustedBorderColor() -> CGColor{
+        var borderColor = UIColor(white: 1.0, alpha: 1.0).cgColor
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            borderColor  = UIColor(white: 0.0, alpha: 1.0).cgColor
+        } else if(SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE){
+            if #available(iOS 12.0, *) {
+                if(UIScreen.main.traitCollection.userInterfaceStyle == .light) {
+                    borderColor  = UIColor(white: 0.0, alpha: 1.0).cgColor
+                }
+            }
+        }
+        return borderColor
     }
 }
