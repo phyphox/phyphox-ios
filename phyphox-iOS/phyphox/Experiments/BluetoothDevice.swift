@@ -14,6 +14,7 @@ let phyphoxServiceUUID: UUID = UUID(uuidString: "cddf0001-30f7-4671-8b43-5e40ba5
 let phyphoxExperimentCharacteristicUUID: UUID = UUID(uuidString: "cddf0002-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxExperimentControlCharacteristicUUID: UUID = UUID(uuidString: "cddf0003-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxEventCharacteristicUUID: UUID = UUID(uuidString: "cddf0004-30f7-4671-8b43-5e40ba53514a")!
+let batteryServiceUUID: String = "2A19"
 
 public extension CBUUID {
     convenience init(uuidString: String) throws {
@@ -105,6 +106,11 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var feedbackViewController: UIViewController?
     
     static var updateDelegate: UpdateConnectedDeviceDelegate?
+    
+    var batteryLevel = -1
+    var connectedDeviceName: String = ""
+    var signalLevel = 100
+    var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
     
     init(delegate: UpdateConnectedDeviceDelegate) {
         ExperimentBluetoothDevice.updateDelegate = delegate
@@ -318,33 +324,30 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
     }
     
-    var batteryLevel = 100
-    var connectedDeviceName: String = ""
-    var signalLevel = 100
-    var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
-
     func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
         signalLevel = Int(RSSI)
         connectedDeviceName = peripheral.name ?? ""
         let  connectedDevice = ConnectedDevicesDataModel(signalStrength: signalLevel,
                                                          batteryLabel: batteryLevel,
                                                          deviceName: connectedDeviceName)
-  
+        
         if(connectedDevices.isEmpty){
             connectedDevices.append(connectedDevice)
-           
-        } else  if(connectedDevices.count > 0){
+            
+        } else if(connectedDevices.count > 0){
             if(connectedDevices.filter { $0.getDeviceName() == connectedDeviceName
             }.isEmpty){
-                    connectedDevices.append(connectedDevice)
-                } else{
-                    if let row = connectedDevices.firstIndex(where: {
-                        $0.getDeviceName() == connectedDeviceName}){
-                        connectedDevices[row] = connectedDevice
-                    }
+                // if the current device name is not in list than add it to the list
+                connectedDevices.append(connectedDevice)
+            } else{
+                // Get row index of the current device info to update its elements
+                if let row = connectedDevices.firstIndex(where: {
+                    $0.getDeviceName() == connectedDeviceName}){
+                    connectedDevices[row] = connectedDevice
+                }
             }
-
         }
+        
         ExperimentBluetoothDevice
             .updateDelegate?
             .showUpdatedConnectedDevices(connectedDevice: connectedDevices)
@@ -420,13 +423,12 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         peripheral.readRSSI()
         if let newData = characteristic.value {
             for delegate in delegates {
-                if(characteristic.uuid.uuidString == "2A19"){
+                if(characteristic.uuid.uuidString == batteryServiceUUID){
                     guard let newBatteryLevel = characteristic.value?.first else {
                         return
                     }
                     if(batteryLevel != newBatteryLevel) {
                         batteryLevel = Int(newBatteryLevel)
-                        print("read Battery: ", newBatteryLevel)
                         peripheral.readValue(for: characteristic)
                     }
                     

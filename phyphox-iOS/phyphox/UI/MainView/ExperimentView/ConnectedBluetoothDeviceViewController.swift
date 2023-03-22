@@ -64,29 +64,29 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
         contentView.addSubview(deviceLabel)
         NSLayoutConstraint.activate([
             deviceLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            deviceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            deviceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             deviceLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
         ])
         
-        signalImageView.contentMode = .scaleAspectFit
-        
-        signalImageView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(signalImageView)
-        NSLayoutConstraint.activate([
-            signalImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            signalImageView.leadingAnchor.constraint(equalTo: deviceLabel.trailingAnchor, constant: 8),
-            
-            signalImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8)
-        ])
-        
         batteryImageView.contentMode = .scaleAspectFit
+        
         batteryImageView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(batteryImageView)
         NSLayoutConstraint.activate([
             batteryImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            batteryImageView.leadingAnchor.constraint(equalTo: signalImageView.trailingAnchor, constant: 8),
-            batteryImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            batteryImageView.leadingAnchor.constraint(equalTo: deviceLabel.trailingAnchor, constant: 8),
+            
             batteryImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8)
+        ])
+        
+        signalImageView.contentMode = .scaleAspectFit
+        signalImageView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(signalImageView)
+        NSLayoutConstraint.activate([
+            signalImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            signalImageView.leadingAnchor.constraint(equalTo: batteryImageView.trailingAnchor, constant: 8),
+            signalImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            signalImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8)
         ])
         
     }
@@ -119,7 +119,10 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
         let config = UIImage.SymbolConfiguration(
             pointSize: 25, weight: .medium, scale: .default)
         
-        if level < 5 {
+       if level == -1 {
+           return UIImage()
+           
+        } else if level < 5 {
             return UIImage(systemName: "battery.0", withConfiguration: config)!
         }
         else if level < 25 {
@@ -130,7 +133,7 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
             return UIImage(systemName: "battery.75", withConfiguration: config)!
         } else if level < 100 {
             return  UIImage(systemName: "battery.100", withConfiguration: config)!
-        } else {
+        } else{
             return UIImage(systemName: "battery.100", withConfiguration: config)!
         }
         
