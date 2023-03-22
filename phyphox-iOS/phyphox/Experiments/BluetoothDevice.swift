@@ -332,10 +332,11 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                                                          batteryLabel: batteryLevel,
                                                          deviceName: connectedDeviceName)
         
+        // append or update the list as per the current state
         if(connectedDevices.isEmpty){
             connectedDevices.append(connectedDevice)
             
-        } else if(connectedDevices.count > 0){
+        } else {
             if(connectedDevices.filter { $0.getDeviceIdentifier() == peripheral.identifier}.isEmpty){
                 // if the current device name is not in list than add it to the list
                 connectedDevices.append(connectedDevice)
