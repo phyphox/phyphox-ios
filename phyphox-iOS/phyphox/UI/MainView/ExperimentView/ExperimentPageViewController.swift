@@ -46,20 +46,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     let flowLayout = UICollectionViewFlowLayout()
     
     var numOfConnectedDevices = 0
-   
-    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
-        numOfConnectedDevices = connectedDevice.count
-        var adjustedHeight = 48.0
-        if( numOfConnectedDevices == 0){
-            return
-        } else if(numOfConnectedDevices > 1){
-            adjustedHeight = 100.0
-        }
-     
-        let customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
-        view.addSubview(customCollectionView)
-        
-    }
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -1487,6 +1473,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         } else {
             // Fallback on earlier versions
         }
+    }
+    
+    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
+        numOfConnectedDevices = connectedDevice.count
+        var adjustedHeight = 48.0
+        if( numOfConnectedDevices == 0){
+            return
+        } else if(numOfConnectedDevices > 1){
+            adjustedHeight = 100.0
+        }
+     
+        let customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
+        view.addSubview(customCollectionView)
+        
     }
 }
 

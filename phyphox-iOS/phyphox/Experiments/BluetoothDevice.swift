@@ -327,7 +327,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
         signalLevel = Int(RSSI)
         connectedDeviceName = peripheral.name ?? ""
-        let  connectedDevice = ConnectedDevicesDataModel(signalStrength: signalLevel,
+        let  connectedDevice = ConnectedDevicesDataModel(deviceIdentifier: peripheral.identifier,
+                                                         signalStrength: signalLevel,
                                                          batteryLabel: batteryLevel,
                                                          deviceName: connectedDeviceName)
         
@@ -335,14 +336,12 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
             connectedDevices.append(connectedDevice)
             
         } else if(connectedDevices.count > 0){
-            if(connectedDevices.filter { $0.getDeviceName() == connectedDeviceName
-            }.isEmpty){
+            if(connectedDevices.filter { $0.getDeviceIdentifier() == peripheral.identifier}.isEmpty){
                 // if the current device name is not in list than add it to the list
                 connectedDevices.append(connectedDevice)
             } else{
                 // Get row index of the current device info to update its elements
-                if let row = connectedDevices.firstIndex(where: {
-                    $0.getDeviceName() == connectedDeviceName}){
+                if let row = connectedDevices.firstIndex(where: {$0.getDeviceIdentifier() == peripheral.identifier}){
                     connectedDevices[row] = connectedDevice
                 }
             }
@@ -464,7 +463,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                 eventCharacteristic = characteristic
             }
             
-            if(characteristic.uuid.uuidString == "2A19"){
+            if(characteristic.uuid.uuidString == batteryServiceUUID){
                 //Battery Label
                 peripheral.readValue(for: characteristic)
                 
@@ -549,11 +548,13 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
 }
 
 class ConnectedDevicesDataModel {
+    private  var deviceIdentifier: UUID?
     private  var signalStrength: Int?
     private  var batteryLabel: Int?
     private  var deviceName: String?
     
-    init(signalStrength: Int, batteryLabel: Int,  deviceName: String) {
+    init(deviceIdentifier: UUID, signalStrength: Int, batteryLabel: Int,  deviceName: String) {
+        self.deviceIdentifier = deviceIdentifier
         self.signalStrength = signalStrength
         self.batteryLabel = batteryLabel
         self.deviceName = deviceName
@@ -561,6 +562,10 @@ class ConnectedDevicesDataModel {
     
     init(signalStrength: Int) {
         self.signalStrength = signalStrength
+    }
+    
+    func getDeviceIdentifier() -> UUID {
+        return deviceIdentifier ?? UUID()
     }
     
     func getSignalStrength() -> Int{

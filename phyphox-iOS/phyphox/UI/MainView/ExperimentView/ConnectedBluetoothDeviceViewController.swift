@@ -11,10 +11,11 @@ import Foundation
 class ConnectedBluetoothDevicesViewController: UICollectionView, UICollectionViewDataSource {
     
     private var data: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
+    let cellIdentifier: String = "ConnectedBleDeviceCell"
     
     init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout, data: [ConnectedDevicesDataModel]) {
         super.init(frame: frame, collectionViewLayout: layout)
-        self.register(ConnectedBleDeviceCell.self, forCellWithReuseIdentifier: "ConnectedBleDeviceCell")
+        self.register(ConnectedBleDeviceCell.self, forCellWithReuseIdentifier: cellIdentifier)
         self.dataSource = self
         self.data = data
         layout.collectionView?.backgroundColor = UIColor(named: "backgroundDark")
@@ -29,14 +30,18 @@ class ConnectedBluetoothDevicesViewController: UICollectionView, UICollectionVie
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ConnectedBleDeviceCell", for: indexPath) as? ConnectedBleDeviceCell else {
+        
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellIdentifier , for: indexPath) as? ConnectedBleDeviceCell else {
             return UICollectionViewCell()
         }
         
         cell.contentView.backgroundColor = UIColor(named: "backgroundDark")
         
-        let dataModel: ConnectedDevicesDataModel = ConnectedDevicesDataModel(signalStrength: data[indexPath.row].getSignalStrength(), batteryLabel: data[indexPath.row].getBatteryLabel(), deviceName: data[indexPath.row].getDeviceName())
+        let dataModel: ConnectedDevicesDataModel = ConnectedDevicesDataModel(
+            deviceIdentifier:data[indexPath.row].getDeviceIdentifier(),
+            signalStrength:data[indexPath.row].getSignalStrength(),
+            batteryLabel: data[indexPath.row].getBatteryLabel(),
+            deviceName: data[indexPath.row].getDeviceName())
         
         cell.configure(model: dataModel)
         
