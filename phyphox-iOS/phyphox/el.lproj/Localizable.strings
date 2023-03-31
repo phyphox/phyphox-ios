@@ -12,7 +12,7 @@
 "damageWarning" = "Προσέξτε να μην προκαλέσετε ζημιά στο κινητό σας κατά τη διάρκεια του πειράματος. Δώστε ιδιαίτερη προσοχή ώστε να μην χτυπήσει σε σκληρές επιφάνειες και αποφύγετε την έκθεσή του σε ισχυρά μαγνητικά πεδία. Οι δημιουργοί του phyphox δεν είναι υπεύθυνοι για τυχόν ζημιές στο κινητό σας.";
 "credits" = "Μνεία";
 "creditsRWTH" = "Η εφαρμογή phyphox δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.";
-"creditsNames" = "Ανάπτυξη και Ιδέα:\nDr. Sebastian Staacks\nΙδέα:\nProf. Christoph Stampfer\nΠρογραμματισμός:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Ανάπτυξη και Ιδέα:\nDr. Sebastian Staacks\nΙδέα:\nProf. Christoph Stampfer\nΠρογραμματισμός:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "sensorLinearAcceleration" = "Γραμμική επιτάχυνση";
 "sensorLight" = "Φως";
 "sensorGyroscope" = "Γυροσκόπιο";
