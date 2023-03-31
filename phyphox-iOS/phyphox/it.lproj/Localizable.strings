@@ -73,7 +73,7 @@
 "sensorMagneticField" = "Campo magnetico";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Vuoi eliminare questo esperimento dalla tua collezione?";
-"creditsNames" = "Sviluppatore e progettista: \nDr. Sebastian Staacks \nCreatore: \nProf. Christoph Stampfer \nProgrammatori: \nDominik Dorse \nJonas Gessner \nCamilla Lummerzheim";
+"creditsNames" = "Sviluppatore e progettista:\nDr. Sebastian Staacks\nCreatore:\nProf. Christoph Stampfer\nProgrammatori:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "remoteServerWarning" = "Stai per abilitare l’accesso remoto ai dati acquisiti. Fallo solo se sei su una rete affidabile! Nota: l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su alcune reti aziendali e universitarie. \n \nPer massimizzare la sicurezza e la performance è meglio connettersi a questo dispositivo col tethering (hotspot mobile). \n \nDopo aver premuto OK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.";
 "export_pick_share" = "Seleziona un metodo per esportare";
 "sensorNotAvailableWarningTitle" = "Sensore non disponibile.";
