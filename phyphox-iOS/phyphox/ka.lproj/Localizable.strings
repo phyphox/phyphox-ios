@@ -325,7 +325,7 @@
 "actions" = "მოქმედებები";
 "newExperiment" = "დაამატე ექსპერიმენტი";
 "creditsRWTH" = "ფაიფოქსი შექმნილია 2nd Institute of Physics at the RWTH Aachen University-ში.";
-"creditsNames" = "განვითარება და კოცეფცია:\nDr. Sebastian Staacks\nკონცეფცია:\nProf. Christoph Stampfer\nპროგრამირება:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "განვითარება და კოცეფცია:\nDr. Sebastian Staacks\nკონცეფცია:\nProf. Christoph Stampfer\nპროგრამირება:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "gpl" = "ფაიფოქსი არის ღია სივრცის სოფთვეარი გამოშვებული GNU General Public Licence-ის მიერ. გთხოვთ ეწვიოთ http://phyphox.org დამატებითი ინფორმაციისათვის და მიიღოთ წვდომა მის კოდზე. თუმცა სახელი \"phypox\" და \"RWTH Aachen\" არის დარეგისტრირებული სავაჭრო მარკები.";
 "appleBanWarningMoreInfo" = "დამატებითი ინფორმაცია";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
