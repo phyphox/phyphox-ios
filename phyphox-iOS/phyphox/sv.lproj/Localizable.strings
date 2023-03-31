@@ -16,7 +16,7 @@
 "info" = "Info";
 "credits" = "Credit";
 "creditsRWTH" = "phyphox har skapats av 2:a Institute of Physics vid RWTH Aachen University.";
-"creditsNames" = "Utveckling och koncept:\nDr. Sebastian Staacks\nKoncept:\nProf. Christoph Stampfer\nProgramming:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Utveckling och koncept:\nDr. Sebastian Staacks\nKoncept:\nProf. Christoph Stampfer\nProgramming:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "gpl" = "Phyphox® är öppen mjukvara under GNU General Public Licence. Besök http://phyphox.org för ytterligare information och tillgång till källkod. Namnet \"phyphox\" och \"RWTH Aachen\" är dock registrerade varumärken.";
 "sensorLinearAcceleration" = "Linjär acceleration";
 "sensorLight" = "Ljus";
