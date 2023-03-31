@@ -83,7 +83,7 @@
 "sensorMagneticField" = "Magnetické pole";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "confirmDelete" = "Chcete tento experiment smazat ze své sbírky?";
-"creditsNames" = "Vývoj a koncept: \nDr. Sebastian Staacks \nKoncept: \nProf. Christoph Stampfer \nProgramování: \nDominik Dorsel \nJonas Gessner \nCamilla Lummerzheim";
+"creditsNames" = "Vývoj a koncept:\nDr. Sebastian Staacks\nKoncept:\nProf. Christoph Stampfer\nProgramování:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "remoteServerWarning" = "Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni k důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitních či firemních sítích povoleno a tedy ani umožněno. \nPro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu). \nPo zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.";
 "export_pick_share" = "Vyberte si způsob exportu";
 "sensorNotAvailableWarningTitle" = "Senzor není dostupný.";
