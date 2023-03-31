@@ -13,7 +13,7 @@
 "damageWarning" = "Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na działanie znacznego pola magnetycznego. Autorzy phyphox'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.";
 "credits" = "Autorzy";
 "creditsRWTH" = "phyphox powstał w II Instytucie Fizyki Uniwersytetu RWTH w Aachen.";
-"creditsNames" = "Koncepcja i rozwój:\n Dr. Sebastian Staacks\nKoncepcja:\n Prof. Christoph Stampfer\nProgramowanie:\n Dominik Dorsel\n Jonas Gessner\n Camilla Lummerzheim";
+"creditsNames" = "Koncepcja i rozwój:\nDr. Sebastian Staacks\nKoncepcja:\nProf. Christoph Stampfer\nProgramowanie:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "sensorLinearAcceleration" = "Przyspieszenia liniowego";
 "sensorLight" = "Światła";
 "sensorGyroscope" = "Żyroskop";
