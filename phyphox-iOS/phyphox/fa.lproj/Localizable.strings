@@ -196,7 +196,7 @@
 "bt_more_info_link_button" = "اطلاعات بیشتر";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
 "actions" = "Actions";
-"creditsNames" = "Development and Concept:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgramming:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Development and Concept:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgramming:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "sensorAttitude" = "Attitude";
 "leave_experiment" = "Leave experiment";
 "leave_experiment_question" = "Leave this experiment and discard recorded data?";
