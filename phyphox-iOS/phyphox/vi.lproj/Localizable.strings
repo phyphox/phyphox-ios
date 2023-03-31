@@ -14,7 +14,7 @@
 "damageWarning" = "Vui lòng không làm hỏng điện thoại trong khi làm thí nghiệm. Vui lòng cẩn thận để tránh làm rơi điện thoại trên bề mặt cứng và không để gần từ trường mạnh. Tác giả phyphox không có trách nhiệm đối với việc hỏng điện thoại của bạn.";
 "credits" = "Thông tin tác giả";
 "creditsRWTH" = "phyphox đã được tạo ra ở Viện Vật Lý thứ 2 ở Đại Học RWTH Aachen.";
-"creditsNames" = "Phát triển và ý tưởng:\nTiến sĩ Sebastian Staacks\nÝ tưởng:\nGiáo sư Christoph Stampfer\nLập trình:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Phát triển và ý tưởng:\nTiến sĩ Sebastian Staacks\nÝ tưởng:\nGiáo sư Christoph Stampfer\nLập trình:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "sensorLinearAcceleration" = "Gia tốc tuyến tính";
 "sensorLight" = "Ánh sáng";
 "sensorGyroscope" = "Con quay hồi chuyển";
