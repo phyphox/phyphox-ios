@@ -409,7 +409,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         print(error)
                     }
                 })
-                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: {_ in } )
                 .addCancelAction()
                 .show(in: self.navigationController!, animated: true)
             
