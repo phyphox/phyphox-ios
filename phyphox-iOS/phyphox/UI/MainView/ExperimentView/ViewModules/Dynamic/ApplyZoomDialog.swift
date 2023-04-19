@@ -271,14 +271,14 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let okButton = UIButton()
         okButton.translatesAutoresizingMaskIntoConstraints = false
         okButton.setTitle(localize("ok"), for: .normal)
-        okButton.setTitleColor(UIColor(named: "mainBackground"), for: .normal)
+        okButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         okButton.addTarget(self, action: #selector(confirmDialog), for: .touchUpInside)
         dialogView.addSubview(okButton)
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.setTitle(localize("cancel"), for: .normal)
-        cancelButton.setTitleColor(UIColor(named: "mainBackground"), for: .normal)
+        cancelButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)
         
