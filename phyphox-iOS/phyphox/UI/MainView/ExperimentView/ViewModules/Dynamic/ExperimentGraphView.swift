@@ -461,9 +461,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             searchRangeMinY -= CGFloat(offset)
             searchRangeMaxY -= CGFloat(offset)
         }
-        
-        print("Suche in \(searchRangeMinX) bis \(searchRangeMaxX)")
-        
+                
         for (i, dataSet) in dataSets.enumerated() {
             
             let n = hasZData ? dataSet.data3D.count : dataSet.data2D.count

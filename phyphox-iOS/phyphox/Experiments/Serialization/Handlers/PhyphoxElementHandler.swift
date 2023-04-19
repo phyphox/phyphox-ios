@@ -64,7 +64,7 @@ private extension ExperimentAudioInput {
 
         let sampleRateBuffer = descriptor.buffer(for: "rate", from: buffers)
 
-        self.init(sampleRate: descriptor.rate, outBuffer: outBuffer, sampleRateInfoBuffer: sampleRateBuffer)
+        self.init(sampleRate: descriptor.rate, outBuffer: outBuffer, sampleRateInfoBuffer: sampleRateBuffer, appendData: descriptor.appendData)
     }
 }
 
@@ -99,7 +99,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 15, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 16, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -180,7 +180,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let links = linkHandler.results
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
-        let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
+        let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, requireFillName: nil, requireFillThreshold: 1, requireFillDynamicName: nil, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
 
         let analysisInputBufferNames = getInputBufferNames(from: analysisDescriptor)
 
@@ -213,7 +213,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
         
         let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
-        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs)
+        let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, requireFill: analysisDescriptor.requireFillName.map { buffers[$0] } ?? nil, requireFillThreshold: analysisDescriptor.requireFillThreshold, requireFillDynamic: analysisDescriptor.requireFillDynamicName.map { buffers[$0] } ?? nil, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs, audioInputs: audioInputs)
         
         var bluetoothDevices: [ExperimentBluetoothDevice] = []
         var bluetoothInputs: [ExperimentBluetoothInput] = []

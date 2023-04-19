@@ -87,6 +87,10 @@ struct AnalysisDescriptor {
     let dynamicSleepName: String?
     let onUserInput: Bool
 
+    let requireFillName: String?
+    let requireFillThreshold: Int
+    let requireFillDynamicName: String?
+    
     let timedRun: Bool
     let timedRunStartDelay: Double
     let timedRunStopDelay: Double
@@ -113,6 +117,9 @@ final class AnalysisElementHandler: ResultElementHandler {
         case sleep
         case dynamicSleep
         case onUserInput
+        case requireFill
+        case requireFillThreshold
+        case requireFillDynamic
         case timedRun
         case timedRunStartDelay
         case timedRunStopDelay
@@ -126,6 +133,10 @@ final class AnalysisElementHandler: ResultElementHandler {
         
         let onUserInput: Bool = try attributes.optionalValue(for: .onUserInput) ?? false
         
+        let requireFillName: String? = attributes.optionalString(for: .requireFill)
+        let requireFillThreshold = try attributes.optionalValue(for: .requireFillThreshold) ?? 1
+        let requireFillDynamicName = attributes.optionalString(for: .requireFillDynamic)
+        
         let timedRun = try attributes.optionalValue(for: .timedRun) ?? false
         let timedRunStartDelay = try attributes.optionalValue(for: .timedRunStartDelay) ?? 3.0
         let timedRunStopDelay = try attributes.optionalValue(for: .timedRunStopDelay) ?? 10.0
@@ -136,7 +147,7 @@ final class AnalysisElementHandler: ResultElementHandler {
 
         let modules = Array(zip(moduleNames, moduleHandler.results))
 
-        results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, onUserInput: onUserInput, timedRun: timedRun, timedRunStartDelay: timedRunStartDelay, timedRunStopDelay: timedRunStopDelay, modules: modules))
+        results.append(AnalysisDescriptor(sleep: sleep, dynamicSleepName: dynamicSleep, onUserInput: onUserInput, requireFillName: requireFillName, requireFillThreshold: requireFillThreshold, requireFillDynamicName: requireFillDynamicName, timedRun: timedRun, timedRunStartDelay: timedRunStartDelay, timedRunStopDelay: timedRunStopDelay, modules: modules))
     }
 
     func clearChildHandlers() {

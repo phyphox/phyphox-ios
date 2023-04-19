@@ -206,6 +206,26 @@ final class DataBuffer {
             didWrite()
         }
     }
+    
+    func readAndClear(reset: Bool) -> [Double] {
+        return syncWrite {
+            guard !staticBuffer || !written else { return contents }
+
+            willWrite()
+
+            let copy = contents
+            
+            if reset {
+                contents = baseContents
+            } else {
+                contents = []
+            }
+
+            didWrite()
+            
+            return copy
+        }
+    }
 
     func replaceValues(_ values: [Double]) {
         syncWrite {
@@ -280,6 +300,8 @@ final class DataBuffer {
     func toArray() -> [Double] {
         return syncRead { return contents }
     }
+    
+    
 }
 
 extension DataBuffer: Sequence {
