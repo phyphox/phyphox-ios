@@ -33,8 +33,6 @@ class MenuTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.backgroundColor = UIColor(named: "mainBackground")!
-        
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "menu")
         view.addSubview(tableView)
         
@@ -59,6 +57,7 @@ class MenuTableViewController: UITableViewController {
         
         cell.textLabel?.text = element.label
         cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+        cell.backgroundColor = .clear
         cell.accessoryView = UIImageView(image: element.icon)
         return cell
     }
@@ -79,6 +78,8 @@ class MenuTableViewController: UITableViewController {
         tableView = FixedTableView()
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.backgroundColor = .clear
+        tableView.isScrollEnabled = false
         tableView.isUserInteractionEnabled = true
         
         menuAlertController.setValue(self, forKey: "contentViewController")
