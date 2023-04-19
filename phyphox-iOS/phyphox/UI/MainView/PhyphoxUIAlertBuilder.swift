@@ -243,7 +243,7 @@ class JGAlertAccessoryViewController: UIViewController {
             get {
                 // adjust the height as per the number of element in export data
                 return CGSize(width:self.view.frame.width,
-                              height: 35.0 * Double(exportTypes.count))
+                              height: 50.0 * Double(exportTypes.count))
             }
         
             set {super.preferredContentSize = newValue}

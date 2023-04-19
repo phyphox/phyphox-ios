@@ -219,7 +219,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         dialogView.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         
-        backgroundView.backgroundColor = UIColor(named: "mainBackground")
+        backgroundView.backgroundColor = UIColor(named: "secondaryBackground")
         backgroundView.alpha = 0.6
         backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(cancelDialog)))
         self.view.addSubview(backgroundView)
