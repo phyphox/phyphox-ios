@@ -284,7 +284,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         
         //...........
         
-        dialogView.backgroundColor = UIColor.white
+        dialogView.backgroundColor = UIColor(named: "mainBackground")
         dialogView.layer.cornerRadius = 6
         self.view.addSubview(dialogView)
         
