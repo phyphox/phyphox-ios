@@ -62,7 +62,7 @@ func mapColorString(_ string: String?) -> UIColor? {
     
     if let color = namedColors[colorString.lowercased()] {
         return  getRequiredColor(uiColor: color)
-    } else if let color = UIColor(named: colorString) {
+    } else if let color = UIColor(hexString: colorString) {
         return color
     } else {
         return nil
