@@ -58,6 +58,7 @@ class MenuTableViewController: UITableViewController {
         cell.textLabel?.text = element.label
         cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
         cell.backgroundColor = .clear
+        cell.separatorInset = .zero
         cell.accessoryView = UIImageView(image: element.icon)
         return cell
     }
@@ -80,6 +81,11 @@ class MenuTableViewController: UITableViewController {
         tableView.delegate = self
         tableView.backgroundColor = .clear
         tableView.isScrollEnabled = false
+        
+        // Add a separator on the top
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: tableView.frame.width, height: 0.5))
+        tableView.tableHeaderView?.backgroundColor = tableView.separatorColor
+        
         tableView.isUserInteractionEnabled = true
         
         menuAlertController.setValue(self, forKey: "contentViewController")
