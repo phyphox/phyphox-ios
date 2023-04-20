@@ -219,7 +219,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         dialogView.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         
-        backgroundView.backgroundColor = UIColor.black
+        backgroundView.backgroundColor = UIColor(named: "secondaryBackground")
         backgroundView.alpha = 0.6
         backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(cancelDialog)))
         self.view.addSubview(backgroundView)
@@ -271,20 +271,20 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let okButton = UIButton()
         okButton.translatesAutoresizingMaskIntoConstraints = false
         okButton.setTitle(localize("ok"), for: .normal)
-        okButton.setTitleColor(UIColor.black, for: .normal)
+        okButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         okButton.addTarget(self, action: #selector(confirmDialog), for: .touchUpInside)
         dialogView.addSubview(okButton)
         
         let cancelButton = UIButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.setTitle(localize("cancel"), for: .normal)
-        cancelButton.setTitleColor(UIColor.black, for: .normal)
+        cancelButton.setTitleColor(UIColor(named: "textColor"), for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
         dialogView.addSubview(cancelButton)
         
         //...........
         
-        dialogView.backgroundColor = UIColor.white
+        dialogView.backgroundColor = UIColor(named: "mainBackground")
         dialogView.layer.cornerRadius = 6
         self.view.addSubview(dialogView)
         

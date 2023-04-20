@@ -53,7 +53,7 @@ final class ExperimentTimedRunDialogView: UIView {
                 
         func setupAllSwitch(on: Bool, label: String) -> AllSwitch {
             let bt = UIButton()
-            bt.setTitleColor(UIColor.black, for: .normal)
+            bt.setTitleColor(UIColor(named: "textColor"), for: .normal)
             bt.layer.borderWidth = 1
             bt.layer.cornerRadius = 5
             bt.titleLabel?.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
@@ -62,7 +62,7 @@ final class ExperimentTimedRunDialogView: UIView {
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             
             la.text = label
-            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
+            la.textColor = UIColor(named: "textColor")
             
             var sw = AllSwitch(bt: bt, onState: on, la: la)
             sw.on = on
@@ -78,7 +78,7 @@ final class ExperimentTimedRunDialogView: UIView {
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             
             la.text = label
-            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
+            la.textColor = UIColor(named: "textColor")
             
             return BeeperSwitch(sw: sw, la: la)
         }
@@ -99,13 +99,13 @@ final class ExperimentTimedRunDialogView: UIView {
             formatter.numberStyle = .decimal
             formatter.minimumFractionDigits = 1
             tf.text = formatter.string(from: value as NSNumber)
-            tf.textColor = UIColor.init(white: 0.0, alpha: 1.0)
-            tf.backgroundColor = UIColor.init(white: 1.0, alpha: 1.0)
+            tf.textColor = UIColor(named: "textColor")
+            tf.backgroundColor = UIColor(named: "mainBackground")
             
             let la = UILabel()
             la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
             la.text = label
-            la.textColor = UIColor.init(white: 0.0, alpha: 1.0)
+            la.textColor = UIColor(named: "textColor")
             
             return TimerField(tf: tf, la: la)
         }

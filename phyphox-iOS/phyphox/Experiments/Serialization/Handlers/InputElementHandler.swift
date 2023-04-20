@@ -189,6 +189,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
 struct AudioInputDescriptor: SensorDescriptor {
     let rate: UInt
     let outputs: [SensorOutputDescriptor]
+    let appendData: Bool
 }
 
 private final class AudioElementHandler: ResultElementHandler, LookupElementHandler {
@@ -206,14 +207,17 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
 
     private enum Attribute: String, AttributeKey {
         case rate
+        case append
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
+        let appendData: Bool = try attributes.optionalValue(for: .append) ?? false
 
-        results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results))
+
+        results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results, appendData: appendData))
     }
 }
 

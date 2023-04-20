@@ -92,11 +92,11 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         
         renderer = ExperimentDepthGUIRenderer(metalDevice: arView.device!, renderDestination: arView)
         
-        aggregationBtn.backgroundColor = kLightBackgroundColor
+        aggregationBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
         aggregationBtn.setTitle(localize("depthAggregationMode"), for: UIControl.State())
         aggregationBtn.isHidden = true
         
-        cameraBtn.backgroundColor = kLightBackgroundColor
+        cameraBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
         cameraBtn.setTitle(localize("sensorCamera"), for: UIControl.State())
         cameraBtn.isHidden = true
         
@@ -105,7 +105,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = kTextColor
+        label.textColor = UIColor(named: "textColor")
 
         addSubview(label)
         

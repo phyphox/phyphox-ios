@@ -30,7 +30,9 @@ final class ValueViewMapElementHandler: ResultElementHandler, ChildlessElementHa
         let min = try attributes.optionalValue(for: .min) ?? -Double.infinity
         let max = try attributes.optionalValue(for: .max) ?? Double.infinity
 
-        results.append(ValueViewMap(range: min...max, replacement: text))
+        if max >= min {
+            results.append(ValueViewMap(range: min...max, replacement: text))
+        }
     }
 }
 
@@ -75,7 +77,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? kTextColor
+        let color = (mapColorString(attributes.optionalString(for: .color)) ?? UIColor(named: "textColor"))!
 
         let mappings = mapHandler.results
         let inpurBufferName = try inputHandler.expectSingleResult()

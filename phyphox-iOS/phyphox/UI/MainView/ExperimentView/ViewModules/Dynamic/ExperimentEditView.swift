@@ -32,6 +32,8 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     private let unitLabel: UILabel?
     private let label = UILabel()
     
+    var dynamicLabelHeight = 0.0
+    
     let formatter = NumberFormatter()
 
     required init?(descriptor: EditViewDescriptor) {
@@ -40,15 +42,15 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = kTextColor
+        label.textColor = UIColor(named: "textColor")
         label.textAlignment = .right
 
         formatter.numberStyle = .decimal
         formatter.groupingSeparator = ""
         
         textField = UITextField()
-        textField.backgroundColor = kLightBackgroundColor
-        textField.textColor = kTextColor
+        textField.backgroundColor = UIColor(named: "lightBackgroundColor")
+        textField.textColor = UIColor(named: "textColor")
         
         textField.returnKeyType = .done
         
@@ -59,7 +61,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             unitLabel = {
                 let l = UILabel()
                 l.text = descriptor.localizedUnit
-                l.textColor = kTextColor
+                l.textColor = UIColor(named: "textColor")
                 
                 l.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.subheadline)
                 
@@ -75,14 +77,14 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
-        toolbar.barTintColor = kBackgroundColor
+        toolbar.barTintColor = UIColor(named: "mainBackground")
         let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let doneButton = UIBarButtonItem(title: localize("ok"), style: .done, target: self, action: #selector(hideKeyboard(_:)))
         doneButton.width = UIScreen.main.bounds.width / 3
         doneButton.tintColor = kHighlightColor
         if descriptor.signed {
             let pmButton = UIBarButtonItem(title: "+/−", style: .done, target: self, action: #selector(changeSign))
-            pmButton.tintColor = kTextColor
+            pmButton.tintColor = UIColor(named: "textColor")
             pmButton.width = UIScreen.main.bounds.width / 3
             toolbar.items = [pmButton, space, doneButton]
         } else {
@@ -191,6 +193,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         textField.text = formattedValue(rawValue)
     }
     
+    
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         //We want to have the gap between label and value centered, so we require atwice the width of the larger half
         let s1 = label.sizeThatFits(size)
@@ -207,20 +210,22 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             right += (spacing+s3.width)
             height = max(height, s3.height)
         }
-        
+
+        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
         let width = min(2.0 * max(left, right), size.width)
         
-        return CGSize(width: width, height: height)
+        
+        return CGSize(width: width, height: dynamicLabelHeight)
     }
+
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let h = label.sizeThatFits(self.bounds.size).height
         let h2 = textField.sizeThatFits(self.bounds.size).height
         let w = (bounds.width - spacing)/2.0
         
-        label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - h)/2.0), size: CGSize(width: w, height: h))
+        label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
         
         var actualTextFieldWidth = textFieldWidth
         

@@ -34,13 +34,14 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     
     init(filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
         ble = BluetoothScan(scanDirectly: true, filterByName: filterByName, filterByUUID: filterByUUID, checkExperiments: checkExperiments, autoConnect: autoConnect)
-        
+       
         signalImages = []
-        for i in 0..<5 {
-            signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
-        }
         
         super.init(style: .plain)
+        
+        for i in 0..<5 {
+            self.showTheSignalImageByAdjustingWithAppMode(i: i)
+        }
 
         ble.scanResultsDelegate = self
     }
@@ -68,9 +69,9 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     }
     
     func formatCell(_ cell: UITableViewCell, withEntry entry: BluetoothScan.ScanResult) {
-        cell.backgroundColor = kBackgroundColor
+        cell.backgroundColor = UIColor(named: "mainBackground")
         cell.textLabel?.text = entry.advertisedName ?? entry.peripheral.name ?? localize("unknown")
-        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(white: 1.0, alpha: 0.6) : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : kTextColor)
+        cell.textLabel?.textColor = entry.experiment == .unavailable ? UIColor(named: "textUnavailableColor")! : (entry.oneOfMany && entry.strongestSignal ? kHighlightColor : UIColor(named: "textColor"))
         cell.detailTextLabel?.text = entry.experiment == .unavailable ? localize("bt_device_not_supported") : ""
         cell.detailTextLabel?.textColor = kHighlightColor
         let signal_i: Int
@@ -121,6 +122,26 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         } else {
             sortedResults =  [BluetoothScan.ScanResult] (ble.discoveredDevices.values.sorted(by: {$0.firstSeen.compare($1.firstSeen) == .orderedAscending}))
             tableView.reloadData()
+        }
+    }
+    
+    func showTheSignalImageByAdjustingWithAppMode(i: Int){
+        if #available(iOS 13.0, *) {
+            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+                signalImages.append((UIImage(named: "bluetooth_signal_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!)
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+                signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
+            } else {
+                if(UIScreen.main.traitCollection.userInterfaceStyle == .light){
+                    signalImages.append((UIImage(named: "bluetooth_signal_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!)
+                } else {
+                    signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
+                }
+                
+            }
+        }
+        else {
+            signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
         }
     }
    

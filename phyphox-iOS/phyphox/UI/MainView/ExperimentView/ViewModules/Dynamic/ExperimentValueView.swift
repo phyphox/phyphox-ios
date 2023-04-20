@@ -16,6 +16,8 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
     private let label = UILabel()
     private let valueLabel = UILabel()
     private let unitLabel = UILabel()
+    /** represents which label's text is out of its bound  */
+    private var labelOutOfBoundDict = [String: Bool]()
 
     var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 0)
@@ -29,12 +31,15 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         }
     }
     
+    var dynamicLabelHeight = 0.0
+    
     required init?(descriptor: ValueViewDescriptor) {
         self.descriptor = descriptor
 
         super.init(frame: .zero)
 
         label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = descriptor.color
@@ -50,7 +55,8 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         unitLabel.textColor = descriptor.color
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         unitLabel.textAlignment = .left
-        
+        labelOutOfBoundDict[descriptor.label] = false
+
         addSubview(valueLabel)
         addSubview(unitLabel)
         addSubview(label)
@@ -118,11 +124,12 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         let hangOver = (bounds.width - 2*spacing)/2.0 - s2.width - s3.width - spacing
         let push = hangOver < 0 ? hangOver : 0.0
         
-        label.frame = CGRect(x: push, y: (bounds.height - s1.height)/2.0, width: bounds.width/2.0 - spacing, height: s1.height)
+        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
         
+        label.frame = CGRect(x: push, y: (bounds.height - dynamicLabelHeight)/2.0, width: bounds.width/2.0 - spacing, height: dynamicLabelHeight)
         valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
-
         unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (bounds.height - s3.height)/2.0, width: s3.width, height: s3.height)
+       
     }
 }
 

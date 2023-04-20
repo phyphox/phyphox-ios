@@ -9,7 +9,7 @@
 import Foundation
 import GCDWebServers
 
-protocol ExperimentWebServerDelegate: class {
+protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }
     var remainingTimerTime: Double { get }
     

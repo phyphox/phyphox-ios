@@ -49,6 +49,15 @@ final class ExperimentSerialization {
     static func readExperimentFromURL(_ url: URL) throws -> Experiment {
         let readURL: URL
 
+        /*
+        
+        The following will block loading of saved states. This is only for testing and recovery for users with loading problems due to large files stuck in their system. Do not use this block in production versions.
+        
+        if url.absoluteString.contains(savedExperimentStatesURL.absoluteString) {
+            throw SerializationError.genericError(message: "This is a special phyphox recovery version that does not load saved states.")
+        }
+        */
+        
         if url.pathExtension == experimentStateFileExtension {
             readURL = url.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension)
         }

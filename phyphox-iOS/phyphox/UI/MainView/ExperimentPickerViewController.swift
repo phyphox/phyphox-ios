@@ -35,7 +35,7 @@ final class PickerContainerView: CollectionContainerView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        collectionView.backgroundColor = kBackgroundColor
+        collectionView.backgroundColor = UIColor(name: "mainBackground")
     }
     
     override var intrinsicContentSize: CGSize {
@@ -146,6 +146,7 @@ final class ExperimentPickerViewController: CollectionViewController {
                     catFontColor = fontColor
                 }
             }
+            view.backgroundColor = catColor
             view.color = catColor
             view.fontColor = catFontColor
             

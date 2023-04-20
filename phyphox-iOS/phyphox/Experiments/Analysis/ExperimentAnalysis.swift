@@ -14,7 +14,7 @@ extension String: AttributeKey {
     }
 }
 
-protocol ExperimentAnalysisDelegate: class {
+protocol ExperimentAnalysisDelegate: AnyObject {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis)
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
 }
@@ -27,6 +27,10 @@ final class ExperimentAnalysis {
     private let sleep: Double
     private let dynamicSleep: DataBuffer?
     private let onUserInput: Bool
+    
+    private let requireFill: DataBuffer?
+    private let requireFillThreshold: Int
+    private let requireFillDynamic: DataBuffer?
 
     public let timedRun: Bool
     public let timedRunStartDelay: Double
@@ -38,14 +42,19 @@ final class ExperimentAnalysis {
     weak var delegate: ExperimentAnalysisDelegate?
     
     let sensorInputs: [ExperimentSensorInput]
+    let audioInputs: [ExperimentAudioInput]
+
 
     public var queue: DispatchQueue?
     
-    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput]) {
+    init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, requireFill: DataBuffer?, requireFillThreshold: Int, requireFillDynamic: DataBuffer?, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], audioInputs: [ExperimentAudioInput]) {
         self.modules = modules
         self.sleep = sleep
         self.dynamicSleep = dynamicSleep
         self.onUserInput = onUserInput
+        self.requireFill = requireFill
+        self.requireFillThreshold = requireFillThreshold
+        self.requireFillDynamic = requireFillDynamic
 
         self.timedRun = timedRun
         self.timedRunStartDelay = timedRunStartDelay
@@ -54,6 +63,7 @@ final class ExperimentAnalysis {
         self.timeReference = timeReference
         
         self.sensorInputs = sensorInputs
+        self.audioInputs = audioInputs
         
         for module in modules {
             for input in module.inputs {
@@ -86,7 +96,7 @@ final class ExperimentAnalysis {
 
         busy = true
 
-        let delay = cycle > 1 ? max(1/50.0, dynamicSleep?.last ?? sleep) : 0
+        let delay = cycle > 1 ? max(1/100.0, dynamicSleep?.last ?? sleep) : 0
 
         after(delay) {
             if !self.running && self.cycle > 0 { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
@@ -103,7 +113,7 @@ final class ExperimentAnalysis {
                 self.busy = false
                 self.delegate?.analysisDidUpdate(self)
 
-                if self.cycle > 1 && (didRequestUpdateWhileBusy || !self.onUserInput) {
+                if !isPreRun && (didRequestUpdateWhileBusy || !self.onUserInput) {
                     self.setNeedsUpdate()
                 }
             }
@@ -112,6 +122,29 @@ final class ExperimentAnalysis {
     
     private func update(_ completion: @escaping () -> Void) {
 
+        for sensorInput in sensorInputs {
+            sensorInput.updateGeneratedRate()
+        }
+        
+        for audioInput in audioInputs {
+            audioInput.outBuffer.appendFromArray(audioInput.backBuffer.readAndClear(reset: false))
+        }
+        
+        if let requireFill = requireFill {
+            let threshold: Int
+            if let dynamic = requireFillDynamic?.last {
+                threshold = Int(dynamic)
+            } else {
+                threshold = requireFillThreshold
+            }
+            if requireFill.count < threshold {
+                mainThread {
+                    completion()
+                }
+                return
+            }
+        }
+        
         func inCycleList(thisCycle: Int, cycles: [(Int, Int)]) -> Bool {
             if cycles.count == 0 {
                 return true
@@ -131,21 +164,22 @@ final class ExperimentAnalysis {
         let modulesInCycle = modules.filter{inCycleList(thisCycle: cycle, cycles: $0.cycles)}
         
         let c = modulesInCycle.count - 1
-
+        
         let experimentTime = timeReference.getExperimentTime()
         let linearTime = timeReference.getLinearTime()
         let experimentOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: experimentTime)).timeIntervalSince1970
         let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
-        
-        for sensorInput in sensorInputs {
-            sensorInput.updateGeneratedRate()
-        }
         
         if (c >= 0) {
             for (i, analysis) in modulesInCycle.enumerated() {
                 queue?.async(execute: {
                     analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
                     if i == c {
+                        for audioInput in self.audioInputs {
+                            if !audioInput.appendData {
+                                audioInput.outBuffer.clear(reset: false)
+                            }
+                        }
                         mainThread {
                             self.cycle += 1
                             completion()
@@ -175,6 +209,9 @@ extension ExperimentAnalysis: Equatable {
     static func ==(lhs: ExperimentAnalysis, rhs: ExperimentAnalysis) -> Bool {
         return lhs.sleep == rhs.sleep &&
             lhs.dynamicSleep == rhs.dynamicSleep &&
+            lhs.requireFill == rhs.requireFill &&
+            lhs.requireFillThreshold == rhs.requireFillThreshold &&
+            lhs.requireFillDynamic == rhs.requireFillDynamic &&
             lhs.modules == rhs.modules
     }
 }

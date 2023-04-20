@@ -8,7 +8,7 @@
 
 import UIKit
 
-protocol GraphGridDelegate: class {
+protocol GraphGridDelegate: AnyObject {
     func updatePlotArea()
 }
 
@@ -22,8 +22,8 @@ final class GraphGridView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        borderView.layer.borderColor = UIColor(white: 1.0, alpha: 1.0).cgColor
-        borderView.layer.borderWidth = 2.0/UIScreen.main.scale
+        borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
+        borderView.layer.borderWidth = SettingBundleHelper.getGraphSettingWidth()/UIScreen.main.scale
         
         addSubview(borderView)
     }
@@ -242,7 +242,7 @@ final class GraphGridView: UIView {
             let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
             for line in horizontalGridLines {
                 let label = labels[index]
-                label.textColor = kTextColor
+                label.textColor = UIColor(named: "textColor")
 
                 if descPrecisionX < 0 {
                     formatterX.minimumFractionDigits = max(line.precision, 0)
@@ -250,6 +250,7 @@ final class GraphGridView: UIView {
                 }
                 
                 label.text = format(line.absoluteValue, formatter: formatterX, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
+                label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
                 label.sizeToFit()
 
                 ySpace = max(ySpace, label.frame.size.height)
@@ -260,7 +261,7 @@ final class GraphGridView: UIView {
             if !isZScale {
                 for line in grid.yGridLines {
                     let label = labels[index]
-                    label.textColor = kTextColor
+                    label.textColor = UIColor(named: "textColor")
                                         
                     if descPrecisionY < 0 {
                         formatterY.usesSignificantDigits = false
@@ -270,6 +271,7 @@ final class GraphGridView: UIView {
                     }
 
                     label.text = format(line.absoluteValue, formatter: formatterY, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
+                    label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
                     label.sizeToFit()
 
                     xSpace = max(xSpace, label.frame.size.width)

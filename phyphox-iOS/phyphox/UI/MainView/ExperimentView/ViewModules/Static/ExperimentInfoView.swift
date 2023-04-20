@@ -15,7 +15,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
 
     required init?(descriptor: InfoViewDescriptor) {
         self.descriptor = descriptor
-        
+
         super.init(frame: .zero)
 
         label.numberOfLines = 0
@@ -25,7 +25,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         label.textColor = descriptor.color
         switch (descriptor.align) {
             case .left: label.textAlignment = .natural
-        case .right: label.textAlignment = UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .left : .right
+            case .right: label.textAlignment = UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .left : .right
             case .center: label.textAlignment = .center
         }
 
@@ -43,10 +43,10 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         s.height = label.sizeThatFits(s).height
         return s
     }
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
-        
+
         label.frame = bounds
     }
 }

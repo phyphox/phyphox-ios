@@ -58,7 +58,6 @@
 		6B0C71551C1C706A00500FEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0C71541C1C706A00500FEE /* Constants.swift */; };
 		6B0D69302055C59B0044A4CE /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */; };
-		6B2E0FC3205AC5E1008FAA91 /* UIAlertController+PTExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2E0FC1205AC5E1008FAA91 /* UIAlertController+PTExtensions.m */; };
 		6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */; };
 		6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B00F0CF1C46FE9800971941 /* ExperimentAudioInput.swift */; };
 		6B422E1A1CA2FC2F00E945BC /* ExperimentAudioOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5374C11CA15C3500B59FB9 /* ExperimentAudioOutput.swift */; };
@@ -156,7 +155,13 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
-		C018C9AC2707A98300E9E14B /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C018C9AB2707A98300E9E14B /* BEMCheckBox */; };
+		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
+		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
+		A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */; };
+		A1FA9A00299FCFBC00E0FDBF /* color.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1FA99FF299FCFBC00E0FDBF /* color.xcassets */; };
+		A1FA9A0229A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */; };
+		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
+		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
 		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C034B0112716F9E500C0EF00 /* ExperimentDepthGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034B0102716F9E500C0EF00 /* ExperimentDepthGUIView.swift */; };
@@ -214,16 +219,24 @@
 		C0AD8552229EA1CF00421738 /* HintBubbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */; };
 		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
 		C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C086C6EA270755E100348772 /* CocoaMQTT.framework */; };
-		C0BD4DF027079C490020A5AF /* GCDWebServers in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DEF27079C490020A5AF /* GCDWebServers */; };
 		C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DF527079C600020A5AF /* JGProgressHUD */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
+		C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C228E5A16D00BC98DE /* GCDWebServers */; };
+		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
 		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
 		C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; };
 		C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
 		C051CFB122AEEB4100355864 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
@@ -392,9 +405,7 @@
 		6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphViewDescriptor.swift; sourceTree = "<group>"; };
 		6B0C71541C1C706A00500FEE /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6B26F6FC1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentExportSetSelectionView.swift; sourceTree = "<group>"; };
-		6B2E0FBF205AC5E1008FAA91 /* UIAlertController+PTExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIAlertController+PTExtensions.h"; sourceTree = "<group>"; };
 		6B2E0FC0205AC5E1008FAA91 /* UIColor+Expanded.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Expanded.h"; sourceTree = "<group>"; };
-		6B2E0FC1205AC5E1008FAA91 /* UIAlertController+PTExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIAlertController+PTExtensions.m"; sourceTree = "<group>"; };
 		6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Expanded.m"; sourceTree = "<group>"; };
 		6B422E2B1CA4A4BF00E945BC /* GraphGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridView.swift; sourceTree = "<group>"; };
 		6B422E2D1CA535EB00E945BC /* GraphGridLineView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphGridLineView.swift; sourceTree = "<group>"; };
@@ -496,6 +507,14 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
+		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
+		A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExt.swift; sourceTree = "<group>"; };
+		A1FA99FF299FCFBC00E0FDBF /* color.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = color.xcassets; sourceTree = "<group>"; };
+		A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhyphoxUIAlertBuilder.swift; sourceTree = "<group>"; };
+		A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorConverterHelper.swift; sourceTree = "<group>"; };
+		A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
 		C025FC0623D9D45800AE13B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -596,13 +615,20 @@
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
 				C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */,
-				C018C9AC2707A98300E9E14B /* BEMCheckBox in Frameworks */,
 				C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */,
+				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
 				C0FC14872707C16300512064 /* libJXLS.a in Frameworks */,
 				C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */,
-				C0BD4DF027079C490020A5AF /* GCDWebServers in Frameworks */,
+				C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */,
 				C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1FA9A0929ACC5F800E0FDBF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -661,10 +687,9 @@
 		6B2E0FBE205AC5E1008FAA91 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				6B2E0FBF205AC5E1008FAA91 /* UIAlertController+PTExtensions.h */,
-				6B2E0FC1205AC5E1008FAA91 /* UIAlertController+PTExtensions.m */,
 				6B2E0FC0205AC5E1008FAA91 /* UIColor+Expanded.h */,
 				6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */,
+				A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -708,6 +733,7 @@
 			children = (
 				6B7BF77C1C130425007408FB /* phyphox */,
 				C051CFAD22AEEB4100355864 /* phyphox screenshots */,
+				A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */,
 				6B7BF77B1C130425007408FB /* Products */,
 				C075AA7B2232CC0500DE86D8 /* Frameworks */,
 			);
@@ -718,6 +744,7 @@
 			children = (
 				6B7BF77A1C130425007408FB /* phyphox.app */,
 				C051CFAC22AEEB4000355864 /* phyphox screenshots.xctest */,
+				A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -725,6 +752,7 @@
 		6B7BF77C1C130425007408FB /* phyphox */ = {
 			isa = PBXGroup;
 			children = (
+				A1E03AA129B779A400CE93A6 /* Helper */,
 				6B7BF7C11C13048B007408FB /* AppDelegate.swift */,
 				6B0C71541C1C706A00500FEE /* Constants.swift */,
 				C079BC692260D2B40018D6A5 /* localizationHelper.swift */,
@@ -752,6 +780,7 @@
 				4BBA0C9C1D8D75A300A9A634 /* InfoPlist.strings */,
 				6B0815431CABF61B00EE2791 /* libc++.tbd */,
 				4B6AE7141CF9AF0B0070A691 /* Localizable.strings */,
+				A1FA99FF299FCFBC00E0FDBF /* color.xcassets */,
 			);
 			name = Assets;
 			sourceTree = "<group>";
@@ -893,6 +922,7 @@
 				C07B53002294264200BA085A /* BluetoothScanResultsTableViewController.swift */,
 				C060904D21E28727000BEE30 /* ExperimentPickerViewController.swift */,
 				C048ED1C21E3975200544E9A /* ExperimentPickerView.swift */,
+				A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */,
 			);
 			path = MainView;
 			sourceTree = "<group>";
@@ -920,6 +950,7 @@
 		6BFE377020447BC900301CA3 /* ExperimentView */ = {
 			isa = PBXGroup;
 			children = (
+				A1E03A8029B61CB300CE93A6 /* ExperimentPageView */,
 				4B53E8481CFC65EE004E6164 /* ExperimentPageViewController.swift */,
 				C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */,
 				6B00F0291C4072B700971941 /* ExperimentViewController.swift */,
@@ -1099,6 +1130,31 @@
 			path = "Complex-Update-Value";
 			sourceTree = "<group>";
 		};
+		A1E03A8029B61CB300CE93A6 /* ExperimentPageView */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ExperimentPageView;
+			sourceTree = "<group>";
+		};
+		A1E03AA129B779A400CE93A6 /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				A1A6A72E297685DF00090309 /* Utility.swift */,
+				A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */,
+				A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */,
+			);
+			path = Helper;
+			sourceTree = "<group>";
+		};
+		A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
+			);
+			path = phyphoxTests;
+			sourceTree = "<group>";
+		};
 		C034B02227171E0100C0EF00 /* DepthGUI */ = {
 			isa = PBXGroup;
 			children = (
@@ -1196,13 +1252,31 @@
 			);
 			name = phyphox;
 			packageProductDependencies = (
-				C0BD4DEF27079C490020A5AF /* GCDWebServers */,
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
-				C018C9AB2707A98300E9E14B /* BEMCheckBox */,
+				C0F430C228E5A16D00BC98DE /* GCDWebServers */,
+				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1FA9A1229ACC5F800E0FDBF /* Build configuration list for PBXNativeTarget "phyphoxTests" */;
+			buildPhases = (
+				A1FA9A0829ACC5F800E0FDBF /* Sources */,
+				A1FA9A0929ACC5F800E0FDBF /* Frameworks */,
+				A1FA9A0A29ACC5F800E0FDBF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */,
+			);
+			name = phyphoxTests;
+			productName = phyphoxTests;
+			productReference = A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		C051CFAB22AEEB4000355864 /* phyphox screenshots */ = {
 			isa = PBXNativeTarget;
@@ -1228,13 +1302,12 @@
 		6B7BF7721C130425007408FB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1020;
+				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 0930;
 				ORGANIZATIONNAME = "RWTH Aachen";
 				TargetAttributes = {
 					6B7BF7791C130425007408FB = {
 						CreatedOnToolsVersion = 7.1.1;
-						DevelopmentTeam = 44GTV4NJA9;
 						LastSwiftMigration = 1230;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
@@ -1242,6 +1315,10 @@
 								enabled = 1;
 							};
 						};
+					};
+					A1FA9A0B29ACC5F800E0FDBF = {
+						CreatedOnToolsVersion = 14.2;
+						TestTargetID = 6B7BF7791C130425007408FB;
 					};
 					C051CFAB22AEEB4000355864 = {
 						CreatedOnToolsVersion = 10.2.1;
@@ -1280,9 +1357,9 @@
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
-				C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
-				C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
+				C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */,
+				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -1304,6 +1381,7 @@
 			targets = (
 				6B7BF7791C130425007408FB /* phyphox */,
 				C051CFAB22AEEB4000355864 /* phyphox screenshots */,
+				A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1405,6 +1483,7 @@
 				C075DCBE287EA33E001CBE5E /* Settings.bundle in Resources */,
 				C0984B2C227883B100D0EBCD /* MapFragmentShader.glsl in Resources */,
 				C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */,
+				A1FA9A00299FCFBC00E0FDBF /* color.xcassets in Resources */,
 				6B7BF7851C130425007408FB /* Assets.xcassets in Resources */,
 				6BD026CB1CB5707F005085B1 /* phyphox-webinterface in Resources */,
 				6BE320961CB06F7200DCC1ED /* VertexShader.glsl in Resources */,
@@ -1413,6 +1492,13 @@
 				4BBA0C9A1D8D75A300A9A634 /* InfoPlist.strings in Resources */,
 				6BD026EC1CB5C13E005085B1 /* Licenses.ptf in Resources */,
 				6B0D69302055C59B0044A4CE /* phyphox-experiments in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1FA9A0A29ACC5F800E0FDBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1468,6 +1554,7 @@
 				C05CD4A0258D030500662BDF /* GraphPauseMarkerView.swift in Sources */,
 				4B5568B71DD7D846000C033E /* ButtonViewDescriptor.swift in Sources */,
 				6BEA9455207FE8990077274A /* ButtonViewElementHandler.swift in Sources */,
+				A1FA9A0229A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift in Sources */,
 				C063C662238ECCD000327AE7 /* NetworkDiscovery.swift in Sources */,
 				6B63C8E41CC14A96007DC09B /* WebServerUtilities.swift in Sources */,
 				6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */,
@@ -1488,16 +1575,19 @@
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
+				A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */,
 				C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */,
 				4BE1DEFB1E5096F400F10C71 /* SubrangeAnalysis.swift in Sources */,
 				6B7BF8111C14761F007408FB /* MaxAnalysis.swift in Sources */,
 				6BEA944A207FC5280077274A /* ExportElementHandler.swift in Sources */,
 				6B612FE6207E5A8B001DA8D9 /* PhyphoxDocumentHandler.swift in Sources */,
+				A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */,
 				4BE7CAE01E4CD20F00C31090 /* SeparatorViewDescriptor.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
+				A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */,
 				6B612FF6207EB052001DA8D9 /* AnalysisElementHandler.swift in Sources */,
 				6BAEC1DC1C1F6EFC00FBD979 /* ViewDescriptor.swift in Sources */,
 				4B47B02D1DA6A1E100CCBA6E /* AcosAnalysis.swift in Sources */,
@@ -1551,7 +1641,6 @@
 				4B47B03B1DA6AF6900CCBA6E /* TanhAnalysis.swift in Sources */,
 				6B00F0A21C457B5D00971941 /* ExperimentValueView.swift in Sources */,
 				C08725112241460500079279 /* ColorElementHandler.swift in Sources */,
-				6B2E0FC3205AC5E1008FAA91 /* UIAlertController+PTExtensions.m in Sources */,
 				C05CA3262715D0BD00452FB7 /* ExperimentDepthInput.swift in Sources */,
 				6B7BF8171C147B8F007408FB /* RampGeneratorAnalysis.swift in Sources */,
 				6B7BF8211C147CF3007408FB /* AutocorrelationAnalysis.swift in Sources */,
@@ -1581,6 +1670,7 @@
 				6B7BF7F61C132722007408FB /* ExperimentSensorInput.swift in Sources */,
 				6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */,
 				4B47B0331DA6A87A00CCBA6E /* CountAnalysis.swift in Sources */,
+				A1A6A72F297685DF00090309 /* Utility.swift in Sources */,
 				6B7BF81F1C147CE0007408FB /* DifferentiationAnalysis.swift in Sources */,
 				6B7BF8051C146B23007408FB /* GCDAnalysis.swift in Sources */,
 				6BEA9457207FF8CE0077274A /* GraphViewElementHandler.swift in Sources */,
@@ -1635,6 +1725,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1FA9A0829ACC5F800E0FDBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C051CFA822AEEB4000355864 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1647,6 +1745,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */;
+		};
 		C051CFB222AEEB4100355864 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
@@ -1849,7 +1952,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1871,13 +1974,13 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.11;
+				MARKETING_VERSION = 1.1.12;
 				OTHER_LDFLAGS = "";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
@@ -1889,6 +1992,7 @@
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TREAT_MISSING_BASELINES_AS_TEST_FAILURES = NO;
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;
 			};
@@ -1914,7 +2018,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
@@ -1931,13 +2035,13 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.11;
+				MARKETING_VERSION = 1.1.12;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1949,6 +2053,65 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "";
 				USE_HEADERMAP = YES;
+			};
+			name = Release;
+		};
+		A1FA9A1329ACC5F800E0FDBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/phyphox";
+			};
+			name = Debug;
+		};
+		A1FA9A1429ACC5F800E0FDBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/phyphox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/phyphox";
 			};
 			name = Release;
 		};
@@ -2034,6 +2197,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A1FA9A1229ACC5F800E0FDBF /* Build configuration list for PBXNativeTarget "phyphoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1FA9A1329ACC5F800E0FDBF /* Debug */,
+				A1FA9A1429ACC5F800E0FDBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C051CFC322AEEB4100355864 /* Build configuration list for PBXNativeTarget "phyphox screenshots" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2046,22 +2218,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox";
-			requirement = {
-				kind = revision;
-				revision = a3292ebae9f0c2737b0c90281219dced2ce51ac8;
-			};
-		};
-		C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/phyphox/GCDWebServer";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JonasGessner/JGProgressHUD";
@@ -2070,23 +2226,39 @@
 				kind = branch;
 			};
 		};
+		C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JacobHearst/GCDWebServer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
+		C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C018C9AB2707A98300E9E14B /* BEMCheckBox */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C018C9AA2707A98300E9E14B /* XCRemoteSwiftPackageReference "BEMCheckBox" */;
-			productName = BEMCheckBox;
-		};
-		C0BD4DEF27079C490020A5AF /* GCDWebServers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C0BD4DEE27079C490020A5AF /* XCRemoteSwiftPackageReference "GCDWebServer" */;
-			productName = GCDWebServers;
-		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */;
 			productName = JGProgressHUD;
+		};
+		C0F430C228E5A16D00BC98DE /* GCDWebServers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */;
+			productName = GCDWebServers;
+		};
+		C0F430C528E5A2DB00BC98DE /* BEMCheckBox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */;
+			productName = BEMCheckBox;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
