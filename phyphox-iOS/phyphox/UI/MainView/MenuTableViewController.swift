@@ -56,8 +56,9 @@ class MenuTableViewController: UITableViewController {
         let element = elements[indexPath.row]
         
         cell.textLabel?.text = element.label
-        cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
         cell.backgroundColor = .clear
+        // Font size adjustment activates ONLY on the original iPhone SE.
+        cell.textLabel?.adjustsFontSizeToFitWidth = true
         cell.separatorInset = .zero
         cell.accessoryView = UIImageView(image: element.icon)
         return cell
