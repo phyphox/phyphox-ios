@@ -33,8 +33,6 @@ class MenuTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.backgroundColor = UIColor(named: "mainBackground")!
-        
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "menu")
         view.addSubview(tableView)
         
@@ -58,7 +56,10 @@ class MenuTableViewController: UITableViewController {
         let element = elements[indexPath.row]
         
         cell.textLabel?.text = element.label
-        cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+        cell.backgroundColor = .clear
+        // Font size adjustment activates ONLY on the original iPhone SE.
+        cell.textLabel?.adjustsFontSizeToFitWidth = true
+        cell.separatorInset = .zero
         cell.accessoryView = UIImageView(image: element.icon)
         return cell
     }
@@ -79,6 +80,13 @@ class MenuTableViewController: UITableViewController {
         tableView = FixedTableView()
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.backgroundColor = .clear
+        tableView.isScrollEnabled = false
+        
+        // Add a separator on the top
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: tableView.frame.width, height: 0.5))
+        tableView.tableHeaderView?.backgroundColor = tableView.separatorColor
+        
         tableView.isUserInteractionEnabled = true
         
         menuAlertController.setValue(self, forKey: "contentViewController")
