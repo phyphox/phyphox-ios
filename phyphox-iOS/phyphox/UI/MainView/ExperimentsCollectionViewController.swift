@@ -195,7 +195,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             UIApplication.shared.open(URL(string: localize("bt_more_info_link_url"))!)
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
+        let cancelAction = UIAlertAction(title: localize("cancel"), style: .cancel) { (action) in }
         
         bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
