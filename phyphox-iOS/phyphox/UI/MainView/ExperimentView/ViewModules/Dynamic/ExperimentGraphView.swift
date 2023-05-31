@@ -63,8 +63,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
 
     private let label = UILabel()
-    private let xLabel: UILabel
-    private let yLabel: UILabel
+    private var xLabel: UILabel
+    private var yLabel: UILabel
     private let zLabel: UILabel?
     
     private let glGraph: GLGraphView
@@ -173,6 +173,34 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private var timeReferenceSets: [[TimeReferenceSet]] {
         return dataSets.map { $0.timeReferenceSets }
     }
+    
+    private func refreshView(){
+        glGraph.lineWidth = []
+        glGraph.lineColor = []
+        for i in 0..<descriptor.yInputBuffers.count {
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
+            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+            
+            descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
+            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
+        }
+        
+        
+        graphArea.willRemoveSubview(label)
+        
+
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
+        label.textColor = UIColor(named: "textColor")
+
+        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        
+        graphArea.addSubview(label)
+        
+    }
+    
     
     required init?(descriptor: GraphViewDescriptor) {
         self.descriptor = descriptor
@@ -332,6 +360,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.addGestureRecognizer(plotTapGesture)
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+    }
+    
+    @objc func reload(){
+        self.refreshView()
+        self.layoutSubviews()
+        self.setNeedsDisplay()
     }
 
     @available(*, unavailable)
@@ -1822,9 +1856,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         updatePlotArea()
     }
     
-    @objc func reload(){
-        self.layoutSubviews()
-    }
+    
     
 }
 

@@ -344,6 +344,8 @@ final class GraphGridView: UIView {
             }
         }
         
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadBorderWidth), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        
         bringSubviewToFront(borderView)
         
         borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
@@ -355,6 +357,13 @@ final class GraphGridView: UIView {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         self.layoutSubviews()
+    }
+    
+    @objc
+    func reloadBorderWidth(){
+        borderView.layer.borderWidth = SettingBundleHelper.getGraphSettingWidth()/UIScreen.main.scale
+        self.layoutSubviews()
+        self.setNeedsDisplay()
     }
     
 }
