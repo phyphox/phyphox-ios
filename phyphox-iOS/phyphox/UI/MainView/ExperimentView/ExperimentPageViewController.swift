@@ -346,6 +346,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
     }
     
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self.viewDidLoad()
+        
+    }
+    
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
         let callback: ButtonViewTriggerCallback
         init(callback: ButtonViewTriggerCallback) {
