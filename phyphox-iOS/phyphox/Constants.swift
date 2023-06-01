@@ -70,10 +70,17 @@ func mapColorString(_ string: String?) -> UIColor? {
 }
 
 func getRequiredColor(uiColor: UIColor) -> UIColor? {
-    if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+    if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
         return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
-    } else {
+    } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
         return uiColor
+    } else {
+        if #available(iOS 12.0, *) {
+            if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
+                return uiColor
+            }
+        }
+        return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
     }
 }
 
