@@ -106,12 +106,14 @@ final class ExperimentAnalysis {
 
             self.delegate?.analysisWillUpdate(self)
             
-            self.update {
+            self.update {didExecute in
                 let didRequestUpdateWhileBusy = self.requestedUpdateWhileBusy
 
                 self.requestedUpdateWhileBusy = false
                 self.busy = false
-                self.delegate?.analysisDidUpdate(self)
+                if didExecute {
+                    self.delegate?.analysisDidUpdate(self)
+                }
 
                 if !isPreRun && (didRequestUpdateWhileBusy || !self.onUserInput) {
                     self.setNeedsUpdate()
@@ -120,7 +122,7 @@ final class ExperimentAnalysis {
         }
     }
     
-    private func update(_ completion: @escaping () -> Void) {
+    private func update(_ completion: @escaping (_ didExecute: Bool) -> Void) {
 
         for sensorInput in sensorInputs {
             sensorInput.updateGeneratedRate()
@@ -139,7 +141,7 @@ final class ExperimentAnalysis {
             }
             if requireFill.count < threshold {
                 mainThread {
-                    completion()
+                    completion(false)
                 }
                 return
             }
@@ -182,7 +184,7 @@ final class ExperimentAnalysis {
                         }
                         mainThread {
                             self.cycle += 1
-                            completion()
+                            completion(true)
                         }
                     }
                 })
@@ -190,7 +192,7 @@ final class ExperimentAnalysis {
         } else {
             mainThread {
                 self.cycle += 1
-                completion()
+                completion(true)
             }
         }
     }
