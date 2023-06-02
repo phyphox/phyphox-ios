@@ -25,14 +25,15 @@ class ColorConverterHelper {
     let HUE_MAX = 360.0
     
     public func adjustColorForLightTheme(colorName: UIColor) -> UIColor {
-        let r = (colorName.cgColor.components?[0] ?? 1.0) * 255.0
-        let g = (colorName.cgColor.components?[1] ?? 1.0 ) * 255.0
-        let b = (colorName.cgColor.components?[2] ?? 1.0 ) * 255.0
-        
-        
-        if r == 0x40 && g == 0x40 && b == 0x40 {
-            return UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        if colorName == kHighlightColor {
+            return kHighlightColor
         }
+        if colorName == kBackgroundColor {
+            return UIColor(white: 1, alpha: 0)
+        }
+        let r = colorName.red * 255.0
+        let g = colorName.green * 255.0
+        let b = colorName.blue * 255.0
         
         var hsv = rbgToHsv(rgb: RGB(red: r, green: g, blue: b))
         

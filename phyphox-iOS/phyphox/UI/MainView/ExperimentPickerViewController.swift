@@ -128,22 +128,22 @@ final class ExperimentPickerViewController: CollectionViewController {
             let collection = collections[indexPath.section]
             
             view.title = collection.title
-            var colorsInCollection = [UIColor : (Int, UIColor)]()
+            var colorsInCollection = [UIColor : Int]()
             for experiment in collection.experiments {
-                if let count = colorsInCollection[experiment.experiment.color]?.0 {
-                    colorsInCollection[experiment.experiment.color]!.0 = count + 1
+                if let count = colorsInCollection[experiment.experiment.color] {
+                    colorsInCollection[experiment.experiment.color] = count + 1
                 } else {
-                    colorsInCollection[experiment.experiment.color] = (1, experiment.experiment.fontColor)
+                    colorsInCollection[experiment.experiment.color] = 1
                 }
             }
             var max = 0
             var catColor = kHighlightColor
             var catFontColor = UIColor.white
-            for (color, (count, fontColor)) in colorsInCollection {
+            for (color, count) in colorsInCollection {
                 if count > max {
                     max = count
                     catColor = color
-                    catFontColor = fontColor
+                    catFontColor = color.overlayTextColor()
                 }
             }
             view.backgroundColor = catColor

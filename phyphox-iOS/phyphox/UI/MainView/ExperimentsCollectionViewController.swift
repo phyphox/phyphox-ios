@@ -505,29 +505,27 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             } else {
                 view.title = collection.title
             }
-            var colorsInCollection = [UIColor : (Int, UIColor)]()
+            var colorsInCollection = [UIColor : Int]()
             for experiment in collection.experiments {
-                if let count = colorsInCollection[experiment.experiment.color]?.0 {
-                    colorsInCollection[experiment.experiment.color]!.0 = count + 1
+                if let count = colorsInCollection[experiment.experiment.color] {
+                    colorsInCollection[experiment.experiment.color] = count + 1
                 } else {
-                    colorsInCollection[experiment.experiment.color] = (1, experiment.experiment.fontColor)
+                    colorsInCollection[experiment.experiment.color] = 1
                 }
             }
             var max = 0
             var catColor = kHighlightColor
-            var catFontColor = UIColor(named: "textColor")
-            for (color, (count, fontColor)) in colorsInCollection {
+            for (color, count) in colorsInCollection {
                 if count > max {
                     max = count
-                    catColor = color
-                    catFontColor = fontColor
-                }
+                    catColor = color                }
             }
             view.color = catColor
-            view.fontColor = catFontColor
+            view.fontColor = catColor.overlayTextColor()
             
             if(collection.type == .phyphoxOrg){
-                view.color = kLightGrayColor
+                view.color = kFullWhiteColor.autoLightColor()
+                view.fontColor = kFullWhiteColor.autoLightColor().overlayTextColor()
             }
 
             return view
@@ -1033,5 +1031,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
         }
         
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                self.selfView.collectionView.reloadData()
+            }
+        }
     }
 }

@@ -17,7 +17,7 @@ final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
     required init?(descriptor: SeparatorViewDescriptor) {
         self.descriptor = descriptor
         super.init(frame: .zero)
-        backgroundColor = descriptor.color
+        backgroundColor = descriptor.color.autoLightColor()
     }
 
     @available(*, unavailable)
@@ -27,5 +27,14 @@ final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         return CGSize(width: size.width, height: descriptor.height * fontScale)
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                backgroundColor = descriptor.color.autoLightColor()
+            }
+        }
     }
 }

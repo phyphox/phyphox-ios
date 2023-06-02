@@ -61,26 +61,11 @@ func mapColorString(_ string: String?) -> UIColor? {
     }
     
     if let color = namedColors[colorString.lowercased()] {
-        return  getRequiredColor(uiColor: color)
+        return  color
     } else if let color = UIColor(hexString: colorString) {
         return color
     } else {
         return nil
-    }
-}
-
-func getRequiredColor(uiColor: UIColor) -> UIColor? {
-    if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
-        return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
-    } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
-        return uiColor
-    } else {
-        if #available(iOS 12.0, *) {
-            if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
-                return uiColor
-            }
-        }
-        return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
     }
 }
 

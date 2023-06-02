@@ -214,6 +214,42 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    func updateSegControlDesign() {
+        let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+        segControl!.setTitleTextAttributes(font, for: .normal)
+        segControl!.setTitleTextAttributes(font, for: .selected)
+        
+        segControl!.tintColor = UIColor(named: "textColor")
+        segControl!.backgroundColor = UIColor(named: "textColor")
+        
+        //Generate new background and divider images for the segControl
+        let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
+        UIGraphicsBeginImageContext(rect.size)
+        let ctx = UIGraphicsGetCurrentContext()
+        
+        //Background
+        ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
+        ctx!.fill(rect)
+        let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
+        
+        //Higlighted image, bg with underline
+        ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
+        ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
+        let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
+        
+        UIGraphicsEndImageContext()
+        
+        segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
+        segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
+        if #available(iOS 11.0, *) {
+            segControl!.layer.maskedCorners = []
+        }
+    }
+    
     func updateLayout() {
         var offsetTop : CGFloat = self.topLayoutGuide.length
         if (experiment.viewDescriptors!.count > 1) {
@@ -284,38 +320,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
-            segControl!.setTitleTextAttributes(font, for: .normal)
-            segControl!.setTitleTextAttributes(font, for: .selected)
-            segControl!.tintColor = UIColor(named: "textColor")
-            segControl!.backgroundColor = UIColor(named: "textColor")
-            
-            //Generate new background and divider images for the segControl
-            let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
-            UIGraphicsBeginImageContext(rect.size)
-            let ctx = UIGraphicsGetCurrentContext()
-            
-            //Background
-            ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
-            ctx!.fill(rect)
-            let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-            
-            //Higlighted image, bg with underline
-            ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
-            ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
-            let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-            
-            UIGraphicsEndImageContext()
-            
-            segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
-            segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
-            if #available(iOS 11.0, *) {
-                segControl!.layer.maskedCorners = []
-            }
+            updateSegControlDesign()
             segControl!.sizeToFit()
             
             tabBar = UIScrollView()
@@ -348,8 +353,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        self.viewDidLoad()
-        
+        updateSelectedViewCollection()
+        refreshTheAdjustedGraphColorForLightMode()
+        updateSegControlDesign()
+        tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {

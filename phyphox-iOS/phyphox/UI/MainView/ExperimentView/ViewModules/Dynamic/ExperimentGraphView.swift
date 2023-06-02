@@ -181,7 +181,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
-            descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
             glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
         }
         
@@ -218,7 +218,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
-            descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
             glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
         }
         glGraph.historyLength = descriptor.history
@@ -1856,7 +1856,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         updatePlotArea()
     }
     
-    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                refreshView()
+                refreshMarkers()
+            }
+        }
+    }
     
 }
 
