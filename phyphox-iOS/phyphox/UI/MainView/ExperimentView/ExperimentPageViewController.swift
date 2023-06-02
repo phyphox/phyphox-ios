@@ -805,8 +805,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func showSaveState() {
         self.stopExperiment()
         
-        UIAlertController.PhyphoxUIAlertBuilder()
-            .title(title: localize("save_state"))
+        let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
+        alertBuilder.title(title: localize("save_state"))
             .message(message: localize("save_state_message"))
             .preferredStyle(style: .alert)
             .addTextField(configHandler: { (textField) in
@@ -818,10 +818,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
             })
             .addActionWithTitle(localize("save_state_save"), style: .default, handler: { [unowned self] action in
-                saveTheState()
+                if let title = alertBuilder.getTextFieldValue().text {
+                    saveTheState(title: title)
+                }
             })
             .addActionWithTitle(localize("save_state_share"), style: .default, handler: { [unowned self] action in
-                shareTheState()
+                if let title = alertBuilder.getTextFieldValue().text {
+                    shareTheState(title: title)
+                }
             })
             .addCancelAction()
             .show(in: self.navigationController!, animated: true)
@@ -843,14 +847,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
     }
     
-    private func saveTheState(){
+    private func saveTheState(title: String){
         do {
             if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
                 try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
-            }
-            
-            guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
-                return
             }
             
             //For now, we disable the new state serializer (saving buffers to a separate binary file)
@@ -887,13 +887,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func shareTheState(){
+    private func shareTheState(title: String){
         let fileName = createTimeStampedFileNameWith(fileNameDefault: localize("save_state_default_title"))
         let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
-        
-        guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
-            return
-        }
         
         let HUD = showHUDProgressWidget()
         
