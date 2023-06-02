@@ -75,14 +75,6 @@ final class Experiment {
             return kHighlightColor
         }
     }
-    
-    var fontColor: UIColor {
-        if color.luminance > 0.7 {
-            return UIColor(white: 0.0, alpha: 1.0)
-        } else {
-            return UIColor(white: 1.0, alpha: 1.0)
-        }
-    }
 
     var local: Bool = false
     var source: URL?

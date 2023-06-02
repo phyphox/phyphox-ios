@@ -155,6 +155,7 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
+		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */; };
@@ -507,6 +508,11 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+		866632E82A29E1D90068762D /* UIColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtensions.swift; sourceTree = "<group>"; };
+		86C183CF29F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
+		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExt.swift; sourceTree = "<group>"; };
@@ -690,6 +696,7 @@
 				6B2E0FC0205AC5E1008FAA91 /* UIColor+Expanded.h */,
 				6B2E0FC2205AC5E1008FAA91 /* UIColor+Expanded.m */,
 				A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */,
+				866632E82A29E1D90068762D /* UIColorExtensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -1354,6 +1361,8 @@
 				es,
 				tr,
 				English,
+				hi,
+				ka,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
@@ -1661,6 +1670,7 @@
 				C07B53062294265800BA085A /* BluetoothDevice.swift in Sources */,
 				6BD026EA1CB5C047005085B1 /* PTFile.swift in Sources */,
 				C05CD472258C904C00662BDF /* EventsElementHandler.swift in Sources */,
+				866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */,
 				4B5568B51DD7D1F4000C033E /* ExperimentButtonView.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
@@ -1779,6 +1789,8 @@
 				C0F2A7C722E5E16F00CC2C2A /* sr_Latn */,
 				C025FC0623D9D45800AE13B6 /* es */,
 				C0D47C182408741600F84F74 /* tr */,
+				86C183CF29F131BC0089E396 /* hi */,
+				86C183D129F132020089E396 /* ka */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1804,6 +1816,8 @@
 				C0F2A7C622E5E16F00CC2C2A /* sr_Latn */,
 				C025FC1723D9D46500AE13B6 /* es */,
 				C0D47C172408741600F84F74 /* tr */,
+				86C183D029F131BC0089E396 /* hi */,
+				86C183D229F132020089E396 /* ka */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

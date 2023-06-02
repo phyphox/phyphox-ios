@@ -15,10 +15,12 @@ class SettingBundleHelper {
     private static let BIG_WIDTH: Double  = 4.0
     private static let EXTRA_BIG_WIDTH: Double = 6.0
     
-    private static let SMALL_LABEL: Double = 45.0/UIScreen.main.scale
-    private static let MEDIUM_LABEL: Double = 50.0/UIScreen.main.scale
-    private static let BIG_LABEL: Double = 55.0/UIScreen.main.scale
-    private static let EXTRA_BIG_LABEL: Double  = 60.0/UIScreen.main.scale
+    private static let SCREEN_SIZE = 3.0
+    
+    private static let SMALL_LABEL: Double = 45.0/SCREEN_SIZE
+    private static let MEDIUM_LABEL: Double = 50.0/SCREEN_SIZE
+    private static let BIG_LABEL: Double = 55.0/SCREEN_SIZE
+    private static let EXTRA_BIG_LABEL: Double  = 60.0/SCREEN_SIZE
     
     enum UserDefaultKeys: String {
         case APP_MODE = "appModeKey"

@@ -42,17 +42,17 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         label.lineBreakMode = .byWordWrapping
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = descriptor.color
+        label.textColor = descriptor.color.autoLightColor()
         label.textAlignment = .right
 
         valueLabel.text = "- "
-        valueLabel.textColor = descriptor.color
+        valueLabel.textColor = descriptor.color.autoLightColor()
         let defaultFont = UIFont.preferredFont(forTextStyle: .headline)
         valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size) * defaultFont.pointSize)
         valueLabel.textAlignment = .left
         
         unitLabel.text = descriptor.localizedUnit
-        unitLabel.textColor = descriptor.color
+        unitLabel.textColor = descriptor.color.autoLightColor()
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         unitLabel.textAlignment = .left
         labelOutOfBoundDict[descriptor.label] = false
@@ -130,6 +130,17 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
         unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (bounds.height - s3.height)/2.0, width: s3.width, height: s3.height)
        
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                label.textColor = descriptor.color.autoLightColor()
+                valueLabel.textColor = descriptor.color.autoLightColor()
+                unitLabel.textColor = descriptor.color.autoLightColor()
+            }
+        }
     }
 }
 

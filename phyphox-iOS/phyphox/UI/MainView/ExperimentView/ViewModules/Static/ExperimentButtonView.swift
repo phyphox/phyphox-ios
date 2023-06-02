@@ -27,6 +27,8 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
         
         button = UIButton()
         button.backgroundColor = UIColor(named: "lightBackgroundColor")
+        button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        button.setTitleColor(kHighlightColor, for: .highlighted)
         button.setTitle(descriptor.localizedLabel, for: UIControl.State())
         super.init(frame: .zero)
         
@@ -64,5 +66,14 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
         let w = button.sizeThatFits(self.bounds.size).width + 2*padding
         
         button.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width-w)/2.0, y: spacing), size: CGSize(width: w, height: self.bounds.height-2*spacing))
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+            }
+        }
     }
 }

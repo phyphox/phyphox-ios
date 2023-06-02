@@ -207,6 +207,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             x = nil
             y = nil
             z = nil
+            abs = nil
             accuracy = nil
             
             numberOfUpdates = 0

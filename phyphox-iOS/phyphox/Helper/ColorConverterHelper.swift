@@ -17,20 +17,23 @@ class ColorConverterHelper {
     }
     
     struct HSV {
-        var heu: Double
+        var hue: Double
         var saturation: Double
         var value: Double
     }
     
+    let HUE_MAX = 360.0
+    
     public func adjustColorForLightTheme(colorName: UIColor) -> UIColor {
-        let r = (colorName.cgColor.components?[0] ?? 1.0) * 255.0
-        let g = (colorName.cgColor.components?[1] ?? 1.0 ) * 255.0
-        let b = (colorName.cgColor.components?[2] ?? 1.0 ) * 255.0
-        
-        
-        if r == 0x40 && g == 0x40 && b == 0x40 {
-            return UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        if colorName == kHighlightColor {
+            return kHighlightColor
         }
+        if colorName == kBackgroundColor {
+            return UIColor(white: 1, alpha: 0)
+        }
+        let r = colorName.red * 255.0
+        let g = colorName.green * 255.0
+        let b = colorName.blue * 255.0
         
         var hsv = rbgToHsv(rgb: RGB(red: r, green: g, blue: b))
         
@@ -41,7 +44,7 @@ class ColorConverterHelper {
         hsv.value = l + t
         hsv.saturation = l > 0 ? 2 * t / hsv.value : 0.0
         
-        let newRgb =  hsvToRgb(hsv: HSV(heu: hsv.heu, saturation: hsv.saturation, value: hsv.value))
+        let newRgb =  hsvToRgb(hsv: HSV(hue: hsv.hue, saturation: hsv.saturation, value: hsv.value))
         
         let adjustedUIColor = UIColor.init(red: CGFloat(newRgb.red)/255.0, green: CGFloat(newRgb.green)/255.0, blue: CGFloat(newRgb.blue)/255.0, alpha: 1.0)
         
@@ -71,9 +74,7 @@ class ColorConverterHelper {
     }
     
     func rbgToHsv(rgb: RGB) -> HSV {
-        
-        let HUE_MAX = 360.0
-        var hsv = HSV(heu: 0.0, saturation: 0.0, value: 0.0)
+        var hsv = HSV(hue: 0.0, saturation: 0.0, value: 0.0)
         let r = Double(rgb.red)
         let g = Double(rgb.green)
         let b = Double(rgb.blue)
@@ -89,14 +90,14 @@ class ColorConverterHelper {
         if maxVal == minVal {
             h = 0
         } else if maxVal == r {
-            h = (g - b + delta * 6) / (6 * delta)
+            h = (g - b + delta * (g < b ? 6 : 0)) / (6 * delta)
         } else if maxVal == g {
             h = (b - r + delta * 2) / (6 * delta)
         } else {
             h = (r - g + delta * 4) / (6 * delta)
         }
         
-        hsv.heu = h * HUE_MAX
+        hsv.hue = h * HUE_MAX
         hsv.saturation = s
         return hsv
         
@@ -106,8 +107,8 @@ class ColorConverterHelper {
         
         var r, g, b, i: Int
         var f, p, q, t: Double
-        i = Int(floor(hsv.heu * 6))
-        f = hsv.heu * 6 - Double(i)
+        i = Int(floor(hsv.hue * 6/HUE_MAX))
+        f = hsv.hue * 6/HUE_MAX - Double(i)
         p = hsv.value * (1 - hsv.saturation)
         q = hsv.value * (1 - f * hsv.saturation)
         t = hsv.value * (1 - (1 - f) * hsv.saturation)

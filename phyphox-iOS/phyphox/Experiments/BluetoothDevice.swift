@@ -161,7 +161,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                                                 message: message,
                                                 preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: localize("cancel"), style: .cancel)
         { (action) in
             //we allow cancelling the scanning dialog but bring up the issue again if the user wants to start the experiment without connecting devices
         }
