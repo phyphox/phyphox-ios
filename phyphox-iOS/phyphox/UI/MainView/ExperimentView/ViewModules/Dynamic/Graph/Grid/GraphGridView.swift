@@ -344,8 +344,7 @@ final class GraphGridView: UIView {
             }
         }
         
-        NotificationCenter.default.addObserver(self, selector: #selector(reloadBorderWidth), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
-        
+       
         bringSubviewToFront(borderView)
         
         borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
