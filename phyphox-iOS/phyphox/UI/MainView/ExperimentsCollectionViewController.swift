@@ -138,6 +138,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         self.title = "phyphox"
         
         reload()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
       
         ExperimentManager.shared.reloadUserExperiments()
 
