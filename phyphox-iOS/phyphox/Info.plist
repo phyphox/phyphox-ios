@@ -49,7 +49,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
+<<<<<<< HEAD
 	<string>11029</string>
+=======
+	<string>11076</string>
+>>>>>>> 11781b1 (Fix: line breaking and word overlapping in lable text for info view)
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
