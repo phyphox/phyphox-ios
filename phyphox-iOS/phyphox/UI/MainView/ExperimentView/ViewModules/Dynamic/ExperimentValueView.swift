@@ -124,7 +124,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         let hangOver = (bounds.width - 2*spacing)/2.0 - s2.width - s3.width - spacing
         let push = hangOver < 0 ? hangOver : 0.0
         
-        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
+        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-")
         
         label.frame = CGRect(x: push, y: (bounds.height - dynamicLabelHeight)/2.0, width: bounds.width/2.0 - spacing, height: dynamicLabelHeight)
         valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
