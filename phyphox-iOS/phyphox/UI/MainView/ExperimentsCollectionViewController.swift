@@ -167,6 +167,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        hintBubble?.closeHint()
+        hintBubble = nil
+    }
+    
     //Force iPad-style popups (for the hint to the menu)
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         return .none
