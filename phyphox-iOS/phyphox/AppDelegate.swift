@@ -18,6 +18,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var main: MainNavigationViewController!
     var mainNavViewController: ScalableViewController!
+    var experimentsCollectionViewController: ExperimentsCollectionViewController!
 
     func initApp(url: URL?) -> Bool {
         KeyboardTracker.startTracking()
@@ -27,7 +28,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         UILabel.appearance().adjustsFontForContentSizeCategory = true
         
-        let experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: url == nil || ProcessInfo.processInfo.arguments.contains("screenshot"))
+        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: url == nil || ProcessInfo.processInfo.arguments.contains("screenshot"))
         
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(experimentsCollectionViewController, animated: false)
@@ -35,10 +36,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         window!.makeKeyAndVisible()
-        
-        if let url = url {
-            return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
-        }
 
         //The following is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and the app will launch a pre-recorded experiment to allow for screenshots with data.
         if ProcessInfo.processInfo.arguments.contains("screenshot") {
@@ -49,18 +46,18 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        return initApp(url: nil)
+        return initApp(url: launchOptions?[.url] as? URL)
     }
     
     func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         
         cleanInbox(url.lastPathComponent)
-        return initApp(url: url)
+        return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
     }
     
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         cleanInbox(url.lastPathComponent)
-        return initApp(url: url)
+        return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

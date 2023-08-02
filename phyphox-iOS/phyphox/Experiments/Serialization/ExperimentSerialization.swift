@@ -44,11 +44,10 @@ let experimentStateExperimentFileName = "Experiment"
 let experimentFileExtension = "phyphox"
 
 final class ExperimentSerialization {
-    static let parser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
 
     static func readExperimentFromURL(_ url: URL) throws -> Experiment {
+        let parser = DocumentParser(documentHandler: PhyphoxDocumentHandler())
         let readURL: URL
-
         /*
         
         The following will block loading of saved states. This is only for testing and recovery for users with loading problems due to large files stuck in their system. Do not use this block in production versions.
@@ -70,6 +69,7 @@ final class ExperimentSerialization {
         }
         let crc32Stream = CRC32InputStream(inputStream)
         let experiment = try parser.parse(stream: crc32Stream)
+
         experiment.source = url
         experiment.crc32 = crc32Stream.crcValue
 
