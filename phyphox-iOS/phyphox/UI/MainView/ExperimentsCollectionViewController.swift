@@ -172,6 +172,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         hintBubble = nil
     }
     
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        hintBubble?.closeHint()
+        hintBubble = nil
+    }
+    
     //Force iPad-style popups (for the hint to the menu)
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         return .none
