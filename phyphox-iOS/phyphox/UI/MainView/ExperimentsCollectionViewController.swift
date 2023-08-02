@@ -645,6 +645,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     func detectFileType(data: Data) -> FileType {
+        if data.count < 20 {
+            return .unknown
+        }
         if data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04 {
             //Look for ZIP signature
             return .zip
