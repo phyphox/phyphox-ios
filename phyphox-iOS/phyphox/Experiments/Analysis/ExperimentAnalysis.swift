@@ -17,6 +17,7 @@ extension String: AttributeKey {
 protocol ExperimentAnalysisDelegate: AnyObject {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis)
     func analysisDidUpdate(_ analysis: ExperimentAnalysis)
+    func analysisSkipped(_ analysis: ExperimentAnalysis)
 }
 
 final class ExperimentAnalysis {
@@ -113,6 +114,8 @@ final class ExperimentAnalysis {
                 self.busy = false
                 if didExecute {
                     self.delegate?.analysisDidUpdate(self)
+                } else {
+                    self.delegate?.analysisSkipped(self)
                 }
 
                 if !isPreRun && (didRequestUpdateWhileBusy || !self.onUserInput) {

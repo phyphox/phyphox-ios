@@ -1460,5 +1460,13 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
             }
         }
     }
+    
+    func analysisSkipped(_ analysis: ExperimentAnalysis) {
+        for module in viewModules.flatMap({ $0 }) {
+            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+                analysisLimitedViewModule.analysisRunning = false
+            }
+        }
+    }
 }
 
