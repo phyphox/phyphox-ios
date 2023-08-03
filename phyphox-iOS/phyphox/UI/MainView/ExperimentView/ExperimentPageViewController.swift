@@ -355,8 +355,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
         refreshTheAdjustedGraphColorForLightMode()
-        updateSegControlDesign()
-        tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+        if (experiment.viewDescriptors!.count > 1) {
+            updateSegControlDesign()
+            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+        }
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
