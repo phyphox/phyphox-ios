@@ -39,7 +39,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         //The following is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and the app will launch a pre-recorded experiment to allow for screenshots with data.
         if ProcessInfo.processInfo.arguments.contains("screenshot") {
-            return experimentsCollectionViewController.launchExperimentByURL(URL(string: "https://rwth-aachen.sciebo.de/s/mezViL5TH4gyEe5/download")!, chosenPeripheral: nil)
+            return experimentsCollectionViewController.launchExperimentByURL(URL(string: "https://rwth-aachen.sciebo.de/s/5MzNo8IIe8bJuoD/download")!, chosenPeripheral: nil)
         }
         
         return true

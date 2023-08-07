@@ -5,7 +5,8 @@ devices([
    "iPhone 8",
    "iPhone 8 Plus",
    "iPhone 11 Pro Max",
-   "iPad Pro (12.9-inch) (4th generation)"
+   "iPad Pro (12.9-inch) (4th generation)",
+   "iPhone 14 Plus"
 ])
 
 languages([
@@ -15,8 +16,10 @@ languages([
   "en-US",
   "es-ES",
   "fr-FR",
+  "hi",
   "it",
   "ja",
+  "ka",
   "nl-NL",
   "pl",
   "pt-BR",
