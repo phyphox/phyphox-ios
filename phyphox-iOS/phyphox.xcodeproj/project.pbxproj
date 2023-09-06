@@ -141,8 +141,7 @@
 		6BE3209F1CB19E0300DCC1ED /* CreatePresentationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209C1CB19E0300DCC1ED /* CreatePresentationController.swift */; };
 		6BE320A01CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209D1CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift */; };
 		6BE320A11CB19E0300DCC1ED /* CreateViewControllerTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209E1CB19E0300DCC1ED /* CreateViewControllerTransition.swift */; };
-		6BE320AA1CB2B55700DCC1ED /* TextFieldTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */; };
-		6BE320AE1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */; };
+		6BE320AA1CB2B55700DCC1ED /* TextFieldTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */; };		6BE320AE1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */; };
 		6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B11CB3C0DE00DCC1ED /* PTButton.m */; };
 		6BE320B41CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */; };
 		6BEA944A207FC5280077274A /* ExportElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA943B207FC5280077274A /* ExportElementHandler.swift */; };
@@ -159,6 +158,7 @@
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
+		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */; };
@@ -479,12 +479,14 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
+
+		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
+
 		866632E82A29E1D90068762D /* UIColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtensions.swift; sourceTree = "<group>"; };
 		86C183CF29F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExt.swift; sourceTree = "<group>"; };
