@@ -34,15 +34,19 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     
     init(filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
         ble = BluetoothScan(scanDirectly: true, filterByName: filterByName, filterByUUID: filterByUUID, checkExperiments: checkExperiments, autoConnect: autoConnect)
-       
+        
         signalImages = []
         
         super.init(style: .plain)
         
         for i in 0..<5 {
-            self.showTheSignalImageByAdjustingWithAppMode(i: i)
+            if #available(iOS 13.0, *) {
+                signalImages.append(BluetoothScanResultsTableViewController.showTheSignalImageByAdjustingWithAppMode(i: i))
+            } else {
+                signalImages.append(UIImage(named: "cellular_level_\(i)")!)
+            }
         }
-
+        
         ble.scanResultsDelegate = self
     }
     
@@ -63,7 +67,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     override func viewWillDisappear(_ animated: Bool) {
         ble.stopScan()
     }
-   
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
@@ -125,24 +129,21 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         }
     }
     
-    func showTheSignalImageByAdjustingWithAppMode(i: Int){
-        if #available(iOS 13.0, *) {
-            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
-                signalImages.append((UIImage(named: "bluetooth_signal_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!)
-            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
-                signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
+    @available(iOS 13.0, *)
+    static func showTheSignalImageByAdjustingWithAppMode(i: Int) -> UIImage{
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+            return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.white, renderingMode: .alwaysOriginal))!
+        } else {
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .light){
+                return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
             } else {
-                if(UIScreen.main.traitCollection.userInterfaceStyle == .light){
-                    signalImages.append((UIImage(named: "bluetooth_signal_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!)
-                } else {
-                    signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
-                }
-                
+                return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.white, renderingMode: .alwaysOriginal))!
             }
-        }
-        else {
-            signalImages.append(UIImage(named: "bluetooth_signal_\(i)")!)
+            
         }
     }
-   
+    
+    
 }
