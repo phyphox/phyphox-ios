@@ -229,6 +229,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let titleView = UILabel()
         titleView.translatesAutoresizingMaskIntoConstraints = false
         titleView.text = localize("applyZoomTitle")
+        titleView.textColor = UIColor(named: "textColor")
         titleView.font = UIFont.preferredFont(forTextStyle: .headline)
         dialogView.addSubview(titleView)
         
@@ -244,6 +245,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let explView = UILabel()
         explView.translatesAutoresizingMaskIntoConstraints = false
         explView.text = localize("applyZoomExplanation")
+        explView.textColor = UIColor(named: "textColor")
         explView.lineBreakMode = .byWordWrapping
         explView.numberOfLines = 0
         scrollContentView.addSubview(explView)
@@ -266,6 +268,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         let advancedSwitchLabel = UILabel()
         advancedSwitchLabel.translatesAutoresizingMaskIntoConstraints = false
         advancedSwitchLabel.text = localize("applyZoomAdvanced")
+        advancedSwitchLabel.textColor = UIColor(named: "textColor")
         dialogView.addSubview(advancedSwitchLabel)
         
         let okButton = UIButton()
