@@ -19,6 +19,7 @@ final class GraphGridView: UIView {
     
     var isZScale: Bool = false
     
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -353,9 +354,21 @@ final class GraphGridView: UIView {
             }
         }
         
+       
         bringSubviewToFront(borderView)
+        
+        borderView.layer.borderColor = UIColor(named: "graphLines")!.cgColor
+        borderView.layer.borderWidth = SettingBundleHelper.getGraphSettingWidth()/UIScreen.main.scale
+        
+        addSubview(borderView)
     }
     
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self.layoutSubviews()
+    }
+    
+
     private func getAdjustedBorderColor() -> CGColor{
         var borderColor = UIColor(white: 1.0, alpha: 1.0).cgColor
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
@@ -369,4 +382,12 @@ final class GraphGridView: UIView {
         }
         return borderColor
     }
+
+    @objc
+    func reloadBorderWidth(){
+        borderView.layer.borderWidth = SettingBundleHelper.getGraphSettingWidth()/UIScreen.main.scale
+        self.layoutSubviews()
+        self.setNeedsDisplay()
+    }
+
 }

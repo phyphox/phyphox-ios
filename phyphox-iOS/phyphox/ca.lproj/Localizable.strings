@@ -72,7 +72,7 @@
 "save_locally_button" = "Guardar en la colección";
 "save_locally_done" = "Experimento exitosamente agregado a la colección.";
 "info" = "Información";
-"creditsNames" = "Desarrollo y Concepto:\nDr. Sebastian Staacks\nConcepto:\nProf. Christoph Stampfer\nProgramación:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Desarrollo y Concepto:\nDr. Sebastian Staacks\nConcepto:\nProf. Christoph Stampfer\nProgramación:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "gpl" = "Phyphox es software de código abierto publicado bajo Licencia Pública General de GNU. Para mayor información así como acceso a su código fuente, por favor visite http://phyphox.org. Sin embargo, los nombres \"phyphox\" y \"RWTH Aachen\" son marcas registradas.";
 "sensorTemperature" = "Temperatura";
 "sensorHumidity" = "Humedad";

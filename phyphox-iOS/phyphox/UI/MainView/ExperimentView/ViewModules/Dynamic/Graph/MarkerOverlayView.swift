@@ -88,6 +88,18 @@ final class MarkerOverlayView: UIView {
                 lineLayers[i].path = newLine.cgPath
             }
         }
+        
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            let tmpMarkers = markers
+            markers = []
+            updateOverlay()
+            markers = tmpMarkers
+            updateOverlay()
+        }
     }
     
     override func layoutSubviews() {

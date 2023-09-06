@@ -75,14 +75,6 @@ final class Experiment {
             return kHighlightColor
         }
     }
-    
-    var fontColor: UIColor {
-        if color.luminance > 0.7 {
-            return UIColor(white: 0.0, alpha: 1.0)
-        } else {
-            return UIColor(white: 1.0, alpha: 1.0)
-        }
-    }
 
     var local: Bool = false
     var source: URL?
@@ -180,7 +172,7 @@ final class Experiment {
     }
 
     convenience init(file: String, error: String) {
-        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: []), export: nil)
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
         invalid = true;
     }
     
@@ -443,6 +435,10 @@ extension Experiment: ExperimentAnalysisDelegate {
                 networkConnection.doExecute()
             }
         }
+    }
+    
+    func analysisSkipped(_ analysis: ExperimentAnalysis) {
+        analysisDelegate?.analysisSkipped(analysis)
     }
 }
 

@@ -49,7 +49,9 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
+
 	<string>11111</string>
+
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

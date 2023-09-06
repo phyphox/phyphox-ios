@@ -37,7 +37,7 @@
 "apple_ban" = "该实验已失效。";
 "actions" = "操作";
 "newExperiment" = "新建实验";
-"creditsNames" = "开发和概念:\nSebastian Staacks博士\n概念:\nChristoph Stampfer教授\n编程:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "开发和概念:\nSebastian Staacks博士\n概念:\nChristoph Stampfer教授\n编程:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "location" = "GPS定位";
 "appleBanWarningMoreInfo" = "更多信息";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";

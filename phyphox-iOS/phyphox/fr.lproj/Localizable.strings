@@ -86,7 +86,7 @@
 "apple_ban" = "Cette expérience n'est plus disponible.";
 "actions" = "Actions";
 "newExperiment" = "Ajouter une expérience";
-"creditsNames" = "Concept et développement : \nDr. Sebastian Staacks\nConcept : \nProf. Christoph Stampfer\nProgrammation : \nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Concept et développement :\nDr. Sebastian Staacks\nConcept :\nProf. Christoph Stampfer\nProgrammation :\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "appleBanWarningMoreInfo" = "Plus d'infos";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "enableTimedRun" = "Activer le mode chronométré";

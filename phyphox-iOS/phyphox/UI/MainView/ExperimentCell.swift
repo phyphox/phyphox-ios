@@ -160,7 +160,7 @@ class ExperimentCell: UICollectionViewCell {
                         catch {}
                     }
 
-                    let iconView = experiment.icon.generateResizableRepresentativeView(color: experiment.color, fontColor: experiment.fontColor)
+                    let iconView = experiment.icon.generateResizableRepresentativeView(color: experiment.color, fontColor: experiment.color.overlayTextColor())
                     self.iconView = iconView
 
                     contentView.addSubview(iconView)

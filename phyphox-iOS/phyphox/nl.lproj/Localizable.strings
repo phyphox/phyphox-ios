@@ -89,7 +89,7 @@
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "actions" = "Acties";
 "newExperiment" = "Voeg experiment toe";
-"creditsNames" = "Concept en uitwerking:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgrammering:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Concept en uitwerking:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgrammering:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "enableTimedRun" = "Begin getimede meting";
 "disableTimedRun" = "Beëindig getimede meting";
 "switch_to_calibrated_magnetometer" = "Ga over naar gekalibreerde magnetometer";

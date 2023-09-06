@@ -53,7 +53,7 @@
 "apple_ban" = "Ovaj eksperiment nije više dostupan.";
 "actions" = "Akcija";
 "newExperiment" = "Dodaj eksperiment";
-"creditsNames" = "Razvoj i koncept:\nDr. Sebastian Staacks\nKoncept:\nProf. Christoph Stampfer\nProgramiranje:\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "Razvoj i koncept:\nDr. Sebastian Staacks\nKoncept:\nProf. Christoph Stampfer\nProgramiranje:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "appleBanWarningMoreInfo" = "Više informacija";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "timedRunDialogTitle" = "Podešavanje vremena";

@@ -21,7 +21,7 @@ let iPad = UI_USER_INTERFACE_IDIOM() == .pad
 let kBackgroundColor = UIColor(white: 32.0/255.0, alpha: 1.0)
 let kDarkBackgroundColor = UIColor(white: 16.0/255.0, alpha: 1.0)
 let kLightBackgroundColor = UIColor(white: 64.0/255.0, alpha: 1.0)
-let kLightBackgroundColorForLight = UIColor(white: 191.0/255.0, alpha: 1.0)
+let kLightBackgroundColorForLight = UIColor(white: 225.0/255.0, alpha: 1.0)
 let kFullWhiteColor = UIColor(white: 255.0/255.0, alpha: 1.0)
 let kLightGrayColor = UIColor(white: 0.8, alpha: 1.0)
 let kLightBackgroundHoverColor = UIColor(white: 0.5, alpha: 1.0)
@@ -61,19 +61,11 @@ func mapColorString(_ string: String?) -> UIColor? {
     }
     
     if let color = namedColors[colorString.lowercased()] {
-        return  getRequiredColor(uiColor: color)
-    } else if let color = UIColor(named: colorString) {
+        return  color
+    } else if let color = UIColor(hexString: colorString) {
         return color
     } else {
         return nil
-    }
-}
-
-func getRequiredColor(uiColor: UIColor) -> UIColor? {
-    if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
-        return ColorConverterHelper().adjustColorForLightTheme(colorName: uiColor)
-    } else {
-        return uiColor
     }
 }
 

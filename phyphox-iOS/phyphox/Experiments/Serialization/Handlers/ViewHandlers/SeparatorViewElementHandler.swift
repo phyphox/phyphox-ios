@@ -30,7 +30,7 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
 
         let height: CGFloat = try attributes.optionalValue(for: .height) ?? 0.1
 
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? UIColor(named: "mainBackground")!
+        let color = mapColorString(attributes.optionalString(for: .color)) ?? kBackgroundColor
 
         results.append(.separator(SeparatorViewElementDescriptor(height: height, color: color)))
     }

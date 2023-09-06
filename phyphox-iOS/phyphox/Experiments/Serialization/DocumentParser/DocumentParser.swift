@@ -148,6 +148,9 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
 
     /// Helper property that returns a backtrace to the current position within the XML file. Used for error reporting.
     private var currentElementBacktrace: String {
+        if handlerStack.count == 0 {
+            return "[empty]"
+        }
         return handlerStack.suffix(from: 1).map({ $0.elementName }).joined(separator: " > ")
     }
 

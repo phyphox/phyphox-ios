@@ -228,6 +228,42 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    func updateSegControlDesign() {
+        let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+        segControl!.setTitleTextAttributes(font, for: .normal)
+        segControl!.setTitleTextAttributes(font, for: .selected)
+        
+        segControl!.tintColor = UIColor(named: "textColor")
+        segControl!.backgroundColor = UIColor(named: "textColor")
+        
+        //Generate new background and divider images for the segControl
+        let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
+        UIGraphicsBeginImageContext(rect.size)
+        let ctx = UIGraphicsGetCurrentContext()
+        
+        //Background
+        ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
+        ctx!.fill(rect)
+        let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
+        
+        //Higlighted image, bg with underline
+        ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
+        ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
+        let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
+        
+        UIGraphicsEndImageContext()
+        
+        segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
+        segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
+        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
+        if #available(iOS 11.0, *) {
+            segControl!.layer.maskedCorners = []
+        }
+    }
+    
     func updateLayout() {
         var offsetTop : CGFloat = self.topLayoutGuide.length
         if (experiment.viewDescriptors!.count > 1) {
@@ -315,38 +351,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             segControl!.apportionsSegmentWidthsByContent = true
             
-            let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
-            segControl!.setTitleTextAttributes(font, for: .normal)
-            segControl!.setTitleTextAttributes(font, for: .selected)
-            segControl!.tintColor = UIColor(named: "textColor")
-            segControl!.backgroundColor = UIColor(named: "textColor")
-            
-            //Generate new background and divider images for the segControl
-            let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
-            UIGraphicsBeginImageContext(rect.size)
-            let ctx = UIGraphicsGetCurrentContext()
-            
-            //Background
-            ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
-            ctx!.fill(rect)
-            let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-            
-            //Higlighted image, bg with underline
-            ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
-            ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
-            let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-            
-            UIGraphicsEndImageContext()
-            
-            segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
-            segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
-            segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
-            if #available(iOS 11.0, *) {
-                segControl!.layer.maskedCorners = []
-            }
+            updateSegControlDesign()
             segControl!.sizeToFit()
             
             tabBar = UIScrollView()
@@ -378,6 +383,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         updateSelectedViewCollection()
         
         
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        updateSelectedViewCollection()
+        refreshTheAdjustedGraphColorForLightMode()
+        if (experiment.viewDescriptors!.count > 1) {
+            updateSegControlDesign()
+            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+        }
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
@@ -443,7 +458,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         print(error)
                     }
                 })
-                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: {_ in } )
                 .addCancelAction()
                 .show(in: self.navigationController!, animated: true)
             
@@ -833,8 +847,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func showSaveState() {
         self.stopExperiment()
         
-        UIAlertController.PhyphoxUIAlertBuilder()
-            .title(title: localize("save_state"))
+        let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
+        alertBuilder.title(title: localize("save_state"))
             .message(message: localize("save_state_message"))
             .preferredStyle(style: .alert)
             .addTextField(configHandler: { (textField) in
@@ -846,10 +860,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
             })
             .addActionWithTitle(localize("save_state_save"), style: .default, handler: { [unowned self] action in
-                saveTheState()
+                if let title = alertBuilder.getTextFieldValue().text {
+                    saveTheState(title: title)
+                }
             })
             .addActionWithTitle(localize("save_state_share"), style: .default, handler: { [unowned self] action in
-                shareTheState()
+                if let title = alertBuilder.getTextFieldValue().text {
+                    shareTheState(title: title)
+                }
             })
             .addCancelAction()
             .show(in: self.navigationController!, animated: true)
@@ -871,14 +889,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
     }
     
-    private func saveTheState(){
+    private func saveTheState(title: String){
         do {
             if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
                 try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
-            }
-            
-            guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
-                return
             }
             
             //For now, we disable the new state serializer (saving buffers to a separate binary file)
@@ -915,13 +929,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    private func shareTheState(){
+    private func shareTheState(title: String){
         let fileName = createTimeStampedFileNameWith(fileNameDefault: localize("save_state_default_title"))
         let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
-        
-        guard let title =  UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue().text else {
-            return
-        }
         
         let HUD = showHUDProgressWidget()
         
@@ -1500,6 +1510,14 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
+        for module in viewModules.flatMap({ $0 }) {
+            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+                analysisLimitedViewModule.analysisRunning = false
+            }
+        }
+    }
+    
+    func analysisSkipped(_ analysis: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
             if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false

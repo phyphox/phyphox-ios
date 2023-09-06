@@ -22,7 +22,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         label.text = descriptor.localizedLabel
         let fontSize = UIFont.systemFontSize * descriptor.fontSize
         label.font = (descriptor.bold ? UIFont.boldSystemFont(ofSize: fontSize) : (descriptor.italic ? UIFont.italicSystemFont(ofSize: fontSize) : UIFont.systemFont(ofSize: fontSize)))
-        label.textColor = descriptor.color
+        label.textColor = descriptor.color.autoLightColor()
         switch (descriptor.align) {
             case .left: label.textAlignment = .natural
             case .right: label.textAlignment = UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .left : .right
@@ -48,5 +48,14 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         super.layoutSubviews()
 
         label.frame = bounds
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                label.textColor = descriptor.color.autoLightColor()
+            }
+        }
     }
 }

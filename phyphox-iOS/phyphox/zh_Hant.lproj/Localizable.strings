@@ -52,7 +52,7 @@
 "export" = "匯出數據";
 "pick_exportFormat" = "選擇數據格式";
 "newExperiment" = "新增實驗";
-"creditsNames" = "發展與概念：Sebastian Staacks 博士\n概念：Christoph Stampfer 教授\n程式設計：Dominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+"creditsNames" = "發展與概念：Sebastian Staacks 博士\n概念：Christoph Stampfer 教授\n程式設計：Gaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
 "timedRunStopDelay" = "實驗長短(秒)";
 "export_subject" = "手機物理實作的數據";
 "export_pick_share" = "選擇輸出模式";

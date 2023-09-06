@@ -27,7 +27,6 @@ final class IfAnalysis: ExperimentAnalysisModule {
         greater = try attributes.optionalValue(for: "greater") ?? false
 
         for input in inputs {
-            print(input)
             if input.asString == "a" {
                 in1 = input
             }

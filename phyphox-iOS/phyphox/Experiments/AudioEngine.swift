@@ -133,7 +133,7 @@ final class AudioEngine {
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
                         
                         self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
-                        self.recordIn?.outBuffer.appendFromArray(data.map { Double($0) })
+                        self.recordIn?.backBuffer.appendFromArray(data.map { Double($0) })
                     }
                 }
             })

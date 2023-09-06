@@ -42,17 +42,17 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         label.lineBreakMode = .byWordWrapping
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = descriptor.color
+        label.textColor = descriptor.color.autoLightColor()
         label.textAlignment = .right
 
         valueLabel.text = "- "
-        valueLabel.textColor = descriptor.color
+        valueLabel.textColor = descriptor.color.autoLightColor()
         let defaultFont = UIFont.preferredFont(forTextStyle: .headline)
         valueLabel.font = UIFont.init(descriptor: defaultFont.fontDescriptor, size: CGFloat(descriptor.size) * defaultFont.pointSize)
         valueLabel.textAlignment = .left
         
         unitLabel.text = descriptor.localizedUnit
-        unitLabel.textColor = descriptor.color
+        unitLabel.textColor = descriptor.color.autoLightColor()
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         unitLabel.textAlignment = .left
         labelOutOfBoundDict[descriptor.label] = false
@@ -110,26 +110,45 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        return CGSize(width: size.width, height: valueLabel.sizeThatFits(size).height)
+        let s2 = valueLabel.sizeThatFits(size)
+        let s3 = unitLabel.sizeThatFits(size)
+        let valueUnitWidth = s2.width + s3.width
+        
+        let maxLabelWidth = (size.width-3*spacing)/2.0
+        let labelWidth = valueUnitWidth > maxLabelWidth ? 2*maxLabelWidth - valueUnitWidth : maxLabelWidth
+        
+        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: size.height))
+        return CGSize(width: size.width, height: max(s1.height, s2.height, s3.height))
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let s1 = label.sizeThatFits(self.bounds.size)
         let s2 = valueLabel.sizeThatFits(self.bounds.size)
         let s3 = unitLabel.sizeThatFits(self.bounds.size)
+        let valueUnitWidth = s2.width + s3.width
+        let maxLabelWidth = (self.bounds.width-3*spacing)/2.0
+        let labelWidth = valueUnitWidth > maxLabelWidth ? 2*maxLabelWidth - valueUnitWidth : maxLabelWidth
+
+        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: self.bounds.height))
         
-        //We want to align the gap between label and value to the center of the screen. But if the value and unit would exceed the screen, we have to push everything to the left
-        let hangOver = (bounds.width - 2*spacing)/2.0 - s2.width - s3.width - spacing
-        let push = hangOver < 0 ? hangOver : 0.0
+        let totalHeight = max(s1.height, s2.height, s3.height)
         
-        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
-        
-        label.frame = CGRect(x: push, y: (bounds.height - dynamicLabelHeight)/2.0, width: bounds.width/2.0 - spacing, height: dynamicLabelHeight)
-        valueLabel.frame = CGRect(x: label.frame.maxX + spacing, y: (bounds.height - s2.height)/2.0, width: s2.width, height: s2.height)
-        unitLabel.frame = CGRect(x: valueLabel.frame.maxX, y: (bounds.height - s3.height)/2.0, width: s3.width, height: s3.height)
+        label.frame = CGRect(x: spacing, y: 0, width: labelWidth, height: totalHeight)
+        valueLabel.frame = CGRect(x: 2*spacing + labelWidth, y: 0, width: s2.width, height: totalHeight)
+        unitLabel.frame = CGRect(x: 2*spacing + labelWidth + s2.width, y: 0, width: s3.width, height: totalHeight)
        
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                label.textColor = descriptor.color.autoLightColor()
+                valueLabel.textColor = descriptor.color.autoLightColor()
+                unitLabel.textColor = descriptor.color.autoLightColor()
+            }
+        }
     }
 }
 

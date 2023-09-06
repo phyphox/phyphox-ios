@@ -63,8 +63,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
 
     private let label = UILabel()
-    private let xLabel: UILabel
-    private let yLabel: UILabel
+    private var xLabel: UILabel
+    private var yLabel: UILabel
     private let zLabel: UILabel?
     
     private let glGraph: GLGraphView
@@ -174,6 +174,34 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         return dataSets.map { $0.timeReferenceSets }
     }
     
+    private func refreshView(){
+        glGraph.lineWidth = []
+        glGraph.lineColor = []
+        for i in 0..<descriptor.yInputBuffers.count {
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
+            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+            
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
+            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
+        }
+        
+        
+        graphArea.willRemoveSubview(label)
+        
+
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
+        label.textColor = UIColor(named: "textColor")
+
+        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        
+        graphArea.addSubview(label)
+        
+    }
+    
+    
     required init?(descriptor: GraphViewDescriptor) {
         self.descriptor = descriptor
         
@@ -190,7 +218,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
             var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
             
-            descriptor.color[i].getRed(&r, green: &g, blue: &b, alpha: &a)
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
             glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
         }
         glGraph.historyLength = descriptor.history
@@ -333,6 +361,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
     }
+    
+    @objc func reload(){
+        self.refreshView()
+        self.layoutSubviews()
+        self.setNeedsDisplay()
+    }
 
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
@@ -461,9 +495,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             searchRangeMinY -= CGFloat(offset)
             searchRangeMaxY -= CGFloat(offset)
         }
-        
-        print("Suche in \(searchRangeMinX) bis \(searchRangeMaxX)")
-        
+                
         for (i, dataSet) in dataSets.enumerated() {
             
             let n = hasZData ? dataSet.data3D.count : dataSet.data2D.count
@@ -1824,8 +1856,14 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         updatePlotArea()
     }
     
-    @objc func reload(){
-        self.layoutSubviews()
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #available(iOS 13.0, *) {
+            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                refreshView()
+                refreshMarkers()
+            }
+        }
     }
     
 }
