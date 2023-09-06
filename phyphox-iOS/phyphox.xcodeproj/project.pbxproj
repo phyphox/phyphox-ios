@@ -1266,14 +1266,7 @@
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
-<<<<<<< HEAD
-<<<<<<< HEAD
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
-=======
->>>>>>> 26e36c4 (Replace our CocoaMQTT fork with upstream version to fix incompatibility with iOS 16)
-=======
-				860E13F22B514703008FAFC6 /* GCDWebServer */,
->>>>>>> 70f0b50 (Switch repository for Swift-packaged version of GCDWebServer)
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
