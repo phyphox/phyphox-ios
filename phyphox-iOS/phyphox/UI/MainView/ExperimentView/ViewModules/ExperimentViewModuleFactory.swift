@@ -50,6 +50,9 @@ final class ExperimentViewModuleFactory {
                     //Should not happen as the depth input is marked as unavailable below iOS 14
                 }
             }
+            else if let descriptor = descriptor as? CameraViewDescriptor {
+                views.append(ExperimentCameraGUIView(descriptor: descriptor))
+            }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }

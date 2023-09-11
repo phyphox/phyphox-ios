@@ -510,6 +510,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         session.attachDelegate(delegate: depthGUI)
                         depthGUI.depthGUISelectionDelegate = session
                     }
+                    
+                    if let cameraGUI = view as? ExperimentCameraGUIView {
+                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
+                            continue
+                        }
+                        session.attachDelegate(delegate: cameraGUI)
+                        cameraGUI.depthGUISelectionDelegate = session
+                    }
                 }
             }
         }
