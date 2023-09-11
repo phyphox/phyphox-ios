@@ -10,7 +10,8 @@ import Foundation
 import AVFoundation
 
 @available(iOS 14.0, *)
-final class ExperimentCameraInputSession: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraGUISelectionDelegate, ObservableObject {
+final class ExperimentCameraInputSession: CameraGUISelectionDelegate {
+
 
     var x1: Float = 0.4
     var x2: Float = 0.6
@@ -31,109 +32,34 @@ final class ExperimentCameraInputSession: NSObject, AVCaptureVideoDataOutputSamp
     
     var measuring = false
     
-    private var queue: DispatchQueue? = DispatchQueue.global(qos: .userInteractive)
-    private var queueOutput: DispatchQueue? = DispatchQueue.global(qos: .userInteractive)
-    // Communicate with the session and other session objects on this queue.
-    private let sessionQueue = DispatchQueue(label: "session queue")
+    private var queue: DispatchQueue?
     
-    @Published var cameraSession = AVCaptureSession()
+    var cameraSession = AVCaptureSession()
    
     var screenRect: CGRect! = nil // For view dimensions
     
-    
-    var isSessionRunning = false
-//    12
-    var isConfigured = false
-//    13
-    //var setupResult: SessionSetupResult = .success
-    
-    @objc dynamic var videoDeviceInput: AVCaptureDeviceInput!
-    
-    //    MARK: Alert properties
-        public var alertError: AlertError = AlertError()
-    
-    
-    @Published public var shouldShowAlertView = false
-//    3.
-    @Published public var shouldShowSpinner = false
-//    4.
-    @Published public var willCapturePhoto = false
-//    5.
-    @Published public var isCameraButtonDisabled = true
-//    6.
-    @Published public var isCameraUnavailable = true
-    
-    
-    override init(){
+    init(){
         frontCamera = false
-    }
-    
-    
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-            // Process pixel buffer bytes here
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            return
-        }
-        
-        
-        
-        // Convert the image buffer to a CIImage
-        let ciImage = CIImage(cvPixelBuffer: imageBuffer)
-        
-            
-        // Convert the CIImage to a UIImage
-        let context = CIContext(options: nil)
-        let cgImage = context.createCGImage(ciImage, from: ciImage.extent)
-        
-        let width = cgImage?.width
-        let height = cgImage?.height
-        
-        let uiImage = UIImage(cgImage: cgImage!)
-        
-        // Example: Print a message in a background queue
-        queueOutput?.async {
-           
-        }
     }
     
 
     func runSession(){
-        // get camera device
-        guard let videoDevice = AVCaptureDevice.default(for: .video) else { return }
         
-        // plug camera device into device input which talkes with capture session via AVCaptureConnection
+        
+        guard let videoDevice = AVCaptureDevice.default(.builtInDualWideCamera, for: AVMediaType.video, position:  .back) else { return }
+        
         guard let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
         
-        cameraSession.sessionPreset = .high
-        if let existingInputs = cameraSession.inputs as? [AVCaptureInput] {
-            for input in existingInputs {
-                cameraSession.removeInput(input)
-            }
-        }
         guard cameraSession.canAddInput(videoDeviceInput) else { return }
         cameraSession.addInput(videoDeviceInput)
         
-        // setup output, add output to our capture session
-        let captureOutput = AVCaptureVideoDataOutput()
-        captureOutput.alwaysDiscardsLateVideoFrames = true
-        captureOutput.setSampleBufferDelegate(self, queue: queue)
-        cameraSession.addOutput(captureOutput)
+        cameraSession.startRunning()
         
-        self.delegate?.updateFrame(captureSession: self.cameraSession)
-        
-        queue?.async {
-            print("runSession Queue")
-            if (self.cameraSession.isRunning == false) {
-                self.cameraSession.startRunning()
-            }
-        }
+        delegate?.updateFrame(captureSession: cameraSession)
     }
     
     func stopSession() {
         running = false
-        if (self.cameraSession.isRunning == true) {
-            self.cameraSession.stopRunning()
-        }
     }
     
     func start(queue: DispatchQueue) throws {
@@ -143,9 +69,7 @@ final class ExperimentCameraInputSession: NSObject, AVCaptureVideoDataOutputSamp
     
     func stop() {
         measuring = false
-        
     }
-    
     
     func clear() {
         
@@ -200,7 +124,5 @@ final class ExperimentCameraInputSession: NSObject, AVCaptureVideoDataOutputSamp
             }
         }
     }
-    
-    
 }
 

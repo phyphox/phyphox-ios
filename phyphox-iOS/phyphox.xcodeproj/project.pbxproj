@@ -175,6 +175,9 @@
 		A1B9C1BC2AA9E45900238AF6 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */; };
 		A1B9C1BE2AA9E59D00238AF6 /* CameraViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BD2AA9E59D00238AF6 /* CameraViewDescriptor.swift */; };
 		A1B9C1C02AA9E76C00238AF6 /* CameraViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BF2AA9E76C00238AF6 /* CameraViewElementHandler.swift */; };
+		A1B9C1BC2AA9E45900238AF6 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */; };
+		A1B9C1BE2AA9E59D00238AF6 /* CameraViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BD2AA9E59D00238AF6 /* CameraViewDescriptor.swift */; };
+		A1B9C1C02AA9E76C00238AF6 /* CameraViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BF2AA9E76C00238AF6 /* CameraViewElementHandler.swift */; };
 		A1B9C1C22AA9E87300238AF6 /* ExperimentCameraInputSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1C12AA9E87300238AF6 /* ExperimentCameraInputSession.swift */; };
 		A1B9C1C42AA9EC9600238AF6 /* ExperimentCameraGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1C32AA9EC9600238AF6 /* ExperimentCameraGUIView.swift */; };
 		A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */; };
@@ -514,6 +517,9 @@
 		A18E13592B7F563B006EB323 /* CameraUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraUIView.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
+		A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInput.swift; sourceTree = "<group>"; };
+		A1B9C1BD2AA9E59D00238AF6 /* CameraViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewDescriptor.swift; sourceTree = "<group>"; };
+		A1B9C1BF2AA9E76C00238AF6 /* CameraViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewElementHandler.swift; sourceTree = "<group>"; };
 		A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInput.swift; sourceTree = "<group>"; };
 		A1B9C1BD2AA9E59D00238AF6 /* CameraViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewDescriptor.swift; sourceTree = "<group>"; };
 		A1B9C1BF2AA9E76C00238AF6 /* CameraViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewElementHandler.swift; sourceTree = "<group>"; };

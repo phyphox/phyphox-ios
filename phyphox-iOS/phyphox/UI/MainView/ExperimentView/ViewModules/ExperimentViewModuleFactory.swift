@@ -60,6 +60,9 @@ final class ExperimentViewModuleFactory {
                 }
 
             }
+            else if let descriptor = descriptor as? CameraViewDescriptor {
+                views.append(ExperimentCameraGUIView(descriptor: descriptor))
+            }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }
