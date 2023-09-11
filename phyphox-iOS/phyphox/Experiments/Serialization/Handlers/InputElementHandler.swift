@@ -118,6 +118,57 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
+struct CameraInputDescriptor: SensorDescriptor {
+    let x1: Float
+    let x2: Float
+    let y1: Float
+    let y2: Float
+    let smooth: Bool
+    let outputs: [SensorOutputDescriptor]
+}
+
+private final class CameraElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [CameraInputDescriptor]()
+
+    private let outputHandler = SensorOutputElementHandler()
+
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["output": outputHandler]
+    }
+
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    private enum Attribute: String, AttributeKey {
+        case mode
+        case x1
+        case x2
+        case y1
+        case y2
+        case smooth
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let x1user: Float = try attributes.optionalValue(for: .x1) ?? 0.4
+        let x2user: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+        let y1user: Float = try attributes.optionalValue(for: .y1) ?? 0.4
+        let y2user: Float = try attributes.optionalValue(for: .y2) ?? 0.6
+
+        //Careful: We will now switch from the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+        let x1 = 1.0-y1user
+        let x2 = 1.0-y2user
+        let y1 = 1.0-x1user
+        let y2 = 1.0-x2user
+        
+        let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
+        
+        results.append(CameraInputDescriptor( x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
+    }
+}
+
 struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
@@ -413,7 +464,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
 }
 
 final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = (sensors: [SensorInputDescriptor], depth: [DepthInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
+    typealias Result = (sensors: [SensorInputDescriptor], depth: [DepthInputDescriptor], camera: [CameraInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
 
     var results = [Result]()
 
@@ -422,11 +473,12 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
     private let audioHandler = AudioElementHandler()
     private let locationHandler = LocationElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
+    private let cameraHandler = CameraElementHandler()
 
     var childHandlers: [String: ElementHandler]
 
     init() {
-        childHandlers = ["sensor": sensorHandler, "depth": depthHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["sensor": sensorHandler, "depth": depthHandler, "camera": cameraHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -434,9 +486,10 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
         let location = locationHandler.results
         let sensors = sensorHandler.results
         let depth = depthHandler.results
+        let camera = cameraHandler.results
         let bluetooth = bluetoothHandler.results
 
-        results.append((sensors, depth, audio, location, bluetooth))
+        results.append((sensors, depth, camera, audio, location, bluetooth))
     }
 }
 
