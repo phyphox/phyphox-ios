@@ -333,3 +333,4 @@
 "depthAggregationModeAverage" = "Average";
 "sensorDepth" = "Depth (LiDAR)";
 "depthAggregationModeWeighted" = "Weighted";
+"settings" = "Nastavení";
