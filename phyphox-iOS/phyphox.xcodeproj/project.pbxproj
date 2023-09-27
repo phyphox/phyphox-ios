@@ -156,6 +156,7 @@
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
+		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
@@ -204,7 +205,6 @@
 		C07B530D22942CC300BA085A /* InputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07B530C22942CC300BA085A /* InputConversion.swift */; };
 		C07BBC1F26209CAC0097C57A /* ExperimentTimedRunDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */; };
 		C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */; };
-		C086C6F22707560100348772 /* CocoaMQTT.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C086C6EA270755E100348772 /* CocoaMQTT.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
 		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
@@ -220,7 +220,6 @@
 		C0AD8542229E7E7A00421738 /* MenuTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8541229E7E7A00421738 /* MenuTableViewController.swift */; };
 		C0AD8552229EA1CF00421738 /* HintBubbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AD8551229EA1CF00421738 /* HintBubbleViewController.swift */; };
 		C0AE8A982294558000A3EC48 /* ConfigConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AE8A972294558000A3EC48 /* ConfigConversion.swift */; };
-		C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C086C6EA270755E100348772 /* CocoaMQTT.framework */; };
 		C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DF527079C600020A5AF /* JGProgressHUD */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
@@ -245,34 +244,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
-		};
-		C086C6E9270755E100348772 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8225B532227C2E8700E4DB51;
-			remoteInfo = "iOS CocoaMQTT";
-		};
-		C086C6EB270755E100348772 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8225B54C227C32C500E4DB51;
-			remoteInfo = "CocoaMQTT-Tests";
-		};
-		C086C6ED270755E100348772 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 111124B224BB515E00E2DFBC;
-			remoteInfo = "Mac CocoaMQTT";
-		};
-		C086C6EF270755E100348772 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 111124DC24BB516400E2DFBC;
-			remoteInfo = "tvOS CocoaMQTT";
 		};
 		C0FC14852707C15200512064 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -340,7 +311,6 @@
 			dstSubfolderSpec = 10;
 			files = (
 				C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */,
-				C086C6F22707560100348772 /* CocoaMQTT.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -586,7 +556,6 @@
 		C07B530C22942CC300BA085A /* InputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConversion.swift; sourceTree = "<group>"; };
 		C07BBC1E26209CAC0097C57A /* ExperimentTimedRunDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentTimedRunDialogView.swift; sourceTree = "<group>"; };
 		C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRC32InputStream.swift; sourceTree = "<group>"; };
-		C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = CocoaMQTT.xcodeproj; path = CocoaMQTT/CocoaMQTT.xcodeproj; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
 		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
@@ -622,7 +591,7 @@
 				C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */,
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
-				C0BD4DEA27079C0D0020A5AF /* CocoaMQTT.framework in Frameworks */,
+				867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */,
 				C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */,
 				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
@@ -1197,20 +1166,8 @@
 				C06BCD262707AADC00B29595 /* ImageIO.framework */,
 				C0FC14882707C19900512064 /* ZipZap.xcodeproj */,
 				C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */,
-				C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		C086C6E3270755E100348772 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				C086C6EA270755E100348772 /* CocoaMQTT.framework */,
-				C086C6EC270755E100348772 /* CocoaMQTT-Tests.xctest */,
-				C086C6EE270755E100348772 /* CocoaMQTT.framework */,
-				C086C6F0270755E100348772 /* CocoaMQTT.framework */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		C0FC14822707C15200512064 /* Products */ = {
@@ -1257,6 +1214,7 @@
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
 				C0F430C228E5A16D00BC98DE /* GCDWebServers */,
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
+				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1364,14 +1322,11 @@
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
 				C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
+				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
-				{
-					ProductGroup = C086C6E3270755E100348772 /* Products */;
-					ProjectRef = C086C6E2270755E100348772 /* CocoaMQTT.xcodeproj */;
-				},
 				{
 					ProductGroup = C0FC14822707C15200512064 /* Products */;
 					ProjectRef = C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */;
@@ -1391,34 +1346,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		C086C6EA270755E100348772 /* CocoaMQTT.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = CocoaMQTT.framework;
-			remoteRef = C086C6E9270755E100348772 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C086C6EC270755E100348772 /* CocoaMQTT-Tests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "CocoaMQTT-Tests.xctest";
-			remoteRef = C086C6EB270755E100348772 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C086C6EE270755E100348772 /* CocoaMQTT.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = CocoaMQTT.framework;
-			remoteRef = C086C6ED270755E100348772 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C086C6F0270755E100348772 /* CocoaMQTT.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = CocoaMQTT.framework;
-			remoteRef = C086C6EF270755E100348772 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		C0FC14862707C15200512064 /* libJXLS.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -1990,7 +1917,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.12;
+				MARKETING_VERSION = 1.1.13;
 				OTHER_LDFLAGS = "";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
@@ -2051,7 +1978,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.12;
+				MARKETING_VERSION = 1.1.13;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2228,6 +2155,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/emqx/CocoaMQTT";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JonasGessner/JGProgressHUD";
@@ -2255,6 +2190,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		867E2BD72AC464D000ABB472 /* CocoaMQTT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTT;
+		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */;
