@@ -1374,7 +1374,7 @@
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
-
+			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
