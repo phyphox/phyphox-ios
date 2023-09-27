@@ -479,14 +479,12 @@
 		6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextElementHandler.swift; sourceTree = "<group>"; };
 		6BF82BC72147FF6F00175659 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
-
-		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
-
 		866632E82A29E1D90068762D /* UIColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtensions.swift; sourceTree = "<group>"; };
 		86C183CF29F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1E03A7E29B61A9000CE93A6 /* UIImageExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExt.swift; sourceTree = "<group>"; };
@@ -1216,7 +1214,10 @@
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
+<<<<<<< HEAD
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
+=======
+>>>>>>> 26e36c4 (Replace our CocoaMQTT fork with upstream version to fix incompatibility with iOS 16)
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1324,7 +1325,10 @@
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
+<<<<<<< HEAD
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
+=======
+>>>>>>> 26e36c4 (Replace our CocoaMQTT fork with upstream version to fix incompatibility with iOS 16)
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -2192,6 +2196,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+
 		860E13F22B514703008FAFC6 /* GCDWebServer */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */;
