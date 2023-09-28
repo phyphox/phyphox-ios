@@ -105,15 +105,15 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
     func getSignal(rssi: Int) -> UIImage{
       
         if rssi > -35 {
-            return (UIImage(named: "cellular_level_4")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+            return UIImage(named: "cellular_level_4")!
         } else if rssi > -55 {
-            return (UIImage(named: "cellular_level_3")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+            return UIImage(named: "cellular_level_3")!
         } else if rssi > -70 {
-            return (UIImage(named: "cellular_level_2")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+            return UIImage(named: "cellular_level_2")!
         } else if rssi > -90 {
-            return (UIImage(named: "cellular_level_1")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+            return UIImage(named: "cellular_level_1")!
         } else {
-            return (UIImage(named: "cellular_level_0")?.withTintColor(.black, renderingMode: .alwaysOriginal))!
+            return UIImage(named: "cellular_level_0")!
         }
         
         
@@ -163,9 +163,8 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
     func configure(model: ConnectedDevicesDataModel){
         deviceLabel.text = model.getDeviceName()
         if #available(iOS 13.0, *) {
-            signalImageView.image = getSignal(rssi: model.getSignalStrength())
-            let getBatteryLevelImage = getBatteryLevel(level: model.getBatteryLabel())
-            batteryImageView.image = getBatteryLevelImage.withTintColor(.black, renderingMode: .alwaysOriginal)
+            signalImageView.image = getImageAsDeviceMode(image: getSignal(rssi: model.getSignalStrength()))
+            batteryImageView.image = getImageAsDeviceMode(image: getBatteryLevel(level: model.getBatteryLabel()))
         } else {
             // Fallback on earlier versions
         }
