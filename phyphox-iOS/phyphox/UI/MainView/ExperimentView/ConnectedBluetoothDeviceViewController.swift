@@ -105,7 +105,6 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
     func getSignal(rssi: Int) -> UIImage{
       
         if rssi > -35 {
-<<<<<<< HEAD
             return UIImage(named: "cellular_level_4")!
         } else if rssi > -55 {
             return UIImage(named: "cellular_level_3")!
