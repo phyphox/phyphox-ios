@@ -436,6 +436,10 @@ extension Experiment: ExperimentAnalysisDelegate {
             }
         }
     }
+    
+    func analysisSkipped(_ analysis: ExperimentAnalysis) {
+        analysisDelegate?.analysisSkipped(analysis)
+    }
 }
 
 extension Experiment {

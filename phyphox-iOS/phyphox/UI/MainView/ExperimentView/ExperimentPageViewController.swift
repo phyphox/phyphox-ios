@@ -355,8 +355,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
         refreshTheAdjustedGraphColorForLightMode()
-        updateSegControlDesign()
-        tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+        if (experiment.viewDescriptors!.count > 1) {
+            updateSegControlDesign()
+            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+        }
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
@@ -1454,6 +1456,14 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
+        for module in viewModules.flatMap({ $0 }) {
+            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+                analysisLimitedViewModule.analysisRunning = false
+            }
+        }
+    }
+    
+    func analysisSkipped(_ analysis: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
             if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false

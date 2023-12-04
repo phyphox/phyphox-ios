@@ -11,7 +11,7 @@ import CoreBluetooth
 import ZipZap
 
 private let minCellWidth: CGFloat = 320.0
-private let phyphoxCatHintRelease = "1.1.9" //If this is updated to the current version, the hint bubble for the support menu is shown again
+private let phyphoxCatHintRelease = "1.1.12" //If this is updated to the current version, the hint bubble for the support menu is shown again
 private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
@@ -73,7 +73,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let defaults = UserDefaults.standard
         if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
-            hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.9), onDismiss: {() -> Void in
+            hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.8), onDismiss: {() -> Void in
             })
             guard let hintBubble = hintBubble else {
                 return
@@ -165,6 +165,16 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 .addCancelAction()
                 .show(in: navigationController!, animated: true)
         }
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        hintBubble?.closeHint()
+        hintBubble = nil
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        hintBubble?.closeHint()
+        hintBubble = nil
     }
     
     //Force iPad-style popups (for the hint to the menu)
@@ -640,6 +650,9 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     func detectFileType(data: Data) -> FileType {
+        if data.count < 20 {
+            return .unknown
+        }
         if data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04 {
             //Look for ZIP signature
             return .zip
