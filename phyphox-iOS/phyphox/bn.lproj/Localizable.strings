@@ -20,7 +20,7 @@
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
 "faqPhyphoxOrg" = "প্রায়শই জিজ্ঞাসা করা প্রশ্ন";
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
-"remotePhyphoxOrg" = "রিমোট কন্ট্রোল সংক্রান্ত সহায়তা";
+"remotePhyphoxOrg" = "রিমোট কন্ট্রোল সহায়তা";
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
 "deviceInfo" = "ডিভাইসের বিবরণ";
 "copyToClipboard" = "ক্লিপবোর্ডে কপি করুন";
@@ -64,3 +64,14 @@
 "newExperimentBTReadErrorTitle" = "ব্লুটুথ পরীক্ষায় ত্রুটি।";
 "newExperimentBTReadErrorCorrupted" = "প্রেরিত পরীক্ষার ডাটা বিকৃত হয়েছে।";
 "generalErrorDialog" = "কোনো সমস্যা হয়েছে।";
+"sensorLinearAcceleration" = "রৈখিক ত্বরণ";
+"sensorLight" = "লাইট";
+"sensorGyroscope" = "জাইরোস্কোপ";
+"sensorAccelerometer" = "ত্বরণমাপি";
+"sensorMagneticField" = "চুম্বক ক্ষেত্র";
+"sensorPressure" = "চাপ";
+"sensorProximity" = "নৈকট্য";
+"sensorTemperature" = "তাপমাত্রা";
+"sensorHumidity" = "আদ্রতা";
+"sensorAttitude" = "দেহভঙ্গিমা";
+"sensorGravity" = "গুরুত্ব";
