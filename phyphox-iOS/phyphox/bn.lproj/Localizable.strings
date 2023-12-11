@@ -99,7 +99,7 @@
 "start" = "শুরু করুন";
 "clear_data" = "ডাটা মুছে দিন";
 "clear_data_question" = "রেকর্ড করা ডাটা মুছবো?";
-"clear" = "মুছা";
-"leave_experiment" = "পরীক্ষা করা ছাড়া";
-"leave_experiment_question" = "এই পরীক্ষাটি না করি এবং রেকর্ড করা ডাটা বাতিল করি?";
-"leave" = "বাদ দাউ";
+"clear" = "মুছুন";
+"leave_experiment" = "পরীক্ষা করা বন্ধ করুন";
+"leave_experiment_question" = "এই পরীক্ষাটি বন্ধ করে রেকর্ড করা ডাটা বাতিল করি?";
+"leave" = "বেরিয়ে যান";
