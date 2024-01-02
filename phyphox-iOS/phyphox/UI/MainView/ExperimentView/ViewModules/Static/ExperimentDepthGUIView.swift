@@ -89,7 +89,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         
         arView.device = MTLCreateSystemDefaultDevice()
         arView.backgroundColor = UIColor.clear
-        
+ 
         renderer = ExperimentDepthGUIRenderer(metalDevice: arView.device!, renderDestination: arView)
         
         aggregationBtn.backgroundColor = UIColor(named: "lightBackgroundColor")

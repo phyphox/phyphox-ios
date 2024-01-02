@@ -265,7 +265,7 @@ class ExperimentDepthGUIRenderer {
         let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
         var scaledSelectionState = SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: selectionState.editable)
         renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionStruct>.stride, index: 2)
-        
+         
         // Setup plane vertex buffers.
         renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
         renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 1)
