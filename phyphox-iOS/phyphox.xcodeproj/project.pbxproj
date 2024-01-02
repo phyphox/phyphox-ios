@@ -161,6 +161,8 @@
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		86F38FD02BA4A66700C2D643 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 86F38FCF2BA4A66700C2D643 /* PrivacyInfo.xcprivacy */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
+		A14B3A472B7AD2960016E380 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14B3A462B7AD2960016E380 /* ExperimentCameraInput.swift */; };
+		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		A15891F02B10BFD000A169C3 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891EF2B10BFD000A169C3 /* MetalView.swift */; };
 		A15891F22B10BFED00A169C3 /* MetalRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891F12B10BFED00A169C3 /* MetalRenderer.swift */; };
 		A182CEDD2B025B23000385D2 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDC2B025B23000385D2 /* CameraView.swift */; };
@@ -170,6 +172,8 @@
 		A182CEE72B02DF10000385D2 /* CameraService+Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */; };
 		A18E13582B7CAFF4006EB323 /* ExperimentCameraInputSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */; };
 		A18E135A2B7F563B006EB323 /* CameraUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18E13592B7F563B006EB323 /* CameraUIView.swift */; };
+		A182CEE52B028525000385D2 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE42B028525000385D2 /* CameraPreview.swift */; };
+		A182CEE72B02DF10000385D2 /* CameraService+Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1B9C1BC2AA9E45900238AF6 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */; };
@@ -515,6 +519,8 @@
 		A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CameraService+Enums.swift"; sourceTree = "<group>"; };
 		A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInputSession.swift; sourceTree = "<group>"; };
 		A18E13592B7F563B006EB323 /* CameraUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraUIView.swift; sourceTree = "<group>"; };
+		A182CEE42B028525000385D2 /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CameraService+Enums.swift"; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInput.swift; sourceTree = "<group>"; };
@@ -1166,6 +1172,10 @@
 				A15891F12B10BFED00A169C3 /* MetalRenderer.swift */,
 				A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */,
 				A18E13592B7F563B006EB323 /* CameraUIView.swift */,
+				A182CEE42B028525000385D2 /* CameraPreview.swift */,
+				A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */,
+				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
+				A15891F12B10BFED00A169C3 /* MetalRenderer.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -1592,6 +1602,7 @@
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
+				A182CEE52B028525000385D2 /* CameraPreview.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */,
 				6B612FF6207EB052001DA8D9 /* AnalysisElementHandler.swift in Sources */,
