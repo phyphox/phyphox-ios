@@ -511,13 +511,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
-                    if let cameraGUI = view as? ExperimentCameraGUIView {
-                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
-                            continue
-                        }
-                        session.attachDelegate(delegate: cameraGUI)
-                        cameraGUI.depthGUISelectionDelegate = session
-                    }
                 }
             }
         }
@@ -540,6 +533,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if #available(iOS 14.0, *) {
             if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
                 session.stopSession()
+            }
+            
+            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+                camSession.stopSession()
             }
         }
         disconnectFromBluetoothDevices()

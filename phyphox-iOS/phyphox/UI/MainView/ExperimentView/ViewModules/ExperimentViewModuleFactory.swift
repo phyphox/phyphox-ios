@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 final class ExperimentViewModuleFactory {
     
@@ -51,7 +52,12 @@ final class ExperimentViewModuleFactory {
                 }
             }
             else if let descriptor = descriptor as? CameraViewDescriptor {
-                views.append(ExperimentCameraGUIView(descriptor: descriptor))
+                if #available(iOS 14.0, *) {
+                    // TODO need to pass descriptor in view argument.
+                    views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
+                } else {
+                    // Fallback on earlier versions
+                }
             }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
