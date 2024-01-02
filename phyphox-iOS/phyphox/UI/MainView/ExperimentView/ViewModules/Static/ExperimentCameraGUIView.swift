@@ -8,6 +8,7 @@
 
 import Foundation
 import AVFoundation
+import SwiftUI
 
 protocol CameraGUIDelegate {
     func updateFrame(captureSession: AVCaptureSession)
@@ -23,86 +24,37 @@ protocol CameraGUISelectionDelegate {
 }
 
 
+
+@available(iOS 13.0, *)
 final class ExperimentCameraGUIView: UIView, CameraGUIDelegate {
     
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
-    
-    func updateFrame(captureSession: AVCaptureSession) {
-        videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        layoutSubviews()
-    }
-    
-    var resolution: CGSize?
     var depthGUISelectionDelegate: CameraGUISelectionDelegate?
     
-    func updateResolution(resolution: CGSize) {
-        self.resolution = resolution
-        setNeedsLayout()
-    }
-    
+    var resolution: CGSize?
     
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
     var resizableState: ResizableViewModuleState =  .normal
     
-    let unfoldMoreImageView: UIImageView
-    let unfoldLessImageView: UIImageView
+    var showMoreButton: UIButton = UIButton()
     
-    let descriptor: CameraViewDescriptor
-    let spacing: CGFloat = 1.0
-    private let sideMargins:CGFloat = 10.0
-    private let buttonPadding: CGFloat = 20.0
+    var showLessButton: UIButton = UIButton()
     
+    let videoPreviewUIView = UIView()
     
-    var screenRect: CGRect! = nil // For view dimensions
     private let label = UILabel()
     
-    
-    private let aggregationBtn = UIButton()
-    private let cameraBtn = UIButton()
-    
-    var panGestureRecognizer: UIPanGestureRecognizer? = nil
-    
-    required init?(descriptor: CameraViewDescriptor) {
-        self.descriptor = descriptor
-        
-        unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-        unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
-        
-        
-        aggregationBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
-        aggregationBtn.setTitle(localize("depthAggregationMode"), for: UIControl.State())
-        aggregationBtn.isHidden = true
-        
-        cameraBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
-        cameraBtn.setTitle(localize("sensorCamera"), for: UIControl.State())
-        cameraBtn.isHidden = true
+    required init() {
         
         super.init(frame: .zero)
         
-        label.numberOfLines = 0
-        label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .body)
-        label.textColor = UIColor(named: "textColor")
+        setUpCameraViews()
         
-        addSubview(label)
+        addSubview(showMoreButton)
+        addSubview(showLessButton)
         
-
-        
-        let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-        unfoldMoreImageView.frame = unfoldRect
-        unfoldLessImageView.frame = unfoldRect
-        unfoldLessImageView.isHidden = true
-        unfoldMoreImageView.isHidden = false
-        
-        addSubview(unfoldMoreImageView)
-        addSubview(unfoldLessImageView)
-        
-        addSubview(aggregationBtn)
-        addSubview(cameraBtn)
-        
-        
+        //horizontalCameraSettingsStackView()
     }
-   
     
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
@@ -110,57 +62,144 @@ final class ExperimentCameraGUIView: UIView, CameraGUIDelegate {
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        switch resizableState {
-        case .exclusive:
-            return size
-        case .hidden:
-            return CGSize.init(width: 0, height: 0)
-        default:
-            let labelh = label.sizeThatFits(size).height
-            
-            return CGSize(width: size.width, height: Swift.min((size.width-2*sideMargins)/descriptor.aspectRatio + labelh + 2*spacing, size.height))
-        }
+        return size
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        videoPreviewLayer?.frame = bounds
-        videoPreviewLayer?.videoGravity = .resizeAspectFill
+        print("layoutSubviews")
+        var cameraWidth : CGFloat
+        var cameraHeight : CGFloat
+        var previewXPosition: CGFloat
+        
+        
+        switch resizableState {
+        case .normal:
+            cameraWidth = (UIScreen.main.bounds.width - 20) / 2
+            cameraHeight = UIScreen.main.bounds.height / 3
+            previewXPosition = (UIScreen.main.bounds.width / 2) - ((videoPreviewLayer?.frame.width ?? 0)/2)
+        case .exclusive:
+            cameraWidth = UIScreen.main.bounds.width - 20
+            cameraHeight = UIScreen.main.bounds.height / 2
+            previewXPosition = 10
+        case .hidden:
+            cameraWidth = 0
+            cameraHeight = 0
+            previewXPosition = 10
+        }
         
         if(videoPreviewLayer != nil){
-            layer.addSublayer(videoPreviewLayer!)
+            print("updateFrame: layoutSubviews")
+            videoPreviewLayer?.frame = CGRect(x: previewXPosition, y: 40, width: cameraWidth, height: cameraHeight)
+            videoPreviewLayer?.contents =
+            videoPreviewLayer?.videoGravity = .resizeAspectFill
+            videoPreviewUIView.layer.addSublayer(videoPreviewLayer!)
+            addSubview(videoPreviewUIView)
+
         }
-            
-        
         
     }
     
-    func resizableStateChanged(_ newState: ResizableViewModuleState) {
+    func updateFrame(captureSession: AVCaptureSession) {
+        //videoPreviewLayer = ScannerOverlayPreviewLayer(session: captureSession)
+        videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        layoutSubviews()
         
     }
     
-    @objc func tapped(_ sender: UITapGestureRecognizer) {
-        if resizableState == .normal {
-            layoutDelegate?.presentExclusiveLayout(self)
+    func updateResolution(resolution: CGSize) {
+        self.resolution = resolution
+        setNeedsLayout()
+    }
+    
+    func setUpCameraViews() {
+        
+        let unfoldRect = CGRectMake(5, 5, 40, 40)
+        
+        if #available(iOS 13.0, *) {
+            showMoreButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
         } else {
-            layoutDelegate?.restoreLayout()
+            showMoreButton.setImage(UIImage(named: "unfold_more"), for: .normal)
         }
-    }
-    
-    var panningIndexX: Int = 0
-    var panningIndexY: Int = 0
-    @objc func panned (_ sender: UIPanGestureRecognizer) {
-        guard var del = depthGUISelectionDelegate else {
-            return
+        showMoreButton.frame = unfoldRect
+        showMoreButton.contentMode = .scaleAspectFill
+        showMoreButton.isHidden = false
+        showMoreButton.addTarget(self, action: #selector(maximizeCamera), for: .touchUpInside)
+        
+        if #available(iOS 13.0, *) {
+            showLessButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
+        } else {
+            showLessButton.setImage(UIImage(named: "unfold_less"), for: .normal)
         }
-    }
-    
-    @objc private func aggregationBtnPressed() {
-    }
+        showLessButton.frame = unfoldRect
+        showLessButton.isHidden = true
+        showLessButton.addTarget(self, action: #selector(minimizeCamera), for: .touchUpInside)
         
         
-    @objc private func cameraBtnPressed() {
     }
+    
+    @objc private func maximizeCamera() {
+        print("maximizeCamera")
+        
+        showLessButton.isHidden = false
+        showMoreButton.isHidden = true
+        
+        resizableState = .exclusive
+        layoutSubviews()
+   }
+    
+    @objc private func minimizeCamera() {
+        print("minimizeCamera")
+        
+        showLessButton.isHidden = true
+        showMoreButton.isHidden = false
+        
+        resizableState = .normal
+        layoutSubviews()
+   }
+    
+    private func horizontalCameraSettingsStackView(){
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        stackView.spacing = 10
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Create buttons
+        for i in 1...5 {
+            let button = UIButton()
+            button.setTitle("Button \(i)", for: .normal)
+            button.setTitleColor( UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0), for: .normal)
+            button.setImage(UIImage(named: "new_experiment_simple"), for: .normal)
+            button.addTarget(self, action: #selector(buttonTapped(_:)), for: .touchUpInside)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            stackView.addArrangedSubview(button)
+        }
+        
+        addSubview(stackView)
+        
+        NSLayoutConstraint.activate([
+                // Video preview view constraints
+                videoPreviewUIView.topAnchor.constraint(equalTo: topAnchor),
+                videoPreviewUIView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                videoPreviewUIView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                videoPreviewUIView.bottomAnchor.constraint(equalTo: bottomAnchor),
+                
+                // Button 1 constraints
+                stackView.topAnchor.constraint(equalTo: videoPreviewUIView.bottomAnchor, constant: 20),
+                stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+                
+            ])
+        
+        
+    }
+  
+    
+    @objc func buttonTapped(_ sender: UIButton) {
+            print("Button tapped: \(sender.titleLabel?.text ?? "")")
+        }
+
     
 }
