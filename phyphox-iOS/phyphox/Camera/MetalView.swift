@@ -17,10 +17,9 @@ struct CameraMetalView: UIViewRepresentable {
     let metalView: MTKView = MTKView()
     
     
-    func makeCoordinator() -> MetalRenderer {
+    func makeCoordinator() -> Coordinator {
         print("MetalView: makeCoordinator")
-        return MetalRenderer(parent: self, renderer: metalView)
-    }
+        return Coordinator(renderer: MetalRenderer(parent: self, renderer: metalView))
     
     func makeUIView(context: UIViewRepresentableContext<CameraMetalView>) -> MTKView {
         print("MetalView: makeUIView")

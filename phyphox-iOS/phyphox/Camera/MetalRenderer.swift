@@ -47,6 +47,8 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     
     var cvImageBuffer : CVImageBuffer?
     
+    var arrCVImageBuffer: [CVImageBuffer]
+    
     
     init(parent: CameraMetalView ,renderer: RenderDestinationProvider) {
         print("Metal Renderer : init")
@@ -57,7 +59,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             self.metalDevice = metalDevice
         }
         
-        
+        arrCVImageBuffer = [CVImageBuffer]()
         super.init()
         
         loadMetal()
@@ -84,9 +86,16 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     }
     
     
-    func updateFrame(imageBuffer: CVImageBuffer, selectionState: SelectionStruct) {
+    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct) {
         print("Metal Renderer: updateFrame")
-        self.cvImageBuffer = imageBuffer
+        
+        if imageBuffer != nil {
+            print("Metal Renderer: imageBuffer not nil")
+            arrCVImageBuffer.append(imageBuffer)
+            print("Metal Renderer: imageBuffer size: ", arrCVImageBuffer.count)
+            self.cvImageBuffer = imageBuffer
+        }
+        
         self.selectionState = selectionState
     }
     
@@ -236,8 +245,10 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     func updateAppState() {
 
         print("updateAppState before")
+        
+        print("Metal Renderer: updateAppState imageBuffer size: ", arrCVImageBuffer.count)
         // Get the AR session's current frame.
-        guard let currentFrame = cvImageBuffer else {
+        guard let currentFrame = self.cvImageBuffer else {
             return
         }
         
