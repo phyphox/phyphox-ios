@@ -1602,7 +1602,6 @@
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
-				A182CEE52B028525000385D2 /* CameraPreview.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */,
 				6B612FF6207EB052001DA8D9 /* AnalysisElementHandler.swift in Sources */,
