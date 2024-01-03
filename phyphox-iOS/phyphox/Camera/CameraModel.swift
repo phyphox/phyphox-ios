@@ -13,19 +13,24 @@ import MetalKit
 @available(iOS 14.0, *)
 final class CameraModel: ObservableObject {
     private let service = CameraService()
+    var metalView =  CameraMetalView()
    
+    var metalRenderer: MetalRenderer
     var session: AVCaptureSession
     
     
     init() {
         self.session = service.session
+        self.metalRenderer = MetalRenderer(parent: metalView, renderer: metalView.metalView)
     }
 
     
     func configure(){
         service.checkForPermisssion()
         service.configure()
-        service.setUpMetal()
+        
+        metalView.metalView.delegate = metalRenderer
+        service.metalRender = metalRenderer
     }
     
     func getScale() -> CGFloat {
