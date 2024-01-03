@@ -202,7 +202,7 @@ struct PhyphoxCameraView: View {
                 
                     ZStack{
                         
-                        CameraMetalView()
+                        model.metalView
                             .foregroundColor(.gray)
                             .onAppear{
                                 model.configure()
