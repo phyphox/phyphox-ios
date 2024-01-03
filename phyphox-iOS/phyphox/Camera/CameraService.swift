@@ -97,21 +97,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    public func setUpMetal(){
-        
-        metalRender = CameraMetalView().makeCoordinator()
-    
-        
-        //metalView.backgroundColor = UIColor.clear
-        
-        //metalRender = MetalRenderer(renderer: metalView)
-        //metalView.delegate = metalRender
-        
-       // metalRender?.drawRectResized(size: metalView.bounds.size)
-        
-        
-        
-    }
     
     
     private func configureSession(){

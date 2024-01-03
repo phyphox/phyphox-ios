@@ -165,7 +165,6 @@
 		A182CEDF2B025B41000385D2 /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDE2B025B41000385D2 /* CameraModel.swift */; };
 		A182CEE12B025B53000385D2 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE02B025B53000385D2 /* CameraService.swift */; };
 		A182CEE32B025B6C000385D2 /* CameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE22B025B6C000385D2 /* CameraInput.swift */; };
-		A182CEE52B028525000385D2 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE42B028525000385D2 /* CameraPreview.swift */; };
 		A182CEE72B02DF10000385D2 /* CameraService+Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
@@ -504,7 +503,6 @@
 		A182CEDE2B025B41000385D2 /* CameraModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraModel.swift; sourceTree = "<group>"; };
 		A182CEE02B025B53000385D2 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		A182CEE22B025B6C000385D2 /* CameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraInput.swift; sourceTree = "<group>"; };
-		A182CEE42B028525000385D2 /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
 		A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CameraService+Enums.swift"; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
@@ -1147,7 +1145,6 @@
 				A182CEDE2B025B41000385D2 /* CameraModel.swift */,
 				A182CEE02B025B53000385D2 /* CameraService.swift */,
 				A182CEE22B025B6C000385D2 /* CameraInput.swift */,
-				A182CEE42B028525000385D2 /* CameraPreview.swift */,
 				A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */,
 				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
 				A15891F12B10BFED00A169C3 /* MetalRenderer.swift */,
@@ -1574,7 +1571,6 @@
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,
 				6B00F0B71C46F23000971941 /* ExperimentExport.swift in Sources */,
-				A182CEE52B028525000385D2 /* CameraPreview.swift in Sources */,
 				6B94A6211CA015A4008D9ACF /* GLGraphView.swift in Sources */,
 				A1E03A7F29B61A9000CE93A6 /* UIImageExt.swift in Sources */,
 				6B612FF6207EB052001DA8D9 /* AnalysisElementHandler.swift in Sources */,

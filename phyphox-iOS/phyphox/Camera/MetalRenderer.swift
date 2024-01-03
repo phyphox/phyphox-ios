@@ -8,15 +8,16 @@
 
 import Foundation
 import MetalKit
+import AVFoundation
 
 
 @available(iOS 13.0, *)
-class MetalRenderer: NSObject, MTKViewDelegate {
+class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var metalDevice: MTLDevice!
     var metalCommandQueue: MTLCommandQueue!
     var imagePlaneVertexBuffer: MTLBuffer!
-    var renderDestination: RenderDestinationProvider
+    var renderDestination: MTKView
     
     // The current viewport size.
     var viewportSize: CGSize = CGSize()
@@ -50,7 +51,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     var arrCVImageBuffer: [CVImageBuffer]
     
     
-    init(parent: CameraMetalView ,renderer: RenderDestinationProvider) {
+    init(parent: CameraMetalView ,renderer: MTKView) {
         print("Metal Renderer : init")
         
         self.renderDestination = renderer
@@ -64,19 +65,17 @@ class MetalRenderer: NSObject, MTKViewDelegate {
         
         loadMetal()
         
-        
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         drawRectResized(size: size)
-        
     }
     
     func draw(in view: MTKView) {
-        
         update()
-    
     }
+    
+
     
     // Schedule a draw to happen at a new size.
     func drawRectResized(size: CGSize) {
@@ -184,11 +183,13 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             }
             
             updateAppState()
+            
+            print("Metal Renderer: updateAppState next")
                         
             if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
-
+                print("Metal Renderer: renderPassDescriptor")
                 if let renderEncoding = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-                    
+                    print("Metal Renderer: renderEncoding")
                     // Set a label to identify this render pass in a captured Metal frame.
                     renderEncoding.label = "DepthGUICameraPreview"
 
@@ -212,6 +213,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     
     // Schedules the camera image to be rendered on the GPU.
     func doRenderPass(renderEncoder: MTLRenderCommandEncoder) {
+        print("Metal Renderer: doRenderPass started")
         guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
             return
         }
@@ -239,6 +241,8 @@ class MetalRenderer: NSObject, MTKViewDelegate {
         // Draw final quad to display
         renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         renderEncoder.popDebugGroup()
+        
+        print("Metal Renderer: doRenderPass ended")
     }
     
     // Updates any app state.
@@ -276,6 +280,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
     
     // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
     func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
+        print("Metal Renderer: createTexture started")
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex)
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex)
         
@@ -286,7 +291,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
         if status != kCVReturnSuccess {
             texture = nil
         }
-        
+        print("Metal Renderer: createTexture ended")
         return texture
     }
     
