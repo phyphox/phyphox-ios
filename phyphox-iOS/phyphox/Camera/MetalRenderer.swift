@@ -48,8 +48,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var cvImageBuffer : CVImageBuffer?
     
-    var arrCVImageBuffer: [CVImageBuffer]
-    
     
     init(parent: CameraMetalView ,renderer: MTKView) {
         print("Metal Renderer : init")
@@ -60,7 +58,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             self.metalDevice = metalDevice
         }
         
-        arrCVImageBuffer = [CVImageBuffer]()
         super.init()
         
         loadMetal()
@@ -90,8 +87,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         if imageBuffer != nil {
             print("Metal Renderer: imageBuffer not nil")
-            arrCVImageBuffer.append(imageBuffer)
-            print("Metal Renderer: imageBuffer size: ", arrCVImageBuffer.count)
             self.cvImageBuffer = imageBuffer
         }
         
@@ -250,13 +245,10 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
 
         print("updateAppState before")
         
-        print("Metal Renderer: updateAppState imageBuffer size: ", arrCVImageBuffer.count)
-        // Get the AR session's current frame.
         guard let currentFrame = self.cvImageBuffer else {
             return
         }
         
-        // imageBuffer getting nil here
         print("updateAppState after")
         // Prepare the current frame's camera image for transfer to the GPU.
         updateCameraImageTextures(frame: currentFrame)
@@ -281,8 +273,8 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
     func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
         print("Metal Renderer: createTexture started")
-        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex)
-        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex)
+        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // 480  //240
+        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
         
         var texture: CVMetalTexture? = nil
         let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat,
