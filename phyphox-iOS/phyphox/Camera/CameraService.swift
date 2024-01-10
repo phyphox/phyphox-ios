@@ -12,7 +12,7 @@ import AVFoundation
 import MetalKit
 import CoreMedia
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     public let session = AVCaptureSession()
@@ -24,8 +24,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     @objc dynamic var videoDeviceInput: AVCaptureDeviceInput!
     
     var setupResult: SessionSetupResult = .success
-    
-    weak var delegate: CameraCaptureHelperDelegate?
     
     public var alertError: AlertError = AlertError()
     
@@ -48,6 +46,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var flag: Bool = true
     
     var defaultVideoDevice: AVCaptureDevice?
+    
+    var cameraModel: CameraModel?
     
     @Published var zoomScale: CGFloat = 1.0
     
@@ -97,7 +97,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    
+    @available(iOS 14.0, *)
+    func initializeModel(model: CameraModel){
+        cameraModel = model
+    }
     
     private func configureSession(){
         
@@ -107,8 +110,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         session.beginConfiguration()
         session.sessionPreset = .medium
-        
-
         
         do {
             
@@ -322,45 +323,19 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             return
         }
         
-        self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: true))
+        print("captureOutput imagebuffer x1: ", cameraModel?.x1)
+        print("captureOutput imagebuffer x2: ", cameraModel?.x2)
+        print("captureOutput imagebuffer y1: ", cameraModel?.y1)
+        print("captureOutput imagebuffer y2: ", cameraModel?.y2)
         
-        let isPlanar = CVPixelBufferIsPlanar(imageBuffer)
-        let width = isPlanar ? CVPixelBufferGetWidthOfPlane(imageBuffer, 0) : CVPixelBufferGetWidth(imageBuffer)
-        print("imagebuffer width: ", width)
-        let height = isPlanar ? CVPixelBufferGetHeightOfPlane(imageBuffer, 1) : CVPixelBufferGetHeight(imageBuffer)
-        print("imagebuffer height: ", height)
-            }
+        self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
+            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true))
         
-    private let context = CIContext()
-    
-    // MARK: Sample buffer to UIImage conversion
-        private func imageFromSampleBuffer(sampleBuffer: CMSampleBuffer) -> UIImage? {
-            guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
-            let ciImage = CIImage(cvPixelBuffer: imageBuffer)
-           
-            //context.render(ciImage, to: imageBuffer)
-            
-            //print("CameraSerivce: after Render: imagebuffer: ", imageBuffer.    )
-            self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: true))
-            guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
-            //print("imageBuffer: bytes per row: ",imageBuffer)
-            return UIImage(cgImage: cgImage)
-        }
-    
-    
-    func convert(cmage:CIImage) -> UIImage {
-        let context:CIContext = CIContext.init(options: nil)
-        let cgImage:CGImage = context.createCGImage(cmage, from: cmage.extent)!
-        let image:UIImage = UIImage.init(cgImage: cgImage)
-        return image
     }
+        
+   
 }
 
-protocol CameraCaptureHelperDelegate: class
-{
-    @available(iOS 13.0, *)
-    func newCameraImage(_ cameraCaptureHelper: CameraService, image: CIImage)
-}
 
 
 

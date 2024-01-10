@@ -14,7 +14,7 @@ import Combine
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
      
-    @StateObject var model = CameraModel()
+     var model = CameraModel()
     
     @State private var isMinimized = true
     
@@ -174,13 +174,33 @@ struct PhyphoxCameraView: View {
         })
     }
     
+    
     @State private var speed = 50.0
     @State private var isEditing = false
     
     @State private var isZooming = false
     
+    @State private var viewState = CGPoint.zero
+    
+    @Environment(\.scenePhase) var scenePhase
+    
     
     var body: some View {
+        
+        let dragGesture = DragGesture()
+            .onChanged{ value in
+                viewState = value.location
+                model.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.begin)
+                print("dragGesture: onChanged", value)
+            
+            }
+            .onEnded{ value in
+                model.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.end)
+                self.viewState = .zero
+                print("dragGesture: onEnded")
+            }
+        
+        
         GeometryReader { reader in
             ZStack {
                 //UIColor(named: "")?.edgesIgnoringSafeArea(.all)
@@ -206,7 +226,10 @@ struct PhyphoxCameraView: View {
                             .foregroundColor(.gray)
                             .onAppear{
                                 model.configure()
+                                model.initModel(model: model)
                             }
+                
+                            .gesture(dragGesture)
                             .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
                             .frame(width: !isMinimized ? reader.size.width / 2 : reader.size.width ,
                                    height: !isMinimized ? reader.size.height / 3 : reader.size.height / 1.5,
@@ -327,6 +350,8 @@ struct PhyphoxCameraView: View {
                     
                 }
                 
+            }.onDisappear{
+                model.endSession()
             }
         }.background(Color.black)
     }
