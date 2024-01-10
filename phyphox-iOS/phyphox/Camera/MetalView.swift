@@ -33,10 +33,7 @@ struct CameraMetalView: UIViewRepresentable {
        
         //Fix: As the imagebuffer width * height is 480 and 180, we need to set the drawable size of MTKView same. Else, the drawable size will be 1080 * 1256 (for example) and due to the large render buffer, the frame starts dropping. TODO: Need to test it and remove the hard dependency.
         metalView.drawableSize = CGSize(width: 480, height: 180)
-        
-        //This trasformation is done to rotate the videoPreview in right degree.
-        metalView.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 2.0)
-        
+    
         return metalView
     }
     
