@@ -84,6 +84,10 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct) {
         print("Metal Renderer: updateFrame")
+        print("Metal Renderer: updateFrame selectionState: x1 ", selectionState.x1)
+        print("Metal Renderer: updateFrame selectionState:  x2", selectionState.x2)
+        print("Metal Renderer: updateFrame selectionState:  y1 ", selectionState.y1)
+        print("Metal Renderer: updateFrame selectionState:  y2 ", selectionState.y2)
         
         if imageBuffer != nil {
             print("Metal Renderer: imageBuffer not nil")
