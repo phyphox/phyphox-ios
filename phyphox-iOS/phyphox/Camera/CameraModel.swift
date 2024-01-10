@@ -98,23 +98,33 @@ final class CameraModel{
             let d12 = (x - x1)*(x - x1) + (y - y2)*(y - y2)
             let d21 = (x - x2)*(x - x2) + (y - y1)*(y - y1)
             let d22 = (x - x2)*(x - x2) + (y - y2)*(y - y2)
-            let dist:Float = 0.01
-            if d11 < dist && d11 < d12 && d11 < d21 && d11 < d22 {
+            
+            let dist:Float = 0.1 // it was 0.01 for depth, after removing it from if else, it worked. Need to come again for this
+            if d11 < d12 && d11 < d21 && d11 < d22 {
                 panningIndexX = 1
                 panningIndexY = 1
-            } else if d12 < dist && d12 < d21 && d12 < d22 {
+            } else if d12 < d21 && d12 < d22 {
                 panningIndexX = 1
                 panningIndexY = 2
-            } else if d21 < dist && d21 < d22 {
+            } else if  d21 < d22 {
                 panningIndexX = 2
                 panningIndexY = 1
-            } else if d22 < dist {
+            }  else {
                 panningIndexX = 2
                 panningIndexY = 2
-            } else {
-                panningIndexX = 0
-                panningIndexY = 0
             }
+            
+            if panningIndexX == 1 {
+                x1 = x
+            } else if panningIndexX == 2 {
+                x2 = x
+            }
+            if panningIndexY == 1 {
+                y1 = y
+            } else if panningIndexY == 2 {
+                y2 = y
+            }
+            
         } else if state == .end {
             if panningIndexX == 1 {
                 x1 = x
@@ -126,6 +136,15 @@ final class CameraModel{
             } else if panningIndexY == 2 {
                 y2 = y
             }
+            
+            print("pannned x1 ", x1)
+            print("pannned x2 ", x2)
+            print("pannned y1 ", y1)
+            print("pannned y2 ", y2)
+            
+            print("pannned x. ", x)
+            print("pannned y. ", y)
+           
         } else {
             
         }

@@ -294,11 +294,14 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     // Sets up vertex data (source and destination rectangles) rendering.
     func updateImagePlane(frame: CVImageBuffer) {
         // Update the texture coordinates of the image plane to aspect fill the viewport.
-        let orientation = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation ?? .portrait
-        let cgImageOrientation = CGImagePropertyOrientation(interfaceOrientation: orientation)
+        //let orientation = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation ?? .portrait
+        //let cgImageOrientation = CGImagePropertyOrientation(interfaceOrientation: orientation)
         // Convert the image buffer to a CIImage
-        let ciImage = CIImage(cvPixelBuffer: frame)
-        displayToCameraTransform = ciImage.orientationTransform(for: cgImageOrientation).inverted()
+        //let ciImage = CIImage(cvPixelBuffer: frame)
+        //displayToCameraTransform = ciImage.orientationTransform(for: cgImageOrientation).inverted()
+        
+        // Just a work-around
+        displayToCameraTransform = CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
         let vertexData = imagePlaneVertexBuffer.contents().assumingMemoryBound(to: Float.self)
         for index in 0...3 {
             let textureCoordIndex = 4 * index + 2
