@@ -1272,9 +1272,13 @@
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
 <<<<<<< HEAD
+<<<<<<< HEAD
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
 =======
 >>>>>>> 26e36c4 (Replace our CocoaMQTT fork with upstream version to fix incompatibility with iOS 16)
+=======
+				860E13F22B514703008FAFC6 /* GCDWebServer */,
+>>>>>>> 70f0b50 (Switch repository for Swift-packaged version of GCDWebServer)
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1381,11 +1385,8 @@
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
-<<<<<<< HEAD
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
-=======
->>>>>>> 26e36c4 (Replace our CocoaMQTT fork with upstream version to fix incompatibility with iOS 16)
-			);
+
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
@@ -2269,7 +2270,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-
 		860E13F22B514703008FAFC6 /* GCDWebServer */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */;
