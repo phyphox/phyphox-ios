@@ -155,6 +155,7 @@
 		6BEA94592080B2F30077274A /* MultilineTextElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA94582080B2F30077274A /* MultilineTextElementHandler.swift */; };
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
+		860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F22B514703008FAFC6 /* GCDWebServer */; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
@@ -223,7 +224,6 @@
 		C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = C0BD4DF527079C600020A5AF /* JGProgressHUD */; };
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
-		C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C228E5A16D00BC98DE /* GCDWebServers */; };
 		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
 		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
 		C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; };
@@ -593,11 +593,11 @@
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
 				867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */,
 				C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */,
+				860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */,
 				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
 				C0FC14872707C16300512064 /* libJXLS.a in Frameworks */,
 				C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */,
-				C0F430C328E5A16D00BC98DE /* GCDWebServers in Frameworks */,
 				C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1212,9 +1212,9 @@
 			name = phyphox;
 			packageProductDependencies = (
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
-				C0F430C228E5A16D00BC98DE /* GCDWebServers */,
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
+				860E13F22B514703008FAFC6 /* GCDWebServer */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1320,9 +1320,9 @@
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
-				C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
+				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -2155,6 +2155,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/yene/GCDWebServer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.5.7;
+			};
+		};
 		867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/emqx/CocoaMQTT";
@@ -2171,14 +2179,6 @@
 				kind = branch;
 			};
 		};
-		C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/JacobHearst/GCDWebServer";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.0.0;
-			};
-		};
 		C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox";
@@ -2190,6 +2190,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		860E13F22B514703008FAFC6 /* GCDWebServer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */;
+			productName = GCDWebServer;
+		};
 		867E2BD72AC464D000ABB472 /* CocoaMQTT */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
@@ -2199,11 +2204,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */;
 			productName = JGProgressHUD;
-		};
-		C0F430C228E5A16D00BC98DE /* GCDWebServers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C0F430C128E5A16D00BC98DE /* XCRemoteSwiftPackageReference "GCDWebServer" */;
-			productName = GCDWebServers;
 		};
 		C0F430C528E5A2DB00BC98DE /* BEMCheckBox */ = {
 			isa = XCSwiftPackageProductDependency;
