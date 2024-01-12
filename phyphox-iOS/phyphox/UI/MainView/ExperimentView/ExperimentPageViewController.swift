@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import GCDWebServers
+import GCDWebServer
 import SwiftUI
 
 protocol ExportDelegate {
