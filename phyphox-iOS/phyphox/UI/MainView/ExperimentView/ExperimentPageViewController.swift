@@ -317,7 +317,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem?.accessibilityLabel = localize("actions")
@@ -388,11 +388,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         if (experiment.viewDescriptors!.count > 1) {
             updateSegControlDesign()
             tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
         }
+        
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
@@ -1470,12 +1471,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func refreshTheAdjustedGraphColorForLightMode(){
+    func refreshAppTheme(){
         if #available(iOS 12.0, *) {
             if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
                UIScreen.main.traitCollection.userInterfaceStyle == .light){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .light
+                } else {
+                    // Fallback on earlier versions
+                }
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
+                      UIScreen.main.traitCollection.userInterfaceStyle == .dark){
+                if #available(iOS 13.0, *) {
+                    view.overrideUserInterfaceStyle = .dark
                 } else {
                     // Fallback on earlier versions
                 }
