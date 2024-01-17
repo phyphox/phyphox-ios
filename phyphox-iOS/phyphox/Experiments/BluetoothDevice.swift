@@ -299,7 +299,9 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         characteristics_map = [:]
         servicesToBeDiscovered = []
+        connectedDevices = []
         centralManager?.stopScan()
+        
     }
     
     override func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
