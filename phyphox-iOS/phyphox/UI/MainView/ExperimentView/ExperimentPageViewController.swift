@@ -1517,6 +1517,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
+        
+        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
+        customCollectionView.removeFromSuperview()
+        
         numOfConnectedDevices = connectedDevice.count
         var adjustedHeight = 48.0
         if( numOfConnectedDevices == 0){
@@ -1524,8 +1528,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         } else if(numOfConnectedDevices > 1){
             adjustedHeight = 100.0
         }
-        
-        customCollectionView.removeFromSuperview()
      
         customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
         view.addSubview(customCollectionView)
