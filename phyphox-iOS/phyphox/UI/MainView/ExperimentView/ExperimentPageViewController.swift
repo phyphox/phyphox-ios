@@ -1497,14 +1497,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func refreshAppTheme(){
         if #available(iOS 12.0, *) {
             if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
-               UIScreen.main.traitCollection.userInterfaceStyle == .light){
+               (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .light
                 } else {
                     // Fallback on earlier versions
                 }
             } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                      UIScreen.main.traitCollection.userInterfaceStyle == .dark){
+                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .dark
                 } else {
