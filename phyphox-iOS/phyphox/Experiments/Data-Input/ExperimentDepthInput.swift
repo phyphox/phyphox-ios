@@ -80,7 +80,7 @@ final class ExperimentDepthInput {
             }
         }
         if cameraOrientation == nil || cameraOrientation == .front {
-            if ARFaceTrackingConfiguration.isSupported {
+            if AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTrueDepthCamera], mediaType: .depthData, position: .front).devices.count > 0 {
                 return
             }
         }
