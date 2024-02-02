@@ -230,7 +230,7 @@
 "beeperStop" = "Stop-Ton";
 "activate_all" = "Alle aktivieren";
 "deactivate_all" = "Alle deaktivieren";
-"common_unit_short_arbitrary_unit" = "a.u.";
+"common_unit_short_arbitrary_unit" = "arb. unit";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";
 "common_unit_short_hertz" = "Hz";
