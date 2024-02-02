@@ -14,12 +14,12 @@ final class IfAnalysis: ExperimentAnalysisModule {
     private let equal: Bool
     private let greater: Bool
     
-    private var in1: ExperimentAnalysisDataIO? = nil
-    private var in2: ExperimentAnalysisDataIO? = nil
-    private var inTrue: ExperimentAnalysisDataIO? = nil
-    private var inFalse: ExperimentAnalysisDataIO? = nil
+    private var in1: ExperimentAnalysisDataInput? = nil
+    private var in2: ExperimentAnalysisDataInput? = nil
+    private var inTrue: ExperimentAnalysisDataInput? = nil
+    private var inFalse: ExperimentAnalysisDataInput? = nil
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         less = try attributes.optionalValue(for: "less") ?? false
@@ -86,7 +86,7 @@ final class IfAnalysis: ExperimentAnalysisModule {
             return
         }
         
-        let out: ExperimentAnalysisDataIO?
+        let out: ExperimentAnalysisDataInput?
         
         if (v1! < v2! && less) || (v1! == v2! && equal) || (v1! > v2! && greater) {
             out = inTrue
@@ -99,22 +99,20 @@ final class IfAnalysis: ExperimentAnalysisModule {
         let outputValues: [Double]
 
         switch output {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             outputValues = data.data
         case .value(value: let value, usedAs: _):
             outputValues = [value]
         }
 
         switch firstOutput {
-        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: let clear):
-            if clear {
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: let append):
+            if !append {
                 buffer.replaceValues(outputValues)
             }
             else {
                 buffer.appendFromArray(outputValues)
             }
-        case .value(value: _, usedAs: _):
-            break
         }
     }
 }

@@ -22,7 +22,7 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
     private var yIn: MutableDoubleArray?
     private var xLocIn: MutableDoubleArray?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
@@ -31,21 +31,21 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             } else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             } else if input.asString == "xi" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xLocIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -131,10 +131,8 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         switch outputs[0] {
-        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
             buffer.appendFromArray(result)
-        case .value(value: _, usedAs: _):
-            break
         }
     }
 }

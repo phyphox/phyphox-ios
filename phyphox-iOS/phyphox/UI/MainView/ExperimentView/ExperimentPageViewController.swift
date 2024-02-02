@@ -427,7 +427,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
                 output.replaceValues(buffer.toArray())
                 output.triggerUserInput()
             case .value(let value, usedAs: _):

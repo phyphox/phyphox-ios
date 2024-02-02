@@ -11,12 +11,12 @@ import Foundation
 
 final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
     
-    private var from: ExperimentAnalysisDataIO? = nil
-    private var to: ExperimentAnalysisDataIO? = nil
-    private var length: ExperimentAnalysisDataIO? = nil
-    private var arrayIns: [ExperimentAnalysisDataIO] = []
+    private var from: ExperimentAnalysisDataInput? = nil
+    private var to: ExperimentAnalysisDataInput? = nil
+    private var length: ExperimentAnalysisDataInput? = nil
+    private var arrayIns: [ExperimentAnalysisDataInput] = []
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         for input in inputs {
             if input.asString == "from" {
@@ -66,7 +66,7 @@ final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
         if end < 0 {
             for arrayIn in arrayIns {
                 switch arrayIn {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     end = max(end, data.data.count)
                 case .value(value: _, usedAs: _):
                     break
@@ -79,7 +79,7 @@ final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
             guard i < outputs.count else { break }
             
             switch arrayIn {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let data = data.data
                 let thisEnd = min(end, data.count)
                 if thisEnd < start {
@@ -99,10 +99,8 @@ final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
             let output = outputs[i]
 
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

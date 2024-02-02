@@ -10,22 +10,22 @@ import Foundation
 
 final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
     private let inputBuffer: MutableDoubleArray
-    private let x0Input: ExperimentAnalysisDataIO?
-    private let dxInput: ExperimentAnalysisDataIO?
+    private let x0Input: ExperimentAnalysisDataInput?
+    private let dxInput: ExperimentAnalysisDataInput?
     
-    private let binStartsOutput: ExperimentAnalysisDataIO?
-    private let binCountsOutput: ExperimentAnalysisDataIO?
+    private let binStartsOutput: ExperimentAnalysisDataOutput?
+    private let binCountsOutput: ExperimentAnalysisDataOutput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         guard !inputs.isEmpty && !outputs.isEmpty else {
             throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
 
-        var tIn: ExperimentAnalysisDataIO?
-        var tX0: ExperimentAnalysisDataIO?
-        var tDx: ExperimentAnalysisDataIO?
-        var tBinStarts: ExperimentAnalysisDataIO?
-        var tBinCounts: ExperimentAnalysisDataIO?
+        var tIn: ExperimentAnalysisDataInput?
+        var tX0: ExperimentAnalysisDataInput?
+        var tDx: ExperimentAnalysisDataInput?
+        var tBinStarts: ExperimentAnalysisDataOutput?
+        var tBinCounts: ExperimentAnalysisDataOutput?
         
         for input in inputs {
             if input.asString == "x0" {
@@ -53,7 +53,7 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
         }
 
         switch tInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             inputBuffer = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
@@ -104,19 +104,15 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
                 
         if let binStartsOutput = binStartsOutput {
             switch binStartsOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(binStarts)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
         if let binCountsOutput = binCountsOutput {
             switch binCountsOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(binCounts)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

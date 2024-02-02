@@ -17,7 +17,7 @@ final class DifferentiationAnalysis: AutoClearingExperimentAnalysisModule {
         let inputValues: [Double]
 
         switch firstInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             inputValues = data.data
         case .value(value: _, usedAs: _):
             return
@@ -58,10 +58,8 @@ final class DifferentiationAnalysis: AutoClearingExperimentAnalysisModule {
         
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

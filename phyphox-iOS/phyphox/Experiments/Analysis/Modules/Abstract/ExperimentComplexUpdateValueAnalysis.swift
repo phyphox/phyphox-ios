@@ -47,7 +47,7 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
         
         for input in inputs {
             switch input {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let array = data.data
 
                 let src = ValueSource(vector: array)
@@ -112,10 +112,8 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
                 
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

@@ -17,7 +17,7 @@ struct NetworkConnectionSendDescriptor {
     }
     let type: SendableType
     let name: String
-    let clear: Bool
+    let keep: Bool
     let additionalAttributes: [String:String]
 }
 
@@ -29,6 +29,7 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
     private enum Attribute: String, AttributeKey {
         case id
         case clear
+        case keep
         case type
         case datatype
     }
@@ -37,7 +38,8 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let id = try attributes.nonEmptyString(for: .id)
-        let clear = try attributes.optionalValue(for: .clear) ?? false
+        let clear = try attributes.optionalValue(for: .clear) ?? false //deprecated
+        let keep = try attributes.optionalValue(for: .keep) ?? !clear //keep is now !clear
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
         var additionalAttributes = [String:String]()
         if let datatype = attributes.optionalString(for: .datatype) {
@@ -46,7 +48,7 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         
         guard !(text.isEmpty && type != .time) else { throw ElementHandlerError.missingText }
         
-        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text, clear: clear, additionalAttributes: additionalAttributes))
+        results.append(NetworkConnectionSendDescriptor(id: id, type: type, name: text, keep: keep, additionalAttributes: additionalAttributes))
     }
 
     func clear() {
@@ -56,7 +58,7 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
 
 struct NetworkConnectionReceiveDescriptor {
     let id: String
-    let clear: Bool
+    let append: Bool
     let name: String
 }
 
@@ -68,6 +70,7 @@ private final class NetworkConnectionReceiveElementHandler: ResultElementHandler
     private enum Attribute: String, AttributeKey {
         case id
         case clear
+        case append
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -76,8 +79,9 @@ private final class NetworkConnectionReceiveElementHandler: ResultElementHandler
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let id = try attributes.nonEmptyString(for: .id)
-        let clear = try attributes.optionalValue(for: .clear) ?? false
-        results.append(NetworkConnectionReceiveDescriptor(id: id, clear: clear, name: text))
+        let clear = try attributes.optionalValue(for: .clear) ?? false //deprecated
+        let append = try attributes.optionalValue(for: .append) ?? !clear //append is now !clear
+        results.append(NetworkConnectionReceiveDescriptor(id: id, append: append, name: text))
     }
 
     func clear() {

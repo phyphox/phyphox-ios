@@ -38,14 +38,14 @@ final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
         }
     }
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         sigma = 1.0
         guard let firstInput = inputs.first else { throw SerializationError.genericError(message: "Input must be a buffer") }
 
         switch firstInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             inputBuffer = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Input must be a buffer")
@@ -91,10 +91,8 @@ final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
                 
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }
