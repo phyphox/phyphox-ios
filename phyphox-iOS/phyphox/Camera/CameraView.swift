@@ -9,12 +9,13 @@
 import Foundation
 import SwiftUI
 import Combine
+import CoreMedia
 
 
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
      
-     var model = CameraModel()
+    @ObservedObject var cameraModel = CameraModel()
     
     @State private var isMinimized = true
     
@@ -28,14 +29,13 @@ struct PhyphoxCameraView: View {
     @State private var height: CGFloat = 200.0
     @State private var width: CGFloat = 200.0
     @State private var startPosition: CGFloat = 0.0
+  
+    @State private var speed = 50.0
+
+    @State private var viewState = CGPoint.zero
+    @Environment(\.scenePhase) var scenePhase
     
-    @State private var rotation: Double = 0.0
-    @State private var isFlipped: Bool = false
-    @State private var autoExposureOff : Bool = true
-    
-    @State private var zoomClicked: Bool = false
-    
-    
+  
     var mimimizeCameraButton: some View {
         Button(action: {
             self.isMinimized.toggle()
@@ -49,153 +49,17 @@ struct PhyphoxCameraView: View {
     }
     
     
-    var flipCameraButton: some View {
-        Button(action: {
-            if(isFlipped){
-                withAnimation(Animation.linear(duration: 0.3)) {
-                    self.rotation = -90.0
-                }
-                isFlipped = false
-            } else {
-                withAnimation(Animation.linear(duration: 0.3)) {
-                    self.rotation = 90.0
-                }
-                isFlipped = true
-            }
-            
-            model.switchCamera()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("flip_camera")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .rotationEffect(.degrees(rotation))
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
-                        )
-
-        })
-    }
-    
-    @State private var zoomScale: CGFloat = 1.0
-    
-    var zoomSlider: some View {
-        Button(action: {
-            zoomClicked = !zoomClicked
-            model.zoom()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_zoom")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-                       
-        })
-    }
-    
-    var autoExposure: some View {
-        Button(action: {
-            autoExposureOff = !autoExposureOff
-            model.autoExposure()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_auto_exposure")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25))
-                        
-        })
-    }
-    
-    
-    var isoSetting: some View {
-        Button(action: {
-            model.iso()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_camera_iso")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-                       
-        })
-    }
-    
-    var shutterSpeedSetting: some View {
-        Button(action: {
-            model.shutterSpeed()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_shutter_speed")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-        })
-    }
-    
-    var apertureSetting: some View {
-        Button(action: {
-            model.shutterSpeed()
-        }, label: {
-            Circle()
-                .opacity(isMinimized ? 1.0 : 0.0)
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image(systemName: "camera.aperture")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
-                        .foregroundColor(.white))
-        })
-    }
-    
-    
-    @State private var speed = 50.0
-    @State private var isEditing = false
-    
-    @State private var isZooming = false
-    
-    @State private var viewState = CGPoint.zero
-    
-    @Environment(\.scenePhase) var scenePhase
-    
-    
     var body: some View {
         
         let dragGesture = DragGesture()
             .onChanged{ value in
                 viewState = value.location
-                model.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.begin)
+                cameraModel.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.begin)
                 print("dragGesture: onChanged", value)
             
             }
             .onEnded{ value in
-                model.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.end)
+                cameraModel.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.end)
                 self.viewState = .zero
                 print("dragGesture: onEnded")
             }
@@ -222,11 +86,11 @@ struct PhyphoxCameraView: View {
                 
                     ZStack{
                         
-                        model.metalView
+                        cameraModel.metalView
                             .foregroundColor(.gray)
                             .onAppear{
-                                model.configure()
-                                model.initModel(model: model)
+                                cameraModel.configure()
+                                cameraModel.initModel(model: cameraModel)
                             }
                 
                             .gesture(dragGesture)
@@ -237,125 +101,295 @@ struct PhyphoxCameraView: View {
                     
                         
                         
-                            
-                        
                     }
-                  
-                    HStack {
-                        
-                        VStack(spacing: 0) {
-                            flipCameraButton
-                                .frame(maxWidth: .infinity)
-                            
-                            Text(isFlipped ? "Front" : "Back")
-                                .font(.caption2)
-                        }
-                        
-                            
-                        VStack(spacing: 0) {
-                            autoExposure
-                                .frame(maxWidth: .infinity)
-                            
-                            Text(autoExposureOff ? "Off" : "On")
-                                .font(.caption2)
-                            
-                        }
-                        
-                        
-                           
-                        VStack(spacing: 0) {
-                            
-                            isoSetting
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                                .frame(maxWidth: .infinity)
-                                .disabled(autoExposureOff ? false : true)
-                        
-                            Text("100").font(.caption2)
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                        }
-                        
-                        
-                          
-                        VStack(spacing: 0) {
-                            
-                            shutterSpeedSetting
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                                .frame(maxWidth: .infinity)
-                                .disabled(autoExposureOff ? false : true)
-                            
-                            Text("1/60")
-                                .font(.caption2)
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                        }
-                        
-                       
-                            
-                        VStack(spacing: 0) {
-                            
-                            apertureSetting
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                                .frame(maxWidth: .infinity)
-                                .disabled(autoExposureOff ? false : true)
-                            
-                            Text("f/1.85")
-                                .font(.caption2)
-                                .opacity(autoExposureOff ? 1.0 : 0.4 )
-                        }
-                       
-                        
-                        VStack(spacing: 0) {
-                            
-                            zoomSlider
-                                .opacity(isMinimized ? 1.0 : 0.0)
-                                .frame(maxWidth: .infinity)
-                            
-                            Text("Zoom").font(.caption2)
-                        }
-                        
-                           
-                        
-                            
-                        
-                    }
-                    .frame(maxWidth: .infinity)
-                    .opacity(isMinimized ? 1.0 : 0.0)
-                    .padding(.horizontal, 1)
-                    .preferredColorScheme(.dark)
+
+                    CameraSettingView(cameraSettingModel: cameraModel.cameraSettingsModel).opacity(isMinimized ? 1.0 : 0.0)
                     
                     
-                    Spacer().frame(width: 10.0, height: 20.0)
-                   
-                    
-                    
-                    VStack {
-                        Slider(
-                            value:  Binding(get: {
-                                Double(self.model.getScale())
-                            }, set: { newValue in
-                                self.model.setScale(scale: CGFloat(newValue))
-                            }),
-                                in: 0...100,
-                                step: 1
-                            ) {
-                                Text("Speed")
-                            } minimumValueLabel: {
-                                Text("0")
-                            } maximumValueLabel: {
-                                Text("100")
-                            } onEditingChanged: { editing in
-                                isEditing = editing
-                            }.opacity(isMinimized ? 1.0 : 0.0)
-                        
-                    }.opacity(zoomClicked ? 1.0 : 0.0)
+  
                     
                 }
                 
             }.onDisappear{
-                model.endSession()
+                cameraModel.endSession()
             }
         }.background(Color.black)
     }
+}
+
+@available(iOS 14.0, *)
+struct CameraSettingView: View {
+    @ObservedObject var cameraSettingModel = CameraSettingsModel()
     
+    @State private var cameraSettingMode: CameraSettingMode = .NONE
+    
+    @State private var isEditing = false
+    @State private var isZooming = false
+    
+    @State private var rotation: Double = 0.0
+    @State private var isFlipped: Bool = false
+    @State private var autoExposureOff : Bool = true
+    
+    @State private var zoomClicked: Bool = false
+    
+    @State private var isListVisible: Bool = false
+    
+    
+    var flipCameraButton: some View {
+        Button(action: {
+            cameraSettingMode = .SWITCH_LENS
+            isListVisible = false
+            if(isFlipped){
+                withAnimation(Animation.linear(duration: 0.3)) {
+                    self.rotation = -90.0
+                }
+                isFlipped = false
+            } else {
+                withAnimation(Animation.linear(duration: 0.3)) {
+                    self.rotation = 90.0
+                }
+                isFlipped = true
+            }
+            
+            cameraSettingModel.switchCamera()
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image("flip_camera")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .rotationEffect(.degrees(rotation))
+                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
+                        )
+
+        })
+    }
+    
+    @State private var zoomScale: CGFloat = 1.0
+    
+    var zoomSlider: some View {
+
+        Button(action: {
+            cameraSettingMode = .ZOOM
+            isListVisible.toggle()
+            zoomClicked = !zoomClicked
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image("ic_zoom")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
+                       
+        })
+    }
+    
+    var autoExposure: some View {
+        Button(action: {
+            cameraSettingMode = .AUTO_EXPOSURE
+            autoExposureOff = !autoExposureOff
+            isListVisible = false
+            zoomClicked = false
+            cameraSettingModel.autoExposure(auto: !autoExposureOff)
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image("ic_auto_exposure")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 25, height: 25))
+                        
+        })
+    }
+    
+    
+    var isoSetting: some View {
+        Button(action: {
+            cameraSettingMode = .ISO
+            isListVisible.toggle()
+            zoomClicked = false
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image("ic_camera_iso")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
+                       
+        })
+    }
+    
+    var shutterSpeedSetting: some View {
+        Button(action: {
+            cameraSettingMode = .SHUTTER_SPEED
+            isListVisible.toggle()
+            zoomClicked = false
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image("ic_shutter_speed")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
+        })
+    }
+    
+    var apertureSetting: some View {
+        Button(action: {
+            cameraSettingMode = .NONE
+            isListVisible = false
+            zoomClicked = false
+        }, label: {
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image(systemName: "camera.aperture")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 25, height: 25)
+                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
+                        .foregroundColor(.white))
+        })
+    }
+
+    
+    var body: some View {
+        HStack {
+            
+            VStack(spacing: 0) {
+                flipCameraButton
+                    .frame(maxWidth: .infinity)
+                
+                Text(isFlipped ? "Front" : "Back")
+                    .font(.caption2)
+            }
+            
+                
+            VStack(spacing: 0) {
+                autoExposure
+                    .frame(maxWidth: .infinity)
+                
+                Text(autoExposureOff ? "Off" : "On")
+                    .font(.caption2)
+                
+            }
+            
+            
+               
+            VStack(spacing: 0) {
+                
+                isoSetting
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    .frame(maxWidth: .infinity)
+                    .disabled(autoExposureOff ? false : true)
+            
+                Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+            }
+            
+              
+            VStack(spacing: 0) {
+                
+                shutterSpeedSetting
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    .frame(maxWidth: .infinity)
+                    .disabled(autoExposureOff ? false : true)
+                let exposureDuration = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
+                Text("1/" + String(Int((1 / exposureDuration))))
+                    .font(.caption2)
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+            }
+            
+           
+                
+            VStack(spacing: 0) {
+                
+                apertureSetting
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    .frame(maxWidth: .infinity)
+                    .disabled(autoExposureOff ? false : true)
+                
+                Text("f/" + String(cameraSettingModel.currentApertureValue))
+                    .font(.caption2)
+                    .opacity(autoExposureOff ? 1.0 : 0.4 )
+            }
+           
+            
+            VStack(spacing: 0) {
+                
+                zoomSlider
+                    .frame(maxWidth: .infinity)
+                
+                Text("Zoom").font(.caption2)
+            }
+           
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 1)
+        .preferredColorScheme(.dark)
+        
+        
+        VStack {
+            var cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(cameraSettingsValues , id: \.self) { title in
+                        if(cameraSettingMode == .SHUTTER_SPEED){
+                            TextButton(text: "1/" + String(title)) {
+                                cameraSettingModel.exposure(value: Double(title))
+                                
+                            }
+                        } else if(cameraSettingMode == .ISO){
+                            TextButton(text: String(title)) {
+                                //cameraSettingModel.exposure(value: Double(title))
+                                cameraSettingModel.iso(value: Float(title))
+                            }
+
+                        }
+                                            }
+                }
+            }.opacity(!isListVisible ? 0.0 : 1.0)
+            
+            Spacer().frame(width: 10.0, height: 10.0)
+            
+            let sliderRange: ClosedRange<Double> = Double(1)...Double((cameraSettingModel.defaultCameraSetting?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3)
+
+            Slider(
+                value:  Binding(get: {
+                    Double(self.cameraSettingModel.getScale())
+                }, set: { newValue in
+                    self.cameraSettingModel.setScale(scale: CGFloat(newValue))
+                }),
+                in: sliderRange,
+                step: 0.1
+                ) {
+                    Text("")
+                } minimumValueLabel: {
+                    Text(String(cameraSettingModel.minZoom))
+                } maximumValueLabel: {
+                    Text(String(cameraSettingModel.maxZoom))
+                } onEditingChanged: { editing in
+                    isEditing = editing
+                }.opacity(zoomClicked ? 1.0 : 0.0)
+        }
+        
+    }
 }
 
 
@@ -386,3 +420,21 @@ public struct AlertError {
         self.secondaryAction = secondaryAction
     }
 }
+
+@available(iOS 13.0.0, *)
+struct TextButton: View {
+    var text: String
+    var action: () -> Void
+    
+    @available(iOS 13.0.0, *)
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                .foregroundColor(.black)
+                .background(Color.white)
+                .cornerRadius(10)
+        }
+    }
+}
+

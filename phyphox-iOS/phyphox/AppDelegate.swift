@@ -13,6 +13,7 @@ let ResignActiveNotification = "ResignActiveNotification"
 let DidBecomeActiveNotification = "DidBecomeActiveNotification"
 
 @UIApplicationMain
+
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 

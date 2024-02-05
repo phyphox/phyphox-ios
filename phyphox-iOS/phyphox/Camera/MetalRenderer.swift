@@ -83,14 +83,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct) {
-        print("Metal Renderer: updateFrame")
-        print("Metal Renderer: updateFrame selectionState: x1 ", selectionState.x1)
-        print("Metal Renderer: updateFrame selectionState:  x2", selectionState.x2)
-        print("Metal Renderer: updateFrame selectionState:  y1 ", selectionState.y1)
-        print("Metal Renderer: updateFrame selectionState:  y2 ", selectionState.y2)
-        
+       
         if imageBuffer != nil {
-            print("Metal Renderer: imageBuffer not nil")
+           
             self.cvImageBuffer = imageBuffer
         }
         
@@ -98,7 +93,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     func loadMetal(){
-        print("Metal Renderer: Load Metal")
+       
         // Set the default formats needed to render.
         renderDestination.colorPixelFormat = .bgra8Unorm
         renderDestination.sampleCount = 1
@@ -155,14 +150,14 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice.makeCommandQueue()
         
-        print("Metal Renderer: Metal loaded")
+       
         
     }
     
     
     
     func update() {
-        print("MetalRenderer: Update")
+        
         // Wait to ensure only kMaxBuffersInFlight are getting proccessed by any stage in the Metal
         // pipeline (App, Metal, Drivers, GPU, etc).
         _ = inFlightSemaphore.wait(timeout: DispatchTime.distantFuture)
@@ -183,12 +178,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             
             updateAppState()
             
-            print("Metal Renderer: updateAppState next")
+           
                         
             if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
-                print("Metal Renderer: renderPassDescriptor")
+                
                 if let renderEncoding = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-                    print("Metal Renderer: renderEncoding")
+                   
                     // Set a label to identify this render pass in a captured Metal frame.
                     renderEncoding.label = "DepthGUICameraPreview"
 
@@ -206,13 +201,13 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             // Finalize rendering here & push the command buffer to the GPU.
             commandBuffer.commit()
             
-            print("Metal Renderer: updated")
+            
         }
     }
     
     // Schedules the camera image to be rendered on the GPU.
     func doRenderPass(renderEncoder: MTLRenderCommandEncoder) {
-        print("Metal Renderer: doRenderPass started")
+        
         guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
             return
         }
@@ -241,19 +236,19 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         renderEncoder.popDebugGroup()
         
-        print("Metal Renderer: doRenderPass ended")
+        
     }
     
     // Updates any app state.
     func updateAppState() {
 
-        print("updateAppState before")
+       
         
         guard let currentFrame = self.cvImageBuffer else {
             return
         }
         
-        print("updateAppState after")
+        
         // Prepare the current frame's camera image for transfer to the GPU.
         updateCameraImageTextures(frame: currentFrame)
         
@@ -276,7 +271,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
     func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
-        print("Metal Renderer: createTexture started")
+        
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // 480  //240
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
         
@@ -287,7 +282,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         if status != kCVReturnSuccess {
             texture = nil
         }
-        print("Metal Renderer: createTexture ended")
+        
         return texture
     }
     
