@@ -141,7 +141,8 @@
 		6BE3209F1CB19E0300DCC1ED /* CreatePresentationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209C1CB19E0300DCC1ED /* CreatePresentationController.swift */; };
 		6BE320A01CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209D1CB19E0300DCC1ED /* CreateViewControllerTransitioningDelegate.swift */; };
 		6BE320A11CB19E0300DCC1ED /* CreateViewControllerTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE3209E1CB19E0300DCC1ED /* CreateViewControllerTransition.swift */; };
-		6BE320AA1CB2B55700DCC1ED /* TextFieldTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */; };		6BE320AE1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */; };
+		6BE320AA1CB2B55700DCC1ED /* TextFieldTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320A91CB2B55700DCC1ED /* TextFieldTableViewCell.swift */; };
+		6BE320AE1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */; };
 		6BE320B21CB3C0DE00DCC1ED /* PTButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B11CB3C0DE00DCC1ED /* PTButton.m */; };
 		6BE320B41CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE320B31CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift */; };
 		6BEA944A207FC5280077274A /* ExportElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA943B207FC5280077274A /* ExportElementHandler.swift */; };
@@ -158,7 +159,6 @@
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
-		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		A15891F02B10BFD000A169C3 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891EF2B10BFD000A169C3 /* MetalView.swift */; };
 		A15891F22B10BFED00A169C3 /* MetalRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891F12B10BFED00A169C3 /* MetalRenderer.swift */; };
 		A182CEDD2B025B23000385D2 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDC2B025B23000385D2 /* CameraView.swift */; };
