@@ -349,6 +349,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             if let xBuffer = descriptor.xInputBuffers[i] {
                 registerForUpdatesFromBuffer(xBuffer)
             }
+            if let zBuffer = descriptor.zInputBuffers[i] {
+                registerForUpdatesFromBuffer(zBuffer)
+            }
         }
 
         attachDisplayLink(displayLink)
