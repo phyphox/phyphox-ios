@@ -126,7 +126,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection)
-                
                 modules.append(m)
                 
                 experimentViewControllers.append(ExperimentViewController(modules: m))
@@ -537,9 +536,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 session.stopSession()
             }
             
-            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
-                camSession.stopSession()
-            }
+            //if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+            //    camSession.stopSession()
+            //}
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
