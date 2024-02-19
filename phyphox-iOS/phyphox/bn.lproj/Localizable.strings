@@ -107,3 +107,5 @@
 "timed_start" = "সময় চলা শুরু করুন";
 "loadingTitle" = "লোড হচ্ছে";
 "loadingText" = "পরীক্ষাটি লোড হচ্ছে…";
+"loadingBluetoothConnectionText" = "বুলুটুথ ডিভাইস এর সাথে যোগাযোগ স্থাপন করুন";
+"settings" = "সেটিং";
