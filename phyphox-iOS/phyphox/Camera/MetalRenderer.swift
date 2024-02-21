@@ -34,11 +34,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
     
-    struct SelectionStruct {
-        var x1, x2, y1, y2: Float
-        var editable: Bool
-    }
-    
     var displayToCameraTransform: CGAffineTransform = .identity
     var selectionState = SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
@@ -56,6 +51,11 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     var tBuffer: DataBuffer?
     
     private var queue: DispatchQueue?
+    
+    struct SelectionStruct {
+        var x1, x2, y1, y2: Float
+        var editable: Bool
+    }
     
     
     init(parent: CameraMetalView ,renderer: MTKView) {
@@ -91,7 +91,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     
-    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct) {
+    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct, time: TimeInterval) {
        
         if imageBuffer != nil {
            
@@ -100,16 +100,17 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         self.selectionState = selectionState
         
-        getLuma()
+        getLuma(time: time)
     }
     
     func start(queue: DispatchQueue) throws {
         self.queue = queue
     }
     
-    func getLuma(){
+    func getLuma(time: Double){
         if let pixelBuffer = self.cvImageBuffer{
             // Now you can use pixelBuffer as a CVPixelBuffer
+            
             
             var luma = 0
             let luminance = 00
@@ -158,12 +159,15 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             print("analysis area: ", analysisArea)
             print("luma value: ", luma)
             
+            dataIn(z: Double(luma), time: time)
+            
            
         } else {
             //  If the CVImageBuffer is not a CVPixelBuffer, you may need to perform conversion
             
         }
     }
+    
     
     private func writeToBuffers(z: Double, t: TimeInterval) {
         if let zBuffer = zBuffer {
@@ -176,6 +180,14 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     private func dataIn(z: Double, time: TimeInterval) {
+        guard let zBuffer = zBuffer else {
+            print("Error: zBuffer not set")
+            return
+        }
+        guard let tBuffer = tBuffer else {
+            print("Error: tBuffer not set")
+            return
+        }
         guard let timeReference = timeReference else {
             print("Error: time reference not set")
             return

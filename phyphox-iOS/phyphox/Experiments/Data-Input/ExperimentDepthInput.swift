@@ -61,7 +61,7 @@ final class ExperimentDepthInput {
             session.mode = mode
             session.x1 = x1
             session.x2 = x2
-            session.y1 = y1
+            session.y1 = y1 
             session.y2 = y2
             session.zBuffer = zBuffer
             session.tBuffer = tBuffer

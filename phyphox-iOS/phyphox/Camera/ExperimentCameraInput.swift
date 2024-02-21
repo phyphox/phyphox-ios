@@ -19,8 +19,9 @@ final class ExperimentCameraInput {
     let zBuffer: DataBuffer?
     let tBuffer: DataBuffer?
     
+    lazy var session: Any? = nil
     
-    
+   
     init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool) {
         self.initx1 = x1
         self.initx2 = x2
@@ -30,12 +31,23 @@ final class ExperimentCameraInput {
         self.tBuffer = tBuffer
         self.timeReference = timeReference
         
-        print("camera input: initx1: ", x1)
-        print("camera input: initx2: ", x2)
-        print("camera input: inity1: ", y1)
-        print("camera input: inity2: ", y2)
+        session = ExperimentCameraInputSession()
+        guard let session = session as? ExperimentCameraInputSession else {
+            return
+        }
+        
+        session.x1 = x1
+        session.x2 = x2
+        session.y1 = y1
+        session.y2 = y2
+        session.zBuffer = zBuffer
+        session.tBuffer = tBuffer
+        session.timeReference = timeReference
+        
+        session.transferData()
         
     }
+    
 }
 
 extension ExperimentCameraInput: Equatable {

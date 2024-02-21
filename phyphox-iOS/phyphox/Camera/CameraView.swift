@@ -15,7 +15,13 @@ import CoreMedia
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
      
-    @ObservedObject var cameraModel = CameraModel()
+    var cameraSelectionDelegate: CameraSelectionDelegate?
+    var cameraViewDelegete: CameraViewDelegate?
+    
+    @State private var panningIndexX: Int = 0
+    @State private var panningIndexY: Int = 0
+    
+    @State private var modelGesture: CameraGestureState = .none
     
     @State private var isMinimized = true
     
@@ -33,8 +39,7 @@ struct PhyphoxCameraView: View {
     @State private var speed = 50.0
 
     @State private var viewState = CGPoint.zero
-    @Environment(\.scenePhase) var scenePhase
-    
+
   
     var mimimizeCameraButton: some View {
         Button(action: {
@@ -54,21 +59,18 @@ struct PhyphoxCameraView: View {
         let dragGesture = DragGesture()
             .onChanged{ value in
                 viewState = value.location
-                cameraModel.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.begin)
-                print("dragGesture: onChanged", value)
+                pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.begin)
             
             }
             .onEnded{ value in
-                cameraModel.pannned(locationY: viewState.y, locationX: viewState.x , state: CameraModel.GestureState.end)
+                pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.end)
                 self.viewState = .zero
-                print("dragGesture: onEnded")
             }
         
         
         GeometryReader { reader in
             ZStack {
-                //UIColor(named: "")?.edgesIgnoringSafeArea(.all)
-                
+               
                 VStack(alignment: .center, spacing: 5) {
                     
                     HStack(spacing: 0){
@@ -83,16 +85,12 @@ struct PhyphoxCameraView: View {
                         
                         
                     }
-                
+                    
+                    
                     ZStack{
                         
-                        cameraModel.metalView
+                        cameraViewDelegete?.metalView
                             .foregroundColor(.gray)
-                            .onAppear{
-                                cameraModel.configure()
-                                cameraModel.initModel(model: cameraModel)
-                            }
-                
                             .gesture(dragGesture)
                             .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
                             .frame(width: !isMinimized ? reader.size.width / 2 : reader.size.width ,
@@ -103,18 +101,96 @@ struct PhyphoxCameraView: View {
                         
                     }
 
-                    CameraSettingView(cameraSettingModel: cameraModel.cameraSettingsModel).opacity(isMinimized ? 1.0 : 0.0)
-                    
-                    
-  
-                    
+                    CameraSettingView(cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel()).opacity(isMinimized ? 1.0 : 0.0)
+                  
                 }
                 
-            }.onDisappear{
-                cameraModel.endSession()
             }
         }.background(Color.black)
     }
+    
+    
+    func pannned (locationY: CGFloat, locationX: CGFloat , state: CameraGestureState) {
+        
+        guard var del = cameraSelectionDelegate else {
+            print("camera selection delegate is not accessable")
+            return
+        }
+        
+        guard let viewDelegate = cameraViewDelegete else {
+            print("camera view delegate is not accessable")
+            return
+        }
+    
+
+        
+        let pr = CGPoint(x: locationX / (viewDelegate.metalView.metalView.frame.width ), y: locationY / (viewDelegate.metalView.metalView.frame.height ))
+        let ps = pr.applying(viewDelegate.metalRenderer.displayToCameraTransform)
+        let x = Float(ps.x)
+        let y = Float(ps.y)
+        
+        if state == .begin {
+            let x1Square = (x - del.x1) * (x - del.x1)
+            let x2Square = (x - del.x2) * (x - del.x2)
+            let y1Square = (y - del.y1) * (y -  del.y1)
+            let y2Square = (y - del.y2) * (y - del.y2)
+            
+            let d11 = x1Square + y1Square
+            let d12 = x1Square + y2Square
+            let d21 = x2Square + y1Square
+            let d22 = x2Square + y2Square
+            
+            let _:Float = 0.1 // it was 0.01 for depth, after removing it from if else, it worked. Need to come again for this
+            if d11 < d12 && d11 < d21 && d11 < d22 {
+                panningIndexX = 1
+                panningIndexY = 1
+            } else if d12 < d21 && d12 < d22 {
+                panningIndexX = 1
+                panningIndexY = 2
+            } else if  d21 < d22 {
+                panningIndexX = 2
+                panningIndexY = 1
+            }  else {
+                panningIndexX = 2
+                panningIndexY = 2
+            }
+            
+            if panningIndexX == 1 {
+                del.x1 = x
+            } else if panningIndexX == 2 {
+                del.x2 = x
+            }
+            if panningIndexY == 1 {
+                del.y1 = y
+            } else if panningIndexY == 2 {
+                del.y2 = y
+            }
+            
+        } else if state == .end {
+            if panningIndexX == 1 {
+                del.x1 = x
+            } else if panningIndexX == 2 {
+                del.x2 = x
+            }
+            if panningIndexY == 1 {
+                del.y1 = y
+            } else if panningIndexY == 2 {
+                del.y2 = y
+            }
+           
+        } else {
+            
+        }
+        
+        
+    }
+    
+    enum CameraGestureState {
+        case begin
+        case end
+        case none
+    }
+    
 }
 
 @available(iOS 14.0, *)
@@ -437,4 +513,27 @@ struct TextButton: View {
         }
     }
 }
+
+@available(iOS 14.0, *)
+class PhyphoxCameraHostingController: UIHostingController<PhyphoxCameraView>{
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented. Use init(rootView:) instead.")
+        }
+    
+    init(){
+        super.init(rootView: PhyphoxCameraView())
+    }
+        
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            // Additional setup if needed
+        }
+    
+    func getUIView() -> UIView {
+            return self.view
+        }
+}
+
+
+
 

@@ -11,6 +11,24 @@ import AVFoundation
 import MetalKit
 
 
+protocol CameraSelectionDelegate {
+    var x1: Float { get set }
+    var x2: Float { get set }
+    var y1: Float { get set }
+    var y2: Float { get set }
+    var timeReference: ExperimentTimeReference? { get set }
+    var zBuffer: DataBuffer? { get set }
+    var tBuffer: DataBuffer? { get set }
+}
+
+@available(iOS 14.0, *)
+protocol CameraViewDelegate {
+    var metalView: CameraMetalView { get set }
+    var metalRenderer: MetalRenderer { get set }
+    var cameraSettingsModel : CameraSettingsModel { get set }
+}
+
+
 @available(iOS 14.0, *)
 class CameraSettingsModel: ObservableObject {
     
@@ -135,17 +153,14 @@ class CameraSettingsModel: ObservableObject {
 
 
 @available(iOS 14.0, *)
-final class CameraModel: ObservableObject{
+final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDelegate{
+
     
     var x1: Float = 0.4
     var x2: Float = 0.6
     var y1: Float = 0.4
     var y2: Float = 0.6
     
-    var panningIndexX: Int = 0
-    var panningIndexY: Int = 0
-    
-    var modelGesture: GestureState = .none
     
     private let service = CameraService()
     var metalView =  CameraMetalView()
@@ -153,6 +168,10 @@ final class CameraModel: ObservableObject{
    
     var metalRenderer: MetalRenderer
     var session: AVCaptureSession
+    
+    var timeReference: ExperimentTimeReference?
+    var zBuffer: DataBuffer?
+    var tBuffer: DataBuffer?
     
     /// The app's default camera.
     var defaultCamera: AVCaptureDevice? {
@@ -187,6 +206,10 @@ final class CameraModel: ObservableObject{
         self.metalRenderer = MetalRenderer(parent: metalView, renderer: metalView.metalView)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
+        
+        configure()
+        
+        initModel(model: self)
     }
 
     
@@ -215,70 +238,7 @@ final class CameraModel: ObservableObject{
         return service.image!
     }
     
-    
-    func pannned (locationY: CGFloat, locationX: CGFloat , state: GestureState) {
-        let pr = CGPoint(x: locationX / metalView.metalView.frame.width, y: locationY / metalView.metalView.frame.height)
-        let ps = pr.applying(metalRenderer.displayToCameraTransform)
-        let x = Float(ps.x)
-        let y = Float(ps.y)
-        
-        if state == .begin {
-            let d11 = (x - x1)*(x - x1) + (y - y1)*(y -   y1)
-            let d12 = (x - x1)*(x - x1) + (y - y2)*(y - y2)
-            let d21 = (x - x2)*(x - x2) + (y - y1)*(y - y1)
-            let d22 = (x - x2)*(x - x2) + (y - y2)*(y - y2)
-            
-            let dist:Float = 0.1 // it was 0.01 for depth, after removing it from if else, it worked. Need to come again for this
-            if d11 < d12 && d11 < d21 && d11 < d22 {
-                panningIndexX = 1
-                panningIndexY = 1
-            } else if d12 < d21 && d12 < d22 {
-                panningIndexX = 1
-                panningIndexY = 2
-            } else if  d21 < d22 {
-                panningIndexX = 2
-                panningIndexY = 1
-            }  else {
-                panningIndexX = 2
-                panningIndexY = 2
-            }
-            
-            if panningIndexX == 1 {
-                x1 = x
-            } else if panningIndexX == 2 {
-                x2 = x
-            }
-            if panningIndexY == 1 {
-                y1 = y
-            } else if panningIndexY == 2 {
-                y2 = y
-            }
-            
-        } else if state == .end {
-            if panningIndexX == 1 {
-                x1 = x
-            } else if panningIndexX == 2 {
-                x2 = x
-            }
-            if panningIndexY == 1 {
-                y1 = y
-            } else if panningIndexY == 2 {
-                y2 = y
-            }
-           
-        } else {
-            
-        }
-    }
-    // 136 166
-    // d11 = 136 - 0.4 * 136 - 0.4  + 166 - 0.4 * 166 - 0.4
-    
-    enum GestureState {
-        case begin
-        case end
-        case none
-    }
-    
+ 
 }
 
 
