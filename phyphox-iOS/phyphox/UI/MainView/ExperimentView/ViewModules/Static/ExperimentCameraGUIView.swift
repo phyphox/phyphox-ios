@@ -29,7 +29,6 @@ protocol CameraGUISelectionDelegate {
 final class ExperimentCameraGUIView: UIView, CameraGUIDelegate {
     
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
-    var depthGUISelectionDelegate: CameraGUISelectionDelegate?
     
     var resolution: CGSize?
     

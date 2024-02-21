@@ -5,7 +5,7 @@
 //  Created by Gaurav Tripathee on 13.11.23.
 //  Copyright © 2023 RWTH Aachen. All rights reserved.
 //
-//263a
+//
 
 
 import AVFoundation
@@ -318,6 +318,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
+        var time = CMSampleBufferGetDuration(sampleBuffer)
+       
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             print("imagebuffer is nil")
             return
@@ -329,7 +331,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         print("captureOutput imagebuffer y2: ", cameraModel?.y2)
         
         self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
-            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true))
+            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true), time: time.seconds)
         
     }
         

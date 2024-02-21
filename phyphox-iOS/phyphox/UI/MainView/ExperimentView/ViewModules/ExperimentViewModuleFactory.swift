@@ -54,7 +54,9 @@ final class ExperimentViewModuleFactory {
             else if let descriptor = descriptor as? CameraViewDescriptor {
                 if #available(iOS 14.0, *) {
                     // TODO need to pass descriptor in view argument.
-                    views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
+                    let hostingController = PhyphoxCameraHostingController()
+                    views.append(hostingController.getUIView())
+                    //views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
                 } else {
                     // Fallback on earlier versions
                 }

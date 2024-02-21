@@ -49,11 +49,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-<<<<<<< HEAD
-	<string>11233</string>
-=======
-	<string>11128</string>
->>>>>>> 8defd30 (Fix crash on renaming saved state.)
+	<string>13187</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

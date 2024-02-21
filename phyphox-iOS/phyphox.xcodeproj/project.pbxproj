@@ -168,6 +168,8 @@
 		A182CEE12B025B53000385D2 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE02B025B53000385D2 /* CameraService.swift */; };
 		A182CEE32B025B6C000385D2 /* CameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE22B025B6C000385D2 /* CameraInput.swift */; };
 		A182CEE72B02DF10000385D2 /* CameraService+Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */; };
+		A18E13582B7CAFF4006EB323 /* ExperimentCameraInputSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */; };
+		A18E135A2B7F563B006EB323 /* CameraUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18E13592B7F563B006EB323 /* CameraUIView.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1B9C1BC2AA9E45900238AF6 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */; };
@@ -508,6 +510,8 @@
 		A182CEE02B025B53000385D2 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		A182CEE22B025B6C000385D2 /* CameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraInput.swift; sourceTree = "<group>"; };
 		A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CameraService+Enums.swift"; sourceTree = "<group>"; };
+		A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInputSession.swift; sourceTree = "<group>"; };
+		A18E13592B7F563B006EB323 /* CameraUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraUIView.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1B9C1BB2AA9E45900238AF6 /* ExperimentCameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInput.swift; sourceTree = "<group>"; };
@@ -1154,6 +1158,8 @@
 				A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */,
 				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
 				A15891F12B10BFED00A169C3 /* MetalRenderer.swift */,
+				A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */,
+				A18E13592B7F563B006EB323 /* CameraUIView.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -1541,6 +1547,7 @@
 				C063C662238ECCD000327AE7 /* NetworkDiscovery.swift in Sources */,
 				6B63C8E41CC14A96007DC09B /* WebServerUtilities.swift in Sources */,
 				6B0C71501C1C6FFE00500FEE /* GraphViewDescriptor.swift in Sources */,
+				A18E13582B7CAFF4006EB323 /* ExperimentCameraInputSession.swift in Sources */,
 				6B6319681C48457B0038BE22 /* CollectionViewController.swift in Sources */,
 				6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */,
 				6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */,
@@ -1587,6 +1594,7 @@
 				6BB52BC61C1B11CA00217CF1 /* ExperimentTranslation.swift in Sources */,
 				6BE320AA1CB2B55700DCC1ED /* TextFieldTableViewCell.swift in Sources */,
 				6B7BF80D1C14723D007408FB /* CosAnalysis.swift in Sources */,
+				A18E135A2B7F563B006EB323 /* CameraUIView.swift in Sources */,
 				6BE320A11CB19E0300DCC1ED /* CreateViewControllerTransition.swift in Sources */,
 				C0A3BE5B2390070900951C23 /* NetworkElementHandler.swift in Sources */,
 				A1B9C1C02AA9E76C00238AF6 /* CameraViewElementHandler.swift in Sources */,

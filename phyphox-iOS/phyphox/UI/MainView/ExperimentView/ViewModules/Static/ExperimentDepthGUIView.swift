@@ -73,7 +73,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     private let buttonPadding: CGFloat = 20.0
 
 
-    private let label = UILabel()
+    private let label = UILabel() 
     private let arView = MTKView()
     let renderer: ExperimentDepthGUIRenderer
     private let aggregationBtn = UIButton()

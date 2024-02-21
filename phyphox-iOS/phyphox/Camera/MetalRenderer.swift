@@ -9,6 +9,7 @@
 import Foundation
 import MetalKit
 import AVFoundation
+import Accelerate
 
 
 @available(iOS 13.0, *)
@@ -33,11 +34,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
     
-    struct SelectionStruct {
-        var x1, x2, y1, y2: Float
-        var editable: Bool
-    }
-    
     var displayToCameraTransform: CGAffineTransform = .identity
     var selectionState = SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
@@ -47,6 +43,19 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     var cameraImageTextureCbCr: CVMetalTexture?
     
     var cvImageBuffer : CVImageBuffer?
+    
+    
+    
+    var timeReference: ExperimentTimeReference?
+    var zBuffer: DataBuffer?
+    var tBuffer: DataBuffer?
+    
+    private var queue: DispatchQueue?
+    
+    struct SelectionStruct {
+        var x1, x2, y1, y2: Float
+        var editable: Bool
+    }
     
     
     init(parent: CameraMetalView ,renderer: MTKView) {
@@ -82,23 +91,115 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     
-    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct) {
-        print("Metal Renderer: updateFrame")
-        print("Metal Renderer: updateFrame selectionState: x1 ", selectionState.x1)
-        print("Metal Renderer: updateFrame selectionState:  x2", selectionState.x2)
-        print("Metal Renderer: updateFrame selectionState:  y1 ", selectionState.y1)
-        print("Metal Renderer: updateFrame selectionState:  y2 ", selectionState.y2)
-        
+    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct, time: TimeInterval) {
+       
         if imageBuffer != nil {
-            print("Metal Renderer: imageBuffer not nil")
+           
             self.cvImageBuffer = imageBuffer
         }
         
         self.selectionState = selectionState
+        
+        getLuma(time: time)
+    }
+    
+    func start(queue: DispatchQueue) throws {
+        self.queue = queue
+    }
+    
+    func getLuma(time: Double){
+        if let pixelBuffer = self.cvImageBuffer{
+            // Now you can use pixelBuffer as a CVPixelBuffer
+            
+            
+            var luma = 0
+            let luminance = 00
+            
+            //TODO croping image as per the overlay
+            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags.readOnly)
+            let lumaBaseAddress = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0)
+            let lumaWidth = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0)
+            let lumaHeight = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0)
+            let lumaRowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0)
+            
+            var lData = vImage_Buffer(data: lumaBaseAddress, height: vImagePixelCount(lumaHeight), width: vImagePixelCount(lumaWidth), rowBytes: lumaRowBytes)
+            
+            
+            let chromaBaseAddress = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1)
+            let chromaWidth = CVPixelBufferGetWidthOfPlane(pixelBuffer, 1)
+            let chromaHeight = CVPixelBufferGetHeightOfPlane(pixelBuffer, 1)
+            let chromaRowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 1)
+            
+            var cData = vImage_Buffer(data: chromaBaseAddress, height: vImagePixelCount(chromaHeight), width: vImagePixelCount(chromaWidth), rowBytes: chromaRowBytes)
+            
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags.readOnly)
+            
+            let byteBuffer = UnsafeMutableRawPointer(lumaBaseAddress)
+            
+            let bufferPointer = byteBuffer?.assumingMemoryBound(to: Pixel_8.self)
+            
+            
+            for y in 0...lData.height {
+                for x in 0...lData.width {
+                    var l = (bufferPointer?[Int(x)] ?? 0) & 0xFF
+                    luma += Int(l)
+                    
+                }
+            }
+            
+            let xmin = Int(self.selectionState.x1 * Float(lData.width))
+            let xmax = Int(self.selectionState.x2 * Float(lData.width))
+            let ymin = Int(self.selectionState.y1 * Float(lData.height))
+            let ymax = Int(self.selectionState.y2 * Float(lData.height))
+            
+            
+            let analysisArea = (xmax - xmin) * (ymax - ymin)
+            
+            luma /= analysisArea * 255
+            print("analysis area: ", analysisArea)
+            print("luma value: ", luma)
+            
+            dataIn(z: Double(luma), time: time)
+            
+           
+        } else {
+            //  If the CVImageBuffer is not a CVPixelBuffer, you may need to perform conversion
+            
+        }
+    }
+    
+    
+    private func writeToBuffers(z: Double, t: TimeInterval) {
+        if let zBuffer = zBuffer {
+            zBuffer.append(z)
+        }
+        
+        if let tBuffer = tBuffer {
+            tBuffer.append(t)
+        }
+    }
+    
+    private func dataIn(z: Double, time: TimeInterval) {
+        guard let zBuffer = zBuffer else {
+            print("Error: zBuffer not set")
+            return
+        }
+        guard let tBuffer = tBuffer else {
+            print("Error: tBuffer not set")
+            return
+        }
+        guard let timeReference = timeReference else {
+            print("Error: time reference not set")
+            return
+        }
+        let t = timeReference.getExperimentTimeFromEvent(eventTime: time)
+        if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
+            self.writeToBuffers(z: z, t: t)
+        }
     }
     
     func loadMetal(){
-        print("Metal Renderer: Load Metal")
+       
         // Set the default formats needed to render.
         renderDestination.colorPixelFormat = .bgra8Unorm
         renderDestination.sampleCount = 1
@@ -155,14 +256,14 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice.makeCommandQueue()
         
-        print("Metal Renderer: Metal loaded")
+       
         
     }
     
     
     
     func update() {
-        print("MetalRenderer: Update")
+        
         // Wait to ensure only kMaxBuffersInFlight are getting proccessed by any stage in the Metal
         // pipeline (App, Metal, Drivers, GPU, etc).
         _ = inFlightSemaphore.wait(timeout: DispatchTime.distantFuture)
@@ -183,12 +284,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             
             updateAppState()
             
-            print("Metal Renderer: updateAppState next")
+           
                         
             if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
-                print("Metal Renderer: renderPassDescriptor")
+                
                 if let renderEncoding = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-                    print("Metal Renderer: renderEncoding")
+                   
                     // Set a label to identify this render pass in a captured Metal frame.
                     renderEncoding.label = "DepthGUICameraPreview"
 
@@ -206,13 +307,13 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             // Finalize rendering here & push the command buffer to the GPU.
             commandBuffer.commit()
             
-            print("Metal Renderer: updated")
+            
         }
     }
     
     // Schedules the camera image to be rendered on the GPU.
     func doRenderPass(renderEncoder: MTLRenderCommandEncoder) {
-        print("Metal Renderer: doRenderPass started")
+        
         guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
             return
         }
@@ -241,19 +342,19 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         renderEncoder.popDebugGroup()
         
-        print("Metal Renderer: doRenderPass ended")
+        
     }
     
     // Updates any app state.
     func updateAppState() {
 
-        print("updateAppState before")
+       
         
         guard let currentFrame = self.cvImageBuffer else {
             return
         }
         
-        print("updateAppState after")
+        
         // Prepare the current frame's camera image for transfer to the GPU.
         updateCameraImageTextures(frame: currentFrame)
         
@@ -276,7 +377,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
     func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
-        print("Metal Renderer: createTexture started")
+        
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // 480  //240
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
         
@@ -287,7 +388,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         if status != kCVReturnSuccess {
             texture = nil
         }
-        print("Metal Renderer: createTexture ended")
+        
         return texture
     }
     

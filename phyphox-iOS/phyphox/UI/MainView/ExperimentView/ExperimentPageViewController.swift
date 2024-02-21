@@ -512,10 +512,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
+                    
+                    if let cameraUI = view as? _UIHostingView<PhyphoxCameraView>{
+                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
+                            continue
+                        }
+                         
+                        // TODO remove the dependability with iOS 16
+                        if #available(iOS 16.0, *) {
+                            print("race : viewDidApprear")
+                            cameraUI.rootView.cameraSelectionDelegate = session.cameraModel as? any CameraSelectionDelegate
+                            cameraUI.rootView.cameraViewDelegete = session.cameraModel as? any CameraViewDelegate
+                        } else {
+                            // Fallback on earlier versions
+                        }
+                    }
+                
                 }
-                
-                
             }
+            
         }
         if let networkConnection = experiment.networkConnections.first {
             var sensorList: [String] = []
