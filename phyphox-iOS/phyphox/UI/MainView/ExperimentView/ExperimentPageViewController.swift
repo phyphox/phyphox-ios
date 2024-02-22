@@ -515,7 +515,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
-                         
+                        session.initializeCameraModel()
                         // TODO remove the dependability with iOS 16
                         if #available(iOS 16.0, *) {
                             print("race : viewDidApprear")
@@ -551,9 +551,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 session.stopSession()
             }
             
-            //if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
-            //    camSession.stopSession()
-            //}
+            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+                camSession.endSession()
+            }
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()

@@ -225,6 +225,16 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
         service.initializeModel(model: model)
     }
     
+    
+    func startSession(){
+        service.metalRender?.measuring = true
+    }
+    
+    
+    func stopSession(){
+        service.metalRender?.measuring = false
+    }
+    
     func endSession(){
         service.session.stopRunning()
     }

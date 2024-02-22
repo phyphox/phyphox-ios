@@ -44,6 +44,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var cvImageBuffer : CVImageBuffer?
     
+    var measuring: Bool = false
     
     
     var timeReference: ExperimentTimeReference?
@@ -100,7 +101,10 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         self.selectionState = selectionState
         
-        getLuma(time: time)
+        if measuring { 
+            getLuma(time: time)
+        }
+        
     }
     
     func start(queue: DispatchQueue) throws {

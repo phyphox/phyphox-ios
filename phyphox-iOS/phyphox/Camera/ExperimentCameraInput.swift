@@ -44,8 +44,38 @@ final class ExperimentCameraInput {
         session.tBuffer = tBuffer
         session.timeReference = timeReference
         
-        session.transferData()
         
+    }
+    
+    func start() throws {
+        guard #available(iOS 14.0, *) else {
+            return
+        }
+        guard let session = session as? ExperimentCameraInputSession else {
+            return
+        }
+        
+        session.startSession()
+    }
+    
+    func stop() {
+        guard #available(iOS 14.0, *) else {
+            return
+        }
+        guard let session = session as? ExperimentCameraInputSession else {
+            return
+        }
+        session.stopSession()
+    }
+    
+    func clear() {
+        guard #available(iOS 14.0, *) else {
+            return
+        }
+        guard let session = session as? ExperimentCameraInputSession else {
+            return
+        }
+        session.clear()
     }
     
 }

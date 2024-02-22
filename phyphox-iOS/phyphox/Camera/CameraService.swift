@@ -11,7 +11,7 @@
 import AVFoundation
 import MetalKit
 import CoreMedia
-
+ 
 @available(iOS 14.0, *)
 public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     
@@ -54,6 +54,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var cameraSetting: CameraSettingsModel = CameraSettingsModel()
     
     @Published var zoomScale: CGFloat = 1.0
+    
+   
     
     // MARK: Device Configuration Properties
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
@@ -305,20 +307,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-func changeExpoDuration(){
-    if (defaultVideoDevice?.isExposureModeSupported(.locked) == true){
-        do {
-            try defaultVideoDevice?.lockForConfiguration()
-            defaultVideoDevice?.exposureMode = .custom
-            defaultVideoDevice?.unlockForConfiguration()
-        } catch {
-            print("Error setting camera zoom: \(error.localizedDescription)")
+    func changeExpoDuration(){
+        if (defaultVideoDevice?.isExposureModeSupported(.locked) == true){
+            do {
+                try defaultVideoDevice?.lockForConfiguration()
+                defaultVideoDevice?.exposureMode = .custom
+                defaultVideoDevice?.unlockForConfiguration()
+            } catch {
+                print("Error setting camera zoom: \(error.localizedDescription)")
+            }
+        }
+        else {
+            print("custom exposure setting not supported")
         }
     }
-    else {
-        print("custom exposure setting not supported")
-    }
-}
     
     func setExposureTo(auto: Bool){
         do {
@@ -571,16 +573,16 @@ func changeExpoDuration(){
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        var time = CMSampleBufferGetDuration(sampleBuffer)
-       
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            var time = CMSampleBufferGetDuration(sampleBuffer)
            
-            return
-        }
-    
-        self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
-            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true), time: time.seconds)
+            guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+               
+                return
+            }
         
+            self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
+                x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true), time: time.seconds)
+       
     }
         
    
