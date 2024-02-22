@@ -8,6 +8,7 @@
 
 import Foundation
 import GCDWebServer
+import SwiftUI
 
 protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)
@@ -45,8 +46,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     let flowLayout = UICollectionViewFlowLayout()
     
     var numOfConnectedDevices = 0
-    
-    var customCollectionView = ConnectedBluetoothDevicesViewController(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout(), data: [])
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -127,7 +126,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection)
-                
                 modules.append(m)
                 
                 experimentViewControllers.append(ExperimentViewController(modules: m))
@@ -426,7 +424,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
                 output.replaceValues(buffer.toArray())
                 output.triggerUserInput()
             case .value(let value, usedAs: _):
@@ -517,7 +515,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
-                         
+                        session.initializeCameraModel()
                         // TODO remove the dependability with iOS 16
                         if #available(iOS 16.0, *) {
                             print("race : viewDidApprear")
@@ -554,7 +552,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
-                camSession.stopSession()
+                camSession.endSession()
             }
         }
         disconnectFromBluetoothDevices()
@@ -1497,14 +1495,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     func refreshAppTheme(){
         if #available(iOS 12.0, *) {
             if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
-               (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
+               UIScreen.main.traitCollection.userInterfaceStyle == .light){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .light
                 } else {
                     // Fallback on earlier versions
                 }
             } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                      UIScreen.main.traitCollection.userInterfaceStyle == .dark){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .dark
                 } else {
@@ -1517,10 +1515,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
-        
-        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
-        customCollectionView.removeFromSuperview()
-        
         numOfConnectedDevices = connectedDevice.count
         var adjustedHeight = 48.0
         if( numOfConnectedDevices == 0){
@@ -1529,7 +1523,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             adjustedHeight = 100.0
         }
      
-        customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
+        let customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
         view.addSubview(customCollectionView)
         
     }

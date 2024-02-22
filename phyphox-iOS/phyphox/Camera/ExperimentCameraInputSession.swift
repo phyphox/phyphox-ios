@@ -22,7 +22,7 @@ class ExperimentCameraInputSession: NSObject {
     
     lazy var cameraModel: Any? = nil
     
-    func transferData(){
+    func initializeCameraModel(){
         
         
         if #available(iOS 14.0, *) {
@@ -45,6 +45,49 @@ class ExperimentCameraInputSession: NSObject {
         }
     }
     
+    func startSession(){
+        if #available(iOS 14.0, *) {
+            guard let cameraModel = cameraModel as? CameraModel else {
+                return
+            }
+            
+            cameraModel.startSession()
+            
+        } else {
+            // Fallback on earlier versions
+        }
+    }
+    
+    func stopSession(){
+        if #available(iOS 14.0, *) {
+            guard let cameraModel = cameraModel as? CameraModel else {
+                return
+            }
+            
+            cameraModel.stopSession()
+            
+        } else {
+            // Fallback on earlier versions
+        }
+    }
+    
+    func endSession(){
+        if #available(iOS 14.0, *) {
+            guard let cameraModel = cameraModel as? CameraModel else {
+                return
+            }
+            
+            cameraModel.endSession()
+            
+        } else {
+            // Fallback on earlier versions
+        }
+    }
+    
+    
+    func clear() {
+        
+    }
   
      
     

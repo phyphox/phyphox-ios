@@ -401,6 +401,7 @@ final class Experiment {
         sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
         try depthInput?.start(queue: queue)
+        try cameraInput?.start()
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
@@ -419,6 +420,7 @@ final class Experiment {
                 
         sensorInputs.forEach { $0.stop() }
         depthInput?.stop()
+        cameraInput?.stop()
         gpsInputs.forEach { $0.stop() }
         bluetoothInputs.forEach { $0.stop() }
         networkConnections.forEach { $0.stop() }
@@ -446,6 +448,7 @@ final class Experiment {
 
         sensorInputs.forEach { $0.clear() }
         depthInput?.clear()
+        cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
         
         if byUser {
