@@ -567,21 +567,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     public func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let totalSampleSize = CMSampleBufferGetTotalSampleSize(sampleBuffer)
-        
     }
     
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-            var time = CMSampleBufferGetDuration(sampleBuffer)
+            var presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+            let seconds = CMTimeGetSeconds(presentationTimestamp)
            
             guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-               
                 return
             }
         
             self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
-                x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true), time: time.seconds)
+                x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: true), time: seconds)
        
     }
         

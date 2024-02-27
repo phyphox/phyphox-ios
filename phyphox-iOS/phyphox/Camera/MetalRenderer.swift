@@ -60,7 +60,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     init(parent: CameraMetalView ,renderer: MTKView) {
-        print("Metal Renderer : init")
         
         self.renderDestination = renderer
         
@@ -88,7 +87,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     func drawRectResized(size: CGSize) {
         viewportSize = size
         viewportSizeDidChange = true
-        print("Metal Renderer: drawRectResized")
     }
     
     
@@ -101,7 +99,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         self.selectionState = selectionState
         
-        if measuring { 
+        if measuring {
             getLuma(time: time)
         }
         
@@ -113,13 +111,10 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     func getLuma(time: Double){
         if let pixelBuffer = self.cvImageBuffer{
-            // Now you can use pixelBuffer as a CVPixelBuffer
-            
             
             var luma = 0
             let luminance = 00
             
-            //TODO croping image as per the overlay
             CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags.readOnly)
             let lumaBaseAddress = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0)
             let lumaWidth = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0)
@@ -160,8 +155,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             let analysisArea = (xmax - xmin) * (ymax - ymin)
             
             luma /= analysisArea * 255
-            print("analysis area: ", analysisArea)
-            print("luma value: ", luma)
             
             dataIn(z: Double(luma), time: time)
             
@@ -196,7 +189,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             print("Error: time reference not set")
             return
         }
+        
         let t = timeReference.getExperimentTimeFromEvent(eventTime: time)
+
         if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
             self.writeToBuffers(z: z, t: t)
         }
