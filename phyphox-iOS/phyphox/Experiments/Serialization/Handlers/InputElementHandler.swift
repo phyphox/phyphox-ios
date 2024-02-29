@@ -124,6 +124,11 @@ struct CameraInputDescriptor: SensorDescriptor {
     let y1: Float
     let y2: Float
     let smooth: Bool
+    let autoExposure: Bool
+    let exposureAdjustmentLevel: Int
+    let locked: String
+    let feature: String
+    let analysis: String
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -140,6 +145,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
 
     func startElement(attributes: AttributeContainer) throws {}
     
+    // spelling in the xml should match with it
     private enum Attribute: String, AttributeKey {
         case mode
         case x1
@@ -147,6 +153,11 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         case y1
         case y2
         case smooth
+        case auto_exposure
+        case exposure_adjustment_level
+        case locked
+        case feature
+        case analysis
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -165,7 +176,17 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         
         let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
         
-        results.append(CameraInputDescriptor( x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
+        let autoExposure: Bool = try attributes.optionalValue(for: .auto_exposure) ?? true
+        
+        let exposureAdjustmentLevel: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 3
+        
+        let locked: String = try attributes.optionalValue(for: .locked) ?? ""
+        
+        let feature: String = try attributes.optionalString(for: .feature) ?? ""
+        
+        let analysis: String = try attributes.optionalString(for: .analysis) ?? ""
+        
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, autoExposure: autoExposure, exposureAdjustmentLevel: exposureAdjustmentLevel, locked: locked, feature: feature, analysis: analysis, outputs: outputHandler.results))
     }
 }
 

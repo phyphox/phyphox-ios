@@ -19,6 +19,7 @@ protocol CameraSelectionDelegate {
     var timeReference: ExperimentTimeReference? { get set }
     var zBuffer: DataBuffer? { get set }
     var tBuffer: DataBuffer? { get set }
+    var exposureSettingLevel: Int { get set }
 }
 
 @available(iOS 14.0, *)
@@ -29,12 +30,21 @@ protocol CameraViewDelegate {
 }
 
 
+protocol CameraSettingDelegate {
+    var exposureSettingLevel: Int { get set }
+    var locked: String { get set }
+}
+
+
 @available(iOS 14.0, *)
-class CameraSettingsModel: ObservableObject {
+class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     var cameraSettingLevel: CameraSettingLevel = .ADVANCE
     
     var cameraSettingMode: CameraSettingMode = .NONE
+    
+    var exposureSettingLevel: Int = 0
+    var locked: String = ""
     
     @Published var maxOpticalZoom: Int = 1
     var ultraWideCamera: Bool = false
@@ -154,13 +164,13 @@ class CameraSettingsModel: ObservableObject {
 
 @available(iOS 14.0, *)
 final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDelegate{
-
-    
+   
     var x1: Float = 0.4
     var x2: Float = 0.6
     var y1: Float = 0.4
     var y2: Float = 0.6
     
+    var exposureSettingLevel: Int = 3
     
     private let service = CameraService()
     var metalView =  CameraMetalView()
