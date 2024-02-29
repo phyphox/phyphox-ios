@@ -22,6 +22,12 @@ class ExperimentCameraInputSession: NSObject {
     
     lazy var cameraModel: Any? = nil
     
+    var autoExposure: Bool = true
+    var exposureAdjustmentLevel: Int = 0
+    var locked: String = ""
+    var feature: String = ""
+    var analysis: String = ""
+    
     func initializeCameraModel(){
         
         
@@ -40,6 +46,8 @@ class ExperimentCameraInputSession: NSObject {
             cameraModel.metalRenderer.timeReference = timeReference
             cameraModel.metalRenderer.zBuffer = zBuffer
             cameraModel.metalRenderer.tBuffer =  tBuffer
+            
+            cameraModel.exposureSettingLevel = exposureAdjustmentLevel
         } else {
             // Fallback on earlier versions
         }

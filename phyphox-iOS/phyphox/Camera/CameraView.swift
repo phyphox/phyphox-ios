@@ -101,7 +101,10 @@ struct PhyphoxCameraView: View {
                         
                     }
 
-                    CameraSettingView(cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel()).opacity(isMinimized ? 1.0 : 0.0)
+                    CameraSettingView(
+                        cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
+                        exposureSettingLevel: cameraSelectionDelegate?.exposureSettingLevel ?? 0
+                    ).opacity(isMinimized ? 1.0 : 0.0)
                   
                 }
                 
@@ -193,9 +196,37 @@ struct PhyphoxCameraView: View {
     
 }
 
+
+@available(iOS 14.0, *)
+struct CameraSettingButton: View {
+    let action: () -> Void
+    let image: String
+    let size: CGFloat
+    
+    var body: some View {
+        
+        Button(action: {
+            action()
+        }){
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image(image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                )
+        }
+        
+    }
+}
+
 @available(iOS 14.0, *)
 struct CameraSettingView: View {
     @ObservedObject var cameraSettingModel = CameraSettingsModel()
+    var exposureSettingLevel: Int
     
     @State private var cameraSettingMode: CameraSettingMode = .NONE
     
@@ -210,9 +241,11 @@ struct CameraSettingView: View {
     
     @State private var isListVisible: Bool = false
     
+    @State private var zoomScale: CGFloat = 1.0
+
     
     var flipCameraButton: some View {
-        Button(action: {
+        CameraSettingButton(action: {
             cameraSettingMode = .SWITCH_LENS
             isListVisible = false
             if(isFlipped){
@@ -228,196 +261,141 @@ struct CameraSettingView: View {
             }
             
             cameraSettingModel.switchCamera()
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("flip_camera")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .rotationEffect(.degrees(rotation))
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
-                        )
-
-        })
+        }, image: "flip_camera", size: 30).rotationEffect(.degrees(rotation))
     }
     
-    @State private var zoomScale: CGFloat = 1.0
-    
     var zoomSlider: some View {
-
-        Button(action: {
+        CameraSettingButton(action: {
             cameraSettingMode = .ZOOM
             isListVisible.toggle()
             zoomClicked = !zoomClicked
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_zoom")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-                       
-        })
+        }, image: "ic_zoom", size: 45)
     }
     
     var autoExposure: some View {
-        Button(action: {
-            cameraSettingMode = .AUTO_EXPOSURE
-            autoExposureOff = !autoExposureOff
-            isListVisible = false
-            zoomClicked = false
-            cameraSettingModel.autoExposure(auto: !autoExposureOff)
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_auto_exposure")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25))
-                        
-        })
+         CameraSettingButton(action: {
+             cameraSettingMode = .AUTO_EXPOSURE
+             autoExposureOff = !autoExposureOff
+             isListVisible = false
+             zoomClicked = false
+             cameraSettingModel.autoExposure(auto: !autoExposureOff)
+         }, image: "ic_auto_exposure", size: 25)
     }
     
+    var exposureSetting: some View{
+        CameraSettingButton(action: {
+            cameraSettingMode = .EXPOSURE
+            isListVisible.toggle()
+            zoomClicked = false
+        }, image: "ic_exposure", size: 30)
+    }
     
     var isoSetting: some View {
-        Button(action: {
+        CameraSettingButton(action: {
             cameraSettingMode = .ISO
             isListVisible.toggle()
             zoomClicked = false
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_camera_iso")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-                       
-        })
+        }, image: "ic_camera_iso", size: 30)
     }
     
     var shutterSpeedSetting: some View {
-        Button(action: {
+        CameraSettingButton(action: {
             cameraSettingMode = .SHUTTER_SPEED
             isListVisible.toggle()
             zoomClicked = false
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image("ic_shutter_speed")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/))
-        })
+        }, image: "ic_shutter_speed", size: 30)
     }
     
     var apertureSetting: some View {
-        Button(action: {
+        CameraSettingButton(action: {
             cameraSettingMode = .NONE
             isListVisible = false
             zoomClicked = false
-        }, label: {
-            Circle()
-                .foregroundColor(Color.gray.opacity(0.0))
-                .frame(width: 45, height: 45, alignment: .center)
-                .overlay(
-                    Image(systemName: "camera.aperture")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25)
-                        .clipShape(/*@START_MENU_TOKEN@*/Circle()/*@END_MENU_TOKEN@*/)
-                        .foregroundColor(.white))
-        })
+        }, image: "camera.aperture", size: 25)
     }
 
     
     var body: some View {
-        HStack {
+        
+        if(exposureSettingLevel == 0){
+            HStack{}
+        } else {
             
-            VStack(spacing: 0) {
-                flipCameraButton
-                    .frame(maxWidth: .infinity)
+            HStack {
                 
-                Text(isFlipped ? "Front" : "Back")
-                    .font(.caption2)
+                VStack {
+                    flipCameraButton.frame(maxWidth: .infinity)
+                    Text(isFlipped ? "Front" : "Back").font(.caption2)
+                }
+                
+                if(exposureSettingLevel == 2){
+                    VStack {
+                        exposureSetting
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .disabled(autoExposureOff ? false : true).frame(maxWidth: .infinity)
+                        
+                        Text("0.0")
+                            .font(.caption2)
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    }
+                    
+                }
+                
+                if(exposureSettingLevel == 3){
+                    VStack {
+                        autoExposure.frame(maxWidth: .infinity)
+                        Text(autoExposureOff ? "Off" : "On").font(.caption2)
+                    }
+                    
+                    VStack {
+                        isoSetting
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .disabled(autoExposureOff ? false : true)
+                            .frame(maxWidth: .infinity)
+                        
+                        Text(String(Int(cameraSettingModel.currentIso)))
+                            .font(.caption2)
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    }
+                    
+                    
+                    VStack {
+                        
+                        shutterSpeedSetting
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .disabled(autoExposureOff ? false : true)
+                            .frame(maxWidth: .infinity)
+                        
+                        let exposureDuration = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
+                        
+                        Text("1/" + String(Int((1 / exposureDuration))))
+                            .font(.caption2)
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    }
+                    
+                    VStack {
+                        
+                        apertureSetting
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .frame(maxWidth: .infinity)
+                            .disabled(autoExposureOff ? false : true)
+                        
+                        Text("f/" + String(cameraSettingModel.currentApertureValue))
+                            .font(.caption2)
+                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    }
+                }
+
+                VStack {
+                    zoomSlider.frame(maxWidth: .infinity)
+                    Text("Zoom").font(.caption2)
+                }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 1)
+            .preferredColorScheme(.dark)
             
-                
-            VStack(spacing: 0) {
-                autoExposure
-                    .frame(maxWidth: .infinity)
-                
-                Text(autoExposureOff ? "Off" : "On")
-                    .font(.caption2)
-                
-            }
-            
-            
-               
-            VStack(spacing: 0) {
-                
-                isoSetting
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-                    .frame(maxWidth: .infinity)
-                    .disabled(autoExposureOff ? false : true)
-            
-                Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-            }
-            
-              
-            VStack(spacing: 0) {
-                
-                shutterSpeedSetting
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-                    .frame(maxWidth: .infinity)
-                    .disabled(autoExposureOff ? false : true)
-                let exposureDuration = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
-                Text("1/" + String(Int((1 / exposureDuration))))
-                    .font(.caption2)
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-            }
-            
-           
-                
-            VStack(spacing: 0) {
-                
-                apertureSetting
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-                    .frame(maxWidth: .infinity)
-                    .disabled(autoExposureOff ? false : true)
-                
-                Text("f/" + String(cameraSettingModel.currentApertureValue))
-                    .font(.caption2)
-                    .opacity(autoExposureOff ? 1.0 : 0.4 )
-            }
-           
-            
-            VStack(spacing: 0) {
-                
-                zoomSlider
-                    .frame(maxWidth: .infinity)
-                
-                Text("Zoom").font(.caption2)
-            }
-           
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 1)
-        .preferredColorScheme(.dark)
         
         
         VStack {
