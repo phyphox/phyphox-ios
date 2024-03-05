@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import GCDWebServers
+import GCDWebServer
 
 protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }

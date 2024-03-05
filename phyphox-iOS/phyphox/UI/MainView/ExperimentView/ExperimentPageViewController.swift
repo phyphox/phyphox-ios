@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import GCDWebServers
+import GCDWebServer
 import SwiftUI
 
 protocol ExportDelegate {
@@ -17,7 +17,8 @@ protocol ExportDelegate {
 protocol StopExperimentDelegate {
     func stopExperiment()
 }
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate {
+
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
     
     var actionItem: UIBarButtonItem?
     var playItem: UIBarButtonItem?
@@ -41,6 +42,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     let webServer: ExperimentWebServer
     
     private let viewModules: [[UIView]]
+    
+    let flowLayout = UICollectionViewFlowLayout()
+    
+    var numOfConnectedDevices = 0
+    
+    var customCollectionView = ConnectedBluetoothDevicesViewController(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout(), data: [])
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -148,6 +155,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
         
+        
+        flowLayout.scrollDirection = .vertical
+        flowLayout.minimumLineSpacing = 10
+        flowLayout.minimumInteritemSpacing = 10
+
+        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
+        
+        ExperimentBluetoothDevice.updateDelegate = self
+        
+        
         self.navigationItem.title = experiment.displayTitle
         
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
@@ -188,7 +205,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -265,16 +281,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         
+        var adjustableHeightS1 = 0.0
+        var adjustableHeightS2 = 0.0
+        if(  numOfConnectedDevices == 1){
+            adjustableHeightS1 = 30.0
+            adjustableHeightS2 = 20.0
+        } else if(numOfConnectedDevices > 1){
+            adjustableHeightS1 = 82.0
+            adjustableHeightS2 = 72.0
+        }
+        
         if let label = self.serverLabel, let labelBackground = self.serverLabelBackground {
             let s = label.sizeThatFits(CGSize(width: offsetFrame.width, height: 300))
-            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height-offsetBottom))
+            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height-offsetBottom - adjustableHeightS1))
             
-            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom, width: pageViewControlerRect.width, height: s.height + offsetBottom)
-            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom, width: offsetFrame.width, height: s.height)
+            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS1  , width: pageViewControlerRect.width, height: s.height + offsetBottom - adjustableHeightS2)
+            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS2  , width: offsetFrame.width, height: s.height  )
             label.frame = labelFrame
             labelBackground.frame = labelBackgroundFrame
             label.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
             labelBackground.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
+        }
+        
+        if self.serverQRIcon != nil {
+            NSLayoutConstraint.activate([
+                self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -15.0),
+                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -20.0 )
+            ])
         }
         
         self.pageViewControler.view.frame = pageViewControlerRect
@@ -286,7 +319,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem?.accessibilityLabel = localize("actions")
@@ -340,6 +373,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .forward, animated: false, completion: nil)
         pageViewControler.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
+        
+        
         updateLayout()
         
         self.addChild(pageViewControler)
@@ -349,16 +384,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+        
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         if (experiment.viewDescriptors!.count > 1) {
             updateSegControlDesign()
             tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
         }
+        
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
@@ -390,7 +427,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
                 output.replaceValues(buffer.toArray())
                 output.triggerUserInput()
             case .value(let value, usedAs: _):
@@ -631,11 +668,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.serverLabel!.inputAccessoryView = UIView()
             
             self.serverQRIcon = UIButton(type: .system)
-            let image = UIImage(named: "new_experiment_qr")!.resize(size: CGSize(width: 30, height: 30))
+            
+            var image = UIImage(named: "new_experiment_qr")!.resize(size: CGSize(width: 30, height: 30))
+            if #available(iOS 13.0, *) {
+                let config = UIImage.SymbolConfiguration(
+                    pointSize: 25, weight: .medium, scale: .default)
+                
+                image = UIImage(systemName: "info.circle.fill", withConfiguration: config)!
+            } else {
+                // Fallback on earlier versions
+            }
+            
             self.serverQRIcon?.setImage(image, for: .normal)
             self.serverQRIcon?.addTarget(self, action: #selector(showQr), for: .touchUpInside)
             self.serverQRIcon?.imageView?.contentMode = .scaleAspectFit
-           
             
             self.serverLabelBackground = UIView()
             self.serverLabelBackground!.backgroundColor = UIColor(named: "lightBackgroundColor") ?? kLightBackgroundColor
@@ -645,15 +691,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -20.0),
-                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -25.0)
             
-            ])
             
             updateLayout()
         }
     }
+
     
     @objc func showQr(){
         let data = remoteUrl.data(using: .utf8)
@@ -1430,12 +1473,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func refreshTheAdjustedGraphColorForLightMode(){
+    func refreshAppTheme(){
         if #available(iOS 12.0, *) {
             if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
-               UIScreen.main.traitCollection.userInterfaceStyle == .light){
+               (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .light
+                } else {
+                    // Fallback on earlier versions
+                }
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
+                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                if #available(iOS 13.0, *) {
+                    view.overrideUserInterfaceStyle = .dark
                 } else {
                     // Fallback on earlier versions
                 }
@@ -1443,6 +1493,24 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         } else {
             // Fallback on earlier versions
         }
+    }
+    
+    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
+        
+        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
+        customCollectionView.removeFromSuperview()
+        
+        numOfConnectedDevices = connectedDevice.count
+        var adjustedHeight = 48.0
+        if( numOfConnectedDevices == 0){
+            return
+        } else if(numOfConnectedDevices > 1){
+            adjustedHeight = 100.0
+        }
+     
+        customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
+        view.addSubview(customCollectionView)
+        
     }
 }
 

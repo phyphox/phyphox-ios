@@ -152,7 +152,7 @@
 "pick_exportFormat" = "ამოირჩიე მონაცემების ფორმატი.";
 "noDrawableData" = "არარის დახატვადი მონაცემები.";
 "categoryNewExperiment" = "მარტივი ექსპერიმენტები";
-"categoryRawSensor" = "სენსორის მონაცემები";
+"categoryRawSensor" = "დაუმუშავებელი სენსორები";
 "categoryPhyphoxOrg" = "წვლილი შეიტანეთ ფაიფოქსში";
 "categoryPhyphoxOrgHint" = "ფაიფოქსის დასახმარებლად ახალი ფუნქციებია სიის ბოლოს.";
 "experimentinfo_hint" = "შეამოწმეთ ექსპერიმენტის ინფორმაცია, იმისათვის რომ გაერკვეთ ექპერიმენტში.";

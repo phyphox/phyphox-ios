@@ -99,7 +99,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 16, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 17, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -260,7 +260,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         guard let buffer = buffers[item.name] else {
                             throw ElementHandlerError.missingElement("data-container")
                         }
-                        send[item.id] = NetworkSendableData(source: .Buffer(buffer, clear: item.clear), additionalAttributes: item.additionalAttributes)
+                        send[item.id] = NetworkSendableData(source: .Buffer(buffer, keep: item.keep), additionalAttributes: item.additionalAttributes)
                     case .meta:
                         let metadata: NetworkSendableData.Source
                         switch (item.name) {
@@ -330,7 +330,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     guard let buffer = buffers[item.name] else {
                         throw ElementHandlerError.missingElement("data-container")
                     }
-                    receive[item.id] = NetworkReceivableData(buffer: buffer, clear: item.clear)
+                    receive[item.id] = NetworkReceivableData(buffer: buffer, append: item.append)
                 }
                 networkConnections.append(NetworkConnection(id: descriptor.id, privacyURL: descriptor.privacyURL, address: descriptor.address, discovery: descriptor.discovery, autoConnect: descriptor.autoConnect, service: descriptor.service, conversion: descriptor.conversion, send: send, receive: receive, interval: descriptor.interval))
             }
@@ -375,12 +375,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             return EditViewDescriptor(label: descriptor.label, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
 
         case .button(let descriptor):
-            let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataIO, DataBuffer) in
+            let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataInput, DataBuffer) in
                 guard let outputBuffer = buffers[flow.outputBufferName] else {
                     throw ElementHandlerError.missingElement("data-container")
                 }
 
-                let input: ExperimentAnalysisDataIO
+                let input: ExperimentAnalysisDataInput
 
                 switch flow.input {
                 case .buffer(let bufferName):
@@ -388,11 +388,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         throw ElementHandlerError.missingElement("data-container")
                     }
 
-                    input = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "", clear: true)
+                    input = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "", keep: false)
                 case .value(let value):
                     input = .value(value: value, usedAs: "")
                 case .clear:
-                    input = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: "", clear: true)
+                    input = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: "", keep: false)
                 }
 
                 return (input, outputBuffer)
@@ -556,7 +556,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private func getInputBufferNames(from analysis: AnalysisDescriptor) -> Set<String> {
         let inputBufferNames = analysis.modules.flatMap({ $0.descriptor.inputs }).compactMap({ descriptor -> String? in
             switch descriptor {
-            case .buffer(name: let name, usedAs: _, clear: _):
+            case .buffer(name: let name, usedAs: _, keep: _):
                 return name
             case .value(value: _, usedAs: _):
                 return nil

@@ -10,19 +10,32 @@ import Foundation
 
 // Helpers for `AnalysisElementHandler`.
 
-private extension ExperimentAnalysisDataIO {
-    init(descriptor: ExperimentAnalysisDataIODescriptor, buffers: [String: DataBuffer]) throws {
+private extension ExperimentAnalysisDataInput {
+    init(descriptor: ExperimentAnalysisDataInputDescriptor, buffers: [String: DataBuffer]) throws {
         switch descriptor {
-        case .buffer(name: let bufferName, usedAs: let usedAs, clear: let clear):
+        case .buffer(name: let bufferName, usedAs: let usedAs, keep: let keep):
             guard let buffer = buffers[bufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            self = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, clear: clear)
+            self = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, keep: keep)
         case .value(value: let value, usedAs: let usedAs):
             self = .value(value: value, usedAs: usedAs)
         case .empty(let asString):
-            self = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: asString, clear: false)
+            self = .buffer(buffer: emptyBuffer, data: MutableDoubleArray(data: []), usedAs: asString, keep: true)
+        }
+    }
+}
+
+private extension ExperimentAnalysisDataOutput {
+    init(descriptor: ExperimentAnalysisDataOutputDescriptor, buffers: [String: DataBuffer]) throws {
+        switch descriptor {
+        case .buffer(name: let bufferName, usedAs: let usedAs, append: let append):
+            guard let buffer = buffers[bufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+
+            self = .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, append: append)
         }
     }
 }
@@ -84,8 +97,8 @@ final class ExperimentAnalysisFactory {
             throw ElementHandlerError.unexpectedChildElement(key)
         }
 
-        let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
-        let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataIO(descriptor: $0, buffers: buffers) }
+        let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataInput(descriptor: $0, buffers: buffers) }
+        let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataOutput(descriptor: $0, buffers: buffers) }
         let attributes = descriptor.attributes
         
         var cycles: [(Int,Int)] = []

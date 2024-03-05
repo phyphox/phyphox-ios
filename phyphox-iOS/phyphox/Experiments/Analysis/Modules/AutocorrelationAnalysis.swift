@@ -10,20 +10,20 @@ import Foundation
 import Accelerate
 
 final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
-    private var minXIn: ExperimentAnalysisDataIO?
-    private var maxXIn: ExperimentAnalysisDataIO?
+    private var minXIn: ExperimentAnalysisDataInput?
+    private var maxXIn: ExperimentAnalysisDataInput?
     
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray!
     
-    private var xOut: ExperimentAnalysisDataIO?
-    private var yOut: ExperimentAnalysisDataIO?
+    private var xOut: ExperimentAnalysisDataOutput?
+    private var yOut: ExperimentAnalysisDataOutput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -31,7 +31,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -192,19 +192,15 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 
         if let yOut = yOut {
             switch yOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(yValues)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
         if let xOut = xOut {
             switch xOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(xValues)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

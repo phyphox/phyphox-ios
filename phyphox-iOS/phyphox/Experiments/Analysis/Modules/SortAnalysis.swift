@@ -10,10 +10,10 @@ import Foundation
 
 final class SortAnalysis: AutoClearingExperimentAnalysisModule {
     
-    private var ins: [ExperimentAnalysisDataIO] = []
+    private var ins: [ExperimentAnalysisDataInput] = []
     let descending: Bool;
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
@@ -40,7 +40,7 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         let mainArray: [Double]
         switch ins[0] {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             mainArray = data.data
         case .value(value: _, usedAs: _):
             return
@@ -58,7 +58,7 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             guard i < outputs.count else { break }
 
             switch bufferIn {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let inArray = data.data
                 results.append(offsets.map{$0 < inArray.count ? inArray[$0] : Double.nan})
             case .value(value: _, usedAs: _):
@@ -70,10 +70,8 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             let output = outputs[i]
 
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

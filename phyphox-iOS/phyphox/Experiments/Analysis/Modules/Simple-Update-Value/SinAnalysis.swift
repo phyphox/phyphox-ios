@@ -12,7 +12,7 @@ import Accelerate
 final class SinAnalysis: UpdateValueAnalysis {
     private let deg: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         deg = try attributes.optionalValue(for: "deg") ?? false

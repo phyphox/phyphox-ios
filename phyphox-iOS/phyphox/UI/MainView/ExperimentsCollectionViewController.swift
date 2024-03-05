@@ -370,9 +370,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     
     private func showStateTitleEditForExperiment(_ experiment: Experiment, button: UIButton, oldTitle: String) {
         
-        
-        UIAlertController.PhyphoxUIAlertBuilder()
-            .title(title: localize("rename"))
+        let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
+        alertBuilder.title(title: localize("rename"))
             .message(message: "")
             .preferredStyle(style: .alert)
             .addTextField(configHandler: {(textfield: UITextField!) -> Void in
@@ -381,7 +380,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             })
             .addActionWithTitle(localize("rename"), style: .default, handler: { [unowned self] action in
                 do {
-                    let textField = UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue()
+                    let textField = alertBuilder.getTextFieldValue()
                 
                     if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
                         try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)

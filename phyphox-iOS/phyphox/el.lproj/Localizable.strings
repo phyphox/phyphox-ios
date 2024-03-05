@@ -337,3 +337,6 @@
 "settings" = "Ρυθμίσεις";
 "cameraFrontFacing" = "Μπροστινή κάμερα";
 "cameraBackFacing" = "Οπίσθια κάμερα";
+"url_invalid" = "Άκυρο URL";
+"url_invalid_msg" = "Αυτό το πείραμα είναι απλά ένας σύνδεσμος, αλλά δεν βρέθηκε έγκυρο URL.";
+"showQRCodeForRemoteURL" = "Κωδικός QR για την πρόσβαση σε URL";

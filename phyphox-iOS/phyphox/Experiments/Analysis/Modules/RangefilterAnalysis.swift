@@ -49,7 +49,7 @@ final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     if let currentInput = currentIn {
                         iterators.append((Range(min: currentMin, max: currentMax), currentInput))
                     }
@@ -124,10 +124,8 @@ final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
                 
         for (i, output) in outputs.enumerated() {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(out[i])
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

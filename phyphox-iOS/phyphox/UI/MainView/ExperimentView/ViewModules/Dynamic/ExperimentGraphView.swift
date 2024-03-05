@@ -287,7 +287,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
         if #available(iOS 13.0, *) {
             let config = UIImage.SymbolConfiguration(
-                pointSize: 25, weight: .medium, scale: .default)
+                pointSize: 25, weight: .regular, scale: .default)
             unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
             unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
                                                              withConfiguration: config))
@@ -348,6 +348,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             registerForUpdatesFromBuffer(descriptor.yInputBuffers[i])
             if let xBuffer = descriptor.xInputBuffers[i] {
                 registerForUpdatesFromBuffer(xBuffer)
+            }
+            if let zBuffer = descriptor.zInputBuffers[i] {
+                registerForUpdatesFromBuffer(zBuffer)
             }
         }
 

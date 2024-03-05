@@ -10,20 +10,25 @@ import Foundation
 
 // This file contains element handlers for the `analysis` child element (and its child elements) of the `phyphox` root element.
 
-enum ExperimentAnalysisDataIODescriptor {
+enum ExperimentAnalysisDataInputDescriptor {
     case value(value: Double, usedAs: String)
-    case buffer(name: String, usedAs: String, clear: Bool)
+    case buffer(name: String, usedAs: String, keep: Bool)
     case empty(usedAs: String)
 }
 
-final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessElementHandler {
-    var results = [ExperimentAnalysisDataIODescriptor]()
+enum ExperimentAnalysisDataOutputDescriptor {
+    case buffer(name: String, usedAs: String, append: Bool)
+}
+
+final class AnalysisDataInputElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [ExperimentAnalysisDataInputDescriptor]()
 
     func startElement(attributes: AttributeContainer) throws {}
 
     private enum Attribute: String, AttributeKey {
         case type
         case clear
+        case keep
         case usedAs = "as"
     }
 
@@ -37,9 +42,10 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
         case .buffer:
             guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
-            let clear = try attributes.optionalValue(for: .clear) ?? true
-
-            results.append(.buffer(name: text, usedAs: usedAs, clear: clear))
+            let clear = try attributes.optionalValue(for: .clear) ?? true //deprecated
+            let keep = try attributes.optionalValue(for: .keep) ?? !clear
+            
+            results.append(.buffer(name: text, usedAs: usedAs, keep: keep))
         case .value:
             guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
@@ -54,9 +60,43 @@ final class AnalysisDataFlowElementHandler: ResultElementHandler, ChildlessEleme
     }
 }
 
+final class AnalysisDataOutputElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [ExperimentAnalysisDataOutputDescriptor]()
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    private enum Attribute: String, AttributeKey {
+        case type
+        case clear
+        case append
+        case usedAs = "as"
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let type = try attributes.optionalValue(for: .type) ?? DataInputTypeAttribute.buffer
+        let usedAs = attributes.optionalString(for: .usedAs) ?? ""
+
+        switch type {
+        case .buffer:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
+
+            let clear = try attributes.optionalValue(for: .clear) ?? true
+            let append = try attributes.optionalValue(for: .append) ?? !clear
+            
+            results.append(.buffer(name: text, usedAs: usedAs, append: append))
+        case .value:
+            throw ElementHandlerError.unexpectedAttributeValue("type")
+        case .empty:
+            throw ElementHandlerError.unexpectedAttributeValue("type")
+        }
+    }
+}
+
 struct AnalysisModuleDescriptor {
-    let inputs: [ExperimentAnalysisDataIODescriptor]
-    let outputs: [ExperimentAnalysisDataIODescriptor]
+    let inputs: [ExperimentAnalysisDataInputDescriptor]
+    let outputs: [ExperimentAnalysisDataOutputDescriptor]
 
     let attributes: AttributeContainer
 }
@@ -68,8 +108,8 @@ final class AnalysisModuleElementHandler: ResultElementHandler, LookupElementHan
 
     var childHandlers: [String : ElementHandler]
 
-    private let inputsHandler = AnalysisDataFlowElementHandler()
-    private let outputsHandler = AnalysisDataFlowElementHandler()
+    private let inputsHandler = AnalysisDataInputElementHandler()
+    private let outputsHandler = AnalysisDataOutputElementHandler()
 
     init() {
         childHandlers = ["input": inputsHandler, "output": outputsHandler]

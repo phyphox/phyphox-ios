@@ -9,14 +9,14 @@
 import Foundation
 
 final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
-    private var avgOutput: ExperimentAnalysisDataIO?
-    private var stdOutput: ExperimentAnalysisDataIO?
+    private var avgOutput: ExperimentAnalysisDataOutput?
+    private var stdOutput: ExperimentAnalysisDataOutput?
     
     private let input: MutableDoubleArray
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
-        var avg: ExperimentAnalysisDataIO? = nil
-        var std: ExperimentAnalysisDataIO? = nil
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
+        var avg: ExperimentAnalysisDataOutput? = nil
+        var std: ExperimentAnalysisDataOutput? = nil
         for output in outputs {
             if output.asString == "std" || avg != nil {
                 std = output
@@ -33,7 +33,7 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
         }
 
         switch firstInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             input = data
         case .value(value: _, usedAs: _):
             throw SerializationError.genericError(message: "Average needs a buffer as input.")
@@ -63,10 +63,8 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
         
         if let avgOutput = avgOutput {
             switch avgOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray([avg])
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
@@ -87,10 +85,8 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
             }
 
             switch stdOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray([std])
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }
