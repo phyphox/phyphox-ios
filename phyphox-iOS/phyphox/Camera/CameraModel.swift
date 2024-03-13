@@ -23,10 +23,11 @@ protocol CameraSelectionDelegate {
 }
 
 @available(iOS 14.0, *)
-protocol CameraViewDelegate {
+protocol CameraViewDelegate: AnyObject {
     var metalView: CameraMetalView { get set }
     var metalRenderer: MetalRenderer { get set }
     var cameraSettingsModel : CameraSettingsModel { get set }
+    var isOverlayEditable: Bool { get set }
 }
 
 
@@ -182,6 +183,8 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     var timeReference: ExperimentTimeReference?
     var zBuffer: DataBuffer?
     var tBuffer: DataBuffer?
+    
+    var isOverlayEditable: Bool = false
     
     /// The app's default camera.
     var defaultCamera: AVCaptureDevice? {

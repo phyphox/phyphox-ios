@@ -23,7 +23,7 @@ struct PhyphoxCameraView: View {
     
     @State private var modelGesture: CameraGestureState = .none
     
-    @State private var isMinimized = true
+    @State private var isMaximized = false
     
     @State private var overlayWidth: CGFloat = 50
     @State private var overlayHeight: CGFloat = 50
@@ -43,9 +43,11 @@ struct PhyphoxCameraView: View {
   
     var mimimizeCameraButton: some View {
         Button(action: {
-            self.isMinimized.toggle()
+            self.isMaximized.toggle()
+            
+            self.cameraViewDelegete?.isOverlayEditable.toggle()
         }, label: {
-            Image(systemName: isMinimized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+            Image(systemName: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                 .font(.title2)
                 .padding()
                 .background(Color.black)
@@ -58,13 +60,17 @@ struct PhyphoxCameraView: View {
         
         let dragGesture = DragGesture()
             .onChanged{ value in
-                viewState = value.location
-                pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.begin)
-            
+                if(isMaximized){
+                    viewState = value.location
+                    pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.begin)
+                }
+             
             }
             .onEnded{ value in
-                pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.end)
-                self.viewState = .zero
+                if(isMaximized){
+                    pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.end)
+                    self.viewState = .zero
+                }
             }
         
         
@@ -93,8 +99,8 @@ struct PhyphoxCameraView: View {
                             .foregroundColor(.gray)
                             .gesture(dragGesture)
                             .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
-                            .frame(width: !isMinimized ? reader.size.width / 2 : reader.size.width ,
-                                   height: !isMinimized ? reader.size.height / 3 : reader.size.height / 1.5,
+                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width ,
+                                   height: !isMaximized ? reader.size.height / 3 : reader.size.height / 1.5,
                                    alignment: .topTrailing)
                     
                         
@@ -104,7 +110,7 @@ struct PhyphoxCameraView: View {
                     CameraSettingView(
                         cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
                         exposureSettingLevel: cameraSelectionDelegate?.exposureSettingLevel ?? 0
-                    ).opacity(isMinimized ? 1.0 : 0.0)
+                    ).opacity(isMaximized ? 1.0 : 0.0)
                   
                 }
                 
