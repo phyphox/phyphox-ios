@@ -9,6 +9,7 @@
 import Foundation
 import AVFoundation
 import CoreLocation
+import CoreMotion
 
 private struct ExperimentRequiredPermission: OptionSet {
     let rawValue: Int
@@ -16,6 +17,7 @@ private struct ExperimentRequiredPermission: OptionSet {
     static let none = ExperimentRequiredPermission([])
     static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
     static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
+    static let motionFitness = ExperimentRequiredPermission(rawValue: (1 << 2))
 }
 
 struct ExperimentLink: Equatable {
@@ -167,6 +169,15 @@ final class Experiment {
         if !gpsInputs.isEmpty {
             requiredPermissions.insert(.location)
         }
+        print(ProcessInfo().operatingSystemVersion)
+        if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion == 4 {
+            for sensorInput in sensorInputs {
+                if sensorInput.sensorType == .pressure {
+                    requiredPermissions.insert(.motionFitness)
+                    break
+                }
+            }
+        }
         
         analysis.delegate = self
     }
@@ -302,6 +313,32 @@ final class Experiment {
                 
             case .notDetermined:
                 locationManager?.requestWhenInUseAuthorization()
+                break
+                
+            default:
+                break
+            }
+        } else if requiredPermissions.contains(.motionFitness) {
+            print("Motion and Fitness permission required.")
+            let status = CMAltimeter.authorizationStatus()
+            switch status {
+            case .denied:
+                failed()
+                let alert = UIAlertController(title: "iOS 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+            case .restricted:
+                failed()
+                let alert = UIAlertController(title: "iOS 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been restricted. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .notDetermined:
+                print("Trying CMSensorRecorder workaround.")
+                let recorder = CMSensorRecorder()
+                DispatchQueue.global().async {
+                    recorder.recordAccelerometer(forDuration: 0.1)
+                }
                 break
                 
             default:
