@@ -19,7 +19,7 @@
 				<string>35F9.1</string>
 			</array>
 			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
 		</dict>
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
