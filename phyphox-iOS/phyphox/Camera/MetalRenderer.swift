@@ -15,7 +15,7 @@ import Accelerate
 @available(iOS 13.0, *)
 class MetalRenderer: NSObject,  MTKViewDelegate{
     
-    var metalDevice: MTLDevice!
+    var metalDevice: MTLDevice?
     var metalCommandQueue: MTLCommandQueue!
     var imagePlaneVertexBuffer: MTLBuffer!
     var renderDestination: MTKView
@@ -205,11 +205,11 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         // Create a vertex buffer with our image plane vertex data.
         let imagePlaneVertexDataCount = kImagePlaneVertexData.count * MemoryLayout<Float>.size
-        imagePlaneVertexBuffer = metalDevice.makeBuffer(bytes: kImagePlaneVertexData, length: imagePlaneVertexDataCount, options: [])
+        imagePlaneVertexBuffer = metalDevice?.makeBuffer(bytes: kImagePlaneVertexData, length: imagePlaneVertexDataCount, options: [])
         imagePlaneVertexBuffer.label = "ImagePlaneVertexBuffer"
         
         // Load all the shader files with a metal file extension in the project.
-        let defaultLibrary = metalDevice.makeDefaultLibrary()!
+        let defaultLibrary = metalDevice?.makeDefaultLibrary()!
                 
         // Create a vertex descriptor for our image plane vertex buffer.
         let imagePlaneVertexDescriptor = MTLVertexDescriptor()
@@ -231,12 +231,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                         
         // Create camera image texture cache.
         var textureCache: CVMetalTextureCache?
-        CVMetalTextureCacheCreate(nil, nil, metalDevice, nil, &textureCache)
+        CVMetalTextureCacheCreate(nil, nil, metalDevice!, nil, &textureCache)
         cameraImageTextureCache = textureCache
         
         // Define the shaders that will render the camera image on the GPU.
-        let vertexFunction = defaultLibrary.makeFunction(name: "vertexTransform")!
-        let fragmentFunction = defaultLibrary.makeFunction(name: "fragmentShader")!
+        let vertexFunction = defaultLibrary?.makeFunction(name: "vertexTransform")!
+        let fragmentFunction = defaultLibrary?.makeFunction(name: "fragmentShader")!
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.label = "MyPipeline"
         pipelineStateDescriptor.sampleCount = renderDestination.sampleCount
@@ -247,13 +247,13 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
 
         // Initialize the pipeline.
         do {
-            try pipelineState = metalDevice.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
+            try pipelineState = metalDevice?.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
         } catch let error {
             print("Failed to create pipeline state, error \(error)")
         }
         
         // Create the command queue for one frame of rendering work.
-        metalCommandQueue = metalDevice.makeCommandQueue()
+        metalCommandQueue = metalDevice?.makeCommandQueue()
         
        
         

@@ -56,6 +56,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     @Published var zoomScale: CGFloat = 1.0
     
    
+    let defaultMinExposureCMTime = CMTime(value: 14, timescale: 1000000, flags: CMTimeFlags(rawValue: 1), epoch: 0)
+    let defaultMaxExposureCMTime = CMTime(value: 1, timescale: 1, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     
     // MARK: Device Configuration Properties
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
@@ -82,7 +84,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             setupResult = .notAuthorized
             
             DispatchQueue.main.async {
-                self.alertError = AlertError(title: "Camera Access", message: "SwiftCamera doesn't have access to use your camera, please update your privacy settings.", primaryButtonTitle: "Settings", secondaryButtonTitle: nil, primaryAction: {
+                self.alertError = AlertError(title: "Camera Access", message: "Phyphox doesn't have access to use your camera, please update your privacy settings.", primaryButtonTitle: "Settings", secondaryButtonTitle: nil, primaryAction: {
                         UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!,
                                                   options: [:], completionHandler: nil)
                     
@@ -121,7 +123,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
        
        func updateZoom(scale: CGFloat){
            lockConfig { () -> () in
-               defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor)!))
+               defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor) ?? 1.0))
                zoomScale = scale
            }
        }
@@ -181,8 +183,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let shutters: [Float] = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
         var shutters_available: [Float] = []
             
-        let min_seconds = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.minExposureDuration)!)
-        let max_seconds = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.maxExposureDuration)!)
+        let min_seconds = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
+        let max_seconds = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMinExposureCMTime)
             
         for one_shutter in shutters {
             let seconds = 1.0 / Float64(one_shutter)
@@ -243,7 +245,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         case .SWITCH_LENS:
             return []
         case .ISO:
-            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso)!), max: Int((cameraModel?.cameraSettingsModel.maxIso)!))
+            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0), max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0))
         case .SHUTTER_SPEED:
             return getShutterSpeedRange()
         case .WHITE_BAlANCE:
@@ -259,15 +261,16 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         cameraModel?.cameraSettingsModel.minIso = cameraModel?.defaultCamera?.activeFormat.minISO ?? 30.0
         cameraModel?.cameraSettingsModel.maxIso = cameraModel?.defaultCamera?.activeFormat.maxISO ?? 100.0
         
-        cameraModel?.cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.minExposureDuration)!)
-        cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.maxExposureDuration)!)
+       
+        cameraModel?.cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
+        cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMaxExposureCMTime)
         
-        cameraModel?.cameraSettingsModel.apertureValue = (cameraModel?.defaultCamera!.lensAperture)!
+        cameraModel?.cameraSettingsModel.apertureValue = (cameraModel?.defaultCamera?.lensAperture) ?? 1.0
         
         //cameraModel?.cameraSettingsModel.minZoom = (cameraModel?.defaultCamera?.minAvailableVideoZoomFactor.rounded().hashValue)!
         //cameraModel?.cameraSettingsModel.maxZoom = (cameraModel?.defaultCamera?.maxAvailableVideoZoomFactor.rounded().hashValue)!
         
-        cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraModel?.defaultCamera!.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
+        cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraModel?.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
         
         if(cameraModel?.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInDualWideCamera ||
            cameraModel?.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInTripleCamera){
@@ -277,7 +280,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func changeISO(_ iso: Float) {
 
-        let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed)!
+        let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
         
         if (defaultVideoDevice?.isExposureModeSupported(.locked) == true){
             lockConfig { () -> () in
@@ -361,18 +364,15 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             cameraModel?.cameraSettingsModel.currentApertureValue = defaultVideoDevice?.lensAperture ?? 1.0
             cameraModel?.cameraSettingsModel.currentIso = defaultVideoDevice?.iso ?? 30.0
-            print("setting deviceType ", defaultCameraType)
             
             print("setting iso ", defaultVideoDevice?.iso ?? 30.0)
             
-            cameraModel?.cameraSettingsModel.currentShutterSpeed = (defaultVideoDevice?.exposureDuration)!
-            print("setting shutter", Double((defaultVideoDevice?.exposureDuration.timescale)!))
-            
-            
-            cameraModel?.cameraSettingsModel.minZoom = Int((defaultVideoDevice?.minAvailableVideoZoomFactor)!)
+            cameraModel?.cameraSettingsModel.currentShutterSpeed = (defaultVideoDevice?.exposureDuration)
+           
+            cameraModel?.cameraSettingsModel.minZoom = Int((defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
             
             if(defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
-                cameraModel?.cameraSettingsModel.maxZoom = Int((defaultVideoDevice?.maxAvailableVideoZoomFactor)!) / 10
+                cameraModel?.cameraSettingsModel.maxZoom = Int((defaultVideoDevice?.maxAvailableVideoZoomFactor ?? 1.0) ) / 10
             } else {
                 cameraModel?.cameraSettingsModel.maxZoom = (defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
             }
@@ -389,7 +389,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             do {
                 try defaultVideoDevice?.lockForConfiguration()
-                defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor)!))
+                defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor ?? 1.0)))
                 defaultVideoDevice?.unlockForConfiguration()
                         } catch {
                             print("Error setting camera zoom: \(error.localizedDescription)")
@@ -415,8 +415,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
-       
-            //captureOutput.videoSettings =
            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
@@ -572,14 +570,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-            var presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        let presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
             let seconds = CMTimeGetSeconds(presentationTimestamp)
            
             guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                 return
             }
         
-            self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        
+        print("Image Resolution: \(width)x\(height)")
+
+        
+        self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
                 x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds)
        
     }
