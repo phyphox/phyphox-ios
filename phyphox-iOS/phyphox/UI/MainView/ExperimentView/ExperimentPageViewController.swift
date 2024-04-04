@@ -202,6 +202,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        print("view will apprear")
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -312,6 +314,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        print("View did load")
         
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
@@ -510,20 +514,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
-                    
-                    if let cameraUI = view as? _UIHostingView<PhyphoxCameraView>{
+                    if let cameraGUI = view as? ExperimentCameraUIView {
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
                         session.initializeCameraModel()
-                        // TODO remove the dependability with iOS 16
-                        if #available(iOS 16.0, *) {
-                            print("race : viewDidApprear")
-                            cameraUI.rootView.cameraSelectionDelegate = session.cameraModel as? any CameraSelectionDelegate
-                            cameraUI.rootView.cameraViewDelegete = session.cameraModel as? any CameraViewDelegate
-                        } else {
-                            // Fallback on earlier versions
-                        }
+                        print("viewDidAppear")
+                        session.attachDelegate(delegate: cameraGUI as! CameraGUIDelegate)
+                        cameraGUI.cameraSelectionDelegate = session.cameraModel as? any CameraSelectionDelegate
+                        cameraGUI.cameraViewDelegete = session.cameraModel as? any CameraViewDelegate
+                        print("experimentViewController")
                     }
                 
                 }
@@ -557,7 +557,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-        
+        print("viewDidDisappear")
         if isMovingFromParent {
             tearDownWebServer()
             

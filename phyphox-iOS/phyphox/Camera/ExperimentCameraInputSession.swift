@@ -28,6 +28,8 @@ class ExperimentCameraInputSession: NSObject {
     var feature: String = ""
     var analysis: String = ""
     
+    var delegate : CameraGUIDelegate?
+    
     func initializeCameraModel(){
         
         
@@ -97,6 +99,10 @@ class ExperimentCameraInputSession: NSObject {
         
     }
   
-     
+    
+    public func attachDelegate(delegate: CameraGUIDelegate) {
+        self.delegate = delegate
+        delegate.updateResolution(resolution: CGSize(width: 300, height: 300))
+    }
     
 }

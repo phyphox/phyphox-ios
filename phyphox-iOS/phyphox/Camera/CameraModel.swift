@@ -203,14 +203,10 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
             return device
         }
         
-        // Find the built-in Wide-Angle Camera, if it exists.
-        if let device = AVCaptureDevice.default(.builtInWideAngleCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
         
-        return nil
+        return AVCaptureDevice.default(.builtInWideAngleCamera,
+                                       for: .video,
+                                       position: .back)
     }
     
     
@@ -224,6 +220,7 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
         
         initModel(model: self)
     }
+    
 
     
     func configure(){

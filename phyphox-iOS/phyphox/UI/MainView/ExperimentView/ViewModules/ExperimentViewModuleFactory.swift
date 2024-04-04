@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import SwiftUI
 
 final class ExperimentViewModuleFactory {
     
@@ -50,16 +49,16 @@ final class ExperimentViewModuleFactory {
                     print("DepthGUI not supported below iOS 14")
                     //Should not happen as the depth input is marked as unavailable below iOS 14
                 }
-            }
-            else if let descriptor = descriptor as? CameraViewDescriptor {
+            } else  if let descriptor = descriptor as? CameraViewDescriptor {
                 if #available(iOS 14.0, *) {
                     // TODO need to pass descriptor in view argument.
-                    let hostingController = PhyphoxCameraHostingController()
-                    views.append(hostingController.getUIView())
+                    
+                    views.append(ExperimentCameraUIView(descriptor: descriptor))
                     //views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
                 } else {
                     // Fallback on earlier versions
                 }
+
             }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")

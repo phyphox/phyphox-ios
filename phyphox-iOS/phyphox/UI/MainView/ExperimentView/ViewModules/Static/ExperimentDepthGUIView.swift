@@ -39,6 +39,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     var depthGUISelectionDelegate: DepthGUISelectionDelegate?
     
     func updateResolution(resolution: CGSize) {
+        print("updateResolution resolution ", resolution)
         self.resolution = resolution
         setNeedsLayout()
     }
@@ -191,6 +192,9 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
             w = frame.width - 2*sideMargins
             h = frame.height - 2*spacing - s.height - buttonH - button2H
         }
+        
+        print("updateResolution w ", w)
+        print("updateResolution h ", h)
         arView.frame = CGRect(x: (frame.width - w)/2, y: 2*spacing + s.height, width: w, height: h)
         if resizableState == .exclusive {
             aggregationBtn.frame = CGRect(x: (frame.width - buttonS.width)/2, y: 2*spacing + s.height + h + 2*spacing, width: buttonS.width, height: buttonS.height)

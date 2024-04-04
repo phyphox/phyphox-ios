@@ -9,103 +9,140 @@
 import Foundation
 import AVFoundation
 import SwiftUI
+import MetalKit
+import Combine
 
-@available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView {
-    
-    private let cameraModel = CameraModel()
-    private var isMinimized = true
-    
-    private var overlayWidth: CGFloat = 50
-    private var overlayHeight: CGFloat = 50
-    private var scale: CGFloat = 1.0
-    private var currentPosition: CGSize = .zero
-    private var newPosition: CGSize = .zero
-    private var height: CGFloat = 200.0
-    private var width: CGFloat = 200.0
-    private var startPosition: CGFloat = 0.0
-    private var speed = 50.0
-    private var viewState = CGPoint.zero
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        
-        addSubview(minimizeCameraButton)
-    }
-    
-    
-    private var minimizeCameraButton: UIButton  {
-        let minimizedButton = UIButton(type: .system)
-        minimizedButton.addTarget(self, action: #selector(minimizeButtonTapped), for: .touchUpInside)
-        
-        let imageName = isMinimized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
-        let image = UIImage(systemName: imageName)?.withRenderingMode(.alwaysOriginal)
-        
-        minimizedButton.setImage(image, for: .normal)
-        minimizedButton.titleLabel?.font = UIFont.systemFont(ofSize: 20)
-        minimizedButton.tintColor = UIColor(named: "textColor")
-        minimizedButton.backgroundColor = .black
-        minimizedButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        
-        return minimizedButton
-    }
-    
-    @objc private func minimizeButtonTapped(){
-        isMinimized.toggle()
-    }
-    
+private enum CameraGestureState {
+    case begin
+    case end
+    case none
+}
+
+@available(iOS 13.0, *)
+class CameraUIDataModel: ObservableObject {
+   @Published  var isToggled: Bool = false
 }
 
 
 @available(iOS 14.0, *)
-final class CameraSettingUIView: UIView {
-    private var cameraSettingModel = CameraSettingsModel()
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
     
-    private var cameraSettingMode: CameraSettingMode = .NONE
+    func updateFrame(captureSession: AVCaptureSession) {
+        print("update frame")
+    }
     
-    private var isEditing = false
-    private var isZooming = false
-    
-    private var rotation: Double = 0.0
-    private var isFlipped: Bool = false
-    private var autoExposureOff : Bool = true
-    
-    private var zoomClicked: Bool = false
-    
-    private var isListVisible: Bool = false
-    
-    
-    private var flipCameraBUtton: UIButton  {
-        let flipCameraButton = UIButton(type: .system)
-        flipCameraButton.addTarget(self, action: #selector(flipCameraButtonTapped), for: .touchUpInside)
-
-        
-        let image = UIImage(named: "flip_camera")?.withRenderingMode(.alwaysOriginal)
-
-        flipCameraButton.setImage(image, for: .normal)
-        flipCameraButton.imageView?.contentMode = .scaleAspectFit
-        flipCameraButton.backgroundColor = UIColor.gray.withAlphaComponent(0.0)
-        
-        return flipCameraButton
+    func updateResolution(resolution: CGSize) {
+        setNeedsLayout()
     }
     
     
-    @objc private func flipCameraButtonTapped() {
-            cameraSettingMode = .SWITCH_LENS
-            isListVisible = false
-            if isFlipped {
-                withAnimation(Animation.linear(duration: 0.3)) {
-                    self.rotation = -90.0
-                }
-                isFlipped = false
-            } else {
-                withAnimation(Animation.linear(duration: 0.3)) {
-                    self.rotation = 90.0
-                }
-                isFlipped = true
-            }
+    var cameraSelectionDelegate: CameraSelectionDelegate?
+    var cameraViewDelegete: CameraViewDelegate?
 
-            // Call your camera setting model method here
-            cameraSettingModel.switchCamera()
+    let descriptor: CameraViewDescriptor
+    
+    let screenWidth = UIScreen.main.bounds.width
+    let screenHeight = UIScreen.main.bounds.height / 2
+    
+    var resizableState: ResizableViewModuleState = .normal
+    
+    let dataModel = CameraUIDataModel()
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+    required init?(descriptor: CameraViewDescriptor) {
+        self.descriptor = descriptor
+        
+        super.init(frame: .zero)
+        
+       
+    }
+    
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        
+        switch resizableState {
+        case .exclusive:
+            print("exclusive")
+            return size
+        case .hidden:
+            print("hidden")
+            return CGSize.init(width: 0, height: 0)
+        default:
+            print("default")
+            return size
+           //return size
         }
+    }
+
+    
+    override func layoutSubviews() {
+       super.layoutSubviews()
+        
+        let cameraViewModel = CameraViewModel(cameraUIDataModel: dataModel)
+        
+        let cameraViewHostingController = UIHostingController(rootView: PhyphoxCameraView(
+            viewModel: cameraViewModel, cameraSelectionDelegate: cameraSelectionDelegate, cameraViewDelegete:  cameraViewDelegete
+        ))
+        
+        let hostingController = UIHostingController(rootView: CameraSettingView(
+            cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
+            exposureSettingLevel: cameraSelectionDelegate?.exposureSettingLevel ?? 0
+        ))
+
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        cameraViewHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        addSubview(cameraViewHostingController.view)
+        addSubview(hostingController.view)
+       
+        dataModel.objectWillChange.sink{
+            [weak self] _ in
+            print("viewmodel ", self?.dataModel.isToggled)
+            if(self?.dataModel.isToggled == true){
+                hostingController.view.isHidden = true
+                self?.resizableState = .normal
+                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 600 , height: 250 ))
+                self?.setNeedsDisplay()
+                
+            } else {
+                hostingController.view.isHidden = false
+                self?.resizableState = .exclusive
+                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 600, height: 860))
+                self?.setNeedsDisplay()
+                
+                
+            }
+        }.store(in: &cancellables)
+         
+        var constraints = [NSLayoutConstraint]()
+        
+        constraints.append(cameraViewHostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor))
+        constraints.append(cameraViewHostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor))
+        constraints.append(cameraViewHostingController.view.bottomAnchor.constraint(equalTo: hostingController.view.topAnchor))
+        constraints.append(cameraViewHostingController.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor))
+        
+        
+        constraints.append(hostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor))
+        constraints.append(hostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor))
+        constraints.append(hostingController.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor))
+        constraints.append(hostingController.view.topAnchor.constraint(equalTo: cameraViewHostingController.view.bottomAnchor))
+        
+        constraints.append(hostingController.view.widthAnchor.constraint(equalTo: cameraViewHostingController.view.widthAnchor, multiplier: 1))
+        
+        constraints.append(cameraViewHostingController.view.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.75))
+        
+        constraints.append(cameraViewHostingController.view.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 1))
+        
+        constraints.append(hostingController.view.heightAnchor.constraint(equalTo: cameraViewHostingController.view.heightAnchor, multiplier: 0.30))
+         
+         
+        NSLayoutConstraint.activate(constraints)
+       
+    }
+    
 }

@@ -11,10 +11,21 @@ import SwiftUI
 import Combine
 import CoreMedia
 
+@available(iOS 13.0, *)
+class CameraViewModel: ObservableObject {
+    @Published var cameraUIDataModel: CameraUIDataModel
+    
+    init(cameraUIDataModel: CameraUIDataModel) {
+        self.cameraUIDataModel = cameraUIDataModel
+    }
+}
+
 
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
-     
+    
+    @ObservedObject var viewModel: CameraViewModel
+    
     var cameraSelectionDelegate: CameraSelectionDelegate?
     var cameraViewDelegete: CameraViewDelegate?
     
@@ -23,7 +34,7 @@ struct PhyphoxCameraView: View {
     
     @State private var modelGesture: CameraGestureState = .none
     
-    @State private var isMaximized = false
+    @State var isMaximized = false
     
     @State private var overlayWidth: CGFloat = 50
     @State private var overlayHeight: CGFloat = 50
@@ -40,11 +51,12 @@ struct PhyphoxCameraView: View {
 
     @State private var viewState = CGPoint.zero
 
+    var resizableState: ResizableViewModuleState =  .normal
   
     var mimimizeCameraButton: some View {
         Button(action: {
             self.isMaximized.toggle()
-            
+            viewModel.cameraUIDataModel.isToggled.toggle()
             self.cameraViewDelegete?.isOverlayEditable.toggle()
         }, label: {
             Image(systemName: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
@@ -76,7 +88,7 @@ struct PhyphoxCameraView: View {
         
         GeometryReader { reader in
             ZStack {
-               
+                
                 VStack(alignment: .center, spacing: 5) {
                     
                     HStack(spacing: 0){
@@ -89,33 +101,32 @@ struct PhyphoxCameraView: View {
                         
                         Circle().frame(width: 50, height: 50).opacity(0.0)
                         
-                        
                     }
                     
-                    
                     ZStack{
+                       
+                        /*
+                        Rectangle()
+                            .foregroundColor(.red)
+                            .frame(width: !isMaximized ? reader.size.width / 2.5 : reader.size.width,
+                                   height: !isMaximized ? reader.size.height / 2.3 : reader.size.height,
+                                   alignment: .center)
                         
+                         */
+                       
                         cameraViewDelegete?.metalView
-                            .foregroundColor(.gray)
                             .gesture(dragGesture)
-                            .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
-                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width ,
-                                   height: !isMaximized ? reader.size.height / 3 : reader.size.height / 1.5,
+                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.2 ,
+                                   height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.2,
                                    alignment: .topTrailing)
                     
                         
                         
                     }
-
-                    CameraSettingView(
-                        cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
-                        exposureSettingLevel: cameraSelectionDelegate?.exposureSettingLevel ?? 0
-                    ).opacity(isMaximized ? 1.0 : 0.0)
-                  
                 }
                 
-            }
-        }.background(Color.black)
+            }//.background(Color.black)
+        }
     }
     
     
@@ -209,9 +220,11 @@ struct CameraSettingButton: View {
     let image: String
     let size: CGFloat
     
+    
     var body: some View {
         
         Button(action: {
+            print("CameraSettingButton")
             action()
         }){
             Circle()
@@ -222,7 +235,6 @@ struct CameraSettingButton: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: size, height: size)
-                        .clipShape(Circle())
                 )
         }
         
@@ -275,7 +287,7 @@ struct CameraSettingView: View {
             cameraSettingMode = .ZOOM
             isListVisible.toggle()
             zoomClicked = !zoomClicked
-        }, image: "ic_zoom", size: 45)
+        }, image: "ic_zoom", size: 30)
     }
     
     var autoExposure: some View {
@@ -313,19 +325,42 @@ struct CameraSettingView: View {
     }
     
     var apertureSetting: some View {
-        CameraSettingButton(action: {
+        
+        Button(action: {
             cameraSettingMode = .NONE
             isListVisible = false
             zoomClicked = false
-        }, image: "camera.aperture", size: 25)
+        }){
+            Circle()
+                .foregroundColor(Color.gray.opacity(0.0))
+                .frame(width: 45, height: 45, alignment: .center)
+                .overlay(
+                    Image(systemName: "camera.aperture")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 25, height: 25)
+                        .clipShape(Circle())
+                )
+        }
+    
     }
 
     
     var body: some View {
         
+        GeometryReader { reader in
+            let _ = print("setting height", reader.size.width)
+            let _ = print("setting width", reader.size.width)
+        }
         if(exposureSettingLevel == 0){
             HStack{}
         } else {
+            if(cameraSettingMode == .ISO || cameraSettingMode == .SHUTTER_SPEED){
+                Spacer().frame(width: 10.0, height: 40.0)
+            } else {
+                Spacer().frame(width: 0.0, height:  0.0)
+            }
+            
             
             HStack {
                 
@@ -397,7 +432,7 @@ struct CameraSettingView: View {
                     Text("Zoom").font(.caption2)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 1)
             .preferredColorScheme(.dark)
             
@@ -409,6 +444,11 @@ struct CameraSettingView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
+                    if(cameraSettingMode == .ISO || cameraSettingMode == .SHUTTER_SPEED){
+                        Spacer().frame(width: 10.0, height: 40.0)
+                    } else {
+                        Spacer().frame(width: 0.0, height:  0.0)
+                    }
                     ForEach(cameraSettingsValues , id: \.self) { title in
                         if(cameraSettingMode == .SHUTTER_SPEED){
                             TextButton(text: "1/" + String(title)) {
@@ -417,7 +457,6 @@ struct CameraSettingView: View {
                             }
                         } else if(cameraSettingMode == .ISO){
                             TextButton(text: String(title)) {
-                                //cameraSettingModel.exposure(value: Double(title))
                                 cameraSettingModel.iso(value: Float(title))
                             }
 
@@ -449,18 +488,6 @@ struct CameraSettingView: View {
                 }.opacity(zoomClicked ? 1.0 : 0.0)
         }
         
-    }
-}
-
-
-struct PhyphoxCameraView_Previews: PreviewProvider {
-    @available(iOS 13.0, *)
-    static var previews: some View {
-        if #available(iOS 14.0, *) {
-            PhyphoxCameraView()
-        } else {
-            // Fallback on earlier versions
-        }
     }
 }
 
@@ -497,27 +524,6 @@ struct TextButton: View {
         }
     }
 }
-
-@available(iOS 14.0, *)
-class PhyphoxCameraHostingController: UIHostingController<PhyphoxCameraView>{
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented. Use init(rootView:) instead.")
-        }
-    
-    init(){
-        super.init(rootView: PhyphoxCameraView())
-    }
-        
-        override func viewDidLoad() {
-            super.viewDidLoad()
-            // Additional setup if needed
-        }
-    
-    func getUIView() -> UIView {
-            return self.view
-        }
-}
-
 
 
 

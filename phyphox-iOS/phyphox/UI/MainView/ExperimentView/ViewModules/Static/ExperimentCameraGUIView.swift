@@ -26,7 +26,7 @@ protocol CameraGUISelectionDelegate {
 
 
 @available(iOS 13.0, *)
-final class ExperimentCameraGUIView: UIView, CameraGUIDelegate {
+final class ExperimentCameraGUIView: UIView {
     
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     
