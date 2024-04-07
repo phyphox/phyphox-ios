@@ -56,7 +56,7 @@ struct PhyphoxCameraView: View {
     var mimimizeCameraButton: some View {
         Button(action: {
             self.isMaximized.toggle()
-            viewModel.cameraUIDataModel.isToggled.toggle()
+            viewModel.cameraUIDataModel.cameraIsMaximized.toggle()
             self.cameraViewDelegete?.isOverlayEditable.toggle()
         }, label: {
             Image(systemName: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
@@ -105,22 +105,22 @@ struct PhyphoxCameraView: View {
                     
                     ZStack{
                        
-                        /*
+                        
                         Rectangle()
                             .foregroundColor(.red)
                             .frame(width: !isMaximized ? reader.size.width / 2.5 : reader.size.width,
                                    height: !isMaximized ? reader.size.height / 2.3 : reader.size.height,
                                    alignment: .center)
                         
-                         */
-                       
+                         
+                        /*
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
                             .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.2 ,
                                    height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.2,
                                    alignment: .topTrailing)
                     
-                        
+                         */
                         
                     }
                 }

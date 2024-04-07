@@ -20,7 +20,7 @@ private enum CameraGestureState {
 
 @available(iOS 13.0, *)
 class CameraUIDataModel: ObservableObject {
-   @Published  var isToggled: Bool = false
+   @Published  var cameraIsMaximized: Bool = false
 }
 
 
@@ -54,6 +54,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
         self.descriptor = descriptor
         
         super.init(frame: .zero)
+        
         
        
     }
@@ -99,11 +100,17 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
         
         addSubview(cameraViewHostingController.view)
         addSubview(hostingController.view)
+        
+        if(dataModel.cameraIsMaximized){
+            hostingController.view.isHidden = false
+        } else {
+            hostingController.view.isHidden = true
+        }
        
         dataModel.objectWillChange.sink{
             [weak self] _ in
-            print("viewmodel ", self?.dataModel.isToggled)
-            if(self?.dataModel.isToggled == true){
+            print("viewmodel ", self?.dataModel.cameraIsMaximized)
+            if(self?.dataModel.cameraIsMaximized == true){
                 hostingController.view.isHidden = true
                 self?.resizableState = .normal
                 cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 600 , height: 250 ))
