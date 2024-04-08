@@ -76,6 +76,8 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     private var zoomScale: Float = 1.0
     
+    var exposureCompensationRange: ClosedRange<Float>?
+    
     var service: CameraService?
     
     @available(iOS 14.0, *)
@@ -108,7 +110,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
         service?.changeCamera()
     }
     
-    func getLisOfCameraSettingsValue(cameraSettingMode: CameraSettingMode) -> [Int] {
+    func getLisOfCameraSettingsValue(cameraSettingMode: CameraSettingMode) -> [Float] {
         service?.getSelectableValuesForCameraSettings(cameraSettingMode: cameraSettingMode) ?? []
     }
    
@@ -117,7 +119,9 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
         service?.setExposureTo(auto: auto)
     }
     
-    func shutterSpeed() {}
+    func exposure(value: Float) {
+        service?.changeExposure(value: value)
+    }
     
     func aperture() {}
     
@@ -125,8 +129,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
         service?.changeISO(value)
     }
    
-    func exposure(value: Double) {
-        //service?.changeExpoDuration()
+    func shutterSpeed(value: Double) {
         service?.changeExposureDuration(value)
     }
     
