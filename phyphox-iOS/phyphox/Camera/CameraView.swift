@@ -106,21 +106,12 @@ struct PhyphoxCameraView: View {
                     ZStack{
                        
                         
-                        Rectangle()
-                            .foregroundColor(.red)
-                            .frame(width: !isMaximized ? reader.size.width / 2.5 : reader.size.width,
-                                   height: !isMaximized ? reader.size.height / 2.3 : reader.size.height,
-                                   alignment: .center)
-                        
-                         
-                        /*
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
                             .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.2 ,
                                    height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.2,
                                    alignment: .topTrailing)
                     
-                         */
                         
                     }
                 }
@@ -451,15 +442,20 @@ struct CameraSettingView: View {
                     }
                     ForEach(cameraSettingsValues , id: \.self) { title in
                         if(cameraSettingMode == .SHUTTER_SPEED){
-                            TextButton(text: "1/" + String(title)) {
-                                cameraSettingModel.exposure(value: Double(title))
+                            TextButton(text: "1/" + String(Int(title))) {
+                                cameraSettingModel.shutterSpeed(value: Double(title))
                                 
                             }
                         } else if(cameraSettingMode == .ISO){
-                            TextButton(text: String(title)) {
+                            TextButton(text: String(Int(title))) {
                                 cameraSettingModel.iso(value: Float(title))
                             }
 
+                        } else if(cameraSettingMode == .EXPOSURE){
+                            TextButton(text: String(title)) {
+                                cameraSettingModel.exposure(value: Float(title))
+                                
+                            }
                         }
                                             }
                 }

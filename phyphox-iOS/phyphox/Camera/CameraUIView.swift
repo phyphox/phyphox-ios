@@ -66,18 +66,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         
-        switch resizableState {
-        case .exclusive:
-            print("exclusive")
-            return size
-        case .hidden:
-            print("hidden")
-            return CGSize.init(width: 0, height: 0)
-        default:
-            print("default")
-            return size
-           //return size
-        }
+        return size
     }
 
     
@@ -107,19 +96,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
             hostingController.view.isHidden = true
         }
        
+        // UI Showing the 
         dataModel.objectWillChange.sink{
             [weak self] _ in
-            print("viewmodel ", self?.dataModel.cameraIsMaximized)
             if(self?.dataModel.cameraIsMaximized == true){
                 hostingController.view.isHidden = true
                 self?.resizableState = .normal
-                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 600 , height: 250 ))
+                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 400 , height: 250 ))
                 self?.setNeedsDisplay()
                 
             } else {
                 hostingController.view.isHidden = false
                 self?.resizableState = .exclusive
-                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 600, height: 860))
+                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 400, height: 860))
                 self?.setNeedsDisplay()
                 
                 

@@ -221,7 +221,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return nearestNumber
     }
     
-    func getSelectableValuesForCameraSettings(cameraSettingMode: CameraSettingMode) -> [Int] {
+    func getSelectableValuesForCameraSettings(cameraSettingMode: CameraSettingMode) -> [Float] {
         switch cameraSettingMode {
         case .ZOOM:
             var zoomList : [Float] = []
@@ -236,18 +236,18 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 }
                 //zoomList.append(Float((cameraModel?.cameraSettingsModel.maxOpticalZoom)! * 3 ))
             }
-            return zoomList.map{Int($0)}
+            return zoomList.map{Float($0)}
            
         case .EXPOSURE:
-            return []
+            return getExposureValues()
         case .AUTO_EXPOSURE:
             return []
         case .SWITCH_LENS:
             return []
         case .ISO:
-            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0), max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0))
+            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0), max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
         case .SHUTTER_SPEED:
-            return getShutterSpeedRange()
+            return getShutterSpeedRange().map{Float($0)}
         case .WHITE_BAlANCE:
             return []
         case .NONE:
@@ -317,7 +317,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 defaultVideoDevice?.exposureMode = .custom
                 defaultVideoDevice?.unlockForConfiguration()
             } catch {
-                print("Error setting camera zoom: \(error.localizedDescription)")
+                print("Error setting camera shutter speed: \(error.localizedDescription)")
             }
         }
         else {
@@ -331,9 +331,46 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             defaultVideoDevice?.exposureMode = auto ? .autoExpose : .custom
             defaultVideoDevice?.unlockForConfiguration()
         } catch {
-            print("Error setting camera zoom: \(error.localizedDescription)")
+            print("Error setting camera exposure: \(error.localizedDescription)")
         }
         print("is already in autoexposure")
+    }
+    
+    func changeExposure(value: Float) {
+        
+        if (defaultVideoDevice?.isExposureModeSupported(.locked)  == true && defaultVideoDevice?.isExposureModeSupported(.continuousAutoExposure) == true){
+            do {
+                try defaultVideoDevice?.lockForConfiguration()
+                defaultVideoDevice?.exposureMode = .continuousAutoExposure
+                defaultVideoDevice!.setExposureTargetBias(value, completionHandler: nil)
+                defaultVideoDevice?.unlockForConfiguration()
+            } catch {
+                print("Error setting camera expsoure: \(error.localizedDescription)")
+            }
+        }
+        else {
+            print("custom exposure setting not supported")
+        }
+    }
+    
+    func getExposureValues() -> [Float] {
+        return getExposureValuesFromRange(min: Int(cameraModel?.cameraSettingsModel.exposureCompensationRange?.lowerBound ?? -8.0),
+                                          max: Int(cameraModel?.cameraSettingsModel.exposureCompensationRange?.upperBound ?? 8.0),
+                                          step: 1)
+    }
+    
+    func getExposureValuesFromRange(min: Int, max: Int, step: Float) -> [Float] {
+        var exposureValues = [Float]()
+        
+        for value in min...max {
+            let exposureCompensation = Float(value) * step
+            let decimalPlaces = 1
+            let powerOf10 = pow(10.0, Float(decimalPlaces))
+            let roundedNumber = round(exposureCompensation * powerOf10) / powerOf10
+            exposureValues.append(roundedNumber)
+        }
+        
+        return exposureValues.filter { (Int($0 * 10) % 5) == 0 }
     }
 
     
@@ -415,6 +452,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
+            let minExposure = defaultVideoDevice?.minExposureTargetBias
+            let maxExposure = defaultVideoDevice?.maxExposureTargetBias
+                
+            cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
