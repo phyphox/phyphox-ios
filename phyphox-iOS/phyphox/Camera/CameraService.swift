@@ -397,8 +397,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 defaultVideoDevice = frontCameraDevice
             }
             
-            
-            
             cameraModel?.cameraSettingsModel.currentApertureValue = defaultVideoDevice?.lensAperture ?? 1.0
             cameraModel?.cameraSettingsModel.currentIso = defaultVideoDevice?.iso ?? 30.0
             
@@ -598,6 +596,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 } catch {
                     print("Error occurred while creating video device input: \(error)")
                 }
+                self.defaultVideoDevice = videoDevice
             }
             
         
