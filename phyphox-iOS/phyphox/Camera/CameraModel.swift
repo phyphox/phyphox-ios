@@ -59,7 +59,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     var minIso: Float = 30.0
     var maxIso: Float = 100.0
-    @Published var currentIso: Float = 30.0
+    @Published var currentIso: Int = 30
     
     var apertureValue: Float = 1.0
     @Published var currentApertureValue: Float = 1.0
@@ -125,7 +125,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     func aperture() {}
     
-    func iso(value: Float) {
+    func iso(value: Int) {
         service?.changeISO(value)
     }
    

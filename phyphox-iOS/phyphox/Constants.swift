@@ -55,6 +55,10 @@ let namedColors = [
     "weakwhite":   UIColor(red: (196.0/255.0), green: (196.0/255.0), blue: (196.0/255.0), alpha: 1.0)
 ]
 
+let shutters = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
+
+let iso = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
+
 func mapColorString(_ string: String?) -> UIColor? {
     guard let colorString = string else {
         return nil

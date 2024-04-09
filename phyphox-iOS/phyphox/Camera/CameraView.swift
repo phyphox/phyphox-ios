@@ -448,12 +448,12 @@ struct CameraSettingView: View {
                             }
                         } else if(cameraSettingMode == .ISO){
                             TextButton(text: String(Int(title))) {
-                                cameraSettingModel.iso(value: Float(title))
+                                cameraSettingModel.iso(value: Int(title))
                             }
 
                         } else if(cameraSettingMode == .EXPOSURE){
                             TextButton(text: String(title)) {
-                                cameraSettingModel.exposure(value: Float(title))
+                                cameraSettingModel.exposure(value: title)
                                 
                             }
                         }

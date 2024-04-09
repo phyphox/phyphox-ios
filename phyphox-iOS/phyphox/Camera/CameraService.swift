@@ -172,15 +172,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     func shutterSpeedRange(min: Int, max: Int) -> [Int] {
-        let shutterSpeedRange = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
-        
-        let filteredShutterSpeedRange = shutterSpeedRange.filter{$0 >= min && $0 <= max}
+        let filteredShutterSpeedRange = shutters.filter{$0 >= min && $0 <= max}
         
         return filteredShutterSpeedRange
     }
     
     func getShutterSpeedRange() -> [Int] {
-        let shutters: [Float] = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
         var shutters_available: [Float] = []
             
         let min_seconds = CMTimeGetSeconds((cameraModel?.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
@@ -189,7 +186,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         for one_shutter in shutters {
             let seconds = 1.0 / Float64(one_shutter)
             if seconds >= min_seconds && seconds <= max_seconds {
-                shutters_available.append(one_shutter)
+                shutters_available.append(Float(one_shutter))
             }
         }
         
@@ -197,11 +194,28 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
+    func getNearestValue(value: Int, numbers: [Int]) -> Int{
+        
+        if(numbers.contains(value)){
+            return value
+        }
+        
+        for (index, number) in numbers.enumerated() {
+            if(number > value){
+                let average = (number + numbers[index - 1])/2
+                if(value > average){
+                    return number
+                } else {
+                    return numbers[index - 1]
+                }
+            }
+        }
+        return value
+    }
+    
     
     func isoRange(min: Int, max: Int) -> [Int] {
-        let isoRange = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
-        
-        let filteredIsoRange = isoRange.filter { $0 >= min && $0 <= max }
+        let filteredIsoRange = iso.filter { $0 >= min && $0 <= max }
         
         return filteredIsoRange
     }
@@ -245,7 +259,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         case .SWITCH_LENS:
             return []
         case .ISO:
-            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0), max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
+            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
+                            max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
         case .SHUTTER_SPEED:
             return getShutterSpeedRange().map{Float($0)}
         case .WHITE_BAlANCE:
@@ -278,14 +293,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
-    func changeISO(_ iso: Float) {
+    func changeISO(_ iso: Int) {
 
         let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
         
         if (defaultVideoDevice?.isExposureModeSupported(.locked) == true){
             lockConfig { () -> () in
                 defaultVideoDevice?.exposureMode = .custom
-                defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: iso, completionHandler: nil)
+                defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: Float(iso), completionHandler: nil)
                 cameraModel?.cameraSettingsModel.currentIso = iso
                 
             }
@@ -398,9 +413,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
             
             cameraModel?.cameraSettingsModel.currentApertureValue = defaultVideoDevice?.lensAperture ?? 1.0
-            cameraModel?.cameraSettingsModel.currentIso = defaultVideoDevice?.iso ?? 30.0
-            
-            print("setting iso ", defaultVideoDevice?.iso ?? 30.0)
+            cameraModel?.cameraSettingsModel.currentIso = getNearestValue(value: Int(defaultVideoDevice?.iso ?? 30.0), numbers: iso)
             
             cameraModel?.cameraSettingsModel.currentShutterSpeed = (defaultVideoDevice?.exposureDuration)
            
@@ -413,6 +426,11 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
            
             cameraModel?.cameraSettingsModel.maxOpticalZoom = defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
+            
+            let minExposure = defaultVideoDevice?.minExposureTargetBias
+            let maxExposure = defaultVideoDevice?.maxExposureTargetBias
+                
+            cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
             
             
             guard let videoDevice = defaultVideoDevice else {
@@ -449,11 +467,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)]
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
-            
-            let minExposure = defaultVideoDevice?.minExposureTargetBias
-            let maxExposure = defaultVideoDevice?.maxExposureTargetBias
-                
-            cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
