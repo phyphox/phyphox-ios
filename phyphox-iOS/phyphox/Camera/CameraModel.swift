@@ -251,17 +251,6 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     func endSession(){
         service.session.stopRunning()
     }
-
-    
-    func getMetalView() -> MTKView {
-        return service.metalView
-    }
-    
-    func getCIImage() -> CGImage {
-        return service.image!
-    }
-    
- 
 }
 
 
