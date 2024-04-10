@@ -19,8 +19,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     private let sessionQueue = DispatchQueue(label: "session queue", attributes: [], autoreleaseFrequency: .workItem)
     
-    private let metadataObjectsQueue = DispatchQueue(label: "sample buffer", attributes: [])
-    
     @objc dynamic var videoDeviceInput: AVCaptureDeviceInput!
     
     var setupResult: SessionSetupResult = .success
@@ -41,12 +39,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var metalRender : MetalRenderer?
     
-    let metalView: MTKView = MTKView()
-    
-    var image: CGImage?
-    
-    var flag: Bool = true
-    
     var defaultVideoDevice: AVCaptureDevice?
     
     var cameraModel: CameraModel?
@@ -59,7 +51,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     let defaultMinExposureCMTime = CMTime(value: 14, timescale: 1000000, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     let defaultMaxExposureCMTime = CMTime(value: 1, timescale: 1, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     
-    // MARK: Device Configuration Properties
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
     
     
@@ -121,31 +112,28 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
        // optical zoom range, normal zoom range.
        // iphone 12 mini: Dual 12MP, wide and ultra wide, wide : f/1,6, ultra wide: f/2.4 120 degree field of view, 2x optical zoom out , digital zoom upto 5x,
        
-       func updateZoom(scale: CGFloat){
+    func updateZoom(scale: CGFloat){
            lockConfig { () -> () in
                defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor) ?? 1.0))
                zoomScale = scale
            }
-       }
+    }
        
        
-       func lockConfig(complete: () -> ()) {
+    func lockConfig(complete: () -> ()) {
            if isConfigured {
                configLocked = true
                do{
                    try defaultVideoDevice?.lockForConfiguration()
                    complete()
                    defaultVideoDevice?.unlockForConfiguration()
-                   self.postChangeCameraSetting()
                    configLocked = false
                } catch {
                    configLocked = false
                   
                }
                }
-           }
-       
-    func postChangeCameraSetting(){}
+    }
         
     func getAvailableOpticalZoomList(maxOpticalZoom_: Int?) -> [Int] {
         guard let maxOpticalZoom = maxOpticalZoom_ else {
@@ -293,6 +281,30 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
+    func setCameraSettinginfo(){
+        self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
+        self.cameraModel?.cameraSettingsModel.currentIso = self.getNearestValue(value: Int(self.defaultVideoDevice?.iso ?? 30.0), numbers: iso)
+        
+        self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
+       
+        self.cameraModel?.cameraSettingsModel.minZoom = Int((self.defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
+        
+        if(self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
+            self.cameraModel?.cameraSettingsModel.maxZoom = Int((self.defaultVideoDevice?.maxAvailableVideoZoomFactor ?? 1.0) ) / 10
+        } else {
+            self.cameraModel?.cameraSettingsModel.maxZoom = (self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
+        }
+       
+        self.cameraModel?.cameraSettingsModel.maxOpticalZoom = self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
+        
+        let minExposure = self.defaultVideoDevice?.minExposureTargetBias
+        let maxExposure = self.defaultVideoDevice?.maxExposureTargetBias
+            
+        self.cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
+        
+        
+    }
+    
     func changeISO(_ iso: Int) {
 
         let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
@@ -412,26 +424,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 defaultVideoDevice = frontCameraDevice
             }
             
-            cameraModel?.cameraSettingsModel.currentApertureValue = defaultVideoDevice?.lensAperture ?? 1.0
-            cameraModel?.cameraSettingsModel.currentIso = getNearestValue(value: Int(defaultVideoDevice?.iso ?? 30.0), numbers: iso)
-            
-            cameraModel?.cameraSettingsModel.currentShutterSpeed = (defaultVideoDevice?.exposureDuration)
-           
-            cameraModel?.cameraSettingsModel.minZoom = Int((defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
-            
-            if(defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
-                cameraModel?.cameraSettingsModel.maxZoom = Int((defaultVideoDevice?.maxAvailableVideoZoomFactor ?? 1.0) ) / 10
-            } else {
-                cameraModel?.cameraSettingsModel.maxZoom = (defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
-            }
-           
-            cameraModel?.cameraSettingsModel.maxOpticalZoom = defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
-            
-            let minExposure = defaultVideoDevice?.minExposureTargetBias
-            let maxExposure = defaultVideoDevice?.maxExposureTargetBias
-                
-            cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
-            
+            setCameraSettinginfo()
             
             guard let videoDevice = defaultVideoDevice else {
                 print("Default video device is unavailable.")
@@ -470,7 +463,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
-            //captureOutput.alwaysDiscardsLateVideoFrames = true
+            
             if session.canAddOutput(captureOutput) {
                 session.addOutput(captureOutput)
             } else {
@@ -493,36 +486,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         self.start()
         
     }
-    
-    private func texture(sampleBuffer: CMSampleBuffer?, textureCache: CVMetalTextureCache?, planeIndex: Int = 0, pixelFormat: MTLPixelFormat = .bgra8Unorm) throws -> MTLTexture {
-            guard let sampleBuffer = sampleBuffer else {
-                throw MetalCameraSessionError.missingSampleBuffer
-            }
-            guard let textureCache = textureCache else {
-                throw MetalCameraSessionError.failedToCreateTextureCache
-            }
-            guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-                throw MetalCameraSessionError.failedToGetImageBuffer
-            }
-            
-            let isPlanar = CVPixelBufferIsPlanar(imageBuffer)
-            let width = isPlanar ? CVPixelBufferGetWidthOfPlane(imageBuffer, planeIndex) : CVPixelBufferGetWidth(imageBuffer)
-            let height = isPlanar ? CVPixelBufferGetHeightOfPlane(imageBuffer, planeIndex) : CVPixelBufferGetHeight(imageBuffer)
-            
-            var imageTexture: CVMetalTexture?
-            
-            let result = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, textureCache, imageBuffer, nil, pixelFormat, width, height, planeIndex, &imageTexture)
-
-            guard
-                let unwrappedImageTexture = imageTexture,
-                let texture = CVMetalTextureGetTexture(unwrappedImageTexture),
-                result == kCVReturnSuccess
-            else {
-                throw MetalCameraSessionError.failedToCreateTextureFromImage
-            }
-
-            return texture
-        }
     
     public func start() {
 //        We use our capture session queue to ensure our UI runs smoothly on the main thread.
@@ -555,7 +518,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     /// - Tag: ChangeCamera
     public func changeCamera() {
        
-        
         sessionQueue.async {
             let currentVideoDevice = self.videoDeviceInput.device
             let currentPosition = currentVideoDevice.position
@@ -603,21 +565,21 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     } else {
                         self.session.addInput(self.videoDeviceInput)
                     }
-                                        
+                    self.defaultVideoDevice = videoDevice
+                           
+                    self.setCameraSettinginfo()
                     
                     self.session.commitConfiguration()
                 } catch {
                     print("Error occurred while creating video device input: \(error)")
                 }
-                self.defaultVideoDevice = videoDevice
+                
             }
-            
-        
         }
     }
     
     public func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        let totalSampleSize = CMSampleBufferGetTotalSampleSize(sampleBuffer)
+        print("captureOutput didDrop")
     }
     
     
@@ -634,104 +596,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let height = CVPixelBufferGetHeight(imageBuffer)
         
         print("Image Resolution: \(width)x\(height)")
-
         
         self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
                 x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds)
        
     }
-        
    
 }
-
-
-
-
-
-public enum MetalCameraSessionState {
-    case ready
-    case streaming
-    case stopped
-    case waiting
-    case error
-}
-
-public enum MetalCameraPixelFormat {
-    case rgb
-    case yCbCr
-    
-    var coreVideoType: OSType {
-        switch self {
-        case .rgb:
-            return kCVPixelFormatType_32BGRA
-        case .yCbCr:
-            return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
-        }
-    }
-}
-
-/**
- Streaming error
- */
-public enum MetalCameraSessionError: Error {
-    /**
-     * Streaming errors
-     *///
-    case noHardwareAccess
-    case failedToAddCaptureInputDevice
-    case failedToAddCaptureOutput
-    case requestedHardwareNotFound
-    case inputDeviceNotAvailable
-    case captureSessionRuntimeError
-    
-    /**
-     * Conversion errors
-     *///
-    case failedToCreateTextureCache
-    case missingSampleBuffer
-    case failedToGetImageBuffer
-    case failedToCreateTextureFromImage
-    case failedToRetrieveTimestamp
-    
-    /**
-     Indicates if the error is related to streaming the media.
-     
-     - returns: True if the error is related to streaming, false otherwise
-     */
-    public func isStreamingError() -> Bool {
-        switch self {
-        case .noHardwareAccess, .failedToAddCaptureInputDevice, .failedToAddCaptureOutput, .requestedHardwareNotFound, .inputDeviceNotAvailable, .captureSessionRuntimeError:
-            return true
-        default:
-            return false
-        }
-    }
-    
-    public var localizedDescription: String {
-        switch self {
-        case .noHardwareAccess:
-            return "Failed to get access to the hardware for a given media type"
-        case .failedToAddCaptureInputDevice:
-            return "Failed to add a capture input device to the capture session"
-        case .failedToAddCaptureOutput:
-            return "Failed to add a capture output data channel to the capture session"
-        case .requestedHardwareNotFound:
-            return "Specified hardware is not available on this device"
-        case .inputDeviceNotAvailable:
-            return "Capture input device cannot be opened, probably because it is no longer available or because it is in use"
-        case .captureSessionRuntimeError:
-            return "AVCaptureSession runtime error"
-        case .failedToCreateTextureCache:
-            return "Failed to initialize texture cache"
-        case .missingSampleBuffer:
-            return "No sample buffer to convert the image from"
-        case .failedToGetImageBuffer:
-            return "Failed to retrieve an image buffer from camera's output sample buffer"
-        case .failedToCreateTextureFromImage:
-            return "Failed to convert the frame to a Metal texture"
-        case .failedToRetrieveTimestamp:
-            return "Failed to retrieve timestamp from the sample buffer"
-        }
-    }
-}
-
