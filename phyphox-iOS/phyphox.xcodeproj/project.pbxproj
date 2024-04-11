@@ -1163,8 +1163,6 @@
 				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
 				A15891F12B10BFED00A169C3 /* MetalRenderer.swift */,
 				A14B3A462B7AD2960016E380 /* ExperimentCameraInput.swift */,
-				A18E13572B7CAFF4006EB323 /* ExperimentCameraInputSession.swift */,
-				A18E13592B7F563B006EB323 /* CameraUIView.swift */,
 				A182CEE42B028525000385D2 /* CameraPreview.swift */,
 				A182CEE62B02DF10000385D2 /* CameraService+Enums.swift */,
 				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
