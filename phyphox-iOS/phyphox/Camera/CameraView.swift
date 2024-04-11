@@ -62,8 +62,6 @@ struct PhyphoxCameraView: View {
             Image(systemName: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                 .font(.title2)
                 .padding()
-                .background(Color.black)
-                .foregroundColor(.white)
         })
     }
     
@@ -96,7 +94,7 @@ struct PhyphoxCameraView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Text("Preview")
-                            .foregroundColor(.white)
+                            .foregroundColor(Color("textColor"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Circle().frame(width: 50, height: 50).opacity(0.0)
@@ -215,7 +213,6 @@ struct CameraSettingButton: View {
     var body: some View {
         
         Button(action: {
-            print("CameraSettingButton")
             action()
         }){
             Circle()
@@ -506,6 +503,8 @@ public struct AlertError {
 
 @available(iOS 13.0.0, *)
 struct TextButton: View {
+    
+    @Environment(\.colorScheme) var colorScheme
     var text: String
     var action: () -> Void
     
@@ -515,7 +514,7 @@ struct TextButton: View {
             Text(text)
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 .foregroundColor(.black)
-                .background(Color.white)
+                .background(Color("buttonBackground"))
                 .cornerRadius(10)
         }
     }
