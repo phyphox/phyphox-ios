@@ -36,6 +36,11 @@ protocol CameraSettingDelegate {
     var locked: String { get set }
 }
 
+protocol CameraGUIDelegate {
+    func updateFrame(captureSession: AVCaptureSession)
+    func updateResolution(resolution: CGSize)
+}
+
 
 @available(iOS 14.0, *)
 class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
@@ -80,6 +85,29 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     var service: CameraService?
     
+    /// The app's default camera.
+    var defaultCamera: AVCaptureDevice? {
+        
+        // Find the built-in Dual Camera, if it exists.
+        if let device = AVCaptureDevice.default(.builtInTripleCamera,
+                                                for: .video,
+                                                position: .back) {
+            return device
+        }
+        
+        // Find the built-in Dual Wide Camera, if it exists. (consist of wide and ultra wide camera)
+        if let device = AVCaptureDevice.default(.builtInDualWideCamera,
+                                                for: .video,
+                                                position: .back) {
+            return device
+        }
+        
+        
+        return AVCaptureDevice.default(.builtInWideAngleCamera,
+                                       for: .video,
+                                       position: .back)
+    }
+    
     @available(iOS 14.0, *)
     init(service: CameraService){
         self.service = service
@@ -111,7 +139,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     }
     
     func getLisOfCameraSettingsValue(cameraSettingMode: CameraSettingMode) -> [Float] {
-        service?.getSelectableValuesForCameraSettings(cameraSettingMode: cameraSettingMode) ?? []
+        service?.getSelectableValuesForCameraSettingsList(cameraSettingMode: cameraSettingMode) ?? []
     }
    
     
@@ -135,34 +163,15 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     func zoom() {}
     
-    func whiteBalance() {}
-    
-    var defaultCameraSetting: AVCaptureDevice? {
-        
-        // Find the built-in Dual Camera, if it exists.
-        if let device = AVCaptureDevice.default(.builtInTripleCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        // Find the built-in Dual Wide Camera, if it exists. (consist of wide and ultra wide camera)
-        if let device = AVCaptureDevice.default(.builtInDualWideCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        // Find the built-in Wide-Angle Camera, if it exists.
-        if let device = AVCaptureDevice.default(.builtInWideAngleCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        return nil
+    func getAvailableOpticalZoomValues() -> [ Int]{
+        return service?.getAvailableOpticalZoomList(maxOpticalZoom_: 5) ?? []
     }
     
+    func whiteBalance() {}
+
+    func getDeviceNames(){
+        service?.getAvailableDevices(position: service?.defaultVideoDevice?.position)
+    }
 }
 
 
@@ -188,29 +197,6 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     var tBuffer: DataBuffer?
     
     var isOverlayEditable: Bool = false
-    
-    /// The app's default camera.
-    var defaultCamera: AVCaptureDevice? {
-        
-        // Find the built-in Dual Camera, if it exists.
-        if let device = AVCaptureDevice.default(.builtInTripleCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        // Find the built-in Dual Wide Camera, if it exists. (consist of wide and ultra wide camera)
-        if let device = AVCaptureDevice.default(.builtInDualWideCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        
-        return AVCaptureDevice.default(.builtInWideAngleCamera,
-                                       for: .video,
-                                       position: .back)
-    }
     
     
     init() {

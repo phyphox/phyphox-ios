@@ -2,8 +2,8 @@
 //  CameraService+Enums.swift
 //  phyphox
 //
-//  Created by Gaurav Tripathee on 13.11.23.
-//  Copyright © 2023 RWTH Aachen. All rights reserved.
+//  Created by Gaurav Tripathee on 18.04.24.
+//  Copyright © 2024 RWTH Aachen. All rights reserved.
 //
 
 import Foundation

@@ -460,25 +460,47 @@ struct CameraSettingView: View {
             
             Spacer().frame(width: 10.0, height: 10.0)
             
-            let sliderRange: ClosedRange<Double> = Double(1)...Double((cameraSettingModel.defaultCameraSetting?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3)
+            let sliderRange: ClosedRange<Double> = {
+                let minimumZoom = Double(cameraSettingModel.service?.getMinimumZoomValue() ?? 1)
+                let maximumZoom = Double((cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3)
+                return minimumZoom...maximumZoom
+            }()
+            
+            let opticalZoomValues = cameraSettingModel.service?.getOpticalZoomList()  ?? []
 
-            Slider(
-                value:  Binding(get: {
-                    Double(self.cameraSettingModel.getScale())
-                }, set: { newValue in
-                    self.cameraSettingModel.setScale(scale: CGFloat(newValue))
-                }),
-                in: sliderRange,
-                step: 0.1
-                ) {
-                    Text("")
-                } minimumValueLabel: {
-                    Text(String(cameraSettingModel.minZoom))
-                } maximumValueLabel: {
-                    Text(String(cameraSettingModel.maxZoom))
-                } onEditingChanged: { editing in
-                    isEditing = editing
-                }.opacity(zoomClicked ? 1.0 : 0.0)
+            VStack{
+                HStack {
+                    ForEach(opticalZoomValues, id: \.self) { value in
+                        TextButton(text:"\(value)x", action: {
+                            //self.cameraSettingModel.setScale(scale: CGFloat(value))
+                        })
+                    }
+                }
+                
+                Slider(value:  Binding(get: {
+                        Double(self.cameraSettingModel.getScale())
+                    }, set: { newValue in
+                        self.cameraSettingModel.setScale(scale: CGFloat(newValue))
+                    }),
+                    in: sliderRange,
+                    step: 0.1
+                    ) {
+                        Text("")
+                    }
+            minimumValueLabel: {
+                        Text("\(cameraSettingModel.service?.getMinimumZoomValue() ?? 1)x")
+                    } 
+            maximumValueLabel: {
+                        Text("\(cameraSettingModel.maxZoom)x")
+                    } 
+            onEditingChanged: { editing in
+                        isEditing = editing
+                    }
+                    
+            }
+            .opacity(zoomClicked ? 1.0 : 0.0)
+            .padding(EdgeInsets(top: 5.0, leading: 10.0, bottom: 5.0, trailing: 10.0))
+            
         }
         
     }
@@ -513,7 +535,7 @@ struct TextButton: View {
         Button(action: action) {
             Text(text)
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                .foregroundColor(.black)
+                .foregroundColor(Color("textColorInsideButton"))
                 .background(Color("buttonBackground"))
                 .cornerRadius(10)
         }
