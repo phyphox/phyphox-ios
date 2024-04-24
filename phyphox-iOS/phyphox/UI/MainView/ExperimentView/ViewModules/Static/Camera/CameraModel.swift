@@ -85,8 +85,14 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     var service: CameraService?
     
+    @Published var isDefaultCamera: Bool = true
+    
     /// The app's default camera.
     var defaultCamera: AVCaptureDevice? {
+        
+        return AVCaptureDevice.default(.builtInWideAngleCamera,
+                                       for: .video,
+                                       position: .back)
         
         // Find the built-in Dual Camera, if it exists.
         if let device = AVCaptureDevice.default(.builtInTripleCamera,
@@ -95,6 +101,7 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
             return device
         }
         
+        
         // Find the built-in Dual Wide Camera, if it exists. (consist of wide and ultra wide camera)
         if let device = AVCaptureDevice.default(.builtInDualWideCamera,
                                                 for: .video,
@@ -102,10 +109,6 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
             return device
         }
         
-        
-        return AVCaptureDevice.default(.builtInWideAngleCamera,
-                                       for: .video,
-                                       position: .back)
     }
     
     @available(iOS 14.0, *)
@@ -123,6 +126,30 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     
     func setScale(scale: CGFloat) {
        // service.zoomScale = scale
+        var deviceType : AVCaptureDevice.DeviceType
+        
+        let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)
+        
+        print("scale ", scale  )
+        
+        if(scale < 1.0 && scale >= 0.9 || scale == 0.5) {
+            print("builtInDualWideCamera")
+            deviceType = .builtInDualWideCamera
+            service?.changeDevice(preferredDevice: deviceType)
+        } else if(scale >= 1.0 && scale <= 1.1 || scale == 1.0) {
+            print("builtInWideAngleCamera")
+            deviceType = .builtInWideAngleCamera
+            service?.changeDevice(preferredDevice: deviceType)
+        }
+        
+        /**
+        if(service?.defaultVideoDevice?.deviceType == .builtInWideAngleCamera){
+            isDefaultCamera = true
+        } else {
+            isDefaultCamera = false
+        }
+         */
+        
         service?.updateZoom(scale: scale)
     }
     
@@ -154,10 +181,16 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     func aperture() {}
     
     func iso(value: Int) {
+        if(!isDefaultCamera){
+            return
+        }
         service?.changeISO(value)
     }
    
     func shutterSpeed(value: Double) {
+        if(!isDefaultCamera){
+            return
+        }
         service?.changeExposureDuration(value)
     }
     

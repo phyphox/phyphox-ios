@@ -248,6 +248,8 @@ struct CameraSettingView: View {
     @State private var isListVisible: Bool = false
     
     @State private var zoomScale: CGFloat = 1.0
+    
+    
 
     
     var flipCameraButton: some View {
@@ -291,6 +293,8 @@ struct CameraSettingView: View {
     var exposureSetting: some View{
         CameraSettingButton(action: {
             cameraSettingMode = .EXPOSURE
+            cameraSettingModel.cameraSettingMode = .EXPOSURE
+            cameraSettingModel.service?.configure()
             isListVisible.toggle()
             zoomClicked = false
         }, image: "ic_exposure", size: 30)
@@ -299,6 +303,8 @@ struct CameraSettingView: View {
     var isoSetting: some View {
         CameraSettingButton(action: {
             cameraSettingMode = .ISO
+            cameraSettingModel.cameraSettingMode = .ISO
+            cameraSettingModel.service?.configureSession()
             isListVisible.toggle()
             zoomClicked = false
         }, image: "ic_camera_iso", size: 30)
@@ -307,6 +313,8 @@ struct CameraSettingView: View {
     var shutterSpeedSetting: some View {
         CameraSettingButton(action: {
             cameraSettingMode = .SHUTTER_SPEED
+            cameraSettingModel.cameraSettingMode = .SHUTTER_SPEED
+            cameraSettingModel.service?.configure()
             isListVisible.toggle()
             zoomClicked = false
         }, image: "ic_shutter_speed", size: 30)
@@ -333,6 +341,9 @@ struct CameraSettingView: View {
     
     }
 
+    @State var selectedKey: Double?
+    @State var value: Float = 0
+  
     
     var body: some View {
         
@@ -376,42 +387,51 @@ struct CameraSettingView: View {
                         Text(autoExposureOff ? "Off" : "On").font(.caption2)
                     }
                     
-                    VStack {
-                        isoSetting
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
-                            .disabled(autoExposureOff ? false : true)
-                            .frame(maxWidth: .infinity)
-                        
-                        Text(String(Int(cameraSettingModel.currentIso)))
-                            .font(.caption2)
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                    if((autoExposureOff && cameraSettingModel.isDefaultCamera)){
+                        VStack {
+                            isoSetting.frame(maxWidth: .infinity).opacity(1.0 )
+                            
+                            Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
+                                
+                        }
+                    } else {
+                        VStack {
+                            isoSetting.frame(maxWidth: .infinity).opacity(0.4 )
+                            
+                            Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
+                                
+                        }
                     }
+                    
+                    
+                    
+                    //.disabled((autoExposureOff && cameraSettingModel.isDefaultCamera) ? false : true)
                     
                     
                     VStack {
                         
                         shutterSpeedSetting
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
-                            .disabled(autoExposureOff ? false : true)
+                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
+                            .disabled((autoExposureOff && cameraSettingModel.isDefaultCamera) ? false : true)
                             .frame(maxWidth: .infinity)
                         
                         let exposureDuration = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
                         
                         Text("1/" + String(Int((1 / exposureDuration))))
                             .font(.caption2)
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
                     }
                     
                     VStack {
                         
                         apertureSetting
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
                             .frame(maxWidth: .infinity)
-                            .disabled(autoExposureOff ? false : true)
+                            .disabled((autoExposureOff && cameraSettingModel.isDefaultCamera) ? false : true)
                         
                         Text("f/" + String(cameraSettingModel.currentApertureValue))
                             .font(.caption2)
-                            .opacity(autoExposureOff ? 1.0 : 0.4 )
+                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
                     }
                 }
 
@@ -428,7 +448,6 @@ struct CameraSettingView: View {
         
         
         VStack {
-            var cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
@@ -437,59 +456,89 @@ struct CameraSettingView: View {
                     } else {
                         Spacer().frame(width: 0.0, height:  0.0)
                     }
-                    ForEach(cameraSettingsValues , id: \.self) { title in
+                    ForEach(isoValuesWithSelectedFlag.sorted(by: <), id: \.key) { key, value in
                         if(cameraSettingMode == .SHUTTER_SPEED){
-                            TextButton(text: "1/" + String(Int(title))) {
-                                cameraSettingModel.shutterSpeed(value: Double(title))
+                        
+                            TextButton(text: "1/" + String(Int(key)),  textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                                self.updateExposureValue(key: key)
+                                cameraSettingModel.shutterSpeed(value: Double(key))
                                 
-                            }
+                            })
                         } else if(cameraSettingMode == .ISO){
-                            TextButton(text: String(Int(title))) {
-                                cameraSettingModel.iso(value: Int(title))
-                            }
+                            TextButton(text: String(Int(key)),  textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                                self.updateExposureValue(key: key)
+                                cameraSettingModel.iso(value: Int(key))
+                            })
 
                         } else if(cameraSettingMode == .EXPOSURE){
-                            TextButton(text: String(title)) {
-                                cameraSettingModel.exposure(value: title)
+                            
+                            TextButton(text: String(key) , textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                                self.updateExposureValue(key: key)
+                                cameraSettingModel.exposure(value: Float(key))
                                 
-                            }
+                            })
                         }
-                                            }
+                    }
                 }
             }.opacity(!isListVisible ? 0.0 : 1.0)
             
             Spacer().frame(width: 10.0, height: 10.0)
             
+            let minZoomValue = cameraSettingModel.service?.getMinimumZoomValue(defaultCamera: true)
+            
             let sliderRange: ClosedRange<Double> = {
-                let minimumZoom = Double(cameraSettingModel.service?.getMinimumZoomValue() ?? 1)
-                let maximumZoom = Double((cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3)
+                let minimumZoom = Double(minZoomValue ?? 1)
+                let maximumZoom = Double(cameraSettingModel.service?.getMaxZoom() ?? 3)
                 return minimumZoom...maximumZoom
             }()
             
-            let opticalZoomValues = cameraSettingModel.service?.getOpticalZoomList()  ?? []
 
             VStack{
                 HStack {
-                    ForEach(opticalZoomValues, id: \.self) { value in
-                        TextButton(text:"\(value)x", action: {
-                            //self.cameraSettingModel.setScale(scale: CGFloat(value))
+                    
+                    ForEach(zoomValuesWithSelectedFlag.sorted(by: <), id: \.key) { key, value in
+                    
+                        TextButton(text:"\(key)x", textColor: (zoomValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"),  action: {
+                            /**
+                            if(key == 0.5){
+                                cameraSettingModel.isDefaultCamera = false
+                            } else {
+                                cameraSettingModel.isDefaultCamera = true
+                            }
+                             */
+                           
+                            self.updateValue(key: key)
+                            self.cameraSettingModel.setScale(scale: CGFloat(key))
+                            
+                            /**
+                            
+                            for zoomValue in valuesWithSelectedIndex.keys {
+                                if(key == zoomValue){
+                                    print("key == zoomValue", key)
+                                    valuesWithSelectedIndex[zoomValue] = 1
+                                } else {
+                                    print("key != zoomValue", key)
+                                    valuesWithSelectedIndex[zoomValue] = 0
+                                }
+                            }
+                            */
                         })
+                         
                     }
+                }.onAppear{
+                    let opticalZoomValues = cameraSettingModel.service?.getOpticalZoomList()  ?? []
+                    updateValuesWithSelectedIndex(values: opticalZoomValues)
                 }
                 
-                Slider(value:  Binding(get: {
-                        Double(self.cameraSettingModel.getScale())
-                    }, set: { newValue in
-                        self.cameraSettingModel.setScale(scale: CGFloat(newValue))
-                    }),
+                Slider(value:  sliderBinding,
                     in: sliderRange,
                     step: 0.1
                     ) {
                         Text("")
                     }
             minimumValueLabel: {
-                        Text("\(cameraSettingModel.service?.getMinimumZoomValue() ?? 1)x")
-                    } 
+                Text(String(minZoomValue ?? 1) + "x")
+                    }
             maximumValueLabel: {
                         Text("\(cameraSettingModel.maxZoom)x")
                     } 
@@ -504,6 +553,91 @@ struct CameraSettingView: View {
         }
         
     }
+    
+    var sliderBinding: Binding<Double> {
+            Binding<Double>(
+                get: {
+                    return Double(self.cameraSettingModel.getScale())
+                },
+                set: { newValue in
+                    
+                    
+                    for zoomvValues in zoomValuesWithSelectedFlag.keys{
+                        if(newValue > zoomValuesWithSelectedFlag.keys.sorted().last ?? 1.0){
+                            zoomValuesWithSelectedFlag[zoomvValues] = 0.0
+                        }
+                    }
+                    
+                    
+                    self.cameraSettingModel.setScale(scale: CGFloat(newValue))
+                }
+            )
+        }
+    
+    
+    private var isoValuesWithSelectedFlag: [Double: Double] {
+        var dictionary: [Double: Double] = [:]
+        
+        var currentValue: Double = 1.0
+        
+        if(cameraSettingMode == .SHUTTER_SPEED){
+            currentValue = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
+        } else if(cameraSettingMode == .ISO){
+            currentValue = Double(cameraSettingModel.currentIso)
+        } else if(cameraSettingMode == .EXPOSURE){
+            currentValue = Double(cameraSettingModel.currentExposureValue)
+        }
+        
+        let cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+            for value in cameraSettingsValues {
+                if (value == Float(currentValue)) {
+                    dictionary[Double(value)] = 1.0
+                } else {
+                    dictionary[Double(value)] = 0.0
+                }
+                            
+        }
+            return dictionary
+    }
+    
+    
+    @State private var sliderValue: Double = 0.5
+    
+    @State var zoomValuesWithSelectedFlag: [Double: Double] = [ 1.0 : 1.0]
+    
+    @State var exposureValuesWithSelectedFlag: [Double: Double] = [:]
+    
+    private func updateValue(key: Double) {
+        for zoomvValues in zoomValuesWithSelectedFlag.keys{
+            if (key == zoomvValues){
+                zoomValuesWithSelectedFlag[zoomvValues] = 1.0
+            } else{
+                zoomValuesWithSelectedFlag[zoomvValues] = 0.0
+            }
+        }
+            
+        }
+    
+    private func updateValuesWithSelectedIndex(values: [Double]) {
+        zoomValuesWithSelectedFlag = values.reduce(into: [:]) { result, value in
+            if value == 1.0 {
+                result[value] = 1.0
+            } else {
+                result[value] = 0
+            }
+        }
+        }
+    
+    private func updateExposureValue(key: Double) {
+        for zoomvValues in isoValuesWithSelectedFlag.keys{
+            if (key == zoomvValues){
+                exposureValuesWithSelectedFlag[zoomvValues] = 1.0
+            } else{
+                exposureValuesWithSelectedFlag[zoomvValues] = 0.0
+            }
+        }
+            
+        }
 }
 
 public struct AlertError {
@@ -528,6 +662,7 @@ struct TextButton: View {
     
     @Environment(\.colorScheme) var colorScheme
     var text: String
+    var textColor: Color
     var action: () -> Void
     
     @available(iOS 13.0.0, *)
@@ -536,7 +671,7 @@ struct TextButton: View {
             Text(text)
                 .padding(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 .foregroundColor(Color("textColorInsideButton"))
-                .background(Color("buttonBackground"))
+                .background(textColor)
                 .cornerRadius(10)
         }
     }

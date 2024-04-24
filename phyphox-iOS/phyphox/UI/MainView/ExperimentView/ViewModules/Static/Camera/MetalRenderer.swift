@@ -347,8 +347,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     // Updates any app state.
     func updateAppState() {
 
-       
-        
         guard let currentFrame = self.cvImageBuffer else {
             return
         }
