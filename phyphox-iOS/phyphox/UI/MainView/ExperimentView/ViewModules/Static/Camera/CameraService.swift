@@ -311,9 +311,11 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     // Reset function call count every second
     func resetCallCount() {
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             print("Function called \(self.functionCallCount) times in the last second")
             self.functionCallCount = 0
+            
             self.resetCallCount() // Restart the timer
         }
     }
@@ -331,7 +333,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let width = CVPixelBufferGetWidth(imageBuffer)
         let height = CVPixelBufferGetHeight(imageBuffer)
         
-        //print("Image Resolution: \(width)x\(height)")
+        //print("Image Resolution 1 : \(width)x\(height)")
         functionCallCount += 1
         self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
             x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds)
@@ -393,6 +395,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)]
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
+            
+            let formatDescription = videoDevice.activeFormat.formatDescription
+            let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
+            
+            print("resolution 2 : \(dimension.width)x\(dimension.height)")
+            //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
+            cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
+            cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)

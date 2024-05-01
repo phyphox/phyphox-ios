@@ -20,6 +20,7 @@ protocol CameraSelectionDelegate {
     var zBuffer: DataBuffer? { get set }
     var tBuffer: DataBuffer? { get set }
     var exposureSettingLevel: Int { get set }
+    var locked: String { get set }
 }
 
 @available(iOS 14.0, *)
@@ -31,26 +32,17 @@ protocol CameraViewDelegate: AnyObject {
 }
 
 
-protocol CameraSettingDelegate {
-    var exposureSettingLevel: Int { get set }
-    var locked: String { get set }
-}
-
 protocol CameraGUIDelegate {
-    func updateFrame(captureSession: AVCaptureSession)
     func updateResolution(resolution: CGSize)
 }
 
 
 @available(iOS 14.0, *)
-class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
+class CameraSettingsModel: ObservableObject {
     
     var cameraSettingLevel: CameraSettingLevel = .ADVANCE
     
     var cameraSettingMode: CameraSettingMode = .NONE
-    
-    var exposureSettingLevel: Int = 0
-    var locked: String = ""
     
     @Published var maxOpticalZoom: Int = 1
     var ultraWideCamera: Bool = false
@@ -86,6 +78,8 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
     var service: CameraService?
     
     @Published var isDefaultCamera: Bool = true
+    
+    var resolution = CGSize(width: 0, height: 0)
     
     /// The app's default camera.
     var defaultCamera: AVCaptureDevice? {
@@ -210,13 +204,15 @@ class CameraSettingsModel: ObservableObject, CameraSettingDelegate {
 
 @available(iOS 14.0, *)
 final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDelegate{
-   
+
     var x1: Float = 0.4
     var x2: Float = 0.6
     var y1: Float = 0.4
     var y2: Float = 0.6
     
     var exposureSettingLevel: Int = 3
+    
+    var locked: String = ""
     
     private let service = CameraService()
     var metalView =  CameraMetalView()
@@ -231,16 +227,15 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     
     var isOverlayEditable: Bool = false
     
-    
     init() {
         self.session = service.session
         self.metalRenderer = MetalRenderer(parent: metalView, renderer: metalView.metalView)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
         
-        configure()
-        
         initModel(model: self)
+        
+        configure()
     }
     
 

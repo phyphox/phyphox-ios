@@ -520,12 +520,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
-                        session.initializeCameraModel()
-                        print("viewDidAppear")
-                        session.attachDelegate(delegate: cameraGUI as! CameraGUIDelegate)
-                        cameraGUI.cameraSelectionDelegate = session.cameraModel as? any CameraSelectionDelegate
-                        cameraGUI.cameraViewDelegete = session.cameraModel as? any CameraViewDelegate
-                        print("experimentViewController")
+                        session.initializeCameraModelAndRunSession(uiView: cameraGUI)
+                        
                     }
                 
                 }

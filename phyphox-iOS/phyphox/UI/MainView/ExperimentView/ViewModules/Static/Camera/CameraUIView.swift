@@ -12,11 +12,7 @@ import SwiftUI
 import MetalKit
 import Combine
 
-private enum CameraGestureState {
-    case begin
-    case end
-    case none
-}
+
 
 @available(iOS 13.0, *)
 class CameraUIDataModel: ObservableObject {
@@ -26,10 +22,7 @@ class CameraUIDataModel: ObservableObject {
 
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
-    
-    func updateFrame(captureSession: AVCaptureSession) {
-        print("update frame")
-    }
+  
     
     func updateResolution(resolution: CGSize) {
         setNeedsLayout()
@@ -76,16 +69,21 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
         let cameraViewModel = CameraViewModel(cameraUIDataModel: dataModel)
         
         let cameraViewHostingController = UIHostingController(rootView: PhyphoxCameraView(
-            viewModel: cameraViewModel, cameraSelectionDelegate: cameraSelectionDelegate, cameraViewDelegete:  cameraViewDelegete
+            viewModel: cameraViewModel, 
+            cameraSelectionDelegate: cameraSelectionDelegate,
+            cameraViewDelegete:  cameraViewDelegete
         ))
         
         let hostingController = UIHostingController(rootView: CameraSettingView(
             cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
-            exposureSettingLevel: cameraSelectionDelegate?.exposureSettingLevel ?? 0
+            cameraSelectionDelegate: cameraSelectionDelegate
         ))
 
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         cameraViewHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        hostingController.view.backgroundColor = UIColor(named: "mainBackground")
+        cameraViewHostingController.view.backgroundColor = UIColor(named: "mainBackground")
         
         addSubview(cameraViewHostingController.view)
         addSubview(hostingController.view)
@@ -102,14 +100,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
             if(self?.dataModel.cameraIsMaximized == true){
                 hostingController.view.isHidden = true
                 self?.resizableState = .normal
-                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 400 , height: 250 ))
-                self?.setNeedsDisplay()
+                
                 
             } else {
                 hostingController.view.isHidden = false
                 self?.resizableState = .exclusive
-                cameraViewHostingController.view.sizeThatFits(CGSize.init(width: self?.screenWidth ?? 400, height: 860))
-                self?.setNeedsDisplay()
+               
                 
                 
             }

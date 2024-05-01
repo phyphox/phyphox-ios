@@ -30,29 +30,35 @@ class ExperimentCameraInputSession: NSObject {
     
     var delegate : CameraGUIDelegate?
     
-    func initializeCameraModel(){
+    @available(iOS 14.0, *)
+    func initializeCameraModelAndRunSession(uiView: ExperimentCameraUIView){
         
+        // During model instantiation, the camera session runs
+        cameraModel = CameraModel()
         
-        if #available(iOS 14.0, *) {
-            cameraModel = CameraModel()
-            
-            guard let cameraModel = cameraModel as? CameraModel else {
-                return
-            }
-            
-            cameraModel.x1 = x1
-            cameraModel.x2 = x2
-            cameraModel.y1 = y1
-            cameraModel.y2 = y2
-            
-            cameraModel.metalRenderer.timeReference = timeReference
-            cameraModel.metalRenderer.zBuffer = zBuffer
-            cameraModel.metalRenderer.tBuffer =  tBuffer
-            
-            cameraModel.exposureSettingLevel = exposureAdjustmentLevel
-        } else {
-            // Fallback on earlier versions
+        guard let cameraModel = cameraModel as? CameraModel else {
+            return
         }
+        
+        cameraModel.x1 = x1
+        cameraModel.x2 = x2
+        cameraModel.y1 = y1
+        cameraModel.y2 = y2
+        
+        cameraModel.metalRenderer.timeReference = timeReference
+        cameraModel.metalRenderer.zBuffer = zBuffer
+        cameraModel.metalRenderer.tBuffer =  tBuffer
+        
+        cameraModel.exposureSettingLevel = exposureAdjustmentLevel
+        cameraModel.locked = locked
+        
+        delegate = uiView as CameraGUIDelegate
+        
+        uiView.updateResolution(resolution: cameraModel.cameraSettingsModel.resolution)
+        
+        uiView.cameraSelectionDelegate = cameraModel as any CameraSelectionDelegate
+        uiView.cameraViewDelegete = cameraModel as any CameraViewDelegate
+        
     }
     
     func startSession(){
@@ -97,12 +103,6 @@ class ExperimentCameraInputSession: NSObject {
     
     func clear() {
         
-    }
-  
-    
-    public func attachDelegate(delegate: CameraGUIDelegate) {
-        self.delegate = delegate
-        delegate.updateResolution(resolution: CGSize(width: 300, height: 300))
     }
     
 }

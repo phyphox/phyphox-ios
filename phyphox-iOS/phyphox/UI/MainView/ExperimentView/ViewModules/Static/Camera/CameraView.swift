@@ -106,8 +106,8 @@ struct PhyphoxCameraView: View {
                         
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
-                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.2 ,
-                                   height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.2,
+                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.1 ,
+                                   height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.1,
                                    alignment: .topTrailing)
                     
                         
@@ -232,8 +232,8 @@ struct CameraSettingButton: View {
 @available(iOS 14.0, *)
 struct CameraSettingView: View {
     @ObservedObject var cameraSettingModel = CameraSettingsModel()
-    var exposureSettingLevel: Int
-    
+    var cameraSelectionDelegate: CameraSelectionDelegate?
+
     @State private var cameraSettingMode: CameraSettingMode = .NONE
     
     @State private var isEditing = false
@@ -347,10 +347,10 @@ struct CameraSettingView: View {
     
     var body: some View {
         
-        GeometryReader { reader in
-            let _ = print("setting height", reader.size.width)
-            let _ = print("setting width", reader.size.width)
-        }
+        Spacer().frame(width: 10.0, height: 20.0)
+        
+        let exposureSettingLevel = cameraSelectionDelegate?.exposureSettingLevel
+   
         if(exposureSettingLevel == 0){
             HStack{}
         } else {
@@ -446,7 +446,6 @@ struct CameraSettingView: View {
             
         }
         
-        
         VStack {
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -499,29 +498,10 @@ struct CameraSettingView: View {
                     ForEach(zoomValuesWithSelectedFlag.sorted(by: <), id: \.key) { key, value in
                     
                         TextButton(text:"\(key)x", textColor: (zoomValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"),  action: {
-                            /**
-                            if(key == 0.5){
-                                cameraSettingModel.isDefaultCamera = false
-                            } else {
-                                cameraSettingModel.isDefaultCamera = true
-                            }
-                             */
                            
                             self.updateValue(key: key)
                             self.cameraSettingModel.setScale(scale: CGFloat(key))
                             
-                            /**
-                            
-                            for zoomValue in valuesWithSelectedIndex.keys {
-                                if(key == zoomValue){
-                                    print("key == zoomValue", key)
-                                    valuesWithSelectedIndex[zoomValue] = 1
-                                } else {
-                                    print("key != zoomValue", key)
-                                    valuesWithSelectedIndex[zoomValue] = 0
-                                }
-                            }
-                            */
                         })
                          
                     }
@@ -679,3 +659,30 @@ struct TextButton: View {
 
 
 
+/*
+ 
+ func minimize(cameraViewHostingController: UIHostingController<PhyphoxCameraView>, hostingController: UIHostingController<CameraSettingView>){
+     NSLayoutConstraint.deactivate(viewConstraints)
+     let leadingConstraint = cameraViewHostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor)
+     let trailingConstraint = cameraViewHostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor)
+     let topConstraint = cameraViewHostingController.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor)
+     let bottomConstraint = cameraViewHostingController.view.bottomAnchor.constraint(equalTo: hostingController.view.topAnchor, constant:  -50)
+
+     let settingLeadingConstraint = hostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor)
+     let settingTrailingConstraint = hostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor)
+     let settingTopConstraint = hostingController.view.topAnchor.constraint(equalTo: cameraViewHostingController.view.bottomAnchor)
+     let settingBottomConstraint = hostingController.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor)
+
+     
+     let widthConstraint = hostingController.view.widthAnchor.constraint(equalTo: cameraViewHostingController.view.widthAnchor, multiplier: 1)
+     let heightConstraint = hostingController.view.heightAnchor.constraint(equalTo: cameraViewHostingController.view.heightAnchor, multiplier: 0.35)
+ 
+     
+     
+     let centerXContraint = cameraViewHostingController.view.centerXAnchor.constraint(equalTo: centerXAnchor)
+     
+     viewConstraints.append(contentsOf: [leadingConstraint, trailingConstraint, topConstraint, bottomConstraint, settingLeadingConstraint, settingTrailingConstraint, settingTopConstraint, settingBottomConstraint, widthConstraint, heightConstraint, centerXContraint])
+
+     NSLayoutConstraint.activate(viewConstraints)
+ }
+ **/
