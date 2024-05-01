@@ -131,25 +131,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
-    func getCameraSettingsInfo(){
-        
-        cameraModel?.cameraSettingsModel.minIso = cameraSettingModel.defaultCamera?.activeFormat.minISO ?? 30.0
-        cameraModel?.cameraSettingsModel.maxIso = cameraSettingModel.defaultCamera?.activeFormat.maxISO ?? 100.0
-        
-        
-        cameraModel?.cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
-        cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMaxExposureCMTime)
-        
-        cameraModel?.cameraSettingsModel.apertureValue = (cameraSettingModel.defaultCamera?.lensAperture) ?? 1.0
-       
-        cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
-        
-        if(cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInDualWideCamera ||
-           cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInTripleCamera){
-            cameraModel?.cameraSettingsModel.ultraWideCamera = true
-        }
-    }
-    
+
     func getMaxZoom() -> Int{
         if(self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
              return Int(3)
@@ -159,14 +141,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     func setCameraSettinginfo(){
-        if(defaultVideoDevice?.deviceType != .builtInWideAngleCamera){
-            return
-        }
-        
-        self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
-        self.cameraModel?.cameraSettingsModel.currentIso = getNearestValue(value: Int(self.defaultVideoDevice?.iso ?? 30.0), numbers: iso)
-        
-        self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
         
         self.cameraModel?.cameraSettingsModel.minZoom = Int((self.defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
         
@@ -174,13 +148,36 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         self.cameraModel?.cameraSettingsModel.maxOpticalZoom = self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
         
+        
+        if(defaultVideoDevice?.deviceType != .builtInWideAngleCamera){
+            return
+        }
+        
+        cameraModel?.cameraSettingsModel.minIso = cameraSettingModel.defaultCamera?.activeFormat.minISO ?? 30.0
+        cameraModel?.cameraSettingsModel.maxIso = cameraSettingModel.defaultCamera?.activeFormat.maxISO ?? 100.0
+        cameraModel?.cameraSettingsModel.currentIso = 100 //
+        
+        cameraModel?.cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
+        cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMaxExposureCMTime)
+        
+        cameraModel?.cameraSettingsModel.apertureValue = (cameraSettingModel.defaultCamera?.lensAperture) ?? 1.0
+       
+        //cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
+        
+        if(cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInDualWideCamera ||
+           cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInTripleCamera){
+            cameraModel?.cameraSettingsModel.ultraWideCamera = true
+        }
+        
+        self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
+        
+        self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
+
+        
         let minExposure = self.defaultVideoDevice?.minExposureTargetBias
         let maxExposure = self.defaultVideoDevice?.maxExposureTargetBias
         
         self.cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
-        
-        
-        let maxOpticalZoomFactor = defaultVideoDevice?.maxAvailableVideoZoomFactor
         
     }
     
@@ -203,8 +200,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
                         
                         self.session.beginConfiguration()
-                        
-                        self.getCameraSettingsInfo()
                       
                         self.session.removeInput(self.videoDeviceInput)
                         
@@ -347,7 +342,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.beginConfiguration()
         session.sessionPreset = .medium
         
-        getCameraSettingsInfo()
+       
         
         do {
             // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
@@ -361,7 +356,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 defaultVideoDevice = frontCameraDevice
             }
             
-            setCameraSettinginfo()
+            
             
             getAvailableDevices(position: .back)
             
@@ -409,6 +404,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 print("Error: Cannot add the Output to the session")
             }
             
+            
+            setCameraSettinginfo()
             
         } catch {
             print("Couldn't create video device input: \(error)")
@@ -764,6 +761,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 try defaultVideoDevice?.lockForConfiguration()
                 defaultVideoDevice?.exposureMode = .continuousAutoExposure
                 defaultVideoDevice!.setExposureTargetBias(value, completionHandler: nil)
+                cameraModel?.cameraSettingsModel.currentExposureValue = value
                 defaultVideoDevice?.unlockForConfiguration()
             } catch {
                 print("Error setting camera expsoure: \(error.localizedDescription)")

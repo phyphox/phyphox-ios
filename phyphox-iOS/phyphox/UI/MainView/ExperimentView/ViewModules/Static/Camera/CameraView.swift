@@ -347,7 +347,7 @@ struct CameraSettingView: View {
     
     var body: some View {
         
-        Spacer().frame(width: 10.0, height: 20.0)
+        Spacer().frame(width: 10.0, height: 40.0)
         
         let exposureSettingLevel = cameraSelectionDelegate?.exposureSettingLevel
    
@@ -374,7 +374,7 @@ struct CameraSettingView: View {
                             .opacity(autoExposureOff ? 1.0 : 0.4 )
                             .disabled(autoExposureOff ? false : true).frame(maxWidth: .infinity)
                         
-                        Text("0.0")
+                        Text(String(cameraSettingModel.currentExposureValue))
                             .font(.caption2)
                             .opacity(autoExposureOff ? 1.0 : 0.4 )
                     }
@@ -455,27 +455,35 @@ struct CameraSettingView: View {
                     } else {
                         Spacer().frame(width: 0.0, height:  0.0)
                     }
+                    
                     ForEach(isoValuesWithSelectedFlag.sorted(by: <), id: \.key) { key, value in
                         if(cameraSettingMode == .SHUTTER_SPEED){
-                        
-                            TextButton(text: "1/" + String(Int(key)),  textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                            
+                            TextButton(text: "1/" + String(Int(key)),  textColor: (isoValuesWithUserSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                                let _ = print("selected key ", key)
                                 self.updateExposureValue(key: key)
                                 cameraSettingModel.shutterSpeed(value: Double(key))
                                 
-                            })
+                            }).onAppear{
+                                updateExposureValue()
+                            }
                         } else if(cameraSettingMode == .ISO){
-                            TextButton(text: String(Int(key)),  textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                            TextButton(text: String(Int(key)),  textColor: (isoValuesWithUserSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
                                 self.updateExposureValue(key: key)
                                 cameraSettingModel.iso(value: Int(key))
-                            })
+                            }).onAppear{
+                                updateExposureValue()
+                            }
 
                         } else if(cameraSettingMode == .EXPOSURE){
                             
-                            TextButton(text: String(key) , textColor: (isoValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
+                            TextButton(text: String(key) , textColor: (isoValuesWithUserSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
                                 self.updateExposureValue(key: key)
                                 cameraSettingModel.exposure(value: Float(key))
                                 
-                            })
+                            }).onAppear{
+                                updateExposureValue()
+                            }
                         }
                     }
                 }
@@ -554,14 +562,35 @@ struct CameraSettingView: View {
             )
         }
     
+    func findIsoNearestNumber(value: Double, numbers: [Double]) -> Double {
+        var nearestNumber: Double?
+        var minDifference = Double.infinity
+
+        for number in numbers {
+                let difference = abs(number - value)
+                if difference < minDifference {
+                    minDifference = difference
+                    nearestNumber = number
+                }
+            }
+
+        return nearestNumber ?? 30.0
+    }
     
-    private var isoValuesWithSelectedFlag: [Double: Double] {
-        var dictionary: [Double: Double] = [:]
-        
+    @State private var isoValuesWithUserSelectedFlag : [Double:Double] = [ : ]
+    
+    private func updateExposureValue(){
         var currentValue: Double = 1.0
         
         if(cameraSettingMode == .SHUTTER_SPEED){
-            currentValue = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000))
+            currentValue = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000)) * 1000
+            if shutters.contains(Int(currentValue)){
+                // Do nothing
+            } else {
+                currentValue = findIsoNearestNumber(value: currentValue, numbers: shutters.map{Double($0)})
+                
+            }
+            
         } else if(cameraSettingMode == .ISO){
             currentValue = Double(cameraSettingModel.currentIso)
         } else if(cameraSettingMode == .EXPOSURE){
@@ -569,7 +598,45 @@ struct CameraSettingView: View {
         }
         
         let cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+        print("cameraSettingsValues ", cameraSettingsValues)
             for value in cameraSettingsValues {
+               
+                if (value == Float(currentValue)) {
+                    isoValuesWithUserSelectedFlag[Double(value)] = 1.0
+                } else {
+                    isoValuesWithUserSelectedFlag[Double(value)] = 0.0
+                }
+                            
+        }
+        
+    }
+    
+    
+    private var isoValuesWithSelectedFlag: [Double: Double] {
+        var dictionary: [Double: Double] = [:]
+        
+        var currentValue: Double = 1.0
+        
+        if(cameraSettingMode == .SHUTTER_SPEED){
+            currentValue = CMTimeGetSeconds(cameraSettingModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000)) * 1000
+            if shutters.contains(Int(currentValue)){
+                // Do nothing
+            } else {
+                currentValue = findIsoNearestNumber(value: currentValue, numbers: shutters.map{Double($0)})
+                
+            }
+            
+        } else if(cameraSettingMode == .ISO){
+            currentValue = Double(cameraSettingModel.currentIso)
+        } else if(cameraSettingMode == .EXPOSURE){
+            currentValue = Double(cameraSettingModel.currentExposureValue)
+        }
+        
+        
+        let cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+        print("cameraSettingsValues ", cameraSettingsValues)
+            for value in cameraSettingsValues {
+               
                 if (value == Float(currentValue)) {
                     dictionary[Double(value)] = 1.0
                 } else {
@@ -577,6 +644,7 @@ struct CameraSettingView: View {
                 }
                             
         }
+        exposureValuesWithSelectedFlag = dictionary
             return dictionary
     }
     
@@ -611,9 +679,9 @@ struct CameraSettingView: View {
     private func updateExposureValue(key: Double) {
         for zoomvValues in isoValuesWithSelectedFlag.keys{
             if (key == zoomvValues){
-                exposureValuesWithSelectedFlag[zoomvValues] = 1.0
+                isoValuesWithUserSelectedFlag[zoomvValues] = 1.0
             } else{
-                exposureValuesWithSelectedFlag[zoomvValues] = 0.0
+                isoValuesWithUserSelectedFlag[zoomvValues] = 0.0
             }
         }
             
@@ -658,31 +726,3 @@ struct TextButton: View {
 }
 
 
-
-/*
- 
- func minimize(cameraViewHostingController: UIHostingController<PhyphoxCameraView>, hostingController: UIHostingController<CameraSettingView>){
-     NSLayoutConstraint.deactivate(viewConstraints)
-     let leadingConstraint = cameraViewHostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor)
-     let trailingConstraint = cameraViewHostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor)
-     let topConstraint = cameraViewHostingController.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor)
-     let bottomConstraint = cameraViewHostingController.view.bottomAnchor.constraint(equalTo: hostingController.view.topAnchor, constant:  -50)
-
-     let settingLeadingConstraint = hostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor)
-     let settingTrailingConstraint = hostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor)
-     let settingTopConstraint = hostingController.view.topAnchor.constraint(equalTo: cameraViewHostingController.view.bottomAnchor)
-     let settingBottomConstraint = hostingController.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor)
-
-     
-     let widthConstraint = hostingController.view.widthAnchor.constraint(equalTo: cameraViewHostingController.view.widthAnchor, multiplier: 1)
-     let heightConstraint = hostingController.view.heightAnchor.constraint(equalTo: cameraViewHostingController.view.heightAnchor, multiplier: 0.35)
- 
-     
-     
-     let centerXContraint = cameraViewHostingController.view.centerXAnchor.constraint(equalTo: centerXAnchor)
-     
-     viewConstraints.append(contentsOf: [leadingConstraint, trailingConstraint, topConstraint, bottomConstraint, settingLeadingConstraint, settingTrailingConstraint, settingTopConstraint, settingBottomConstraint, widthConstraint, heightConstraint, centerXContraint])
-
-     NSLayoutConstraint.activate(viewConstraints)
- }
- **/
