@@ -83,7 +83,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     public func configure(){
-        resetCallCount()
+        //resetCallCount()
         sessionQueue.async {
             self.configureSession()
         }
@@ -164,7 +164,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         
         self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
-        //self.cameraModel?.cameraSettingsModel.currentIso = getNearestValue(value: Int(self.defaultVideoDevice?.iso ?? 30.0), numbers: iso)
+        self.cameraModel?.cameraSettingsModel.currentIso = getNearestValue(value: Int(self.defaultVideoDevice?.iso ?? 30.0), numbers: iso)
         
         self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
         
@@ -205,9 +205,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         self.session.beginConfiguration()
                         
                         self.getCameraSettingsInfo()
-                        
-                        // Remove the existing device input first, because AVCaptureSession doesn't support
-                        // simultaneous use of the rear and front cameras.
+                      
                         self.session.removeInput(self.videoDeviceInput)
                         
                         if self.session.canAddInput(videoDeviceInput) {
@@ -222,10 +220,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         
                         
                         if(preferredDevice == .builtInWideAngleCamera){
-                            print("isDefaultCamera true")
                             self.cameraSettingModel.isDefaultCamera = true
                         } else {
-                            print("isDefaultCamera false")
                             self.cameraSettingModel.isDefaultCamera = false
                         }
                         
@@ -309,7 +305,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     var functionCallCount = 0
     
-    // Reset function call count every second
+    // Reset function call count every second to count the frame rate
     func resetCallCount() {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
