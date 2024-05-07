@@ -77,7 +77,6 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
                 buffer.appendFromArray(Array(inArray[index-overlap..<inArray.count]))
             }
         }
-        print ("index \(index), overlap \(overlap), nin \(inArray.count), nout \(inArray.count - index-overlap)")
         
     }
 }
