@@ -158,6 +158,7 @@
 		860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F22B514703008FAFC6 /* GCDWebServer */; };
 		86147C122D78EC03008BAAD2 /* CameraGUIShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */; };
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		864AEBC22BEA36E5009DBAF2 /* EventStreamAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864AEBC12BEA36E5009DBAF2 /* EventStreamAnalysis.swift */; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		86E0978C2D64D012005C7378 /* AnalyzingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */; };
@@ -505,6 +506,7 @@
 		6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTracker.swift; sourceTree = "<group>"; };
 		86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = CameraGUIShader.metal; sourceTree = "<group>"; };
 		8640FE692BAA3AD0006D7973 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		864AEBC12BEA36E5009DBAF2 /* EventStreamAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStreamAnalysis.swift; sourceTree = "<group>"; };
 		866632E82A29E1D90068762D /* UIColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtensions.swift; sourceTree = "<group>"; };
 		86C183CF29F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1120,6 +1122,7 @@
 				C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */,
 				C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */,
 				C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */,
+				864AEBC12BEA36E5009DBAF2 /* EventStreamAnalysis.swift */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -1614,6 +1617,7 @@
 				C0A97FE72477DCBF00A630EE /* SortAnalysis.swift in Sources */,
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */,
+				864AEBC22BEA36E5009DBAF2 /* EventStreamAnalysis.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
 				A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */,
 				C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */,
