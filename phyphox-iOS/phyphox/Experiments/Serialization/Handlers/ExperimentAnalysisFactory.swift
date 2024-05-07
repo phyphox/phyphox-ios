@@ -89,7 +89,8 @@ final class ExperimentAnalysisFactory {
         "if": IfAnalysis.self,
         "reduce": ReduceAnalysis.self,
         "map": MapAnalysis.self,
-        "formula": FormulaAnalysis.self
+        "formula": FormulaAnalysis.self,
+        "eventstream": EventStreamAnalysis.self
     ]
 
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {
