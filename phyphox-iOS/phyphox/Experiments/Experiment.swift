@@ -170,7 +170,7 @@ final class Experiment {
             requiredPermissions.insert(.location)
         }
         print(ProcessInfo().operatingSystemVersion)
-        if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion == 4 {
+        if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion >= 4 {
             for sensorInput in sensorInputs {
                 if sensorInput.sensorType == .pressure {
                     requiredPermissions.insert(.motionFitness)
@@ -324,12 +324,12 @@ final class Experiment {
             switch status {
             case .denied:
                 failed()
-                let alert = UIAlertController(title: "iOS 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: "iOS 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been restricted. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been restricted. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
