@@ -63,6 +63,11 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? ImageViewDescriptor {
+                guard let rr = r as? ImageViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
                 return false
             }

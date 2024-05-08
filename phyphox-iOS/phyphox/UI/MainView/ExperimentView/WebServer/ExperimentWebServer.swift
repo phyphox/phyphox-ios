@@ -74,6 +74,31 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
+        server!.addHandler(forMethod: "GET", pathRegex: "/res", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            
+            func returnErrorResponse(_ response: AnyObject) {
+                let response = GCDWebServerDataResponse(jsonObject: response)
+                
+                completionBlock(response)
+            }
+            
+            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
+            let query = queryDictionary(components?.query ?? "")
+            if let src = query["src"] {
+                if self.experiment.resources.contains(src) {
+                    if let file = self.experiment.resourceFolder?.appendingPathComponent(src) {
+                        if FileManager.default.fileExists(atPath: file.path) {
+                            completionBlock(GCDWebServerFileResponse(file: file.path))
+                            return
+                        }
+                    }
+                }
+                returnErrorResponse(["error": "Unknown file."] as AnyObject)
+            } else {
+                returnErrorResponse(["error": "No file requested."] as AnyObject)
+            }
+        })
+        
         server!.addHandler(forMethod: "GET", pathRegex: "/export", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)

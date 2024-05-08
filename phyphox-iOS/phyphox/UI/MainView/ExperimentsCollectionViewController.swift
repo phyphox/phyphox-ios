@@ -680,11 +680,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             if (entry.fileMode & S_IFDIR) > 0 {
                 continue
             }
+            let fileName = tmp.appendingPathComponent(entry.fileName)
             if entry.fileName.hasSuffix(".phyphox") {
-                let fileName = tmp.appendingPathComponent(entry.fileName)
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
                 try entry.newData().write(to: fileName, options: .atomic)
                 files.append(fileName)
+            } else if fileName.deletingLastPathComponent().lastPathComponent == "res" {
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try entry.newData().write(to: fileName, options: .atomic)
             }
         }
         
@@ -830,8 +833,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
-                    try data.write(to: tmp, options: .atomic)
-                    finalURL = tmp
+                    if (url.absoluteString.starts(with: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString)) {
+                        finalURL = url
+                    } else {
+                        try data.write(to: tmp, options: .atomic)
+                        finalURL = tmp
+                    }
                 }
             }
             catch let error {

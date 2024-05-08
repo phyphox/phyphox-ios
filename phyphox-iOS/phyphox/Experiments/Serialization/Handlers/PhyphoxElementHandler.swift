@@ -354,6 +354,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         switch descriptor {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
+        case .image(let descriptor):
+            return ImageViewDescriptor(src: descriptor.src, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
         case .info(let descriptor):
             return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
         case .value(let descriptor):

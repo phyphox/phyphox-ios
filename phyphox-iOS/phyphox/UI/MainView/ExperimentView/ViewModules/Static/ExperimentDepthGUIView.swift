@@ -81,7 +81,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     
     var panGestureRecognizer: UIPanGestureRecognizer? = nil
     
-    required init?(descriptor: DepthGUIViewDescriptor) {
+    required init?(descriptor: DepthGUIViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
         unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))

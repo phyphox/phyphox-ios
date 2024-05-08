@@ -85,7 +85,7 @@ protocol DescriptorBoundViewModule {
 
     var descriptor: Descriptor { get }
 
-    init?(descriptor: Descriptor)
+    init?(descriptor: Descriptor, resourceFolder: URL?)
 }
 
 protocol DisplayLinkListener: AnyObject {

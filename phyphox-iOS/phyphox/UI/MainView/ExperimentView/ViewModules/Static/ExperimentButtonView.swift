@@ -22,7 +22,7 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
 
     var buttonTappedCallback: (() -> Void)?
 
-    required init?(descriptor: ButtonViewDescriptor) {
+    required init?(descriptor: ButtonViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
         button = UIButton()

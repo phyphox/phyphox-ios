@@ -133,6 +133,9 @@ final class WebServerUtilities {
                     else if element is ButtonViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""
                     }
+                    else if element is ImageViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"none\""
+                    }
                     
                     viewLayout += "}"
                     

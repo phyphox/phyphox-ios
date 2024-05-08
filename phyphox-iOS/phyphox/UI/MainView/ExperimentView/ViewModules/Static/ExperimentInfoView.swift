@@ -13,7 +13,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
 
     private let label = UILabel()
 
-    required init?(descriptor: InfoViewDescriptor) {
+    required init?(descriptor: InfoViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
 
         super.init(frame: .zero)

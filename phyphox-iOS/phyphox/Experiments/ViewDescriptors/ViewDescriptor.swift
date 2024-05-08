@@ -31,3 +31,7 @@ extension ViewDescriptor {
     }
 
 }
+
+protocol ResourceViewDescriptor: ViewDescriptor {
+    var resources: [String] { get }
+}

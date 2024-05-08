@@ -126,7 +126,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
-                let m = ExperimentViewModuleFactory.createViews(collection)
+                let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
                 
                 modules.append(m)
                 

@@ -36,7 +36,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     
     let formatter = NumberFormatter()
 
-    required init?(descriptor: EditViewDescriptor) {
+    required init?(descriptor: EditViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
 
         label.numberOfLines = 0

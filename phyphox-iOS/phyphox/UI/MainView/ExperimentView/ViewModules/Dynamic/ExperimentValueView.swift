@@ -33,7 +33,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
     
     var dynamicLabelHeight = 0.0
     
-    required init?(descriptor: ValueViewDescriptor) {
+    required init?(descriptor: ValueViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
 
         super.init(frame: .zero)

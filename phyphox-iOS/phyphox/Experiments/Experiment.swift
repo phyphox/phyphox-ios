@@ -81,6 +81,35 @@ final class Experiment {
     var local: Bool = false
     var source: URL?
     var crc32: UInt?
+    var localResourceFolder: URL? {
+        if let crc32 = crc32 {
+            return customExperimentsURL.appendingPathComponent(String(crc32, radix: 16))
+        } else {
+            return nil
+        }
+    }
+    var resourceFolder: URL? {
+        if local {
+            return localResourceFolder
+        } else {
+            return source?.deletingLastPathComponent().appendingPathComponent("res")
+        }
+    }
+    var resources: [String] {
+        var res: Set<String> = []
+        if let viewDescriptors = viewDescriptors {
+            for viewDescriptor in viewDescriptors {
+                for view in viewDescriptor.views {
+                    if let view = view as? ResourceViewDescriptor {
+                        for resource in view.resources {
+                            res.insert(resource)
+                        }
+                    }
+                }
+            }
+        }
+        return Array(res)
+    }
     
     var appleBan: Bool
     var invalid = false
@@ -240,6 +269,17 @@ final class Experiment {
 
         func moveFile(from fileURL: URL) throws {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
+            
+            if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
+                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: false)
+                for resource in self.resources {
+                    do {
+                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: localResourceFolder.appendingPathComponent(resource))
+                    } catch {
+                        print("Could not save \(resource).")
+                    }
+                }
+            }
             
             self.source = experimentURL
             local = true

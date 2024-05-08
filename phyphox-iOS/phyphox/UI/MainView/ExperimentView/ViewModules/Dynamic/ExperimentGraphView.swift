@@ -202,7 +202,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     
-    required init?(descriptor: GraphViewDescriptor) {
+    required init?(descriptor: GraphViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
         logX = descriptor.logX
