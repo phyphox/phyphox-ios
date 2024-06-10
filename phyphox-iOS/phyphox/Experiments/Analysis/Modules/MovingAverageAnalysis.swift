@@ -64,7 +64,7 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
         var result: [Double] = []
                 
         for i in start..<inArray.count {
-            let substart = min(i-width, 0)
+            let substart = max(i-width, 0)
             let sum = inArray[substart ... i].reduce(0.0, +)
             result.append(sum / (Double(i - substart + 1)))
         }
