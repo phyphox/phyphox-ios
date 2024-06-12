@@ -11,7 +11,7 @@
 import AVFoundation
 import MetalKit
 import CoreMedia
- 
+
 @available(iOS 14.0, *)
 public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     
@@ -40,7 +40,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var cameraModel: CameraModel?
     
     var cameraSettingModel: CameraSettingsModel = CameraSettingsModel()
-   
+    
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
     
     let defaultMinExposureCMTime = CMTime(value: 14, timescale: 1000000, flags: CMTimeFlags(rawValue: 1), epoch: 0)
@@ -48,7 +48,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     
     var isConfigured = false
-   
+    
     
     public func checkForPermisssion(){
         
@@ -121,7 +121,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             return []
         case .ISO:
             return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
-                                          max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
+                            max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
         case .SHUTTER_SPEED:
             return getShutterSpeedRange().map{Float($0)}
         case .WHITE_BAlANCE:
@@ -131,12 +131,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
-
+    
     func getMaxZoom() -> Int{
         if(self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
-             return Int(3)
+            return Int(3)
         } else {
-           return (self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
+            return (self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
         }
     }
     
@@ -161,7 +161,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMaxExposureCMTime)
         
         cameraModel?.cameraSettingsModel.apertureValue = (cameraSettingModel.defaultCamera?.lensAperture) ?? 1.0
-       
+        
         //cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
         
         if(cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInDualWideCamera ||
@@ -172,7 +172,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
         
         self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
-
+        
         
         let minExposure = self.defaultVideoDevice?.minExposureTargetBias
         let maxExposure = self.defaultVideoDevice?.maxExposureTargetBias
@@ -181,7 +181,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    public func changeDevice(preferredDevice: AVCaptureDevice.DeviceType){
+    public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
         
         sessionQueue.async {
             let currentVideoDevice = self.videoDeviceInput.device
@@ -194,13 +194,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             var newVideoDevice: AVCaptureDevice? = device.first
             
             if(!ultraWideDeviceDiscoverySession.devices.isEmpty){
-               
+                
                 if let videoDevice = newVideoDevice {
                     do {
                         let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
                         
                         self.session.beginConfiguration()
-                      
+                        
                         self.session.removeInput(self.videoDeviceInput)
                         
                         if self.session.canAddInput(videoDeviceInput) {
@@ -342,7 +342,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.beginConfiguration()
         session.sessionPreset = .medium
         
-       
+        
         
         do {
             // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
@@ -387,6 +387,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
+            
             let formatDescription = videoDevice.activeFormat.formatDescription
             let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
             
@@ -394,7 +395,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
             cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
             cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
-           
+            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
             
@@ -424,14 +425,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     public func start() {
-//        We use our capture session queue to ensure our UI runs smoothly on the main thread.
+        //        We use our capture session queue to ensure our UI runs smoothly on the main thread.
         sessionQueue.async {
             if !self.isSessionRunning && self.isConfigured {
                 switch self.setupResult {
                 case .success:
                     self.session.startRunning()
                     self.isSessionRunning = self.session.isRunning
-                  
+                    
                     if self.session.isRunning {
                         DispatchQueue.main.async {
                             self.isCameraUnavailable = false
@@ -440,7 +441,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     
                 case .configurationFailed, .notAuthorized:
                     print("Application not authorized to use camera")
-
+                    
                     DispatchQueue.main.async {
                         self.alertError = AlertError(title: "Camera Error", message: "Camera configuration failed. Either your device camera is not available or its missing permissions", primaryButtonTitle: "Accept", secondaryButtonTitle: nil, primaryAction: nil, secondaryAction: nil)
                         self.shouldShowAlertView = true
@@ -457,21 +458,21 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var configLocked = false
     
     @Published var zoomScale: CGFloat = 1.0
-
-       
+    
+    
     func lockConfig(complete: () -> ()) {
-           if isConfigured {
-               configLocked = true
-               do{
-                   try defaultVideoDevice?.lockForConfiguration()
-                   complete()
-                   defaultVideoDevice?.unlockForConfiguration()
-                   configLocked = false
-               } catch {
-                   configLocked = false
-                  
-               }
-               }
+        if isConfigured {
+            configLocked = true
+            do{
+                try defaultVideoDevice?.lockForConfiguration()
+                complete()
+                defaultVideoDevice?.unlockForConfiguration()
+                configLocked = false
+            } catch {
+                configLocked = false
+                
+            }
+        }
     }
     
     
@@ -485,52 +486,52 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         
         return devices.compactMap { device in
-               if #available(iOS 15.4, *), device.deviceType == .builtInLiDARDepthCamera {
-                   return getNewDevicesName(device: device.deviceType)
-               } else {
-                   return getDevicesName(device: device.deviceType)
-               }
-           }
+            if #available(iOS 15.4, *), device.deviceType == .builtInLiDARDepthCamera {
+                return getNewDevicesName(device: device.deviceType)
+            } else {
+                return getDevicesName(device: device.deviceType)
+            }
+        }
         
     }
     
     private func getDevicesName(device: AVCaptureDevice.DeviceType) -> [String: String]{
-            return switch(device) {
-            case  .builtInDualCamera : ["Dual Camera": "Camera device type that consists of a wide-angle and telephoto camera."]
-            case  .builtInDualWideCamera : ["Dual Wide Camera": "Camera device type that consists of two cameras of fixed focal length, one ultrawide angle and one wide angle."]
-            case  .builtInTripleCamera : ["Triple Camera":"Camera device type that consists of three cameras of fixed focal length, one ultrawide angle, one wide angle, and one telephoto."]
-            case  .builtInTelephotoCamera : ["Telephoto Camera":"Camera device type with a longer focal length than a wide-angle camera"]
-            case  .builtInTrueDepthCamera : ["True Depth Camera":"A device that consists of two cameras, one Infrared and one YUV."]
-            case  .builtInUltraWideCamera  : ["Ultra Wide Camera":"Camera device type with a shorter focal length than a wide-angle camera."]
-            case  .builtInWideAngleCamera : ["Wide Angle Camera":"A default wide-angle camera device type."]
-            default : ["not available": ""]
+        return switch(device) {
+        case  .builtInDualCamera : ["Dual Camera": "Camera device type that consists of a wide-angle and telephoto camera."]
+        case  .builtInDualWideCamera : ["Dual Wide Camera": "Camera device type that consists of two cameras of fixed focal length, one ultrawide angle and one wide angle."]
+        case  .builtInTripleCamera : ["Triple Camera":"Camera device type that consists of three cameras of fixed focal length, one ultrawide angle, one wide angle, and one telephoto."]
+        case  .builtInTelephotoCamera : ["Telephoto Camera":"Camera device type with a longer focal length than a wide-angle camera"]
+        case  .builtInTrueDepthCamera : ["True Depth Camera":"A device that consists of two cameras, one Infrared and one YUV."]
+        case  .builtInUltraWideCamera  : ["Ultra Wide Camera":"Camera device type with a shorter focal length than a wide-angle camera."]
+        case  .builtInWideAngleCamera : ["Wide Angle Camera":"A default wide-angle camera device type."]
+        default : ["not available": ""]
         }
         
     }
-
+    
     
     @available(iOS 15.4, *)
     private func getNewDevicesName(device: AVCaptureDevice.DeviceType) -> [String: String]{
-            switch(device) {
-                case  .builtInLiDARDepthCamera : return ["LiDAR Depth Camera": "A device that consists of two cameras, one LiDAR and one YUV."]
-                default : return ["not available": ""]
-            }
-     
+        switch(device) {
+        case  .builtInLiDARDepthCamera : return ["LiDAR Depth Camera": "A device that consists of two cameras, one LiDAR and one YUV."]
+        default : return ["not available": ""]
+        }
+        
     }
     
-  
-       // optical zoom range, normal zoom range.
-       // iphone 12 mini: Dual 12MP, wide and ultra wide, wide : f/1,6, ultra wide: f/2.4 120 degree field of view, 2x optical zoom out , digital zoom upto 5x,
+    
+    // optical zoom range, normal zoom range.
+    // iphone 12 mini: Dual 12MP, wide and ultra wide, wide : f/1,6, ultra wide: f/2.4 120 degree field of view, 2x optical zoom out , digital zoom upto 5x,
     
     
     func updateZoom(scale: CGFloat){
-           lockConfig { () -> () in
-               defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor) ?? 1.0))
-               zoomScale = scale
-           }
+        lockConfig { () -> () in
+            defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor) ?? 1.0))
+            zoomScale = scale
+        }
     }
-  
-        
+    
+    
     func getAvailableOpticalZoomList(maxOpticalZoom_: Int?) -> [Int] {
         guard let maxOpticalZoom = maxOpticalZoom_ else {
             return []
@@ -566,14 +567,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 zoomList.append(1.0)
             }
             zoomList.append(contentsOf: virtualDeviceZoomFactors.map { Double(truncating: $0) / 2.0 })
-            }
+        }
         
-            
+        
         if #available(iOS 16.0, *) {
-                if let secondaryZoomFactors = defaultVideoDevice?.activeFormat.secondaryNativeResolutionZoomFactors {
-                    print("secondaryZoomFactors ", secondaryZoomFactors)
-                    zoomList.append(contentsOf: secondaryZoomFactors.map { Double($0) / 2.0 })
-                }
+            if let secondaryZoomFactors = defaultVideoDevice?.activeFormat.secondaryNativeResolutionZoomFactors {
+                print("secondaryZoomFactors ", secondaryZoomFactors)
+                zoomList.append(contentsOf: secondaryZoomFactors.map { Double($0) / 2.0 })
+            }
         }
         
         return zoomList.sorted()
@@ -609,10 +610,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func getShutterSpeedRange() -> [Int] {
         var shutters_available: [Float] = []
-            
+        
         let min_seconds = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
         let max_seconds = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMinExposureCMTime)
-            
+        
         for one_shutter in shutters {
             let seconds = 1.0 / Float64(one_shutter)
             if seconds >= min_seconds && seconds <= max_seconds {
@@ -653,7 +654,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func findIsoNearestNumber(input: Int, numbers: [Int]) -> Int {
         var nearestNumber = numbers[0]
         var difference = abs(input - nearestNumber)
-
+        
         for number in numbers {
             let currentDifference = abs(input - number)
             if currentDifference < difference {
@@ -661,13 +662,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 nearestNumber = number
             }
         }
-
+        
         return nearestNumber
     }
     
     
     func changeISO(_ iso: Int) {
-
+        
         let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
         
         if (defaultVideoDevice?.isExposureModeSupported(.custom) == true){
@@ -714,12 +715,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     private func changeExposureMode(mode: AVCaptureDevice.ExposureMode){
-           lockConfig { () -> () in
-               if ((self.defaultVideoDevice?.isExposureModeSupported(mode)) != nil) {
-                   self.defaultVideoDevice?.exposureMode = mode
-               }
-           }
-       }
+        lockConfig { () -> () in
+            if ((self.defaultVideoDevice?.isExposureModeSupported(mode)) != nil) {
+                self.defaultVideoDevice?.exposureMode = mode
+            }
+        }
+    }
     
     // the custom setting is not supported in the dual wide camera but it does supports
     // in the wide angle camera. don't support RAW capture and manual controls.

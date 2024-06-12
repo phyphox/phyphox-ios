@@ -46,13 +46,13 @@ struct PhyphoxCameraView: View {
     @State private var height: CGFloat = 200.0
     @State private var width: CGFloat = 200.0
     @State private var startPosition: CGFloat = 0.0
-  
+    
     @State private var speed = 50.0
-
+    
     @State private var viewState = CGPoint.zero
-
+    
     var resizableState: ResizableViewModuleState =  .normal
-  
+    
     var mimimizeCameraButton: some View {
         Button(action: {
             self.isMaximized.toggle()
@@ -74,7 +74,7 @@ struct PhyphoxCameraView: View {
                     viewState = value.location
                     pannned(locationY: viewState.y, locationX: viewState.x , state: CameraGestureState.begin)
                 }
-             
+                
             }
             .onEnded{ value in
                 if(isMaximized){
@@ -102,14 +102,14 @@ struct PhyphoxCameraView: View {
                     }
                     
                     ZStack{
-                       
+                        
                         
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
                             .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.1 ,
                                    height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.1,
                                    alignment: .topTrailing)
-                    
+                        
                         
                     }
                 }
@@ -130,8 +130,8 @@ struct PhyphoxCameraView: View {
             print("camera view delegate is not accessable")
             return
         }
-    
-
+        
+        
         
         let pr = CGPoint(x: locationX / (viewDelegate.metalView.metalView.frame.width ), y: locationY / (viewDelegate.metalView.metalView.frame.height ))
         let ps = pr.applying(viewDelegate.metalRenderer.displayToCameraTransform)
@@ -186,7 +186,7 @@ struct PhyphoxCameraView: View {
             } else if panningIndexY == 2 {
                 del.y2 = y
             }
-           
+            
         } else {
             
         }
@@ -233,7 +233,7 @@ struct CameraSettingButton: View {
 struct CameraSettingView: View {
     @ObservedObject var cameraSettingModel = CameraSettingsModel()
     var cameraSelectionDelegate: CameraSelectionDelegate?
-
+    
     @State private var cameraSettingMode: CameraSettingMode = .NONE
     
     @State private var isEditing = false
@@ -250,7 +250,7 @@ struct CameraSettingView: View {
     @State private var zoomScale: CGFloat = 1.0
     
     
-
+    
     
     var flipCameraButton: some View {
         CameraSettingButton(action: {
@@ -281,13 +281,13 @@ struct CameraSettingView: View {
     }
     
     var autoExposure: some View {
-         CameraSettingButton(action: {
-             cameraSettingMode = .AUTO_EXPOSURE
-             autoExposureOff = !autoExposureOff
-             isListVisible = false
-             zoomClicked = false
-             cameraSettingModel.autoExposure(auto: !autoExposureOff)
-         }, image: "ic_auto_exposure", size: 25)
+        CameraSettingButton(action: {
+            cameraSettingMode = .AUTO_EXPOSURE
+            autoExposureOff = !autoExposureOff
+            isListVisible = false
+            zoomClicked = false
+            cameraSettingModel.autoExposure(auto: !autoExposureOff)
+        }, image: "ic_auto_exposure", size: 25)
     }
     
     var exposureSetting: some View{
@@ -338,19 +338,19 @@ struct CameraSettingView: View {
                         .clipShape(Circle())
                 )
         }
-    
+        
     }
-
+    
     @State var selectedKey: Double?
     @State var value: Float = 0
-  
+    
     
     var body: some View {
         
         Spacer().frame(width: 10.0, height: 40.0)
         
         let exposureSettingLevel = cameraSelectionDelegate?.exposureSettingLevel
-   
+        
         if(exposureSettingLevel == 0){
             HStack{}
         } else {
@@ -365,7 +365,7 @@ struct CameraSettingView: View {
                 
                 VStack {
                     flipCameraButton.frame(maxWidth: .infinity)
-                    Text(isFlipped ? "Front" : "Back").font(.caption2)
+                    Text(cameraSettingModel.service?.defaultVideoDevice?.position == .front ? "Front" : "Back").font(.caption2)
                 }
                 
                 if(exposureSettingLevel == 2){
@@ -392,14 +392,14 @@ struct CameraSettingView: View {
                             isoSetting.frame(maxWidth: .infinity).opacity(1.0 )
                             
                             Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
-                                
+                            
                         }
                     } else {
                         VStack {
                             isoSetting.frame(maxWidth: .infinity).opacity(0.4 )
                             
                             Text(String(Int(cameraSettingModel.currentIso))).font(.caption2)
-                                
+                            
                         }
                     }
                     
@@ -434,9 +434,12 @@ struct CameraSettingView: View {
                             .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
                     }
                 }
-
+                
                 VStack {
-                    zoomSlider.frame(maxWidth: .infinity)
+                    zoomSlider
+                        .frame(maxWidth: .infinity)
+                        .opacity(cameraSettingModel.service?.defaultVideoDevice?.position == .front ? 0.4 : 1.0)
+                        .disabled(cameraSettingModel.service?.defaultVideoDevice?.position == .front ? true : false)
                     Text("Zoom").font(.caption2)
                 }
             }
@@ -474,7 +477,7 @@ struct CameraSettingView: View {
                             }).onAppear{
                                 updateExposureValue()
                             }
-
+                            
                         } else if(cameraSettingMode == .EXPOSURE){
                             
                             TextButton(text: String(key) , textColor: (isoValuesWithUserSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
@@ -499,81 +502,86 @@ struct CameraSettingView: View {
                 return minimumZoom...maximumZoom
             }()
             
-
-            VStack{
-                HStack {
-                    
-                    ForEach(zoomValuesWithSelectedFlag.sorted(by: <), id: \.key) { key, value in
-                    
-                        TextButton(text:"\(key)x", textColor: (zoomValuesWithSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"),  action: {
-                           
-                            self.updateValue(key: key)
-                            self.cameraSettingModel.setScale(scale: CGFloat(key))
+            
+            if(cameraSettingModel.service?.defaultVideoDevice?.position == .back){
+                VStack{
+                    HStack {
+                        
+                        ForEach(zoomValuesWithItemSelectionFlag.sorted(by: <), id: \.key) { key, value in
                             
-                        })
-                         
+                            TextButton(text:"\(key)x", textColor: (zoomValuesWithItemSelectionFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"),  action: {
+                                
+                                self.updateValue(key: key)
+                                self.cameraSettingModel.setZoomScale(scale: CGFloat(key))
+                                
+                            })
+                            
+                        }
+                    }.onAppear{
+                        let opticalZoomValues = cameraSettingModel.service?.getOpticalZoomList()  ?? []
+                        updateValuesWithSelectedIndex(values: opticalZoomValues)
                     }
-                }.onAppear{
-                    let opticalZoomValues = cameraSettingModel.service?.getOpticalZoomList()  ?? []
-                    updateValuesWithSelectedIndex(values: opticalZoomValues)
-                }
-                
-                Slider(value:  sliderBinding,
-                    in: sliderRange,
-                    step: 0.1
+                    
+                    Slider(value:  sliderBinding,
+                           in: sliderRange,
+                           step: 0.1
                     ) {
                         Text("")
                     }
-            minimumValueLabel: {
-                Text(String(minZoomValue ?? 1) + "x")
-                    }
-            maximumValueLabel: {
-                        Text("\(cameraSettingModel.maxZoom)x")
-                    } 
-            onEditingChanged: { editing in
-                        isEditing = editing
-                    }
+                minimumValueLabel: {
+                    Text(String(minZoomValue ?? 1) + "x")
+                }
+                maximumValueLabel: {
+                    Text("\(cameraSettingModel.maxZoom)x")
+                }
+                onEditingChanged: { editing in
+                    isEditing = editing
+                }
                     
+                }
+                .opacity(zoomClicked ? 1.0 : 0.0)
+                .padding(EdgeInsets(top: 5.0, leading: 10.0, bottom: 5.0, trailing: 10.0))
             }
-            .opacity(zoomClicked ? 1.0 : 0.0)
-            .padding(EdgeInsets(top: 5.0, leading: 10.0, bottom: 5.0, trailing: 10.0))
-            
+            else {
+                // Space is given so that when switching the camera lens will let the camer setting view to be static
+                Spacer().frame(width: 10.0, height: 80.0)
+            }
         }
         
     }
     
     var sliderBinding: Binding<Double> {
-            Binding<Double>(
-                get: {
-                    return Double(self.cameraSettingModel.getScale())
-                },
-                set: { newValue in
-                    
-                    
-                    for zoomvValues in zoomValuesWithSelectedFlag.keys{
-                        if(newValue > zoomValuesWithSelectedFlag.keys.sorted().last ?? 1.0){
-                            zoomValuesWithSelectedFlag[zoomvValues] = 0.0
-                        }
+        Binding<Double>(
+            get: {
+                return Double(self.cameraSettingModel.getZoomScale())
+            },
+            set: { newValue in
+                
+                
+                for zoomvValues in zoomValuesWithItemSelectionFlag.keys{
+                    if(newValue > zoomValuesWithItemSelectionFlag.keys.sorted().last ?? 1.0){
+                        zoomValuesWithItemSelectionFlag[zoomvValues] = 0.0
                     }
-                    
-                    
-                    self.cameraSettingModel.setScale(scale: CGFloat(newValue))
                 }
-            )
-        }
+                
+                
+                self.cameraSettingModel.setZoomScale(scale: CGFloat(newValue))
+            }
+        )
+    }
     
     func findIsoNearestNumber(value: Double, numbers: [Double]) -> Double {
         var nearestNumber: Double?
         var minDifference = Double.infinity
-
+        
         for number in numbers {
-                let difference = abs(number - value)
-                if difference < minDifference {
-                    minDifference = difference
-                    nearestNumber = number
-                }
+            let difference = abs(number - value)
+            if difference < minDifference {
+                minDifference = difference
+                nearestNumber = number
             }
-
+        }
+        
         return nearestNumber ?? 30.0
     }
     
@@ -598,15 +606,15 @@ struct CameraSettingView: View {
         }
         
         let cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
-        print("cameraSettingsValues ", cameraSettingsValues)
-            for value in cameraSettingsValues {
-               
-                if (value == Float(currentValue)) {
-                    isoValuesWithUserSelectedFlag[Double(value)] = 1.0
-                } else {
-                    isoValuesWithUserSelectedFlag[Double(value)] = 0.0
-                }
-                            
+        
+        for value in cameraSettingsValues {
+            
+            if (value == Float(currentValue)) {
+                isoValuesWithUserSelectedFlag[Double(value)] = 1.0
+            } else {
+                isoValuesWithUserSelectedFlag[Double(value)] = 0.0
+            }
+            
         }
         
     }
@@ -634,47 +642,47 @@ struct CameraSettingView: View {
         
         
         let cameraSettingsValues = cameraSettingModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
-        print("cameraSettingsValues ", cameraSettingsValues)
-            for value in cameraSettingsValues {
-               
-                if (value == Float(currentValue)) {
-                    dictionary[Double(value)] = 1.0
-                } else {
-                    dictionary[Double(value)] = 0.0
-                }
-                            
+        
+        for value in cameraSettingsValues {
+            
+            if (value == Float(currentValue)) {
+                dictionary[Double(value)] = 1.0
+            } else {
+                dictionary[Double(value)] = 0.0
+            }
+            
         }
         exposureValuesWithSelectedFlag = dictionary
-            return dictionary
+        return dictionary
     }
     
     
     @State private var sliderValue: Double = 0.5
     
-    @State var zoomValuesWithSelectedFlag: [Double: Double] = [ 1.0 : 1.0]
+    @State var zoomValuesWithItemSelectionFlag: [Double: Double] = [ 1.0 : 1.0]
     
     @State var exposureValuesWithSelectedFlag: [Double: Double] = [:]
     
     private func updateValue(key: Double) {
-        for zoomvValues in zoomValuesWithSelectedFlag.keys{
+        for zoomvValues in zoomValuesWithItemSelectionFlag.keys{
             if (key == zoomvValues){
-                zoomValuesWithSelectedFlag[zoomvValues] = 1.0
+                zoomValuesWithItemSelectionFlag[zoomvValues] = 1.0
             } else{
-                zoomValuesWithSelectedFlag[zoomvValues] = 0.0
+                zoomValuesWithItemSelectionFlag[zoomvValues] = 0.0
             }
         }
-            
-        }
+        
+    }
     
     private func updateValuesWithSelectedIndex(values: [Double]) {
-        zoomValuesWithSelectedFlag = values.reduce(into: [:]) { result, value in
+        zoomValuesWithItemSelectionFlag = values.reduce(into: [:]) { result, value in
             if value == 1.0 {
                 result[value] = 1.0
             } else {
                 result[value] = 0
             }
         }
-        }
+    }
     
     private func updateExposureValue(key: Double) {
         for zoomvValues in isoValuesWithSelectedFlag.keys{
@@ -684,8 +692,8 @@ struct CameraSettingView: View {
                 isoValuesWithUserSelectedFlag[zoomvValues] = 0.0
             }
         }
-            
-        }
+        
+    }
 }
 
 public struct AlertError {

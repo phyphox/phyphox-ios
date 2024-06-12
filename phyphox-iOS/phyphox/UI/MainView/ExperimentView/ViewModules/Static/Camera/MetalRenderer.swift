@@ -81,7 +81,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         update()
     }
     
-
+    
     
     // Schedule a draw to happen at a new size.
     func drawRectResized(size: CGSize) {
@@ -91,9 +91,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct, time: TimeInterval) {
-       
+        
         if imageBuffer != nil {
-           
+            
             self.cvImageBuffer = imageBuffer
         }
         
@@ -158,7 +158,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             
             dataIn(z: Double(luma), time: time)
             
-           
+            
         } else {
             //  If the CVImageBuffer is not a CVPixelBuffer, you may need to perform conversion
             
@@ -191,14 +191,14 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
         
         let t = timeReference.getExperimentTimeFromEvent(eventTime: time)
-
+        
         if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
             self.writeToBuffers(z: z, t: t)
         }
     }
     
     func loadMetal(){
-       
+        
         // Set the default formats needed to render.
         renderDestination.colorPixelFormat = .bgra8Unorm
         renderDestination.sampleCount = 1
@@ -210,7 +210,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         // Load all the shader files with a metal file extension in the project.
         let defaultLibrary = metalDevice?.makeDefaultLibrary()!
-                
+        
         // Create a vertex descriptor for our image plane vertex buffer.
         let imagePlaneVertexDescriptor = MTLVertexDescriptor()
         
@@ -228,7 +228,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         imagePlaneVertexDescriptor.layouts[0].stride = 16
         imagePlaneVertexDescriptor.layouts[0].stepRate = 1
         imagePlaneVertexDescriptor.layouts[0].stepFunction = .perVertex
-                        
+        
         // Create camera image texture cache.
         var textureCache: CVMetalTextureCache?
         CVMetalTextureCacheCreate(nil, nil, metalDevice!, nil, &textureCache)
@@ -244,7 +244,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         pipelineStateDescriptor.fragmentFunction = fragmentFunction
         pipelineStateDescriptor.vertexDescriptor = imagePlaneVertexDescriptor
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = renderDestination.colorPixelFormat
-
+        
         // Initialize the pipeline.
         do {
             try pipelineState = metalDevice?.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
@@ -255,7 +255,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice?.makeCommandQueue()
         
-       
+        
         
     }
     
@@ -283,18 +283,18 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             
             updateAppState()
             
-           
-                        
+            
+            
             if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
                 
                 if let renderEncoding = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-                   
+                    
                     // Set a label to identify this render pass in a captured Metal frame.
-                    renderEncoding.label = "DepthGUICameraPreview"
-
+                    renderEncoding.label = "CameraGUIPreview"
+                    
                     // Schedule the camera image to be drawn to the screen.
                     doRenderPass(renderEncoder: renderEncoding)
-
+                    
                     // Finish encoding commands.
                     renderEncoding.endEncoding()
                 }
@@ -316,27 +316,27 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
             return
         }
-
+        
         // Push a debug group that enables you to identify this render pass in a Metal frame capture.
         renderEncoder.pushDebugGroup("CameraPass")
-
+        
         // Set render command encoder state.
         renderEncoder.setCullMode(.none)
         renderEncoder.setRenderPipelineState(pipelineState)
-
+        
         let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying(displayToCameraTransform.inverted())
         let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
         var scaledSelectionState = SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: selectionState.editable)
         renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionStruct>.stride, index: 2)
-         
+        
         // Setup plane vertex buffers.
         renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
         renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 1)
-
+        
         // Setup textures for the camera fragment shader.
         renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageY), index: 0)
         renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageCbCr), index: 1)
-
+        
         // Draw final quad to display
         renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         renderEncoder.popDebugGroup()
@@ -346,7 +346,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     // Updates any app state.
     func updateAppState() {
-
+        
         guard let currentFrame = self.cvImageBuffer else {
             return
         }
@@ -361,7 +361,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             updateImagePlane(frame: currentFrame)
         }
     }
-        
+    
     // Creates two textures (Y and CbCr) to transfer the current frame's camera image to the GPU for rendering.
     func updateCameraImageTextures(frame: CVImageBuffer) {
         if CVPixelBufferGetPlaneCount(frame) < 2 {

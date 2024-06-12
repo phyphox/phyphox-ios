@@ -113,46 +113,26 @@ class CameraSettingsModel: ObservableObject {
     init(){}
     
     
-    func getScale() -> CGFloat {
+    func getZoomScale() -> CGFloat {
         service?.zoomScale ?? 1.0
         
     }
     
-    func setScale(scale: CGFloat) {
-       // service.zoomScale = scale
+    func setZoomScale(scale: CGFloat) {
         var deviceType : AVCaptureDevice.DeviceType
         
         let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)
         
-        print("scale ", scale  )
-        
+        // IF the device has ultra wide camera
         if(scale < 1.0 && scale >= 0.9 || scale == 0.5) {
-            print("builtInDualWideCamera")
             deviceType = .builtInDualWideCamera
-            service?.changeDevice(preferredDevice: deviceType)
-        } else if(scale >= 1.0 && scale <= 1.1 || scale == 1.0) {
-            print("builtInWideAngleCamera")
+            service?.changeBuiltInCameraDevice(preferredDevice: deviceType)
+        } else if(scale >= 1.0 && scale <= 1.1 ) {
             deviceType = .builtInWideAngleCamera
-            service?.changeDevice(preferredDevice: deviceType)
+            service?.changeBuiltInCameraDevice(preferredDevice: deviceType)
         }
-        
-        /**
-        if(service?.defaultVideoDevice?.deviceType == .builtInWideAngleCamera){
-            isDefaultCamera = true
-        } else {
-            isDefaultCamera = false
-        }
-         */
         
         service?.updateZoom(scale: scale)
-    }
-    
-    func setZoomScale(scale: Float) {
-           zoomScale = scale
-       }
-       
-    func getZoomScale() -> Float {
-           return zoomScale
     }
     
     func switchCamera(){
@@ -162,7 +142,7 @@ class CameraSettingsModel: ObservableObject {
     func getLisOfCameraSettingsValue(cameraSettingMode: CameraSettingMode) -> [Float] {
         service?.getSelectableValuesForCameraSettingsList(cameraSettingMode: cameraSettingMode) ?? []
     }
-   
+    
     
     func autoExposure(auto: Bool) {
         service?.setExposureTo(auto: auto)
@@ -180,7 +160,7 @@ class CameraSettingsModel: ObservableObject {
         }
         service?.changeISO(value)
     }
-   
+    
     func shutterSpeed(value: Double) {
         if(!isDefaultCamera){
             return
@@ -195,7 +175,7 @@ class CameraSettingsModel: ObservableObject {
     }
     
     func whiteBalance() {}
-
+    
     func getDeviceNames(){
         service?.getAvailableDevices(position: service?.defaultVideoDevice?.position)
     }
@@ -204,7 +184,7 @@ class CameraSettingsModel: ObservableObject {
 
 @available(iOS 14.0, *)
 final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDelegate{
-
+    
     var x1: Float = 0.4
     var x2: Float = 0.6
     var y1: Float = 0.4
@@ -217,7 +197,7 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     private let service = CameraService()
     var metalView =  CameraMetalView()
     var cameraSettingsModel : CameraSettingsModel
-   
+    
     var metalRenderer: MetalRenderer
     var session: AVCaptureSession
     
@@ -238,7 +218,7 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
         configure()
     }
     
-
+    
     
     func configure(){
         service.checkForPermisssion()
