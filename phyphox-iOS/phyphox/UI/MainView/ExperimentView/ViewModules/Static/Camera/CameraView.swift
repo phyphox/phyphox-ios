@@ -425,13 +425,13 @@ struct CameraSettingView: View {
                     VStack {
                         
                         apertureSetting
-                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
+                            .opacity(0.4)
                             .frame(maxWidth: .infinity)
-                            .disabled((autoExposureOff && cameraSettingModel.isDefaultCamera) ? false : true)
+                            .disabled(true)
                         
                         Text("f/" + String(cameraSettingModel.currentApertureValue))
                             .font(.caption2)
-                            .opacity((autoExposureOff && cameraSettingModel.isDefaultCamera) ? 1.0 : 0.4 )
+                            .opacity(0.4)
                     }
                 }
                 
@@ -463,7 +463,6 @@ struct CameraSettingView: View {
                         if(cameraSettingMode == .SHUTTER_SPEED){
                             
                             TextButton(text: "1/" + String(Int(key)),  textColor: (isoValuesWithUserSelectedFlag[key] == 1) ? Color("highlightColor") : Color("buttonBackground"), action:  {
-                                let _ = print("selected key ", key)
                                 self.updateExposureValue(key: key)
                                 cameraSettingModel.shutterSpeed(value: Double(key))
                                 
