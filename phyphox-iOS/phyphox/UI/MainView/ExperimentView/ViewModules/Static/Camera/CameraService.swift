@@ -220,6 +220,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                             self.cameraSettingModel.isDefaultCamera = false
                         }
                         
+                        self.metalRender?.defaultVideoDevice = self.defaultVideoDevice
+                        
                         self.session.commitConfiguration()
                     } catch {
                         print("Error occurred while creating video device input: \(error)")
@@ -286,6 +288,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     
                     self.setCameraSettinginfo()
                     
+                    self.metalRender?.defaultVideoDevice = self.defaultVideoDevice
+                    
+                    
+                    
                     self.session.commitConfiguration()
                 } catch {
                     print("Error occurred while creating video device input: \(error)")
@@ -293,6 +299,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 
             }
         }
+        
+        sessionQueue.async {
+            self.metalRender?.deviceChanged()
+        }
+        
+        
     }
     
     public func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -387,14 +399,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
-            
-            let formatDescription = videoDevice.activeFormat.formatDescription
-            let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
-            
-            print("resolution 2 : \(dimension.width)x\(dimension.height)")
-            //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
-            cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
-            cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
+           
             
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
@@ -405,7 +410,17 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 print("Error: Cannot add the Output to the session")
             }
             
+            session.sessionPreset = .medium
             
+            let formatDescription = videoDevice.activeFormat.formatDescription
+            let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
+            
+            print("resolution 2 : \(dimension.width)x\(dimension.height)")
+            //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
+            cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
+            cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
+            
+            metalRender?.defaultVideoDevice = defaultVideoDevice
             setCameraSettinginfo()
             
         } catch {

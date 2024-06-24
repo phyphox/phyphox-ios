@@ -51,8 +51,6 @@ struct PhyphoxCameraView: View {
     
     @State private var viewState = CGPoint.zero
     
-    var resizableState: ResizableViewModuleState =  .normal
-    
     var mimimizeCameraButton: some View {
         Button(action: {
             self.isMaximized.toggle()
@@ -102,13 +100,13 @@ struct PhyphoxCameraView: View {
                     }
                     
                     ZStack{
-                        
-                        
+                        let adjustedSize = getAdjustedSizeForPreviewFrame(frameWidth: reader.size.width, frameHeight: reader.size.height)
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
-                            .frame(width: !isMaximized ? reader.size.width / 2 : reader.size.width / 1.1 ,
-                                   height: !isMaximized ? reader.size.height / 2.5 : reader.size.height / 1.1,
+                            .frame(width: adjustedSize.width ,
+                                   height: adjustedSize.height ,
                                    alignment: .topTrailing)
+                            
                         
                         
                     }
@@ -118,6 +116,42 @@ struct PhyphoxCameraView: View {
         }
     }
     
+    
+    func getAdjustedSizeForPreviewFrame(frameWidth: CGFloat, frameHeight: CGFloat) -> CGSize{
+        let h, w: CGFloat
+      
+        let imageResolution = CGSize(
+            width: cameraViewDelegete?.cameraSettingsModel.resolution.width ?? 0.0,
+            height: cameraViewDelegete?.cameraSettingsModel.resolution.height ?? 0.0
+        )
+        
+        let actualAspect = frameWidth / frameHeight
+        let aspect: CGFloat
+        
+        if UIDevice.current.orientation.isLandscape {
+            aspect = imageResolution.width / imageResolution.height
+        } else {
+            aspect = imageResolution.height / imageResolution.width
+        }
+        
+        if aspect > actualAspect {
+            
+            w = frameWidth
+            h = w / aspect
+        } else {
+            h = frameHeight
+            w = h * aspect
+        }
+
+        if UIDevice.current.orientation.isPortrait {
+            if(!isMaximized){
+                return CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
+            }
+        }
+        
+        return CGSize(width: w, height: h)
+    }
+   
     
     func pannned (locationY: CGFloat, locationX: CGFloat , state: CameraGestureState) {
         
