@@ -21,6 +21,7 @@ class CameraViewModel: ObservableObject {
 }
 
 
+
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
     
@@ -34,7 +35,7 @@ struct PhyphoxCameraView: View {
     
     @State private var modelGesture: CameraGestureState = .none
     
-    @State var isMaximized = false
+    @State var isMaximized = UserDefaultManager.shared.isMaximized
     
     @State private var overlayWidth: CGFloat = 50
     @State private var overlayHeight: CGFloat = 50
@@ -50,10 +51,11 @@ struct PhyphoxCameraView: View {
     @State private var speed = 50.0
     
     @State private var viewState = CGPoint.zero
+
     
     var mimimizeCameraButton: some View {
         Button(action: {
-            self.isMaximized.toggle()
+            self.isMaximized.toggleThatPersists()
             viewModel.cameraUIDataModel.cameraIsMaximized.toggle()
             self.cameraViewDelegete?.isOverlayEditable.toggle()
         }, label: {
@@ -65,7 +67,6 @@ struct PhyphoxCameraView: View {
     
     
     var body: some View {
-        
         let dragGesture = DragGesture()
             .onChanged{ value in
                 if(isMaximized){
@@ -119,37 +120,29 @@ struct PhyphoxCameraView: View {
     
     func getAdjustedSizeForPreviewFrame(frameWidth: CGFloat, frameHeight: CGFloat) -> CGSize{
         let h, w: CGFloat
-      
-        let imageResolution = CGSize(
-            width: cameraViewDelegete?.cameraSettingsModel.resolution.width ?? 0.0,
-            height: cameraViewDelegete?.cameraSettingsModel.resolution.height ?? 0.0
-        )
         
-        let actualAspect = frameWidth / frameHeight
-        let aspect: CGFloat
-        
-        if UIDevice.current.orientation.isLandscape {
-            aspect = imageResolution.width / imageResolution.height
-        } else {
-            aspect = imageResolution.height / imageResolution.width
+        guard let imageResolution = cameraViewDelegete?.cameraSettingsModel.resolution else {
+            return .zero
         }
         
+        let actualAspect = frameWidth / frameHeight
+        let isLandscape = (frameWidth > frameHeight)
+        let aspect = isLandscape ? (imageResolution.width / imageResolution.height) : (imageResolution.height / imageResolution.width)
+        
         if aspect > actualAspect {
-            
             w = frameWidth
             h = w / aspect
         } else {
             h = frameHeight
             w = h * aspect
         }
-
-        if (UIDevice.current.orientation.isPortrait || UIDevice.current.orientation.isFlat) {
-            if(!isMaximized){
-                return CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
-            }
+        
+        if isMaximized {
+            return CGSize(width: w, height: h)
+        } else {
+            return CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
         }
         
-        return CGSize(width: w, height: h)
     }
    
     

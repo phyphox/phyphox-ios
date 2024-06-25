@@ -408,43 +408,29 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
     }
     
-    // TODO. For now it works. But this function need to again go through another throught process
     func transformForDeviceOrientation() -> CGAffineTransform {
         let currentOrientation = UIDevice.current.orientation
+        let isBackCamera = defaultVideoDevice?.position == .back
         
         let rotate90Anticlockwise = CGAffineTransform(a: 0.0, b: 1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 0.0)
         let rotate90ClockWise = CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
         
+        // TODO. Need to handle for all the faceup and facedown cases for all protraits and all landscapes modes.
+        // For that we need to recognize landscape and portrait through screen's width and height
         switch currentOrientation {
         case .portrait , .faceUp , .faceDown:
-            if(defaultVideoDevice?.position == .back){
-                return rotate90ClockWise
-            } else {
-                return rotate90Anticlockwise
-            }
+            return isBackCamera ? rotate90ClockWise : rotate90Anticlockwise
           
         case .landscapeLeft:
-            if(defaultVideoDevice?.position == .back){
-                return CGAffineTransform.identity
-            } else {
-                return rotate90Anticlockwise.concatenating(rotate90ClockWise)
-            }
+            return isBackCamera ? CGAffineTransform.identity : rotate90Anticlockwise.concatenating(rotate90ClockWise)
 
         case .landscapeRight:
-            if(defaultVideoDevice?.position == .back){
-                return rotate90ClockWise.concatenating(rotate90ClockWise)
-            } else {
-                return CGAffineTransform.identity // flipped
-            }
+            // originally image is flipped for front camera, but applying 90 degree anti clock wise and then 90 degree clockwise works
+            return isBackCamera ? rotate90ClockWise.concatenating(rotate90ClockWise) : rotate90Anticlockwise.concatenating(rotate90ClockWise)
             
         case .portraitUpsideDown:
-            if(defaultVideoDevice?.position == .back){
-                return rotate90ClockWise.concatenating(rotate90ClockWise).concatenating(rotate90ClockWise)
-            } else {
-                return CGAffineTransform.identity // flipped
-            }
-
-            // handle for front
+            return isBackCamera ? rotate90ClockWise.concatenating(rotate90ClockWise).concatenating(rotate90ClockWise) : rotate90Anticlockwise.concatenating(rotate90ClockWise).concatenating(rotate90ClockWise)
+            
         default:
             return CGAffineTransform.identity
         }
