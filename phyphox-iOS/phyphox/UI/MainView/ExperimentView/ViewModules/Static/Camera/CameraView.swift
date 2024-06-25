@@ -143,7 +143,7 @@ struct PhyphoxCameraView: View {
             w = h * aspect
         }
 
-        if UIDevice.current.orientation.isPortrait {
+        if (UIDevice.current.orientation.isPortrait || UIDevice.current.orientation.isFlat) {
             if(!isMaximized){
                 return CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
             }
