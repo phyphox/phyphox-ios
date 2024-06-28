@@ -48,6 +48,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         super.layoutSubviews()
 
         label.frame = bounds
+
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {

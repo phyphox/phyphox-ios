@@ -43,7 +43,7 @@ private extension ExperimentCameraInput {
         let zBuffer = descriptor.buffer(for: "z", from: buffers)
         let tBuffer = descriptor.buffer(for: "t", from: buffers)
 
-        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth, autoExposure: descriptor.autoExposure, exposureAdjustmentLevel:  descriptor.exposureAdjustmentLevel, locked: descriptor.locked, feature: descriptor.feature, analysis: descriptor.analysis)
+        self.init(timeReference: timeReference, zBuffer: zBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth, autoExposure: descriptor.autoExposure, locked: descriptor.locked, feature: descriptor.feature, analysis: descriptor.analysis)
     }
 }
 
@@ -108,7 +108,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 17, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 19, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -450,7 +450,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             
         case .camera(let descriptor):
-            return CameraViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, translation: translations)
+            return CameraViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, exposureAdjustmentLevel: (Int(descriptor.exposureAdjustmentLevel) ?? 3),
+                                        grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, translation: translations)
+            
+        case .image(let descriptor):
+            return ImageViewDescriptor(src: descriptor.src, translation: translations)
         }
         
     }

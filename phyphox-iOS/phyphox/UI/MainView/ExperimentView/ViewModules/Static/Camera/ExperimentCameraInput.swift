@@ -20,7 +20,7 @@ final class ExperimentCameraInput {
     let tBuffer: DataBuffer?
     
     let autoExposure: Bool
-    let exposureAdjustmentLevel: Int
+
     let locked: String
     let feature: String
     let analysis: String
@@ -28,7 +28,7 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool, exposureAdjustmentLevel: Int, locked: String, feature: String, analysis: String) {
+    init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
         self.initx1 = x1
         self.initx2 = x2
         self.inity1 = y1
@@ -37,7 +37,7 @@ final class ExperimentCameraInput {
         self.tBuffer = tBuffer
         self.timeReference = timeReference
         self.autoExposure = autoExposure
-        self.exposureAdjustmentLevel = exposureAdjustmentLevel
+       
         self.locked = locked
         self.feature = feature
         self.analysis = analysis
@@ -56,7 +56,7 @@ final class ExperimentCameraInput {
         session.timeReference = timeReference
         
         session.autoExposure = autoExposure
-        session.exposureAdjustmentLevel = exposureAdjustmentLevel
+      
         session.locked = locked
         session.feature = feature
         session.analysis = analysis

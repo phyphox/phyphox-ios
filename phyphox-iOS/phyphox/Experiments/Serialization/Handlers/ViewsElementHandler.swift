@@ -19,6 +19,7 @@ enum ViewElementDescriptor {
     case graph(GraphViewElementDescriptor)
     case depthGUI(DepthGUIViewElementDescriptor)
     case camera(CameraViewElementDescriptor)
+    case image(ImageViewElementDescriptor)
 }
 
 protocol ViewComponentElementHandler: ElementHandler {
@@ -41,6 +42,7 @@ private final class ViewElementHandler: ResultElementHandler {
     private let graphHandler = GraphViewElementHandler()
     private let depthGUIHandler = DepthGUIViewElementHandler()
     private let cameraHandler = CameraViewElementHandler()
+    private let imageHandler = ImageViewElementHandler()
 
     private var elementOrder = [ViewComponentElementHandler]()
 
@@ -66,6 +68,8 @@ private final class ViewElementHandler: ResultElementHandler {
             handler = depthGUIHandler
         case "camera-gui":
             handler = cameraHandler
+        case "image":
+            handler = imageHandler
         default:
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }

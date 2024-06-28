@@ -11,12 +11,20 @@ import Foundation
 struct CameraViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let aspectRatio: CGFloat
+    let exposureAdjustmentLevel: Int
+    let grayscale: String
+    let markOverexposure: String
+    let markUnderexposure: String
 
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, aspectRatio: CGFloat, translation: ExperimentTranslationCollection?) {
+    init(label: String, aspectRatio: CGFloat, exposureAdjustmentLevel: Int, grayscale: String, markOverexposure: String, markUnderexposure: String, translation: ExperimentTranslationCollection?) {
         self.label = label
         self.aspectRatio = aspectRatio
+        self.exposureAdjustmentLevel = exposureAdjustmentLevel
+        self.grayscale = grayscale
+        self.markOverexposure = markOverexposure
+        self.markUnderexposure = markUnderexposure
         self.translation = translation
     }
 

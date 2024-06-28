@@ -41,6 +41,8 @@ final class ExperimentViewModuleFactory {
             }
             else if let descriptor = descriptor as? SeparatorViewDescriptor {
                 views.append(ExperimentSeparatorView(descriptor: descriptor))
+            } else if let descriptor = descriptor as? ImageViewDescriptor {
+                views.append(ExperimentImageView(descriptor: descriptor))
             }
             else if let descriptor = descriptor as? DepthGUIViewDescriptor {
                 if #available(iOS 14.0, *) {
@@ -51,10 +53,7 @@ final class ExperimentViewModuleFactory {
                 }
             } else  if let descriptor = descriptor as? CameraViewDescriptor {
                 if #available(iOS 14.0, *) {
-                    // TODO need to pass descriptor in view argument.
-                    
                     views.append(ExperimentCameraUIView(descriptor: descriptor))
-                    //views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
                 } else {
                     // Fallback on earlier versions
                 }

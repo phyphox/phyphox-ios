@@ -45,11 +45,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
     
     required init?(descriptor: CameraViewDescriptor) {
         self.descriptor = descriptor
-        
         super.init(frame: .zero)
         
-        
-       
     }
     
     @available(*, unavailable)
@@ -68,42 +65,49 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
         
         let cameraViewModel = CameraViewModel(cameraUIDataModel: dataModel)
         
+        cameraSelectionDelegate?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
+        
         let cameraViewHostingController = UIHostingController(rootView: PhyphoxCameraView(
             viewModel: cameraViewModel, 
             cameraSelectionDelegate: cameraSelectionDelegate,
             cameraViewDelegete:  cameraViewDelegete
         ))
         
-        let hostingController = UIHostingController(rootView: CameraSettingView(
+        let cameraSettingHostingController = UIHostingController(rootView: CameraSettingView(
             cameraSettingModel: cameraViewDelegete?.cameraSettingsModel ?? CameraSettingsModel(),
             cameraSelectionDelegate: cameraSelectionDelegate
         ))
-
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-        cameraViewHostingController.view.translatesAutoresizingMaskIntoConstraints = false
         
-        hostingController.view.backgroundColor = UIColor(named: "mainBackground")
+
+        cameraSettingHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        cameraViewHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        cameraViewHostingController.view.clipsToBounds = false
+        
+        cameraSettingHostingController.view.backgroundColor = UIColor(named: "mainBackground")
         cameraViewHostingController.view.backgroundColor = UIColor(named: "mainBackground")
         
+        
         addSubview(cameraViewHostingController.view)
-        addSubview(hostingController.view)
+        addSubview(cameraSettingHostingController.view)
+        
+       
         
         if(dataModel.cameraIsMaximized){
-            hostingController.view.isHidden = false
+            cameraSettingHostingController.view.isHidden = false
         } else {
-            hostingController.view.isHidden = true
+            cameraSettingHostingController.view.isHidden = true
         }
        
         // UI Showing the 
         dataModel.objectWillChange.sink{
             [weak self] _ in
             if(self?.dataModel.cameraIsMaximized == true){
-                hostingController.view.isHidden = true
+                cameraSettingHostingController.view.isHidden = true
                 self?.resizableState = .normal
                 
                 
             } else {
-                hostingController.view.isHidden = false
+                cameraSettingHostingController.view.isHidden = false
                 self?.resizableState = .exclusive
                
                 
@@ -115,26 +119,25 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate {
         
         constraints.append(cameraViewHostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor))
         constraints.append(cameraViewHostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor))
-        constraints.append(cameraViewHostingController.view.bottomAnchor.constraint(equalTo: hostingController.view.topAnchor))
+        constraints.append(cameraViewHostingController.view.bottomAnchor.constraint(equalTo: cameraSettingHostingController.view.topAnchor))
         constraints.append(cameraViewHostingController.view.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor))
         
         
-        constraints.append(hostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor))
-        constraints.append(hostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor))
-        constraints.append(hostingController.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor))
-        constraints.append(hostingController.view.topAnchor.constraint(equalTo: cameraViewHostingController.view.bottomAnchor))
+        constraints.append(cameraSettingHostingController.view.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor))
+        constraints.append(cameraSettingHostingController.view.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor))
+        constraints.append(cameraSettingHostingController.view.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor))
+        constraints.append(cameraSettingHostingController.view.topAnchor.constraint(equalTo: cameraViewHostingController.view.bottomAnchor))
         
-        constraints.append(hostingController.view.widthAnchor.constraint(equalTo: cameraViewHostingController.view.widthAnchor, multiplier: 1))
+        constraints.append(cameraSettingHostingController.view.widthAnchor.constraint(equalTo: cameraViewHostingController.view.widthAnchor, multiplier: 1))
         
-        constraints.append(cameraViewHostingController.view.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.75))
+        constraints.append(cameraViewHostingController.view.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.70))
         
         constraints.append(cameraViewHostingController.view.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 1))
         
-        constraints.append(hostingController.view.heightAnchor.constraint(equalTo: cameraViewHostingController.view.heightAnchor, multiplier: 0.30))
+        constraints.append(cameraSettingHostingController.view.heightAnchor.constraint(equalTo: cameraViewHostingController.view.heightAnchor, multiplier: 0.30))
          
          
         NSLayoutConstraint.activate(constraints)
-       
     }
-    
+ 
 }

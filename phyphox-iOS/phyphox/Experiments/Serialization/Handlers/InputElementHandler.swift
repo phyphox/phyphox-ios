@@ -125,7 +125,6 @@ struct CameraInputDescriptor: SensorDescriptor {
     let y2: Float
     let smooth: Bool
     let autoExposure: Bool
-    let exposureAdjustmentLevel: Int
     let locked: String
     let feature: String
     let analysis: String
@@ -154,7 +153,6 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         case y2
         case smooth
         case auto_exposure
-        case exposure_adjustment_level
         case locked
         case feature
         case analysis
@@ -178,7 +176,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         
         let autoExposure: Bool = try attributes.optionalValue(for: .auto_exposure) ?? true
         
-        let exposureAdjustmentLevel: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 3
+        //let exposureAdjustmentLevel: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 3
         
         let locked: String = try attributes.optionalValue(for: .locked) ?? ""
         
@@ -186,7 +184,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         
         let analysis: String = try attributes.optionalString(for: .analysis) ?? ""
         
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, autoExposure: autoExposure, exposureAdjustmentLevel: exposureAdjustmentLevel, locked: locked, feature: feature, analysis: analysis, outputs: outputHandler.results))
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, autoExposure: autoExposure, locked: locked, feature: feature, analysis: analysis, outputs: outputHandler.results))
     }
 }
 
