@@ -11,10 +11,8 @@ import Foundation
 class ExperimentCameraInputSession: NSObject {
     var timeReference: ExperimentTimeReference?
     
-    var zBuffer: DataBuffer?
-    
-    var tBuffer: DataBuffer?
-    
+    var experimentCameraBuffers: ExperimentCameraBuffers?
+ 
     var x1: Float = 0.4
     var x2: Float = 0.6
     var y1: Float = 0.4
@@ -45,8 +43,8 @@ class ExperimentCameraInputSession: NSObject {
         cameraModel.y2 = y2
         
         cameraModel.metalRenderer.timeReference = timeReference
-        cameraModel.metalRenderer.zBuffer = zBuffer
-        cameraModel.metalRenderer.tBuffer =  tBuffer
+        cameraModel.metalRenderer.cameraBuffers = experimentCameraBuffers
+       
         
         cameraModel.locked = locked
         

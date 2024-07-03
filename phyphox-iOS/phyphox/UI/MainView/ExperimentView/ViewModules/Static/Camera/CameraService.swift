@@ -326,6 +326,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
+        print("captureOutput didOutput")
         let presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let seconds = CMTimeGetSeconds(presentationTimestamp)
         

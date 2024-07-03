@@ -16,9 +16,8 @@ final class ExperimentCameraInput {
     let inity2: Float
     
     let timeReference: ExperimentTimeReference?
-    let zBuffer: DataBuffer?
-    let tBuffer: DataBuffer?
     
+    var experimentCameraBuffers: ExperimentCameraBuffers?
     let autoExposure: Bool
 
     let locked: String
@@ -28,13 +27,25 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, zBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
+        
+        experimentCameraBuffers = ExperimentCameraBuffers(
+            luminanceBuffer: luminanceBuffer,
+            lumaBuffer: lumaBuffer,
+            hueBuffer: hueBuffer,
+            saturationBuffer: saturationBuffer,
+            valueBuffer: valueBuffer,
+            shutterSpeedBuffer: shutterSpeedBuffer,
+            isoBuffer: isoBuffer,
+            apertureBuffer: apertureBuffer,
+            tBuffer: tBuffer
+        )
+        
         self.initx1 = x1
         self.initx2 = x2
         self.inity1 = y1
         self.inity2 = y2
-        self.zBuffer = zBuffer
-        self.tBuffer = tBuffer
+      
         self.timeReference = timeReference
         self.autoExposure = autoExposure
        
@@ -51,8 +62,7 @@ final class ExperimentCameraInput {
         session.x2 = x2
         session.y1 = y1
         session.y2 = y2
-        session.zBuffer = zBuffer
-        session.tBuffer = tBuffer
+        session.experimentCameraBuffers = experimentCameraBuffers
         session.timeReference = timeReference
         
         session.autoExposure = autoExposure
@@ -97,6 +107,22 @@ final class ExperimentCameraInput {
     
 }
 
+class ExperimentCameraBuffers {
+    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, tBuffer: DataBuffer?
+    
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil) {
+        self.luminanceBuffer = luminanceBuffer
+        self.lumaBuffer = lumaBuffer
+        self.hueBuffer = hueBuffer
+        self.saturationBuffer = saturationBuffer
+        self.valueBuffer = valueBuffer
+        self.shutterSpeedBuffer = shutterSpeedBuffer
+        self.isoBuffer = isoBuffer
+        self.apertureBuffer = apertureBuffer
+        self.tBuffer = tBuffer
+    }
+}
+
 extension ExperimentCameraInput: Equatable {
     static func ==(lhs: ExperimentCameraInput, rhs: ExperimentCameraInput) -> Bool {
         return lhs.initx1 == rhs.initx1 &&
@@ -104,7 +130,14 @@ extension ExperimentCameraInput: Equatable {
                 lhs.inity1 == rhs.inity1 &&
                 lhs.inity2 == rhs.inity2 &&
                 lhs.timeReference == rhs.timeReference &&
-                lhs.zBuffer == rhs.zBuffer &&
-                lhs.tBuffer == rhs.tBuffer
+                lhs.experimentCameraBuffers?.luminanceBuffer == rhs.experimentCameraBuffers?.luminanceBuffer &&
+                lhs.experimentCameraBuffers?.lumaBuffer == rhs.experimentCameraBuffers?.lumaBuffer &&
+                lhs.experimentCameraBuffers?.hueBuffer == rhs.experimentCameraBuffers?.hueBuffer &&
+                lhs.experimentCameraBuffers?.saturationBuffer == rhs.experimentCameraBuffers?.saturationBuffer &&
+                lhs.experimentCameraBuffers?.valueBuffer == rhs.experimentCameraBuffers?.valueBuffer &&
+                lhs.experimentCameraBuffers?.shutterSpeedBuffer == rhs.experimentCameraBuffers?.shutterSpeedBuffer &&
+                lhs.experimentCameraBuffers?.isoBuffer == rhs.experimentCameraBuffers?.isoBuffer &&
+                lhs.experimentCameraBuffers?.apertureBuffer == rhs.experimentCameraBuffers?.apertureBuffer &&
+                lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer
     }
 }

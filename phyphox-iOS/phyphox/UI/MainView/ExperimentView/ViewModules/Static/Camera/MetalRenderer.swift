@@ -49,8 +49,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
     
     var timeReference: ExperimentTimeReference?
-    var zBuffer: DataBuffer?
-    var tBuffer: DataBuffer?
+    var cameraBuffers: ExperimentCameraBuffers?
     
     private var queue: DispatchQueue?
     
@@ -105,7 +104,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         self.selectionState = selectionState
         
         if measuring {
-            getLuma(time: time)
+            getLuminance(time: time)
         }
         
     }
@@ -114,7 +113,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         self.queue = queue
     }
     
-    func getLuma(time: Double){
+    func getLuminance(time: Double){
         if let pixelBuffer = self.cvImageBuffer{
             
             var luma = 0
@@ -172,21 +171,21 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     private func writeToBuffers(z: Double, t: TimeInterval) {
-        if let zBuffer = zBuffer {
+        if let zBuffer = cameraBuffers?.luminanceBuffer {
             zBuffer.append(z)
         }
         
-        if let tBuffer = tBuffer {
+        if let tBuffer = cameraBuffers?.tBuffer {
             tBuffer.append(t)
         }
     }
     
     private func dataIn(z: Double, time: TimeInterval) {
-        guard let zBuffer = zBuffer else {
+        guard let zBuffer = cameraBuffers?.luminanceBuffer else {
             print("Error: zBuffer not set")
             return
         }
-        guard let tBuffer = tBuffer else {
+        guard let tBuffer = cameraBuffers?.tBuffer else {
             print("Error: tBuffer not set")
             return
         }
