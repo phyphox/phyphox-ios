@@ -21,6 +21,7 @@ class CameraViewModel: ObservableObject {
 }
 
 
+/**
 
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
@@ -29,6 +30,8 @@ struct PhyphoxCameraView: View {
     
     var cameraSelectionDelegate: CameraSelectionDelegate?
     var cameraViewDelegete: CameraViewDelegate?
+    
+    @State var cameraPreviewSize = CGSize()
     
     @State private var panningIndexX: Int = 0
     @State private var panningIndexY: Int = 0
@@ -102,20 +105,32 @@ struct PhyphoxCameraView: View {
                     
                     ZStack{
                         let adjustedSize = getAdjustedSizeForPreviewFrame(frameWidth: reader.size.width, frameHeight: reader.size.height)
+                        let _ = print("size adjusted height ", reader.size.height)
+                        let _ = print("size adjusted width ", reader.size.width)
+                        
                         cameraViewDelegete?.metalView
                             .gesture(dragGesture)
                             .frame(width: adjustedSize.width ,
                                    height: adjustedSize.height ,
                                    alignment: .topTrailing)
-                            
+                            .onAppear(perform: {
+                                setCameraSize(adjustedSize: CGSize(width: reader.size.width, height: reader.size.height))
+                            })
                         
                         
                     }
                 }
                 
-            }//.background(Color.black)
+            }.background(Color.yellow)
         }
     }
+    
+    func setCameraSize(adjustedSize: CGSize){
+        print("size setCameraSize ", adjustedSize)
+        viewModel.cameraUIDataModel.cameraSize = adjustedSize
+        self.cameraSize = adjustedSize
+    }
+    
     
     
     func getAdjustedSizeForPreviewFrame(frameWidth: CGFloat, frameHeight: CGFloat) -> CGSize{
@@ -136,10 +151,14 @@ struct PhyphoxCameraView: View {
             h = frameHeight
             w = h * aspect
         }
+        print("size adjusted h ",  h)
+        print("size adjusted w ", w)
         
         if isMaximized {
+            self.cameraPreviewSize = CGSize(width: w, height: h)
             return CGSize(width: w, height: h)
         } else {
+            self.cameraPreviewSize = CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
             return CGSize(width: w, height: h).applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
         }
         
@@ -760,3 +779,4 @@ struct TextButton: View {
 }
 
 
+ */

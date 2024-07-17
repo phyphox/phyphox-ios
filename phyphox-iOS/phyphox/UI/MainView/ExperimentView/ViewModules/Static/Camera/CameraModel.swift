@@ -26,6 +26,7 @@ protocol CameraSelectionDelegate {
 @available(iOS 14.0, *)
 protocol CameraViewDelegate: AnyObject {
     var metalView: CameraMetalView { get set }
+    var mView: MTKView { get set }
     var metalRenderer: MetalRenderer { get set }
     var cameraSettingsModel : CameraSettingsModel { get set }
     var isOverlayEditable: Bool { get set }
@@ -196,6 +197,7 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     
     private let service = CameraService()
     var metalView =  CameraMetalView()
+    var mView =  MTKView()
     var cameraSettingsModel : CameraSettingsModel
     
     var metalRenderer: MetalRenderer
@@ -209,7 +211,13 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     
     init() {
         self.session = service.session
-        self.metalRenderer = MetalRenderer(parent: metalView, renderer: metalView.metalView)
+        
+        if let metalDevice = MTLCreateSystemDefaultDevice() {
+            mView.device = metalDevice
+        }
+        mView.preferredFramesPerSecond = 60
+        mView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        self.metalRenderer = MetalRenderer(renderer: mView)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
         
@@ -223,8 +231,8 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     func configure(){
         service.checkForPermisssion()
         service.configure()
-        
-        metalView.metalView.delegate = metalRenderer
+        mView.delegate = metalRenderer
+        //metalView.metalView.delegate = metalRenderer
         service.metalRender = metalRenderer
     }
     

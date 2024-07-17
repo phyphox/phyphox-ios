@@ -59,7 +59,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     
-    init(parent: CameraMetalView ,renderer: MTKView) {
+    init(renderer: MTKView) {
         
         self.renderDestination = renderer
         
@@ -74,6 +74,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        print("mtkView ", size)
         drawRectResized(size: size)
     }
     

@@ -18,8 +18,6 @@ struct CameraMetalView: UIViewRepresentable {
     func makeUIView(context: UIViewRepresentableContext<CameraMetalView>) -> MTKView {
         print("MetalView: makeUIView")
         //metalView.delegate = context.coordinator
-    
-        metalView.preferredFramesPerSecond = 60
         
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             metalView.device = metalDevice
