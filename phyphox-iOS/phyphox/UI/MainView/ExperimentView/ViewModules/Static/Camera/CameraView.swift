@@ -20,9 +20,7 @@ class CameraViewModel: ObservableObject {
     }
 }
 
-
 /**
-
 @available(iOS 14.0, *)
 struct PhyphoxCameraView: View {
     
@@ -128,7 +126,7 @@ struct PhyphoxCameraView: View {
     func setCameraSize(adjustedSize: CGSize){
         print("size setCameraSize ", adjustedSize)
         viewModel.cameraUIDataModel.cameraSize = adjustedSize
-        self.cameraSize = adjustedSize
+        //self.cameraSize = adjustedSize
     }
     
     
@@ -740,6 +738,8 @@ struct CameraSettingView: View {
         
     }
 }
+ */
+
 
 public struct AlertError {
     public var title: String = ""
@@ -779,4 +779,4 @@ struct TextButton: View {
 }
 
 
- */
+

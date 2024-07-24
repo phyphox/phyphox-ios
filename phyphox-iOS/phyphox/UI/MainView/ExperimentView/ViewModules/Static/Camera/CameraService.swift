@@ -99,20 +99,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func getSelectableValuesForCameraSettingsList(cameraSettingMode: CameraSettingMode) -> [Float] {
         switch cameraSettingMode {
         case .ZOOM:
-            var zoomList : [Float] = []
-            if(cameraModel?.cameraSettingsModel.ultraWideCamera == true){
-                zoomList.append(0.5)
-            }
-            
-            if(cameraModel?.cameraSettingsModel.maxOpticalZoom != nil ){
-                let zoomValue = getAvailableOpticalZoomList(maxOpticalZoom_: cameraModel?.cameraSettingsModel.maxOpticalZoom)
-                for value in zoomValue{
-                    zoomList.append(Float(value))
-                }
-                //zoomList.append(Float((cameraModel?.cameraSettingsModel.maxOpticalZoom)! * 3 ))
-            }
-            return zoomList.map{Float($0)}
-            
+            return getOpticalZoomList().map{Float($0)}
         case .EXPOSURE:
             return getExposureValues()
         case .AUTO_EXPOSURE:
@@ -591,8 +578,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 zoomList.append(contentsOf: secondaryZoomFactors.map { Double($0) / 2.0 })
             }
         }
-        
-        return zoomList.sorted()
+        let array = Array(Set(zoomList)) // to make sure there are not duplicate numbers
+        return array.sorted()
         
     }
     

@@ -20,9 +20,81 @@ class CameraUIDataModel: ObservableObject {
     @Published var cameraSize: CGSize = CGSize(width: 0, height: 0)
 }
 
+protocol ZoomSliderViewDelegate: AnyObject {
+    func buttonTapped()
+}
+
 
 @available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule {
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    
+    weak var buttonClickedDelegate: ZoomSliderViewDelegate?
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        self.cameraSettingValues.count
+    }
+    
+    var index : IndexPath = IndexPath(row: 0, section: 0)
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CameraSettingValueViewCell.identifier, for: indexPath) as? CameraSettingValueViewCell else {
+            fatalError("Failed to dequeue CameraSettingValueViewCell in CameraUIView")
+        }
+        
+        index = indexPath
+        let value = self.cameraSettingValues[indexPath.row]
+        cell.configure(with: String(value))
+        return cell
+         
+        /**
+        let value = Array(self.isoValuesWithSelectedFlag.keys)[indexPath.row]
+        cell.configure(with: String(value))
+        return cell
+         */
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    
+        print("indexPath ", indexPath.row)
+        
+        if let cell = collectionView.cellForItem(at: indexPath) as? CameraSettingValueViewCell {
+            cell.isSelected = true
+            cell.contentView.tintColor = UIColor(named: "highlightColor")
+            let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(settingValueTapped(_:)))
+            currentindex = indexPath.row
+            cell.contentView.addGestureRecognizer(tapGestureRecognizer)
+            tapGestureRecognizer.cancelsTouchesInView = false
+        }
+    }
+    
+    var currentindex = 0
+    
+    
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath) as! CameraSettingValueViewCell
+                cell.isSelected = false
+
+    }
+    
+    
+    @objc private func settingValueTapped(_ sender: UITapGestureRecognizer){
+        print("currentTitle ", currentindex )
+        
+       
+        if(cameraSettingMode == .SHUTTER_SPEED) {
+            cameraViewDelegete?.cameraSettingsModel.shutterSpeed(value: Double(self.cameraSettingValues[currentindex]))
+        }
+        if(cameraSettingMode == .ISO) {
+            cameraViewDelegete?.cameraSettingsModel.iso(value: Int(self.cameraSettingValues[currentindex]))
+        }
+        
+        if(cameraSettingMode == .ZOOM){
+            buttonClickedDelegate?.buttonTapped()
+            cameraViewDelegete?.cameraSettingsModel.setZoomScale(scale: CGFloat(self.cameraSettingValues[currentindex]))
+        }
+    }
+    
+    let loadZoomSessionQueue = DispatchQueue(label: "loadZoom", attributes: [], autoreleaseFrequency: .workItem)
    
     var cameraSelectionDelegate: CameraSelectionDelegate?
     var cameraViewDelegete: CameraViewDelegate?
@@ -32,7 +104,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private let dataModel = CameraUIDataModel()
     private let cameraViewModel : CameraViewModel
     
-    private var cancellables = Set<AnyCancellable>()
+    private var cancellableForCameraSettingMode = Set<AnyCancellable>()
     
     // Camera preview views
     private var cameraPreviewView: UIView
@@ -40,6 +112,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private let previewResizingButton : UIButton
     private var headerView: UIView?
     private var metalView: MTKView?
+    private var zoomSlider: UISlider?
     
     // View minimization and maximization
     private var isViewMaximized = false
@@ -53,8 +126,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     // Camera Setting Views and its flags
     private var cameraSettingUIView: UIStackView?
-    private var cameraSettingHostingController : UIHostingController<CameraSettingView>?
-    private var cameraSettingMode: CameraSettingMode = .NONE
+    @Published var cameraSettingMode: CameraSettingMode = .NONE
     private var isListVisible: Bool = false
     private var rotation: Double = 0.0
     private var isFlipped: Bool = false
@@ -69,8 +141,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     // size definations
     private let heightSpacing = 40.0
     private let actualScreenWidth = UIScreen.main.bounds.width
+    private let actualScreenHeight = UIScreen.main.bounds.height
     private let screenWidth = UIScreen.main.bounds.width
     private let screenHeight = UIScreen.main.bounds.height / 2
+    
     
     required init?(descriptor: CameraViewDescriptor) {
         self.descriptor = descriptor
@@ -92,6 +166,20 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         isoSettingText = createLabel(withText: "Not set")
         shutterSpeedText = createLabel(withText: "Not set")
         apertureText = createLabel(withText: "Not set")
+        
+        self.collectionView.dataSource = self
+        self.collectionView.delegate = self
+        self.isUserInteractionEnabled = true
+
+        
+        $cameraSettingMode.sink(receiveValue: { newMode in
+            print("mode ", newMode)
+            
+            for val in self.isoValuesWithSelectedFlag.sorted(by: <) {
+                print(val)
+            }
+        }
+        ).store(in: &cancellableForCameraSettingMode)
     }
     
     @available(*, unavailable)
@@ -128,34 +216,64 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         metalView?.contentMode = .scaleAspectFit
         metalView?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(resizeTapped(_:))))
         
+       
         addSubview(headerView ?? emptyView)
         addSubview(metalView ?? emptyView)
         addSubview(cameraSettingUIView ?? emptyView)
+        addSubview(collectionView)
+        
+        
+       
         
         if resizableState == .exclusive {
             cameraSettingUIView?.frame = CGRect(x: 0.0, y: h + 10.0, width: frame.width, height: 70.0)
+            self.collectionView.frame = CGRect(x: 0, y: h + 10.0 + 80.0 , width: frame.width , height: 50.0)
+            self.collectionView.contentInset = .init(top: 0, left: frame.width / 2, bottom: 0, right: frame.width / 2 )
+            if(cameraViewDelegete != nil ){
+                zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
+                buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
+                addSubview(zoomSlider ?? emptyView)
+            }
+            self.zoomSlider?.frame = CGRect(x: 0, y: h + 10.0 + 80.0 + 40.0 , width: frame.width , height: 50.0)
+            self.zoomSlider?.isHidden = false
         } else{
             cameraSettingUIView?.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
+            self.collectionView.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
+            self.zoomSlider?.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
+            self.zoomSlider?.isHidden = true
         }
         
     }
     
+    
+    let settingValueHeight = 50.0
+    
     func updateResolution(resolution: CGSize) {
         setNeedsLayout()
     }
+ 
     
     private func getAdjustedSize() -> CGSize{
         let h, w: CGFloat
         
         let frameWidth = UIScreen.main.bounds.width
         let frameHeight = UIScreen.main.bounds.height
+        print("frame.height", frame.height)
+        
+        var frameH : CGFloat
+        
+        if resizableState == .exclusive {
+            frameH = frameHeight * 0.65
+        } else {
+            frameH = frame.height
+        }
         
         if let imageResolution =  cameraViewDelegete?.cameraSettingsModel.resolution  {
             if(imageResolution.width == 0.0 || imageResolution.height == 0.0) {
                 w = frame.width
-                h = frame.height
+                h = frameH
             } else {
-                let actualAspect = frame.width / frame.height
+                let actualAspect = frame.width / frameH
                 let isLandscape = (frameWidth > frameHeight)
                 let aspect = isLandscape ? (imageResolution.width / imageResolution.height) : (imageResolution.height / imageResolution.width)
             
@@ -164,14 +282,14 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                     w = frame.width
                     h = w / aspect
                 } else {
-                    h = frame.height
+                    h = frameH
                     w = h * aspect
                 }
             }
             
         } else {
             w = frame.width
-            h = frame.height
+            h = frameH
         }
         return CGSize(width: w, height: h)
     }
@@ -304,7 +422,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
 
 
-    // MARK: - button tap events
+    // MARK: - gesture recognizers
     
     @objc func resizeTapped(_ sender: UITapGestureRecognizer) {
         if resizableState == .normal {
@@ -360,6 +478,14 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         cameraSettingMode = .ISO
         cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .ISO
         cameraViewDelegete?.cameraSettingsModel.service?.configureSession()
+        self.collectionView.reloadData()
+        DispatchQueue.main.async {
+            if (self.cameraSettingValues.count > 0){
+                self.collectionView.selectItem(at: IndexPath(item: 2 , section: 0), animated: false, scrollPosition: .centeredHorizontally)
+                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: 2, section: 0))
+            }
+            
+        }
         isListVisible.toggle()
         zoomClicked = false
     }
@@ -369,6 +495,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         cameraSettingMode = .SHUTTER_SPEED
         cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .SHUTTER_SPEED
         cameraViewDelegete?.cameraSettingsModel.service?.configure()
+        self.collectionView.reloadData()
         isListVisible.toggle()
         zoomClicked = false
     }
@@ -382,82 +509,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
         cameraSettingMode = .ZOOM
+        cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .ZOOM
         isListVisible.toggle()
+        self.collectionView.reloadData()
+        print("currentCAmerasetting values ", cameraSettingValues)
         zoomClicked = !zoomClicked
     }
-    
-    
-    // MARK: - Utility Functions for creating views
-    
-    private func createStackView(axis: NSLayoutConstraint.Axis, distribution: UIStackView.Distribution) -> UIStackView {
-        let stackView = UIStackView()
-        stackView.axis = axis
-        stackView.distribution = distribution
-        stackView.alignment = .fill
-        stackView.backgroundColor = .clear
-        
-        return stackView
-    }
-    
-    
-    private func createButton(image: ButtonImage, action: Selector) -> UIButton {
-        let button = UIButton(type: .custom)
-        button.backgroundColor = .clear
-        
-        func rescaleImage(edgeInsets: UIEdgeInsets? = nil, transform: CGAffineTransform? = nil) {
-            if let insets = edgeInsets {
-                button.imageEdgeInsets = insets
-            }
-            if let transform = transform {
-                button.transform = transform
-            }
-        }
-        
-        switch image {
-        case .systemImageName(let systemName):
-            button.setImage(UIImage(systemName: systemName), for: .normal)
-            rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
-        case .assetImageName(let imageName):
-            let image = UIImage(named: imageName)
-            button.setImage(image, for: .normal)
-           
-            switch imageName{
-            case "ic_auto_exposure":
-                rescaleImage(edgeInsets: UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6))
-            case "flip_camera", "ic_camera_iso":
-                rescaleImage(edgeInsets: UIEdgeInsets(top: 3, left: 3, bottom: 3, right: 3))
-            case "ic_zoom", "ic_shutter_speed":
-                rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
-            default:
-                break
-            }
-        }
-        
-        button.imageView?.contentMode = .scaleAspectFit
-        button.addTarget(self, action: action, for: .touchUpInside)
-        
-        return button
-    }
-    
-    enum ButtonImage {
-        case systemImageName(String)
-        case assetImageName(String)
-    }
-
-    
-    private func createLabel(withText text: String , font: UIFont? = nil) -> UILabel {
-        let label = UILabel()
-        label.text = text
-        label.backgroundColor = UIColor(named: "mainBackground")
-        label.textColor = UIColor(named: "textColor")
-        label.font = font ?? .preferredFont(forTextStyle: .caption1)
-        label.textAlignment = .center
-        
-        return label
-    }
-    
-    
-    // MARK: - Gesture recognizer for panning
      
     @objc func panned(_ sender: UIPanGestureRecognizer) {
         
@@ -534,7 +591,274 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
     }
     
+    
+    // MARK: - camera setting exposure value generator
+   
+ 
+    private let collectionView: UICollectionView = {
+        //let layout = CenterAlignedCollectionViewFlowLayout()
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.register(CameraSettingValueViewCell.self, forCellWithReuseIdentifier: CameraSettingValueViewCell.identifier)
+        return collectionView
+    }()
+    
+    
+    private var cameraSettingValues : [Float] {
+        return cameraViewDelegete?.cameraSettingsModel.getLisOfCameraSettingsValue(cameraSettingMode: self.cameraSettingMode) ?? []
+        
+    }
+    
+ 
+    
+    
+    func findIsoNearestNumber(value: Double, numbers: [Double]) -> Double {
+        var nearestNumber: Double?
+        var minDifference = Double.infinity
+        
+        for number in numbers {
+            let difference = abs(number - value)
+            if difference < minDifference {
+                minDifference = difference
+                nearestNumber = number
+            }
+        }
+        
+        return nearestNumber ?? 30.0
+    }
+    
+    private var isoValuesWithUserSelectedFlag : [Double:Double] = [ : ]
+    
+    private func updateExposureValue(){
+        var currentValue: Double = 1.0
+        
+        if(cameraSettingMode == .SHUTTER_SPEED){
+            currentValue = CMTimeGetSeconds(cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000)) * 1000
+            if shutters.contains(Int(currentValue)){
+                // Do nothing
+            } else {
+                currentValue = findIsoNearestNumber(value: currentValue, numbers: shutters.map{Double($0)})
+            }
+            
+        } else if(cameraSettingMode == .ISO){
+            currentValue = Double(cameraViewDelegete?.cameraSettingsModel.currentIso ?? 100)
+        } else if(cameraSettingMode == .EXPOSURE){
+            currentValue = Double(cameraViewDelegete?.cameraSettingsModel.currentExposureValue ?? 0)
+        }
+        
+        let cameraSettingsValues = cameraViewDelegete?.cameraSettingsModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+        
+        for value in (cameraSettingsValues ?? []) {
+            
+            if (value == Float(currentValue)) {
+                isoValuesWithUserSelectedFlag[Double(value)] = 1.0
+            } else {
+                isoValuesWithUserSelectedFlag[Double(value)] = 0.0
+            }
+        }
+    }
+    
+    private var isoValuesWithSelectedFlag: [Double: Double] {
+        var dictionary: [Double: Double] = [:]
+        
+        var currentValue: Double = 1.0
+        
+        if(cameraSettingMode == .SHUTTER_SPEED){
+            currentValue = CMTimeGetSeconds(cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed ?? CMTime(seconds: 30.0, preferredTimescale: 1000)) * 1000
+            if shutters.contains(Int(currentValue)){
+                // Do nothing
+            } else {
+                currentValue = findIsoNearestNumber(value: currentValue, numbers: shutters.map{Double($0)})
+                
+            }
+            
+        } else if(cameraSettingMode == .ISO){
+            currentValue = Double(cameraViewDelegete?.cameraSettingsModel.currentIso ?? 100)
+        } else if(cameraSettingMode == .EXPOSURE){
+            currentValue = Double(cameraViewDelegete?.cameraSettingsModel.currentExposureValue ?? 0)
+        }
+        
+        
+        let cameraSettingsValues = cameraViewDelegete?.cameraSettingsModel.getLisOfCameraSettingsValue(cameraSettingMode: cameraSettingMode)
+        
+        for value in (cameraSettingsValues ?? []) {
+            
+            if (value == Float(currentValue)) {
+                dictionary[Double(value)] = 1.0
+            } else {
+                dictionary[Double(value)] = 0.0
+            }
+            
+        }
+        exposureValuesWithSelectedFlag = dictionary
+        return dictionary
+    }
+    
+    private var sliderValue: Double = 0.5
+    
+    var zoomValuesWithItemSelectionFlag: [Double: Double] = [ 1.0 : 1.0]
+    
+    var exposureValuesWithSelectedFlag: [Double: Double] = [:]
+    
+    private func updateValue(key: Double) {
+        for zoomvValues in zoomValuesWithItemSelectionFlag.keys{
+            if (key == zoomvValues){
+                zoomValuesWithItemSelectionFlag[zoomvValues] = 1.0
+            } else{
+                zoomValuesWithItemSelectionFlag[zoomvValues] = 0.0
+            }
+        }
+        
+    }
+    
+    private func updateValuesWithSelectedIndex(values: [Double]) {
+        zoomValuesWithItemSelectionFlag = values.reduce(into: [:]) { result, value in
+            if value == 1.0 {
+                result[value] = 1.0
+            } else {
+                result[value] = 0
+            }
+        }
+    }
+    
+    private func updateExposureValue(key: Double) {
+        for zoomvValues in isoValuesWithSelectedFlag.keys{
+            if (key == zoomvValues){
+                isoValuesWithUserSelectedFlag[zoomvValues] = 1.0
+            } else{
+                isoValuesWithUserSelectedFlag[zoomvValues] = 0.0
+            }
+        }
+        
+    }
+    
+    // MARK: - Utility Functions for creating views
+    
+    private func createStackView(axis: NSLayoutConstraint.Axis, distribution: UIStackView.Distribution) -> UIStackView {
+        let stackView = UIStackView()
+        stackView.axis = axis
+        stackView.distribution = distribution
+        stackView.alignment = .fill
+        stackView.backgroundColor = .clear
+        
+        return stackView
+    }
+    
+    private func createButton(image: ButtonImage, action: Selector) -> UIButton {
+        let button = UIButton(type: .custom)
+        button.backgroundColor = .clear
+        
+        func rescaleImage(edgeInsets: UIEdgeInsets? = nil, transform: CGAffineTransform? = nil) {
+            if let insets = edgeInsets {
+                button.imageEdgeInsets = insets
+            }
+            if let transform = transform {
+                button.transform = transform
+            }
+        }
+        
+        switch image {
+        case .systemImageName(let systemName):
+            button.setImage(UIImage(systemName: systemName), for: .normal)
+            rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
+        case .assetImageName(let imageName):
+            let image = UIImage(named: imageName)
+            button.setImage(image, for: .normal)
+           
+            switch imageName{
+            case "ic_auto_exposure":
+                rescaleImage(edgeInsets: UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6))
+            case "flip_camera", "ic_camera_iso":
+                rescaleImage(edgeInsets: UIEdgeInsets(top: 3, left: 3, bottom: 3, right: 3))
+            case "ic_zoom", "ic_shutter_speed":
+                rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
+            default:
+                break
+            }
+        }
+        
+        button.imageView?.contentMode = .scaleAspectFit
+        button.addTarget(self, action: action, for: .touchUpInside)
+        
+        return button
+    }
+    
+    enum ButtonImage {
+        case systemImageName(String)
+        case assetImageName(String)
+    }
+
+    private func createLabel(withText text: String , font: UIFont? = nil) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.backgroundColor = UIColor(named: "mainBackground")
+        label.textColor = UIColor(named: "textColor")
+        label.font = font ?? .preferredFont(forTextStyle: .caption1)
+        label.textAlignment = .center
+        
+        return label
+    }
+    
+    
+    private func createTextButton(label: String, color: UIColor, action: Selector) {
+        let textButton = UIButton(type:.custom)
+        
+        textButton.titleLabel?.text = label
+        textButton.titleLabel?.textColor = color
+        textButton.addTarget(self, action: action, for: .touchUpInside)
+    }
+    
   
+}
+
+// MARK: - camera setting values collection cell
+class CameraSettingValueViewCell: UICollectionViewCell {
+    
+    static let identifier = "CameraSettingValueViewCell"
+    
+    override var isSelected: Bool {
+        didSet {
+            settingValueView.backgroundColor = isSelected ? UIColor(named: "highlightColor") : UIColor(named: "buttonBackground")
+        }
+    }
+    
+    private let settingValueView: UIButton = {
+        let label = UIButton(type: .roundedRect)
+        label.backgroundColor = UIColor(named: "buttonBackground")
+        label.layer.cornerRadius = 15.0
+        label.titleLabel?.font = .preferredFont(forTextStyle: .caption1)
+        label.setTitleColor(UIColor(named: "textColorInsideButton"), for: .normal)
+        label.isUserInteractionEnabled = false
+        return label
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public func configure(with text: String){
+        self.settingValueView.setTitle(text, for: .normal)
+        self.setupUI()
+    }
+    
+    private func setupUI(){
+        //self.backgroundColor = .clear
+        self.addSubview(self.settingValueView)
+        self.settingValueView.frame = CGRect(x: 0, y: 0, width: 50, height: 25)
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.settingValueView.setTitle(nil, for: .normal)
+    }
 }
 
 
@@ -551,4 +875,57 @@ extension UIView
         }
         return (responder as? UIViewController)!
     }
+}
+
+
+
+@available(iOS 14.0, *)
+class ZoomSlider : UISlider , ZoomSliderViewDelegate{
+    
+    
+    let cameraModel: CameraSettingsModel
+    
+    init(cameraSettingModel: CameraSettingsModel) {
+        self.cameraModel = cameraSettingModel
+        
+        super.init(frame: CGRect.zero)
+        setupSlider()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupSlider() {
+        self.minimumValue = minimumZoomValue
+        self.maximumValue = maximumZoomValue
+        self.value = 1
+        self.minimumValueImage = UIImage(systemName: "minus.magnifyingglass")
+        self.maximumValueImage = UIImage(systemName: "plus.magnifyingglass")
+        self.thumbTintColor = UIColor(named: "highlightColor")
+        self.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+    }
+    
+    
+    
+    @objc func sliderValueChanged(_ sender :UISlider) {
+        print("slider current value ", CGFloat(sender.value))
+        self.cameraModel.setZoomScale(scale: CGFloat(sender.value))
+    }
+    
+    lazy private var minimumZoomValue : Float =  {
+        return Float(self.cameraModel.service?.getMinimumZoomValue(defaultCamera: true) ?? 1.0)
+        
+    }()
+   
+    
+    lazy private var maximumZoomValue: Float =  {
+        return Float(self.cameraModel.service?.getMaxZoom() ?? 2)
+    }()
+        
+    
+    func buttonTapped() {
+        self.value = 1.0
+    }
+    
 }
