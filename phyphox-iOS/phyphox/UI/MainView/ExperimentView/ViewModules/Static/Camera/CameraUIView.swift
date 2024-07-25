@@ -203,12 +203,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         super.layoutSubviews()
         
         metalView = cameraViewDelegete?.mView
-        
+    
         cameraSelectionDelegate?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
         cameraSettingUIView = cameraSettingViews(adjustmentLabel: descriptor.exposureAdjustmentLevel)
         
-        let w = getAdjustedSize().width
-        let h = getAdjustedSize().height
+        let w = getAdjustedPreviewFrameSize().width
+        let h = getAdjustedPreviewFrameSize().height
       
         headerView?.frame = CGRect(x: 0.0, y: 0.0, width: frame.width, height: heightSpacing - 10.0)
         
@@ -222,8 +222,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         addSubview(cameraSettingUIView ?? emptyView)
         addSubview(collectionView)
         
-        
-       
         
         if resizableState == .exclusive {
             cameraSettingUIView?.frame = CGRect(x: 0.0, y: h + 10.0, width: frame.width, height: 70.0)
@@ -251,46 +249,31 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     func updateResolution(resolution: CGSize) {
         setNeedsLayout()
     }
- 
     
-    private func getAdjustedSize() -> CGSize{
-        let h, w: CGFloat
-        
+    private func getAdjustedPreviewFrameSize() -> CGSize{
         let frameWidth = UIScreen.main.bounds.width
         let frameHeight = UIScreen.main.bounds.height
-        print("frame.height", frame.height)
         
-        var frameH : CGFloat
+        let frameH = resizableState == .exclusive ? frameHeight * 0.65 : frame.height
         
-        if resizableState == .exclusive {
-            frameH = frameHeight * 0.65
-        } else {
-            frameH = frame.height
+        guard let imageResolution = cameraViewDelegete?.cameraSettingsModel.resolution else {
+            return CGSize(width: frame.width, height: frameH)
         }
         
-        if let imageResolution =  cameraViewDelegete?.cameraSettingsModel.resolution  {
-            if(imageResolution.width == 0.0 || imageResolution.height == 0.0) {
-                w = frame.width
-                h = frameH
-            } else {
-                let actualAspect = frame.width / frameH
-                let isLandscape = (frameWidth > frameHeight)
-                let aspect = isLandscape ? (imageResolution.width / imageResolution.height) : (imageResolution.height / imageResolution.width)
-            
-                if aspect > actualAspect {
-                    
-                    w = frame.width
-                    h = w / aspect
-                } else {
-                    h = frameH
-                    w = h * aspect
-                }
-            }
-            
-        } else {
+        let actualAspect = frame.width / frameH
+        let isLandscape = frameWidth > frameHeight
+        let aspect = isLandscape ? (imageResolution.width / imageResolution.height) : (imageResolution.height / imageResolution.width)
+           
+        let h, w: CGFloat
+        
+        if aspect > actualAspect {
             w = frame.width
+            h = w / aspect
+        } else {
             h = frameH
+            w = h * aspect
         }
+        
         return CGSize(width: w, height: h)
     }
     

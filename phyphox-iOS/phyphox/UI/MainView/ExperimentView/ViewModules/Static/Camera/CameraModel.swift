@@ -80,7 +80,7 @@ class CameraSettingsModel: ObservableObject {
     
     @Published var isDefaultCamera: Bool = true
     
-    var resolution = CGSize(width: 0, height: 0)
+    var resolution = CGSize(width: 480, height: 360)
     
     /// The app's default camera.
     var defaultCamera: AVCaptureDevice? {

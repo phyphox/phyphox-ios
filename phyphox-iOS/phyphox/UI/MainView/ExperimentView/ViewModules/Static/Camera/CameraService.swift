@@ -330,7 +330,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    //MARK Camera Configuration
+    //MARK: Camera Configuration
     
     func configureSession(){
         
