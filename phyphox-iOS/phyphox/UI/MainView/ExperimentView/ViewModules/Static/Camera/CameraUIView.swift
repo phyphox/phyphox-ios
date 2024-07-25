@@ -27,48 +27,6 @@ protocol ZoomSliderViewDelegate: AnyObject {
 
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-    
-    weak var buttonClickedDelegate: ZoomSliderViewDelegate?
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        self.cameraSettingValues.count
-    }
-    
-    var index : IndexPath = IndexPath(row: 0, section: 0)
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CameraSettingValueViewCell.identifier, for: indexPath) as? CameraSettingValueViewCell else {
-            fatalError("Failed to dequeue CameraSettingValueViewCell in CameraUIView")
-        }
-        
-        index = indexPath
-        let value = self.cameraSettingValues[indexPath.row]
-        cell.configure(with: String(value))
-        return cell
-
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
-        if let cell = collectionView.cellForItem(at: indexPath) as? CameraSettingValueViewCell {
-            cell.isSelected = true
-            cell.contentView.tintColor = UIColor(named: "highlightColor")
-            let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(settingValueTapped(_:)))
-            currentCameraSettingValuesIndex = indexPath.row
-            cell.contentView.addGestureRecognizer(tapGestureRecognizer)
-            tapGestureRecognizer.cancelsTouchesInView = false
-        }
-    }
-    
-    
-    
-    
-    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath) as! CameraSettingValueViewCell
-                cell.isSelected = false
-
-    }
-    
  
    
     var cameraSelectionDelegate: CameraSelectionDelegate?
@@ -385,7 +343,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             case .aperture:
                 vStack.addArrangedSubview(createButton(image: .systemImageName("camera.aperture"),
                                                        action: #selector(apertureButtonTapped(_:))))
-                vStack.addArrangedSubview(createLabel(withText: "Not set"))
+                vStack.addArrangedSubview(createDisabledLabel(withText: "Not set"))
             case .zoom:
                 vStack.addArrangedSubview(createButton(image: .assetImageName("ic_zoom"), 
                                                        action: #selector(zoomButtonTapped(_:))))
@@ -642,10 +600,18 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
         }
         
+        func disabledImage(){
+            button.isEnabled = false
+            button.alpha = 0.5
+        }
+        
         switch image {
         case .systemImageName(let systemName):
             button.setImage(UIImage(systemName: systemName), for: .normal)
             rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
+            if(systemName == "camera.aperture"){
+                disabledImage()
+            }
         case .assetImageName(let imageName):
             let image = UIImage(named: imageName)
             button.setImage(image, for: .normal)
@@ -684,6 +650,13 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         return label
     }
     
+    private func createDisabledLabel(withText text: String) -> UILabel {
+        let label = createLabel(withText: text)
+        label.isEnabled = false
+        label.alpha = 0.5
+        return label
+    }
+    
     
     private func createTextButton(label: String, color: UIColor, action: Selector) {
         let textButton = UIButton(type:.custom)
@@ -715,6 +688,50 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         
     }
+    
+    //MARK: Collection views functions
+    
+    weak var buttonClickedDelegate: ZoomSliderViewDelegate?
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        self.cameraSettingValues.count
+    }
+    
+    var index : IndexPath = IndexPath(row: 0, section: 0)
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CameraSettingValueViewCell.identifier, for: indexPath) as? CameraSettingValueViewCell else {
+            fatalError("Failed to dequeue CameraSettingValueViewCell in CameraUIView")
+        }
+        
+        index = indexPath
+        let value = self.cameraSettingValues[indexPath.row]
+        cell.configure(with: String(value))
+        return cell
+
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        if let cell = collectionView.cellForItem(at: indexPath) as? CameraSettingValueViewCell {
+            cell.isSelected = true
+            cell.contentView.tintColor = UIColor(named: "highlightColor")
+            let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(settingValueTapped(_:)))
+            currentCameraSettingValuesIndex = indexPath.row
+            cell.contentView.addGestureRecognizer(tapGestureRecognizer)
+            tapGestureRecognizer.cancelsTouchesInView = false
+        }
+    }
+    
+    
+    
+    
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath) as! CameraSettingValueViewCell
+                cell.isSelected = false
+
+    }
+    
     
   
 }
