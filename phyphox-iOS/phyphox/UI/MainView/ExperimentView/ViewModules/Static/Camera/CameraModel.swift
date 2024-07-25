@@ -45,16 +45,19 @@ class CameraSettingsModel: ObservableObject {
     
     var cameraSettingMode: CameraSettingMode = .NONE
     
+    var zoomOpticalLensValues : [Float] = []
     @Published var maxOpticalZoom: Int = 1
     var ultraWideCamera: Bool = false
     @Published var minZoom: Int = 1
     @Published var maxZoom: Int = 1
     var currentZoom: Int = 1
     
-    var minShutterSpeed: Double = 1.0 // min is more less
-    var maxShutterSpeed: Double = 1.0 // max is near or less more than 1.0
+    var shutterSpeedValues: [Float] = []
+    var minShutterSpeed: Double = 1.0
+    var maxShutterSpeed: Double = 1.0
     @Published var currentShutterSpeed: CMTime?
     
+    var isoValues: [Float] = []
     var minIso: Float = 30.0
     var maxIso: Float = 100.0
     @Published var currentIso: Int = 30
@@ -62,6 +65,7 @@ class CameraSettingsModel: ObservableObject {
     var apertureValue: Float = 1.0
     @Published var currentApertureValue: Float = 1.0
     
+    var exposureValues: [Float] = []
     var minExposureValue: Float = 0.0
     var maxExposureValue: Float = 1.0
     @Published var currentExposureValue: Float = 0.0
@@ -140,8 +144,8 @@ class CameraSettingsModel: ObservableObject {
         service?.changeCamera()
     }
     
-    func getLisOfCameraSettingsValue(cameraSettingMode: CameraSettingMode) -> [Float] {
-        service?.getSelectableValuesForCameraSettingsList(cameraSettingMode: cameraSettingMode) ?? []
+    func setLisOfCameraSettingsValue() {
+        service?.setValuesForCameraSettingsList()
     }
     
     

@@ -96,26 +96,29 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     
-    func getSelectableValuesForCameraSettingsList(cameraSettingMode: CameraSettingMode) -> [Float] {
+    func setSelectableValuesForCameraSettingsList(cameraSettingMode: CameraSettingMode){
         switch cameraSettingMode {
         case .ZOOM:
-            return getOpticalZoomList().map{Float($0)}
+            cameraModel?.cameraSettingsModel.zoomOpticalLensValues =  getOpticalZoomList().map{Float($0)}
         case .EXPOSURE:
-            return getExposureValues()
-        case .AUTO_EXPOSURE:
-            return []
-        case .SWITCH_LENS:
-            return []
+            cameraModel?.cameraSettingsModel.exposureValues =  getExposureValues()
+        case .AUTO_EXPOSURE, .SWITCH_LENS, .WHITE_BAlANCE, .NONE:
+            break
         case .ISO:
-            return isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
-                            max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
+            cameraModel?.cameraSettingsModel.isoValues = isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
+                                                                max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
         case .SHUTTER_SPEED:
-            return getShutterSpeedRange().map{Float($0)}
-        case .WHITE_BAlANCE:
-            return []
-        case .NONE:
-            return []
+            cameraModel?.cameraSettingsModel.shutterSpeedValues =  getShutterSpeedRange().map{Float($0)}
         }
+    }
+    
+    func setValuesForCameraSettingsList(){
+        cameraModel?.cameraSettingsModel.zoomOpticalLensValues =  getOpticalZoomList().map{Float($0)}
+        cameraModel?.cameraSettingsModel.exposureValues =  getExposureValues()
+        cameraModel?.cameraSettingsModel.isoValues = isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
+                                                            max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
+        cameraModel?.cameraSettingsModel.shutterSpeedValues =  getShutterSpeedRange().map{Float($0)}
+        
     }
     
     
@@ -165,6 +168,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let maxExposure = self.defaultVideoDevice?.maxExposureTargetBias
         
         self.cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
+        
+        setValuesForCameraSettingsList()
         
     }
     
