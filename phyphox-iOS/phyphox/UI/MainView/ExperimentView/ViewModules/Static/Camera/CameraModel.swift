@@ -43,8 +43,6 @@ class CameraSettingsModel: ObservableObject {
     
     var cameraSettingLevel: CameraSettingLevel = .ADVANCE
     
-    var cameraSettingMode: CameraSettingMode = .NONE
-    
     var zoomOpticalLensValues : [Float] = []
     @Published var maxOpticalZoom: Int = 1
     var ultraWideCamera: Bool = false
@@ -63,7 +61,12 @@ class CameraSettingsModel: ObservableObject {
     @Published var currentIso: Int = 30
     
     var apertureValue: Float = 1.0
-    @Published var currentApertureValue: Float = 1.0
+    var currentApertureValue: Float = 1.0 {
+        didSet {
+            onApertureCurrentValueChanged?(currentApertureValue)
+        }
+    }
+    var onApertureCurrentValueChanged: ((Float) -> Void)?
     
     var exposureValues: [Float] = []
     var minExposureValue: Float = 0.0

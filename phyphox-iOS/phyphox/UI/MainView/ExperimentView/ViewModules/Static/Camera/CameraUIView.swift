@@ -24,9 +24,18 @@ protocol ZoomSliderViewDelegate: AnyObject {
     func buttonTapped()
 }
 
+protocol CameraSettingValueSelectedDelegare: AnyObject {
+    func valueSelected(string: String)
+}
+
 
 @available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingValueSelectedDelegare {
+    
+    func valueSelected(string: String) {
+        isoSettingText?.text = "check"
+    }
+    
  
    
     var cameraSelectionDelegate: CameraSelectionDelegate?
@@ -112,7 +121,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         autoExposureText = createLabel(withText: "Off")
         isoSettingText = createLabel(withText: "Not set")
         shutterSpeedText = createLabel(withText: "Not set")
-        apertureText = createLabel(withText: "Not set")
+        apertureText = createDisabledLabel(withText: "Not set")
         
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
@@ -138,69 +147,106 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     
     override func layoutSubviews() {
+        
         super.layoutSubviews()
         
-        metalView = cameraViewDelegete?.mView
-    
+        guard let metalView = cameraViewDelegete?.mView else { return }
+        self.metalView = metalView
+        
         cameraSelectionDelegate?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
         cameraSettingUIView = cameraSettingViews(adjustmentLabel: descriptor.exposureAdjustmentLevel)
         
-        let w = getAdjustedPreviewFrameSize().width
-        let h = getAdjustedPreviewFrameSize().height
-      
-        headerView?.frame = CGRect(x: 0.0, y: 0.0, width: frame.width, height: heightSpacing - 10.0)
+        let adjustedSize = getAdjustedPreviewFrameSize()
         
-        metalView?.frame = CGRect(x: (frame.width - w)/2, y: 0.0 + heightSpacing , width: w, height: h - heightSpacing)
-        metalView?.contentMode = .scaleAspectFit
-        metalView?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(resizeTapped(_:))))
-        
+        setupHeaderView(frameWidth: frame.width)
+        setupMetalView(width: adjustedSize.width, height: adjustedSize.height)
+        setupCameraSettingViews(width: adjustedSize.width, height: adjustedSize.height)
+            
        
-        addSubview(headerView ?? emptyView)
-        addSubview(metalView ?? emptyView)
-        addSubview(cameraSettingUIView ?? emptyView)
-        addSubview(collectionView)
-        
-        
         if resizableState == .exclusive {
-            cameraSettingUIView?.frame = CGRect(x: 0.0, y: h + 10.0, width: frame.width, height: 70.0)
-            self.collectionView.frame = CGRect(x: 0, y: h + 10.0 + 80.0 , width: self.frame.width , height: 50.0)
-            self.collectionView.contentInset = .init(top: 0, left: self.frame.width / 2, bottom: 0, right: self.frame.width / 2 )
-            self.collectionView.isHidden = true
-            
-            if(cameraViewDelegete != nil ){
-                zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
-                buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
-                addSubview(zoomSlider ?? emptyView)
-            }
-            self.zoomSlider?.frame = CGRect(x: 0, y: h + 10.0 + 80.0 + 40.0 , width: frame.width , height: 50.0)
-            self.zoomSlider?.isHidden = true
-            
-            $isListVisible.sink(receiveValue: { value in
-                
-                self.collectionView.isHidden = value ? false : true
-                
-            }).store(in: &cancellableForCameraSettingValues)
-            
-            
-            onZoomSliderVisibilityChanged = { value in
-               
-                self.zoomSlider?.isHidden = value ? false : true
-
-            }
-            
-            
-        } else{
-            cameraSettingUIView?.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
-            self.collectionView.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
-            self.zoomSlider?.frame = CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0)
-            self.zoomSlider?.isHidden = true
+            configureExclusiveState(height:adjustedSize.height)
+            } else {
+                resetNonExclusiveState()
         }
-        
+    }
+    
+    private func setupHeaderView(frameWidth: CGFloat) {
+        headerView?.frame = CGRect(x: 0.0, y: 0.0, width: frameWidth, height: heightSpacing - 10.0)
+        addSubview(headerView ?? emptyView)
+    }
+
+    private func setupMetalView(width: CGFloat, height: CGFloat) {
+        self.metalView?.frame = CGRect(x: (frame.width - width) / 2, y: heightSpacing, width: width, height: height - heightSpacing)
+        self.metalView?.contentMode = .scaleAspectFit
+        self.metalView?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(resizeTapped(_:))))
+        addSubview(self.metalView ?? emptyView)
     }
     
     
-    let settingValueHeight = 50.0
+    private func setupCameraSettingViews(width: CGFloat, height: CGFloat) {
+        addSubview(cameraSettingUIView ?? emptyView)
+        addSubview(collectionView)
+    }
     
+    private func configureExclusiveState(height: CGFloat){
+        cameraSettingUIView?.frame = CGRect(x: 0.0, y: height + 10.0, width: frame.width, height: 70.0)
+        collectionView.frame = CGRect(x: 0, y: height + 10.0 + 80.0, width: frame.width, height: 50.0)
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: frame.width / 2, bottom: 0, right: frame.width / 2)
+        collectionView.isHidden = true
+        
+        if(cameraViewDelegete != nil ){
+            zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
+            buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
+            addSubview(zoomSlider ?? emptyView)
+        }
+        
+        self.zoomSlider?.frame = CGRect(x: 0, y: height + 10.0 + 80.0 + 40.0 , width: frame.width , height: 50.0)
+        self.zoomSlider?.isHidden = true
+        
+        $isListVisible.sink(receiveValue: { value in
+            
+            self.collectionView.isHidden = value ? false : true
+            
+        }).store(in: &cancellableForCameraSettingValues)
+        
+        
+        onZoomSliderVisibilityChanged = { value in
+           
+            self.zoomSlider?.isHidden = value ? false : true
+
+        }
+        
+        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+        
+        cameraSettingsModel.onApertureCurrentValueChanged = { value in
+           
+            DispatchQueue.main.async {
+                self.apertureText?.text = "f"+String(value)
+            }
+        }
+        
+        
+        updateCameraSettingsCurrentValues()
+        
+    }
+    
+    private func updateCameraSettingsCurrentValues() {
+        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+        
+        if((cameraSettingsModel.service?.isConfigured) != nil){
+            isoSettingText?.text = String(cameraSettingsModel.currentIso)
+            shutterSpeedText?.text = "1/" + (cameraSettingsModel.currentShutterSpeed?.timescale.description ?? "30")
+            apertureText?.text = "f"+String(cameraSettingsModel.currentApertureValue)
+        }
+    }
+    
+    private func resetNonExclusiveState() {
+        cameraSettingUIView?.frame = .zero
+        collectionView.frame = .zero
+        zoomSlider?.frame = .zero
+        zoomSlider?.isHidden = true
+    }
+
     func updateResolution(resolution: CGSize) {
         setNeedsLayout()
     }
@@ -343,7 +389,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             case .aperture:
                 vStack.addArrangedSubview(createButton(image: .systemImageName("camera.aperture"),
                                                        action: #selector(apertureButtonTapped(_:))))
-                vStack.addArrangedSubview(createDisabledLabel(withText: "Not set"))
+                vStack.addArrangedSubview(apertureText ?? UILabel())
             case .zoom:
                 vStack.addArrangedSubview(createButton(image: .assetImageName("ic_zoom"), 
                                                        action: #selector(zoomButtonTapped(_:))))
@@ -375,8 +421,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
 
     @objc private func flipButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .SWITCH_LENS
-        manageVisiblity()
         
         func rotateButton(_ button: UIButton) {
             let degree = CGFloat.pi / 2
@@ -385,84 +429,80 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             button.transform = isFlipped ? .identity : clockwiseRotation
             isFlipped.toggle()
             
-            if(isFlipped) {
-                cameraPositionText?.text = "Front"
-            } else {
-                cameraPositionText?.text =  "Back"
-            }
-           
+            cameraPositionText?.text = isFlipped ? "Front" : "Back"
+            
         }
         
-        UIView.animate(withDuration: 0.3) {
-            rotateButton(sender)
-        }
+        UIView.animate(withDuration: 0.3) { rotateButton(sender) }
         
-        cameraViewDelegete?.cameraSettingsModel.switchCamera()
+        handleButtonTapped(mode: .SWITCH_LENS, additionalActions: {
+            
+            self.cameraViewDelegete?.cameraSettingsModel.switchCamera()
+ 
+        })
+       
     }
     
-
     @objc private func autoExposureButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .AUTO_EXPOSURE
-        manageVisiblity()
-        autoExposureText?.text = autoExposureOff ? "Off" : "On"
-        cameraViewDelegete?.cameraSettingsModel.autoExposure(auto: !autoExposureOff)
+        handleButtonTapped(mode: .AUTO_EXPOSURE, additionalActions: {
+            self.autoExposureText?.text = self.autoExposureOff ? "Off" : "On"
+            self.cameraViewDelegete?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
+        })
+        
     }
 
     
     @objc private func isoSettingButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .ISO
-        cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .ISO
-       // cameraViewDelegete?.cameraSettingsModel.service?.configureSession()
+        handleButtonTapped(mode: .ISO, additionalActions: {
+            self.collectionView.reloadData()
+        })
        
-        /**
+        guard let currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(self.cameraViewDelegete?.cameraSettingsModel.currentIso ?? 100)}) else { return }
+        
         DispatchQueue.main.async {
             if (self.cameraSettingValues.count > 0){
-                self.collectionView.selectItem(at: IndexPath(item: 2 , section: 0), animated: false, scrollPosition: .centeredHorizontally)
-                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: 2, section: 0))
+                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
+                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
             }
             
-        }*/
-        manageVisiblity()
-        self.collectionView.reloadData()
+        }
+        
     }
     
     
     @objc private func shutterSpeedButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .SHUTTER_SPEED
-        cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .SHUTTER_SPEED
-       // cameraViewDelegete?.cameraSettingsModel.service?.configure()
-        manageVisiblity()
-       self.collectionView.reloadData()
+        handleButtonTapped(mode: .SHUTTER_SPEED, additionalActions: {
+            self.collectionView.reloadData()
+        })
+        
+        guard let currentShutterSpeed = self.cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed else { return }
+        
+        guard let currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentShutterSpeed.timescale.description) }) else { return }
+        
+        DispatchQueue.main.async {
+            if (self.cameraSettingValues.count  > 0){
+                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
+                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
+            }
+            
+        }
     }
     
-    
     @objc private func apertureButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .NONE
-        manageVisiblity()
+        handleButtonTapped(mode: .NONE, additionalActions: nil)
     }
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
-        cameraSettingMode = .ZOOM
-        cameraViewDelegete?.cameraSettingsModel.cameraSettingMode = .ZOOM
-        manageVisiblity()
-        self.collectionView.reloadData()
+        handleButtonTapped(mode: .ZOOM, additionalActions: {
+            self.collectionView.reloadData()
+        })
         
     }
     
-    
-    @objc private func settingValueTapped(_ sender: UITapGestureRecognizer){
-       
-        if(cameraSettingMode == .SHUTTER_SPEED) {
-            cameraViewDelegete?.cameraSettingsModel.shutterSpeed(value: Double(self.cameraSettingValues[currentCameraSettingValuesIndex]))
-        }
-        if(cameraSettingMode == .ISO) {
-            cameraViewDelegete?.cameraSettingsModel.iso(value: Int(self.cameraSettingValues[currentCameraSettingValuesIndex]))
-        }
-        
-        if(cameraSettingMode == .ZOOM){
-            buttonClickedDelegate?.buttonTapped()
-            cameraViewDelegete?.cameraSettingsModel.setZoomScale(scale: CGFloat(self.cameraSettingValues[currentCameraSettingValuesIndex]))
-        }
+    private func handleButtonTapped(mode: CameraSettingMode, additionalActions: (() -> Void)?){
+        cameraSettingMode = mode
+        manageVisiblity()
+        additionalActions?()
     }
     
      
@@ -535,12 +575,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             } else if panningIndexY == 2 {
                 del.y2 = y
             }
-            
         }
-        
-        
     }
-    
     
     // MARK: - camera setting exposure value generator
  
@@ -554,26 +590,20 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         return collectionView
     }()
     
-    
-    private var cameraSettingValues : [Float]  {
-        if(cameraSettingMode == .ISO){
-            return cameraViewDelegete?.cameraSettingsModel.isoValues ?? []
-        }
-        else if(cameraSettingMode == .SHUTTER_SPEED){
-            return cameraViewDelegete?.cameraSettingsModel.shutterSpeedValues ?? []
-        }
-        else if(cameraSettingMode == .EXPOSURE){
-            return cameraViewDelegete?.cameraSettingsModel.shutterSpeedValues ?? []
-        } 
-        else if(cameraSettingMode == .ZOOM){
-            return cameraViewDelegete?.cameraSettingsModel.zoomOpticalLensValues ?? []
-        }
-        else {
+    private var cameraSettingValues: [Float] {
+        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return [] }
+        
+        switch cameraSettingMode {
+        case .ISO:
+            return cameraSettingsModel.isoValues
+        case .SHUTTER_SPEED, .EXPOSURE:
+            return cameraSettingsModel.shutterSpeedValues
+        case .ZOOM:
+            return cameraSettingsModel.zoomOpticalLensValues
+        default:
             return []
         }
-        
     }
-    
   
     // MARK: - Utility Functions for creating views
     
@@ -705,8 +735,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
         
         index = indexPath
-        let value = self.cameraSettingValues[indexPath.row]
-        cell.configure(with: String(value))
+        var value = String(Int(self.cameraSettingValues[indexPath.row]))
+        if(cameraSettingMode == .SHUTTER_SPEED){
+            value = "1/" + value
+        }
+        cell.configure(with: value)
         return cell
 
     }
@@ -716,14 +749,27 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         if let cell = collectionView.cellForItem(at: indexPath) as? CameraSettingValueViewCell {
             cell.isSelected = true
             cell.contentView.tintColor = UIColor(named: "highlightColor")
-            let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(settingValueTapped(_:)))
-            currentCameraSettingValuesIndex = indexPath.row
-            cell.contentView.addGestureRecognizer(tapGestureRecognizer)
-            tapGestureRecognizer.cancelsTouchesInView = false
+            
+            let currentCameraSettingValue = self.cameraSettingValues[indexPath.row]
+            
+            guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+            
+            switch cameraSettingMode {
+            case .NONE, .WHITE_BAlANCE, .AUTO_EXPOSURE, .SWITCH_LENS, .EXPOSURE:
+                break
+            case .ZOOM:
+                buttonClickedDelegate?.buttonTapped()
+                cameraSettingsModel.setZoomScale(scale: CGFloat(currentCameraSettingValue))
+            case .ISO:
+                cameraSettingsModel.iso(value: Int(currentCameraSettingValue))
+                self.isoSettingText?.text = String(Int(currentCameraSettingValue))
+            case .SHUTTER_SPEED:
+                cameraSettingsModel.shutterSpeed(value: Double(currentCameraSettingValue))
+                self.shutterSpeedText?.text = "1/" + String(Int(currentCameraSettingValue))
+           
+            }
         }
     }
-    
-    
     
     
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
@@ -732,8 +778,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 
     }
     
-    
-  
 }
 
 // MARK: - camera setting values collection cell
@@ -772,7 +816,6 @@ class CameraSettingValueViewCell: UICollectionViewCell {
     }
     
     private func setupUI(){
-        //self.backgroundColor = .clear
         self.addSubview(self.settingValueView)
         self.settingValueView.frame = CGRect(x: 0, y: 0, width: 50, height: 25)
     }
@@ -831,7 +874,6 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     
     
     @objc func sliderValueChanged(_ sender :UISlider) {
-        print("slider current value ", CGFloat(sender.value))
         self.cameraModel.setZoomScale(scale: CGFloat(sender.value))
     }
     

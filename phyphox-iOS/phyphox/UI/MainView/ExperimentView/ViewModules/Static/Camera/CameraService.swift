@@ -94,30 +94,15 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func initializeModel(model: CameraModel){
         cameraModel = model
     }
-    
-    
-    func setSelectableValuesForCameraSettingsList(cameraSettingMode: CameraSettingMode){
-        switch cameraSettingMode {
-        case .ZOOM:
-            cameraModel?.cameraSettingsModel.zoomOpticalLensValues =  getOpticalZoomList().map{Float($0)}
-        case .EXPOSURE:
-            cameraModel?.cameraSettingsModel.exposureValues =  getExposureValues()
-        case .AUTO_EXPOSURE, .SWITCH_LENS, .WHITE_BAlANCE, .NONE:
-            break
-        case .ISO:
-            cameraModel?.cameraSettingsModel.isoValues = isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
-                                                                max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
-        case .SHUTTER_SPEED:
-            cameraModel?.cameraSettingsModel.shutterSpeedValues =  getShutterSpeedRange().map{Float($0)}
-        }
-    }
-    
+
     func setValuesForCameraSettingsList(){
-        cameraModel?.cameraSettingsModel.zoomOpticalLensValues =  getOpticalZoomList().map{Float($0)}
-        cameraModel?.cameraSettingsModel.exposureValues =  getExposureValues()
-        cameraModel?.cameraSettingsModel.isoValues = isoRange(min: Int((cameraModel?.cameraSettingsModel.minIso) ?? 30.0),
-                                                            max: Int((cameraModel?.cameraSettingsModel.maxIso) ?? 100.0)).map{Float($0)}
-        cameraModel?.cameraSettingsModel.shutterSpeedValues =  getShutterSpeedRange().map{Float($0)}
+        
+        guard let cameraSettingModel = self.cameraModel?.cameraSettingsModel else { return }
+        
+        cameraSettingModel.zoomOpticalLensValues =  getOpticalZoomList()
+        cameraSettingModel.exposureValues =  getExposureValues()
+        cameraSettingModel.isoValues = getIsoRange(min: (cameraSettingModel.minIso), max: (cameraSettingModel.maxIso))
+        cameraSettingModel.shutterSpeedValues =  getShutterSpeedRange()
         
     }
     
@@ -131,6 +116,44 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     func setCameraSettinginfo(){
+        guard let defaultVideoDevice = self.defaultVideoDevice else { return }
+        guard let cameraModel = cameraModel else { return }
+        
+        let cameraSettingsModel = cameraModel.cameraSettingsModel
+        
+        cameraSettingsModel.minZoom = Int((defaultVideoDevice.minAvailableVideoZoomFactor))
+        cameraSettingsModel.maxZoom = getMaxZoom()
+        cameraSettingsModel.maxOpticalZoom = defaultVideoDevice.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
+        
+        if defaultVideoDevice.deviceType != .builtInWideAngleCamera { return }
+        
+        if let defaultCamera = cameraSettingModel.defaultCamera {
+            cameraSettingsModel.minIso = defaultCamera.activeFormat.minISO
+            cameraSettingsModel.maxIso = defaultCamera.activeFormat.maxISO
+            cameraSettingsModel.currentIso = 100
+            
+            cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds(defaultCamera.activeFormat.minExposureDuration)
+            cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds(defaultCamera.activeFormat.maxExposureDuration)
+            
+            cameraSettingsModel.apertureValue = defaultCamera.lensAperture
+            
+            if defaultCamera.deviceType == .builtInDualWideCamera || defaultCamera.deviceType == .builtInTripleCamera {
+                cameraSettingsModel.ultraWideCamera = true
+            }
+        }
+        
+        cameraSettingsModel.currentApertureValue = defaultVideoDevice.lensAperture
+        cameraSettingsModel.currentShutterSpeed = defaultVideoDevice.exposureDuration
+        
+        let minExposure = defaultVideoDevice.minExposureTargetBias
+        let maxExposure = defaultVideoDevice.maxExposureTargetBias
+        cameraSettingsModel.exposureCompensationRange = minExposure...maxExposure
+        
+        setValuesForCameraSettingsList()
+        
+    }
+    
+    func setCameraSettinginfo_(){
         
         self.cameraModel?.cameraSettingsModel.minZoom = Int((self.defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
         
@@ -281,7 +304,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     self.setCameraSettinginfo()
                     
                     self.metalRender?.defaultVideoDevice = self.defaultVideoDevice
-                    
                     
                     
                     self.session.commitConfiguration()
@@ -563,7 +585,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return []
     }
     
-    func getOpticalZoomList() -> [Double] {
+    func getOpticalZoomList() -> [Float] {
         var zoomList: [Double] = []
         
         zoomList.append(getMinimumZoomValue(defaultCamera: false))
@@ -584,7 +606,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
         }
         let array = Array(Set(zoomList)) // to make sure there are not duplicate numbers
-        return array.sorted()
+        return array.sorted().map{Float($0)}
         
     }
     
@@ -615,7 +637,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return filteredShutterSpeedRange
     }
     
-    func getShutterSpeedRange() -> [Int] {
+    func getShutterSpeedRange() -> [Float] {
         var shutters_available: [Float] = []
         
         let min_seconds = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
@@ -628,7 +650,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
         }
         
-        return shutters_available.map { Int($0) }
+        return shutters_available
         
     }
     
@@ -652,10 +674,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     
-    func isoRange(min: Int, max: Int) -> [Int] {
-        let filteredIsoRange = iso.filter { $0 >= min && $0 <= max }
+    func getIsoRange(min: Float, max: Float) -> [Float] {
+        let filteredIsoRange = iso.filter { $0 >= Int(min) && $0 <= Int(max) }
         
-        return filteredIsoRange
+        return filteredIsoRange.map{Float($0)}
     }
     
     func findIsoNearestNumber(input: Int, numbers: [Int]) -> Int {
