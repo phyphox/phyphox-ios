@@ -190,7 +190,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func configureExclusiveState(height: CGFloat){
         cameraSettingUIView?.frame = CGRect(x: 0.0, y: height + 10.0, width: frame.width, height: 70.0)
         collectionView.frame = CGRect(x: 0, y: height + 10.0 + 80.0, width: frame.width, height: 50.0)
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: frame.width / 2, bottom: 0, right: frame.width / 2)
+       
         collectionView.isHidden = true
         
         if(cameraViewDelegete != nil ){
@@ -454,7 +454,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             self.autoExposureText?.text = self.autoExposureOff ? localize("off") : localize("on")
             self.cameraViewDelegete?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
         })
-        
     }
 
     
@@ -462,8 +461,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         handleButtonTapped(mode: .ISO, additionalActions: {
             self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
+            self.updateContentInset(startListFromMiddle: false)
         })
-        
     }
     
     
@@ -471,16 +470,16 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         handleButtonTapped(mode: .SHUTTER_SPEED, additionalActions: {
             self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
+            self.updateContentInset(startListFromMiddle: false)
         })
-      
     }
     
     @objc private func exposureButtonTapped(_ sender: UIButton){
         handleButtonTapped(mode: .EXPOSURE, additionalActions: {
             self.collectionView.reloadData()
-           
+            self.selectDefaultItemInCollectionView()
+            self.updateContentInset(startListFromMiddle: false)
         })
-       
     }
     
     @objc private func apertureButtonTapped(_ sender: UIButton) {
@@ -493,8 +492,17 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
         handleButtonTapped(mode: .ZOOM, additionalActions: {
             self.collectionView.reloadData()
+            self.selectDefaultItemInCollectionView()
+            self.updateContentInset(startListFromMiddle: true)
         })
-        
+    }
+    
+    private func updateContentInset(startListFromMiddle: Bool){
+        if(startListFromMiddle){
+            self.collectionView.contentInset = UIEdgeInsets(top: 0, left: self.frame.width / 2, bottom: 0, right: self.frame.width / 2)
+        } else{
+            self.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        }
     }
     
     private func handleButtonTapped(mode: CameraSettingMode, additionalActions: (() -> Void)?){
@@ -516,7 +524,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         } else if(cameraSettingMode == .EXPOSURE){
             guard let currentExposureValue = self.cameraViewDelegete?.cameraSettingsModel.currentExposureValue else { return }
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
-        } else {
+        } else if(cameraSettingMode == .ZOOM){
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(1)}) ?? 0
+        }
+        else {
             currentSelectionIndex = 0
         }
         
