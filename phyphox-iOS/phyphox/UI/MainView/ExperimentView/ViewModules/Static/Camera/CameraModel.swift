@@ -25,7 +25,6 @@ protocol CameraSelectionDelegate {
 
 @available(iOS 14.0, *)
 protocol CameraViewDelegate: AnyObject {
-    var metalView: CameraMetalView { get set }
     var mView: MTKView { get set }
     var metalRenderer: MetalRenderer { get set }
     var cameraSettingsModel : CameraSettingsModel { get set }
@@ -129,7 +128,6 @@ class CameraSettingsModel: ObservableObject {
     func setZoomScale(scale: CGFloat) {
         var deviceType : AVCaptureDevice.DeviceType
         
-        let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)
         
         // IF the device has ultra wide camera
         if(scale < 1.0 && scale >= 0.9 || scale == 0.5) {
@@ -203,7 +201,6 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     var locked: String = ""
     
     private let service = CameraService()
-    var metalView =  CameraMetalView()
     var mView =  MTKView()
     var cameraSettingsModel : CameraSettingsModel
     

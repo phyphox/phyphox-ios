@@ -616,7 +616,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             return 1.0
         }
         
-        var additionalCameras = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInTripleCamera, .builtInUltraWideCamera], mediaType: .video, position: .back)
+        let additionalCameras = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInTripleCamera, .builtInUltraWideCamera], mediaType: .video, position: .back)
         
         if(!additionalCameras.devices.isEmpty){
             let minZoomFactor = Double(defaultVideoDevice?.minAvailableVideoZoomFactor ?? 2) / 2.0

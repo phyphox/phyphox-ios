@@ -8,10 +8,18 @@
 
 import Foundation
 import AVFoundation
-import SwiftUI
 import MetalKit
 import Combine
 
+
+@available(iOS 13.0, *)
+class CameraViewModel: ObservableObject {
+    @Published var cameraUIDataModel: CameraUIDataModel
+    
+    init(cameraUIDataModel: CameraUIDataModel) {
+        self.cameraUIDataModel = cameraUIDataModel
+    }
+}
 
 
 @available(iOS 13.0, *)
@@ -24,19 +32,8 @@ protocol ZoomSliderViewDelegate: AnyObject {
     func buttonTapped()
 }
 
-protocol CameraSettingValueSelectedDelegare: AnyObject {
-    func valueSelected(string: String)
-}
-
-
 @available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingValueSelectedDelegare {
-    
-    func valueSelected(string: String) {
-        isoSettingText?.text = "check"
-    }
-    
- 
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
    
     var cameraSelectionDelegate: CameraSelectionDelegate?
     var cameraViewDelegete: CameraViewDelegate?
@@ -118,12 +115,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
         headerView = previewViewHeader()
         
-        cameraPositionText = createLabel(withText: "Back")
-        autoExposureText = createLabel(withText: "Off")
-        isoSettingText = createLabel(withText: "Not set")
-        shutterSpeedText = createLabel(withText: "Not set")
-        exposureText = createLabel(withText: "Not set")
-        apertureText = createDisabledLabel(withText: "Not set")
+        cameraPositionText = createLabel(withText: localize("back"))
+        autoExposureText = createLabel(withText: localize("off"))
+        isoSettingText = createLabel(withText: localize("notSet"))
+        shutterSpeedText = createLabel(withText:localize("notSet"))
+        exposureText = createLabel(withText: localize("notSet"))
+        apertureText = createDisabledLabel(withText: localize("notSet"))
         
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
@@ -311,7 +308,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         hStack.distribution = .fillEqually
         hStack.alignment = .fill
         hStack.addArrangedSubview(cameraPreviewViewControlButton())
-        hStack.addArrangedSubview(createLabel(withText: "Preview", font: .preferredFont(forTextStyle: .body)))
+        hStack.addArrangedSubview(createLabel(withText: localize("preview"), font: .preferredFont(forTextStyle: .body)))
         hStack.addArrangedSubview(emptyButtonView())
         
         return hStack
@@ -438,7 +435,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             button.transform = isFlipped ? .identity : clockwiseRotation
             isFlipped.toggle()
             
-            cameraPositionText?.text = isFlipped ? "Front" : "Back"
+            cameraPositionText?.text = isFlipped ? localize("front") : localize("back")
             
         }
         
@@ -454,7 +451,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func autoExposureButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .AUTO_EXPOSURE, additionalActions: {
-            self.autoExposureText?.text = self.autoExposureOff ? "Off" : "On"
+            self.autoExposureText?.text = self.autoExposureOff ? localize("off") : localize("on")
             self.cameraViewDelegete?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
         })
         
@@ -464,17 +461,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     @objc private func isoSettingButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .ISO, additionalActions: {
             self.collectionView.reloadData()
+            self.selectDefaultItemInCollectionView()
         })
-       
-        guard let currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(self.cameraViewDelegete?.cameraSettingsModel.currentIso ?? 100)}) else { return }
-        
-        DispatchQueue.main.async {
-            if (self.cameraSettingValues.count > 0){
-                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
-                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
-            }
-            
-        }
         
     }
     
@@ -482,34 +470,17 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     @objc private func shutterSpeedButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .SHUTTER_SPEED, additionalActions: {
             self.collectionView.reloadData()
+            self.selectDefaultItemInCollectionView()
         })
-        
-        guard let currentShutterSpeed = self.cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed else { return }
-        
-        guard let currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentShutterSpeed.timescale.description) }) else { return }
-        
-        DispatchQueue.main.async {
-            if (self.cameraSettingValues.count  > 0){
-                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
-                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
-            }
-            
-        }
+      
     }
     
     @objc private func exposureButtonTapped(_ sender: UIButton){
         handleButtonTapped(mode: .EXPOSURE, additionalActions: {
             self.collectionView.reloadData()
+           
         })
-        
-        guard let currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(self.cameraViewDelegete?.cameraSettingsModel.currentExposureValue ?? 100)}) else { return }
-        
-        DispatchQueue.main.async {
-            if(self.cameraSettingValues.count > 0){
-                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
-                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
-            }
-        }
+       
     }
     
     @objc private func apertureButtonTapped(_ sender: UIButton) {
@@ -530,6 +501,33 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         cameraSettingMode = mode
         manageVisiblity()
         additionalActions?()
+    }
+    
+    private func selectDefaultItemInCollectionView(){
+        var currentSelectionIndex: Int
+        
+        if(cameraSettingMode == .ISO){
+            guard let currentIso = self.cameraViewDelegete?.cameraSettingsModel.currentIso else { return }
+            
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentIso)}) ?? 0
+        } else if(cameraSettingMode == .SHUTTER_SPEED){
+            guard let currentShutterSpeed = self.cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed else { return }
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentShutterSpeed.timescale.description)}) ?? 0
+        } else if(cameraSettingMode == .EXPOSURE){
+            guard let currentExposureValue = self.cameraViewDelegete?.cameraSettingsModel.currentExposureValue else { return }
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
+        } else {
+            currentSelectionIndex = 0
+        }
+        
+        DispatchQueue.main.async {
+            if (self.cameraSettingValues.count > 0){
+                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
+                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
+            }
+            
+        }
+        
     }
     
      
@@ -930,4 +928,21 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
         self.value = 1.0
     }
     
+}
+
+public struct AlertError {
+    public var title: String = ""
+    public var message: String = ""
+    public var primaryButtonTitle = "Accept"
+    public var secondaryButtonTitle: String?
+    public var primaryAction: (() -> ())?
+    public var secondaryAction: (() -> ())?
+    
+    public init(title: String = "", message: String = "", primaryButtonTitle: String = "Accept", secondaryButtonTitle: String? = nil, primaryAction: (() -> ())? = nil, secondaryAction: (() -> ())? = nil) {
+        self.title = title
+        self.message = message
+        self.primaryAction = primaryAction
+        self.primaryButtonTitle = primaryButtonTitle
+        self.secondaryAction = secondaryAction
+    }
 }

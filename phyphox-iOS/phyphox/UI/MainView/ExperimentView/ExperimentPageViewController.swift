@@ -8,7 +8,6 @@
 
 import Foundation
 import GCDWebServer
-import SwiftUI
 
 protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)

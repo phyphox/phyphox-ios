@@ -245,6 +245,12 @@
 "depthAggregationModeAverage" = "Average";
 "depthAggregationModeWeighted" = "Weighted";
 "settings" = "Settings";
+"off" = "Off";
+"on" = "On";
+"back" = "Back";
+"front" = "Front";
+"notSet" = "Not set";
+"preview" = "Preview";
 "common_unit_short_arbitrary_unit" = "arb. unit";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";
