@@ -46,6 +46,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     let defaultMinExposureCMTime = CMTime(value: 14, timescale: 1000000, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     let defaultMaxExposureCMTime = CMTime(value: 1, timescale: 1, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     
+    let shutters = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
     
     var isConfigured = false
     
@@ -127,23 +128,21 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         if defaultVideoDevice.deviceType != .builtInWideAngleCamera { return }
         
-        if let defaultCamera = cameraSettingModel.defaultCamera {
-            cameraSettingsModel.minIso = defaultCamera.activeFormat.minISO
-            cameraSettingsModel.maxIso = defaultCamera.activeFormat.maxISO
-            cameraSettingsModel.currentIso = 100
-            
-            cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds(defaultCamera.activeFormat.minExposureDuration)
-            cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds(defaultCamera.activeFormat.maxExposureDuration)
-            
-            cameraSettingsModel.apertureValue = defaultCamera.lensAperture
-            
-            if defaultCamera.deviceType == .builtInDualWideCamera || defaultCamera.deviceType == .builtInTripleCamera {
-                cameraSettingsModel.ultraWideCamera = true
-            }
+        cameraSettingsModel.minIso = defaultVideoDevice.activeFormat.minISO
+        cameraSettingsModel.maxIso = defaultVideoDevice.activeFormat.maxISO
+        cameraSettingsModel.currentIso = 100
+        
+        cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds(defaultVideoDevice.activeFormat.minExposureDuration)
+        cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds(defaultVideoDevice.activeFormat.maxExposureDuration)
+        
+        cameraSettingsModel.apertureValue = defaultVideoDevice.lensAperture
+        
+        if defaultVideoDevice.deviceType == .builtInDualWideCamera || defaultVideoDevice.deviceType == .builtInTripleCamera {
+            cameraSettingsModel.ultraWideCamera = true
         }
         
         cameraSettingsModel.currentApertureValue = defaultVideoDevice.lensAperture
-        cameraSettingsModel.currentShutterSpeed = defaultVideoDevice.exposureDuration
+        cameraSettingsModel.currentShutterSpeed = findClosestPredefinedShutterSpeed(for: defaultVideoDevice.exposureDuration)
         
         let minExposure = defaultVideoDevice.minExposureTargetBias
         let maxExposure = defaultVideoDevice.maxExposureTargetBias
@@ -153,60 +152,21 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    func setCameraSettinginfo_(){
-        
-        self.cameraModel?.cameraSettingsModel.minZoom = Int((self.defaultVideoDevice?.minAvailableVideoZoomFactor ?? 1.0))
-        
-        self.cameraModel?.cameraSettingsModel.maxZoom = getMaxZoom()
-        
-        self.cameraModel?.cameraSettingsModel.maxOpticalZoom = self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
-        
-        
-        if(defaultVideoDevice?.deviceType != .builtInWideAngleCamera){
-            return
-        }
-        
-        cameraModel?.cameraSettingsModel.minIso = cameraSettingModel.defaultCamera?.activeFormat.minISO ?? 30.0
-        cameraModel?.cameraSettingsModel.maxIso = cameraSettingModel.defaultCamera?.activeFormat.maxISO ?? 100.0
-        cameraModel?.cameraSettingsModel.currentIso = 100 //
-        
-        cameraModel?.cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
-        cameraModel?.cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMaxExposureCMTime)
-        
-        cameraModel?.cameraSettingsModel.apertureValue = (cameraSettingModel.defaultCamera?.lensAperture) ?? 1.0
-        
-        //cameraModel?.cameraSettingsModel.maxOpticalZoom = cameraSettingModel.defaultCamera?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
-        
-        if(cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInDualWideCamera ||
-           cameraSettingModel.defaultCamera?.deviceType == AVCaptureDevice.DeviceType.builtInTripleCamera){
-            cameraModel?.cameraSettingsModel.ultraWideCamera = true
-        }
-        
-        self.cameraModel?.cameraSettingsModel.currentApertureValue = self.defaultVideoDevice?.lensAperture ?? 1.0
-        
-        self.cameraModel?.cameraSettingsModel.currentShutterSpeed = (self.defaultVideoDevice?.exposureDuration)
-        
-        
-        let minExposure = self.defaultVideoDevice?.minExposureTargetBias
-        let maxExposure = self.defaultVideoDevice?.maxExposureTargetBias
-        
-        self.cameraModel?.cameraSettingsModel.exposureCompensationRange = (minExposure ?? -8.0)...(maxExposure ?? 8.0)
-        
-        setValuesForCameraSettingsList()
-        
-    }
+   
+    
+    
     
     public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
         
         sessionQueue.async {
             let currentVideoDevice = self.videoDeviceInput.device
-            let currentPosition = currentVideoDevice.position
+           
             
             let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [preferredDevice], mediaType: .video, position: .back)
             
             let device = ultraWideDeviceDiscoverySession.devices
             
-            var newVideoDevice: AVCaptureDevice? = device.first
+            let newVideoDevice: AVCaptureDevice? = device.first
             
             if(!ultraWideDeviceDiscoverySession.devices.isEmpty){
                 
@@ -348,8 +308,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             return
         }
         
-        let width = CVPixelBufferGetWidth(imageBuffer)
-        let height = CVPixelBufferGetHeight(imageBuffer)
+        let _ = CVPixelBufferGetWidth(imageBuffer)
+        let _ = CVPixelBufferGetHeight(imageBuffer)
        
         functionCallCount += 1
         self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
@@ -372,7 +332,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         do {
             // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
-            let defaultCameraType = cameraSettingModel.defaultCamera?.deviceType ?? AVCaptureDevice.DeviceType.builtInWideAngleCamera
+            let defaultCameraType = defaultVideoDevice?.deviceType ?? AVCaptureDevice.DeviceType.builtInWideAngleCamera
             print("defaultCameraType ", defaultCameraType)
             if let backCameraDevice = AVCaptureDevice.default(defaultCameraType, for: .video, position: .back) {
                 // If a rear dual camera is not available, default to the rear wide angle camera.
@@ -640,8 +600,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func getShutterSpeedRange() -> [Float] {
         var shutters_available: [Float] = []
         
-        let min_seconds = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.minExposureDuration) ?? defaultMinExposureCMTime)
-        let max_seconds = CMTimeGetSeconds((cameraSettingModel.defaultCamera?.activeFormat.maxExposureDuration) ?? defaultMinExposureCMTime)
+        guard let defaultCamera = defaultVideoDevice else { return [] }
+        
+        let min_seconds = defaultCamera.activeFormat.minExposureDuration.seconds
+        let max_seconds = defaultCamera.activeFormat.maxExposureDuration.seconds
         
         for one_shutter in shutters {
             let seconds = 1.0 / Float64(one_shutter)
@@ -673,6 +635,38 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return value
     }
     
+    
+    func findClosestPredefinedShutterSpeed(for currentTime: CMTime) -> CMTime {
+        
+        var closestCMTime: CMTime = .zero
+        
+        for (index, _) in shutterSpeeds.enumerated() {
+            if(index == shutterSpeeds.count - 1){
+                break
+            }
+            
+            let currentIndexSecond = shutterSpeeds[index].seconds
+            let nextIndexSecond = shutterSpeeds[index + 1].seconds
+            let average = (currentIndexSecond + nextIndexSecond) / 2
+            let currentThreshold =  shutterSpeeds[index].seconds - average
+          
+            let value = nextIndexSecond + currentThreshold
+            
+            if(currentTime.seconds <= currentIndexSecond && currentTime.seconds >= nextIndexSecond ) {
+               
+                if(value > currentTime.seconds) {
+                    closestCMTime = shutterSpeeds[index + 1]
+                    break
+                } else {
+                    closestCMTime = shutterSpeeds[index]
+                    break
+                }
+            } else {
+              continue
+            }
+        }
+        return closestCMTime
+    }
     
     func getIsoRange(min: Float, max: Float) -> [Float] {
         let filteredIsoRange = iso.filter { $0 >= Int(min) && $0 <= Int(max) }

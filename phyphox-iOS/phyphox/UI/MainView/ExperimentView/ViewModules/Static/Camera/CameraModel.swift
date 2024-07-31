@@ -88,30 +88,6 @@ class CameraSettingsModel: ObservableObject {
     
     var resolution = CGSize(width: 480, height: 360)
     
-    /// The app's default camera.
-    var defaultCamera: AVCaptureDevice? {
-        
-        return AVCaptureDevice.default(.builtInWideAngleCamera,
-                                       for: .video,
-                                       position: .back)
-        
-        // Find the built-in Dual Camera, if it exists.
-        if let device = AVCaptureDevice.default(.builtInTripleCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-        
-        // Find the built-in Dual Wide Camera, if it exists. (consist of wide and ultra wide camera)
-        if let device = AVCaptureDevice.default(.builtInDualWideCamera,
-                                                for: .video,
-                                                position: .back) {
-            return device
-        }
-        
-    }
-    
     @available(iOS 14.0, *)
     init(service: CameraService){
         self.service = service

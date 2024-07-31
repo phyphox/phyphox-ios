@@ -11,6 +11,7 @@ import Foundation
 import CoreGraphics
 import Accelerate
 import AudioToolbox
+import CoreMedia
 
 func CGRectGetMid(_ r: CGRect) -> CGPoint {
     return CGPoint(x: r.midX, y: r.midY)
@@ -55,7 +56,22 @@ let namedColors = [
     "weakwhite":   UIColor(red: (196.0/255.0), green: (196.0/255.0), blue: (196.0/255.0), alpha: 1.0)
 ]
 
-let shutters = [1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000, 8000]
+let shutterSpeeds : [CMTime] = [
+    CMTime(value: 1, timescale: 1),
+    CMTime(value: 1, timescale: 2),
+    CMTime(value: 1, timescale: 4),
+    CMTime(value: 1, timescale: 8),
+    CMTime(value: 1, timescale: 15),
+    CMTime(value: 1, timescale: 30),
+    CMTime(value: 1, timescale: 60),
+    CMTime(value: 1, timescale: 125),
+    CMTime(value: 1, timescale: 250),
+    CMTime(value: 1, timescale: 500),
+    CMTime(value: 1, timescale: 1000),
+    CMTime(value: 1, timescale: 2000),
+    CMTime(value: 1, timescale: 4000),
+    CMTime(value: 1, timescale: 8000),
+]
 
 let iso = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
 

@@ -229,14 +229,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
     }
     
+    
+    
     private func updateCameraSettingsCurrentValues() {
         guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
         
         if((cameraSettingsModel.service?.isConfigured) != nil){
             isoSettingText?.text = String(cameraSettingsModel.currentIso)
-            shutterSpeedText?.text = "1/" + (cameraSettingsModel.currentShutterSpeed?.timescale.description ?? "30")
             exposureText?.text = String(cameraSettingsModel.currentExposureValue)
             apertureText?.text = "f"+String(cameraSettingsModel.currentApertureValue)
+            
+            guard let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed else { return }
+            guard let shutterSpeed = cameraSettingsModel.service?.findClosestPredefinedShutterSpeed(for: currentShutterSpeed) else { return }
+            shutterSpeedText?.text = "1/" + String(CMTimeScale(shutterSpeed.timescale))
         }
     }
     
@@ -514,17 +519,21 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func selectDefaultItemInCollectionView(){
         var currentSelectionIndex: Int
         
+        guard let cameraSettingsModel = self.cameraViewDelegete?.cameraSettingsModel else { return }
+        
         if(cameraSettingMode == .ISO){
-            guard let currentIso = self.cameraViewDelegete?.cameraSettingsModel.currentIso else { return }
-            
-            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentIso)}) ?? 0
-        } else if(cameraSettingMode == .SHUTTER_SPEED){
-            guard let currentShutterSpeed = self.cameraViewDelegete?.cameraSettingsModel.currentShutterSpeed else { return }
-            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentShutterSpeed.timescale.description)}) ?? 0
-        } else if(cameraSettingMode == .EXPOSURE){
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(cameraSettingsModel.currentIso)}) ?? 0
+        } 
+        else if(cameraSettingMode == .SHUTTER_SPEED){
+            guard let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed else { return }
+            guard let shutterSpeed = cameraSettingsModel.service?.findClosestPredefinedShutterSpeed(for: currentShutterSpeed) else { return }
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(shutterSpeed.timescale)}) ?? 0
+        }
+        else if(cameraSettingMode == .EXPOSURE){
             guard let currentExposureValue = self.cameraViewDelegete?.cameraSettingsModel.currentExposureValue else { return }
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
-        } else if(cameraSettingMode == .ZOOM){
+        }
+        else if(cameraSettingMode == .ZOOM){
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(1)}) ?? 0
         }
         else {
@@ -820,8 +829,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath) as! CameraSettingValueViewCell
-                cell.isSelected = false
+        let cell = collectionView.cellForItem(at: indexPath) as? CameraSettingValueViewCell
+        cell?.isSelected = false
 
     }
     
