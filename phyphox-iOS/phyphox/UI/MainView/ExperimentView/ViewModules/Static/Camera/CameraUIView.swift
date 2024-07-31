@@ -29,7 +29,7 @@ class CameraUIDataModel: ObservableObject {
 }
 
 protocol ZoomSliderViewDelegate: AnyObject {
-    func buttonTapped()
+    func buttonTapped(for value: Float)
 }
 
 @available(iOS 14.0, *)
@@ -210,6 +210,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func setupCameraSettingViews(width: CGFloat, height: CGFloat) {
         addSubview(cameraSettingUIView ?? emptyView)
         addSubview(collectionView)
+        if(cameraViewDelegete != nil ){
+            zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
+            buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
+            addSubview(zoomSlider ?? emptyView)
+        }
     }
     
     private func configureExclusiveState(height: CGFloat){
@@ -217,12 +222,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         collectionView.frame = CGRect(x: 0, y: height + 10.0 + 80.0, width: frame.width, height: 50.0)
        
         collectionView.isHidden = true
-        
-        if(cameraViewDelegete != nil ){
-            zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
-            buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
-            addSubview(zoomSlider ?? emptyView)
-        }
         
         self.zoomSlider?.frame = CGRect(x: 0, y: height + 10.0 + 80.0 + 40.0 , width: frame.width , height: 50.0)
         self.zoomSlider?.isHidden = true
@@ -285,14 +284,18 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         let frameWidth = UIScreen.main.bounds.width
         let frameHeight = UIScreen.main.bounds.height
         
-        let frameH = resizableState == .exclusive ? frameHeight * 0.65 : frame.height
+        let isLandscape = frameWidth > frameHeight
+        
+        let frameHeightAsOrientation = isLandscape ? frameHeight * 0.45 : frameHeight * 0.65
+        
+        let frameH = resizableState == .exclusive ? frameHeightAsOrientation : frame.height
         
         guard let imageResolution = cameraViewDelegete?.cameraSettingsModel.resolution else {
             return CGSize(width: frame.width, height: frameH)
         }
         
         let actualAspect = frame.width / frameH
-        let isLandscape = frameWidth > frameHeight
+        
         let aspect = isLandscape ? (imageResolution.width / imageResolution.height) : (imageResolution.height / imageResolution.width)
            
         let h, w: CGFloat
@@ -829,7 +832,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             case .NONE, .WHITE_BAlANCE, .AUTO_EXPOSURE, .SWITCH_LENS:
                 break
             case .ZOOM:
-                buttonClickedDelegate?.buttonTapped()
+                buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue)
                 cameraSettingsModel.setZoomScale(scale: CGFloat(currentCameraSettingValue))
             case .ISO:
                 cameraSettingsModel.iso(value: Int(currentCameraSettingValue))
@@ -921,13 +924,12 @@ extension UIView
 @available(iOS 14.0, *)
 class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     
-    
     let cameraModel: CameraSettingsModel
     
     init(cameraSettingModel: CameraSettingsModel) {
         self.cameraModel = cameraSettingModel
-        
         super.init(frame: CGRect.zero)
+        
         setupSlider()
     }
     
@@ -962,8 +964,8 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     }()
         
     
-    func buttonTapped() {
-        self.value = 1.0
+    func buttonTapped(for value: Float) {
+        self.value = value
     }
     
 }
