@@ -84,6 +84,13 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     var onZoomSliderVisibilityChanged: ((Bool) -> Void)?
     
+    private var switchCameraButton: UIButton?
+    private var autoExposureButton: UIButton?
+    private var isoButton: UIButton?
+    private var shutterSpeedButton: UIButton?
+    private var apertureButton: UIButton?
+    private var exposureButton: UIButton?
+    private var zoomButton: UIButton?
     
     private var cameraPositionText: UILabel?
     private var autoExposureText: UILabel?
@@ -91,6 +98,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var shutterSpeedText: UILabel?
     private var exposureText: UILabel?
     private var apertureText: UILabel?
+    private var zoomText: UILabel?
     
     // size definations
     private let heightSpacing = 40.0
@@ -115,12 +123,29 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
         headerView = previewViewHeader()
         
+        switchCameraButton = createButton(image: .assetImageName("flip_camera"),
+                                          action: #selector(flipButtonTapped(_:)))
+        autoExposureButton = createButton(image: .assetImageName("ic_auto_exposure"),
+                                          action: #selector(autoExposureButtonTapped(_:)))
+        isoButton = createButton(image: .assetImageName("ic_camera_iso"),
+                                 action: #selector(isoSettingButtonTapped(_:)))
+        shutterSpeedButton = createButton(image: .assetImageName("ic_shutter_speed"),
+                                          action: #selector(shutterSpeedButtonTapped(_:)))
+        exposureButton = createButton(image: .assetImageName("ic_exposure"),
+                                      action: #selector(exposureButtonTapped(_:)))
+        apertureButton = createButton(image: .systemImageName("camera.aperture"),
+                                      action: #selector(apertureButtonTapped(_:)))
+        zoomButton = createButton(image: .assetImageName("ic_zoom"),
+                                  action: #selector(zoomButtonTapped(_:)))
+        
+        
         cameraPositionText = createLabel(withText: localize("back"))
         autoExposureText = createLabel(withText: localize("off"))
         isoSettingText = createLabel(withText: localize("notSet"))
         shutterSpeedText = createLabel(withText:localize("notSet"))
         exposureText = createLabel(withText: localize("notSet"))
         apertureText = createDisabledLabel(withText: localize("notSet"))
+        zoomText = createLabel(withText: "Zoom")
         
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
@@ -378,33 +403,26 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             switch type {
             case .flipCamera:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("flip_camera"),
-                                                       action: #selector(flipButtonTapped(_:))))
+                vStack.addArrangedSubview(switchCameraButton ?? UIButton())
                 vStack.addArrangedSubview(cameraPositionText ?? UILabel())
             case .autoExposure:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("ic_auto_exposure"),
-                                                       action: #selector(autoExposureButtonTapped(_:))))
+                vStack.addArrangedSubview(autoExposureButton ?? UIButton())
                 vStack.addArrangedSubview(autoExposureText ?? UILabel())
             case .iso:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("ic_camera_iso"),
-                                                       action: #selector(isoSettingButtonTapped(_:))))
+                vStack.addArrangedSubview(isoButton ?? UIButton())
                 vStack.addArrangedSubview(isoSettingText ?? UILabel())
             case .shutterSpeed:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("ic_shutter_speed"),
-                                                       action: #selector(shutterSpeedButtonTapped(_:))))
+                vStack.addArrangedSubview(shutterSpeedButton ?? UIButton())
                 vStack.addArrangedSubview(shutterSpeedText ?? UILabel())
             case .exposure:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("ic_exposure"),
-                                                       action: #selector(exposureButtonTapped(_:))))
+                vStack.addArrangedSubview(exposureButton ?? UIButton())
                 vStack.addArrangedSubview(exposureText ?? UILabel())
             case .aperture:
-                vStack.addArrangedSubview(createButton(image: .systemImageName("camera.aperture"),
-                                                       action: #selector(apertureButtonTapped(_:))))
+                vStack.addArrangedSubview(apertureButton ?? UIButton())
                 vStack.addArrangedSubview(apertureText ?? UILabel())
             case .zoom:
-                vStack.addArrangedSubview(createButton(image: .assetImageName("ic_zoom"), 
-                                                       action: #selector(zoomButtonTapped(_:))))
-                vStack.addArrangedSubview(createLabel(withText: "Zoom"))
+                vStack.addArrangedSubview(zoomButton ?? UIButton())
+                vStack.addArrangedSubview(zoomText ?? UILabel())
             }
             
             return vStack
