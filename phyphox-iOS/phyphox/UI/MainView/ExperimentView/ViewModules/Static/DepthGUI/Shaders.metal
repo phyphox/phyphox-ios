@@ -102,3 +102,43 @@ fragment half4 fragmentShader(CamColorInOut in [[ stage_in ]],
     }
 }
 
+
+kernel void computeSumLuminance(texture2d<float, access::read> yTexture [[ texture(0) ]],
+                                device float *result [[ buffer(0) ]],
+                                device float *sumResult [[ buffer(1) ]],
+                                device uint *countResult [[ buffer(2) ]],
+                                uint gid [[ thread_position_in_grid ]]) {
+    // Initialize the sum
+    float luminanceSum = 0.0;
+    uint totalPixels = 0;
+    uint nonZeroCount = 0;
+
+    // Get texture dimensions
+    uint width = yTexture.get_width();
+    uint height = yTexture.get_height();
+
+    // Calculate the sum of luminance values
+    for (uint y = 0; y < height; y++) {
+        for (uint x = 0; x < width; x++) {
+            float luminance = yTexture.read(uint2(x, y)).r;
+            luminanceSum += luminance;
+            totalPixels++;
+            if (luminance > 0.0) {
+                nonZeroCount++;
+            }
+        }
+    }
+
+    //uint totalPixels = width * height;
+
+       // Calculate the average luminance
+    float averageLuminance = luminanceSum;
+
+       // Store the result in the output buffer
+    *result = averageLuminance;
+    // Store the result in the output buffer
+    *sumResult = luminanceSum;
+    *countResult = nonZeroCount;
+    
+}
+
