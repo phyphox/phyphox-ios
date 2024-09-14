@@ -11,6 +11,25 @@ import MetalKit
 import AVFoundation
 import Accelerate
 
+/*
+phyphox xml -> ExperimentCameraInput (cameraInput in the Experiment) creates ExperimentCameraInputSession
+    - Each of this cameraInput has one session of cameraInput which can be called from viewmodel. 
+ ExperimentCameraInputSession includes all the session from the current inputs, like x1 x2 values
+ and also does the cameramodel instantiation and pass the xml values into camera model. 
+ 
+ So in this session from ViewModel(which contains UI) the UI is passed to  ExperimentCameraInputSession
+ This setstup the required delegates
+ 
+ When ExperimentCameraInputSession instantitaes CameraModel, the CameraModel then instantiates CameraService and MetalRenderer and CameraSettingModels (which contains all the settings that can be applied to camera)
+ 
+ CameraModel also configues the all the required permissions, and if ok then start the cameraSession which also has a capture Output which runs on every frame that resides in cameraService
+ This capture output then calles updateFrame in MetalRenderer and passes the new frames and selections areas. 
+ This update is done for CPU part
+ 
+ MetalRenderer calls draw function at each loop and this called update() which passes the buffers to the GPU
+    
+ */
+
 
 @available(iOS 13.0, *)
 class MetalRenderer: NSObject,  MTKViewDelegate{
@@ -29,6 +48,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
     
+    var hsvPipeLineState: MTLComputePipelineState!
+    
+    var finalSumPipelineState: MTLComputePipelineState!
     // Captured image texture cache.
     var cameraImageTextureCache: CVMetalTextureCache!
     
@@ -56,11 +78,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     struct SelectionStruct {
         var x1, x2, y1, y2: Float
         var editable: Bool
+        
+        var padding: (UInt8, UInt8, UInt8) = (0, 0, 0)
     }
     
-    
-    var addFunctionPSO: MTLComputePipelineState!
-    
+
+    var lumaAnalyser: LumaAnalyser
     
     init(renderer: MTKView) {
         
@@ -69,16 +92,11 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             self.metalDevice = metalDevice
         }
+        
+        lumaAnalyser = LumaAnalyser(metalDevice: metalDevice)
        
-        
-        
         super.init()
      
-        // Create our random arrays
-        // array1 = getRandomArray()
-        // array2 = getRandomArray()
-
-        
         loadMetal()
         
     }
@@ -94,7 +112,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
     
     
-    
     // Schedule a draw to happen at a new size.
     func drawRectResized(size: CGSize) {
         viewportSize = size
@@ -105,6 +122,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         viewportSizeDidChange = true
     }
     
+    var timeStampOfFrame: TimeInterval = TimeInterval()
     
     func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct, time: TimeInterval) {
         
@@ -113,17 +131,13 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             self.cvImageBuffer = imageBuffer
         }
         
+        //timeStampOfFrame = time
+        
         self.selectionState = selectionState
         
         if measuring {
-            //let startTime = Date()
-            getLuminance(time: time)
-            //sendComputeCommand()
-            //computeInCPU(arr1: array1, arr2: array2)
-            //computeInGPU(arr1: array1, arr2: array2)
-            //let endTime = Date()
-            //let executionTime = endTime.timeIntervalSince(startTime)
-            //print("Execution time using Date: \(executionTime) seconds")
+            timeStampOfFrame = time
+            //getLuminance(time: time)
         }
         
     }
@@ -173,10 +187,66 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             let typedPointerToYPlane = rawPointerToYPlaneBaseAddress?.assumingMemoryBound(to: Pixel_8.self)
             
             var nonZeroCount = 0
+            
+            guard let ytexture = cameraImageTextureY else {
+                print("empty texture")
+                return
+            }
+            
+            let texturee = CVMetalTextureGetTexture(ytexture)
+            
+            let textureWidth = texturee?.width ?? 1
+            let textureHeight = texturee?.height ?? 1
+            let region = MTLRegionMake2D(0, 0, textureWidth , textureHeight )
+            
+            let bytesPerPixel = 1
+            let bytesPerRow = (textureWidth) * bytesPerPixel
+            
+            
+            var pixelData = [UInt8](repeating: 0, count: (textureWidth ) * (textureHeight ) * bytesPerPixel)
+            
+            texturee?.getBytes(&pixelData, bytesPerRow: bytesPerRow, from: region, mipmapLevel: 0)
+            
+            /**
+            for y in 0..<textureHeight {
+                for x in 0..<textureWidth {
+                    let index = (y * textureWidth + x) * bytesPerPixel
+                    let r = pixelData[index]      // Red
+                    if(y == 0){
+                        print("Pixel at (\(x), \(y)): R=\(r)")
+                    }
+                    
+                }
+            }
+             
+             */
+            
+            
+            
+            let data = Data( )
+            
+            let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let outputFile = fileURL.appendingPathComponent("texture").appendingPathExtension("txt")
+            
+            print("filepath ", outputFile.path)
+            do {
+                try data.write(to: outputFile)
+            } catch{
+                print("error ", error.localizedDescription)
+            }
+            
+            bufferExtracted = true
+            
+            
+            
+            
+            /**
             // 173641
-            for y in 0...lData.height {
-                for x in 0...lData.width {
-                    let l = (typedPointerToYPlane?[Int(y) * Int(lData.rowBytes) + Int(x)] ?? 0) & 0xFF
+             
+            for y in 0...textureHeight {
+                for x in 0...textureWidth {
+                   // let l = (typedPointerToYPlane?[Int(y) * Int(lData.rowBytes) + Int(x)] ?? 0) & 0xFF
+                   
                     luminance += Int(l)
                    
                     if(luminance > 0){
@@ -185,6 +255,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                     
                 }
             }
+             */
             
             print("nonZeroCount .. ", nonZeroCount)
             print("lData.height .. ", lData.height)
@@ -241,6 +312,27 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
     }
     
+    private func dataIn(z: Double) {
+        guard let zBuffer = cameraBuffers?.luminanceBuffer else {
+            print("Error: zBuffer not set")
+            return
+        }
+        guard let tBuffer = cameraBuffers?.tBuffer else {
+            print("Error: tBuffer not set")
+            return
+        }
+        guard let timeReference = timeReference else {
+            print("Error: time reference not set")
+            return
+        }
+        
+        let t = timeReference.getExperimentTimeFromEvent(eventTime: timeStampOfFrame)
+        
+        if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
+            self.writeToBuffers(z: z, t: t)
+        }
+    }
+    
     private func dataIn(z: Double, time: TimeInterval) {
         guard let zBuffer = cameraBuffers?.luminanceBuffer else {
             print("Error: zBuffer not set")
@@ -262,68 +354,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
     }
     
-    let count: Int = 3000000
-    
-    var textureCacheAnalysis: CVMetalTextureCache!
-    var inTexture: MTLTexture!
-    var outTexture: MTLTexture!
-    
-    
    
     var analysisPipelineState: MTLComputePipelineState!
-    
-    
-
-    /**
-    func computeInGPU(arr1: [Float], arr2: [Float]){
-        
-        let startTime = CFAbsoluteTimeGetCurrent()
-            
-            loadGpuForAnalysis()
-            
-            
-            print()
-            print("GPU Way")
-
-           
-
-           /**
-            // Figure out how many threads we need to use for our operation
-            let threadsPerGrid = MTLSize(width: count, height: 1, depth: 1)
-            let maxThreadsPerThreadgroup = additionComputePipelineState.maxTotalThreadsPerThreadgroup // 1024
-            let threadsPerThreadgroup = MTLSize(width: maxThreadsPerThreadgroup, height: 1, depth: 1)
-            commandEncoder?.dispatchThreads(threadsPerGrid,
-                                            threadsPerThreadgroup: threadsPerThreadgroup)
-            */
-           
-
-            // Get the pointer to the beginning of our data
-            var resultBufferPointer = resultBuff?.contents().bindMemory(to: Float.self,
-                                                                        capacity: MemoryLayout<Float>.size * count)
-
-            // Print out all of our new added together array information
-            for i in 0..<3 {
-                print("\(arr1[i]) + \(arr2[i]) = \(Float(resultBufferPointer!.pointee) as Any)")
-                resultBufferPointer = resultBufferPointer?.advanced(by: 1)
-            }
-            
-            // Print out the elapsed time
-            let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-            print("Time elapsed \(String(format: "%.05f", timeElapsed)) seconds")
-            print()
-
-        
-    }
-     */
-    
-    // Helper function
-    func getRandomArray()->[Float] {
-        var result = [Float].init(repeating: 0.0, count: count)
-        for i in 0..<count {
-            result[i] = Float(arc4random_uniform(10))
-        }
-        return result
-    }
+   
     
 
     func loadMetal(){
@@ -381,23 +414,49 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             print("Failed to create pipeline state, error \(error)")
         }
         
+        //lumaAnalyser = LumaAnalyser(metalDevice: metalDevice)
+        lumaAnalyser.loadMetal()
+        
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice.makeCommandQueue()
         
         
-        loadGpuForAnalysis()
         
+        //loadGpuForAnalysis()
         
     }
     
+    
+    
     func loadGpuForAnalysis(){
         let gpuFunctionLibrary = metalDevice.makeDefaultLibrary()
-        let additionGPUFunction = gpuFunctionLibrary?.makeFunction(name: "computeSumLuminance")
+       
+        
+        let luminaceFunction = gpuFunctionLibrary?.makeFunction(name: "computeSumLuminanceParallel")
         do {
-            analysisPipelineState = try metalDevice.makeComputePipelineState(function: additionGPUFunction!)
+            analysisPipelineState = try metalDevice.makeComputePipelineState(function: luminaceFunction!)
+            
         } catch {
           print("Failed to create pipeline state, error \(error)")
         }
+        
+        let finalSum = gpuFunctionLibrary?.makeFunction(name: "computeFinalSum")
+        do {
+            finalSumPipelineState = try metalDevice.makeComputePipelineState(function: finalSum!)
+        } catch  {
+            print("Failed to create pipeline state, error \(error)")
+        }
+         
+        /**
+        let hsvFunction = gpuFunctionLibrary?.makeFunction(name: "computeHSV")
+        do {
+            hsvPipeLineState = try metalDevice.makeComputePipelineState(function: hsvFunction!)
+        } catch  {
+            print("Failed to create pipeline state, error \(error)")
+        }
+         */
+       
+        
     }
     
     
@@ -416,9 +475,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
      5) command.endEncoding(), commandBuffer.present(), commandBuffer.commit() , will present the commands and commit to gpu
      
      
-     
-     
-     
      */
     
     
@@ -432,6 +488,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         // Create a new command buffer for each renderpass to the current drawable.
         if let commandBuffer = metalCommandQueue.makeCommandBuffer() {
             commandBuffer.label = "MyCommand"
+                
             
             // Add completion hander which signal _inFlightSemaphore when Metal and the GPU has fully
             // finished proccssing the commands we're encoding this frame.  This indicates when the
@@ -465,102 +522,301 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                 commandBuffer.present(currentDrawable)
             }
             
-            // Finalize rendering here & push the command buffer to the GPU.
             commandBuffer.commit()
+            commandBuffer.waitUntilCompleted()
+            
+            
+            
+            
+            
+             
+            
+             
+            /**
+            if let hsvAnalysisCommandBuffer = metalCommandQueue.makeCommandBuffer(){
+                let startTime = Date()
+                
+                hsvAnalysisCommandBuffer.addCompletedHandler{ commandBuffer in
+                    let endTime = Date()
+                    
+                    let executionTime = endTime.timeIntervalSince(startTime)
+                    print("executionTime : \(executionTime)")
+                }
+                
+                if let analysisEncoding = hsvAnalysisCommandBuffer.makeComputeCommandEncoder() {
+                    analyseHSV(analyseEncoding: analysisEncoding, analysisCommandBuffer: hsvAnalysisCommandBuffer)
+                }
+            }
+             */
+            
+            
+            // Finalize rendering here & push the command buffer to the GPU.
+            
             
             
         }
         
-        //_ = inFlightSemaphore.wait(timeout: DispatchTime.distantFuture)
         
         if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+            
+            checkTimeInterval(metalCommandBuffer: analysisCommandBuffer)
+            
+            guard let ytexture = cameraImageTextureY else {
+                return
+            }
+            
+            guard let texturee = CVMetalTextureGetTexture(ytexture) else {
+                return
+            }
+            
+           
+            lumaAnalyser.update(texture: texturee,
+                                selectionArea: getSelectionState(),
+                                metalCommandBuffer: analysisCommandBuffer)
+        }
+         
+        /**
+        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+            
+            let startTime = Date()
+            
+            analysisCommandBuffer.addCompletedHandler { commandBuffer in
+                let endTime = Date()
+                let executionTime = endTime.timeIntervalSince(startTime)
+                print("executionTime : \(executionTime)")
+            }
             
             
             
             if let analysisEncoding = analysisCommandBuffer.makeComputeCommandEncoder() {
                 
-                guard let ytexture = cameraImageTextureY else {
-                    print("empty texture")
-                    analysisEncoding.endEncoding()
-                    return
-                }
+                analyseLuminance(analysisEncoding: analysisEncoding, analysisCommandBuffer: analysisCommandBuffer)
                 
-              
-                analysisEncoding.setComputePipelineState(analysisPipelineState)
-                
-                let resultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
-               
-                //resultPointer.pointee = 0.0
-                
-                
-                  // Create a buffer to store the sum of luminance values
-                  let sumResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
-                  // Create a buffer to store the count of non-zero luminance values
-                  let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<UInt32>.size, options: .storageModeShared)!
-
-                  
-                
-                let texturee = CVMetalTextureGetTexture(ytexture)
-                
-                
-                analysisEncoding.setTexture(texturee, index: 0)
-                analysisEncoding.setBuffer(resultBuffer, offset: 0, index: 0)
-                analysisEncoding.setBuffer(sumResultBuffer, offset: 0, index: 1)
-                analysisEncoding.setBuffer(countResultBuffer, offset: 0, index: 2)
-                
-                // Set up thread group sizes (one thread group for simplicity)
-                let threadGroupSize = MTLSize(width: 1, height: 1, depth: 1)
-                let gridSize = MTLSize(width: 1, height: 1, depth: 1)
-                
-                analysisEncoding.dispatchThreadgroups(gridSize, threadsPerThreadgroup: threadGroupSize)
-                
-                analysisEncoding.endEncoding()
-                
-                analysisCommandBuffer.commit()
-                analysisCommandBuffer.waitUntilCompleted()
-                
-        
-                // Access the results
-                var resultPointer = resultBuffer.contents().bindMemory(to: Float.self, capacity: 1)
-                let sumResultPointer = sumResultBuffer.contents().bindMemory(to: Float.self, capacity: 1)
-                let countResultPointer = countResultBuffer.contents().bindMemory(to: UInt32.self, capacity: 1)
-
-              
-                let luminanceSum = sumResultPointer.pointee
-                let nonZeroCount = countResultPointer.pointee
-
-                
-                print("Total Luminance Sum: \(luminanceSum)")
-                print("Non-Zero Luminance Count: \(nonZeroCount)")
-                
-                let xmin = Int(self.selectionState.x1 * 480)
-                let xmax = Int(self.selectionState.x2 * 480)
-                let ymin = Int(self.selectionState.y1 * 360)
-                let ymax = Int(self.selectionState.y2 * 360)
-                
-                let analysisArea = (xmax - xmin) * (ymax - ymin)
-                
-                let averageLuminance = resultPointer.pointee / Float(analysisArea)
-                
-                print("Average Luminance: \(averageLuminance)")
-                
-                print("analysisArea: \(analysisArea)")
-                
-                
-                print("selection state x1 ", self.selectionState.x1)
-                print("selection state x2 ", self.selectionState.x2)
-                print("selection state y1 ", self.selectionState.y1)
-                print("selection state y2 ", self.selectionState.y2)
-
+                //analyseHSV(analyseEncoding: analysisEncoding, analysisCommandBuffer: analysisCommandBuffer)
                 
             }
             
+           
         }
+         
+         */
+        
+        
         
         
     }
-
     
+    func checkTimeInterval(metalCommandBuffer: MTLCommandBuffer){
+        let startTime = Date()
+        
+        metalCommandBuffer.addCompletedHandler { commandBuffer in
+            let endTime = Date()
+            let executionTime = endTime.timeIntervalSince(startTime)
+            print("executionTime : \(executionTime)")
+           
+            if self.measuring {
+                var luma = self.lumaAnalyser.lumaFinalValue()
+                self.dataIn(z: Double(luma))
+                //getLuminance(time: time)
+            }
+            
+            
+            
+        }
+    }
+    
+    struct PartialBufferLength {
+        var length : Int
+    };
+    
+    
+    func totalSum(analyseEncoding : MTLComputeCommandEncoder, analysisCommandBuffer: MTLCommandBuffer){
+     
+        
+    }
+    
+    
+    func analyseHSV(analyseEncoding : MTLComputeCommandEncoder, analysisCommandBuffer: MTLCommandBuffer) {
+     
+        guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
+            analyseEncoding.endEncoding()
+            return
+        }
+        
+        analyseEncoding.setComputePipelineState(hsvPipeLineState)
+        
+        
+        let result = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        let saturationBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        let valueBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        
+        analyseEncoding.setTexture(CVMetalTextureGetTexture(cameraImageY), index: 0)
+        analyseEncoding.setTexture(CVMetalTextureGetTexture(cameraImageCbCr), index: 1)
+        analyseEncoding.setBuffer(result, offset: 0, index: 0)
+        //analyseEncoding.setBuffer(saturationBuffer, offset: 0, index: 1)
+        //analyseEncoding.setBuffer(valueBuffer, offset: 0, index: 2)
+        
+        analyseEncoding.dispatchThreadgroups(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
+        
+        analyseEncoding.endEncoding()
+        analysisCommandBuffer.commit()
+        analysisCommandBuffer.waitUntilCompleted()
+        
+        let resultBuffer = result.contents().bindMemory(to: Float.self, capacity: 0)
+        
+        print("resultBuffer: ", resultBuffer.pointee)
+    }
+    
+    
+    var bufferExtracted = false
+    
+    func analyseLuminance(analysisEncoding: MTLComputeCommandEncoder, analysisCommandBuffer: MTLCommandBuffer){
+        
+        guard let ytexture = cameraImageTextureY else {
+            print("empty texture")
+            analysisEncoding.endEncoding()
+            return
+        }
+        
+        guard let texturee = CVMetalTextureGetTexture(ytexture) else {
+            return
+        }
+        
+        print("texture width \(texturee.width) height \(texturee.height) arrayLength\(texturee.arrayLength) " +
+              "pixelformat \(texturee.pixelFormat.rawValue) bufferBytesPerRow \(texturee.bufferBytesPerRow) ")
+        
+        analysisEncoding.setComputePipelineState(analysisPipelineState)
+        
+        //let resultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        //let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
+        
+        var _selectionState =  getSelectionState()
+        let selectionBuffer = metalDevice.makeBuffer(bytes: &_selectionState,length: MemoryLayout<SelectionStruct>.size,options: .storageModeShared)
+        
+        let _width = Int((_selectionState.x2 - _selectionState.x1 + 1))
+        let _height = Int((_selectionState.y2 - _selectionState.y1 + 1))
+       
+        let calculatedGridAndGroupSize = calculateThreadSize(selectedWidth: 360, selectedHeight: 480)
+        
+        let w = analysisPipelineState.threadExecutionWidth
+        let h = analysisPipelineState.maxTotalThreadsPerThreadgroup / w
+        let threadsPerThreadgroup = MTLSizeMake(16, 16, 1)
+        
+        let threadsPerGrid = MTLSize(width: texturee.width,
+                                     height: texturee.height,
+                                     depth: 1)
+        
+        
+        let threadGroupSize = calculatedGridAndGroupSize.threadGroupSize
+       
+        let gridSize = calculatedGridAndGroupSize.gridSize
+        let numThreadGroups = (gridSize.width * gridSize.height)
+       
+         
+        let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * numThreadGroups,options: .storageModeShared)!
+       
+        analysisEncoding.setTexture(texturee, index: 0)
+        //analysisEncoding.setBuffer(resultBuffer, offset: 0, index: 0)
+        analysisEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
+        analysisEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
+        
+         // 0.03 time if we set groupsize 1 by 1 and gridsize 1 by 1
+        analysisEncoding.dispatchThreadgroups(gridSize, threadsPerThreadgroup: threadsPerThreadgroup)
+        
+        analysisEncoding.endEncoding()
+        
+        let result = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
+        
+        if let totalSumEncoding = analysisCommandBuffer.makeComputeCommandEncoder() {
+            
+            totalSumEncoding.setComputePipelineState(finalSumPipelineState)
+            
+            var partialLengthStruct = PartialBufferLength(length: numThreadGroups)
+           
+            let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
+            
+            totalSumEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
+            totalSumEncoding.setBuffer(result, offset: 0, index: 1)
+            totalSumEncoding.setBuffer(arrayLength, offset: 0, index: 2)
+            totalSumEncoding.setBuffer(countResultBuffer, offset: 0, index: 3)
+            
+            totalSumEncoding.dispatchThreadgroups(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(numThreadGroups, 1, 1))
+            
+            totalSumEncoding.endEncoding()
+            
+        }
+        
+        analysisCommandBuffer.commit()
+        analysisCommandBuffer.waitUntilCompleted()
+        
+        let resultBuffer = result.contents().bindMemory(to: Float.self, capacity: 0)
+        
+        print("resultBuffer: ", resultBuffer.pointee)
+        
+        // Discuss the issue about difference in average luminance value when changing the selection region.
+        // Access the results
+        
+        let countResultPointer = countResultBuffer.contents().bindMemory(to: Float.self, capacity: 1)
+        print("countResultPointer: \(countResultPointer.pointee)")
+        let _partialBuffer = partialBuffer.contents().bindMemory(to: Float.self, capacity: 1)
+        // 98 * 72 7056
+        let analysisArea = (_selectionState.x2 - _selectionState.x1 ) * (_selectionState.y2 - _selectionState.y1)
+        
+        // Create a buffer pointer for easy access to all the values
+        let bufferPointer = UnsafeMutableBufferPointer<Float>(start: _partialBuffer, count: numThreadGroups)
+        
+        /**
+        for i in 0...(numThreadGroups-1){
+            print("index \(bufferPointer[i]) for \(i)")
+        }
+         */
+
+       // print("total Luminance: \(resultPointer.pointee)")
+        //print("Average Luminance: \(averageLuminance)")
+        print("analysisArea: \(480 * 360)")
+        //print("countResultPointer: \(countResultPointer.pointee)")
+        print("partialBuffer: \(_partialBuffer.pointee)")
+        
+        
+        print("selection state x1 \(_selectionState.x1), y1 \(_selectionState.y1) ")
+        print("selection state x2 \(_selectionState.x2), y2 \(_selectionState.y2) ")
+    }
+    
+    var numThreadGroups = 0
+    
+    // from A11, (that means from Iphone 8), it supports  nonuniform threadgroups
+    // so before that we need to calculate to get the threadgroup and thread size
+  
+    func calculateThreadSize(selectedWidth: Int, selectedHeight: Int) -> (threadGroupSize: MTLSize, gridSize: MTLSize) {
+       
+         //0.003
+        let threadGroupSize = MTLSize(width: 16, height: 16, depth: 1)
+         // Dispatch the compute shader with the size of the selected bounding box
+         let threadgroupsX = (selectedWidth + threadGroupSize.width - 1) / threadGroupSize.width;
+         let threadgroupsY = (selectedHeight + threadGroupSize.height - 1) / threadGroupSize.height;
+         let _gridSize = MTLSize(width: threadgroupsX, height: threadgroupsY, depth: 1)
+        numThreadGroups = (_gridSize.width * _gridSize.height)
+        
+        return (threadGroupSize: threadGroupSize, gridSize: _gridSize)
+         
+    }
+    
+    
+    func getSelectionState() -> SelectionStruct{
+        let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1))
+            .applying(displayToCameraTransform.inverted())
+        let p2 = CGPoint(
+            x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)
+        ).applying(displayToCameraTransform.inverted())
+        return SelectionStruct(x1: Float(min(p1.x, p2.x)*480),
+                               x2: Float(max(p1.x, p2.x)*480),
+                               y1: Float(min(p1.y, p2.y)*360),
+                               y2: Float(max(p1.y, p2.y)*360),
+                               editable: selectionState.editable)
+    }
+
+   
     // Schedules the camera image to be rendered on the GPU.
     func doRenderPass(renderEncoder: MTLRenderCommandEncoder) {
         
@@ -593,7 +849,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         renderEncoder.popDebugGroup()
         
         
+        
     }
+
     
     // Updates any app state.
     func updateAppState() {
@@ -630,17 +888,11 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
         
         var texture: CVMetalTexture? = nil
-        let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat,
-                                                               width, height, planeIndex, &texture)
+        let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat, width, height, planeIndex, &texture)
         
         if status != kCVReturnSuccess {
             texture = nil
         }
-        
-        // Create output texture
-        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: 480, height: 360, mipmapped: false)
-                textureDescriptor.usage = [.shaderRead, .shaderWrite]
-                outTexture = metalDevice.makeTexture(descriptor: textureDescriptor)
         
         return texture
     }
@@ -686,6 +938,30 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             return CGAffineTransform.identity
         }
         
+    }
+    
+    func getTextureBytes(texture: MTLTexture) -> [UInt8]? {
+        // Define the size of the texture
+        let width = texture.width
+        let height = texture.height
+        let bytesPerPixel = 1 // Assuming RGBA
+
+        // Calculate the total bytes required for the texture
+        let totalBytes = width * height * bytesPerPixel
+
+        // Allocate a buffer to store the texture data
+        var pixelData = [UInt8](repeating: 0, count: totalBytes)
+
+        // Define the region to extract
+        let region = MTLRegionMake2D(0, 0, width, height)
+
+        // Copy texture data into pixelData buffer
+        texture.getBytes(&pixelData,
+                         bytesPerRow: width * bytesPerPixel,
+                         from: region,
+                         mipmapLevel: 0)
+
+        return pixelData
     }
    
 }
