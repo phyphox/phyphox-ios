@@ -153,9 +153,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
    
-    
-    
-    
     public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
         
         sessionQueue.async {

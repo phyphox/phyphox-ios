@@ -402,24 +402,7 @@ kernel void computeHSV(texture2d<float, access::sample> cameraImageTextureY [[ t
         // Compute the value.
     float value = maxValue;
     
-    
-    
     *result = h;
-    
-    /**
-    float4 rgbColor = rgb[float(gid2D ].color;
-    
-    float rgbMax = max(max(rgb.r , rgb.g), rgb.b);
-    float rgbMin = min(min(rgb.r , rgb.g), rgb.b);
-    
-    float d = rgbMax - rgbMin;
-    
-    if(rgbMax == rgbMin){
-        hue = 0.0;
-    } else if(rgbMax == rgb.r) {
-        
-    }
-     */
     
 }
  

@@ -11,10 +11,11 @@ import Foundation
 @available(iOS 13.0, *)
 class LumaAnalyser {
     
+    
+    
     var metalDevice: MTLDevice
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
-    var cameraImageTextureY: CVMetalTexture?
     var selectionState = MetalRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
     var time: TimeInterval = TimeInterval()
@@ -97,21 +98,17 @@ class LumaAnalyser {
         
         analysisEncoding.endEncoding()
         
-       
-
-        
         let result = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
-        
         
         if let finalSum = metalCommandBuffer.makeComputeCommandEncoder() {
             //setup pipeline state
             finalSum.setComputePipelineState(finalSumPipelineState)
             
             //setup  buffers
-            var partialLengthStruct = MetalRenderer.PartialBufferLength(length: numThreadGroups)
+            var partialLengthStruct = PartialBufferLength(length: numThreadGroups)
         
-            let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<MetalRenderer.PartialBufferLength>.size,options: .storageModeShared)
+            let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
             
             finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
             finalSum.setBuffer(result, offset: 0, index: 1)
@@ -132,8 +129,6 @@ class LumaAnalyser {
             
             self.resultBuffer = resultBuffer.pointee
         
-            
-            
             let countBuffer = countt.contents().bindMemory(to: Float.self, capacity: 0)
         
             print("selection width" , countBuffer.pointee)
@@ -142,18 +137,11 @@ class LumaAnalyser {
             
             print("countResultBuffer: ", count.pointee)
             
-            
         }
-        
-       
         
         let _partialBuffer = partialBuffer.contents().bindMemory(to: Float.self, capacity: 1)
         
         print("_partialBuffer: ", _partialBuffer.pointee)
-        
-       
-        
-        
         
     }
     
@@ -184,6 +172,11 @@ class LumaAnalyser {
         
         return (threadGroupSize: threadGroupSize, gridSize: _gridSize, numOfThreadGroups: _numThreadSize )
          
+    }
+    
+    
+    struct PartialBufferLength {
+        var length : Int
     }
     
 
