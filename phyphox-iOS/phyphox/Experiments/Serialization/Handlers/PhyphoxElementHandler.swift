@@ -40,17 +40,18 @@ private extension ExperimentDepthInput {
 
 private extension ExperimentCameraInput {
     convenience init(descriptor: CameraInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
+        let tBuffer = descriptor.buffer(for: "t", from: buffers)
         let luminanceBuffer = descriptor.buffer(for: "luminance", from: buffers)
         let lumaBuffer = descriptor.buffer(for: "luma", from: buffers)
-        let tBuffer = descriptor.buffer(for: "t", from: buffers)
         let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
         let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
         let valueBuffer = descriptor.buffer(for: "value", from: buffers)
+        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
         let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth, autoExposure: descriptor.autoExposure, locked: descriptor.locked, feature: descriptor.feature, analysis: descriptor.analysis)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth, autoExposure: descriptor.autoExposure, locked: descriptor.locked, feature: descriptor.feature, analysis: descriptor.analysis)
     }
 }
 

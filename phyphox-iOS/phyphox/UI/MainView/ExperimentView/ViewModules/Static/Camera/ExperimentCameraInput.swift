@@ -27,7 +27,7 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
         
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -35,6 +35,7 @@ final class ExperimentCameraInput {
             hueBuffer: hueBuffer,
             saturationBuffer: saturationBuffer,
             valueBuffer: valueBuffer,
+            thresholdBuffer: thresholdBuffer,
             shutterSpeedBuffer: shutterSpeedBuffer,
             isoBuffer: isoBuffer,
             apertureBuffer: apertureBuffer,
@@ -108,14 +109,15 @@ final class ExperimentCameraInput {
 }
 
 class ExperimentCameraBuffers {
-    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, tBuffer: DataBuffer?
+    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, tBuffer: DataBuffer?
     
-    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil) {
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil) {
         self.luminanceBuffer = luminanceBuffer
         self.lumaBuffer = lumaBuffer
         self.hueBuffer = hueBuffer
         self.saturationBuffer = saturationBuffer
         self.valueBuffer = valueBuffer
+        self.thresholdBuffer = thresholdBuffer
         self.shutterSpeedBuffer = shutterSpeedBuffer
         self.isoBuffer = isoBuffer
         self.apertureBuffer = apertureBuffer

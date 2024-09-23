@@ -79,9 +79,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var timeStampOfFrame: TimeInterval = TimeInterval()
     
-    var lumaAnalyser: LumaAnalyser
-    
     var cameraPreviewRenderer: CameraPreviewRenderer
+    
+    var analysingModules : [AnalysingModule] = []
     
     init(renderer: MTKView) {
 
@@ -90,12 +90,51 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
         
         cameraPreviewRenderer = CameraPreviewRenderer(metalDevice: metalDevice, renderer: renderer)
-        lumaAnalyser = LumaAnalyser(metalDevice: metalDevice)
-       
+        
         super.init()
      
-        loadMetal()
+        initializeMetal()
         
+        
+    }
+    
+    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
+        self.cameraBuffers = cameraBuffers
+        
+        AnalysingModule.initialize(metalDevice: metalDevice)
+        
+        
+        if(cameraBuffers?.luminanceBuffer != nil){
+            analysingModules.append(LuminanceAnalyser(result: cameraBuffers?.luminanceBuffer))
+        }
+        
+        if(cameraBuffers?.lumaBuffer != nil){
+            analysingModules.append(LumaAnalyser(result: cameraBuffers?.lumaBuffer))
+        }
+        
+        if(cameraBuffers?.hueBuffer != nil){
+            analysingModules.append(HSVAnalyser(result: cameraBuffers?.hueBuffer, mode: .Hue))
+        }
+        
+        if(cameraBuffers?.saturationBuffer != nil){
+            analysingModules.append(HSVAnalyser(result: cameraBuffers?.saturationBuffer, mode: .Saturation))
+        }
+        
+        if(cameraBuffers?.valueBuffer != nil) {
+            analysingModules.append(HSVAnalyser(result: cameraBuffers?.valueBuffer, mode: .Value))
+        }
+        
+        if(cameraBuffers?.thresholdBuffer != nil){
+           // analysingModules.append(HSVAnalyser(result: cameraBuffers?.thresholdBuffer))
+        }
+        
+        for analysingModule in analysingModules {
+            analysingModule.loadMetal()
+        }
+        
+       
+        
+       
     }
     
     
@@ -143,20 +182,22 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             zBuffer.append(z)
         }
         
-        if let tBuffer = cameraBuffers?.tBuffer {
-            tBuffer.append(t)
-        }
+        
     }
     
-    private func dataIn(z: Double) {
-        guard let zBuffer = cameraBuffers?.luminanceBuffer else {
-            print("Error: zBuffer not set")
-            return
-        }
+    private func dataIn() {
+        /**
+         guard let zBuffer = cameraBuffers?.luminanceBuffer else {
+             print("Error: zBuffer not set")
+             return
+         }
+        
+        
         guard let tBuffer = cameraBuffers?.tBuffer else {
             print("Error: tBuffer not set")
             return
         }
+         */
         guard let timeReference = timeReference else {
             print("Error: time reference not set")
             return
@@ -165,12 +206,19 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         let t = timeReference.getExperimentTimeFromEvent(eventTime: timeStampOfFrame)
         
         if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
-            self.writeToBuffers(z: z, t: t)
+            
+            if let tBuffer = cameraBuffers?.tBuffer {
+                tBuffer.append(t)
+            }
+            
+            for analysingModule in analysingModules {
+                analysingModule.writeToBuffers()
+            }
         }
     }
 
     
-    func loadMetal(){
+    func initializeMetal(){
         
         cameraPreviewRenderer.loadMetal()
         
@@ -178,8 +226,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         var textureCache: CVMetalTextureCache?
         CVMetalTextureCacheCreate(nil, nil, metalDevice, nil, &textureCache)
         cameraImageTextureCache = textureCache
-        
-        lumaAnalyser.loadMetal()
         
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice.makeCommandQueue()
@@ -217,7 +263,70 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                                          viewportSize: viewportSize)
             
         }
+        
+        if self.measuring {
+            
+            if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+                
+                let startTime = Date()
+                
+                analysisCommandBuffer.addCompletedHandler { commandBuffer in
+                    let endTime = Date()
+                    let executionTime = endTime.timeIntervalSince(startTime)
+                    print("executionTime : \(executionTime)")
+                    
+                    self.dataIn()
+                    
+                }
+                
+                print("number of element in modules: \(analysingModules.count) ")
+                
+                for analysingModule in analysingModules {
+                    
+                    guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
+                        return
+                    }
+                    
+                    guard let textureY = CVMetalTextureGetTexture(cameraImageY) else { return }
+                    guard let textureCbCr = CVMetalTextureGetTexture(cameraImageCbCr) else { return }
+                    
+                    analysingModule.update(selectionArea: getSelectionState(),
+                                           metalCommandBuffer: analysisCommandBuffer,
+                                           cameraImageTextureY: textureY,
+                                           cameraImageTextureCbCr: textureCbCr)
+                }
+                
+                analysisCommandBuffer.commit()
+                analysisCommandBuffer.waitUntilCompleted()
+               
+            }
+            
+        }
+        
+        
+        /**
+        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+            
+            let startTime = Date()
+            
+            analysisCommandBuffer.addCompletedHandler { commandBuffer in
+                let endTime = Date()
+                let executionTime = endTime.timeIntervalSince(startTime)
+                print("executionTime : \(executionTime)")
+               
+                if self.measuring {
+                    let hue = self.hsvAnalyser.hueFinalValue()
+                    self.dataIn(z: Double(hue))
+                }
+            }
+           
+            hsvAnalyser.update(selectionArea: getSelectionState(),
+                               metalCommandBuffer: analysisCommandBuffer,
+                               cameraImageTextureY: cameraImageTextureY,
+                               cameraImageTextureCbCr: cameraImageTextureCbCr)
+        }
           
+        
         if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
             
             let startTime = Date()
@@ -241,6 +350,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                                 selectionArea: getSelectionState(),
                                 metalCommandBuffer: analysisCommandBuffer)
         }
+         */
          
      
     }

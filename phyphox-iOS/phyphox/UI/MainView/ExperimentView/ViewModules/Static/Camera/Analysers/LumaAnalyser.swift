@@ -9,27 +9,28 @@
 import Foundation
 
 @available(iOS 13.0, *)
-class LumaAnalyser {
+class LumaAnalyser : AnalysingModule {
     
-    
-    
-    var metalDevice: MTLDevice
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
     var selectionState = MetalRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
     var time: TimeInterval = TimeInterval()
+   
+    var result: DataBuffer?
     
-    init(metalDevice: MTLDevice) {
-        self.metalDevice = metalDevice
+    init(result: DataBuffer?) {
+        self.result = result
     }
     
-    func loadMetal(){
-        let gpuFunctionLibrary = metalDevice.makeDefaultLibrary()
+    override func loadMetal(){
         
-        let luminaceFunction = gpuFunctionLibrary?.makeFunction(name: "computeSumLuminanceParallel")
+        guard let metalDevice = AnalysingModule.metalDevice else { return }
+        let gpuFunctionLibrary = AnalysingModule.gpuFunctionLibrary
+        
+        let lumaFunction = gpuFunctionLibrary?.makeFunction(name: "computeSumLuminanceParallel")
         do {
-            analysisPipelineState = try metalDevice.makeComputePipelineState(function: luminaceFunction!)
+            analysisPipelineState = try metalDevice.makeComputePipelineState(function: lumaFunction!)
             
         } catch {
           print("Failed to create pipeline analysis state, error \(error)")
@@ -45,23 +46,28 @@ class LumaAnalyser {
     }
     
     
-    func update(texture: MTLTexture,
-                selectionArea: MetalRenderer.SelectionStruct,
-                metalCommandBuffer: MTLCommandBuffer){
+    override func update(selectionArea: MetalRenderer.SelectionStruct,
+                         metalCommandBuffer: MTLCommandBuffer,
+                         cameraImageTextureY: MTLTexture,
+                         cameraImageTextureCbCr: MTLTexture){
         
         //checkTimeInterval(metalCommandBuffer: metalCommandBuffer)
         
+        print("update")
         self.selectionState = selectionArea
        
-        
         if let analysisEncoding = metalCommandBuffer.makeComputeCommandEncoder() {
-            analyse(analysisEncoding: analysisEncoding, texture: texture, metalCommandBuffer: metalCommandBuffer)
+            analyse(analysisEncoding: analysisEncoding,
+                    texture: cameraImageTextureY,
+                    metalCommandBuffer: metalCommandBuffer)
         }
-        
         
     }
     
+    var lumaValue : MTLBuffer?
     func analyse(analysisEncoding: MTLComputeCommandEncoder, texture: MTLTexture, metalCommandBuffer: MTLCommandBuffer){
+        
+        guard let metalDevice = AnalysingModule.metalDevice else { return }
         
         guard let analysLumaPipelineState = self.analysisPipelineState else {
             print("Failed to create analysisPipelineState")
@@ -73,6 +79,7 @@ class LumaAnalyser {
             return
         }
         
+        print("analysis")
         //setup pipeline
         analysisEncoding.setComputePipelineState(analysLumaPipelineState)
         
@@ -97,8 +104,9 @@ class LumaAnalyser {
             
         
         analysisEncoding.endEncoding()
+        print("analysisEncoding.endEncoding()")
         
-        let result = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        lumaValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
         
         if let finalSum = metalCommandBuffer.makeComputeCommandEncoder() {
@@ -111,7 +119,7 @@ class LumaAnalyser {
             let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
             
             finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
-            finalSum.setBuffer(result, offset: 0, index: 1)
+            finalSum.setBuffer(lumaValue, offset: 0, index: 1)
             finalSum.setBuffer(arrayLength, offset: 0, index: 2)
             finalSum.setBuffer(countResultBuffer, offset: 0, index: 3)
             
@@ -120,14 +128,7 @@ class LumaAnalyser {
              
             finalSum.endEncoding()
             
-            metalCommandBuffer.commit()
-            metalCommandBuffer.waitUntilCompleted()
-     
-            let resultBuffer = result.contents().bindMemory(to: Float.self, capacity: 0)
-        
-            print("resultBuffer" , resultBuffer.pointee)
-            
-            self.resultBuffer = resultBuffer.pointee
+           
         
             let countBuffer = countt.contents().bindMemory(to: Float.self, capacity: 0)
         
@@ -143,6 +144,20 @@ class LumaAnalyser {
         
         print("_partialBuffer: ", _partialBuffer.pointee)
         
+    }
+    
+    var latestResult = 0.0
+    
+    override func writeToBuffers() {
+        let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
+    
+        print("resultBuffer" , resultBuffer?.pointee)
+        
+        self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+        
+        if let zBuffer = result {
+            zBuffer.append(latestResult)
+        }
     }
     
     var resultBuffer :  Float = 0.0

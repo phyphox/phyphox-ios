@@ -43,7 +43,7 @@ class ExperimentCameraInputSession: NSObject {
         cameraModel.y2 = y2
         
         cameraModel.metalRenderer.timeReference = timeReference
-        cameraModel.metalRenderer.cameraBuffers = experimentCameraBuffers
+        cameraModel.metalRenderer.initializeCameraBuffer(cameraBuffers: experimentCameraBuffers)
        
         
         cameraModel.locked = locked
