@@ -46,11 +46,14 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
                 
             case .none:
                 (imageView as! UIImageView).image = image
-            case .invert:                let ciImage = CIImage(image: image)
-                if let filter = CIFilter(name: "CIColorInvert") {
-                    filter.setValue(ciImage, forKey: kCIInputImageKey)
-                    let newImage = UIImage(ciImage: filter.outputImage!)
-                    (imageView as! UIImageView).image = newImage
+            case .invert:
+                let renderer = UIGraphicsImageRenderer(size: image.size)
+                (imageView as! UIImageView).image = renderer.image { (context) in
+                    let rect = CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height)
+                    image.draw(in: rect)
+                    UIColor(white: 1.0, alpha: 1.0).setFill()
+                    context.fill(rect, blendMode: .difference)
+                    image.draw(in: rect, blendMode: .destinationIn, alpha: 1.0)
                 }
             }
         }
