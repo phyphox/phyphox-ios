@@ -21,6 +21,7 @@ enum SensorType: String, LosslessStringConvertible, Equatable, CaseIterable {
     case humidity
     case attitude
     case gravity
+    case custom
 }
 
 extension SensorType {
@@ -48,6 +49,8 @@ extension SensorType {
             return localize("sensorAttitude")
         case .gravity:
             return localize("sensorGravity")
+        case .custom:
+            return localize("sensorVendor")
         }
     }
 }
@@ -276,7 +279,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             guard motionSession.proximityAvailable else {
                 throw SensorError.sensorUnavailable(sensorType)
             }
-        case .light, .temperature, .humidity:
+        case .light, .temperature, .humidity, .custom:
             throw SensorError.sensorUnavailable(sensorType)
         case .attitude, .linearAcceleration, .gravity:
             guard motionSession.deviceMotionAvailable else {
@@ -517,7 +520,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             motionSession.stopAltimeterUpdates(self)
         case .proximity:
             motionSession.stopProximityUpdates(self)
-        case .light, .temperature, .humidity:
+        case .light, .temperature, .humidity, .custom:
             break
         case .attitude:
             motionSession.stopDeviceMotionUpdates(self)

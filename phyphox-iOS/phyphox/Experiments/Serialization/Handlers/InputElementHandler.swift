@@ -163,6 +163,8 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         case average
         case stride
         case ignoreUnavailable
+        case nameFilter // ignored, only part of the file format for Android sensors
+        case typeFilter // ignored, only part of the file format for Android sensors
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
