@@ -1197,13 +1197,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             label.text = countdownFormatter.string(from: dt as NSNumber)
             label.sizeToFit()
-            
-            var items = navigationItem.rightBarButtonItems
-            
-            items?.removeLast()
-            items?.append(UIBarButtonItem(customView: label))
-            
-            navigationItem.rightBarButtonItems = items
         }
         
         after(0.02) {
@@ -1272,16 +1265,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     
                     label.text = countdownFormatter.string(from: dt as NSNumber)
                     label.sizeToFit()
-                    
-                    var items = navigationItem.rightBarButtonItems
-                    
-                    items?.removeLast()
-                    items?.append(UIBarButtonItem(customView: label))
-                    
-                    navigationItem.rightBarButtonItems = items
                 }
                 
-                after(0.2) {
+                after(0.02) {
                     updateT()
                 }
                 
