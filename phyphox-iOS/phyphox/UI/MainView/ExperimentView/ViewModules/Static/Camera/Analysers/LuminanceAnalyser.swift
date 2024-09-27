@@ -130,12 +130,7 @@ class LuminanceAnalyser: AnalysingModule {
              
             finalSum.endEncoding()
             
-            
-            
-            let count = countResultBuffer.contents().bindMemory(to: Float.self, capacity: 1)
-            
-            print("countResultBuffer: ", count.pointee)
-            
+           
         }
         
     }

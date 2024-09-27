@@ -128,21 +128,8 @@ class LumaAnalyser : AnalysingModule {
              
             finalSum.endEncoding()
             
-           
-        
-            let countBuffer = countt.contents().bindMemory(to: Float.self, capacity: 0)
-        
-            print("selection width" , countBuffer.pointee)
-            
-            let count = countResultBuffer.contents().bindMemory(to: Float.self, capacity: 1)
-            
-            print("countResultBuffer: ", count.pointee)
             
         }
-        
-        let _partialBuffer = partialBuffer.contents().bindMemory(to: Float.self, capacity: 1)
-        
-        print("_partialBuffer: ", _partialBuffer.pointee)
         
     }
     

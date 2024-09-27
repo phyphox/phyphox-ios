@@ -131,9 +131,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         for analysingModule in analysingModules {
             analysingModule.loadMetal()
         }
-        
-       
-        
        
     }
     
@@ -401,7 +398,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // 480  //240
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
-        
         
         
         var texture: CVMetalTexture? = nil
