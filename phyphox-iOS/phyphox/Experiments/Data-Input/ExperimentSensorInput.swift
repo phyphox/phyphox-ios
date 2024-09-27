@@ -608,6 +608,9 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                         valueBuffer.reset(nextIntervalStart: valueBuffer.iterationStartTimestamp! + rate)
                     }
                     valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
+                } else {
+                    //Assuming that even delayed sensor readings arrive in correct order, we should still use this delayed reading to update the current state
+                    lastResult = (x: x, y: y, z: z, abs: abs, accuracy: accuracy)
                 }
             case .limit:
                 valueBuffer.addValue(x: x, y: y, z: z, abs: abs, accuracy: accuracy, timestamp: relativeT)
