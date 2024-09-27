@@ -43,7 +43,7 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
-        var maxNonScalarCount = -1 //Scalar and an empty vector should give an empty result
+        var emptyVector = false //Scalar and an empty vector should give an empty result
         
         for input in inputs {
             switch input {
@@ -59,7 +59,9 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
                     values.append(src)
                 }
 
-                maxNonScalarCount = Swift.max(maxNonScalarCount, array.count)
+                if (array.count == 0) {
+                    emptyVector = true
+                }
                 maxCount = Swift.max(maxCount, array.count)
                 
                 if array.count == 0 {
@@ -82,7 +84,7 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
         
         let result: [Double]
         
-        if values.count == 0 || maxCount == 0 || maxNonScalarCount == 0 {
+        if values.count == 0 || maxCount == 0 || emptyVector {
             result = []
         }
         else {
