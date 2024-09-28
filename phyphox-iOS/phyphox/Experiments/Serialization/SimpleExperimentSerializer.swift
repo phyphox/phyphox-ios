@@ -35,7 +35,7 @@ final class SimpleExperimentSerializer {
 
         ExperimentManager.shared.reloadUserExperiments()
         
-        return str
+        return path
     }
     
     

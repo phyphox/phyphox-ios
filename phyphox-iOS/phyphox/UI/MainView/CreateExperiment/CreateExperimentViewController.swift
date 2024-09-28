@@ -27,6 +27,8 @@ class CreateExperimentViewController: UITableViewController {
     private var experimentTitle: String?
     private var rateString: String?
     
+    public var onExperimentCreated: ((String)->())?
+    
     func actualInit() {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tableView.register(TextFieldTableViewCell.self, forCellReuseIdentifier: "TextCell")
@@ -81,7 +83,8 @@ class CreateExperimentViewController: UITableViewController {
         hud.show(in: self.presentingViewController!.view)
         
         do {
-            try _ = SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
+            let path = try SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
+            onExperimentCreated?(path)
             hud.dismiss()
         }
         catch let error as NSError {

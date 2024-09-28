@@ -327,6 +327,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     func createSimpleExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
+        vc.onExperimentCreated = {(path) -> () in
+            nav.dismiss(animated: true)
+            _ = self.launchExperimentByURL(URL(fileURLWithPath: path), chosenPeripheral: nil)
+        }
         
         if iPad {
             nav.modalPresentationStyle = .formSheet
