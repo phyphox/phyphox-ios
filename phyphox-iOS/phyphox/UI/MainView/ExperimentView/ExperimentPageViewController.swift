@@ -618,7 +618,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == "" {
                 print("Fallback to generate URL from IP.")
-                var ip: String? = nil
+                var ip: [String] = []
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
                 if getifaddrs(&interfaceAdresses) == 0 {
                     var iPtr = interfaceAdresses
@@ -628,21 +628,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         let interface = iPtr?.pointee
                         if interface?.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
                             if let name = String(validatingUTF8: (interface?.ifa_name)!) {
-                                if name == "bridge100" { //This is the "hotspot interface"
+                                if ["en0", "bridge100"].contains(name) {
                                     var addr = interface?.ifa_addr.pointee
                                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
                                     getnameinfo(&addr!, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
-                                    ip = String(cString: hostname)
+                                    ip.append(String(cString: hostname))
                                 }
                             }
                         }
                     }
                 }
-                if ip != nil {
-                    if webServer.port != 80 {
-                        url = "http://\(ip!):\(webServer.port)"
-                    } else {
-                        url = "http://\(ip!)"
+                if ip.count > 0 {
+                    for addr in ip {
+                        if url != "" {
+                            url += "\n"
+                        }
+                        if webServer.port != 80 {
+                            url += "http://\(addr):\(webServer.port)"
+                        } else {
+                            url += "http://\(addr)"
+                        }
                     }
                 } else {
                     url = "Error: No active network."
