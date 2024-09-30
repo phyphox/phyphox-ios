@@ -467,8 +467,10 @@ final class Experiment {
         
         running = false
         
-        timeReference.registerEvent(event: .PAUSE)
-        bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        if (timeReference.timeMappings.last?.event != .CLEAR) {
+            timeReference.registerEvent(event: .PAUSE)
+            bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        }
     }
     
     func clear(byUser: Bool) {

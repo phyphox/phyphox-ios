@@ -519,6 +519,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                     out.append(0x00)
                 case .START:
                     out.append(0x01)
+                case .CLEAR:
+                    out.append(0x02)
                 }
                 experimentTime = Int64(timeMapping.experimentTime * 1000)
                 systemTime = Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000)

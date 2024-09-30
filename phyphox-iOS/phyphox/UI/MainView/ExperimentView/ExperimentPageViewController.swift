@@ -1379,6 +1379,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func clearData() {
+        self.experiment.timeReference.registerEvent(event: .CLEAR)
+        self.experiment.bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: self.experiment.timeReference.timeMappings.last) }
+        
         self.stopExperiment()
         self.experiment.clear(byUser: true)
         
