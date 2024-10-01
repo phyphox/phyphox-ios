@@ -151,6 +151,7 @@ struct BluetoothInputDescriptor {
     let conversion: OutputConversion?
     let offset: UInt16
     let bufferName: String
+    let keep: Bool
 }
 
 private final class BluetoothInputElementHandler: ResultElementHandler, ChildlessElementHandler {
@@ -162,6 +163,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
         case char
         case conversion
         case offset
+        case keep
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -177,6 +179,8 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
         
         let offset: UInt16 = try attributes.optionalValue(for: .offset) ?? 0
         
+        let keep: Bool = try attributes.optionalValue(for: .keep) ?? true
+        
         switch conversionName {
         case "byteArray":
             conversion = ByteArrayOutputConversion()
@@ -187,7 +191,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
             conversion = SimpleOutputConversion(function: conversionFunction)
         }
         
-        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, offset: offset, bufferName: text))
+        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, offset: offset, bufferName: text, keep: keep))
     }
     
     func clear() {
