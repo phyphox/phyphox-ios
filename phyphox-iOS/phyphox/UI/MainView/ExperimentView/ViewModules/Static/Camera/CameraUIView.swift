@@ -588,10 +588,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
        
         
         let pr = CGPoint(x: p.x / viewDelegate.mView.frame.width, y: p.y / viewDelegate.mView.frame.height)
-        let ps = pr.applying(viewDelegate.metalRenderer.displayToCameraTransform)
+        let ps = pr.applying(viewDelegate.metalRenderer.cameraPreviewRenderer.displayToCameraTransform)
         let x = Float(ps.x)
         let y = Float(ps.y)
         
+        print()
         
         if sender.state == .began {
             let x1Square = (x - del.x1) * (x - del.x1)

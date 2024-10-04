@@ -33,7 +33,7 @@ class LuminanceAnalyser: AnalysingModule {
         
         let gpuFunctionLibrary = AnalysingModule.gpuFunctionLibrary
         
-        guard let luminanceFunction = gpuFunctionLibrary?.makeFunction(name:"computeSumLuminance") else {
+        guard let luminanceFunction = gpuFunctionLibrary?.makeFunction(name:"computeLuminance") else {
             return
         }
         do {
@@ -138,7 +138,6 @@ class LuminanceAnalyser: AnalysingModule {
     
     override func writeToBuffers() {
         let resultBuffer = luminanceValue?.contents().bindMemory(to: Float.self, capacity: 0)
-        print("resultBuffer" , resultBuffer?.pointee)
         self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
         
         if let zBuffer = result {

@@ -18,6 +18,7 @@ class LumaAnalyser : AnalysingModule {
     var time: TimeInterval = TimeInterval()
    
     var result: DataBuffer?
+    var lumaValue : MTLBuffer?
     
     init(result: DataBuffer?) {
         self.result = result
@@ -28,7 +29,7 @@ class LumaAnalyser : AnalysingModule {
         guard let metalDevice = AnalysingModule.metalDevice else { return }
         let gpuFunctionLibrary = AnalysingModule.gpuFunctionLibrary
         
-        let lumaFunction = gpuFunctionLibrary?.makeFunction(name: "computeSumLuminanceParallel")
+        let lumaFunction = gpuFunctionLibrary?.makeFunction(name: "computeLuma")
         do {
             analysisPipelineState = try metalDevice.makeComputePipelineState(function: lumaFunction!)
             
@@ -51,9 +52,6 @@ class LumaAnalyser : AnalysingModule {
                          cameraImageTextureY: MTLTexture,
                          cameraImageTextureCbCr: MTLTexture){
         
-        //checkTimeInterval(metalCommandBuffer: metalCommandBuffer)
-        
-        print("update")
         self.selectionState = selectionArea
        
         if let analysisEncoding = metalCommandBuffer.makeComputeCommandEncoder() {
@@ -64,7 +62,7 @@ class LumaAnalyser : AnalysingModule {
         
     }
     
-    var lumaValue : MTLBuffer?
+    
     func analyse(analysisEncoding: MTLComputeCommandEncoder, texture: MTLTexture, metalCommandBuffer: MTLCommandBuffer){
         
         guard let metalDevice = AnalysingModule.metalDevice else { return }
@@ -104,7 +102,7 @@ class LumaAnalyser : AnalysingModule {
             
         
         analysisEncoding.endEncoding()
-        print("analysisEncoding.endEncoding()")
+        
         
         lumaValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
@@ -138,8 +136,6 @@ class LumaAnalyser : AnalysingModule {
     override func writeToBuffers() {
         let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
     
-        print("resultBuffer" , resultBuffer?.pointee)
-        
         self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
         
         if let zBuffer = result {

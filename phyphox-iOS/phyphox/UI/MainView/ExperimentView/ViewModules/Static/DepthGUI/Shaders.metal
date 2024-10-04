@@ -59,24 +59,16 @@ struct PartialBufferLength {
     uint length;
 };
 
-enum HSV_Mode: uint {
-    Hue = 0,
-    Saturation = 1,
-    Value = 2,
-    };
+
 
 struct Mode {
     HSV_Mode enumValue;
 };
-    
+
 struct Mode_HSV {
     float mode; // 0.0 for Hue, 1.0 for Staturation, 2.0 for Value
 };
-    
 
-struct HueValue {
-    bool isY;
-};
 
 vertex CamColorInOut vertexTransform(const device CamVertex* cameraVertices [[ buffer(0) ]],
                                      const device CamVertex* sceneVertices [[ buffer(1) ]],
@@ -128,142 +120,14 @@ fragment half4 fragmentShader(CamColorInOut in [[ stage_in ]],
 }
 
 
-kernel void computeSumLuminanceParallellll(texture2d<float, access::read> yTexture [[ texture(0) ]],
-                                           device float *result [[ buffer(0) ]],
-                                           device float *partialSums [[ buffer(1) ]],
-                                           device float *count [[ buffer(2) ]],
-                                           constant SelectionState& selectionState [[ buffer(3) ]],
-                                           uint2 gid2D [[ thread_position_in_grid ]],
-                                           uint2 tid [[ thread_position_in_threadgroup ]],
-                                           uint2 groupSize [[ threads_per_threadgroup ]],
-                                           uint2 groupId [[ threadgroup_position_in_grid ]]) {
-    
-    
-    
-    // Initialize the sum for this thread
-    float luminanceSum = 0.0;
-    
-    float countPixel = 0.0;
-    
-    
-    // Calculate texture dimensions
-    uint width = selectionState.x2 - selectionState.x1;
-    uint height = selectionState.y2 - selectionState.y1;
-    
-    // Convert the 2D gid to a 1D index
-    //uint gid = gid2D.y * (groupSize.x * groupId.x) + gid2D.x;
-    
-    // Clear the buffer at this index
-    //result[gid] = 0.0f;
-    
-    
-    
-    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    
-    if (globalID.x >= yTexture.get_width() || globalID.y >= yTexture.get_height()) {
-        return;
-    }
-    
-    *count = (width / groupSize.x ) * (height / groupSize.y);
-    
-    
-    luminanceSum = yTexture.read(globalID).r * 255 ;
-    threadgroup float localSums[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
-    threadgroup float localPixelCount[256];
-    localSums[tid.x + tid.y * groupSize.x] = luminanceSum;
-    localPixelCount[tid.x + tid.y * groupSize.x] = 1;
-    
-    
-    // Synchronize threads in the threadgroup
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    
-    // Only one thread in the threadgroup should write the sum to the partial sums
-    if (tid.x == 0 && tid.y == 0) {
-        float totalGroupSum = 0.0;
-        uint totalGroupPixels = 0;
-        for (uint i = 0; i < groupSize.x * groupSize.y; i++) {
-            totalGroupSum += localSums[i];
-            totalGroupPixels += localPixelCount[i];
-        }
-        partialSums[groupId.x] = totalGroupPixels;
-        
-    }
-    
-    // First thread in the grid writes the final result
-    if (gid2D.x == 0 && gid2D.y == 0) {
-        float totalSum = 0.0;
-        uint gridSize = (width / groupSize.x ) * (height / groupSize.y);
-        for (uint i = 0; i < gridSize; i++) {
-            totalSum += partialSums[i];
-            
-        }
-        *result = totalSum;
-    }
-    
-}
-
-
-
-// this compute shader works for non selectable states.
-kernel void computeSumLuminanceParallelNonSelectableStates(texture2d<float, access::read> yTexture [[ texture(0) ]],
-                                                           device float *result [[ buffer(0) ]],
-                                                           device float *partialSums [[ buffer(1) ]],
-                                                           device float *count [[ buffer(2) ]],
-                                                           constant SelectionState& selectionState [[ buffer(3) ]],
-                                                           uint2 gid2D [[ thread_position_in_grid ]],
-                                                           uint2 tid [[ thread_position_in_threadgroup ]],
-                                                           uint2 groupSize [[ threads_per_threadgroup ]],
-                                                           uint2 groupId [[ threadgroup_position_in_grid ]]) {
-    
-    
-    uint width = yTexture.get_width();
-    uint height = yTexture.get_height();
-    
-    float totalSum = 0.0;
-    
-    if(gid2D.x > width || gid2D.y > height){
-        return;
-    }
-    
-    float luminance = 0.0;
-    
-    luminance = yTexture.read(gid2D).r * 255;
-    
-    threadgroup float localSums[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
-    localSums[tid.x + tid.y * groupSize.x] = luminance;
-    
-    // Synchronize threads in the threadgroup
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    
-    // Only one thread in the threadgroup should write the sum to the partial sums
-    if (tid.x == 0 && tid.y == 0) {
-        float totalGroupSum = 0.0;
-        for (uint i = 0; i < groupSize.x * groupSize.y; i++) {
-            totalGroupSum += localSums[i];
-        }
-        partialSums[groupId.x] = totalGroupSum;
-        
-    }
-    
-    uint gridSize = (width / groupSize.x ) * (height / groupSize.y);
-    for (uint i = 0; i < gridSize; i++) {
-        totalSum += partialSums[i];
-    }
-    
-    *result = totalSum;
-    
-}
-
-
-// this compute shader works for selectable states.
-kernel void computeSumLuminanceParallel(texture2d<float, access::read> yTexture [[ texture(0) ]],
-                                        device float *partialSums [[ buffer(0) ]],
-                                        constant SelectionState& selectionState [[ buffer(1) ]],
-                                        device float *countt [[ buffer(2) ]],
-                                        uint2 gid2D [[ thread_position_in_grid ]],
-                                        uint2 tid [[ thread_position_in_threadgroup ]],
-                                        uint2 groupSize [[ threads_per_threadgroup ]],
-                                        uint2 groupId [[ threadgroup_position_in_grid ]]) {
+kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]],
+                        device float *partialSums [[ buffer(0) ]],
+                        constant SelectionState& selectionState [[ buffer(1) ]],
+                        device float *countt [[ buffer(2) ]],
+                        uint2 gid2D [[ thread_position_in_grid ]],
+                        uint2 tid [[ thread_position_in_threadgroup ]],
+                        uint2 groupSize [[ threads_per_threadgroup ]],
+                        uint2 groupId [[ threadgroup_position_in_grid ]]) {
     
     
     uint pixelCount = 0;
@@ -284,7 +148,7 @@ kernel void computeSumLuminanceParallel(texture2d<float, access::read> yTexture 
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
     
     threadgroup float localSums[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
-   
+    
     luminance = yTexture.read(globalID).r;
     
     
@@ -292,7 +156,7 @@ kernel void computeSumLuminanceParallel(texture2d<float, access::read> yTexture 
         luminance = 0.0;
     }
     
-
+    
     localSums[tid.x + tid.y * groupSize.x] = luminance;
     threadgroup_barrier(mem_flags::mem_threadgroup);
     
@@ -310,15 +174,14 @@ kernel void computeSumLuminanceParallel(texture2d<float, access::read> yTexture 
 }
 
 
-// this compute shader works for selectable states.
-kernel void computeSumLuminance(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
-                                texture2d<float, access::sample> cameraImageTextureCbCr [[ texture(1) ]],
-                                device float *partialSums [[ buffer(0) ]],
-                                constant SelectionState& selectionState [[ buffer(1) ]],
-                                uint2 gid2D [[ thread_position_in_grid ]],
-                                uint2 tid [[ thread_position_in_threadgroup ]],
-                                uint2 groupSize [[ threads_per_threadgroup ]],
-                                uint2 groupId [[ threadgroup_position_in_grid ]]) {
+kernel void computeLuminance(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
+                             texture2d<float, access::sample> cameraImageTextureCbCr [[ texture(1) ]],
+                             device float *partialSums [[ buffer(0) ]],
+                             constant SelectionState& selectionState [[ buffer(1) ]],
+                             uint2 gid2D [[ thread_position_in_grid ]],
+                             uint2 tid [[ thread_position_in_threadgroup ]],
+                             uint2 groupSize [[ threads_per_threadgroup ]],
+                             uint2 groupId [[ threadgroup_position_in_grid ]]) {
     
     
     uint pixelCount = 0;
@@ -344,19 +207,19 @@ kernel void computeSumLuminance(texture2d<float, access::sample> cameraImageText
                                      cameraImageTextureY.sample(s, float2(gid2D)),
                                      cameraImageTextureCbCr.sample(s, float2(gid2D))
                                      );
-  
+    
     float red = rgb.r;
     float green = rgb.g;
     float blue = rgb.b;
     
-    threadgroup float localSums[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
+    threadgroup float localSums[256];
     
     luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
     
     if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
         luminance = 0.0;
     }
-
+    
     localSums[tid.x + tid.y * groupSize.x] = luminance;
     threadgroup_barrier(mem_flags::mem_threadgroup);
     
@@ -379,15 +242,12 @@ kernel void computeSumLuminance(texture2d<float, access::sample> cameraImageText
 kernel void computeFinalSum(device float *partialSums [[ buffer(0) ]],
                             device float *result [[ buffer(1) ]],
                             constant PartialBufferLength& partialBufferLength [[ buffer(2) ]],
-                            device float *count [[ buffer(3) ]],
                             uint gid [[ thread_position_in_grid ]],
                             uint tid [[ thread_position_in_threadgroup ]]
                             ) {
     
-    uint numPartialSums = partialBufferLength.length;
+    uint numPartialSums = 35; // TODO: fix: numPartialSums is not receiving the value from CPU, hard coded need to be refactored
     threadgroup float localSum[1024];
-    
-    *count = numPartialSums;
     
     if(gid < numPartialSums) {
         localSum[tid] = partialSums[gid];
@@ -398,47 +258,46 @@ kernel void computeFinalSum(device float *partialSums [[ buffer(0) ]],
     // Perform parallel reduction within the threadgroup
     uint testNumPartialSum = exp2(ceil(log2(float(numPartialSums))));
     
-        for (uint stride = testNumPartialSum / 2; stride > 0; stride /= 2) {
-            
-            if (tid < stride && (tid + stride) < numPartialSums) {
-                localSum[tid] += localSum[tid + stride];
-            }
-            threadgroup_barrier(mem_flags::mem_threadgroup);
+    for (uint stride = testNumPartialSum / 2; stride > 0; stride /= 2) {
+        
+        if (tid < stride && (tid + stride) < numPartialSums) {
+            localSum[tid] += localSum[tid + stride];
         }
-  
-   
-       if (gid == 0) {
-           *result = localSum[0];
-       }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+    
+    if (gid == 0) {
+        *result = localSum[0];
+    }
 }
 
 
-kernel void computeHSVV(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
+kernel void computeHue(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
                        texture2d<float, access::sample> cameraImageTextureCbCr [[ texture(1) ]],
                        device float *partialSums [[ buffer(0) ]],
                        constant SelectionState& selectionState [[ buffer(1) ]],
-                       device Mode* inputMode [[buffer(2)]],
+                       constant PartialBufferLength& partialBufferLength [[ buffer(2) ]],
                        uint2 gid2D [[ thread_position_in_grid ]],
                        uint2 tid [[ thread_position_in_threadgroup ]],
                        uint2 groupSize [[ threads_per_threadgroup ]],
                        uint2 groupId [[ threadgroup_position_in_grid ]]){
     
+    uint width = cameraImageTextureY.get_width();
+    uint height = cameraImageTextureCbCr.get_height();
     
-    uint width =  cameraImageTextureY.get_width();
-    uint height = cameraImageTextureY.get_height();
+    uint numPartialSums = partialBufferLength.length; // TODO: fix: numPartialSums is not receiving the value from CPU
     
     if(gid2D.x > width || gid2D.y > height){
         return;
     }
     
-    
     uint selectionWidth = selectionState.x2 - selectionState.x1; //96
-    uint selectionHeight = selectionState.y2 - selectionState.y1; //72
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
     
-    threadgroup float localSums[256]; // 256 * 3 = 768
-   
+    
+    threadgroup float localSums[512]; // 256 * 2, to place both x and y result into same buffer
+    
     // Create an object to sample textures.
     constexpr sampler s(address::clamp_to_edge, filter::linear);
     
@@ -448,73 +307,125 @@ kernel void computeHSVV(texture2d<float, access::sample> cameraImageTextureY [[ 
                                      cameraImageTextureCbCr.sample(s, float2(gid2D))
                                      );
     
-    Mode mode = *inputMode;
-  
-    float minValue, maxValue;
-    uint maxIndex;
-
-    float red = rgb.r;
-    float green = rgb.g;
-    float blue = rgb.b;
-
-    if(red == green && red == blue){
-        maxIndex = 0;
-        maxValue = red;
-        minValue = red;
-    } else if(red >= green && red >= blue){
-        maxIndex = 1;
-        maxValue = red;
-        minValue = (green < blue) ? green : blue;
-    }else if ((green >= red) && (green >= blue))
-    {
-        maxIndex = 2;
-        maxValue = green;
-        minValue = (red < blue) ? red : blue;
+    
+    
+    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);
+    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
+    float d = rgbMax - rgbMin;
+    
+    float result;
+    float x,y;
+    
+    if(rgbMax == rgbMin){
+        result = 0.0;
+    } else if(rgbMax == rgb.r) {
+        result = (rgb.g - rgb.b + d * (rgb.g < rgb.b ? 6.0 : 0.0)) / (6.0 * d);
+    } else if (rgbMax == rgb.g) {
+        result = (rgb.b - rgb.r + d * 2.0) / (6.0 * d);
+    } else {
+        result = (rgb.r - rgb.g + d * 4.0) / (6.0 * d);
     }
-    else
-    {
-        maxIndex = 3;
-        maxValue = blue;
-        minValue = (red < green) ? red : green;
+    
+    result = result * 2 * 3.141592 ;
+    
+    uint index = (tid.x + tid.y * groupSize.x);
+    
+    if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
+        result = 0;
     }
+    
+    y = sin(result);
+    x = cos(result);
+    
+    localSums[index] = y;
+    localSums[index+256] = x;
+    
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+    if (tid.x == 0 && tid.y == 0) {
+        float totalGroupForX = 0.0;
+        float totalGroupForY = 0.0;
+        
+        for (uint i = 0; i < 256; i++) {
+            totalGroupForY += localSums[i];
+            totalGroupForX += localSums[i+256];
+        }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+        
+        uint threadGroupWidth = selectionWidth / groupSize.x ;
+        
+        partialSums[(groupId.x + groupId.y * threadGroupWidth) ] = totalGroupForY;
+        partialSums[(groupId.x + groupId.y * threadGroupWidth) + 35] = totalGroupForX; // TODO: Hard coded need to be refactored
+        threadgroup_barrier(mem_flags::mem_device);
+    }
+}
+
+
+
+kernel void computeSaturationAndValue(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
+                                      texture2d<float, access::sample> cameraImageTextureCbCr [[ texture(1) ]],
+                                      device float *partialSums [[ buffer(0) ]],
+                                      constant SelectionState& selectionState [[ buffer(1) ]],
+                                      device Mode_HSV* inputMode [[buffer(2)]],
+                                      uint2 gid2D [[ thread_position_in_grid ]],
+                                      uint2 tid [[ thread_position_in_threadgroup ]],
+                                      uint2 groupSize [[ threads_per_threadgroup ]],
+                                      uint2 groupId [[ threadgroup_position_in_grid ]]){
+    
+    
+    uint width =  cameraImageTextureY.get_width();
+    uint height = cameraImageTextureY.get_height();
+    
+    if(gid2D.x > width || gid2D.y > height){
+        return;
+    }
+    
+    uint selectionWidth = selectionState.x2 - selectionState.x1; //96
+    uint selectionHeight = selectionState.y2 - selectionState.y1; //72
+    
+    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
+    
+    threadgroup float localSums[256];
+    
+    // Create an object to sample textures.
+    constexpr sampler s(address::clamp_to_edge, filter::linear);
+    
+    // Sample this pixel's camera image color.
+    float4 rgb = ycbcrToRGBTransform(
+                                     cameraImageTextureY.sample(s, float2(gid2D)),
+                                     cameraImageTextureCbCr.sample(s, float2(gid2D))
+                                     );
+    
+    Mode_HSV mode = *inputMode;
+    
+    uint m = mode.mode;
+    
+    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);
+    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
+    float d = rgbMax - rgbMin;
     
     float result;
     
-    switch (mode.enumValue){
-        case Hue:
-    
-            switch(maxIndex)
-                {
-                    case 0:    result = 0.0;
-                                    break;
-                    case 1: result = 60.0 * ((green - blue) / (maxValue - minValue));
-                                    break;
-                    case 2: result = 60.0 * (2 + ((blue - red) / (maxValue - minValue)));
-                                    break;
-                    case 3: result = 60.0 * (4 + ((red - green) / (maxValue - minValue)));
-                                    break;
-                }
+    switch (m){
             
-            if (result < 0.0)
-                result += 360.0;
+        case 1:
+            
+            if (rgbMax == 0.0) {
+                result = 0.0;
+            } else {
+                result = d / rgbMax;
+            }
             
             break;
-        case Saturation:
+        case 2:
             
-            // Compute the saturation.
-            result = (maxIndex == 0) ? 0.0 : ((maxValue - minValue) / maxValue);
-            
-            break;
-        case Value:
-            
-            // Compute the value.
-            result = maxValue;
+            result = max(rgb.r, max(rgb.b, rgb.g));
             
             break;
     }
     
     // Compute 1D index in the partialSums array for the current pixel
-    uint index = (tid.x + tid.y * groupSize.x);  // 3 floats per pixel (H, S, V)
+    uint index = (tid.x + tid.y * groupSize.x);
     
     if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
         result = 0;
@@ -527,10 +438,10 @@ kernel void computeHSVV(texture2d<float, access::sample> cameraImageTextureY [[ 
     
     if (tid.x == 0 && tid.y == 0) {
         float totalGroup = 0.0;
-       
+        
         for (uint i = 0; i < 256; i++) {
             totalGroup += localSums[i];
-           
+            
         }
         threadgroup_barrier(mem_flags::mem_threadgroup);
         
@@ -541,120 +452,11 @@ kernel void computeHSVV(texture2d<float, access::sample> cameraImageTextureY [[ 
     }
     
 }
- 
 
 
-    kernel void computeHSV(texture2d<float, access::sample> cameraImageTextureY [[ texture(0) ]],
-                           texture2d<float, access::sample> cameraImageTextureCbCr [[ texture(1) ]],
-                           device float *partialSums [[ buffer(0) ]],
-                           constant SelectionState& selectionState [[ buffer(1) ]],
-                           device Mode_HSV* inputMode [[buffer(2)]],
-                           constant HueValue& hueVal [[buffer(3)]],
-                           uint2 gid2D [[ thread_position_in_grid ]],
-                           uint2 tid [[ thread_position_in_threadgroup ]],
-                           uint2 groupSize [[ threads_per_threadgroup ]],
-                           uint2 groupId [[ threadgroup_position_in_grid ]]){
-        
-        
-        uint width =  cameraImageTextureY.get_width();
-        uint height = cameraImageTextureY.get_height();
-        
-        if(gid2D.x > width || gid2D.y > height){
-            return;
-        }
-        
-        
-        uint selectionWidth = selectionState.x2 - selectionState.x1; //96
-        uint selectionHeight = selectionState.y2 - selectionState.y1; //72
-        
-        uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-        
-        threadgroup float localSums[256];
-       
-        // Create an object to sample textures.
-        constexpr sampler s(address::clamp_to_edge, filter::linear);
-        
-        // Sample this pixel's camera image color.
-        float4 rgb = ycbcrToRGBTransform(
-                                         cameraImageTextureY.sample(s, float2(gid2D)),
-                                         cameraImageTextureCbCr.sample(s, float2(gid2D))
-                                         );
-        
-        Mode_HSV mode = *inputMode;
-        
-        uint m = mode.mode;
-      
-        float rgbMax = max(max(rgb.r, rgb.g), rgb.b);
-        float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
-        float d = rgbMax - rgbMin;
-        
-        float result;
-        uint x, y;
-        
-        switch (m){
-            case 0:
-                
-                if(rgbMax == rgbMin){
-                    result = 0.0;
-                } else if(rgbMax == rgb.r) {
-                    result = (rgb.g - rgb.b + d * (rgb.g < rgb.b ? 6.0 : 0.0)) / (6.0 * d);
-                } else if (rgbMax == rgb.g) {
-                    result = (rgb.b - rgb.r + d * 2.0) / (6.0 * d);
-                } else {
-                    result = (rgb.r - rgb.g + d * 4.0) / (6.0 * d);
-                }
-                
-                result = result * 2 * 3.141592 ;
-               
-                if(hueVal.isY){
-                    result = sin(result);
-                } else{
-                    result = cos(result);
-                }
-                
-                break;
-                
-            case 1:
-                
-                if (rgbMax == 0.0) {
-                    result = 0.0;
-                } else {
-                    result = d / rgbMax;
-                }
-                
-                break;
-            case 2:
-                
-                result = max(rgb.r, max(rgb.b, rgb.g));
-                
-                break;
-        }
-        
-        // Compute 1D index in the partialSums array for the current pixel
-        uint index = (tid.x + tid.y * groupSize.x);  // 3 floats per pixel (H, S, V)
-        
-        if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
-            result = 0;
-        }
-        
-        // Write the HSV values into the partialSums buffer
-        localSums[index] = result;
-        
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.x == 0 && tid.y == 0) {
-            float totalGroup = 0.0;
-           
-            for (uint i = 0; i < 256; i++) {
-                totalGroup += localSums[i];
-               
-            }
-            threadgroup_barrier(mem_flags::mem_threadgroup);
-            
-            uint threadGroupWidth = selectionWidth / groupSize.x ;
-            
-            partialSums[(groupId.x + groupId.y * threadGroupWidth) ] = totalGroup;
-            threadgroup_barrier(mem_flags::mem_device);
-        }
-        
-    }
+enum HSV_Mode: uint {
+    Hue = 0,
+    Saturation = 1,
+    Value = 2,
+    };
+    

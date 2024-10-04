@@ -11,26 +11,6 @@ import MetalKit
 import AVFoundation
 import Accelerate
 
-/*
-phyphox xml -> ExperimentCameraInput (cameraInput in the Experiment) creates ExperimentCameraInputSession
-    - Each of this cameraInput has one session of cameraInput which can be called from viewmodel. 
- ExperimentCameraInputSession includes all the session from the current inputs, like x1 x2 values
- and also does the cameramodel instantiation and pass the xml values into camera model. 
- 
- So in this session from ViewModel(which contains UI) the UI is passed to  ExperimentCameraInputSession
- This setstup the required delegates
- 
- When ExperimentCameraInputSession instantitaes CameraModel, the CameraModel then instantiates CameraService and MetalRenderer and CameraSettingModels (which contains all the settings that can be applied to camera)
- 
- CameraModel also configues the all the required permissions, and if ok then start the cameraSession which also has a capture Output which runs on every frame that resides in cameraService
- This capture output then calles updateFrame in MetalRenderer and passes the new frames and selections areas. 
- This update is done for CPU part
- 
- MetalRenderer calls draw function at each loop and this called update() which passes the buffers to the GPU
-    
- */
-
-
 @available(iOS 13.0, *)
 class MetalRenderer: NSObject,  MTKViewDelegate{
     
@@ -61,7 +41,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
     
-    var displayToCameraTransform: CGAffineTransform = .identity
     var selectionState = SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
     // Textures used to transfer the current camera image to the GPU for rendering.
@@ -113,7 +92,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
         
         if(cameraBuffers?.hueBuffer != nil){
-            analysingModules.append(HSVAnalyser(result: cameraBuffers?.hueBuffer, mode: .Hue))
+            analysingModules.append(HSVAnalyser(result: cameraBuffers?.hueBuffer, mode: .Hue ))
         }
         
         if(cameraBuffers?.saturationBuffer != nil){
@@ -136,7 +115,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        print("mtkView ", size)
         drawRectResized(size: size)
     }
     
@@ -160,8 +138,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             self.cvImageBuffer = imageBuffer
         }
         
-        //timeStampOfFrame = time
-        
         self.selectionState = selectionState
         
         if measuring {
@@ -174,27 +150,9 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         self.queue = queue
     }
 
-    private func writeToBuffers(z: Double, t: TimeInterval) {
-        if let zBuffer = cameraBuffers?.luminanceBuffer {
-            zBuffer.append(z)
-        }
-        
-        
-    }
     
     private func dataIn() {
-        /**
-         guard let zBuffer = cameraBuffers?.luminanceBuffer else {
-             print("Error: zBuffer not set")
-             return
-         }
-        
-        
-        guard let tBuffer = cameraBuffers?.tBuffer else {
-            print("Error: tBuffer not set")
-            return
-        }
-         */
+     
         guard let timeReference = timeReference else {
             print("Error: time reference not set")
             return
@@ -276,8 +234,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                     
                 }
                 
-                print("number of element in modules: \(analysingModules.count) ")
-                
                 for analysingModule in analysingModules {
                     
                     guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
@@ -300,64 +256,16 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
             
         }
         
-        
-        /**
-        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
-            
-            let startTime = Date()
-            
-            analysisCommandBuffer.addCompletedHandler { commandBuffer in
-                let endTime = Date()
-                let executionTime = endTime.timeIntervalSince(startTime)
-                print("executionTime : \(executionTime)")
-               
-                if self.measuring {
-                    let hue = self.hsvAnalyser.hueFinalValue()
-                    self.dataIn(z: Double(hue))
-                }
-            }
-           
-            hsvAnalyser.update(selectionArea: getSelectionState(),
-                               metalCommandBuffer: analysisCommandBuffer,
-                               cameraImageTextureY: cameraImageTextureY,
-                               cameraImageTextureCbCr: cameraImageTextureCbCr)
-        }
-          
-        
-        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
-            
-            let startTime = Date()
-            
-            analysisCommandBuffer.addCompletedHandler { commandBuffer in
-                let endTime = Date()
-                let executionTime = endTime.timeIntervalSince(startTime)
-                print("executionTime : \(executionTime)")
-               
-                if self.measuring {
-                    let luma = self.lumaAnalyser.lumaFinalValue()
-                    self.dataIn(z: Double(luma))
-                }
-            }
-            
-            guard let ytexture = cameraImageTextureY else { return }
-            
-            guard let texturee = CVMetalTextureGetTexture(ytexture) else { return }
-           
-            lumaAnalyser.update(texture: texturee,
-                                selectionArea: getSelectionState(),
-                                metalCommandBuffer: analysisCommandBuffer)
-        }
-         */
-         
-     
     }
    
     func getSelectionState() -> SelectionStruct{
         let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1))
-            .applying(displayToCameraTransform.inverted())
+            .applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
         let p2 = CGPoint(
             x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)
-        ).applying(displayToCameraTransform.inverted())
+        ).applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
+        
+        // TODO: hard coded resolution size need to be refactored
         return SelectionStruct(x1: Float(min(p1.x, p2.x)*480),
                                x2: Float(max(p1.x, p2.x)*480),
                                y1: Float(min(p1.y, p2.y)*360),
@@ -396,9 +304,8 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
     func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
         
-        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // 480  //240
-        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // 360 //180
-        
+        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // for example 480  //240
+        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // for example 360 //180
         
         var texture: CVMetalTexture? = nil
         let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat, width, height, planeIndex, &texture)
