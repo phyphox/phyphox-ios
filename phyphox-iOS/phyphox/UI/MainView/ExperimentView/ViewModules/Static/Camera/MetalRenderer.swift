@@ -62,6 +62,8 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var analysingModules : [AnalysingModule] = []
     
+    var resolution: CGSize = CGSize(width: 0, height: 0)
+    
     init(renderer: MTKView) {
 
         if let metalDevice = MTLCreateSystemDefaultDevice() {
@@ -115,6 +117,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        resolution = size
         drawRectResized(size: size)
     }
     

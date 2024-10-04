@@ -222,210 +222,17 @@ class HSVAnalyser: AnalysingModule {
         }
         
     }
-    
-    
-    /**
-     func analyse(analysisCommandBuffer: MTLCommandBuffer,cameraImageTextureY: MTLTexture,cameraImageTextureCbCr: MTLTexture){
-     
-     guard let metalDevice = AnalysingModule.metalDevice else { return }
-     
-     guard let svPipeLineState = self.svPipeLineState else { return }
-     
-     guard let finalSumPipelineState = self.finalSumPipelineState else { return }
-     
-     let partialBufferLength = getNumOfThreadsGroups()
-     
-     var hsvMode = getHSVMode()
-     
-     var buffers: BuffersHSV
-     
-     var texture: Textures
-     
-     var reductionBuffers: BuffersForReduction
-     
-     if let analysisEncoding = analysisCommandBuffer.makeComputeCommandEncoder() {
-     
-     analysisEncoding.setComputePipelineState(svPipeLineState)
-     
-     guard let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<MetalRenderer.SelectionStruct>.size,options: .storageModeShared) else {
-     return
-     }
-     guard let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride * partialBufferLength,options: .storageModeShared) else {
-     return
-     }
-     guard let modeBuffer = metalDevice.makeBuffer(bytes: &hsvMode, length: MemoryLayout<Mode_HSV>.size * 4, options: .storageModeShared) else {
-     return
-     }
-     
-     buffers = BuffersHSV(partialBuffer: partialBuffer, selectionBuffer: selectionBuffer, modeBuffer: modeBuffer)
-     texture = Textures(textureY: cameraImageTextureY, textureCbCr: cameraImageTextureCbCr)
-     
-     encodeAndDispatchBuffers(encoder: analysisEncoding, textures: texture, buffers: buffers)
-     
-     analysisEncoding.setComputePipelineState(finalSumPipelineState)
-     
-     //setup  buffers
-     var partialLengthStruct = PartialBufferLength(length: partialBufferLength)
-     
-     guard let value = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared) else { return }
-     
-     guard let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared) else {
-     return
-     }
-     
-     reductionBuffers = BuffersForReduction(partialBuffer: partialBuffer, finalValue: value, partialBufferLength: arrayLength)
-     
-     computeFinalSumAndDispatch(encoder: analysisEncoding, buffers: reductionBuffers)
-     
-     }
-     
-     
-     guard let value = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared) else {
-     return
-     }
-     
-     if let finalSum = analysisCommandBuffer.makeComputeCommandEncoder() {
-     //setup pipeline state
-     finalSum.setComputePipelineState(finalSumPipelineState)
-     
-     //setup  buffers
-     var partialLengthStruct = PartialBufferLength(length: partialBufferLength)
-     
-     guard let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared) else {
-     return
-     }
-     
-     reductionBuffers = BuffersForReduction(partialBuffer: buffers.partialBuffer, finalValue: value, partialBufferLength: arrayLength)
-     
-     computeFinalSumAndDispatch(encoder: finalSum, buffers: reductionBuffers)
-     }
-     
-     if( mode == .Hue){
-     guard let analysisEncdoing_ = analysisCommandBuffer.makeComputeCommandEncoder() else  {
-     return
-     }
-     analysisEncdoing_.setComputePipelineState(svPipeLineState)
-     
-     guard let partialBufferForHueX = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride * partialBufferLength,options: .storageModeShared) else {
-     return
-     }
-     
-     buffers.partialBuffer = partialBufferForHueX
-     
-     encodeAndDispatchBuffers(encoder: analysisEncdoing_, textures: texture, buffers: buffers)
-     
-     
-     
-     }
-     
-     guard let finalResult_ = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared) else {
-     return
-     }
-     
-     if let finalSum = analysisCommandBuffer.makeComputeCommandEncoder() {
-     
-     finalSum.setComputePipelineState(finalSumPipelineState)
-     
-     reductionBuffers.partialBuffer = buffers.partialBuffer
-     reductionBuffers.finalValue = finalResult_
-     
-     computeFinalSumAndDispatch(encoder: finalSum, buffers: reductionBuffers)
-     
-     }
-     
-     }
-     */
-    
-    func encodeAndDispatchBuffers(encoder: MTLComputeCommandEncoder, textures: Textures ,buffers: BuffersHSV) {
-        
-        encoder.setTexture(textures.textureY, index: 0)
-        encoder.setTexture(textures.textureCbCr, index: 1)
-        encoder.setBuffer(buffers.partialBuffer, offset: 0, index: 0)
-        encoder.setBuffer(buffers.selectionBuffer, offset: 0, index: 1)
-        encoder.setBuffer(buffers.modeBuffer, offset: 0, index: 2)
-        
-        encoder.dispatchThreadgroups(getCalcultedGridSize(),threadsPerThreadgroup: getCalculatedThreadGroupSize())
-        
-    }
-    
-    func encodeAndDispatchHueBuffers(encoder: MTLComputeCommandEncoder, textures: Textures ,buffers: HueBufferDescriptor) {
-        
-        encoder.setTexture(textures.textureY, index: 0)
-        encoder.setTexture(textures.textureCbCr, index: 1)
-        encoder.setBuffer(buffers.partialBuffer, offset: 0, index: 0)
-        encoder.setBuffer(buffers.selectionBuffer, offset: 0, index: 1)
-        encoder.setBuffer(buffers.partialBufferLength, offset: 0, index: 2)
-        
-        encoder.dispatchThreadgroups(getCalcultedGridSize(),threadsPerThreadgroup: getCalculatedThreadGroupSize())
-        
-        
-    }
-    
-    
-    func computeFinalSumAndDispatch(encoder: MTLComputeCommandEncoder, buffers: BuffersForReduction){
-        
-        encoder.setBuffer(buffers.partialBuffer, offset: 0, index: 0)
-        encoder.setBuffer(buffers.finalValue, offset: 0, index: 1)
-        encoder.setBuffer(buffers.partialBufferLength, offset: 0, index: 2)
-        
-        
-        encoder.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                     threadsPerThreadgroup: MTLSizeMake(getNumOfThreadsGroups(), 1, 1))
-        
-        
-        
-    }
-    
-    func computeFinalSumAndDispatchWithOffset(encoder: MTLComputeCommandEncoder, buffers: BuffersForReduction){
-        
-        encoder.setBuffer(buffers.partialBuffer, offset: 0, index: 0)
-        encoder.setBuffer(buffers.finalValue, offset: 0, index: 1)
-        encoder.setBuffer(buffers.partialBufferLength, offset: getNumOfThreadsGroups() , index: 2)
-        
-        
-        encoder.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                     threadsPerThreadgroup: MTLSizeMake(getNumOfThreadsGroups() * 2, 1, 1))
-        
-        encoder.endEncoding()
-        
-        
-    }
+
     
     func getHSVMode() -> Float{
         
-        var inputMode = Mode(enumValue: mode)
-        
-        if(inputMode.enumValue == .Hue){
+        if(mode == .Hue){
             return 0.0
-        } else if(inputMode.enumValue == .Saturation){
+        } else if(mode == .Saturation){
             return 1.0
         }else{
             return 2.0
         }
-    }
-    
-    
-    struct Textures{
-        var textureY: MTLTexture
-        var textureCbCr: MTLTexture
-    }
-    
-    struct BuffersHSV{
-        var partialBuffer: MTLBuffer
-        var selectionBuffer: MTLBuffer
-        var modeBuffer: MTLBuffer
-    }
-    
-    struct HueBufferDescriptor {
-        var partialBuffer: MTLBuffer
-        var selectionBuffer: MTLBuffer
-        var partialBufferLength: MTLBuffer
-    }
-    
-    struct BuffersForReduction {
-        var partialBuffer: MTLBuffer
-        var finalValue: MTLBuffer
-        var partialBufferLength: MTLBuffer
     }
     
     
@@ -442,50 +249,6 @@ class HSVAnalyser: AnalysingModule {
     }
     
     
-    /**
-     override func writeToBuffers() {
-     
-     let resultBuffer = value?.contents().bindMemory(to: Float.self, capacity: 0)
-     
-     let partialBufferValue = partialBufferForAnalysis?.contents().bindMemory(to: Float.self, capacity: 0)
-     
-     print("partialBuffer: ", partialBufferValue?.pointee)
-     
-     // let partialBufferArray = Array(UnsafeBufferPointer(start: partialBufferValue, count: numTHreadGroups ?? 0))
-     
-     print("resultBuffer" , resultBuffer?.pointee)
-     
-     self.latestResult = Double(resultBuffer?.pointee ?? 0)
-     
-     if let xBuffer = value_{
-     let xValue = xBuffer.contents().bindMemory(to: Float.self, capacity: 0)
-     print("xBuffer" , xValue.pointee)
-     
-     let partialBufferValue_ = partialBuffer_?.contents().bindMemory(to: Float.self, capacity: 0)
-     
-     print("partialBuffer___: ", partialBufferValue_?.pointee)
-     
-     
-     let averageHueRadians =  Double(atan2(resultBuffer?.pointee ?? 0.0, xValue.pointee))
-     // Convert the average hue back to degrees
-     var averageHueDegrees = averageHueRadians * 180.0 / Double.pi;
-     
-     if (averageHueDegrees < 0) {
-     averageHueDegrees += 360.0;  // Ensure the hue is positive
-     }
-     
-     self.latestResult = averageHueDegrees
-     }
-     
-     if(mode != .Hue ){
-     self.latestResult = Double(resultBuffer?.pointee ?? 0) / Double((getSelectedArea().width * getSelectedArea().height))
-     }
-     
-     if let zBuffer = result {
-     zBuffer.append(latestResult)
-     }
-     }
-     */
     
     override func writeToBuffers() {
         
@@ -563,19 +326,12 @@ class HSVAnalyser: AnalysingModule {
         var mode : Float // 0.0 for Hue, 1.0 for Staturation, 2.0 for Value
         
     }
-    
-    struct HueValue {
-        var isY: Bool // else isX
-    }
-    
+  
     enum HSV_Mode {
         case Hue
         case Saturation
         case Value
     }
     
-    struct Mode {
-        var enumValue: HSV_Mode
-    }
     
 }
