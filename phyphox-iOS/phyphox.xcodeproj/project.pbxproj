@@ -159,11 +159,20 @@
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
+		86E751FF2CC2539D00E9E9C8 /* ImageViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */; };
+		86E752092CC254AD00E9E9C8 /* CameraPreviewRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752082CC254AD00E9E9C8 /* CameraPreviewRenderer.swift */; };
+		86E7520D2CC254E500E9E9C8 /* ExperimentImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */; };
+		86E752132CC2552600E9E9C8 /* LumaAnalyser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752102CC2552600E9E9C8 /* LumaAnalyser.swift */; };
+		86E752142CC2552600E9E9C8 /* HSVAnalyser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520F2CC2552600E9E9C8 /* HSVAnalyser.swift */; };
+		86E752152CC2552600E9E9C8 /* LuminanceAnalyser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752112CC2552600E9E9C8 /* LuminanceAnalyser.swift */; };
+		86E752162CC2552600E9E9C8 /* AnalysingModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520E2CC2552600E9E9C8 /* AnalysingModule.swift */; };
+		86E752192CC2556700E9E9C8 /* SplitAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752182CC2556700E9E9C8 /* SplitAnalysis.swift */; };
+		86E7521A2CC2556700E9E9C8 /* EventStreamAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752172CC2556700E9E9C8 /* EventStreamAnalysis.swift */; };
+		86E7521C2CC255A300E9E9C8 /* ImageViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7521B2CC255A300E9E9C8 /* ImageViewElementHandler.swift */; };
 		86F38FD02BA4A66700C2D643 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 86F38FCF2BA4A66700C2D643 /* PrivacyInfo.xcprivacy */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
 		A15891F02B10BFD000A169C3 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891EF2B10BFD000A169C3 /* MetalView.swift */; };
 		A15891F22B10BFED00A169C3 /* MetalRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891F12B10BFED00A169C3 /* MetalRenderer.swift */; };
-		A182CEDD2B025B23000385D2 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDC2B025B23000385D2 /* CameraView.swift */; };
 		A182CEDF2B025B41000385D2 /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDE2B025B41000385D2 /* CameraModel.swift */; };
 		A182CEE12B025B53000385D2 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE02B025B53000385D2 /* CameraService.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
@@ -498,11 +507,20 @@
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewDescriptor.swift; sourceTree = "<group>"; };
+		86E752082CC254AD00E9E9C8 /* CameraPreviewRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewRenderer.swift; sourceTree = "<group>"; };
+		86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentImageView.swift; sourceTree = "<group>"; };
+		86E7520E2CC2552600E9E9C8 /* AnalysingModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysingModule.swift; sourceTree = "<group>"; };
+		86E7520F2CC2552600E9E9C8 /* HSVAnalyser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HSVAnalyser.swift; sourceTree = "<group>"; };
+		86E752102CC2552600E9E9C8 /* LumaAnalyser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumaAnalyser.swift; sourceTree = "<group>"; };
+		86E752112CC2552600E9E9C8 /* LuminanceAnalyser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LuminanceAnalyser.swift; sourceTree = "<group>"; };
+		86E752172CC2556700E9E9C8 /* EventStreamAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStreamAnalysis.swift; sourceTree = "<group>"; };
+		86E752182CC2556700E9E9C8 /* SplitAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitAnalysis.swift; sourceTree = "<group>"; };
+		86E7521B2CC255A300E9E9C8 /* ImageViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewElementHandler.swift; sourceTree = "<group>"; };
 		86F38FCF2BA4A66700C2D643 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
 		A15891EF2B10BFD000A169C3 /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
 		A15891F12B10BFED00A169C3 /* MetalRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalRenderer.swift; sourceTree = "<group>"; };
-		A182CEDC2B025B23000385D2 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		A182CEDE2B025B41000385D2 /* CameraModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraModel.swift; sourceTree = "<group>"; };
 		A182CEE02B025B53000385D2 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
@@ -656,6 +674,7 @@
 		6B2E0F8E205939DD008FAA91 /* Static */ = {
 			isa = PBXGroup;
 			children = (
+				86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */,
 				A182CEDB2B025AE8000385D2 /* Camera */,
 				6B00F09F1C457B5100971941 /* ExperimentInfoView.swift */,
 				4BE7CAF81E4CD73D00C31090 /* ExperimentSeparatorView.swift */,
@@ -795,6 +814,7 @@
 		6BEA944B207FCA050077274A /* ViewHandlers */ = {
 			isa = PBXGroup;
 			children = (
+				86E7521B2CC255A300E9E9C8 /* ImageViewElementHandler.swift */,
 				6BEA944C207FCA2F0077274A /* ValueViewElementHandler.swift */,
 				6BEA944E207FD8350077274A /* InfoViewElementHandler.swift */,
 				6BEA9450207FE3D90077274A /* SeparatorViewElementHandler.swift */,
@@ -975,6 +995,7 @@
 		6BFE377120447BF200301CA3 /* ViewDescriptors */ = {
 			isa = PBXGroup;
 			children = (
+				86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */,
 				6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */,
 				6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */,
 				6B0C714F1C1C6FFE00500FEE /* GraphViewDescriptor.swift */,
@@ -1061,6 +1082,8 @@
 		6BFE377920447C6D00301CA3 /* Modules */ = {
 			isa = PBXGroup;
 			children = (
+				86E752172CC2556700E9E9C8 /* EventStreamAnalysis.swift */,
+				86E752182CC2556700E9E9C8 /* SplitAnalysis.swift */,
 				6BFE377A20447CF000301CA3 /* Abstract */,
 				6BFE377B20447CFA00301CA3 /* Simple-Update-Value */,
 				6BFE377C20447D2200301CA3 /* Complex-Update-Value */,
@@ -1139,13 +1162,25 @@
 			path = "Complex-Update-Value";
 			sourceTree = "<group>";
 		};
+		86E752122CC2552600E9E9C8 /* Analysers */ = {
+			isa = PBXGroup;
+			children = (
+				86E7520E2CC2552600E9E9C8 /* AnalysingModule.swift */,
+				86E7520F2CC2552600E9E9C8 /* HSVAnalyser.swift */,
+				86E752102CC2552600E9E9C8 /* LumaAnalyser.swift */,
+				86E752112CC2552600E9E9C8 /* LuminanceAnalyser.swift */,
+			);
+			path = Analysers;
+			sourceTree = "<group>";
+		};
 		A182CEDB2B025AE8000385D2 /* Camera */ = {
 			isa = PBXGroup;
 			children = (
+				86E752122CC2552600E9E9C8 /* Analysers */,
+				86E752082CC254AD00E9E9C8 /* CameraPreviewRenderer.swift */,
 				A1AD56EC2BC9189500FD3255 /* ExperimentCameraInput.swift */,
 				A1AD56EA2BC917A900FD3255 /* ExperimentCameraInputSession.swift */,
 				A1AD56E82BC8463800FD3255 /* CameraUIView.swift */,
-				A182CEDC2B025B23000385D2 /* CameraView.swift */,
 				A182CEDE2B025B41000385D2 /* CameraModel.swift */,
 				A182CEE02B025B53000385D2 /* CameraService.swift */,
 				A15891EF2B10BFD000A169C3 /* MetalView.swift */,
@@ -1516,8 +1551,13 @@
 				4B47B02F1DA6A1FC00CCBA6E /* AtanAnalysis.swift in Sources */,
 				C063C660238ECBC500327AE7 /* NetworkConnection.swift in Sources */,
 				6B612FE2207E5A24001DA8D9 /* PhyphoxElementHandler.swift in Sources */,
+				86E752132CC2552600E9E9C8 /* LumaAnalyser.swift in Sources */,
+				86E752142CC2552600E9E9C8 /* HSVAnalyser.swift in Sources */,
+				86E752152CC2552600E9E9C8 /* LuminanceAnalyser.swift in Sources */,
+				86E752162CC2552600E9E9C8 /* AnalysingModule.swift in Sources */,
 				C048ED1D21E3975200544E9A /* ExperimentPickerView.swift in Sources */,
 				4B53E8491CFC65EE004E6164 /* ExperimentPageViewController.swift in Sources */,
+				86E7521C2CC255A300E9E9C8 /* ImageViewElementHandler.swift in Sources */,
 				6B612FEB207E5ACF001DA8D9 /* IconElementHandler.swift in Sources */,
 				6B422DFC1CA2C0B500E945BC /* ExperimentAudioInput.swift in Sources */,
 				C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */,
@@ -1544,6 +1584,8 @@
 				6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */,
 				C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */,
 				6B612FDF207E1648001DA8D9 /* DocumentParser.swift in Sources */,
+				86E752192CC2556700E9E9C8 /* SplitAnalysis.swift in Sources */,
+				86E7521A2CC2556700E9E9C8 /* EventStreamAnalysis.swift in Sources */,
 				6B00F0991C4463A300971941 /* ExperimentAnalysis.swift in Sources */,
 				6B7BF7FA1C1387A1007408FB /* AdditionAnalysis.swift in Sources */,
 				4BA9987D1EDB69D200BD1860 /* LogAnalysis.swift in Sources */,
@@ -1552,6 +1594,7 @@
 				6B612FF4207EA4E5001DA8D9 /* OutputElementHandler.swift in Sources */,
 				A182CEE12B025B53000385D2 /* CameraService.swift in Sources */,
 				6BCD496720505DA70079E569 /* ExperimentGraphUtilities.swift in Sources */,
+				86E752092CC254AD00E9E9C8 /* CameraPreviewRenderer.swift in Sources */,
 				A1B9C1BE2AA9E59D00238AF6 /* CameraViewDescriptor.swift in Sources */,
 				6B612FFD207F70D9001DA8D9 /* ExperimentAnalysisFactory.swift in Sources */,
 				C0A97FE72477DCBF00A630EE /* SortAnalysis.swift in Sources */,
@@ -1593,6 +1636,7 @@
 				6BE320AE1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift in Sources */,
 				6BE320B41CB3E09C00DCC1ED /* ShrinkingAnimaitonViewController.swift in Sources */,
 				6B00F09E1C457B4600971941 /* ExperimentGraphView.swift in Sources */,
+				86E751FF2CC2539D00E9E9C8 /* ImageViewDescriptor.swift in Sources */,
 				C09962AD22391AF00015AE17 /* FixedTableView.swift in Sources */,
 				6B612FFB207F6FF3001DA8D9 /* ViewsElementHandler.swift in Sources */,
 				6B00F0271C40713300971941 /* MainNavigationViewController.swift in Sources */,
@@ -1654,6 +1698,7 @@
 				A182CEDF2B025B41000385D2 /* CameraModel.swift in Sources */,
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
+				86E7520D2CC254E500E9E9C8 /* ExperimentImageView.swift in Sources */,
 				C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */,
 				A1AD56EB2BC917A900FD3255 /* ExperimentCameraInputSession.swift in Sources */,
 				4B47B0311DA6A2F900CCBA6E /* Atan2Analysis.swift in Sources */,
@@ -1698,7 +1743,6 @@
 				6B26F6FD1CAAEDFB00EA9367 /* ExperimentExportSetSelectionView.swift in Sources */,
 				C034B02727172BF500C0EF00 /* Shaders.metal in Sources */,
 				6B6A4C202056A367007586D0 /* GLGraphShaderProgram.swift in Sources */,
-				A182CEDD2B025B23000385D2 /* CameraView.swift in Sources */,
 				6B8AA3F21C5E2A6400E59685 /* ExperimentComplexUpdateValueAnalysis.swift in Sources */,
 				6B422E2C1CA4A4BF00E945BC /* GraphGridView.swift in Sources */,
 				4B486EE11EC4B34D00F1045E /* CreditsView.swift in Sources */,
