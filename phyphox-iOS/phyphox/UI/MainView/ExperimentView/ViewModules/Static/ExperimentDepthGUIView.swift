@@ -93,10 +93,14 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         renderer = ExperimentDepthGUIRenderer(metalDevice: arView.device!, renderDestination: arView)
         
         aggregationBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
+        aggregationBtn.setTitleColor(aggregationBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        aggregationBtn.setTitleColor(kHighlightColor, for: .highlighted)
         aggregationBtn.setTitle(localize("depthAggregationMode"), for: UIControl.State())
         aggregationBtn.isHidden = true
         
         cameraBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
+        cameraBtn.setTitleColor(cameraBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        cameraBtn.setTitleColor(kHighlightColor, for: .highlighted)
         cameraBtn.setTitle(localize("sensorCamera"), for: UIControl.State())
         cameraBtn.isHidden = true
         
@@ -336,5 +340,13 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
                 
         layoutDelegate?.presentDialog(al)
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            aggregationBtn.setTitleColor(aggregationBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+            cameraBtn.setTitleColor(cameraBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        }
     }
 }
