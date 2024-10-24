@@ -433,6 +433,17 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
         case .depthGUI(let descriptor):
             return DepthGUIViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, translation: translations)
+            
+        case .switchView(let descriptor):
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+            
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
+            }
+            
+            return SwitchViewDescriptor(label: descriptor.label, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
         }
     }
 

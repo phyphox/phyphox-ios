@@ -53,6 +53,9 @@ final class ExperimentViewModuleFactory {
             else if let descriptor = descriptor as? ImageViewDescriptor {
                 views.append(ExperimentImageView(descriptor: descriptor, resourceFolder: resourceFolder))
             }
+            else if let descriptor = descriptor as? SwitchViewDescriptor {
+                views.append(ExperimentSwitchView(descriptor: descriptor, resourceFolder: resourceFolder))
+            }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }

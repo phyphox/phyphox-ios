@@ -68,6 +68,11 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? SwitchViewDescriptor {
+                guard let rr = r as? SwitchViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
                 return false
             }
