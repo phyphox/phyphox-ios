@@ -20,6 +20,7 @@ enum ViewElementDescriptor {
     case depthGUI(DepthGUIViewElementDescriptor)
     case image(ImageViewElementDescriptor)
     case switchView(SwitchViewElementDescriptor)
+    case dropdown(DropdownViewElementDescriptor)
 }
 
 protocol ViewComponentElementHandler: ElementHandler {
@@ -43,6 +44,7 @@ private final class ViewElementHandler: ResultElementHandler {
     private let depthGUIHandler = DepthGUIViewElementHandler()
     private let imageHandler = ImageViewElementHandler()
     private let switchHandler = SwitchViewElementHandler()
+    private let dropdownHandler = DropdownViewElementHandler()
 
     private var elementOrder = [ViewComponentElementHandler]()
 
@@ -70,6 +72,8 @@ private final class ViewElementHandler: ResultElementHandler {
             handler = imageHandler
         case "toggle":
             handler = switchHandler
+        case "dropdown":
+            handler = dropdownHandler
         default:
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }

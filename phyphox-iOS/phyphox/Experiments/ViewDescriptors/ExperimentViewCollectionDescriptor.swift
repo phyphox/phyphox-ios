@@ -73,6 +73,11 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? DropdownViewDescriptor {
+                guard let rr = r as? DropdownViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
                 return false
             }

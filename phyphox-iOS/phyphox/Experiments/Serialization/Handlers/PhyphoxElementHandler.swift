@@ -444,6 +444,18 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
             
             return SwitchViewDescriptor(label: descriptor.label, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
+            
+        case .dropdown(let descriptor):
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+            
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue ?? 0.0)
+            }
+            
+            return DropdownViewDescriptor(label: descriptor.label, dropDownList: descriptor.dropDownItems ?? "", defaultValue: descriptor.defaultValue, buffer: buffer)
+            
         }
     }
 
