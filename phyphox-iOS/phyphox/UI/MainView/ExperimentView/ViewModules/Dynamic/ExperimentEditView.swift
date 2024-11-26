@@ -211,7 +211,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             height = max(height, s3.height)
         }
 
-        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
+        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
         let width = min(2.0 * max(left, right), size.width)
         
         

@@ -58,6 +58,8 @@ final class ExperimentViewModuleFactory {
             }
             else if let descriptor = descriptor as? DropdownViewDescriptor {
                 views.append(ExperimentDropdownView(descriptor: descriptor, resourceFolder: resourceFolder))
+            } else if let descriptor = descriptor as? SliderViewDescriptor {
+                views.append(ExperimentSliderView(descriptor: descriptor, resourceFolder: resourceFolder))
             }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")

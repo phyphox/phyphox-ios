@@ -138,7 +138,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         let left = s1.width + spacing/2.0
         let right = s2.width + spacing/2.0
         
-        dynamicLabelHeight = Utility.measureHeightofUILabelOnString(line: label.text ?? "-") * 2.5
+        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
         let width = min(2.0 * max(left, right), size.width)
         
         return CGSize(width: width, height: dynamicLabelHeight)

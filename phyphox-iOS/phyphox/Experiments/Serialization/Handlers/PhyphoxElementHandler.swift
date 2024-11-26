@@ -456,6 +456,17 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             return DropdownViewDescriptor(label: descriptor.label, dropDownList: descriptor.dropDownItems ?? "", defaultValue: descriptor.defaultValue, buffer: buffer)
             
+        case .slider(let descriptor):
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+            
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue ?? 0.0)
+            }
+            
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, buffer: buffer)
+            
         }
     }
 

@@ -13,20 +13,30 @@ class Utility{
     public static var DARK_MODE: String  = "1"
     public static var LIGHT_MODE: String  = "2"
     public static var SYSTEM_MODE: String  = "3"
+
     
-    static  func measureHeightofUILabelOnString(line: String) -> CGFloat {
-        let textView = UITextView()
-        let maxwidth = UIScreen.main.bounds.width
-        textView.frame = CGRect(x:0,y: 0,width: maxwidth,height: CGFloat(MAXFLOAT))
-        textView.textContainerInset = UIEdgeInsets.zero
-        textView.textContainer.lineFragmentPadding = 0
-        textView.font = UIFont.preferredFont(forTextStyle: .body)
-        textView.text = line
-        textView.isScrollEnabled = false
-        textView.sizeToFit()
-        return textView.frame.size.height
+    private static func createConfiguredTextView(for text: String) -> UITextView {
+            let textView = UITextView()
+            textView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: CGFloat.greatestFiniteMagnitude)
+            textView.textContainerInset = .zero
+            textView.textContainer.lineFragmentPadding = 0
+            textView.font = UIFont.preferredFont(forTextStyle: .body)
+            textView.text = text
+            textView.isScrollEnabled = false
+            textView.sizeToFit()
+            return textView
     }
     
+    static func measureHeightOfText(_ text: String) -> CGFloat {
+        let textView = createConfiguredTextView(for: text)
+        return textView.frame.size.height
+    }
+        
+    static func measureWidthOfText(_ text: String) -> CGFloat {
+        let textView = createConfiguredTextView(for: text)
+        return textView.frame.size.width
+    }
+  
     
     
 }
