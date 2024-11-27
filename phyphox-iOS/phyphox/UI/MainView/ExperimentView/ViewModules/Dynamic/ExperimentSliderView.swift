@@ -48,19 +48,19 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         label.textAlignment = .center
         
         minValueLabel.numberOfLines = 0
-        minValueLabel.text = String(descriptor.minValue ?? 0.0)
+        minValueLabel.text = String(Int(descriptor.minValue ?? 0.0))
         minValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         minValueLabel.textColor = UIColor(named: "textColor")
         minValueLabel.textAlignment = .center
         
         maxValueLabel.numberOfLines = 0
-        maxValueLabel.text = String(descriptor.maxValue ?? 0.0)
+        maxValueLabel.text = String(Int(descriptor.maxValue ?? 0.0))
         maxValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         maxValueLabel.textColor = UIColor(named: "textColor")
         maxValueLabel.textAlignment = .center
         
         sliderValue.numberOfLines = 0
-        sliderValue.text = String(descriptor.defaultValue ?? 0.0)
+        sliderValue.text = String(Int(descriptor.defaultValue ?? 0.0))
         sliderValue.font = UIFont.preferredFont(forTextStyle: .body)
         sliderValue.textColor = UIColor(named: "textColor")
         sliderValue.backgroundColor =  UIColor.lightGray.withAlphaComponent(0.2)
@@ -71,7 +71,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         uiSlider.maximumValue = Float(descriptor.maxValue ?? 0.0)
         uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
         uiSlider.isUserInteractionEnabled = true
-        
+        //uiSlider.isContinuous = false
         
         super.init(frame: .zero)
         
@@ -113,20 +113,23 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
         let measuredWidthOfLabel = Utility.measureWidthOfText(label.text ?? "-")
         let labelOffset = (((bounds.width ) / 2.0) - measuredWidthOfLabel) / 2.0
-        label.frame = CGRect(origin: CGPoint(x: labelOffset , y: (bounds.height - dynamicLabelHeight)/2.0 - 15.0) , size: CGSize(width: w, height: dynamicLabelHeight))
+        label.frame = CGRect(origin: CGPoint(x: labelOffset , y: (bounds.height - dynamicLabelHeight)/2.0 - 20.0) , size: CGSize(width: w, height: dynamicLabelHeight))
         
-        sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 15.0) , size: CGSize(width: textFieldWidth, height: h2))
+        sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 20.0) , size: CGSize(width: textFieldWidth, height: h2))
         
-        minValueLabel.frame = CGRect(origin: CGPoint(x: 10, y: bounds.height / 2.0), size: CGSize(width: 20, height: h2))
+        minValueLabel.frame = CGRect(origin: CGPoint(x: 0, y: bounds.height / 2.0), size: CGSize(width: 40, height: h2))
         
-        uiSlider.frame = CGRect(origin: CGPoint(x: 40, y: bounds.height / 2.0), size: CGSize(width: bounds.width - 80, height: h2))
+        uiSlider.frame = CGRect(origin: CGPoint(x: 30, y: bounds.height / 2.0), size: CGSize(width: bounds.width - 70, height: h2))
         
         maxValueLabel.frame = CGRect(origin: CGPoint(x: bounds.width - 40, y: bounds.height / 2.0), size: CGSize(width: 40, height: h2))
 
     }
     
     @objc func sliderValueChanged(_ sender: UISlider){
-        sliderValue.text = String(sender.value)
+        sliderValue.text = String(Int(sender.value))
+        self.descriptor.buffer.replaceValues([Double(sender.value)])
+        
+        self.descriptor.buffer.triggerUserInput()
         print("value", sender.value)
     }
     
