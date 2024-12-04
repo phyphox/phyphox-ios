@@ -78,6 +78,11 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? SliderViewDescriptor {
+                guard let rr = r as? SliderViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
                 return false
             }

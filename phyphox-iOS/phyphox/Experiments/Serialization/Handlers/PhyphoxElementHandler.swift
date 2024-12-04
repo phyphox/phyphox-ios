@@ -399,8 +399,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
                 return (input, outputBuffer)
             }
-
-            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers)
+            
+            let buffer: DataBuffer?
+            if descriptor.dynamicLabel != "" {
+                buffer = buffers[descriptor.dynamicLabel]
+                if(buffer == nil){
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+            } else {
+                buffer = nil
+            }
+            
+            
+            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers, mappings: descriptor.mappings, buffer: buffer)
 
         case .graph(let descriptor):
             let xBuffers = try descriptor.xInputBufferNames.map({ name -> DataBuffer? in

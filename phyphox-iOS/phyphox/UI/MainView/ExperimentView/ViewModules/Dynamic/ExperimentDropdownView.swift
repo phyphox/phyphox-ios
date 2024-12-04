@@ -79,7 +79,6 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         for option in descriptor.dropDownList.components(separatedBy: ",") {
                let action = UIAlertAction(title: option, style: .default) { _ in
-                   print("\(option) selected")
                    self.isDropDownItemSelected = true
                    let value: Double = Double(option) ?? 0.0
                    self.dropdown.setTitle(option, for: .normal)

@@ -24,13 +24,23 @@ struct ButtonViewDescriptor: ViewDescriptor, Equatable {
 
     let label: String
     let translation: ExperimentTranslationCollection?
+    
+    let mappings: [ValueViewMap]
+    
+    let buffer: DataBuffer?
 
-    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataInput, output: DataBuffer)], triggers: [String]) {
+    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataInput, output: DataBuffer)], triggers: [String], mappings: [ValueViewMap], buffer: DataBuffer?) {
         self.dataFlow = dataFlow
         self.triggers = triggers
 
         self.label = label
         self.translation = translation
+        
+        let translatedMappings = mappings.compactMap { map in (translation?.localizeString(map.replacement) ?? map.replacement).map { ValueViewMap(range: map.range, replacement: $0) } }
+        
+        self.mappings = translatedMappings
+        
+        self.buffer = buffer
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

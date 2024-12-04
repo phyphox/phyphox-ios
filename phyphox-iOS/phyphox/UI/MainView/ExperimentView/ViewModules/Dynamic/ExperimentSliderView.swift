@@ -95,7 +95,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         let s1 = label.sizeThatFits(size)
         var s2 = sliderValue.sizeThatFits(size)
         s2.width = textFieldWidth
-        print("s1 width", s1.width)
+       
         let left = s1.width + spacing/2.0
         let right = s2.width + spacing/2.0
         
