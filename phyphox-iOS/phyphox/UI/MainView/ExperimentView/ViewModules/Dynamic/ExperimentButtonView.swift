@@ -69,7 +69,6 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
     }
     
     private func update(){
-        print("update")
         
         if let last = descriptor.buffer?.last, !last.isNaN {
             var mapped = false

@@ -10,16 +10,12 @@ import Foundation
 
 struct SliderViewElementDescriptor{
     var label: String
-    
     var minValue: Double?
-    
     var maxValue: Double?
-    
     var stepSize: Double?
-    
     var defaultValue: Double?
-    
     let outputBufferName: String
+    let precision: Int
 }
 
 
@@ -40,6 +36,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         case maxValue
         case stepSize
         case defaultValue
+        case precision
     }
     
     func nextResult() throws -> ViewElementDescriptor {
@@ -56,18 +53,15 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         
         let label = attributes.optionalString(for: .label) ?? ""
-        
         let minValue = try attributes.optionalValue(for: .minValue) ?? 0.0
-        
-        let maxValue = try attributes.optionalValue(for: .maxValue) ?? 0.0
-        
-        let stepSize = try attributes.optionalValue(for: .stepSize) ?? 0.0
-        
+        let maxValue = try attributes.optionalValue(for: .maxValue) ?? 1.0
+        let stepSize = try attributes.optionalValue(for: .stepSize) ?? 1.0
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
+        let precision = try attributes.optionalValue(for: .precision) ?? 2
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
-        results.append(.slider(SliderViewElementDescriptor(label: label, minValue: minValue, maxValue: maxValue, stepSize: stepSize, defaultValue: defaultValue, outputBufferName: outputBufferName)))
+        results.append(.slider(SliderViewElementDescriptor(label: label, minValue: minValue, maxValue: maxValue, stepSize: stepSize, defaultValue: defaultValue, outputBufferName: outputBufferName, precision: precision)))
         
     }
     

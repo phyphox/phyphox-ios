@@ -40,7 +40,6 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
-        print("descriptor.localizedLabel: ", descriptor.localizedLabel)
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
         label.textAlignment = .right

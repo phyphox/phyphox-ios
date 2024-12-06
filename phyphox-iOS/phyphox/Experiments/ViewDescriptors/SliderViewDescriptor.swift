@@ -16,14 +16,26 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     let maxValue: Double?
     let stepSize: Double?
     let defaultValue: Double?
+    let precision: Int
     
     let buffer: DataBuffer
     
     var value: Double {
-        return buffer.last ?? 0.0
+        return buffer.last ?? (defaultValue ?? 0.0)
     }
     
     var translation: ExperimentTranslationCollection?
+    
+    init(label: String, minValue: Double?, maxValue: Double?, stepSize: Double?, defaultValue: Double?, precision: Int, buffer: DataBuffer, translation: ExperimentTranslationCollection? = nil) {
+        self.label = label
+        self.minValue = minValue
+        self.maxValue = maxValue
+        self.stepSize = stepSize
+        self.defaultValue = defaultValue
+        self.precision = precision
+        self.buffer = buffer
+        self.translation = translation
+    }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
         return ""

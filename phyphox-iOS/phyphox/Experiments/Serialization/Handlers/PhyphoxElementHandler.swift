@@ -476,7 +476,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer.append(descriptor.defaultValue ?? 0.0)
             }
             
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, buffer: buffer)
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision,  buffer: buffer)
             
         }
     }

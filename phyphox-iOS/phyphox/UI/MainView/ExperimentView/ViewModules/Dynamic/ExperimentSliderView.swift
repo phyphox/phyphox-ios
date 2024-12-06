@@ -41,6 +41,14 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     required init(descriptor: SliderViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
+        uiSlider = UISlider()
+        super.init(frame: .zero)
+        
+        
+        guard Float(descriptor.minValue ?? 0.0) < Float(descriptor.maxValue ?? 1.0) else {
+            fatalError("minValue must be less than maxValue")
+        }
+        
         label.numberOfLines = 0
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
@@ -48,33 +56,29 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         label.textAlignment = .center
         
         minValueLabel.numberOfLines = 0
-        minValueLabel.text = String(Int(descriptor.minValue ?? 0.0))
+        minValueLabel.text = numberFormatter(for: descriptor.minValue ?? 0.0)
         minValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         minValueLabel.textColor = UIColor(named: "textColor")
         minValueLabel.textAlignment = .center
         
         maxValueLabel.numberOfLines = 0
-        maxValueLabel.text = String(Int(descriptor.maxValue ?? 0.0))
+        maxValueLabel.text = numberFormatter(for: descriptor.maxValue ?? 0.0)
         maxValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         maxValueLabel.textColor = UIColor(named: "textColor")
         maxValueLabel.textAlignment = .center
         
         sliderValue.numberOfLines = 0
-        sliderValue.text = String(Int(descriptor.defaultValue ?? 0.0))
+        sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
         sliderValue.font = UIFont.preferredFont(forTextStyle: .body)
         sliderValue.textColor = UIColor(named: "textColor")
         sliderValue.backgroundColor =  UIColor.lightGray.withAlphaComponent(0.2)
         sliderValue.textAlignment = .center
         
-        uiSlider = UISlider()
         uiSlider.minimumValue = Float(descriptor.minValue ?? 0.0)
         uiSlider.maximumValue = Float(descriptor.maxValue ?? 0.0)
         uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
         uiSlider.isUserInteractionEnabled = true
-        //uiSlider.isContinuous = false
-        
-        super.init(frame: .zero)
-        
+    
         uiSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
         
         addSubview(label)
@@ -83,6 +87,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         addSubview(uiSlider)
         addSubview(maxValueLabel)
         
+        registerForUpdatesFromBuffer(descriptor.buffer)
         attachDisplayLink(displayLink)
     }
     
@@ -126,11 +131,9 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     @objc func sliderValueChanged(_ sender: UISlider){
-        sliderValue.text = String(Int(sender.value))
-        self.descriptor.buffer.replaceValues([Double(sender.value)])
+      
+        updateSlider(from: Float(sender.value))
         
-        self.descriptor.buffer.triggerUserInput()
-        print("value", sender.value)
     }
     
     func setNeedsUpdate() {
@@ -138,7 +141,68 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     func update(){
-        print("updatedValue", descriptor.value)
+       
+        if(descriptor.value == 0.0){
+            uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
+            sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
+        } else {
+            uiSlider.value = Float(descriptor.value)
+            sliderValue.text = numberFormatter(for: descriptor.value)
+        }
+        
+    }
+    
+    
+    func isEven(value: Double) -> Bool{
+        return Double(Int(value)).remainder(dividingBy: 2.0) == 0.0
+    }
+    
+    func updateSlider(from oldValue: Float) {
+        
+         let stepSize = Float(descriptor.stepSize ?? 1.0)
+         let defaultValue = descriptor.defaultValue ?? 0.0
+         let flooredValue = floor(oldValue/stepSize )
+         
+         let newValue: Float = (stepSize * flooredValue )
+         
+         guard let maxValue = descriptor.maxValue, let minValue = descriptor.minValue,
+               newValue <= Float(maxValue), newValue >= Float(minValue) else {
+             return
+         }
+         
+        /**
+         let adjustment: Float = (isEven(value: defaultValue)
+                                  ? (isEven(value: Double(stepSize)) ? 0 : 1)
+                                  : (stepSize - 1))
+       
+         */
+        
+        guard let maxValue = descriptor.maxValue, let minValue = descriptor.minValue,
+              newValue <= Float(maxValue), newValue >= Float(minValue) else {
+            return
+        }
+        
+        uiSlider.value = newValue
+        sliderValue.text = numberFormatter(for: Double(newValue))
+        
+        self.descriptor.buffer.replaceValues([Double(newValue)])
+        self.descriptor.buffer.triggerUserInput()
+        
+    }
+    
+    
+    
+    func numberFormatter(for value: Double) -> String{
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = descriptor.precision
+        formatter.maximumFractionDigits = descriptor.precision
+        formatter.minimumIntegerDigits = 1
+        formatter.numberStyle = .decimal
+        
+        let number = NSNumber(value: value)
+        
+        return formatter.string(from: number) ?? " "
+        
     }
     
 }
@@ -147,8 +211,8 @@ extension ExperimentSliderView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate && !analysisRunning {
             wantsUpdate = false
-            
             update()
         }
     }
 }
+
