@@ -161,26 +161,15 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
          let stepSize = Float(descriptor.stepSize ?? 1.0)
          let defaultValue = descriptor.defaultValue ?? 0.0
-         let flooredValue = floor(oldValue/stepSize )
+         let minValue = Float(descriptor.minValue ?? 0.0)
+         let flooredValue = floor((oldValue - minValue)/stepSize )
          
-         let newValue: Float = (stepSize * flooredValue )
+         let newValue: Float = (stepSize * flooredValue + minValue )
          
          guard let maxValue = descriptor.maxValue, let minValue = descriptor.minValue,
                newValue <= Float(maxValue), newValue >= Float(minValue) else {
              return
          }
-         
-        /**
-         let adjustment: Float = (isEven(value: defaultValue)
-                                  ? (isEven(value: Double(stepSize)) ? 0 : 1)
-                                  : (stepSize - 1))
-       
-         */
-        
-        guard let maxValue = descriptor.maxValue, let minValue = descriptor.minValue,
-              newValue <= Float(maxValue), newValue >= Float(minValue) else {
-            return
-        }
         
         uiSlider.value = newValue
         sliderValue.text = numberFormatter(for: Double(newValue))

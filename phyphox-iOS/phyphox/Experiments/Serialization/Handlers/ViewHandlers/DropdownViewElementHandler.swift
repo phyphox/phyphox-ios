@@ -8,14 +8,37 @@
 
 import Foundation
 
+final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [DropdownViewMap]()
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    private enum Attribute: String, AttributeKey {
+        case value
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else {
+            throw ElementHandlerError.missingText
+        }
+
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let value = attributes.optionalString(for: .value) ?? ""
+
+        results.append(DropdownViewMap(value: value, replacement: text))
+       
+    }
+}
+
 struct DropdownViewElementDescriptor {
     var label: String
-    
-    let dropDownItems: String?
     
     let defaultValue: Double?
     
     let outputBufferName: String
+    
+    let mappings: [DropdownViewMap]
 }
 
 final class DropdownViewElementHandler : ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -26,14 +49,15 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
     
     private let outputHandler = TextElementHandler()
     
+    private let mapHandler = DropdownViewMapElementHandler()
+    
     init() {
-        childHandlers = ["output": outputHandler]
+        childHandlers = ["output": outputHandler, "map": mapHandler]
     }
     
     private enum Attribute: String, AttributeKey {
         case label
         case defaultValue
-        case dropdownItems
     }
     
     func nextResult() throws -> ViewElementDescriptor {
@@ -51,13 +75,13 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let label = attributes.optionalString(for: .label) ?? ""
         
-        let dropDownList = attributes.optionalString(for: .dropdownItems)
-        
         let outputBufferName = try outputHandler.expectSingleResult()
         
         let defaultValue: Double? = try attributes.optionalValue(for: .defaultValue)
         
-        results.append(.dropdown(DropdownViewElementDescriptor(label: label, dropDownItems: dropDownList , defaultValue: defaultValue, outputBufferName: outputBufferName )))
+        let mappings = mapHandler.results
+        
+        results.append(.dropdown(DropdownViewElementDescriptor(label: label, defaultValue: defaultValue, outputBufferName: outputBufferName, mappings: mappings)))
         
     }
     

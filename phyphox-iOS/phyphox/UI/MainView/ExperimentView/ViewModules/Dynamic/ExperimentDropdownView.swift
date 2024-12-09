@@ -64,6 +64,9 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         attachDisplayLink(displayLink)
         
+        print("mapping replacement ", descriptor.mappings.first?.replacement)
+        print("mapping value ", descriptor.mappings.first?.value)
+        
     }
    
     
@@ -76,11 +79,11 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
         
-        for option in descriptor.dropDownList.components(separatedBy: ",") {
-               let action = UIAlertAction(title: option, style: .default) { _ in
+        for option in descriptor.mappings {
+            let action = UIAlertAction(title: option.replacement, style: .default) { _ in
                    self.isDropDownItemSelected = true
-                   let value: Double = Double(option) ?? 0.0
-                   self.dropdown.setTitle(option, for: .normal)
+                    let value: Double = Double(option.replacement) ?? 0.0
+                    self.dropdown.setTitle(option.replacement, for: .normal)
                    self.descriptor.buffer.replaceValues([value])
                    
                    self.descriptor.buffer.triggerUserInput()
@@ -94,6 +97,11 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         guard let viewController = self.findViewController() else {
             print("No view controller found in the responder chain")
             return
+        }
+        
+        if let presenter = actionSheet.popoverPresentationController {
+            presenter.sourceView = dropdown
+            presenter.sourceRect = dropdown.bounds
         }
         
         viewController.present(actionSheet, animated: true, completion: nil)
@@ -116,8 +124,10 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         //Determine the default title
         let dropDownTitle: String
-        if let dropdownDefaultValue = descriptor.defaultValue, descriptor.dropDownList.contains(String(dropdownDefaultValue)) {
-            dropDownTitle = String(dropdownDefaultValue)
+        if let dropdownDefaultValue = descriptor.defaultValue,
+           descriptor.mappings.filter({ $0.replacement == String(descriptor.defaultValue ?? 0.0)}).count > 0 {
+               dropDownTitle = String(dropdownDefaultValue)
+
         } else {
             dropDownTitle = localize("select")
         }
