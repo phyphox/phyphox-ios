@@ -130,8 +130,8 @@ final class WebServerUtilities {
                     else if let edit = element as? EditViewDescriptor {
                         viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
                     }
-                    else if element is ButtonViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                    else if let button = element as? ButtonViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name.rawValue ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
                     }
                     else if element is ImageViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""

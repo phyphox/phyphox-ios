@@ -63,10 +63,6 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         addSubview(dropdown)
         
         attachDisplayLink(displayLink)
-        
-        print("mapping replacement ", descriptor.mappings.first?.replacement)
-        print("mapping value ", descriptor.mappings.first?.value)
-        
     }
    
     
