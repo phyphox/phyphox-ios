@@ -52,7 +52,8 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         label.textAlignment = .right
         
         switchUI = UISwitch()
-        if(descriptor.defaultValue == 0){
+        
+        if(descriptor.value == 0){
             switchUI.isOn = false
         } else {
             switchUI.isOn = true

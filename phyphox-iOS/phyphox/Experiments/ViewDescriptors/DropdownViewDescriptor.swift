@@ -34,7 +34,49 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return ""
+        return "<div style=\"font-size: 105%;\" class=\"dropdownElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><select class=\"value\" id=\"select\(id)\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\"> </select></div>"
+    }
+    //TODO need to validate the numbers further
+    func setDataHTMLWithID(_ id: Int) -> String {
+        
+        let bufferName = buffer.name
+        let options = mappings.map{ $0.replacement}
+        
+        return """
+            
+            function (data) {
+                    if (!data.hasOwnProperty("\(bufferName)"))
+                        return;
+                    var x = data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1];
+                    
+                    var dropdownElement = document.getElementById("select\(id)")
+            
+                    var selectedValue = x;
+                    if (Number.isInteger(x)) {
+                        selectedValue = x + ".0"
+                      } else {
+                        selectedValue = x.toString();
+                    }
+                    
+                    dropdownElement.innerHTML = "";
+            
+                    var options = \(options);
+                    for (var i = 0; i < options.length ; i++){
+                        var option = document.createElement("option");
+                        option.value = options[i];
+                        option.text = options[i];
+                        dropdownElement.appendChild(option);
+                    }
+            
+                    if (options.includes(selectedValue)) {
+                        dropdownElement.selectedIndex = options.indexOf(selectedValue)
+                    } else {
+                       dropdownElement.selectedIndex = 0;
+                    }
+             
+            }
+
+            """
     }
     
     

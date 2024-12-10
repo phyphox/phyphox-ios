@@ -134,7 +134,10 @@ final class WebServerUtilities {
                         viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name.rawValue ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
                     }
                     else if let toggle = element as? SwitchViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name.rawValue)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
+                    }
+                    else if let dropdown = element as? DropdownViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
                     }
                     else if element is ImageViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""

@@ -115,6 +115,8 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         if(isDropDownItemSelected){
             self.dropdown.setTitle(String(descriptor.value), for: .normal)
+            self.descriptor.buffer.replaceValues([descriptor.value])
+            self.descriptor.buffer.triggerUserInput()
             return
         }
         
@@ -129,6 +131,10 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         }
         
         self.dropdown.setTitle(dropDownTitle, for: .normal)
+        
+        let value: Double = Double(dropDownTitle) ?? 0.0
+        self.descriptor.buffer.replaceValues([value])
+        self.descriptor.buffer.triggerUserInput()
         
         
     }

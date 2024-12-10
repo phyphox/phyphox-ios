@@ -11,7 +11,7 @@ import Foundation
 
 struct SwitchViewElementDescriptor {
     let label: String
-    let defaultValue: Double
+    let defaultValue: Double?
     
     let outputBufferName: String
 }
