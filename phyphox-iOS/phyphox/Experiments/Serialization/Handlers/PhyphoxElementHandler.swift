@@ -464,7 +464,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
             
             if let defaultValue = descriptor.defaultValue {
-                buffer.append(defaultValue)
+                if(descriptor.mappings.first?.value == defaultValue){
+                    buffer.append(Double(descriptor.mappings.first?.replacement ?? "0.0") ?? 0.0)
+                }
+                
             } else {
                 buffer.append(0.0)
             }

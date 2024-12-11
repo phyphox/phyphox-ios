@@ -34,7 +34,7 @@ final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElemen
 struct DropdownViewElementDescriptor {
     var label: String
     
-    let defaultValue: Double?
+    let defaultValue: String?
     
     let outputBufferName: String
     
@@ -77,7 +77,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
-        let defaultValue: Double? = try attributes.optionalValue(for: .defaultValue)
+        let defaultValue: String? = attributes.optionalString(for: .defaultValue) ?? ""
         
         let mappings = mapHandler.results
         

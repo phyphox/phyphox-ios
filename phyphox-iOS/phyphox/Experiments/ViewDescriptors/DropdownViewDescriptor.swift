@@ -15,7 +15,7 @@ struct DropdownViewMap: Equatable {
 
 struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     var label: String
-    let defaultValue: Double?
+    let defaultValue: String?
     let buffer: DataBuffer
     let mappings: [DropdownViewMap]
     
@@ -25,7 +25,7 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, defaultValue: Double?, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection? = nil) {
+    init(label: String, defaultValue: String?, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection? = nil) {
         self.label = label
         self.defaultValue = defaultValue
         self.buffer = buffer
@@ -36,7 +36,7 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size: 105%;\" class=\"dropdownElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><select class=\"value\" id=\"select\(id)\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\"> </select></div>"
     }
-    //TODO need to validate the numbers further
+    
     func setDataHTMLWithID(_ id: Int) -> String {
         
         let bufferName = buffer.name
@@ -51,27 +51,24 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
                     
                     var dropdownElement = document.getElementById("select\(id)")
             
-                    var selectedValue = x;
-                    if (Number.isInteger(x)) {
-                        selectedValue = x + ".0"
-                      } else {
-                        selectedValue = x.toString();
-                    }
-                    
-                    dropdownElement.innerHTML = "";
+                    var selectedValue = parseFloat(x).toFixed(1)
+                    console.log(selectedValue)
+                    dropdownElement.innerHTML = ""
             
-                    var options = \(options);
+                    var options = \(options).map(value => parseFloat(value).toFixed(1));
+                    console.log(options)
                     for (var i = 0; i < options.length ; i++){
-                        var option = document.createElement("option");
-                        option.value = options[i];
-                        option.text = options[i];
-                        dropdownElement.appendChild(option);
+                        var option = document.createElement("option")
+                        option.value = options[i]
+                        option.text = options[i]
+                        dropdownElement.appendChild(option)
                     }
             
                     if (options.includes(selectedValue)) {
+                        console.log(options.indexOf(selectedValue))
                         dropdownElement.selectedIndex = options.indexOf(selectedValue)
                     } else {
-                       dropdownElement.selectedIndex = 0;
+                       dropdownElement.selectedIndex = 0
                     }
              
             }

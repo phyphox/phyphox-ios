@@ -70,18 +70,16 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         fatalError("init(coder:) has not been implemented")
     }
   
-    
     @objc private func showAlertController(sender: UIButton) {
         
         let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
         
         for option in descriptor.mappings {
-            let action = UIAlertAction(title: option.replacement, style: .default) { _ in
+            let replacement: Double = Double(option.replacement) ?? 0.0
+            let action = UIAlertAction(title: String(replacement), style: .default) { _ in
                    self.isDropDownItemSelected = true
-                    let value: Double = Double(option.replacement) ?? 0.0
-                    self.dropdown.setTitle(option.replacement, for: .normal)
-                   self.descriptor.buffer.replaceValues([value])
-                   
+                    self.dropdown.setTitle(String(replacement) , for: .normal)
+                   self.descriptor.buffer.replaceValues([replacement])
                    self.descriptor.buffer.triggerUserInput()
                }
                actionSheet.addAction(action)
@@ -121,21 +119,25 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         }
         
         //Determine the default title
-        let dropDownTitle: String
-        if let dropdownDefaultValue = descriptor.defaultValue,
-           descriptor.mappings.filter({ $0.replacement == String(descriptor.defaultValue ?? 0.0)}).count > 0 {
-               dropDownTitle = String(dropdownDefaultValue)
+        let dropDownDefaultTitle: String
+        if let dropdownDefaultValue = descriptor.defaultValue{
+           let defaultValueMap =  descriptor.mappings.filter({ $0.value == descriptor.defaultValue })
+            let defaultReplacement = defaultValueMap.first?.replacement ?? ""
+            if(defaultValueMap.count > 0){
+                dropDownDefaultTitle = String(defaultReplacement)
+            }
+            else {
+                dropDownDefaultTitle = localize("select")
+            }
 
         } else {
-            dropDownTitle = localize("select")
+            dropDownDefaultTitle = localize("select")
         }
-        
-        self.dropdown.setTitle(dropDownTitle, for: .normal)
-        
-        let value: Double = Double(dropDownTitle) ?? 0.0
+       
+        self.dropdown.setTitle(String(Double(dropDownDefaultTitle) ?? 0.0), for: .normal)
+        let value: Double = Double(dropDownDefaultTitle) ?? 0.0
         self.descriptor.buffer.replaceValues([value])
         self.descriptor.buffer.triggerUserInput()
-        
         
     }
     
