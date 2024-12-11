@@ -95,7 +95,7 @@ final class WebServerUtilities {
                     let escapedHTML = element.generateViewHTMLWithID(idx).replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
                     
                     viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
-
+                    
                     if let graph = element as? GraphViewDescriptor {
                         var dataInput = ""
                         let updateMode: String
@@ -138,6 +138,8 @@ final class WebServerUtilities {
                     }
                     else if let dropdown = element as? DropdownViewDescriptor {
                         viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
+                    } else if let slider = element as? SliderViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(slider.buffer.name)\"], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
                     }
                     else if element is ImageViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""
