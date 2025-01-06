@@ -15,18 +15,19 @@ final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElemen
 
     private enum Attribute: String, AttributeKey {
         case value
+        case replacement
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        guard !text.isEmpty else {
-            throw ElementHandlerError.missingText
-        }
+       
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let value = attributes.optionalString(for: .value) ?? ""
+        
+        let replacementText: String = text.isEmpty ? "" : text
 
-        results.append(DropdownViewMap(value: value, replacement: text))
+        results.append(DropdownViewMap(value: value, replacement: replacementText))
        
     }
 }

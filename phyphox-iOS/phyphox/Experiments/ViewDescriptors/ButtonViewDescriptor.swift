@@ -44,7 +44,7 @@ struct ButtonViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size: 105%;\" class=\"buttonElement\" id=\"element\(id)\"><button class=\"valueNumber\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\">\(localizedLabel)</button></div>"
+        return "<div style=\"font-size: 105%;\" class=\"buttonElement\" id=\"element\(id)\"><button class=\"valueNumber\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\" onchange=\"ajax('control?cmd=set&buffer=\(buffer?.name ?? "")&value='+this.value/)\" >\(localizedLabel)</button></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {

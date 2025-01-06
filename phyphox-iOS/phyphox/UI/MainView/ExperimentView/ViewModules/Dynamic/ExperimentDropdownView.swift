@@ -17,9 +17,20 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     var descriptor: DropdownViewDescriptor
     var analysisRunning: Bool = false
     
-    var isDropDownItemSelected: Bool = false
+    // Checks weather the item is selected from app or web dropdown. If not, set the first item as default value
+    var setDropdownTitleAsDefaultValue: Bool = true
+    
+    private let dropdown: UIButton
+    private let label =  UILabel()
+    
+    var dynamicLabelHeight = 0.0
     
     private let displayLink = DisplayLink(refreshRate: 5)
+    
+    var currentSelectedValue: Double = 0.0
+    var isLaunchedFirstTime = true
+    
+    private var wantsUpdate = false
 
     var active = false {
         didSet {
@@ -29,11 +40,6 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
             }
         }
     }
-    
-    private let dropdown: UIButton
-    private let label =  UILabel()
-    
-    var dynamicLabelHeight = 0.0
    
     required init(descriptor: DropdownViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
@@ -45,13 +51,10 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         label.textAlignment = .right
         
         dropdown = UIButton(type : .system)
-        
-        dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2) // Light gray background
+        dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2)
         dropdown.layer.cornerRadius = 8
-        dropdown.layer.borderColor = UIColor.lightGray.cgColor
-        
         dropdown.contentHorizontalAlignment = .center
-        dropdown.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10) // Less padding for narrower look
+        dropdown.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
         
         super.init(frame: .zero)
         
@@ -68,77 +71,6 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-  
-    @objc private func showAlertController(sender: UIButton) {
-        
-        let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
-        
-        for option in descriptor.mappings {
-            let replacement: Double = Double(option.replacement) ?? 0.0
-            let action = UIAlertAction(title: String(replacement), style: .default) { _ in
-                   self.isDropDownItemSelected = true
-                    self.dropdown.setTitle(String(replacement) , for: .normal)
-                   self.descriptor.buffer.replaceValues([replacement])
-                   self.descriptor.buffer.triggerUserInput()
-               }
-               actionSheet.addAction(action)
-           }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-            actionSheet.addAction(cancelAction)
-        
-        guard let viewController = self.findViewController() else {
-            print("No view controller found in the responder chain")
-            return
-        }
-        
-        if let presenter = actionSheet.popoverPresentationController {
-            presenter.sourceView = dropdown
-            presenter.sourceRect = dropdown.bounds
-        }
-        
-        viewController.present(actionSheet, animated: true, completion: nil)
-        
-
-    }
-
-    private var wantsUpdate = false
-    
-    func setNeedsUpdate() {
-        wantsUpdate = true
-    }
-    
-    func update(){
-        
-        if(isDropDownItemSelected){
-            self.dropdown.setTitle(String(descriptor.value), for: .normal)
-            self.descriptor.buffer.replaceValues([descriptor.value])
-            self.descriptor.buffer.triggerUserInput()
-            return
-        }
-        
-        //Determine the default title
-        let dropDownDefaultTitle: String
-        if let dropdownDefaultValue = descriptor.defaultValue{
-           let defaultValueMap =  descriptor.mappings.filter({ $0.value == descriptor.defaultValue })
-            let defaultReplacement = defaultValueMap.first?.replacement ?? ""
-            if(defaultValueMap.count > 0){
-                dropDownDefaultTitle = String(defaultReplacement)
-            }
-            else {
-                dropDownDefaultTitle = localize("select")
-            }
-
-        } else {
-            dropDownDefaultTitle = localize("select")
-        }
-       
-        self.dropdown.setTitle(String(Double(dropDownDefaultTitle) ?? 0.0), for: .normal)
-        let value: Double = Double(dropDownDefaultTitle) ?? 0.0
-        self.descriptor.buffer.replaceValues([value])
-        self.descriptor.buffer.triggerUserInput()
-        
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -166,11 +98,80 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         dropdown.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: textFieldWidth, height: h2))
         
     }
+    
+   
+    @objc private func showAlertController(sender: UIButton) {
+        
+        let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
+        
+        for option in descriptor.mappings {
+            
+            let title: String = option.replacement == "" ? option.value : (option.replacement ?? option.value)
+           
+            let action = UIAlertAction(title: title, style: .default) { _ in
+                self.setDropdownTitleAsDefaultValue = false
+                let value: Double = Double(option.value) ?? 0.0
+                self.dropdown.setTitle(title, for: .normal)
+                self.descriptor.buffer.replaceValues([value])
+                self.descriptor.buffer.triggerUserInput()
+               }
+               actionSheet.addAction(action)
+           }
+        
+        let cancelAction = UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil)
+            actionSheet.addAction(cancelAction)
+        
+        //To make the view consistent and crash-safe in ipad or in larger screen
+        if let presenter = actionSheet.popoverPresentationController {
+            presenter.sourceView = dropdown
+            presenter.sourceRect = dropdown.bounds
+        }
+        
+        guard let viewController = self.findViewController() else {
+            print("No view controller found in the responder chain")
+            return
+        }
+        
+        viewController.present(actionSheet, animated: true, completion: nil)
+
+    }
+    
+    func update(){
+        
+        if(setDropdownTitleAsDefaultValue){
+            let defaultTitle = descriptor.mappings.first?.replacement
+            let defaultValue = descriptor.mappings.first?.value
+            if(defaultTitle == ""){
+                self.dropdown.setTitle(defaultValue, for: .normal)
+            } else {
+                self.dropdown.setTitle(defaultTitle ?? defaultValue, for: .normal)
+            }
+            
+        } else {
+            for option in descriptor.mappings {
+                if(String(Double(option.value) ?? 0.0) == String(descriptor.value)){
+                    let title: String = option.replacement == "" ? option.value : (option.replacement ?? option.value)
+                    self.dropdown.setTitle(title, for: .normal)
+                    self.descriptor.buffer.replaceValues([descriptor.value])
+                    self.descriptor.buffer.triggerUserInput()
+                }
+            }
+        }
+        
+    }
+    
+    
+    func setNeedsUpdate() {
+        wantsUpdate = true
+    }
+    
+    
 }
 
 extension ExperimentDropdownView: DisplayLinkListener {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate && !analysisRunning {
+            setDropdownTitleAsDefaultValue = false
             wantsUpdate = false
             
             update()

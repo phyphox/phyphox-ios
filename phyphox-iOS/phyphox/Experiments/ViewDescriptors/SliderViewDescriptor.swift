@@ -38,7 +38,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue ?? 0.0)</span><br><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\"> </select></div>"
+        print("default value:: ", defaultValue ?? 0.0)
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue ?? 0.0)</span><br><span class=\"minValue\" id=\"minValue\(id)\">\(minValue ?? 0.0)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue ?? 0.0)</span></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {
@@ -53,7 +54,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                     var selectedValue = parseFloat(x)
                     var sliderElement = document.getElementById("input\(id)")
             
-                    var valueDisplay = document.getElementById("valueDisplay\(id)");
+                    var valueDisplay = document.getElementById("value\(id)");
             
                     if (sliderElement) {
                         sliderElement.min = \(minValue ?? 0.0);
@@ -61,9 +62,13 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                         sliderElement.value = x || \(defaultValue ?? 0.0); 
                     }
                     if (valueDisplay) {
-                        valueDisplay.textContent = x.toFixed(1) || \(defaultValue ?? 0.0);
+                            if(x.toFixed(1) == 0.0){
+                                                            valueDisplay.textContent = \(defaultValue ?? 0.0);
+                                } else {
+                                                    valueDisplay.textContent = x.toFixed(1)
                     }
-            
+                        
+                    }
             }
 
             """

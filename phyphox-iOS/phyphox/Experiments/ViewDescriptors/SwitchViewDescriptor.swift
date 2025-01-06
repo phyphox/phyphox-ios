@@ -29,7 +29,9 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
     
     func generateViewHTMLWithID(_ id: Int) -> String {
         
-        return "<div style=\"font-size: 105%;\" class=\"switchElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input type=\"radio\" class=\"value\" id=\"radio\(id)\" onclick=\"ajax('control?cmd=trigger&element=\(id)');\" ></div>"
+        let defaultSwitchValue = (defaultValue == 1.0)
+        
+        return "<div style=\"font-size: 105%;\" class=\"switchElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><input type=\"checkbox\" class=\"value\" id=\"radio\(id)\" \(defaultSwitchValue) ></input></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {
@@ -42,15 +44,36 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
 
                 var x = data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1];
                 var radioButton = document.getElementById("radio\(id)");
-
-                if (isNaN(x) || x == null || x == 0) {
+            
+                if (isNaN(x) || x == null || x == 0 || x == 0.0) {
                     radioButton.checked = false;
-                    radioButton.disabled = true;
                 } else {
                     radioButton.checked = true;
-                    radioButton.disabled = false;
                 }
+            
+                // Update value when checkbox state changes
+                radioButton.onchange = function() {
+                    var value = radioButton.checked ? 1.0 : 0.0;
+                    ajax('control?cmd=set&buffer=\(buffer.name)&value='+value);
+                };
             }
+            
+            
             """
     }
 }
+
+
+/**
+ 
+ <multiply>
+     <input clear="false">dropdown</input>
+     <input type="value">10</input>
+     <output clear="false">slider</output>
+ </multiply>
+ <add>
+     <input clear="false">dropdown</input>
+     <input type="value">0</input>
+     <output clear="false">toggle</output>
+ </add>
+ */

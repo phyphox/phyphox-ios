@@ -131,7 +131,7 @@ final class WebServerUtilities {
                         viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
                     }
                     else if let button = element as? ButtonViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name.rawValue ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
                     }
                     else if let toggle = element as? SwitchViewDescriptor {
                         viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
