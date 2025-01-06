@@ -38,8 +38,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        print("default value:: ", defaultValue ?? 0.0)
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue ?? 0.0)</span><br><span class=\"minValue\" id=\"minValue\(id)\">\(minValue ?? 0.0)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue ?? 0.0)</span></div>"
+
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue ?? 0.0)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue ?? 0.0)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue ?? 0.0)</span></div></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {
@@ -62,13 +62,24 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                         sliderElement.value = x || \(defaultValue ?? 0.0); 
                     }
                     if (valueDisplay) {
-                            if(x.toFixed(1) == 0.0){
-                                                            valueDisplay.textContent = \(defaultValue ?? 0.0);
-                                } else {
-                                                    valueDisplay.textContent = x.toFixed(1)
-                    }
+                        if(x.toFixed(1) == 0.0){
+                            valueDisplay.textContent = \(defaultValue ?? 0.0);
+                        } else {
+                            valueDisplay.textContent = x.toFixed(1)
+                        }
                         
                     }
+            
+                    if (sliderElement){
+                        sliderElement.addEventListener('input', function () {
+                            if (valueDisplay) {
+                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(1);
+                            }
+                            x = parseFloat(sliderElement.value)
+                            data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1] = x
+                        });
+                        
+            }
             }
 
             """

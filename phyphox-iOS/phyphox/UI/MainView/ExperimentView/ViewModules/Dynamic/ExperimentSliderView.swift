@@ -141,6 +141,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     func update(){
+        print("update slider")
        
         if(descriptor.value == 0.0){
             uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
