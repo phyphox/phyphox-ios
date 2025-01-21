@@ -410,7 +410,6 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer = nil
             }
             
-            
             return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers, mappings: descriptor.mappings, buffer: buffer)
 
         case .graph(let descriptor):
@@ -475,15 +474,29 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings)
             
         case .slider(let descriptor):
-            guard let buffer = buffers[descriptor.outputBufferName] else {
+            
+            let outputBuffers = (SliderType.Range == descriptor.type) ? 
+                try descriptor.outputBufferNames?.compactMap{ bufferName in
+                    guard let buffer = buffers[bufferName] else {
+                        throw ElementHandlerError.missingElement("data-container")
+                    }
+                    return buffer
+                } : nil
+            
+            if(outputBuffers != nil){
+                
+                return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: nil, outputBuffers: outputBuffers, type: descriptor.type)
+            }
+            
+            guard let outputBufferName = descriptor.outputBufferName else {
                 throw ElementHandlerError.missingElement("data-container")
             }
             
-            if buffer.isEmpty {
-                buffer.append(descriptor.defaultValue ?? 0.0)
+            guard let outputBuffer = buffers[outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
             }
             
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision,  buffer: buffer)
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: outputBuffer, outputBuffers: nil, type: descriptor.type)
             
         }
     }

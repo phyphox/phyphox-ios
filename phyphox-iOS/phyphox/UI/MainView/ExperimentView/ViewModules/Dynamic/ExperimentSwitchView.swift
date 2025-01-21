@@ -58,6 +58,7 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         } else {
             switchUI.isOn = true
         }
+        switchUI.transform = CGAffineTransformMakeScale(0.65, 0.65)
         
         super.init(frame: .zero)
         
@@ -104,7 +105,7 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         let left = s1.width + spacing/2.0
         let right = s2.width + spacing/2.0
         
-        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
+        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 1.5
         
         let width = min(2.0 * max(left, right), size.width)
         
@@ -120,7 +121,7 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         
         label.frame =  CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
         
-        switchUI.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: textFieldWidth, height: h2))
+        switchUI.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - ( h2 - 10.0))/2.0), size: CGSize(width: textFieldWidth, height: h2))
     }
     
 }

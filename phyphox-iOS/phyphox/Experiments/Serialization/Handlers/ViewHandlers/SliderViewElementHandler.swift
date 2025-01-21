@@ -14,10 +14,16 @@ struct SliderViewElementDescriptor{
     var maxValue: Double?
     var stepSize: Double?
     var defaultValue: Double?
-    let outputBufferName: String
+    let outputBufferName: String?
+    let outputBufferNames: [String]?
     let precision: Int
+    let type: SliderType
 }
 
+enum SliderType: String {
+    case Normal
+    case Range
+}
 
 final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     var results = [ViewElementDescriptor]()
@@ -37,6 +43,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         case stepSize
         case defaultValue
         case precision
+        case type
     }
     
     func nextResult() throws -> ViewElementDescriptor {
@@ -58,12 +65,22 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let stepSize = try attributes.optionalValue(for: .stepSize) ?? 1.0
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
         let precision = try attributes.optionalValue(for: .precision) ?? 2
+        let type = attributes.optionalString(for: .type) ?? "normal"
         
-        let outputBufferName = try outputHandler.expectSingleResult()
+        let sliderType = (type == "normal") ? SliderType.Normal : SliderType.Range
         
-        results.append(.slider(SliderViewElementDescriptor(label: label, minValue: minValue, maxValue: maxValue, stepSize: stepSize, defaultValue: defaultValue, outputBufferName: outputBufferName, precision: precision)))
+        let outputBufferName = (sliderType == .Normal) ? try outputHandler.expectSingleResult() : nil
+        let outputBufferNames = (sliderType == .Range) ? outputHandler.results : nil
         
+        results.append(.slider(SliderViewElementDescriptor(
+            label: label,
+            minValue: minValue,
+            maxValue: maxValue,
+            stepSize: stepSize,
+            defaultValue: defaultValue,
+            outputBufferName: outputBufferName,
+            outputBufferNames: outputBufferNames,
+            precision: precision,
+            type: sliderType)))
     }
-    
-    
 }

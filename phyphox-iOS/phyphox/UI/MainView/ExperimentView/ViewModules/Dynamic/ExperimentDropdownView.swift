@@ -53,7 +53,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         dropdown = UIButton(type : .system)
         dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2)
         dropdown.layer.cornerRadius = 8
-        dropdown.contentHorizontalAlignment = .center
+        dropdown.contentHorizontalAlignment = .left
         dropdown.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
         
         super.init(frame: .zero)
@@ -95,7 +95,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
         
-        dropdown.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: textFieldWidth, height: h2))
+        dropdown.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: textFieldWidth + 20.0, height: h2))
         
     }
     
