@@ -485,7 +485,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             if(outputBuffers != nil){
                 
-                return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: nil, outputBuffers: outputBuffers, type: descriptor.type)
+                return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: nil, outputBuffers: outputBuffers, type: descriptor.type, showValue: descriptor.showValue)
             }
             
             guard let outputBufferName = descriptor.outputBufferName else {
@@ -496,7 +496,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ElementHandlerError.missingElement("data-container")
             }
             
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: outputBuffer, outputBuffers: nil, type: descriptor.type)
+            
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: outputBuffer, outputBuffers: nil, type: descriptor.type, showValue: descriptor.showValue)
             
         }
     }

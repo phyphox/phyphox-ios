@@ -21,6 +21,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var outputBuffers: [DataBuffer]? = nil
     var buffer: DataBuffer? = nil
     
+    let showValue: Bool
+    
     var value: Double {
         return buffer?.last ?? (defaultValue ?? 0.0)
     }
@@ -28,7 +30,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, minValue: Double?, maxValue: Double?, stepSize: Double?, defaultValue: Double?, precision: Int, buffer: DataBuffer?, outputBuffers: [DataBuffer]?, translation: ExperimentTranslationCollection? = nil, type: SliderType) {
+    init(label: String, minValue: Double?, maxValue: Double?, stepSize: Double?, defaultValue: Double?, precision: Int, buffer: DataBuffer?, outputBuffers: [DataBuffer]?, translation: ExperimentTranslationCollection? = nil, type: SliderType, showValue: Bool) {
         self.label = label
         self.minValue = minValue
         self.maxValue = maxValue
@@ -39,6 +41,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         self.translation = translation
         self.type = type
         self.outputBuffers = outputBuffers
+        self.showValue = showValue
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

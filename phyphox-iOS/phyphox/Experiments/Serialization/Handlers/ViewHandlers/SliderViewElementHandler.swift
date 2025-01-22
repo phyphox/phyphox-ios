@@ -18,6 +18,7 @@ struct SliderViewElementDescriptor{
     let outputBufferNames: [String]?
     let precision: Int
     let type: SliderType
+    let showValue: Bool
 }
 
 enum SliderType: String {
@@ -44,6 +45,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         case defaultValue
         case precision
         case type
+        case showValue
     }
     
     func nextResult() throws -> ViewElementDescriptor {
@@ -66,11 +68,14 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
         let precision = try attributes.optionalValue(for: .precision) ?? 2
         let type = attributes.optionalString(for: .type) ?? "normal"
+        let showValue = try attributes.optionalValue(for: .showValue) ?? true
         
         let sliderType = (type == "normal") ? SliderType.Normal : SliderType.Range
         
         let outputBufferName = (sliderType == .Normal) ? try outputHandler.expectSingleResult() : nil
         let outputBufferNames = (sliderType == .Range) ? outputHandler.results : nil
+        
+       
         
         results.append(.slider(SliderViewElementDescriptor(
             label: label,
@@ -81,6 +86,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
             outputBufferName: outputBufferName,
             outputBufferNames: outputBufferNames,
             precision: precision,
-            type: sliderType)))
+            type: sliderType,
+            showValue: showValue)))
     }
 }

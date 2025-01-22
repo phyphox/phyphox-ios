@@ -84,7 +84,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             uiSlider.maximumValue = Float(descriptor.maxValue ?? 0.0)
             uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
             uiSlider.isUserInteractionEnabled = true
-        
+            uiSlider.minimumTrackTintColor = UIColor(named: "highlightColor")
             uiSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
             addSubview(uiSlider)
             
@@ -117,8 +117,12 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             }
         }
         
-        addSubview(label)
-        addSubview(sliderValue)
+        
+        if(descriptor.showValue){
+            addSubview(label)
+            addSubview(sliderValue)
+        }
+        
         addSubview(minValueLabel)
         addSubview(maxValueLabel)
         
@@ -142,41 +146,60 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         
-        let s1 = label.sizeThatFits(size)
-        var s2 = sliderValue.sizeThatFits(size)
-        s2.width = textFieldWidth
-       
-        let left = s1.width + spacing/2.0
-        let right = s2.width + spacing/2.0
         
-        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
         
-        return CGSize(width: size.width, height: dynamicLabelHeight * 1.5)
+        if(descriptor.showValue){
+            let s1 = label.sizeThatFits(size)
+            var s2 = sliderValue.sizeThatFits(size)
+            s2.width = textFieldWidth
+           
+            _ = s1.width + spacing/2.0
+            _ = s2.width + spacing/2.0
+            
+            
+            dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
+            return CGSize(width: size.width, height: dynamicLabelHeight * 1.5)
+        } else {
+            dynamicLabelHeight = Utility.measureHeightOfText(minValueLabel.text ?? "-") * 1.5
+            return CGSize(width: size.width, height: dynamicLabelHeight)
+        }
+        
         
     }
     
     override func layoutSubviews() {
         
-        let h2 = sliderValue.sizeThatFits(self.bounds.size).height
+        let h2 = minValueLabel.sizeThatFits(self.bounds.size).height
         let w = (bounds.width - spacing)/2.0
         
-        let measuredWidthOfLabel = Utility.measureWidthOfText(label.text ?? "-")
-        let labelOffset = (((bounds.width ) / 2.0) - measuredWidthOfLabel) / 2.0
-        label.frame = CGRect(origin: CGPoint(x: labelOffset , y: (bounds.height - dynamicLabelHeight)/2.0 - 20.0) , size: CGSize(width: w, height: dynamicLabelHeight))
+        var sliderContainerYValue = 0.0
         
-        minValueLabel.frame = CGRect(origin: CGPoint(x: 0, y: bounds.height / 2.0), size: CGSize(width: 60, height: h2))
+        if(descriptor.showValue){
+            sliderContainerYValue = bounds.height / 2.0
+            sliderContainerYValue = sliderContainerYValue + 10.0
+            
+            if(descriptor.type == SliderType.Range){
+                textFieldWidth *= 1.25
+            }
+            
+            sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 12.0) , size: CGSize(width: textFieldWidth, height: h2))
+            let measuredWidthOfLabel = Utility.measureWidthOfText(label.text ?? "-")
+            let labelOffset = (((bounds.width ) / 2.0) - measuredWidthOfLabel) / 2.0
+            label.frame = CGRect(origin: CGPoint(x: labelOffset , y: (bounds.height - dynamicLabelHeight)/2.0 - 12.0) , size: CGSize(width: w, height: dynamicLabelHeight))
+        }
         
         if(descriptor.type == SliderType.Normal){
-            uiSlider.frame = CGRect(origin: CGPoint(x: 55, y: bounds.height / 2.0), size: CGSize(width: bounds.width - 110, height: h2))
+            uiSlider.frame = CGRect(origin: CGPoint(x: 55, y: sliderContainerYValue), size: CGSize(width: bounds.width - 110, height: h2))
+            
         }
         if(descriptor.type == SliderType.Range){
-            rangeSlider.frame = CGRect(origin: CGPoint(x: 55, y: bounds.height / 2.0), size: CGSize(width: bounds.width - 110, height: h2))
-            textFieldWidth *= 1.25
+            rangeSlider.frame = CGRect(origin: CGPoint(x: 55, y: sliderContainerYValue), size: CGSize(width: bounds.width - 110, height: h2))
         }
         
-        sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 20.0) , size: CGSize(width: textFieldWidth, height: h2))
+        minValueLabel.frame = CGRect(origin: CGPoint(x: 0, y: sliderContainerYValue), size: CGSize(width: 60, height: h2))
+        maxValueLabel.frame = CGRect(origin: CGPoint(x: bounds.width - 50, y: sliderContainerYValue), size: CGSize(width: 50, height: h2))
+       
         
-        maxValueLabel.frame = CGRect(origin: CGPoint(x: bounds.width - 50, y: bounds.height / 2.0), size: CGSize(width: 50, height: h2))
         
     }
     
@@ -417,18 +440,18 @@ class RangeSlider: UIControl{
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         
-        trackLayer.frame = bounds.insetBy(dx: 0.0, dy: bounds.height / 2.5)
+        trackLayer.frame = bounds.insetBy(dx: 0.0, dy: bounds.height / 2.50)
         trackLayer.setNeedsDisplay()
         
         let lowerThumbCenter = CGFloat(positionForValue(value: lowerValue))
         
-        lowerThumbLayer.frame = CGRect(x: lowerThumbCenter - thumbWidth / 2.0, y: 0.0,
-          width: thumbWidth, height: thumbWidth)
+        lowerThumbLayer.frame = CGRect(x: lowerThumbCenter - thumbWidth / 2.0, y: -7.0,
+                                       width: thumbWidth * 1.75, height: thumbWidth * 1.75)
         lowerThumbLayer.setNeedsDisplay()
         
         let upperThumbCenter = CGFloat(positionForValue(value: upperValue))
-        upperThumbLayer.frame = CGRect(x: upperThumbCenter - thumbWidth / 2.0, y: 0.0,
-            width: thumbWidth, height: thumbWidth)
+        upperThumbLayer.frame = CGRect(x: upperThumbCenter - thumbWidth / 2.0, y: -7.0,
+            width: thumbWidth * 1.75, height: thumbWidth * 1.75)
         upperThumbLayer.setNeedsDisplay()
         
         CATransaction.commit()
@@ -487,7 +510,7 @@ class RangeSliderTrackLayer: CALayer {
             ctx.fillPath()
             
             // Fill the highlighted range
-            ctx.setFillColor(slider.trackHighlightTintColor.cgColor)
+            ctx.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? slider.trackHighlightTintColor.cgColor)
             let lowerValuePosition = CGFloat(slider.positionForValue(value: slider.lowerValue))
             let upperValuePosition = CGFloat(slider.positionForValue(value: slider.upperValue))
             let rect = CGRect(x: lowerValuePosition, y: 0.0, width: upperValuePosition - lowerValuePosition, height: bounds.height)
