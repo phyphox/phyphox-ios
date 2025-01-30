@@ -15,6 +15,8 @@ struct SliderViewElementDescriptor{
     var stepSize: Double?
     var defaultValue: Double?
     let outputBufferName: String?
+    let lowerBufferName: String
+    let upperBufferName: String
     let outputBufferNames: [String]?
     let precision: Int
     let type: SliderType
@@ -26,15 +28,46 @@ enum SliderType: String {
     case Range
 }
 
+private struct RangeSliderOutputDescriptor {
+    let value: String
+    let bufferName: String
+}
+
+private final class RangeSliderOutputElementHandler: ResultElementHandler, ChildlessElementHandler, AttributelessElementHandler {
+    var results = [RangeSliderOutputDescriptor]()
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    private enum Attribute: String, AttributeKey {
+        case value
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else {
+            throw ElementHandlerError.missingText
+        }
+
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+        
+        var value = try attributes.optionalValue(for: .value) ?? ""
+     
+        results.append(RangeSliderOutputDescriptor(value: value, bufferName: text))
+    }
+}
+
 final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
     var results = [ViewElementDescriptor]()
     
     var childHandlers: [String : ElementHandler]
+    //var rangeSliderChildHandlers: [String : ElementHandler]
     
     private let outputHandler = TextElementHandler()
     
+    private let rangeSliderOutputHandler = RangeSliderOutputElementHandler()
+    
     init() {
-        childHandlers = ["output": outputHandler]
+
+        childHandlers = ["output": rangeSliderOutputHandler]
     }
     
     private enum Attribute: String, AttributeKey {
@@ -72,10 +105,31 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         
         let sliderType = (type == "normal") ? SliderType.Normal : SliderType.Range
         
-        let outputBufferName = (sliderType == .Normal) ? try outputHandler.expectSingleResult() : nil
-        let outputBufferNames = (sliderType == .Range) ? outputHandler.results : nil
+        let outputBufferName = (sliderType == .Normal) ? rangeSliderOutputHandler.results.first?.bufferName : nil
         
-       
+        var outputBufferNames_: [String] = []
+        var lowerBufferName = ""
+        var upperBufferName = ""
+        
+        if(sliderType == .Range) {
+            let outputBuffers = rangeSliderOutputHandler.results
+            guard outputBuffers.count > 0 else {
+                throw ElementHandlerError.missingElement("output")
+            }
+            
+            for outputBuffer in outputBuffers {
+                let value = outputBuffer.value
+                if(value == "lowerValue"){
+                    lowerBufferName = outputBuffer.bufferName
+                }
+                
+                if(value == "upperValue"){
+                    upperBufferName = outputBuffer.bufferName
+                }
+                outputBufferNames_.append(value)
+                
+            }
+        }
         
         results.append(.slider(SliderViewElementDescriptor(
             label: label,
@@ -84,7 +138,9 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
             stepSize: stepSize,
             defaultValue: defaultValue,
             outputBufferName: outputBufferName,
-            outputBufferNames: outputBufferNames,
+            lowerBufferName: lowerBufferName ,
+            upperBufferName: upperBufferName,
+            outputBufferNames : outputBufferNames_,
             precision: precision,
             type: sliderType,
             showValue: showValue)))

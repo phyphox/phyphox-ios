@@ -475,29 +475,36 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
         case .slider(let descriptor):
             
-            let outputBuffers = (SliderType.Range == descriptor.type) ? 
-                try descriptor.outputBufferNames?.compactMap{ bufferName in
-                    guard let buffer = buffers[bufferName] else {
-                        throw ElementHandlerError.missingElement("data-container")
-                    }
-                    return buffer
-                } : nil
+            var outputBuffers : [String : DataBuffer] = [:]
             
-            if(outputBuffers != nil){
+            if(SliderType.Range == descriptor.type){
                 
-                return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: nil, outputBuffers: outputBuffers, type: descriptor.type, showValue: descriptor.showValue)
+                guard let lowerValue = buffers[descriptor.lowerBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                guard let upperValue = buffers[descriptor.upperBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                outputBuffers["LowerValue"] = lowerValue
+                outputBuffers["UpperValue"] = upperValue
+                
+            } else {
+                
+                guard let outputBufferName = descriptor.outputBufferName else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                guard let outputBuffer = buffers[outputBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                outputBuffers["Empty"] = outputBuffer
+                
             }
             
-            guard let outputBufferName = descriptor.outputBufferName else {
-                throw ElementHandlerError.missingElement("data-container")
-            }
-            
-            guard let outputBuffer = buffers[outputBufferName] else {
-                throw ElementHandlerError.missingElement("data-container")
-            }
-            
-            
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, buffer: outputBuffer, outputBuffers: nil, type: descriptor.type, showValue: descriptor.showValue)
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, type: descriptor.type, showValue: descriptor.showValue)
             
         }
     }

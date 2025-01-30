@@ -5,6 +5,16 @@
 //  Created by Gaurav Tripathee on 26.11.24.
 //  Copyright © 2024 RWTH Aachen. All rights reserved.
 //
+/**
+ Things to do done to finalize:
+    1) make the thumb similar as the native in range slider (differnt in emulator and real device.)
+    2) upper limits hide the max value and lower limit has little left padding so it doesnot goes at the lowest value
+    3)
+ 
+ diferent look in wmulator and ral device for range slider thumb and shadow color
+ 
+ */
+
 
 import Foundation
 import QuartzCore
@@ -40,6 +50,11 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     
     private let minValueLabel = UILabel()
     private let maxValueLabel = UILabel()
+    
+    private var sliderBuffer : DataBuffer?
+    
+    private var rangeSliderLowerBuffer : DataBuffer?
+    private var rangeSliderUpperBuffer : DataBuffer?
     
     required init(descriptor: SliderViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
@@ -88,9 +103,11 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             uiSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
             addSubview(uiSlider)
             
-            if let buffer = descriptor.buffer {
-                registerForUpdatesFromBuffer(buffer)
+            if let buffer = descriptor.outputBuffers["Empty"] {
+                sliderBuffer = buffer
+                registerForUpdatesFromBuffer(sliderBuffer!)
             }
+            
         }
         
         if(descriptor.type == SliderType.Range){
@@ -102,19 +119,24 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             rangeSlider.upperValue = descriptor.maxValue ?? 1.0
             rangeSlider.maximumValue = descriptor.maxValue ?? 1.0
             
-            self.descriptor.buffer?.replaceValues([descriptor.minValue ?? 0.0, descriptor.maxValue ?? 1.0])
-            self.descriptor.buffer?.triggerUserInput()
+            addSubview(rangeSlider)
+            
+            if let lowerValueBuffer = descriptor.outputBuffers["LowerValue"] {
+                rangeSliderLowerBuffer = lowerValueBuffer
+                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue ?? 0.0])
+                rangeSliderLowerBuffer?.triggerUserInput()
+                registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
+            }
+            
+            if let upperValueBuffer = descriptor.outputBuffers["UpperValue"]  {
+                rangeSliderUpperBuffer = upperValueBuffer
+                rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue ?? 1.0])
+                rangeSliderUpperBuffer?.triggerUserInput()
+                registerForUpdatesFromBuffer(rangeSliderUpperBuffer!)
+            }
 
             rangeSlider.addTarget(self, action: #selector(rangeSliderValueChanged), for: .valueChanged)
             
-            addSubview(rangeSlider)
-            
-            if let buffer = descriptor.outputBuffers {
-                for b_ in buffer{
-                    registerForUpdatesFromBuffer(b_)
-                }
-                
-            }
         }
         
         
@@ -133,10 +155,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
         sliderValue.text = numberFormatter(for: rangeSlider.lowerValue) + " - "  + numberFormatter(for: rangeSlider.upperValue)
         
-        descriptor.outputBuffers?[0].replaceValues([rangeSlider.lowerValue])
-        self.descriptor.outputBuffers?[0].triggerUserInput()
-        descriptor.outputBuffers?[1].replaceValues([rangeSlider.upperValue])
-        self.descriptor.outputBuffers?[1].triggerUserInput()
+        rangeSliderLowerBuffer?.replaceValues([rangeSlider.lowerValue])
+        rangeSliderLowerBuffer?.triggerUserInput()
+        rangeSliderUpperBuffer?.replaceValues([rangeSlider.upperValue])
+        rangeSliderUpperBuffer?.triggerUserInput()
         
     }
     
@@ -193,7 +215,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             
         }
         if(descriptor.type == SliderType.Range){
-            rangeSlider.frame = CGRect(origin: CGPoint(x: 55, y: sliderContainerYValue), size: CGSize(width: bounds.width - 110, height: h2))
+            rangeSlider.frame = CGRect(origin: CGPoint(x: 57, y: sliderContainerYValue), size: CGSize(width: bounds.width - 115, height: h2))
         }
         
         minValueLabel.frame = CGRect(origin: CGPoint(x: 0, y: sliderContainerYValue), size: CGSize(width: 60, height: h2))
@@ -216,19 +238,23 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     func update(){
        
         if(SliderType.Normal == descriptor.type){
-            if(descriptor.value == 0.0){
+            if(sliderBuffer?.last == 0.0){
                 uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
                 sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
             } else {
-                uiSlider.value = Float(descriptor.value)
-                sliderValue.text = numberFormatter(for: descriptor.value)
+                uiSlider.value = Float(sliderBuffer?.last ?? 0.0)
+                sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? 0.0)
             }
         }
         
         if(SliderType.Range == descriptor.type){
             
-            let lowerValue = descriptor.outputBuffers?[0].last ?? descriptor.minValue
-            let upperValue = descriptor.outputBuffers?[1].last ?? descriptor.maxValue
+            let lowerValue = rangeSliderLowerBuffer?.last ?? descriptor.minValue
+            let upperValue = rangeSliderUpperBuffer?.last ?? descriptor.maxValue
+            
+            rangeSlider.lowerValue = lowerValue ?? 0.0
+            rangeSlider.upperValue = upperValue ?? 1.0
+            
         
             sliderValue.text = numberFormatter(for: lowerValue ?? 0.0) + " - "  + numberFormatter(for: upperValue ?? 0.0)
 
@@ -246,8 +272,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             uiSlider.value = oldValue
             
             sliderValue.text = numberFormatter(for: Double(oldValue))
-            self.descriptor.buffer?.replaceValues([Double(oldValue)])
-            self.descriptor.buffer?.triggerUserInput()
+            sliderBuffer?.replaceValues([Double(oldValue)])
+            sliderBuffer?.triggerUserInput()
             return
         }
         
@@ -266,8 +292,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         uiSlider.value = newValue
         sliderValue.text = numberFormatter(for: Double(newValue))
         
-        self.descriptor.buffer?.replaceValues([Double(newValue)])
-        self.descriptor.buffer?.triggerUserInput()
+        sliderBuffer?.replaceValues([Double(newValue)])
+        sliderBuffer?.triggerUserInput()
         
     }
     
@@ -334,7 +360,7 @@ class RangeSlider: UIControl{
         return CGFloat(bounds.height)
     }
     
-    var trackTintColor: UIColor = UIColor(white: 0.9, alpha: 1.0) {
+    var trackTintColor: UIColor = UIColor(white: 0.25, alpha: 1.0) {
         didSet {
             trackLayer.setNeedsDisplay()
         }
@@ -378,8 +404,6 @@ class RangeSlider: UIControl{
         
         lowerThumbLayer.rangeSlider = self
         upperThumbLayer.rangeSlider = self
-        
-       
         
         updateLayerFrames()
     }
@@ -440,18 +464,24 @@ class RangeSlider: UIControl{
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         
-        trackLayer.frame = bounds.insetBy(dx: 0.0, dy: bounds.height / 2.50)
+        trackLayer.frame = bounds.insetBy(dx: 0.5, dy: bounds.height / 2.50)
         trackLayer.setNeedsDisplay()
         
-        let lowerThumbCenter = CGFloat(positionForValue(value: lowerValue))
+        let thumbVerticlePlacement = -7.0
+        let thumbSize = thumbWidth * 1.45
         
-        lowerThumbLayer.frame = CGRect(x: lowerThumbCenter - thumbWidth / 2.0, y: -7.0,
-                                       width: thumbWidth * 1.75, height: thumbWidth * 1.75)
+        let lowerThumbCenter = CGFloat(positionForValue(value: lowerValue))
+        let lowerThumbHorizontalPlacement = lowerThumbCenter - thumbWidth / 1.5
+        
+        lowerThumbLayer.frame = CGRect(x: lowerThumbHorizontalPlacement, y: thumbVerticlePlacement,
+                                       width: thumbSize, height: thumbSize)
         lowerThumbLayer.setNeedsDisplay()
         
         let upperThumbCenter = CGFloat(positionForValue(value: upperValue))
-        upperThumbLayer.frame = CGRect(x: upperThumbCenter - thumbWidth / 2.0, y: -7.0,
-            width: thumbWidth * 1.75, height: thumbWidth * 1.75)
+        let upperThumbHorizontalPlacement = upperThumbCenter - thumbWidth / 1.4
+        
+        upperThumbLayer.frame = CGRect(x: upperThumbHorizontalPlacement, y: thumbVerticlePlacement,
+                                       width: thumbSize, height: thumbSize)
         upperThumbLayer.setNeedsDisplay()
         
         CATransaction.commit()
