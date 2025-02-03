@@ -475,7 +475,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
         case .slider(let descriptor):
             
-            var outputBuffers : [String : DataBuffer] = [:]
+            var outputBuffers : [SliderOutputValueType : DataBuffer] = [:]
             
             if(SliderType.Range == descriptor.type){
                 
@@ -487,8 +487,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     throw ElementHandlerError.missingElement("data-container")
                 }
                 
-                outputBuffers["LowerValue"] = lowerValue
-                outputBuffers["UpperValue"] = upperValue
+                outputBuffers[.LowerValue] = lowerValue
+                outputBuffers[.UpperValue] = upperValue
                 
             } else {
                 
@@ -500,7 +500,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     throw ElementHandlerError.missingElement("data-container")
                 }
                 
-                outputBuffers["Empty"] = outputBuffer
+                outputBuffers[.Empty] = outputBuffer
                 
             }
             

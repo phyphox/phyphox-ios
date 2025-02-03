@@ -8,6 +8,12 @@
 
 import Foundation
 
+enum SliderOutputValueType {
+    case LowerValue
+    case UpperValue
+    case Empty
+}
+
 
 struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var label: String
@@ -18,13 +24,13 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     let defaultValue: Double?
     let precision: Int
     let type: SliderType
-    var outputBuffers: [String: DataBuffer]
+    var outputBuffers: [SliderOutputValueType: DataBuffer]
     
     let showValue: Bool
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, minValue: Double?, maxValue: Double?, stepSize: Double?, defaultValue: Double?, precision: Int, outputBuffers: [String: DataBuffer], translation: ExperimentTranslationCollection? = nil, type: SliderType, showValue: Bool) {
+    init(label: String, minValue: Double?, maxValue: Double?, stepSize: Double?, defaultValue: Double?, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection? = nil, type: SliderType, showValue: Bool) {
         self.label = label
         self.minValue = minValue
         self.maxValue = maxValue
@@ -50,7 +56,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
-        let buffer = outputBuffers["Empty"]?.last ?? 0.0
+        let buffer = outputBuffers[.Empty]?.last ?? 0.0
         
         return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(stepSize_) onchange=\"ajax('control?cmd=set&buffer=(\(buffer)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(minValueFormatted)</span></div></div>"
     }
@@ -70,7 +76,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     func setDataHTMLWithID(_ id: Int) -> String {
         
-        let bufferName = outputBuffers["Empty"]?.name ?? ""
+        let bufferName = outputBuffers[.Empty]?.name ?? ""
         let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
         let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)

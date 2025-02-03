@@ -5,15 +5,6 @@
 //  Created by Gaurav Tripathee on 26.11.24.
 //  Copyright © 2024 RWTH Aachen. All rights reserved.
 //
-/**
- Things to do done to finalize:
-    1) make the thumb similar as the native in range slider (differnt in emulator and real device.)
-    2) upper limits hide the max value and lower limit has little left padding so it doesnot goes at the lowest value
-    3)
- 
- diferent look in wmulator and ral device for range slider thumb and shadow color
- 
- */
 
 
 import Foundation
@@ -78,18 +69,21 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         minValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         minValueLabel.textColor = UIColor(named: "textColor")
         minValueLabel.textAlignment = .center
+        minValueLabel.adjustsFontSizeToFitWidth = true
         
         maxValueLabel.numberOfLines = 0
         maxValueLabel.text = numberFormatter(for: descriptor.maxValue ?? 0.0)
         maxValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         maxValueLabel.textColor = UIColor(named: "textColor")
         maxValueLabel.textAlignment = .center
+        maxValueLabel.adjustsFontSizeToFitWidth = true
         
         sliderValue.numberOfLines = 0
         sliderValue.font = UIFont.preferredFont(forTextStyle: .body)
         sliderValue.textColor = UIColor(named: "textColor")
         sliderValue.backgroundColor =  UIColor.lightGray.withAlphaComponent(0.2)
         sliderValue.textAlignment = .center
+        sliderValue.adjustsFontSizeToFitWidth = true
         
         if(descriptor.type == SliderType.Normal){
             
@@ -99,11 +93,14 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             uiSlider.maximumValue = Float(descriptor.maxValue ?? 0.0)
             uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
             uiSlider.isUserInteractionEnabled = true
+            
+            //calculatedMaxMinValue()
+            
             uiSlider.minimumTrackTintColor = UIColor(named: "highlightColor")
             uiSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
             addSubview(uiSlider)
             
-            if let buffer = descriptor.outputBuffers["Empty"] {
+            if let buffer = descriptor.outputBuffers[.Empty] {
                 sliderBuffer = buffer
                 registerForUpdatesFromBuffer(sliderBuffer!)
             }
@@ -114,21 +111,24 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             
             sliderValue.text = String(descriptor.minValue ?? 0.0) + " - " + String(descriptor.maxValue ?? 0.0)
             
-            rangeSlider.minimumValue = descriptor.minValue ?? 0.0
-            rangeSlider.lowerValue = descriptor.minValue ?? 0.0
+            
             rangeSlider.upperValue = descriptor.maxValue ?? 1.0
             rangeSlider.maximumValue = descriptor.maxValue ?? 1.0
+            rangeSlider.minimumValue = descriptor.minValue ?? 0.0
+            rangeSlider.lowerValue = descriptor.minValue ?? 0.0
+            
+            rangeSlider.stepSize = descriptor.stepSize ?? 1.0
             
             addSubview(rangeSlider)
             
-            if let lowerValueBuffer = descriptor.outputBuffers["LowerValue"] {
+            if let lowerValueBuffer = descriptor.outputBuffers[.LowerValue] {
                 rangeSliderLowerBuffer = lowerValueBuffer
                 rangeSliderLowerBuffer?.replaceValues([descriptor.minValue ?? 0.0])
                 rangeSliderLowerBuffer?.triggerUserInput()
                 registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
             }
             
-            if let upperValueBuffer = descriptor.outputBuffers["UpperValue"]  {
+            if let upperValueBuffer = descriptor.outputBuffers[.UpperValue]  {
                 rangeSliderUpperBuffer = upperValueBuffer
                 rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue ?? 1.0])
                 rangeSliderUpperBuffer?.triggerUserInput()
@@ -168,8 +168,6 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         
-        
-        
         if(descriptor.showValue){
             let s1 = label.sizeThatFits(size)
             var s2 = sliderValue.sizeThatFits(size)
@@ -196,6 +194,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
         var sliderContainerYValue = 0.0
         
+        let paddingForSliderRow = 10.0
+        
         if(descriptor.showValue){
             sliderContainerYValue = bounds.height / 2.0
             sliderContainerYValue = sliderContainerYValue + 10.0
@@ -211,18 +211,16 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         }
         
         if(descriptor.type == SliderType.Normal){
-            uiSlider.frame = CGRect(origin: CGPoint(x: 55, y: sliderContainerYValue), size: CGSize(width: bounds.width - 110, height: h2))
+            uiSlider.frame = CGRect(origin: CGPoint(x: 50 + paddingForSliderRow, y: sliderContainerYValue), size: CGSize(width: bounds.width - 110 - paddingForSliderRow, height: h2))
             
         }
         if(descriptor.type == SliderType.Range){
-            rangeSlider.frame = CGRect(origin: CGPoint(x: 57, y: sliderContainerYValue), size: CGSize(width: bounds.width - 115, height: h2))
+            rangeSlider.frame = CGRect(origin: CGPoint(x: 52 + paddingForSliderRow, y: sliderContainerYValue), size: CGSize(width: bounds.width - 115 - paddingForSliderRow, height: h2))
         }
         
-        minValueLabel.frame = CGRect(origin: CGPoint(x: 0, y: sliderContainerYValue), size: CGSize(width: 60, height: h2))
-        maxValueLabel.frame = CGRect(origin: CGPoint(x: bounds.width - 50, y: sliderContainerYValue), size: CGSize(width: 50, height: h2))
+        minValueLabel.frame = CGRect(origin: CGPoint(x: paddingForSliderRow, y: sliderContainerYValue), size: CGSize(width: 50, height: h2))
+        maxValueLabel.frame = CGRect(origin: CGPoint(x: bounds.width - 50 - paddingForSliderRow, y: sliderContainerYValue), size: CGSize(width: 50, height: h2))
        
-        
-        
     }
     
     @objc func sliderValueChanged(_ sender: UISlider){
@@ -231,6 +229,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
     }
     
+   
     func setNeedsUpdate() {
         wantsUpdate = true
     }
@@ -350,6 +349,12 @@ class RangeSlider: UIControl{
         }
     }
     
+    var stepSize: Double = 0.0 {
+        didSet {
+            updateLayerFrames()
+        }
+    }
+    
     let trackLayer = RangeSliderTrackLayer()
     let lowerThumbLayer = RangeSliderThumbLayer()
     let upperThumbLayer = RangeSliderThumbLayer()
@@ -386,6 +391,9 @@ class RangeSlider: UIControl{
             upperThumbLayer.setNeedsDisplay()
         }
     }
+    
+    // To determine the next slide for the descrete slider mode
+    var cumulativeDeltaValue = 0.0
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -434,20 +442,31 @@ class RangeSlider: UIControl{
 
         // 1. Determine by how much the user has dragged
         let deltaLocation = Double(location.x - previousLocation.x)
+
         let deltaValue = (maximumValue - minimumValue) * deltaLocation / Double(bounds.width - thumbWidth)
+        
+        cumulativeDeltaValue += deltaValue
+        
+        var stepThreshold = (stepSize == 0.0) ? 0.0 : (stepSize - 0.1)
+        
+        if(cumulativeDeltaValue >= stepThreshold || cumulativeDeltaValue <= -stepThreshold) {
+            
+            let newValueWithStepSize = ((location.x >  previousLocation.x) ? stepSize : -stepSize)
+            let newValue = (stepSize == 0.0) ? deltaValue : newValueWithStepSize
+                                    
+            // 2. Update the values
+            if lowerThumbLayer.highlighted {
+                lowerValue += newValue
+                lowerValue = boundValue(value: lowerValue, toLowerValue: minimumValue, upperValue: upperValue)
+            } else if upperThumbLayer.highlighted {
+                upperValue += newValue
+                upperValue = boundValue(value: upperValue, toLowerValue: lowerValue, upperValue: maximumValue)
+            }
+            cumulativeDeltaValue = 0.0
+        }
 
         previousLocation = location
-
-        // 2. Update the values
-        if lowerThumbLayer.highlighted {
-            lowerValue += deltaValue
-            lowerValue = boundValue(value: lowerValue, toLowerValue: minimumValue, upperValue: upperValue)
-        } else if upperThumbLayer.highlighted {
-            upperValue += deltaValue
-            upperValue = boundValue(value: upperValue, toLowerValue: lowerValue, upperValue: maximumValue)
-        }
         
-
         sendActions(for: .valueChanged)
 
         return true
@@ -539,12 +558,33 @@ class RangeSliderTrackLayer: CALayer {
             ctx.addPath(path.cgPath)
             ctx.fillPath()
             
+            
             // Fill the highlighted range
             ctx.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? slider.trackHighlightTintColor.cgColor)
             let lowerValuePosition = CGFloat(slider.positionForValue(value: slider.lowerValue))
             let upperValuePosition = CGFloat(slider.positionForValue(value: slider.upperValue))
             let rect = CGRect(x: lowerValuePosition, y: 0.0, width: upperValuePosition - lowerValuePosition, height: bounds.height)
             ctx.fill(rect)
+            
+            
+            // Since native iOS slider doenot have marker in the slider indicating its discreteness, drawing of it is disabled.
+            /**
+            if(slider.stepSize != 0.0){
+                let numberOfSteps : Int = (Int((slider.maximumValue - slider.minimumValue)) / Int(slider.stepSize))
+
+                for step in 1..<numberOfSteps {
+                    let minMaxDifference = (slider.maximumValue - slider.minimumValue)
+                    let increaseBy = floor((Double(step) * minMaxDifference  / Double(numberOfSteps)))
+                    let stepValue = slider.minimumValue + increaseBy
+                    
+                    ctx.setFillColor(UIColor(named: "white")?.cgColor ?? slider.trackHighlightTintColor.cgColor)
+                    let positiion = CGFloat(slider.positionForValue(value: stepValue))
+                    let rect = CGRect(x: positiion, y: 0.0, width: 2, height: bounds.height)
+                    ctx.fill(rect)
+                }
+             }
+                 */
+           
         }
     }
 

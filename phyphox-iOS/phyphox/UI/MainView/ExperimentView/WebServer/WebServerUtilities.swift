@@ -139,7 +139,7 @@ final class WebServerUtilities {
                     else if let dropdown = element as? DropdownViewDescriptor {
                         viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
                     } else if let slider = element as? SliderViewDescriptor {
-                        let bufferName = (slider.type == SliderType.Normal) ? slider.outputBuffers["Empty"]?.name : ""
+                        let bufferName = (slider.type == SliderType.Normal) ? slider.outputBuffers[.Empty]?.name : ""
                         viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(bufferName ?? "")\"], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
                     }
                     else if element is ImageViewDescriptor {
