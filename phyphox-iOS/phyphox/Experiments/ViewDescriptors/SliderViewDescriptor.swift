@@ -56,9 +56,38 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
-        let buffer = outputBuffers[.Empty]?.last ?? 0.0
+        let bufferName = outputBuffers[.Empty]?.name ?? ""
         
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(stepSize_) onchange=\"ajax('control?cmd=set&buffer=(\(buffer)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(minValueFormatted)</span></div></div>"
+        return (type == SliderType.Range) ? generateTwoSlidersHTML(id) :
+        
+        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(stepSize_) onchange=\"ajax('control?cmd=set&buffer=\(bufferName)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValueFormatted)</span></div></div>"
+    }
+    
+    private func generateTwoSlidersHTML(_ id: Int) -> String{
+        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
+        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
+        
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" +
+                                                    "<span class=\"label\">\(localizedLabel)</span>" +
+                                                    "<span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" +
+                                                    "<div class=\"sliderContainer\">" +
+                                                    "<span class=\"minValue\" >\(minValueFormatted)</span>" +
+                                                        "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +
+                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize ?? 0.0)\"" +
+                                                            ">" +
+                                                        "</input>" +
+                                                    "<span class=\"maxValue\"></span>" +
+                                                    "</div>" +
+                                                    "<div class=\"sliderContainer\">" +
+                                                    "<span class=\"minValue\"></span>" +
+                                                    "<input type=\"range\" class=\"slider\" id=\"input11\(id)\"" +
+                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize ?? 0.0)\"" +
+                                                            ">" +
+                                                            "</input>" +
+                                                        "<span class=\"maxValue\">\(maxValueFormatted)</span>" +
+                                                    "</div>" +
+                                            "</div>";
     }
     
     func numberFormatter(for value: Double) -> String{
@@ -80,9 +109,11 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
         let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
+
+        return (type == SliderType.Range) ? setDataHTMLWithIDForRangeSlider(id) :
         
         
-        return """
+            """
              function (data) {
                 if (!data.hasOwnProperty("\(bufferName)"))
                        return;
@@ -111,7 +142,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                        if (valueDisplay) {
                            valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(\(self.precision));
                        }
-                       x = parseFloat(sliderElement.value.toFixed(\(self.precision)))
+                       x = parseFloat(parseFloat(sliderElement.value).toFixed(\(self.precision)))
                        data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1] = x
                    });
                    
@@ -121,140 +152,80 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
             """
     }
     
+    private func setDataHTMLWithIDForRangeSlider(_ id: Int) -> String {
+        let lowerValueBufferName = outputBuffers[.LowerValue]?.name ?? ""
+        let upperValueBufferName = outputBuffers[.UpperValue]?.name ?? ""
+        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
+        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
+        
+        let lowerBuffer = outputBuffers[.LowerValue]?.last ?? 0.0
+        let upperBuffer = outputBuffers[.UpperValue]?.last ?? 0.0
+        
+        return """
+                function (data) {
+                          if (!data.hasOwnProperty("\(lowerValueBufferName)"))
+                                return;
+                          if (!data.hasOwnProperty("\(upperValueBufferName)"))
+                                return;
+
+                          var x = data["\(lowerValueBufferName)"][\"data\"][data["\(lowerValueBufferName)"][\"data\"].length - 1]
+                          var y = data["\(upperValueBufferName)"][\"data\"][data["\(upperValueBufferName)"][\"data\"].length - 1]
+
+                          var selectedValueX = parseFloat(x).toFixed(\(precision))
+                          var selectedValueY = parseFloat(y).toFixed(\(precision))
+
+                            var sliderElementOne = document.getElementById(\"input\(id)")
+                            var sliderElementTwo = document.getElementById(\"input11\(id)")
+                            var valueDisplay = document.getElementById(\"value\(id)")
+
+                            if (sliderElementOne && sliderElementTwo) {
+                                sliderElementOne.min = \(minValueFormatted)
+                                sliderElementTwo.min = \(minValueFormatted)
+                                sliderElementOne.max = \(maxValueFormatted)
+                                sliderElementTwo.max = \(maxValueFormatted)
+                                sliderElementOne.step = \(stepSize ?? 0.0)
+                                sliderElementTwo.step = \(stepSize ?? 0.0)
+                                sliderElementOne.value = selectedValueX || \(defaultValueFormatted)
+                                sliderElementTwo.value = selectedValueY || \(defaultValueFormatted)
+                            }
+
+                            if(valueDisplay){
+                                valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
+                            }
+
+                            if (sliderElementOne || sliderElementTwo){
+                                sliderElementOne.onchange = function() {
+                                    if(sliderElementOne.value <= sliderElementTwo.value) {
+                                        if (valueDisplay) {
+                                            valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
+                                        }
+                                        console.log("sliderElementOne")
+                                        console.log(parseFloat(sliderElementOne.value).toFixed(\(precision)))
+                                        console.log("lowerBuffer")
+                                        console.log(\(lowerBuffer))
+                                        ajax('control?cmd=set&buffer=\(lowerValueBufferName)&value='+sliderElementOne.value)
+                                    }
+                                }
+            
+
+                                sliderElementTwo.onchange = function() {
+                                      if(sliderElementOne.value <= sliderElementTwo.value) {
+                                        if (valueDisplay) {
+                                              valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
+                                              }
+                                        
+                                        console.log("sliderElementTwo")
+                                        console.log(parseFloat(sliderElementTwo.value).toFixed(\(precision)))
+                                        console.log("upperBuffer")
+                                        console.log(\(upperBuffer))
+                                        ajax('control?cmd=set&buffer=\(upperValueBufferName)&value='+sliderElementTwo.value)
+                                        }
+                                }
+                        }
+                }
+            """
+    }
+    
     
 }
-
-
-/**
- 
- 
- 
-if (!data.hasOwnProperty("\(bufferName)"))
-       return;
-var x = data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1];
-var selectedValue = parseFloat(x)
-var sliderElement = document.getElementById("input\(id)")
-           
-var valueDisplay = document.getElementById("value\(id)");
-
-if (sliderElement) {
-   sliderElement.min = \(minValueFormatted);
-   sliderElement.max = \(maxValueFormatted);
-   sliderElement.value = x || \(defaultValueFormatted);
-}
-if (valueDisplay) {
-   if(x.toFixed(1) == 0.0){
-       valueDisplay.textContent = \(defaultValueFormatted);
-   } else {
-       valueDisplay.textContent = x.toFixed(\(self.precision));
-   }
-   
-}
-
-if (sliderElement){
-   sliderElement.addEventListener('input', function () {
-       if (valueDisplay) {
-           valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(\(self.precision));
-       }
-       x = parseFloat(sliderElement.value.toFixed(\(self.precision)))
-       data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1] = x
-   });
-   
-}
- 
- */
-
-
-/**
- 
- return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><section class =\"range-slider\"><span class =\"rangeValues\"></span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"20\" step=\"0.5\" onchange=\"ajax('control?cmd=set&buffer=\(buffer?.name ?? "")&value='+this.value)\"><input value=\"50\" min=\"0\" max=\"100\" step=\"0.5\" type=\"range\"></section><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValueFormatted)</span></div></div>"
- 
- var lowerBufferName: String? = nil
- var upperBufferName: String? = nil
- var bufferName: String? = nil
- if(type == SliderType.Range){
-     let bufferNames = outputBuffers?.map{ $0.name}
-     lowerBufferName = bufferNames?[0]
-     upperBufferName = bufferNames?[1]
- }
- 
- if(type == SliderType.Normal){
-     bufferName = buffer?.name
- }
- 
- 
- function (data) {
-         
-         if("\(type)" == "\(SliderType.Range)"){
- 
-                     if (!data.hasOwnProperty("\(lowerBufferName ?? "")"))
-                            return;
-                     if (!data.hasOwnProperty("\(upperBufferName ?? "")"))
-                             return;
-                     var x = data["\(lowerBufferName ?? "")"]["data"][data["\(lowerBufferName ?? "")"]["data"].length - 1];
-                     var y = data["\(upperBufferName ?? "")"]["data"][data["\(upperBufferName ?? "")"]["data"].length - 1];
-                     var lowerValue = parseFloat(x)
-                     var upperValue = parseFloat(y)
-             
-                                     console.log(lowerValue)
-                                     console.log(upperValue)
- 
-                         
- 
-                     // Range slider code is taken from https://stackoverflow.com/questions/4753946/html-slider-with-two-inputs-possible
-                     var slides = document.getElementsByTagName("input");
-                     var slide1 = parseFloat(slides[1].value);
-                     var slide2 = parseFloat(slides[2].value);
- 
-                                                     slides[1].value = lowerValue
-                                                     slides[2].value = upperValue
-                     
-                     if( slide1 > slide2 ){ var tmp = slide2; slide2 = slide1; slide1 = tmp; }
-             
-                     var valueDisplay = document.getElementById("value\(id)");
-             
-                     if (valueDisplay) {
-                         valueDisplay.textContent = slide1 + " - " + slide2;
-                        
-                     }
- 
- if (slides[1]){
-     slides[1].addEventListener('input', function () {
-        if (valueDisplay) {
-            valueDisplay.textContent = parseFloat(slides[1].value).toFixed(\(self.precision));
-        }
-        x = parseFloat(slides[1].value.toFixed(\(self.precision)))
-                                        data["\(lowerBufferName ?? "")"]["data"][data["\(lowerBufferName ?? "")"]["data"].length - 1] = x
-    });
-    
- }
- 
-             if (slides[2]){
-                 slides[2].addEventListener('input', function () {
-                    if (valueDisplay) {
-                        valueDisplay.textContent = parseFloat(slides[2].value).toFixed(\(self.precision));
-                    }
-                    x = parseFloat(slides[2].value.toFixed(\(self.precision)))
-                    data["\(upperBufferName ?? "")"]["data"][data["\(upperBufferName ?? "")"]["data"].length - 1] = x
-                });
-                
-             }
-             
-                     var sliderSections = document.getElementsByClassName("range-slider");
-                         for( var x = 0; x < sliderSections.length; x++ ){
-                             var sliders = sliderSections[x].getElementsByTagName("input");
-                             for( var y = 0; y < sliders.length; y++ ){
-                                 if( sliders[y].type ==="range" ){
-                                     // sliders[y].oninput = slide1;
-                                     // Manually trigger event first time to display values
-                                     // sliders[y].oninput();
-                                 }
-                             }
-                         }
- 
-         }
-         
- }
- 
- 
- */

@@ -94,7 +94,6 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
             uiSlider.isUserInteractionEnabled = true
             
-            //calculatedMaxMinValue()
             
             uiSlider.minimumTrackTintColor = UIColor(named: "highlightColor")
             uiSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
@@ -118,22 +117,23 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             rangeSlider.lowerValue = descriptor.minValue ?? 0.0
             
             rangeSlider.stepSize = descriptor.stepSize ?? 1.0
-            
+           
             addSubview(rangeSlider)
-            
-            if let lowerValueBuffer = descriptor.outputBuffers[.LowerValue] {
-                rangeSliderLowerBuffer = lowerValueBuffer
-                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue ?? 0.0])
-                rangeSliderLowerBuffer?.triggerUserInput()
-                registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
-            }
             
             if let upperValueBuffer = descriptor.outputBuffers[.UpperValue]  {
                 rangeSliderUpperBuffer = upperValueBuffer
+                registerForUpdatesFromBuffer(rangeSliderUpperBuffer!)
                 rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue ?? 1.0])
                 rangeSliderUpperBuffer?.triggerUserInput()
-                registerForUpdatesFromBuffer(rangeSliderUpperBuffer!)
             }
+            
+            if let lowerValueBuffer = descriptor.outputBuffers[.LowerValue] {
+                rangeSliderLowerBuffer = lowerValueBuffer
+                registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
+                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue ?? 0.0])
+                rangeSliderLowerBuffer?.triggerUserInput()
+            }
+            
 
             rangeSlider.addTarget(self, action: #selector(rangeSliderValueChanged), for: .valueChanged)
             
