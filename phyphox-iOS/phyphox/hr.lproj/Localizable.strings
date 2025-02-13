@@ -1,1 +1,16 @@
 
+
+"app_name" = "phyphox";
+"action_settings" = "Postavke";
+"title_activity_experiment" = "phyphox";
+"graph_tools_pan_and_zoom" = "Pomicanje i zumiranje";
+"graph_tools_pick" = "Izaberite podatke";
+"graph_tools_more" = "Više alata";
+"graph_tools_system_time" = "Pretvorite u sustavno vrijeme";
+"graph_tools_reset" = "Resetirajte zumiranje";
+"graph_tools_follow" = "Pratite nove podatke";
+"graph_tools_export" = "Izvezite ovaj skup podataka";
+"graph_tools_log_x" = "Logaritamska x os";
+"graph_tools_log_y" = "Logaritamska y os";
+"graph_point_label" = "Točka";
+"graph_slope_label" = "Nagib";
