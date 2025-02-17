@@ -603,16 +603,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             catch SensorError.sensorUnavailable(let type) {
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title: localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
-           
+                let state = experiment.experiment.stateTitle ?? ""
+                let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") + "\n\n" +  (experiment.experiment.localizedDescription ?? "")
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
+            
                 return
             }
             catch {}
@@ -623,18 +619,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
+                let state = experiment.experiment.stateTitle ?? ""
+                let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") + "\n\n" +  (experiment.experiment.localizedDescription ?? "")
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
-           
-                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
+         
                 return
             }
             catch {}
@@ -643,6 +633,23 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func showSensorNotAvailableDialogWithExperimentDetails(_ title: String, _ message: String, _ links: [ExperimentLink]){
+        let al = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        for link in links {
+            al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
+                UIApplication.shared.open(link.url)
+            }))
+        }
+        al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+            UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+        }))
+         
+        al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
+        
+        self.navigationController!.present(al, animated: true, completion: nil)
     }
     
     enum FileType {
@@ -939,16 +946,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 }
             }
             catch SensorError.sensorUnavailable(let type) {
+                let state = loadedExperiment.stateTitle ?? ""
+                let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") + "\n\n" +  (loadedExperiment.localizedDescription ?? "")
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type) " +  localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: navigationController!, animated: true)
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
            
                 return false
             }
@@ -961,15 +963,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             catch DepthInputError.sensorUnavailable {
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
+                let state = loadedExperiment.stateTitle ?? ""
+                let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") + "\n\n" +  (loadedExperiment.localizedDescription ?? "")
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
+         
                 
                 return false
             }
