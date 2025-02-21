@@ -16,7 +16,7 @@ class LuminanceAnalyser: AnalysingModule {
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
     
-    var selectionState = MetalRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
+    var selectionState = AnalyzingRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
     var time: TimeInterval = TimeInterval()
 
@@ -51,7 +51,7 @@ class LuminanceAnalyser: AnalysingModule {
         
     }
     
-    override func update(selectionArea: MetalRenderer.SelectionStruct,
+    override func update(selectionArea: AnalyzingRenderer.SelectionStruct,
                 metalCommandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: MTLTexture?,
                 cameraImageTextureCbCr: MTLTexture? ) {
@@ -95,7 +95,7 @@ class LuminanceAnalyser: AnalysingModule {
         
         let partialBufferLength = calculatedGridAndGroupSize.numOfThreadGroups
         //setup buffers
-        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<MetalRenderer.SelectionStruct>.size,options: .storageModeShared)
+        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.size,options: .storageModeShared)
         let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * partialBufferLength,options: .storageModeShared)!
         
         analyseEncoding.setTexture(cameraImageTextureY, index: 0)

@@ -12,8 +12,8 @@ import AVFoundation
 import Accelerate
 
 @available(iOS 13.0, *)
-class MetalRenderer: NSObject,  MTKViewDelegate{
-    
+class AnalyzingRenderer {
+        
     struct SelectionStruct {
         var x1, x2, y1, y2: Float
         var editable: Bool
@@ -27,28 +27,13 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     
     var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
     
-    // The current viewport size.
-    var viewportSize: CGSize = CGSize()
-    
-    // Flag for viewport size changes.
-    var viewportSizeDidChange: Bool = false
-    
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
-
-    // Captured image texture cache.
-    var cameraImageTextureCache: CVMetalTextureCache!
     
-    let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
+    let inFlightSemaphore: DispatchSemaphore
     
     var selectionState = SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
-    
-    // Textures used to transfer the current camera image to the GPU for rendering.
-    var cameraImageTextureY: CVMetalTexture?
-    var cameraImageTextureCbCr: CVMetalTexture?
-    
-    var cvImageBuffer : CVImageBuffer?
-    
+        
     var measuring: Bool = false
    
     var timeReference: ExperimentTimeReference?
@@ -57,26 +42,18 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     private var queue: DispatchQueue?
     
     var timeStampOfFrame: TimeInterval = TimeInterval()
-    
-    var cameraPreviewRenderer: CameraPreviewRenderer
-    
+        
     var analysingModules : [AnalysingModule] = []
     
     var resolution: CGSize = CGSize(width: 0, height: 0)
     
-    init(renderer: MTKView) {
-
+    init(inFlightSemaphore: DispatchSemaphore) {
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             self.metalDevice = metalDevice
         }
-        
-        cameraPreviewRenderer = CameraPreviewRenderer(metalDevice: metalDevice, renderer: renderer)
-        
-        super.init()
-     
+        self.inFlightSemaphore = inFlightSemaphore
+             
         initializeMetal()
-        
-        
     }
     
     func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
@@ -114,38 +91,16 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         }
        
     }
-    
-    
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        resolution = size
-        drawRectResized(size: size)
-    }
-    
-    func draw(in view: MTKView) {
-        update()
-    }
-    
-    // Schedule a draw to happen at a new size.
-    func drawRectResized(size: CGSize) {
-        viewportSize = size
-        viewportSizeDidChange = true
-    }
-    
-    func deviceChanged(){
-        viewportSizeDidChange = true
-    }
-    
-    func updateFrame(imageBuffer: CVImageBuffer!, selectionState: SelectionStruct, time: TimeInterval) {
         
-        if imageBuffer != nil {
-            self.cvImageBuffer = imageBuffer
-        }
+    func updateFrame(selectionState: SelectionStruct, time: TimeInterval, cameraImageTextureY: CVMetalTexture, cameraImageTextureCbCr: CVMetalTexture) {
         
         self.selectionState = selectionState
         
         if measuring {
             timeStampOfFrame = time
         }
+        
+        update(cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr)
         
     }
     
@@ -177,21 +132,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
 
     
     func initializeMetal(){
-        
-        cameraPreviewRenderer.loadMetal()
-        
-        // Create camera image texture cache.
-        var textureCache: CVMetalTextureCache?
-        CVMetalTextureCacheCreate(nil, nil, metalDevice, nil, &textureCache)
-        cameraImageTextureCache = textureCache
-        
         // Create the command queue for one frame of rendering work.
         metalCommandQueue = metalDevice.makeCommandQueue()
-        
     }
     
     
-    func update() {
+    func update(cameraImageTextureY: CVMetalTexture, cameraImageTextureCbCr: CVMetalTexture) {
         
         // Wait to ensure only kMaxBuffersInFlight are getting proccessed by any stage in the Metal
         // pipeline (App, Metal, Drivers, GPU, etc).
@@ -199,7 +145,7 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
         
         // Create a new command buffer for each renderpass to the current drawable.
         if let commandBuffer = metalCommandQueue.makeCommandBuffer() {
-            commandBuffer.label = "MyCommand"
+            commandBuffer.label = "AnalyzeCommand"
             
             
             // Add completion hander which signal _inFlightSemaphore when Metal and the GPU has fully
@@ -211,14 +157,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                     strongSelf.inFlightSemaphore.signal()
                 }
             }
-            
-            updateAppState()
-            
-            cameraPreviewRenderer.update(commandBuffer: commandBuffer, 
-                                         selectionState: selectionState,
-                                         cameraImageTextureY: cameraImageTextureY,
-                                         cameraImageTextureCbCr: cameraImageTextureCbCr,
-                                         viewportSize: viewportSize)
             
         }
         
@@ -239,12 +177,8 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                 
                 for analysingModule in analysingModules {
                     
-                    guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
-                        return
-                    }
-                    
-                    guard let textureY = CVMetalTextureGetTexture(cameraImageY) else { return }
-                    guard let textureCbCr = CVMetalTextureGetTexture(cameraImageCbCr) else { return }
+                    guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
+                    guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
                     
                     analysingModule.update(selectionArea: getSelectionState(),
                                            metalCommandBuffer: analysisCommandBuffer,
@@ -262,11 +196,12 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
     }
    
     func getSelectionState() -> SelectionStruct{
+        //TODO Needs complete rework
         let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1))
-            .applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
+           // .applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
         let p2 = CGPoint(
             x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)
-        ).applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
+        )//.applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
         
         // TODO: hard coded resolution size need to be refactored
         return SelectionStruct(x1: Float(min(p1.x, p2.x)*480),
@@ -274,50 +209,6 @@ class MetalRenderer: NSObject,  MTKViewDelegate{
                                y1: Float(min(p1.y, p2.y)*360),
                                y2: Float(max(p1.y, p2.y)*360),
                                editable: selectionState.editable)
-    }
-
-   
-    // Updates any app state.
-    func updateAppState() {
-        
-        guard let currentFrame = self.cvImageBuffer else {
-            return
-        }
-        
-        // Prepare the current frame's camera image for transfer to the GPU.
-        updateCameraImageTextures(frame: currentFrame)
-        
-        // Update the destination-rendering vertex info if the size of the screen changed.
-        if viewportSizeDidChange {
-            viewportSizeDidChange = false
-            cameraPreviewRenderer.updateImagePlane(frame: currentFrame, defaultVideoDevice: defaultVideoDevice)
-        }
-    }
-    
-    // Creates two textures (Y and CbCr) to transfer the current frame's camera image to the GPU for rendering.
-    func updateCameraImageTextures(frame: CVImageBuffer) {
-        if CVPixelBufferGetPlaneCount(frame) < 2 {
-            print("updateCameraImageTextures less than 2")
-            return
-        }
-        cameraImageTextureY = createTexture(fromPixelBuffer: frame, pixelFormat: .r8Unorm, planeIndex: 0)
-        cameraImageTextureCbCr = createTexture(fromPixelBuffer: frame, pixelFormat: .rg8Unorm, planeIndex: 1)
-    }
-    
-    // Creates a Metal texture with the argument pixel format from a CVPixelBuffer at the argument plane index.
-    func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
-        
-        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // for example 480  //240
-        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // for example 360 //180
-        
-        var texture: CVMetalTexture? = nil
-        let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat, width, height, planeIndex, &texture)
-        
-        if status != kCVReturnSuccess {
-            texture = nil
-        }
-        
-        return texture
     }
    
 }

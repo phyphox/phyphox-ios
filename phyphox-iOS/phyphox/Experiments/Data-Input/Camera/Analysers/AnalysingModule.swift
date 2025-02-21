@@ -23,7 +23,7 @@ class AnalysingModule {
         //fatalError("Subclasses must implement loadMetal()")
     }
     
-    func update(selectionArea: MetalRenderer.SelectionStruct,
+    func update(selectionArea: AnalyzingRenderer.SelectionStruct,
                 metalCommandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: MTLTexture,
                 cameraImageTextureCbCr: MTLTexture){

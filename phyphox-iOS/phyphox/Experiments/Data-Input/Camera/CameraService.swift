@@ -12,8 +12,20 @@ import AVFoundation
 import MetalKit
 import CoreMedia
 
+protocol CameraMetalTextureProvider {
+    var cameraImageTextureY: CVMetalTexture? { get }
+    var cameraImageTextureCbCr: CVMetalTexture? { get }
+    var inFlightSemaphore: DispatchSemaphore { get }
+}
+
 @available(iOS 14.0, *)
-public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraMetalTextureProvider {
+    
+    var cameraImageTextureY: CVMetalTexture?
+    var cameraImageTextureCbCr: CVMetalTexture?
+    let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
+
+    var cameraImageTextureCache: CVMetalTextureCache!
     
     public let session = AVCaptureSession()
     
@@ -33,7 +45,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     private var queue =  DispatchQueue(label: "video output queue")
     
-    var metalRender : MetalRenderer?
+    var analyzingRenderer : AnalyzingRenderer?
     
     var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
     
@@ -83,6 +95,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
+    public func setupTextures() {
+        var textureCache: CVMetalTextureCache?
+        if let defaultVideoDevice = analyzingRenderer?.metalDevice {
+            CVMetalTextureCacheCreate(nil, nil, defaultVideoDevice, nil, &textureCache)
+            cameraImageTextureCache = textureCache
+        }
+    }
+    
     public func configure(){
         //resetCallCount()
         sessionQueue.async {
@@ -92,7 +112,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     @available(iOS 14.0, *)
-    func initializeModel(model: CameraModel){
+    func initializeModel(model: CameraModel) {
         cameraModel = model
     }
 
@@ -192,7 +212,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                             self.cameraSettingModel.isDefaultCamera = false
                         }
                         
-                        self.metalRender?.defaultVideoDevice = self.defaultVideoDevice
+                        self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
                         
                         self.session.commitConfiguration()
                     } catch {
@@ -260,7 +280,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     
                     self.setCameraSettinginfo()
                     
-                    self.metalRender?.defaultVideoDevice = self.defaultVideoDevice
+                    self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
                     
                     
                     self.session.commitConfiguration()
@@ -270,11 +290,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 
             }
         }
-        
-        sessionQueue.async {
-            self.metalRender?.deviceChanged()
-        }
-        
         
     }
     
@@ -294,6 +309,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
+    func createTexture(fromPixelBuffer pixelBuffer: CVImageBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
+        
+        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex) // for example 480  //240
+        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex) // for example 360 //180
+        
+        var texture: CVMetalTexture? = nil
+        let status = CVMetalTextureCacheCreateTextureFromImage(nil, cameraImageTextureCache, pixelBuffer, nil, pixelFormat, width, height, planeIndex, &texture)
+        
+        if status != kCVReturnSuccess {
+            texture = nil
+        }
+        
+        return texture
+    }
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
@@ -309,15 +338,28 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let _ = CVPixelBufferGetHeight(imageBuffer)
        
         functionCallCount += 1
-        self.metalRender?.updateFrame(imageBuffer: imageBuffer, selectionState: MetalRenderer.SelectionStruct(
-            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds)
+        
+        if CVPixelBufferGetPlaneCount(imageBuffer) < 2 {
+            print("updateCameraImageTextures less than 2")
+            return
+        }
+        cameraImageTextureY = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .r8Unorm, planeIndex: 0)
+        cameraImageTextureCbCr = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .rg8Unorm, planeIndex: 1)
+        
+        guard let cameraImageTextureY = cameraImageTextureY, let cameraImageTextureCbCr = cameraImageTextureCbCr else {
+            return
+        }
+        
+        self.analyzingRenderer?.updateFrame(selectionState: AnalyzingRenderer.SelectionStruct(
+            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds,
+                cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr
+        )
         
     }
     
     //MARK: Camera Configuration
     
     func configureSession(){
-        
         if setupResult != .success {
             return
         }
@@ -391,7 +433,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
             cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
             
-            metalRender?.defaultVideoDevice = defaultVideoDevice
+            analyzingRenderer?.defaultVideoDevice = defaultVideoDevice
             setCameraSettinginfo()
             
         } catch {

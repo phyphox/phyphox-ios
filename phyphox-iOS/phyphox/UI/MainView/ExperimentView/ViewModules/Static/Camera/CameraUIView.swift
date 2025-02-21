@@ -34,9 +34,17 @@ protocol ZoomSliderViewDelegate: AnyObject {
 
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-   
-    var cameraSelectionDelegate: CameraSelectionDelegate?
-    var cameraViewDelegete: CameraViewDelegate?
+    
+    var cameraModelState: CameraModelState? {
+        didSet {
+            self.cameraPreviewRenderer.cameraModelState = cameraModelState
+        }
+    }
+    var cameraTextureProvider: CameraMetalTextureProvider? {
+        didSet {
+            self.cameraPreviewRenderer.cameraTextureProvider = cameraTextureProvider
+        }
+    }
     
     private let descriptor: CameraViewDescriptor
     
@@ -52,8 +60,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private let emptyView : UIView
     private let previewResizingButton : UIButton
     private var headerView: UIView?
-    private var metalView: MTKView?
     private var zoomSlider: UISlider?
+    
+    //Metal
+    private var metalView = MTKView()
+    private var metalDevice: MTLDevice!
+    private var cameraPreviewRenderer: CameraPreviewRenderer
     
     // View minimization and maximization
     private var isViewMaximized = false
@@ -119,6 +131,14 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         emptyView = UIView()
         emptyView.backgroundColor = .clear
         
+        self.metalDevice = MTLCreateSystemDefaultDevice()
+        metalView.device = metalDevice
+        metalView.preferredFramesPerSecond = 60
+        metalView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        cameraPreviewRenderer = CameraPreviewRenderer(metalDevice: metalDevice, renderDestination: metalView)
+        cameraPreviewRenderer.loadMetal()
+        metalView.delegate = cameraPreviewRenderer
+        
         super.init(frame: .zero)
     
         headerView = previewViewHeader()
@@ -150,7 +170,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
         self.isUserInteractionEnabled = true
-
+        
     }
     
     @available(*, unavailable)
@@ -174,10 +194,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         super.layoutSubviews()
         
-        guard let metalView = cameraViewDelegete?.mView else { return }
-        self.metalView = metalView
-        
-        cameraSelectionDelegate?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
+        cameraModelState?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
         cameraSettingUIView = cameraSettingViews(adjustmentLabel: descriptor.exposureAdjustmentLevel)
         
         let adjustedSize = getAdjustedPreviewFrameSize()
@@ -200,18 +217,18 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
 
     private func setupMetalView(width: CGFloat, height: CGFloat) {
-        self.metalView?.frame = CGRect(x: (frame.width - width) / 2, y: heightSpacing, width: width, height: height - heightSpacing)
-        self.metalView?.contentMode = .scaleAspectFit
-        self.metalView?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(resizeTapped(_:))))
-        addSubview(self.metalView ?? emptyView)
+        self.metalView.frame = CGRect(x: (frame.width - width) / 2, y: heightSpacing, width: width, height: height - heightSpacing)
+        self.metalView.contentMode = .scaleAspectFit
+        self.metalView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(resizeTapped(_:))))
+        addSubview(self.metalView)
     }
     
     
     private func setupCameraSettingViews(width: CGFloat, height: CGFloat) {
         addSubview(cameraSettingUIView ?? emptyView)
         addSubview(collectionView)
-        if(cameraViewDelegete != nil ){
-            zoomSlider = ZoomSlider(cameraSettingModel: cameraViewDelegete!.cameraSettingsModel)
+        if let cameraModelState = cameraModelState {
+            zoomSlider = ZoomSlider(cameraSettingModel: cameraModelState.cameraSettingsModel)
             buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
             addSubview(zoomSlider ?? emptyView)
         }
@@ -239,7 +256,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 
         }
         
-        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = cameraModelState?.cameraSettingsModel else { return }
         
         cameraSettingsModel.onApertureCurrentValueChanged = { value in
            
@@ -256,7 +273,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     
     private func updateCameraSettingsCurrentValues() {
-        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = cameraModelState?.cameraSettingsModel else { return }
         
         if((cameraSettingsModel.service?.isConfigured) != nil){
             isoSettingText?.text = String(cameraSettingsModel.currentIso)
@@ -290,7 +307,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         let frameH = resizableState == .exclusive ? frameHeightAsOrientation : frame.height
         
-        guard let imageResolution = cameraViewDelegete?.cameraSettingsModel.resolution else {
+        guard let imageResolution = cameraModelState?.cameraSettingsModel.resolution else {
             return CGSize(width: frame.width, height: frameH)
         }
         
@@ -317,19 +334,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             cameraSettingUIView?.isHidden = false
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
             if let gr = panGestureRecognizer {
-                metalView?.addGestureRecognizer(gr)
+                metalView.addGestureRecognizer(gr)
             }
-            self.cameraViewDelegete?.isOverlayEditable = true
+            self.cameraModelState?.isOverlayEditable = true
             
             
         } else {
             cameraSettingUIView?.isHidden = true
             if let gr = panGestureRecognizer {
-                metalView?.removeGestureRecognizer(gr)
+                metalView.removeGestureRecognizer(gr)
             }
     
             panGestureRecognizer = nil
-            self.cameraViewDelegete?.isOverlayEditable = false
+            self.cameraModelState?.isOverlayEditable = false
         }
     }
     
@@ -469,7 +486,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         handleButtonTapped(mode: .SWITCH_LENS, additionalActions: {
             
-            self.cameraViewDelegete?.cameraSettingsModel.switchCamera()
+            self.cameraModelState?.cameraSettingsModel.switchCamera()
  
         })
        
@@ -478,7 +495,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     @objc private func autoExposureButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .AUTO_EXPOSURE, additionalActions: {
             self.autoExposureText?.text = self.autoExposureOff ? localize("off") : localize("on")
-            self.cameraViewDelegete?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
+            self.cameraModelState?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
         })
     }
 
@@ -513,7 +530,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
-        if(cameraViewDelegete?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front){
+        if(cameraModelState?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front){
             return
         }
         handleButtonTapped(mode: .ZOOM, additionalActions: {
@@ -540,7 +557,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func selectDefaultItemInCollectionView(){
         var currentSelectionIndex: Int
         
-        guard let cameraSettingsModel = self.cameraViewDelegete?.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = self.cameraModelState?.cameraSettingsModel else { return }
         
         if(cameraSettingMode == .ISO){
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(cameraSettingsModel.currentIso)}) ?? 0
@@ -551,7 +568,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(shutterSpeed.timescale)}) ?? 0
         }
         else if(cameraSettingMode == .EXPOSURE){
-            guard let currentExposureValue = self.cameraViewDelegete?.cameraSettingsModel.currentExposureValue else { return }
+            guard let currentExposureValue = self.cameraModelState?.cameraSettingsModel.currentExposureValue else { return }
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
         }
         else if(cameraSettingMode == .ZOOM){
@@ -574,26 +591,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
      
     @objc func panned(_ sender: UIPanGestureRecognizer) {
         
-        guard var del = cameraSelectionDelegate else {
-            print("camera selection delegate is not accessable")
-            return
-        }
-        
-        guard let viewDelegate = cameraViewDelegete else {
-            print("camera view delegate is not accessable")
+        guard var del = cameraModelState else {
+            print("camera selection delegate is not accessible")
             return
         }
         
         let p = sender.location(in: metalView)
        
         
-        let pr = CGPoint(x: p.x / viewDelegate.mView.frame.width, y: p.y / viewDelegate.mView.frame.height)
-        let ps = pr.applying(viewDelegate.metalRenderer.cameraPreviewRenderer.displayToCameraTransform)
-        let x = Float(ps.x)
-        let y = Float(ps.y)
-        
-        print()
-        
+ //TODO       let pr = CGPoint(x: p.x / metalView.frame.width, y: p.y / metalView.frame.height)
+ //TODO       let ps = pr.applying(viewDelegate.metalRenderer.cameraPreviewRenderer.displayToCameraTransform)
+        let x = Float(0.0)//TODO Float(ps.x)
+        let y = Float(0.0)//TODO Float(ps.y)
+                
         if sender.state == .began {
             let x1Square = (x - del.x1) * (x - del.x1)
             let x2Square = (x - del.x2) * (x - del.x2)
@@ -658,7 +668,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }()
     
     private var cameraSettingValues: [Float] {
-        guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return [] }
+        guard let cameraSettingsModel = cameraModelState?.cameraSettingsModel else { return [] }
         
         switch cameraSettingMode {
         case .ISO:
@@ -827,7 +837,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             let currentCameraSettingValue = self.cameraSettingValues[indexPath.row]
             
-            guard let cameraSettingsModel = cameraViewDelegete?.cameraSettingsModel else { return }
+            guard let cameraSettingsModel = cameraModelState?.cameraSettingsModel else { return }
             
             switch cameraSettingMode {
             case .NONE, .WHITE_BAlANCE, .AUTO_EXPOSURE, .SWITCH_LENS:

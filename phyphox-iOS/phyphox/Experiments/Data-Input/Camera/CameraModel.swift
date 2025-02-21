@@ -10,8 +10,8 @@ import Foundation
 import AVFoundation
 import MetalKit
 
-
-protocol CameraSelectionDelegate {
+@available(iOS 14.0, *)
+protocol CameraModelState {
     var x1: Float { get set }
     var x2: Float { get set }
     var y1: Float { get set }
@@ -21,21 +21,13 @@ protocol CameraSelectionDelegate {
     var tBuffer: DataBuffer? { get set }
     var exposureSettingLevel: Int { get set }
     var locked: String { get set }
-}
-
-@available(iOS 14.0, *)
-protocol CameraViewDelegate: AnyObject {
-    var mView: MTKView { get set }
-    var metalRenderer: MetalRenderer { get set }
     var cameraSettingsModel : CameraSettingsModel { get set }
     var isOverlayEditable: Bool { get set }
 }
 
-
 protocol CameraGUIDelegate {
     func updateResolution(resolution: CGSize)
 }
-
 
 @available(iOS 14.0, *)
 class CameraSettingsModel: ObservableObject {
@@ -165,7 +157,7 @@ class CameraSettingsModel: ObservableObject {
 
 
 @available(iOS 14.0, *)
-final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDelegate{
+final class CameraModel: ObservableObject, CameraModelState{
     
     var x1: Float = 0.4
     var x2: Float = 0.6
@@ -177,10 +169,9 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     var locked: String = ""
     
     private let service = CameraService()
-    var mView =  MTKView()
     var cameraSettingsModel : CameraSettingsModel
     
-    var metalRenderer: MetalRenderer
+    var metalRenderer: AnalyzingRenderer
     var session: AVCaptureSession
     
     var timeReference: ExperimentTimeReference?
@@ -192,12 +183,7 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     init() {
         self.session = service.session
         
-        if let metalDevice = MTLCreateSystemDefaultDevice() {
-            mView.device = metalDevice
-        }
-        mView.preferredFramesPerSecond = 60
-        mView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
-        self.metalRenderer = MetalRenderer(renderer: mView)
+        self.metalRenderer = AnalyzingRenderer(inFlightSemaphore: service.inFlightSemaphore)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
         
@@ -206,14 +192,15 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
         configure()
     }
     
-    
+    func getTextureProvider() -> CameraMetalTextureProvider? {
+        return service
+    }
     
     func configure(){
         service.checkForPermisssion()
         service.configure()
-        mView.delegate = metalRenderer
-        //metalView.metalView.delegate = metalRenderer
-        service.metalRender = metalRenderer
+        service.analyzingRenderer = metalRenderer
+        service.setupTextures()
     }
     
     func initModel(model: CameraModel){
@@ -222,12 +209,12 @@ final class CameraModel: ObservableObject, CameraViewDelegate, CameraSelectionDe
     
     
     func startSession(){
-        service.metalRender?.measuring = true
+        service.analyzingRenderer?.measuring = true
     }
     
     
     func stopSession(){
-        service.metalRender?.measuring = false
+        service.analyzingRenderer?.measuring = false
     }
     
     func endSession(){

@@ -11,28 +11,37 @@ import MetalKit
 import AVFoundation
 
 
-@available(iOS 13.0, *)
-class CameraPreviewRenderer {
+@available(iOS 14.0, *)
+class CameraPreviewRenderer: NSObject, MTKViewDelegate {
+    
+    var cameraModelState: CameraModelState?
+    var cameraTextureProvider: CameraMetalTextureProvider? {
+        didSet {
+            self.inFlightSemaphore = cameraTextureProvider?.inFlightSemaphore
+        }
+    }
+    
+    var inFlightSemaphore: DispatchSemaphore?
     
     var metalDevice: MTLDevice
     var renderDestination: MTKView
+    var metalCommandQueue: MTLCommandQueue!
     var imagePlaneVertexBuffer: MTLBuffer!
     var cameraImageTextureCache: CVMetalTextureCache!
-    let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
     var displayToCameraTransform: CGAffineTransform = .identity
 
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
     
-    init(metalDevice: MTLDevice, renderer: MTKView) {
-        
+    init(metalDevice: MTLDevice, renderDestination: MTKView) {
         self.metalDevice = metalDevice
-        self.renderDestination = renderer
+        self.renderDestination = renderDestination
+        metalCommandQueue = metalDevice.makeCommandQueue()
     }
  
     
     func loadMetal(){
-        
+                
         // Set the default formats needed to render.
         renderDestination.colorPixelFormat = .bgra8Unorm
         renderDestination.sampleCount = 1
@@ -72,7 +81,7 @@ class CameraPreviewRenderer {
         let vertexFunction = defaultLibrary.makeFunction(name: "vertexTransform")!
         let fragmentFunction = defaultLibrary.makeFunction(name: "fragmentShader")!
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-        pipelineStateDescriptor.label = "MyPipeline"
+        pipelineStateDescriptor.label = "CameraPreviewRender Pipeline"
         pipelineStateDescriptor.sampleCount = renderDestination.sampleCount
         pipelineStateDescriptor.vertexFunction = vertexFunction
         pipelineStateDescriptor.fragmentFunction = fragmentFunction
@@ -88,13 +97,33 @@ class CameraPreviewRenderer {
         
     }
     
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+
+    }
     
-    func update(commandBuffer: MTLCommandBuffer, selectionState: MetalRenderer.SelectionStruct,
-                cameraImageTextureY: CVMetalTexture?, cameraImageTextureCbCr: CVMetalTexture?, viewportSize: CGSize){
-        
-        if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
+    func draw(in view: MTKView) {
+        if let strongSemaphore = self.inFlightSemaphore {
+            _ = strongSemaphore.wait(timeout: DispatchTime.distantFuture)
             
-            if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
+            if let commandBuffer = metalCommandQueue.makeCommandBuffer() {
+                commandBuffer.label = "CameraPreviewCommand"
+                
+                commandBuffer.addCompletedHandler { [weak self] commandBuffer in
+                    if let strongSemaphore = self?.inFlightSemaphore {
+                        strongSemaphore.signal()
+                    }
+                }
+                
+                update(commandBuffer: commandBuffer, cameraImageTextureY: cameraTextureProvider?.cameraImageTextureY, cameraImageTextureCbCr: cameraTextureProvider?.cameraImageTextureCbCr, viewportSize: view.frame)
+            }
+        }
+    }
+    
+    func update(commandBuffer: MTLCommandBuffer,
+                cameraImageTextureY: CVMetalTexture?, cameraImageTextureCbCr: CVMetalTexture?, viewportSize: CGRect){
+        if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
+
+            if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor), let cameraModelState = cameraModelState {
                 
                 // Set a label to identify this render pass in a captured Metal frame.
                 renderEncoder.label = "CameraGUIPreview"
@@ -111,10 +140,10 @@ class CameraPreviewRenderer {
                 renderEncoder.setCullMode(.none)
                 renderEncoder.setRenderPipelineState(pipelineState)
                 
-                let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying( displayToCameraTransform.inverted())
-                let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
-                var scaledSelectionState = MetalRenderer.SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: selectionState.editable)
-                renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<MetalRenderer.SelectionStruct>.stride, index: 2)
+                let p1 = CGPoint(x: CGFloat(cameraModelState.x1), y: CGFloat(cameraModelState.y1)).applying( displayToCameraTransform.inverted())
+                let p2 = CGPoint(x: CGFloat(cameraModelState.x2), y: CGFloat(cameraModelState.y2)).applying(displayToCameraTransform.inverted())
+                var scaledSelectionState = AnalyzingRenderer.SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: cameraModelState.isOverlayEditable)
+                renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.stride, index: 2)
                 
                 // Setup plane vertex buffers.
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)

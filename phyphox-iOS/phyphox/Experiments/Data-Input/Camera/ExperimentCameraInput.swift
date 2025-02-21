@@ -28,7 +28,7 @@ final class ExperimentCameraInput {
     
    
     init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
-        
+                
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
             lumaBuffer: lumaBuffer,
@@ -53,6 +53,10 @@ final class ExperimentCameraInput {
         self.locked = locked
         self.feature = feature
         self.analysis = analysis
+        
+        guard #available(iOS 14.0, *) else {
+            return
+        }
         
         session = ExperimentCameraInputSession()
         guard let session = session as? ExperimentCameraInputSession else {

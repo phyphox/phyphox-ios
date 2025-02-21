@@ -521,8 +521,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
-                        session.initializeCameraModelAndRunSession(uiView: cameraGUI)
-                        
+                        cameraGUI.cameraModelState = session.attachDelegate(cameraGUI)
+                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
+    
                     }
                 
                 }
