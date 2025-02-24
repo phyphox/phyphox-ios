@@ -365,9 +365,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         
         session.beginConfiguration()
-        session.sessionPreset = .medium
-        
-        
         
         do {
             // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
@@ -423,12 +420,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 print("Error: Cannot add the Output to the session")
             }
             
-            session.sessionPreset = .medium
+            session.sessionPreset = .high
             
             let formatDescription = videoDevice.activeFormat.formatDescription
             let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
             
-            print("resolution 2 : \(dimension.width)x\(dimension.height)")
+            print("Resolution: \(dimension.width)x\(dimension.height)")
             //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
             cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
             cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
