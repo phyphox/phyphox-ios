@@ -343,6 +343,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) })  }
 
+        guard let descriptors = viewDescriptors else {
+            throw ElementHandlerError.missingElement("view")
+        }
+        
         let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
