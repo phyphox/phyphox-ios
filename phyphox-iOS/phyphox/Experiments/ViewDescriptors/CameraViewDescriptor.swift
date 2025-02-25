@@ -10,7 +10,6 @@ import Foundation
 
 struct CameraViewDescriptor: ViewDescriptor, Equatable {
     let label: String
-    let aspectRatio: CGFloat
     let exposureAdjustmentLevel: Int
     let grayscale: String
     let markOverexposure: String
@@ -20,7 +19,6 @@ struct CameraViewDescriptor: ViewDescriptor, Equatable {
 
     init(label: String, aspectRatio: CGFloat, exposureAdjustmentLevel: Int, grayscale: String, markOverexposure: String, markUnderexposure: String, translation: ExperimentTranslationCollection?) {
         self.label = label
-        self.aspectRatio = aspectRatio
         self.exposureAdjustmentLevel = exposureAdjustmentLevel
         self.grayscale = grayscale
         self.markOverexposure = markOverexposure

@@ -14,7 +14,7 @@ import AVFoundation
 @available(iOS 14.0, *)
 class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
-    var cameraModelState: CameraModelState?
+    var cameraModelOwner: CameraModelOwner?
     var cameraTextureProvider: CameraMetalTextureProvider? {
         didSet {
             self.inFlightSemaphore = cameraTextureProvider?.inFlightSemaphore
@@ -32,6 +32,10 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
 
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
+    
+    var viewportSize: CGSize = CGSize()
+    var viewportSizeDidChange: Bool = false
+    var cameraOrientation: AVCaptureDevice.Position? = nil
     
     init(metalDevice: MTLDevice, renderDestination: MTKView) {
         self.metalDevice = metalDevice
@@ -98,7 +102,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-
+        viewportSize = size
+        viewportSizeDidChange = true
     }
     
     func draw(in view: MTKView) {
@@ -121,9 +126,12 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     func update(commandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: CVMetalTexture?, cameraImageTextureCbCr: CVMetalTexture?, viewportSize: CGRect){
+        
+        updateAppState()
+        
         if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
 
-            if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor), let cameraModelState = cameraModelState {
+            if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor), let cameraModel = cameraModelOwner?.cameraModel {
                 
                 // Set a label to identify this render pass in a captured Metal frame.
                 renderEncoder.label = "CameraGUIPreview"
@@ -140,9 +148,9 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 renderEncoder.setCullMode(.none)
                 renderEncoder.setRenderPipelineState(pipelineState)
                 
-                let p1 = CGPoint(x: CGFloat(cameraModelState.x1), y: CGFloat(cameraModelState.y1)).applying( displayToCameraTransform.inverted())
-                let p2 = CGPoint(x: CGFloat(cameraModelState.x2), y: CGFloat(cameraModelState.y2)).applying(displayToCameraTransform.inverted())
-                var scaledSelectionState = AnalyzingRenderer.SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: cameraModelState.isOverlayEditable)
+                let p1 = CGPoint(x: CGFloat(cameraModel.x1), y: CGFloat(cameraModel.y1)).applying( displayToCameraTransform.inverted())
+                let p2 = CGPoint(x: CGFloat(cameraModel.x2), y: CGFloat(cameraModel.y2)).applying(displayToCameraTransform.inverted())
+                var scaledSelectionState = AnalyzingRenderer.SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: cameraModel.isOverlayEditable)
                 renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.stride, index: 2)
                 
                 // Setup plane vertex buffers.
@@ -171,11 +179,19 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
         
     }
    
+    // Updates any app state.
+    func updateAppState() {
+        // Update the destination-rendering vertex info if the size of the screen changed.
+        if viewportSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel.cameraSettingsModel.service?.defaultVideoDevice?.position {
+            viewportSizeDidChange = false
+            updateImagePlane()
+        }
+    }
     
     // Sets up vertex data (source and destination rectangles) rendering.
-    func updateImagePlane(frame: CVImageBuffer, defaultVideoDevice: AVCaptureDevice?) {
-        displayToCameraTransform = transformForDeviceOrientation(defaultVideoDevice: defaultVideoDevice)
-
+    func updateImagePlane() {
+        cameraOrientation = cameraModelOwner?.cameraModel.cameraSettingsModel.service?.defaultVideoDevice?.position
+        displayToCameraTransform = transformForDeviceOrientation(frontFacingCamera: cameraOrientation == .front)
         let vertexData = imagePlaneVertexBuffer.contents().assumingMemoryBound(to: Float.self)
         for index in 0...3 {
             let textureCoordIndex = 4 * index + 2
@@ -186,31 +202,30 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
         }
     }
     
-    func transformForDeviceOrientation(defaultVideoDevice: AVCaptureDevice?) -> CGAffineTransform {
+    func transformForDeviceOrientation(frontFacingCamera: Bool) -> CGAffineTransform {
         let currentOrientation = UIDevice.current.orientation
-        let isBackCamera = defaultVideoDevice?.position == .back
         
-        let rotate90Anticlockwise = CGAffineTransform(a: 0.0, b: 1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 0.0)
-        let rotate90ClockWise = CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
-        
-        // TODO. Need to handle for all the faceup and facedown cases for all protraits and all landscapes modes.
-        // For that we need to recognize landscape and portrait through screen's width and height
-        switch currentOrientation {
+        let rotationTransform = switch currentOrientation {
         case .portrait , .faceUp , .faceDown:
-            return isBackCamera ? rotate90ClockWise : rotate90Anticlockwise
+            CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
           
         case .landscapeLeft:
-            return isBackCamera ? CGAffineTransform.identity : rotate90Anticlockwise.concatenating(rotate90ClockWise)
+            CGAffineTransform.identity
 
         case .landscapeRight:
-            // originally image is flipped for front camera, but applying 90 degree anti clock wise and then 90 degree clockwise works
-            return isBackCamera ? rotate90ClockWise.concatenating(rotate90ClockWise) : rotate90Anticlockwise.concatenating(rotate90ClockWise)
+            CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: -1.0, tx: 1.0, ty: 1.0)
             
         case .portraitUpsideDown:
-            return isBackCamera ? rotate90ClockWise.concatenating(rotate90ClockWise).concatenating(rotate90ClockWise) : rotate90Anticlockwise.concatenating(rotate90ClockWise).concatenating(rotate90ClockWise)
-            
+            CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: 1.0, ty: 1.0)
+      
         default:
-            return CGAffineTransform.identity
+            CGAffineTransform.identity
+        }
+        
+        if frontFacingCamera {
+            return rotationTransform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
+        } else {
+            return rotationTransform
         }
         
     }

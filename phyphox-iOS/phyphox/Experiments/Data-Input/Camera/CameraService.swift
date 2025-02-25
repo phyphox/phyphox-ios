@@ -12,6 +12,11 @@ import AVFoundation
 import MetalKit
 import CoreMedia
 
+@available(iOS 14.0, *)
+protocol CameraModelOwner {
+    var cameraModel: CameraModel { get }
+}
+
 protocol CameraMetalTextureProvider {
     var cameraImageTextureY: CVMetalTexture? { get }
     var cameraImageTextureCbCr: CVMetalTexture? { get }

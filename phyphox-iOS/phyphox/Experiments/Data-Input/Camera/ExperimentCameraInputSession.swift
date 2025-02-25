@@ -9,7 +9,7 @@
 import Foundation
 
 @available(iOS 14.0, *)
-class ExperimentCameraInputSession: NSObject {
+class ExperimentCameraInputSession: NSObject, CameraModelOwner {
     var timeReference: ExperimentTimeReference?
     
     var experimentCameraBuffers: ExperimentCameraBuffers?
@@ -19,7 +19,8 @@ class ExperimentCameraInputSession: NSObject {
     var y1: Float = 0.4
     var y2: Float = 0.6
     
-    lazy var cameraModel: CameraModel? = nil
+    lazy var cameraModel = CameraModel()
+    var sessionInitialized = false
     
     var autoExposure: Bool = true
     var locked: String = ""
@@ -29,13 +30,6 @@ class ExperimentCameraInputSession: NSObject {
     var delegates : [CameraGUIDelegate] = []
     
     func initializeCameraModelAndRunSession(){
-        // During model instantiation, the camera session runs
-        cameraModel = CameraModel()
-        
-        guard let cameraModel = cameraModel else {
-            return
-        }
-        
         cameraModel.x1 = x1
         cameraModel.x2 = x2
         cameraModel.y1 = y1
@@ -46,33 +40,32 @@ class ExperimentCameraInputSession: NSObject {
        
         
         cameraModel.locked = locked
+        
+        sessionInitialized = true
     }
     
-    func attachDelegate(_ delegate: CameraGUIDelegate) -> CameraModelState? {
+    func attachDelegate(_ delegate: CameraGUIDelegate) -> CameraModelOwner {
         self.delegates.append(delegate)
-        if cameraModel == nil {
+        if !sessionInitialized {
             initializeCameraModelAndRunSession()
         }
-        guard let cameraModel = cameraModel else {
-            return nil
-        }
         delegate.updateResolution(resolution: cameraModel.cameraSettingsModel.resolution)
-        return cameraModel
+        return self
     }
     
     func startSession(){
-        if cameraModel == nil {
+        if !sessionInitialized {
             initializeCameraModelAndRunSession()
         }
-        cameraModel?.startSession()
+        cameraModel.startSession()
     }
     
     func stopSession(){
-        cameraModel?.stopSession()
+        cameraModel.stopSession()
     }
     
     func endSession(){
-        cameraModel?.endSession()
+        cameraModel.endSession()
     }
     
     

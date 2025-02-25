@@ -10,21 +10,6 @@ import Foundation
 import AVFoundation
 import MetalKit
 
-@available(iOS 14.0, *)
-protocol CameraModelState {
-    var x1: Float { get set }
-    var x2: Float { get set }
-    var y1: Float { get set }
-    var y2: Float { get set }
-    var timeReference: ExperimentTimeReference? { get set }
-    var zBuffer: DataBuffer? { get set }
-    var tBuffer: DataBuffer? { get set }
-    var exposureSettingLevel: Int { get set }
-    var locked: String { get set }
-    var cameraSettingsModel : CameraSettingsModel { get set }
-    var isOverlayEditable: Bool { get set }
-}
-
 protocol CameraGUIDelegate {
     func updateResolution(resolution: CGSize)
 }
@@ -157,7 +142,7 @@ class CameraSettingsModel: ObservableObject {
 
 
 @available(iOS 14.0, *)
-final class CameraModel: ObservableObject, CameraModelState{
+final class CameraModel: ObservableObject {
     
     var x1: Float = 0.4
     var x2: Float = 0.6
