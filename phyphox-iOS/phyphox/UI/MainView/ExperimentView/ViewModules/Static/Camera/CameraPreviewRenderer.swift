@@ -10,7 +10,6 @@ import Foundation
 import MetalKit
 import AVFoundation
 
-
 @available(iOS 14.0, *)
 class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
@@ -118,7 +117,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                         strongSemaphore.signal()
                     }
                 }
-                
+
                 update(commandBuffer: commandBuffer, cameraImageTextureY: cameraTextureProvider?.cameraImageTextureY, cameraImageTextureCbCr: cameraTextureProvider?.cameraImageTextureCbCr, viewportSize: view.frame)
             }
         }
@@ -126,7 +125,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     func update(commandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: CVMetalTexture?, cameraImageTextureCbCr: CVMetalTexture?, viewportSize: CGRect){
-        
+
         updateAppState()
         
         if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
@@ -148,10 +147,10 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 renderEncoder.setCullMode(.none)
                 renderEncoder.setRenderPipelineState(pipelineState)
                 
-                let p1 = CGPoint(x: CGFloat(cameraModel.x1), y: CGFloat(cameraModel.y1)).applying( displayToCameraTransform.inverted())
-                let p2 = CGPoint(x: CGFloat(cameraModel.x2), y: CGFloat(cameraModel.y2)).applying(displayToCameraTransform.inverted())
-                var scaledSelectionState = AnalyzingRenderer.SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: cameraModel.isOverlayEditable)
-                renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.stride, index: 2)
+                let selectionArea = cameraModel.selectionArea
+                var selectionStruct = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: cameraModel.isOverlayEditable)
+           
+                renderEncoder.setFragmentBytes(&selectionStruct, length: MemoryLayout<SelectionState>.stride, index: 2)
                 
                 // Setup plane vertex buffers.
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
@@ -182,7 +181,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     // Updates any app state.
     func updateAppState() {
         // Update the destination-rendering vertex info if the size of the screen changed.
-        if viewportSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel.cameraSettingsModel.service?.defaultVideoDevice?.position {
+        if viewportSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position {
             viewportSizeDidChange = false
             updateImagePlane()
         }
@@ -190,7 +189,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     // Sets up vertex data (source and destination rectangles) rendering.
     func updateImagePlane() {
-        cameraOrientation = cameraModelOwner?.cameraModel.cameraSettingsModel.service?.defaultVideoDevice?.position
+        cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position
         displayToCameraTransform = transformForDeviceOrientation(frontFacingCamera: cameraOrientation == .front)
         let vertexData = imagePlaneVertexBuffer.contents().assumingMemoryBound(to: Float.self)
         for index in 0...3 {

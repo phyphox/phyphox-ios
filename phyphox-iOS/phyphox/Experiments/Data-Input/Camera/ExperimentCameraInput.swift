@@ -59,14 +59,25 @@ final class ExperimentCameraInput {
         }
         
         session = ExperimentCameraInputSession()
+        
+        applyCameraInputAttributes()
+        
+    }
+    
+    func applyCameraInputAttributes() {
+        guard #available(iOS 14.0, *) else {
+            return
+        }
+        
         guard let session = session as? ExperimentCameraInputSession else {
             return
         }
         
-        session.x1 = x1
-        session.x2 = x2
-        session.y1 = y1
-        session.y2 = y2
+        session.initx1 = initx1
+        session.initx2 = initx2
+        session.inity1 = inity1
+        session.inity2 = inity2
+        
         session.experimentCameraBuffers = experimentCameraBuffers
         session.timeReference = timeReference
         
@@ -75,8 +86,6 @@ final class ExperimentCameraInput {
         session.locked = locked
         session.feature = feature
         session.analysis = analysis
-        
-        
     }
     
     func start() throws {

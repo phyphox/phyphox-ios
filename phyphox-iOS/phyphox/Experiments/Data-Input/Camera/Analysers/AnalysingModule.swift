@@ -8,7 +8,7 @@
 
 import Foundation
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class AnalysingModule {
     
     static var metalDevice: MTLDevice?
@@ -23,7 +23,7 @@ class AnalysingModule {
         //fatalError("Subclasses must implement loadMetal()")
     }
     
-    func update(selectionArea: AnalyzingRenderer.SelectionStruct,
+    func update(selectionArea: SelectionState,
                 metalCommandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: MTLTexture,
                 cameraImageTextureCbCr: MTLTexture){

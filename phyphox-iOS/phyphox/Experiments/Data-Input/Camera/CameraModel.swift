@@ -10,10 +10,6 @@ import Foundation
 import AVFoundation
 import MetalKit
 
-protocol CameraGUIDelegate {
-    func updateResolution(resolution: CGSize)
-}
-
 @available(iOS 14.0, *)
 class CameraSettingsModel: ObservableObject {
     
@@ -63,7 +59,7 @@ class CameraSettingsModel: ObservableObject {
     
     @Published var isDefaultCamera: Bool = true
     
-    var resolution = CGSize(width: 480, height: 360)
+    var resolution: CGSize? = nil
     
     @available(iOS 14.0, *)
     init(service: CameraService){
@@ -149,6 +145,12 @@ final class CameraModel: ObservableObject {
     var y1: Float = 0.4
     var y2: Float = 0.6
     
+    var selectionArea: CGRect {
+        get {
+            return CGRect(x: CGFloat(min(x1, x2)), y: CGFloat(min(y1, y2)), width: CGFloat(abs(x2-x1)), height: CGFloat(abs(y2-y1)))
+        }
+    }
+    
     var exposureSettingLevel: Int = 3
     
     var locked: String = ""
@@ -156,7 +158,7 @@ final class CameraModel: ObservableObject {
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel
     
-    var metalRenderer: AnalyzingRenderer
+    var analyzingRenderer: AnalyzingRenderer
     var session: AVCaptureSession
     
     var timeReference: ExperimentTimeReference?
@@ -165,15 +167,15 @@ final class CameraModel: ObservableObject {
     
     var isOverlayEditable: Bool = false
     
-    init() {
+    init(owner: CameraModelOwner) {
+        self.service.cameraModelOwner = owner
+        
         self.session = service.session
         
-        self.metalRenderer = AnalyzingRenderer(inFlightSemaphore: service.inFlightSemaphore)
+        self.analyzingRenderer = AnalyzingRenderer(inFlightSemaphore: service.inFlightSemaphore)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
-        
-        initModel(model: self)
-        
+                
         configure()
     }
     
@@ -184,14 +186,9 @@ final class CameraModel: ObservableObject {
     func configure(){
         service.checkForPermisssion()
         service.configure()
-        service.analyzingRenderer = metalRenderer
+        service.analyzingRenderer = analyzingRenderer
         service.setupTextures()
     }
-    
-    func initModel(model: CameraModel){
-        service.initializeModel(model: model)
-    }
-    
     
     func startSession(){
         service.analyzingRenderer?.measuring = true

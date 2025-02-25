@@ -11,16 +11,10 @@ import MetalKit
 import AVFoundation
 import Accelerate
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class AnalyzingRenderer {
-        
-    struct SelectionStruct {
-        var x1, x2, y1, y2: Float
-        var editable: Bool
-        
-        var padding: (UInt8, UInt8, UInt8) = (0, 0, 0)
-    }
     
+    var cameraModelOwner: CameraModelOwner? = nil
     var metalDevice: MTLDevice!
     var metalCommandQueue: MTLCommandQueue!
     var imagePlaneVertexBuffer: MTLBuffer!
@@ -31,9 +25,7 @@ class AnalyzingRenderer {
     var pipelineState: MTLRenderPipelineState!
     
     let inFlightSemaphore: DispatchSemaphore
-    
-    var selectionState = SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
-        
+            
     var measuring: Bool = false
    
     var timeReference: ExperimentTimeReference?
@@ -44,9 +36,7 @@ class AnalyzingRenderer {
     var timeStampOfFrame: TimeInterval = TimeInterval()
         
     var analysingModules : [AnalysingModule] = []
-    
-    var resolution: CGSize = CGSize(width: 0, height: 0)
-    
+        
     init(inFlightSemaphore: DispatchSemaphore) {
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             self.metalDevice = metalDevice
@@ -92,10 +82,8 @@ class AnalyzingRenderer {
        
     }
         
-    func updateFrame(selectionState: SelectionStruct, time: TimeInterval, cameraImageTextureY: CVMetalTexture, cameraImageTextureCbCr: CVMetalTexture) {
-        
-        self.selectionState = selectionState
-        
+    func updateFrame(time: TimeInterval, cameraImageTextureY: CVMetalTexture, cameraImageTextureCbCr: CVMetalTexture) {
+                
         if measuring {
             timeStampOfFrame = time
         }
@@ -139,6 +127,10 @@ class AnalyzingRenderer {
     
     func update(cameraImageTextureY: CVMetalTexture, cameraImageTextureCbCr: CVMetalTexture) {
         
+        guard let selectionArea = cameraModelOwner?.cameraModel?.selectionArea else {
+            return
+        }
+        
         // Wait to ensure only kMaxBuffersInFlight are getting proccessed by any stage in the Metal
         // pipeline (App, Metal, Drivers, GPU, etc).
         _ = inFlightSemaphore.wait(timeout: DispatchTime.distantFuture)
@@ -180,7 +172,7 @@ class AnalyzingRenderer {
                     guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
                     guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
                     
-                    analysingModule.update(selectionArea: getSelectionState(),
+                    analysingModule.update(selectionArea: SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: false),
                                            metalCommandBuffer: analysisCommandBuffer,
                                            cameraImageTextureY: textureY,
                                            cameraImageTextureCbCr: textureCbCr)
@@ -193,22 +185,6 @@ class AnalyzingRenderer {
             
         }
         
-    }
-   
-    func getSelectionState() -> SelectionStruct{
-        //TODO Needs complete rework
-        let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1))
-           // .applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
-        let p2 = CGPoint(
-            x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)
-        )//.applying(cameraPreviewRenderer.displayToCameraTransform.inverted())
-        
-        // TODO: hard coded resolution size need to be refactored
-        return SelectionStruct(x1: Float(min(p1.x, p2.x)*480),
-                               x2: Float(max(p1.x, p2.x)*480),
-                               y1: Float(min(p1.y, p2.y)*360),
-                               y2: Float(max(p1.y, p2.y)*360),
-                               editable: selectionState.editable)
     }
    
 }

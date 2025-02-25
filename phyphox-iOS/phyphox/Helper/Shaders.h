@@ -35,14 +35,6 @@ typedef struct {
     float2 texCoordScene;
 } CamColorInOut;
 
-struct SelectionState {
-    float x1;
-    float x2;
-    float y1;
-    float y2;
-    bool editable;
-};
-
 struct PartialBufferLength {
     uint length;
 };

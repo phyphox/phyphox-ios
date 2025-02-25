@@ -522,7 +522,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                             continue
                         }
                         cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
-                        cameraGUI.cameraTextureProvider = session.cameraModel.getTextureProvider()
+                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
     
                     }
                 

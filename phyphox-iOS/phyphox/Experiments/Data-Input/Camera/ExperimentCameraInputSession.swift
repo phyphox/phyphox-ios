@@ -8,18 +8,28 @@
 
 import Foundation
 
+protocol CameraGUIDelegate {
+    func updateResolution(resolution: CGSize)
+}
+
+@available(iOS 14.0, *)
+protocol CameraModelOwner {
+    var cameraModel: CameraModel? { get }
+    func updateResolution(_ resolution: CGSize)
+}
+
 @available(iOS 14.0, *)
 class ExperimentCameraInputSession: NSObject, CameraModelOwner {
+    var initx1: Float = 0.0
+    var initx2: Float = 0.0
+    var inity1: Float = 0.0
+    var inity2: Float = 0.0
+    
     var timeReference: ExperimentTimeReference?
     
     var experimentCameraBuffers: ExperimentCameraBuffers?
  
-    var x1: Float = 0.4
-    var x2: Float = 0.6
-    var y1: Float = 0.4
-    var y2: Float = 0.6
-    
-    lazy var cameraModel = CameraModel()
+    var cameraModel: CameraModel?
     var sessionInitialized = false
     
     var autoExposure: Bool = true
@@ -29,17 +39,21 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
     
     var delegates : [CameraGUIDelegate] = []
     
+    override init() {
+        super.init()
+    }
+    
     func initializeCameraModelAndRunSession(){
-        cameraModel.x1 = x1
-        cameraModel.x2 = x2
-        cameraModel.y1 = y1
-        cameraModel.y2 = y2
+        cameraModel = CameraModel(owner: self)
+        cameraModel?.x1 = initx1
+        cameraModel?.x2 = initx2
+        cameraModel?.y1 = inity1
+        cameraModel?.y2 = inity2
+        cameraModel?.analyzingRenderer.cameraModelOwner = self
+        cameraModel?.analyzingRenderer.timeReference = timeReference
+        cameraModel?.analyzingRenderer.initializeCameraBuffer(cameraBuffers: experimentCameraBuffers)
         
-        cameraModel.metalRenderer.timeReference = timeReference
-        cameraModel.metalRenderer.initializeCameraBuffer(cameraBuffers: experimentCameraBuffers)
-       
-        
-        cameraModel.locked = locked
+        cameraModel?.locked = locked
         
         sessionInitialized = true
     }
@@ -49,23 +63,34 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         if !sessionInitialized {
             initializeCameraModelAndRunSession()
         }
-        delegate.updateResolution(resolution: cameraModel.cameraSettingsModel.resolution)
+        if let resolution = cameraModel?.cameraSettingsModel.resolution {
+            delegate.updateResolution(resolution: resolution)
+        }
         return self
+    }
+    
+    func updateResolution(_ resolution: CGSize) {
+        cameraModel?.cameraSettingsModel.resolution = resolution
+        for delegate in delegates {
+            delegate.updateResolution(resolution: resolution)
+        }
     }
     
     func startSession(){
         if !sessionInitialized {
             initializeCameraModelAndRunSession()
         }
-        cameraModel.startSession()
+        cameraModel?.startSession()
     }
     
     func stopSession(){
-        cameraModel.stopSession()
+        cameraModel?.stopSession()
     }
     
     func endSession(){
-        cameraModel.endSession()
+        cameraModel?.endSession()
+        cameraModel = nil
+        sessionInitialized = false
     }
     
     

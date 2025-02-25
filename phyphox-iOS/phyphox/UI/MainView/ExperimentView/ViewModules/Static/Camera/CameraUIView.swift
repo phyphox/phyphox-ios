@@ -123,10 +123,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     static let controlHeight = 60.0
     static let controlExtraHeight = 30.0
     static let controlZoomHeight = 30.0
-    private let actualScreenWidth = UIScreen.main.bounds.width
-    private let actualScreenHeight = UIScreen.main.bounds.height
-    private let screenWidth = UIScreen.main.bounds.width
-    private let screenHeight = UIScreen.main.bounds.height / 2
     
     
     required init?(descriptor: CameraViewDescriptor) {
@@ -215,7 +211,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         super.layoutSubviews()
         
         let orientation = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation ?? .portrait
-        let imageResolution = cameraModelOwner?.cameraModel.cameraSettingsModel.resolution ?? CGSize(width: 1920, height: 1080)
+        let imageResolution = cameraModelOwner?.cameraModel?.cameraSettingsModel.resolution ?? CGSize(width: 1920, height: 1080)
         
         //Header
         let headSize = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
@@ -249,10 +245,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         self.metalView.frame = CGRect(x: (frame.width - w) / 2, y: headSize.height + 2*spacing + (metalAvailableHeight - h) / 2, width: w, height: h)
         
         //TODO This also does not seem to belong here...
-        cameraModelOwner?.cameraModel.exposureSettingLevel = descriptor.exposureAdjustmentLevel
+        cameraModelOwner?.cameraModel?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
         
         //TODO ...and neither does this.
-        guard let cameraSettingsModel = cameraModelOwner?.cameraModel.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         cameraSettingsModel.onApertureCurrentValueChanged = { value in
             DispatchQueue.main.async {
                 self.apertureText?.text = "f"+String(value)
@@ -279,7 +275,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     private func updateCameraSettingsCurrentValues() {
-        guard let cameraSettingsModel = cameraModelOwner?.cameraModel.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
         if((cameraSettingsModel.service?.isConfigured) != nil){
             isoSettingText?.text = String(cameraSettingsModel.currentIso)
@@ -293,7 +289,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
 
     func updateResolution(resolution: CGSize) {
-        setNeedsLayout()
+        Task.detached { @MainActor in
+            self.setNeedsLayout()
+        }
     }
     
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
@@ -303,7 +301,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             if let gr = panGestureRecognizer {
                 metalView.addGestureRecognizer(gr)
             }
-            self.cameraModelOwner?.cameraModel.isOverlayEditable = true
+            self.cameraModelOwner?.cameraModel?.isOverlayEditable = true
             
             
         } else {
@@ -313,7 +311,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
     
             panGestureRecognizer = nil
-            self.cameraModelOwner?.cameraModel.isOverlayEditable = false
+            self.cameraModelOwner?.cameraModel?.isOverlayEditable = false
         }
     }
     
@@ -449,7 +447,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         handleButtonTapped(mode: .SWITCH_LENS, additionalActions: {
             
-            self.cameraModelOwner?.cameraModel.cameraSettingsModel.switchCamera()
+            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.switchCamera()
  
         })
        
@@ -458,7 +456,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     @objc private func autoExposureButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .AUTO_EXPOSURE, additionalActions: {
             self.autoExposureText?.text = self.autoExposureOff ? localize("off") : localize("on")
-            self.cameraModelOwner?.cameraModel.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
+            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
         })
     }
 
@@ -493,7 +491,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
-        if(cameraModelOwner?.cameraModel.cameraSettingsModel.service?.defaultVideoDevice?.position == .front){
+        if(cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front){
             return
         }
         handleButtonTapped(mode: .ZOOM, additionalActions: {
@@ -520,7 +518,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func selectDefaultItemInCollectionView(){
         var currentSelectionIndex: Int
         
-        guard let cameraSettingsModel = self.cameraModelOwner?.cameraModel.cameraSettingsModel else { return }
+        guard let cameraSettingsModel = self.cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
         if(cameraSettingMode == .ISO){
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(cameraSettingsModel.currentIso)}) ?? 0
@@ -531,7 +529,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(shutterSpeed.timescale)}) ?? 0
         }
         else if(cameraSettingMode == .EXPOSURE){
-            guard let currentExposureValue = self.cameraModelOwner?.cameraModel.cameraSettingsModel.currentExposureValue else { return }
+            guard let currentExposureValue = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentExposureValue else { return }
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
         }
         else if(cameraSettingMode == .ZOOM){
@@ -631,7 +629,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }()
     
     private var cameraSettingValues: [Float] {
-        guard let cameraSettingsModel = cameraModelOwner?.cameraModel.cameraSettingsModel else { return [] }
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return [] }
         
         switch cameraSettingMode {
         case .ISO:
@@ -800,7 +798,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             let currentCameraSettingValue = self.cameraSettingValues[indexPath.row]
             
-            guard let cameraSettingsModel = cameraModelOwner?.cameraModel.cameraSettingsModel else { return }
+            guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
             
             switch cameraSettingMode {
             case .NONE, .WHITE_BAlANCE, .AUTO_EXPOSURE, .SWITCH_LENS:

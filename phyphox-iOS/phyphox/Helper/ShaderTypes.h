@@ -57,4 +57,12 @@ typedef struct {
     matrix_float4x4 modelMatrix;
 } InstanceUniforms;
 
+struct SelectionState {
+    float x1;
+    float x2;
+    float y1;
+    float y2;
+    bool editable;
+};
+
 #endif /* ShaderTypes_h */

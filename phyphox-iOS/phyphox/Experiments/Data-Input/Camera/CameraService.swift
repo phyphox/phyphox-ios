@@ -12,11 +12,6 @@ import AVFoundation
 import MetalKit
 import CoreMedia
 
-@available(iOS 14.0, *)
-protocol CameraModelOwner {
-    var cameraModel: CameraModel { get }
-}
-
 protocol CameraMetalTextureProvider {
     var cameraImageTextureY: CVMetalTexture? { get }
     var cameraImageTextureCbCr: CVMetalTexture? { get }
@@ -53,9 +48,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var analyzingRenderer : AnalyzingRenderer?
     
     var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
-    
-    var cameraModel: CameraModel?
-    
+        
+    var cameraModelOwner: CameraModelOwner? = nil
     var cameraSettingModel: CameraSettingsModel = CameraSettingsModel()
     
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
@@ -115,15 +109,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         
     }
-    
-    @available(iOS 14.0, *)
-    func initializeModel(model: CameraModel) {
-        cameraModel = model
-    }
 
     func setValuesForCameraSettingsList(){
         
-        guard let cameraSettingModel = self.cameraModel?.cameraSettingsModel else { return }
+        guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
         cameraSettingModel.zoomOpticalLensValues =  getOpticalZoomList()
         cameraSettingModel.exposureValues =  getExposureValues()
@@ -143,7 +132,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func setCameraSettinginfo(){
         guard let defaultVideoDevice = self.defaultVideoDevice else { return }
-        guard let cameraModel = cameraModel else { return }
+        guard let cameraModel = cameraModelOwner?.cameraModel else { return }
         
         let cameraSettingsModel = cameraModel.cameraSettingsModel
         
@@ -181,9 +170,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
         
         sessionQueue.async {
-            let currentVideoDevice = self.videoDeviceInput.device
-           
-            
             let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [preferredDevice], mediaType: .video, position: .back)
             
             let device = ultraWideDeviceDiscoverySession.devices
@@ -280,9 +266,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         self.session.addInput(self.videoDeviceInput)
                     }
                     self.defaultVideoDevice = videoDevice
-                    
-                    self.getAvailableDevices(position: .front)
-                    
+                                        
                     self.setCameraSettinginfo()
                     
                     self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
@@ -330,7 +314,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
+
         //print("captureOutput didOutput")
         let presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let seconds = CMTimeGetSeconds(presentationTimestamp)
@@ -355,8 +339,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             return
         }
         
-        self.analyzingRenderer?.updateFrame(selectionState: AnalyzingRenderer.SelectionStruct(
-            x1: cameraModel?.x1 ?? 0, x2: cameraModel?.x2 ?? 0, y1: cameraModel?.y1 ?? 0, y2: cameraModel?.y2 ?? 0, editable: cameraModel?.isOverlayEditable ?? true), time: seconds,
+        self.analyzingRenderer?.updateFrame(time: seconds,
                 cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr
         )
         
@@ -382,10 +365,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 // If the rear wide angle camera isn't available, default to the front wide angle camera.
                 defaultVideoDevice = frontCameraDevice
             }
-            
-            
-            
-            getAvailableDevices(position: .back)
             
             guard let videoDevice = defaultVideoDevice else {
                 print("Default video device is unavailable.")
@@ -431,9 +410,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
             
             print("Resolution: \(dimension.width)x\(dimension.height)")
-            //cameraModel?.resolution = CGSize(width: dimension.height, height: dimension.width)
-            cameraModel?.cameraSettingsModel.resolution.width = CGFloat(dimension.width)
-            cameraModel?.cameraSettingsModel.resolution.height = CGFloat(dimension.height)
+            cameraModelOwner?.updateResolution(CGSize(width: Int(dimension.width), height: Int(dimension.height)))
             
             analyzingRenderer?.defaultVideoDevice = defaultVideoDevice
             setCameraSettinginfo()
@@ -733,13 +710,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func changeISO(_ iso: Int) {
         
-        let duration_seconds = (cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
+        let duration_seconds = (cameraModelOwner?.cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
         
         if (defaultVideoDevice?.isExposureModeSupported(.custom) == true){
             lockConfig { () -> () in
                 defaultVideoDevice?.exposureMode = .custom
                 defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: Float(iso), completionHandler: nil)
-                cameraModel?.cameraSettingsModel.currentIso = iso
+                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentIso = iso
                 
             }
         } else {
@@ -755,7 +732,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             lockConfig { () -> () in
                 defaultVideoDevice?.exposureMode = .custom
                 defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: AVCaptureDevice.currentISO, completionHandler: nil)
-                cameraModel?.cameraSettingsModel.currentShutterSpeed = duration_seconds
+                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentShutterSpeed = duration_seconds
             }
         } else {
             print("custom exposure setting not supported")
@@ -826,7 +803,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 try defaultVideoDevice?.lockForConfiguration()
                 defaultVideoDevice?.exposureMode = .continuousAutoExposure
                 defaultVideoDevice!.setExposureTargetBias(value, completionHandler: nil)
-                cameraModel?.cameraSettingsModel.currentExposureValue = value
+                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentExposureValue = value
                 defaultVideoDevice?.unlockForConfiguration()
             } catch {
                 print("Error setting camera expsoure: \(error.localizedDescription)")
@@ -838,8 +815,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     func getExposureValues() -> [Float] {
-        return getExposureValuesFromRange(min: Int(cameraModel?.cameraSettingsModel.exposureCompensationRange?.lowerBound ?? -8.0),
-                                          max: Int(cameraModel?.cameraSettingsModel.exposureCompensationRange?.upperBound ?? 8.0),
+        return getExposureValuesFromRange(min: Int(cameraModelOwner?.cameraModel?.cameraSettingsModel.exposureCompensationRange?.lowerBound ?? -8.0),
+                                          max: Int(cameraModelOwner?.cameraModel?.cameraSettingsModel.exposureCompensationRange?.upperBound ?? 8.0),
                                           step: 1)
     }
     

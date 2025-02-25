@@ -8,13 +8,13 @@
 
 import Foundation
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class HSVAnalyser: AnalysingModule {
     
     var svPipeLineState: MTLComputePipelineState?
     var hPipeLineState: MTLComputePipelineState?
     var finalSumPipelineState: MTLComputePipelineState?
-    var selectionState = AnalyzingRenderer.SelectionStruct(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
+    var selectionState = SelectionState(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
     
     var result: DataBuffer?
     var mode: HSV_Mode
@@ -64,7 +64,7 @@ class HSVAnalyser: AnalysingModule {
         }
     }
     
-    override func update(selectionArea: AnalyzingRenderer.SelectionStruct,
+    override func update(selectionArea: SelectionState,
                          metalCommandBuffer: MTLCommandBuffer,
                          cameraImageTextureY: MTLTexture,
                          cameraImageTextureCbCr: MTLTexture ){
@@ -110,7 +110,7 @@ class HSVAnalyser: AnalysingModule {
             partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride * partialBufferLength * 2 ,options: .storageModeShared)
             
             guard let selectionBuffer =
-                    metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.size,options: .storageModeShared) else {
+                    metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<SelectionState>.size,options: .storageModeShared) else {
                 return
             }
             
@@ -179,7 +179,7 @@ class HSVAnalyser: AnalysingModule {
             
             analysisEncoding.setComputePipelineState(svPipeLineState)
             
-            guard let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<AnalyzingRenderer.SelectionStruct>.size,options: .storageModeShared) else {
+            guard let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<SelectionState>.size,options: .storageModeShared) else {
             return
             }
             guard let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride * partialBufferLength,options: .storageModeShared) else {
