@@ -180,10 +180,6 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
-        if average && rate == 0.0 {
-            throw ElementHandlerError.message("Averaging is enabled but rate is 0")
-        }
-
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
     }
 }
