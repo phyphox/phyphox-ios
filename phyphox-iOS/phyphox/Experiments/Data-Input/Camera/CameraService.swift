@@ -193,7 +193,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                             self.session.addInput(self.videoDeviceInput)
                         }
                         self.defaultVideoDevice = videoDevice
-                        
+                        self.setBestInputFormat(for: videoDevice)
+                    
                         self.setCameraSettinginfo()
                         
                         
@@ -266,6 +267,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         self.session.addInput(self.videoDeviceInput)
                     }
                     self.defaultVideoDevice = videoDevice
+                    self.setBestInputFormat(for: videoDevice)
                                         
                     self.setCameraSettinginfo()
                     
@@ -373,20 +375,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
             
             let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
-            
-            let (bestFormat, bestFrameRateRange) = findBestInputFormat(for: videoDevice)
                         
             if session.canAddInput(videoDeviceInput) {
                 session.addInput(videoDeviceInput)
                 self.videoDeviceInput = videoDeviceInput
                 
-                if let bestFormat = bestFormat, let bestFrameRateRange = bestFrameRateRange {
-                    try videoDevice.lockForConfiguration()
-                    videoDevice.activeFormat = bestFormat
-                    videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
-                    videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
-                    videoDevice.unlockForConfiguration()
-                }
+                setBestInputFormat(for: videoDevice)
+                
             } else {
                 print("Couldn't add video device input to the session.")
                 setupResult = .configurationFailed
@@ -435,7 +430,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
-    func findBestInputFormat(for videoDevice: AVCaptureDevice) -> (AVCaptureDevice.Format?, AVFrameRateRange?) {
+    func setBestInputFormat(for videoDevice: AVCaptureDevice) {
         //Find best video format with following priority:
         //1. Highest framerate!!!
         //2. Aspect ratio matching the sensor to avoid cropping
@@ -497,7 +492,18 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
         }
         print("Best format: \(bestFormat.debugDescription) with frame rate range \(bestFrameRateRange), aspect ratio \(bestAspectRatio), height \(bestHeight)")
-        return (bestFormat, bestFrameRateRange)
+        
+        if let bestFormat = bestFormat, let bestFrameRateRange = bestFrameRateRange {
+            do {
+                try videoDevice.lockForConfiguration()
+                videoDevice.activeFormat = bestFormat
+                videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
+                videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
+                videoDevice.unlockForConfiguration()
+            } catch {
+                print("Failed to set best format.")
+            }
+        }
     }
     
     public func start() {
