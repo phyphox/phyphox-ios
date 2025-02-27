@@ -204,7 +204,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        print("view will apprear")
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -317,9 +316,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        print("View did load")
-        
+                
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
@@ -557,7 +554,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-        print("viewDidDisappear")
+
         if isMovingFromParent {
             tearDownWebServer()
             

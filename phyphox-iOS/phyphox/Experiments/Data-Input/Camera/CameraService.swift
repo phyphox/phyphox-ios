@@ -353,7 +353,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         
         session.beginConfiguration()
-        
         do {
             // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
             let defaultCameraType = defaultVideoDevice?.deviceType ?? AVCaptureDevice.DeviceType.builtInWideAngleCamera
@@ -375,10 +374,19 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
             
+            let (bestFormat, bestFrameRateRange) = findBestInputFormat(for: videoDevice)
+                        
             if session.canAddInput(videoDeviceInput) {
                 session.addInput(videoDeviceInput)
                 self.videoDeviceInput = videoDeviceInput
                 
+                if let bestFormat = bestFormat, let bestFrameRateRange = bestFrameRateRange {
+                    try videoDevice.lockForConfiguration()
+                    videoDevice.activeFormat = bestFormat
+                    videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
+                    videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(bestFrameRateRange.maxFrameRate))
+                    videoDevice.unlockForConfiguration()
+                }
             } else {
                 print("Couldn't add video device input to the session.")
                 setupResult = .configurationFailed
@@ -393,8 +401,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
-           
-            
             let captureSessionQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
             
@@ -404,12 +410,11 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 print("Error: Cannot add the Output to the session")
             }
             
-            session.sessionPreset = .high
-            
             let formatDescription = videoDevice.activeFormat.formatDescription
             let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
             
             print("Resolution: \(dimension.width)x\(dimension.height)")
+            print("Max frame duration: \(videoDevice.activeVideoMaxFrameDuration)")
             cameraModelOwner?.updateResolution(CGSize(width: Int(dimension.width), height: Int(dimension.height)))
             
             analyzingRenderer?.defaultVideoDevice = defaultVideoDevice
@@ -424,11 +429,75 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         session.commitConfiguration()
         
-        
         self.isConfigured = true
         
         self.start()
         
+    }
+    
+    func findBestInputFormat(for videoDevice: AVCaptureDevice) -> (AVCaptureDevice.Format?, AVFrameRateRange?) {
+        //Find best video format with following priority:
+        //1. Highest framerate!!!
+        //2. Aspect ratio matching the sensor to avoid cropping
+        //3. Smaller side of resolution close to small side of screen resolution (optimizing preview quality while maintaining a reasonable amount of detail for data analysis)
+        
+        var bestFormat: AVCaptureDevice.Format? = nil
+        var bestFrameRateRange: AVFrameRateRange? = nil
+        var bestAspectRatio: Float? = nil
+        var bestHeight: Int32? = nil
+        let targetHeight = Int32(min(UIScreen.main.bounds.width, UIScreen.main.bounds.height))
+        
+        //Find highest resolution for photos as best guess for camera aspect ratio (probably always 4:3 anyway)
+        var highestResolution: CMVideoDimensions? = nil
+        for format in videoDevice.formats {
+            let highRes = format.highResolutionStillImageDimensions
+            if highRes.width * highRes.height > (highestResolution?.width ?? 0) * (highestResolution?.height ?? 0) {
+                highestResolution = highRes
+            }
+        }
+        let targetAspect = Float(highestResolution?.width ?? 1) / Float(highestResolution?.height ?? 1)
+        
+        for format in videoDevice.formats {
+            for range in format.videoSupportedFrameRateRanges {
+                let aspectRatio = Float(format.formatDescription.dimensions.width) / Float(format.formatDescription.dimensions.height)
+                let height = format.formatDescription.dimensions.height
+                
+                //Better framerate always wins
+                if range.maxFrameRate > bestFrameRateRange?.maxFrameRate ?? 0 {
+                    bestFormat = format
+                    bestFrameRateRange = range
+                    bestAspectRatio = aspectRatio
+                    bestHeight = height
+                    continue
+                } else if range.maxFrameRate < bestFrameRateRange?.maxFrameRate ?? 0 {
+                    continue
+                }
+                
+                //Prefer uncropped aspect ratios
+                if abs(aspectRatio - (bestAspectRatio ?? 0.0)) > 0.01 { //else identical within rounding errors
+                    if abs(aspectRatio - targetAspect) < abs((bestAspectRatio ?? 0.0) - targetAspect) {
+                        bestFormat = format
+                        bestFrameRateRange = range
+                        bestAspectRatio = aspectRatio
+                        bestHeight = height
+                        continue
+                    } else if abs(aspectRatio - targetAspect) > abs((bestAspectRatio ?? 0.0) - targetAspect) {
+                        continue
+                    }
+                }
+                
+                //Prefer resolutions with a height close to the screen's width
+                if (abs(height - targetHeight) < abs((bestHeight ?? 0) - targetHeight)) {
+                    bestFormat = format
+                    bestFrameRateRange = range
+                    bestAspectRatio = aspectRatio
+                    bestHeight = height
+                    continue
+                }
+            }
+        }
+        print("Best format: \(bestFormat.debugDescription) with frame rate range \(bestFrameRateRange), aspect ratio \(bestAspectRatio), height \(bestHeight)")
+        return (bestFormat, bestFrameRateRange)
     }
     
     public func start() {
