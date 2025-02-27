@@ -552,24 +552,23 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
      
     @objc func panned(_ sender: UIPanGestureRecognizer) {
         
-        guard var del = cameraModelOwner?.cameraModel else {
-            print("camera selection delegate is not accessible")
+        guard var model = cameraModelOwner?.cameraModel else {
             return
         }
         
         let p = sender.location(in: metalView)
        
         
- //TODO       let pr = CGPoint(x: p.x / metalView.frame.width, y: p.y / metalView.frame.height)
- //TODO       let ps = pr.applying(viewDelegate.metalRenderer.cameraPreviewRenderer.displayToCameraTransform)
-        let x = Float(0.0)//TODO Float(ps.x)
-        let y = Float(0.0)//TODO Float(ps.y)
+        let pr = CGPoint(x: p.x / metalView.frame.width, y: p.y / metalView.frame.height)
+        let ps = pr.applying(cameraPreviewRenderer.displayToCameraTransform)
+        let x = Float(ps.x)
+        let y = Float(ps.y)
                 
         if sender.state == .began {
-            let x1Square = (x - del.x1) * (x - del.x1)
-            let x2Square = (x - del.x2) * (x - del.x2)
-            let y1Square = (y - del.y1) * (y -  del.y1)
-            let y2Square = (y - del.y2) * (y - del.y2)
+            let x1Square = (x - model.x1) * (x - model.x1)
+            let x2Square = (x - model.x2) * (x - model.x2)
+            let y1Square = (y - model.y1) * (y - model.y1)
+            let y2Square = (y - model.y2) * (y - model.y2)
             
             let d11 = x1Square + y1Square
             let d12 = x1Square + y2Square
@@ -592,26 +591,26 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
             
             if panningIndexX == 1 {
-                del.x1 = x
+                model.x1 = x
             } else if panningIndexX == 2 {
-                del.x2 = x
+                model.x2 = x
             }
             if panningIndexY == 1 {
-                del.y1 = y
+                model.y1 = y
             } else if panningIndexY == 2 {
-                del.y2 = y
+                model.y2 = y
             }
             
         } else {
             if panningIndexX == 1 {
-                del.x1 = x
+                model.x1 = x
             } else if panningIndexX == 2 {
-                del.x2 = x
+                model.x2 = x
             }
             if panningIndexY == 1 {
-                del.y1 = y
+                model.y1 = y
             } else if panningIndexY == 2 {
-                del.y2 = y
+                model.y2 = y
             }
         }
     }

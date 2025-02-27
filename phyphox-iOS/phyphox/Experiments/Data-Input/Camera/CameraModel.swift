@@ -151,6 +151,16 @@ final class CameraModel: ObservableObject {
         }
     }
     
+    var absoluteSelectionArea: CGRect? {
+        get {
+            guard let res = cameraSettingsModel.resolution else {
+                return nil
+            }
+            let sel = selectionArea
+            return CGRect(x: sel.minX * res.width, y: sel.minY * res.height, width: sel.maxX * res.width, height: sel.maxY * res.height)
+        }
+    }
+    
     var exposureSettingLevel: Int = 3
     
     var locked: String = ""

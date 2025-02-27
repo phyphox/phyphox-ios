@@ -32,8 +32,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
     
-    var viewportSize: CGSize = CGSize()
-    var viewportSizeDidChange: Bool = false
+    var drawableSize: CGSize = CGSize()
+    var drawableSizeDidChange: Bool = false
     var cameraOrientation: AVCaptureDevice.Position? = nil
     
     init(metalDevice: MTLDevice, renderDestination: MTKView) {
@@ -101,8 +101,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        viewportSize = size
-        viewportSizeDidChange = true
+        drawableSize = size
+        drawableSizeDidChange = true
     }
     
     func draw(in view: MTKView) {
@@ -148,9 +148,14 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 renderEncoder.setRenderPipelineState(pipelineState)
                 
                 let selectionArea = cameraModel.selectionArea
-                var selectionStruct = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: cameraModel.isOverlayEditable)
+                let selectionState = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: cameraModel.isOverlayEditable)
+                let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying(displayToCameraTransform.inverted())
+                let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
+                
+                //Scale to resolution of the metal view drawable. Important: This is not viewportSize, which is in screen coordinates, drawableSize which is in pixels! Also, the camera resolution does not play a role here as it is rendered to a texture which is simply accessed by the shader via normalized texture coordinates.
+                var scaledSelectionState = SelectionState(x1: Float(min(p1.x, p2.x)*drawableSize.width), x2: Float(max(p1.x, p2.x)*drawableSize.width), y1: Float(min(p1.y, p2.y)*drawableSize.height), y2: Float(max(p1.y, p2.y)*drawableSize.height), editable: selectionState.editable)
            
-                renderEncoder.setFragmentBytes(&selectionStruct, length: MemoryLayout<SelectionState>.stride, index: 2)
+                renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionState>.stride, index: 2)
                 
                 // Setup plane vertex buffers.
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
@@ -181,8 +186,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     // Updates any app state.
     func updateAppState() {
         // Update the destination-rendering vertex info if the size of the screen changed.
-        if viewportSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position {
-            viewportSizeDidChange = false
+        if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position {
+            drawableSizeDidChange = false
             updateImagePlane()
         }
     }
