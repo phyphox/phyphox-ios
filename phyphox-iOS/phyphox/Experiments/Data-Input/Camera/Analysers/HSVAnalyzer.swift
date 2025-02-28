@@ -1,5 +1,5 @@
 //
-//  HSVAnalyser.swift
+//  HSVAnalyzer.swift
 //  phyphox
 //
 //  Created by Gaurav Tripathee on 11.09.24.
@@ -9,7 +9,7 @@
 import Foundation
 
 @available(iOS 14.0, *)
-class HSVAnalyser: AnalysingModule {
+class HSVAnalyzer: AnalyzingModule {
     
     var svPipeLineState: MTLComputePipelineState?
     var hPipeLineState: MTLComputePipelineState?
@@ -36,8 +36,8 @@ class HSVAnalyser: AnalysingModule {
     
     override func loadMetal(){
         
-        guard let metalDevice = AnalysingModule.metalDevice else { return }
-        let gpuFunctionLibrary = AnalysingModule.gpuFunctionLibrary
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
+        let gpuFunctionLibrary = AnalyzingModule.gpuFunctionLibrary
         
         let svFunction = gpuFunctionLibrary?.makeFunction(name: "computeSaturationAndValue")
         do {
@@ -69,12 +69,12 @@ class HSVAnalyser: AnalysingModule {
         
         if(mode == .Hue){
             
-            analyseHue( analysisCommandBuffer: metalCommandBuffer,
+            analyzeHue( analysisCommandBuffer: metalCommandBuffer,
                         cameraImageTextureY: cameraImageTextureY,
                         cameraImageTextureCbCr: cameraImageTextureCbCr)
         } else {
             
-            analyse(analysisCommandBuffer: metalCommandBuffer,
+            analyze(analysisCommandBuffer: metalCommandBuffer,
                     cameraImageTextureY: cameraImageTextureY,
                     cameraImageTextureCbCr: cameraImageTextureCbCr)
         }
@@ -84,9 +84,9 @@ class HSVAnalyser: AnalysingModule {
     
     var partialBuffer: MTLBuffer?
     
-    func analyseHue(analysisCommandBuffer: MTLCommandBuffer,cameraImageTextureY: MTLTexture,cameraImageTextureCbCr: MTLTexture){
+    func analyzeHue(analysisCommandBuffer: MTLCommandBuffer,cameraImageTextureY: MTLTexture,cameraImageTextureCbCr: MTLTexture){
         
-        guard let metalDevice = AnalysingModule.metalDevice else { return }
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
         guard let hPipeLineState = self.hPipeLineState else { return }
         
@@ -157,9 +157,9 @@ class HSVAnalyser: AnalysingModule {
         
     }
     
-    func analyse(analysisCommandBuffer: MTLCommandBuffer,cameraImageTextureY: MTLTexture,cameraImageTextureCbCr: MTLTexture){
+    func analyze(analysisCommandBuffer: MTLCommandBuffer,cameraImageTextureY: MTLTexture,cameraImageTextureCbCr: MTLTexture){
         
-        guard let metalDevice = AnalysingModule.metalDevice else { return }
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
         guard let svPipeLineState = self.svPipeLineState else { return }
         
@@ -171,7 +171,7 @@ class HSVAnalyser: AnalysingModule {
         
         if let analysisEncoding = analysisCommandBuffer.makeComputeCommandEncoder() {
             
-            // MARK: analyse and get partial arrays of the analysis
+            // MARK: analyze and get partial arrays of the analysis
             
             analysisEncoding.setComputePipelineState(svPipeLineState)
             

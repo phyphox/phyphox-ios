@@ -9,7 +9,7 @@
 import Foundation
 
 @available(iOS 14.0, *)
-class AnalysingModule {
+class AnalyzingModule {
     
     static var metalDevice: MTLDevice?
     static var gpuFunctionLibrary: MTLLibrary?

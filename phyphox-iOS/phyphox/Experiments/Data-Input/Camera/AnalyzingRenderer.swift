@@ -35,7 +35,7 @@ class AnalyzingRenderer {
     
     var timeStampOfFrame: TimeInterval = TimeInterval()
         
-    var analysingModules : [AnalysingModule] = []
+    var analysingModules : [AnalyzingModule] = []
         
     init(inFlightSemaphore: DispatchSemaphore) {
         if let metalDevice = MTLCreateSystemDefaultDevice() {
@@ -49,27 +49,27 @@ class AnalyzingRenderer {
     func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
         self.cameraBuffers = cameraBuffers
         
-        AnalysingModule.initialize(metalDevice: metalDevice)
+        AnalyzingModule.initialize(metalDevice: metalDevice)
         
         
         if(cameraBuffers?.luminanceBuffer != nil){
-            analysingModules.append(LuminanceAnalyser(result: cameraBuffers?.luminanceBuffer))
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
         }
         
         if(cameraBuffers?.lumaBuffer != nil){
-            analysingModules.append(LumaAnalyser(result: cameraBuffers?.lumaBuffer))
+            analysingModules.append(LumaAnalyzer(result: cameraBuffers?.lumaBuffer))
         }
         
         if(cameraBuffers?.hueBuffer != nil){
-            analysingModules.append(HSVAnalyser(result: cameraBuffers?.hueBuffer, mode: .Hue ))
+            analysingModules.append(HSVAnalyzer(result: cameraBuffers?.hueBuffer, mode: .Hue ))
         }
         
         if(cameraBuffers?.saturationBuffer != nil){
-            analysingModules.append(HSVAnalyser(result: cameraBuffers?.saturationBuffer, mode: .Saturation))
+            analysingModules.append(HSVAnalyzer(result: cameraBuffers?.saturationBuffer, mode: .Saturation))
         }
         
         if(cameraBuffers?.valueBuffer != nil) {
-            analysingModules.append(HSVAnalyser(result: cameraBuffers?.valueBuffer, mode: .Value))
+            analysingModules.append(HSVAnalyzer(result: cameraBuffers?.valueBuffer, mode: .Value))
         }
         
         if(cameraBuffers?.thresholdBuffer != nil){

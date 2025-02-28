@@ -1,43 +1,39 @@
 //
-//  LuminanceAnalyser.swift
+//  LumaAnalyzer.swift
 //  phyphox
 //
-//  Created by Gaurav Tripathee on 14.09.24.
+//  Created by Gaurav Tripathee on 11.09.24.
 //  Copyright © 2024 RWTH Aachen. All rights reserved.
 //
 
 import Foundation
 
 @available(iOS 14.0, *)
-class LuminanceAnalyser: AnalysingModule {
-    
-    var resultBuffer: Double = 0.0
+class LumaAnalyzer : AnalyzingModule {
     
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
-    
-    var time: TimeInterval = TimeInterval()
 
+    var time: TimeInterval = TimeInterval()
+   
     var result: DataBuffer?
+    var lumaValue : MTLBuffer?
     
     init(result: DataBuffer?) {
         self.result = result
-       
     }
     
-    override func loadMetal() {
+    override func loadMetal(){
         
-        guard let metalDevice = AnalysingModule.metalDevice else { return }
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
+        let gpuFunctionLibrary = AnalyzingModule.gpuFunctionLibrary
         
-        let gpuFunctionLibrary = AnalysingModule.gpuFunctionLibrary
-        
-        guard let luminanceFunction = gpuFunctionLibrary?.makeFunction(name:"computeLuminance") else {
-            return
-        }
+        let lumaFunction = gpuFunctionLibrary?.makeFunction(name: "computeLuma")
         do {
-            analysisPipelineState = try metalDevice.makeComputePipelineState(function: luminanceFunction)
-        } catch  {
-            print("Failed to create pipeline analysis state, error \(error)")
+            analysisPipelineState = try metalDevice.makeComputePipelineState(function: lumaFunction!)
+            
+        } catch {
+          print("Failed to create pipeline analysis state, error \(error)")
         }
         
         let finalSum = gpuFunctionLibrary?.makeFunction(name: "computeFinalSum")
@@ -49,89 +45,93 @@ class LuminanceAnalyser: AnalysingModule {
         
     }
     
+    
     override func doUpdate(metalCommandBuffer: MTLCommandBuffer,
-                cameraImageTextureY: MTLTexture?,
-                cameraImageTextureCbCr: MTLTexture? ) {
-        
+                         cameraImageTextureY: MTLTexture,
+                         cameraImageTextureCbCr: MTLTexture){
+               
         if let analysisEncoding = metalCommandBuffer.makeComputeCommandEncoder() {
-            analyse(analyseEncoding : analysisEncoding,
-                    analysisCommandBuffer: metalCommandBuffer,
-                    cameraImageTextureY: cameraImageTextureY,
-                    cameraImageTextureCbCr: cameraImageTextureCbCr)
+            analyze(analysisEncoding: analysisEncoding,
+                    texture: cameraImageTextureY,
+                    metalCommandBuffer: metalCommandBuffer)
         }
-        
         
     }
     
-    var luminanceValue : MTLBuffer?
-    func analyse(analyseEncoding : MTLComputeCommandEncoder,
-                 analysisCommandBuffer: MTLCommandBuffer,
-                 cameraImageTextureY: MTLTexture?,
-                 cameraImageTextureCbCr: MTLTexture?) {
+    
+    func analyze(analysisEncoding: MTLComputeCommandEncoder, texture: MTLTexture, metalCommandBuffer: MTLCommandBuffer){
         
-        guard let metalDevice = AnalysingModule.metalDevice else { return }
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
-        guard let analysisPipelineState = self.analysisPipelineState else {
+        guard let analysLumaPipelineState = self.analysisPipelineState else {
             print("Failed to create analysisPipelineState")
-            analyseEncoding.endEncoding()
             return
         }
         
         guard let finalSumPipelineState = self.finalSumPipelineState else {
             print("Failed to create finalSumPipelineState")
-            analyseEncoding.endEncoding()
             return
         }
         
-        analyseEncoding.setComputePipelineState(analysisPipelineState)
+        print("analysis")
+        //setup pipeline
+        analysisEncoding.setComputePipelineState(analysLumaPipelineState)
         
-        let calculatedGridAndGroupSize = calculateThreadSize(selectedWidth: getSelectedArea().width, selectedHeight: getSelectedArea().height)
+        let calculatedGridAndGroupSize = calculateThreadSize(selectedWidth: getSelectedArea().width,
+                                                             selectedHeight: getSelectedArea().height)
+        let numThreadGroups = calculatedGridAndGroupSize.numOfThreadGroups
         
-        let partialBufferLength = calculatedGridAndGroupSize.numOfThreadGroups
         //setup buffers
         let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<SelectionState>.size,options: .storageModeShared)
-        let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * partialBufferLength,options: .storageModeShared)!
+        let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * numThreadGroups,options: .storageModeShared)!
         
-        analyseEncoding.setTexture(cameraImageTextureY, index: 0)
-        analyseEncoding.setTexture(cameraImageTextureCbCr, index: 1)
-        analyseEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
-        analyseEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
+        let countt = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
+       
+        analysisEncoding.setTexture(texture, index: 0)
+        analysisEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
+        analysisEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
+        analysisEncoding.setBuffer(countt, offset: 0, index: 2)
         
-        analyseEncoding.dispatchThreadgroups(calculatedGridAndGroupSize.gridSize,
-                                             threadsPerThreadgroup: calculatedGridAndGroupSize.threadGroupSize)
+        // dispatch it
+        analysisEncoding.dispatchThreadgroups(calculatedGridAndGroupSize.gridSize,
+                                              threadsPerThreadgroup: calculatedGridAndGroupSize.threadGroupSize)
+            
         
-        analyseEncoding.endEncoding()
+        analysisEncoding.endEncoding()
         
-        luminanceValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
+        
+        lumaValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
         
-        if let finalSum = analysisCommandBuffer.makeComputeCommandEncoder() {
+        if let finalSum = metalCommandBuffer.makeComputeCommandEncoder() {
             //setup pipeline state
             finalSum.setComputePipelineState(finalSumPipelineState)
             
             //setup  buffers
-            var partialLengthStruct = PartialBufferLength(length: partialBufferLength)
+            var partialLengthStruct = PartialBufferLength(length: numThreadGroups)
         
             let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
             
             finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
-            finalSum.setBuffer(luminanceValue, offset: 0, index: 1)
+            finalSum.setBuffer(lumaValue, offset: 0, index: 1)
             finalSum.setBuffer(arrayLength, offset: 0, index: 2)
             finalSum.setBuffer(countResultBuffer, offset: 0, index: 3)
             
             finalSum.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                                  threadsPerThreadgroup: MTLSizeMake(partialBufferLength, 1, 1))
+                                                  threadsPerThreadgroup: MTLSizeMake(numThreadGroups, 1, 1))
              
             finalSum.endEncoding()
             
-           
+            
         }
         
     }
+    
     var latestResult = 0.0
     
     override func writeToBuffers() {
-        let resultBuffer = luminanceValue?.contents().bindMemory(to: Float.self, capacity: 0)
+        let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
+    
         self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
         
         if let zBuffer = result {
@@ -139,10 +139,11 @@ class LuminanceAnalyser: AnalysingModule {
         }
     }
     
-    func luminanceFinalValue() -> Double{
-        return self.resultBuffer
-    }
+    var resultBuffer :  Float = 0.0
     
+    func lumaFinalValue() -> Float{
+        return self.resultBuffer / Float((getSelectedArea().width * getSelectedArea().height))
+    }
     
     func calculateThreadSize(selectedWidth: Int, selectedHeight: Int) -> (threadGroupSize: MTLSize, gridSize: MTLSize, numOfThreadGroups: Int) {
        
@@ -158,8 +159,10 @@ class LuminanceAnalyser: AnalysingModule {
          
     }
     
+    
     struct PartialBufferLength {
         var length : Int
     }
     
+
 }
