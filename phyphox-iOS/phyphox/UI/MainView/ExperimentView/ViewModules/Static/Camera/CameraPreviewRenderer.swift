@@ -195,41 +195,41 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     // Sets up vertex data (source and destination rectangles) rendering.
     func updateImagePlane() {
         cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position
-        displayToCameraTransform = transformForDeviceOrientation(frontFacingCamera: cameraOrientation == .front)
+        displayToCameraTransform = transformForDeviceOrientation()
+        let cameraSpecificTransform = if cameraOrientation == .front {
+            //Image of fron facing camera needs to be mirrored for intuitive use
+            displayToCameraTransform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
+        } else {
+            displayToCameraTransform
+        }
         let vertexData = imagePlaneVertexBuffer.contents().assumingMemoryBound(to: Float.self)
         for index in 0...3 {
             let textureCoordIndex = 4 * index + 2
             let textureCoord = CGPoint(x: CGFloat(kImagePlaneVertexData[textureCoordIndex]), y: CGFloat(kImagePlaneVertexData[textureCoordIndex + 1]))
-            let transformedCoord = textureCoord.applying(displayToCameraTransform)
+            let transformedCoord = textureCoord.applying(cameraSpecificTransform)
             vertexData[textureCoordIndex] = Float(transformedCoord.x)
             vertexData[textureCoordIndex + 1] = Float(transformedCoord.y)
         }
     }
     
-    func transformForDeviceOrientation(frontFacingCamera: Bool) -> CGAffineTransform {
+    func transformForDeviceOrientation() -> CGAffineTransform {
         let currentOrientation = UIDevice.current.orientation
         
-        let rotationTransform = switch currentOrientation {
+        switch currentOrientation {
         case .portrait , .faceUp , .faceDown:
-            CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
+            return CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
           
         case .landscapeLeft:
-            CGAffineTransform.identity
+            return CGAffineTransform.identity
 
         case .landscapeRight:
-            CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: -1.0, tx: 1.0, ty: 1.0)
+            return CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: -1.0, tx: 1.0, ty: 1.0)
             
         case .portraitUpsideDown:
-            CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: 1.0, ty: 1.0)
+            return CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: 1.0, ty: 1.0)
       
         default:
-            CGAffineTransform.identity
-        }
-        
-        if frontFacingCamera {
-            return rotationTransform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
-        } else {
-            return rotationTransform
+            return CGAffineTransform.identity
         }
         
     }

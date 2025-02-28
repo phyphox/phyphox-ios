@@ -13,7 +13,6 @@ class LumaAnalyser : AnalysingModule {
     
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
-    var selectionState = SelectionState(x1: 0.4, x2: 0.6, y1: 0.4, y2: 0.6, editable: false)
 
     var time: TimeInterval = TimeInterval()
    
@@ -47,13 +46,10 @@ class LumaAnalyser : AnalysingModule {
     }
     
     
-    override func update(selectionArea: SelectionState,
-                         metalCommandBuffer: MTLCommandBuffer,
+    override func doUpdate(metalCommandBuffer: MTLCommandBuffer,
                          cameraImageTextureY: MTLTexture,
                          cameraImageTextureCbCr: MTLTexture){
-        
-        self.selectionState = selectionArea
-       
+               
         if let analysisEncoding = metalCommandBuffer.makeComputeCommandEncoder() {
             analyse(analysisEncoding: analysisEncoding,
                     texture: cameraImageTextureY,
@@ -147,15 +143,6 @@ class LumaAnalyser : AnalysingModule {
     
     func lumaFinalValue() -> Float{
         return self.resultBuffer / Float((getSelectedArea().width * getSelectedArea().height))
-    }
-    
-   
-    func getSelectedArea() -> (width: Int, height: Int){
-        //setup the thread group size and grid size
-        let _width = Int((selectionState.x2 - selectionState.x1 + 1))
-        let _height = Int((selectionState.y2 - selectionState.y1 + 1))
-        
-        return (width: _width, height: _height)
     }
     
     func calculateThreadSize(selectedWidth: Int, selectedHeight: Int) -> (threadGroupSize: MTLSize, gridSize: MTLSize, numOfThreadGroups: Int) {

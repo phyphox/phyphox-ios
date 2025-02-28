@@ -130,6 +130,12 @@ class AnalyzingRenderer {
         guard let selectionArea = cameraModelOwner?.cameraModel?.selectionArea else {
             return
         }
+        let isMirroredCamera = cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front
+        let cameraSpecificSelectionArea = if isMirroredCamera {
+            selectionArea.offsetBy(dx: 0, dy: 1.0 - selectionArea.maxY - selectionArea.minY)
+        } else {
+            selectionArea
+        }
         
         // Wait to ensure only kMaxBuffersInFlight are getting proccessed by any stage in the Metal
         // pipeline (App, Metal, Drivers, GPU, etc).
@@ -167,12 +173,11 @@ class AnalyzingRenderer {
                     
                 }
                 
+                guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
+                guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
+                
                 for analysingModule in analysingModules {
-                    
-                    guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
-                    guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
-                    
-                    analysingModule.update(selectionArea: SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: false),
+                    analysingModule.update(selectionArea: cameraSpecificSelectionArea,
                                            metalCommandBuffer: analysisCommandBuffer,
                                            cameraImageTextureY: textureY,
                                            cameraImageTextureCbCr: textureCbCr)

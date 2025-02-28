@@ -14,25 +14,52 @@ class AnalysingModule {
     static var metalDevice: MTLDevice?
     static var gpuFunctionLibrary: MTLLibrary?
     
+    var selectionState = SelectionState(x1: 0, x2: 0, y1: 0, y2: 0, editable: false)
+    
     static func initialize(metalDevice: MTLDevice) {
         self.metalDevice = metalDevice
         self.gpuFunctionLibrary = metalDevice.makeDefaultLibrary()
     }
     
-    func loadMetal(){
+    func loadMetal() {
         //fatalError("Subclasses must implement loadMetal()")
     }
     
-    func update(selectionArea: SelectionState,
+    func update(selectionArea: CGRect,
                 metalCommandBuffer: MTLCommandBuffer,
                 cameraImageTextureY: MTLTexture,
-                cameraImageTextureCbCr: MTLTexture){
+                cameraImageTextureCbCr: MTLTexture) {
         
-        //fatalError("Subclasses must implement update method()")
+        let w = cameraImageTextureY.width
+        let h = cameraImageTextureY.height
+        
+        self.selectionState = SelectionState(
+            x1: Float(selectionArea.minX) * Float(w),
+            x2: Float(selectionArea.maxX) * Float(w),
+            y1: Float(selectionArea.minY) * Float(h),
+            y2: Float(selectionArea.maxY) * Float(h),
+            editable: false
+        )
+                
+        doUpdate(metalCommandBuffer: metalCommandBuffer, cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr)
     }
     
-    func writeToBuffers(){
+    func doUpdate(metalCommandBuffer: MTLCommandBuffer,
+                cameraImageTextureY: MTLTexture,
+                cameraImageTextureCbCr: MTLTexture) {
+        
+        //fatalError("Subclasses must implement doUpdate method()")
+    }
+    
+    func writeToBuffers() {
         //fatalError("Subclasses must implement writeToBuffers()")
+    }
+    
+    func getSelectedArea() -> (width: Int, height: Int){
+        let _width = Int((selectionState.x2 - selectionState.x1 + 1))
+        let _height = Int((selectionState.y2 - selectionState.y1 + 1))
+        
+        return (width: _width, height: _height)
     }
     
 }
