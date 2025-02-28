@@ -16,8 +16,8 @@ class LuminanceAnalyzer: AnalyzingModule {
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
     
-    var time: TimeInterval = TimeInterval()
-
+    var luminanceValue : MTLBuffer?
+    
     var result: DataBuffer?
     
     init(result: DataBuffer?) {
@@ -63,7 +63,6 @@ class LuminanceAnalyzer: AnalyzingModule {
         
     }
     
-    var luminanceValue : MTLBuffer?
     func analyze(analyzeEncoding : MTLComputeCommandEncoder,
                  analysisCommandBuffer: MTLCommandBuffer,
                  cameraImageTextureY: MTLTexture?,
@@ -89,13 +88,16 @@ class LuminanceAnalyzer: AnalyzingModule {
         
         let partialBufferLength = calculatedGridAndGroupSize.numOfThreadGroups
         //setup buffers
-        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<SelectionState>.size,options: .storageModeShared)
-        let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * partialBufferLength,options: .storageModeShared)!
+        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState, length: MemoryLayout<SelectionState>.size, options: .storageModeShared)
+        let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * partialBufferLength, options: .storageModeShared)!
+        var partialLengthStruct = PartialBufferLength(length: partialBufferLength)
+        let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
         
         analyzeEncoding.setTexture(cameraImageTextureY, index: 0)
         analyzeEncoding.setTexture(cameraImageTextureCbCr, index: 1)
         analyzeEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
         analyzeEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
+        analyzeEncoding.setBuffer(arrayLength, offset: 0, index: 2)
         
         analyzeEncoding.dispatchThreadgroups(calculatedGridAndGroupSize.gridSize,
                                              threadsPerThreadgroup: calculatedGridAndGroupSize.threadGroupSize)
@@ -103,24 +105,17 @@ class LuminanceAnalyzer: AnalyzingModule {
         analyzeEncoding.endEncoding()
         
         luminanceValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
-        let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
         
         if let finalSum = analysisCommandBuffer.makeComputeCommandEncoder() {
             //setup pipeline state
             finalSum.setComputePipelineState(finalSumPipelineState)
             
-            //setup  buffers
-            var partialLengthStruct = PartialBufferLength(length: partialBufferLength)
-        
-            let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
-            
             finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
             finalSum.setBuffer(luminanceValue, offset: 0, index: 1)
             finalSum.setBuffer(arrayLength, offset: 0, index: 2)
-            finalSum.setBuffer(countResultBuffer, offset: 0, index: 3)
             
             finalSum.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                                  threadsPerThreadgroup: MTLSizeMake(partialBufferLength, 1, 1))
+                                                  threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
              
             finalSum.endEncoding()
             
@@ -128,30 +123,23 @@ class LuminanceAnalyzer: AnalyzingModule {
         }
         
     }
-    var latestResult = 0.0
     
     override func writeToBuffers() {
         let resultBuffer = luminanceValue?.contents().bindMemory(to: Float.self, capacity: 0)
-        self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+        let latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
         
         if let zBuffer = result {
             zBuffer.append(latestResult)
         }
     }
     
-    func luminanceFinalValue() -> Double{
-        return self.resultBuffer
-    }
-    
-    
     func calculateThreadSize(selectedWidth: Int, selectedHeight: Int) -> (threadGroupSize: MTLSize, gridSize: MTLSize, numOfThreadGroups: Int) {
        
-         //0.003
         let threadGroupSize = MTLSize(width: 16, height: 16, depth: 1)
          // Dispatch the compute shader with the size of the selected bounding box
-         let threadgroupsX = (selectedWidth + threadGroupSize.width - 1) / threadGroupSize.width;
-         let threadgroupsY = (selectedHeight + threadGroupSize.height - 1) / threadGroupSize.height;
-         let _gridSize = MTLSize(width: threadgroupsX, height: threadgroupsY, depth: 1)
+        let threadgroupsX = (selectedWidth + threadGroupSize.width - 1) / threadGroupSize.width;
+        let threadgroupsY = (selectedHeight + threadGroupSize.height - 1) / threadGroupSize.height;
+        let _gridSize = MTLSize(width: threadgroupsX, height: threadgroupsY, depth: 1)
         let _numThreadSize = (_gridSize.width * _gridSize.height)
         
         return (threadGroupSize: threadGroupSize, gridSize: _gridSize, numOfThreadGroups: _numThreadSize )

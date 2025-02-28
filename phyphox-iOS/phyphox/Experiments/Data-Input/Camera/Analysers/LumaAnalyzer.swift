@@ -13,9 +13,7 @@ class LumaAnalyzer : AnalyzingModule {
     
     var analysisPipelineState : MTLComputePipelineState?
     var finalSumPipelineState : MTLComputePipelineState?
-
-    var time: TimeInterval = TimeInterval()
-   
+    
     var result: DataBuffer?
     var lumaValue : MTLBuffer?
     
@@ -118,7 +116,7 @@ class LumaAnalyzer : AnalyzingModule {
             finalSum.setBuffer(countResultBuffer, offset: 0, index: 3)
             
             finalSum.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                                  threadsPerThreadgroup: MTLSizeMake(numThreadGroups, 1, 1))
+                                                  threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
              
             finalSum.endEncoding()
             

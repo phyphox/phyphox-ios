@@ -34,10 +34,10 @@ class AnalyzingModule {
         let h = cameraImageTextureY.height
         
         self.selectionState = SelectionState(
-            x1: Float(selectionArea.minX) * Float(w),
-            x2: Float(selectionArea.maxX) * Float(w),
-            y1: Float(selectionArea.minY) * Float(h),
-            y2: Float(selectionArea.maxY) * Float(h),
+            x1: min(max(Float(selectionArea.minX) * Float(w), 0.0), Float(w)),
+            x2: min(max(Float(selectionArea.maxX) * Float(w), 0.0), Float(w)),
+            y1: min(max(Float(selectionArea.minY) * Float(h), 0.0), Float(h)),
+            y2: min(max(Float(selectionArea.maxY) * Float(h), 0.0), Float(h)),
             editable: false
         )
                 
