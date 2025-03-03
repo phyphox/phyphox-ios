@@ -27,6 +27,14 @@ float4 ycbcrToRGBTransform(float4 y, float4 CbCr) {
     return ycbcrToRGBTransform * ycbcr;
 }
 
+float linearizeGamma(float x) {
+    if (x < 0.04045) {
+        return x / 12.92;
+    } else {
+        return pow((x + 0.055) / 1.055, 2.4);
+    }
+}
+
 vertex CamColorInOut vertexTransform(const device CamVertex* cameraVertices [[ buffer(0) ]],
                                      const device CamVertex* sceneVertices [[ buffer(1) ]],
                                      unsigned int vid [[ vertex_id ]]) {

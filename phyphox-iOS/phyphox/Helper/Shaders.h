@@ -24,6 +24,9 @@ typedef struct {
 // Convert from YCbCr to rgb.
 float4 ycbcrToRGBTransform(float4 y, float4 CbCr);
 
+//Linearize gamma RGB channels to linear RGB (individually)
+float linearizeGamma(float x);
+
 typedef struct {
     float2 position;
     float2 texCoord;

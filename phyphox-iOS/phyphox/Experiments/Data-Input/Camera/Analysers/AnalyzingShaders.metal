@@ -90,7 +90,7 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
         float green = rgb.g;
         float blue = rgb.b;
             
-        luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+        luminance = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
     }
     
     localSums[tid.x + tid.y * groupSize.x] = luminance;
