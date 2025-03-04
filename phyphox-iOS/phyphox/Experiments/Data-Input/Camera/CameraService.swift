@@ -389,7 +389,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             // setup output, add output to our capture session
             let captureOutput = AVCaptureVideoDataOutput()
             
-            captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)]
+            captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
             
             captureOutput.alwaysDiscardsLateVideoFrames = true
             
