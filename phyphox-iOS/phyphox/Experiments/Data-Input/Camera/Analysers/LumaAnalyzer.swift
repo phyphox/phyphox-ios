@@ -82,46 +82,33 @@ class LumaAnalyzer : AnalyzingModule {
         //setup buffers
         let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState,length: MemoryLayout<SelectionState>.size,options: .storageModeShared)
         let partialBuffer = metalDevice.makeBuffer(length: MemoryLayout<Int>.stride * numThreadGroups,options: .storageModeShared)!
-        
-        let countt = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
-       
+        var partialLengthStruct = PartialBufferLength(length: numThreadGroups)
+        let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
+               
         analysisEncoding.setTexture(texture, index: 0)
         analysisEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
         analysisEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
-        analysisEncoding.setBuffer(countt, offset: 0, index: 2)
+        analysisEncoding.setBuffer(arrayLength, offset: 0, index: 2)
         
         // dispatch it
         analysisEncoding.dispatchThreadgroups(calculatedGridAndGroupSize.gridSize,
                                               threadsPerThreadgroup: calculatedGridAndGroupSize.threadGroupSize)
             
         
-        analysisEncoding.endEncoding()
-        
-        
         lumaValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
         
-        if let finalSum = metalCommandBuffer.makeComputeCommandEncoder() {
-            //setup pipeline state
-            finalSum.setComputePipelineState(finalSumPipelineState)
-            
-            //setup  buffers
-            var partialLengthStruct = PartialBufferLength(length: numThreadGroups)
+        //setup pipeline state
+        analysisEncoding.setComputePipelineState(finalSumPipelineState)
         
-            let arrayLength = metalDevice.makeBuffer(bytes: &partialLengthStruct,length: MemoryLayout<PartialBufferLength>.size,options: .storageModeShared)
-            
-            finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
-            finalSum.setBuffer(lumaValue, offset: 0, index: 1)
-            finalSum.setBuffer(arrayLength, offset: 0, index: 2)
-            finalSum.setBuffer(countResultBuffer, offset: 0, index: 3)
-            
-            finalSum.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                                  threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
-             
-            finalSum.endEncoding()
-            
-            
-        }
+        analysisEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
+        analysisEncoding.setBuffer(lumaValue, offset: 0, index: 1)
+        analysisEncoding.setBuffer(arrayLength, offset: 0, index: 2)
+        
+        analysisEncoding.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
+                                              threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
+         
+        analysisEncoding.endEncoding()
         
     }
     

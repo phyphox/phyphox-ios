@@ -101,26 +101,19 @@ class LuminanceAnalyzer: AnalyzingModule {
         
         analyzeEncoding.dispatchThreadgroups(calculatedGridAndGroupSize.gridSize,
                                              threadsPerThreadgroup: calculatedGridAndGroupSize.threadGroupSize)
-        
-        analyzeEncoding.endEncoding()
-        
+                
         luminanceValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
         
-        if let finalSum = analysisCommandBuffer.makeComputeCommandEncoder() {
-            //setup pipeline state
-            finalSum.setComputePipelineState(finalSumPipelineState)
-            
-            finalSum.setBuffer(partialBuffer, offset: 0, index: 0)
-            finalSum.setBuffer(luminanceValue, offset: 0, index: 1)
-            finalSum.setBuffer(arrayLength, offset: 0, index: 2)
-            
-            finalSum.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
-                                                  threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
-             
-            finalSum.endEncoding()
-            
-           
-        }
+        analyzeEncoding.setComputePipelineState(finalSumPipelineState)
+        
+        analyzeEncoding.setBuffer(partialBuffer, offset: 0, index: 0)
+        analyzeEncoding.setBuffer(luminanceValue, offset: 0, index: 1)
+        analyzeEncoding.setBuffer(arrayLength, offset: 0, index: 2)
+        
+        analyzeEncoding.dispatchThreadgroups(MTLSizeMake(1, 1, 1),
+                                              threadsPerThreadgroup: MTLSizeMake(256, 1, 1))
+         
+        analyzeEncoding.endEncoding()
         
     }
     

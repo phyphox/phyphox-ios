@@ -324,9 +324,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
         }
-        
-        let _ = CVPixelBufferGetWidth(imageBuffer)
-        let _ = CVPixelBufferGetHeight(imageBuffer)
        
         functionCallCount += 1
         
