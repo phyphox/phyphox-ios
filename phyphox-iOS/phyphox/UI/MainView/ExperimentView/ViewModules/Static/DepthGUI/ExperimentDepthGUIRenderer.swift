@@ -35,6 +35,13 @@ class ExperimentDepthGUIRenderer {
     let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
     var renderDestination: RenderDestinationProvider
     
+    //DepthGUI does not use color modifiers like the camera GUI does
+    var shaderColorModifier = ShaderColorModifier(
+        grayscale: false,
+        overexposureColor: vector_float3(.nan, .nan, .nan),
+        underexposureColor: vector_float3(.nan, .nan, .nan)
+    )
+    
     // Metal objects.
     var commandQueue: MTLCommandQueue!
     
@@ -169,8 +176,8 @@ class ExperimentDepthGUIRenderer {
         cameraImageTextureCache = textureCache
         
         // Define the shaders that will render the camera image on the GPU.
-        let vertexFunction = defaultLibrary.makeFunction(name: "vertexTransform")!
-        let fragmentFunction = defaultLibrary.makeFunction(name: "fragmentShader")!
+        let vertexFunction = defaultLibrary.makeFunction(name: "cameraGUIvertexTransform")!
+        let fragmentFunction = defaultLibrary.makeFunction(name: "cameraGUIfragmentShader")!
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.label = "MyPipeline"
         pipelineStateDescriptor.sampleCount = renderDestination.sampleCount
@@ -265,6 +272,7 @@ class ExperimentDepthGUIRenderer {
         let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
         var scaledSelectionState = SelectionStruct(x1: Float(min(p1.x, p2.x)*viewportSize.width), x2: Float(max(p1.x, p2.x)*viewportSize.width), y1: Float(min(p1.y, p2.y)*viewportSize.height), y2: Float(max(p1.y, p2.y)*viewportSize.height), editable: selectionState.editable)
         renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionStruct>.stride, index: 2)
+        renderEncoder.setFragmentBytes(&shaderColorModifier, length: MemoryLayout<ShaderColorModifier>.stride, index: 3)
          
         // Setup plane vertex buffers.
         renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)

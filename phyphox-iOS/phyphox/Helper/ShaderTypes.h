@@ -57,12 +57,20 @@ typedef struct {
     matrix_float4x4 modelMatrix;
 } InstanceUniforms;
 
+//Used by camera and depth input and GUI shaders to represent the user-selected area
 struct SelectionState {
     float x1;
     float x2;
     float y1;
     float y2;
     bool editable;
+};
+
+//Used by camera GUI shaders to modify the colors in order to highlight over/under exposure
+struct ShaderColorModifier {
+    bool grayscale;
+    vector_float3 overexposureColor;
+    vector_float3 underexposureColor;
 };
 
 #endif /* ShaderTypes_h */

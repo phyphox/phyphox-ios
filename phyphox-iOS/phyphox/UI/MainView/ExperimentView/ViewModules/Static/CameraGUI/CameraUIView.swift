@@ -140,7 +140,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         metalView.device = metalDevice
         metalView.preferredFramesPerSecond = 60
         metalView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
-        cameraPreviewRenderer = CameraPreviewRenderer(metalDevice: metalDevice, renderDestination: metalView)
+        cameraPreviewRenderer = CameraPreviewRenderer(metalDevice: metalDevice, renderDestination: metalView, descriptor: descriptor)
         cameraPreviewRenderer.loadMetal()
         metalView.delegate = cameraPreviewRenderer
                 
@@ -323,7 +323,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         hStack.distribution = .fillEqually
         hStack.alignment = .fill
         hStack.addArrangedSubview(cameraPreviewViewControlButton())
-        hStack.addArrangedSubview(createLabel(withText: localize("preview"), font: .preferredFont(forTextStyle: .body)))
+        hStack.addArrangedSubview(createLabel(withText: descriptor.localizedLabel, font: .preferredFont(forTextStyle: .body)))
         hStack.addArrangedSubview(emptyButtonView())
         
         return hStack

@@ -28,6 +28,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     var imagePlaneVertexBuffer: MTLBuffer!
     var cameraImageTextureCache: CVMetalTextureCache!
     var displayToCameraTransform: CGAffineTransform = .identity
+    
+    let descriptor: CameraViewDescriptor
 
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
@@ -36,9 +38,10 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     var drawableSizeDidChange: Bool = false
     var cameraOrientation: AVCaptureDevice.Position? = nil
     
-    init(metalDevice: MTLDevice, renderDestination: MTKView) {
+    init(metalDevice: MTLDevice, renderDestination: MTKView, descriptor: CameraViewDescriptor) {
         self.metalDevice = metalDevice
         self.renderDestination = renderDestination
+        self.descriptor = descriptor
         metalCommandQueue = metalDevice.makeCommandQueue()
     }
  
@@ -81,8 +84,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
         cameraImageTextureCache = textureCache
         
         // Define the shaders that will render the camera image on the GPU.
-        let vertexFunction = defaultLibrary.makeFunction(name: "vertexTransform")!
-        let fragmentFunction = defaultLibrary.makeFunction(name: "fragmentShader")!
+        let vertexFunction = defaultLibrary.makeFunction(name: "cameraGUIvertexTransform")!
+        let fragmentFunction = defaultLibrary.makeFunction(name: "cameraGUIfragmentShader")!
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.label = "CameraPreviewRender Pipeline"
         pipelineStateDescriptor.sampleCount = renderDestination.sampleCount
@@ -156,6 +159,19 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 var scaledSelectionState = SelectionState(x1: Float(min(p1.x, p2.x)*drawableSize.width), x2: Float(max(p1.x, p2.x)*drawableSize.width), y1: Float(min(p1.y, p2.y)*drawableSize.height), y2: Float(max(p1.y, p2.y)*drawableSize.height), editable: selectionState.editable)
            
                 renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionState>.stride, index: 2)
+                
+                var shaderColorModifier = ShaderColorModifier(
+                    grayscale: descriptor.grayscale,
+                    overexposureColor: vector_float3(
+                        Float(descriptor.markOverexposure?.red ?? .nan),
+                        Float(descriptor.markOverexposure?.green ?? .nan),
+                        Float(descriptor.markOverexposure?.blue ?? .nan)
+                    ), underexposureColor: vector_float3(
+                        Float(descriptor.markUnderexposure?.red ?? .nan),
+                        Float(descriptor.markUnderexposure?.green ?? .nan),
+                        Float(descriptor.markUnderexposure?.blue ?? .nan)
+                    ))
+                renderEncoder.setFragmentBytes(&shaderColorModifier, length: MemoryLayout<ShaderColorModifier>.stride, index: 3)
                 
                 // Setup plane vertex buffers.
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)

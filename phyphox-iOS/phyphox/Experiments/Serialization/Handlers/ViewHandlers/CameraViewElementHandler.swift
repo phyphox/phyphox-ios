@@ -12,9 +12,9 @@ struct CameraViewElementDescriptor {
     let label: String
     let exposureAdjustmentLevel: String
     let aspectRatio: CGFloat
-    let grayscale: String
-    let markOverexposure: String
-    let markUnderexposure: String
+    let grayscale: Bool
+    let markOverexposure: UIColor?
+    let markUnderexposure: UIColor?
 }
 
 final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
@@ -40,11 +40,11 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         
-        let grayScale = attributes.optionalString(for: .grayscale) ?? ""
+        let grayScale = try attributes.optionalValue(for: .grayscale) ?? false
         
-        let markOverexposure = attributes.optionalString(for: .markOverexposure) ?? ""
+        let markOverexposure = mapColorString(attributes.optionalString(for: .markOverexposure))
         
-        let markUnderexposure = attributes.optionalString(for: .markUnderexposure) ?? ""
+        let markUnderexposure = mapColorString(attributes.optionalString(for: .markUnderexposure))
         
         results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, aspectRatio: aspectRatio, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure)))
     }
