@@ -200,7 +200,8 @@ final class CameraModel: ObservableObject {
         service.setupTextures()
     }
     
-    func startSession(){
+    func startSession(queue: DispatchQueue){
+        service.analyzingRenderer?.queue = queue
         service.analyzingRenderer?.measuring = true
     }
     

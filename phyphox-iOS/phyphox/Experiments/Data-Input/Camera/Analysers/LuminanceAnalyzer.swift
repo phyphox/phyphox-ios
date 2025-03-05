@@ -19,6 +19,7 @@ class LuminanceAnalyzer: AnalyzingModule {
     var luminanceValue : MTLBuffer?
     
     var result: DataBuffer?
+    var latestResult: Double = .nan
     
     init(result: DataBuffer?) {
         self.result = result
@@ -117,10 +118,12 @@ class LuminanceAnalyzer: AnalyzingModule {
         
     }
     
-    override func writeToBuffers() {
+    override func prepareWriteToBuffers() {
         let resultBuffer = luminanceValue?.contents().bindMemory(to: Float.self, capacity: 0)
-        let latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
-        
+        latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+    }
+    
+    override func writeToBuffers() {
         if let zBuffer = result {
             zBuffer.append(latestResult)
         }

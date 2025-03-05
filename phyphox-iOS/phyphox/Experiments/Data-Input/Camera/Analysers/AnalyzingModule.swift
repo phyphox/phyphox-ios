@@ -51,6 +51,10 @@ class AnalyzingModule {
         //fatalError("Subclasses must implement doUpdate method()")
     }
     
+    func prepareWriteToBuffers() {
+        //fatalError("Subclasses must implement writeToBuffers()")
+    }
+    
     func writeToBuffers() {
         //fatalError("Subclasses must implement writeToBuffers()")
     }

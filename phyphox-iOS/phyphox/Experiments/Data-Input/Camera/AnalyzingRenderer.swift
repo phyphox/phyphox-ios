@@ -31,7 +31,7 @@ class AnalyzingRenderer {
     var timeReference: ExperimentTimeReference?
     var cameraBuffers: ExperimentCameraBuffers?
     
-    private var queue: DispatchQueue?
+    var queue: DispatchQueue?
     
     var timeStampOfFrame: TimeInterval = TimeInterval()
         
@@ -92,11 +92,6 @@ class AnalyzingRenderer {
         
     }
     
-    func start(queue: DispatchQueue) throws {
-        self.queue = queue
-    }
-
-    
     private func dataIn() {
      
         guard let timeReference = timeReference else {
@@ -108,12 +103,20 @@ class AnalyzingRenderer {
         
         if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
             
-            if let tBuffer = cameraBuffers?.tBuffer {
-                tBuffer.append(t)
+            for analysingModule in self.analysingModules {
+                analysingModule.prepareWriteToBuffers()
             }
             
-            for analysingModule in analysingModules {
-                analysingModule.writeToBuffers()
+            queue?.async {
+                autoreleasepool(invoking: {
+                    if let tBuffer = self.cameraBuffers?.tBuffer {
+                        tBuffer.append(t)
+                    }
+                    
+                    for analysingModule in self.analysingModules {
+                        analysingModule.writeToBuffers()
+                    }
+                })
             }
         }
     }

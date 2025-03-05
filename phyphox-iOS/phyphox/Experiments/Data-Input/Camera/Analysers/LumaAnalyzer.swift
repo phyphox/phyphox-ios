@@ -16,6 +16,7 @@ class LumaAnalyzer : AnalyzingModule {
     
     var result: DataBuffer?
     var lumaValue : MTLBuffer?
+    var latestResult: Double = .nan
     
     init(result: DataBuffer?) {
         self.result = result
@@ -112,13 +113,12 @@ class LumaAnalyzer : AnalyzingModule {
         
     }
     
-    var latestResult = 0.0
+    override func prepareWriteToBuffers() {
+        let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
+        latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+    }
     
     override func writeToBuffers() {
-        let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
-    
-        self.latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
-        
         if let zBuffer = result {
             zBuffer.append(latestResult)
         }

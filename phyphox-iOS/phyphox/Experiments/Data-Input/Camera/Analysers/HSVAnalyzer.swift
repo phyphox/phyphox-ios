@@ -17,6 +17,7 @@ class HSVAnalyzer: AnalyzingModule {
     
     var result: DataBuffer?
     var mode: HSV_Mode
+    var latestResult: Double = .nan
         
     var value : MTLBuffer?
     var valueY : MTLBuffer?
@@ -227,8 +228,8 @@ class HSVAnalyzer: AnalyzingModule {
     
     
     
-    override func writeToBuffers() {
-        var v: Double = .nan
+    override func prepareWriteToBuffers() {
+        
         if(mode == .Hue){
             
             let resultYBuffer = valueY?.contents().bindMemory(to: Float.self, capacity: 0)
@@ -236,7 +237,7 @@ class HSVAnalyzer: AnalyzingModule {
             
             let y = resultYBuffer?.pointee ?? 0.0
             let x = resultXBuffer?.pointee ?? 1.0
-                        
+            
             let averageHueRadians =  Double(atan2(y, x))
             
             var averageHueDegrees = averageHueRadians * 180.0 / Double.pi;
@@ -245,16 +246,18 @@ class HSVAnalyzer: AnalyzingModule {
                 averageHueDegrees += 360.0;  // Ensure the hue is positive
             }
             
-            v = averageHueDegrees
+            latestResult = averageHueDegrees
             
         } else {
             
             let resultBuffer = value?.contents().bindMemory(to: Float.self, capacity: 0)
-            v = Double(resultBuffer?.pointee ?? 0) / Double((getSelectedArea().width * getSelectedArea().height))
+            latestResult = Double(resultBuffer?.pointee ?? 0) / Double((getSelectedArea().width * getSelectedArea().height))
         }
-        
+    }
+    
+    override func writeToBuffers() {
         if let zBuffer = result {
-            zBuffer.append(v)
+            zBuffer.append(latestResult)
         }
         
     }

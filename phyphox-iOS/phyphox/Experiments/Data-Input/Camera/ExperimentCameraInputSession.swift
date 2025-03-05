@@ -76,11 +76,11 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         }
     }
     
-    func startSession(){
+    func startSession(queue: DispatchQueue){
         if !sessionInitialized {
             initializeCameraModelAndRunSession()
         }
-        cameraModel?.startSession()
+        cameraModel?.startSession(queue: queue)
     }
     
     func stopSession(){

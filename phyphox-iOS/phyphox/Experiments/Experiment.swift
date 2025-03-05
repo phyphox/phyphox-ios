@@ -401,7 +401,7 @@ final class Experiment {
         sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
         try depthInput?.start(queue: queue)
-        try cameraInput?.start()
+        try cameraInput?.start(queue: queue)
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }

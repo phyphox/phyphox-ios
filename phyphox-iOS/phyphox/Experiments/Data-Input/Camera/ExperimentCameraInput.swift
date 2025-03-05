@@ -88,7 +88,7 @@ final class ExperimentCameraInput {
         session.analysis = analysis
     }
     
-    func start() throws {
+    func start(queue: DispatchQueue) throws {
         guard #available(iOS 14.0, *) else {
             return
         }
@@ -96,7 +96,7 @@ final class ExperimentCameraInput {
             return
         }
         
-        session.startSession()
+        session.startSession(queue: queue)
     }
     
     func stop() {
