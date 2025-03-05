@@ -62,7 +62,7 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
         let inArray = dataIn.data
         
         let index = Int(indexIn?.getSingleValue() ?? Double(inArray.count))
-        let overlap = min(index, Int(overlapIn?.getSingleValue() ?? 0.0))
+        let overlap = Int(overlapIn?.getSingleValue() ?? 0.0)
         
         var limit = min(index, inArray.count)
         if let out1Out = out1Out, limit > 0 {
