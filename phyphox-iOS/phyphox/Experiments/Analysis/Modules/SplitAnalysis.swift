@@ -64,17 +64,19 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
         let index = Int(indexIn?.getSingleValue() ?? Double(inArray.count))
         let overlap = min(index, Int(overlapIn?.getSingleValue() ?? 0.0))
         
-        if let out1Out = out1Out {
+        var limit = min(index, inArray.count)
+        if let out1Out = out1Out, limit > 0 {
             switch out1Out {
             case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                buffer.appendFromArray(Array(inArray[0..<index]))
+                buffer.appendFromArray(Array(inArray[0..<limit]))
             }
         }
         
-        if let out2Out = out2Out {
+        limit = max(limit-overlap, 0)
+        if let out2Out = out2Out, limit < inArray.count {
             switch out2Out {
             case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                buffer.appendFromArray(Array(inArray[index-overlap..<inArray.count]))
+                buffer.appendFromArray(Array(inArray[limit..<inArray.count]))
             }
         }
         
