@@ -267,7 +267,14 @@ final class AudioEngine {
                 var phase = phases[i]
                 for i in 0..<end {
                     let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                    data[i] += Float(a)*sineLookup[lookupIndex]
+                    if(tone.waveform == "sine"){
+                        data[i] += Float(a)*sineLookup[lookupIndex]
+                    } else if(tone.waveform == "square"){
+                        data[i] += (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                    } else if(tone.waveform == "sawtooth"){
+                        data[i] += Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                    }
+                    
                     phase += phaseStep
                 }
                 while phase > 100000 {

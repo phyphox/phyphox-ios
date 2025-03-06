@@ -556,7 +556,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     }
                 }
                 
-                let tone = ExperimentAudioOutputTone(frequency: frequency, amplitude: amplitude, duration: duration)
+                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration)
                 tones.append(tone)
             }
             

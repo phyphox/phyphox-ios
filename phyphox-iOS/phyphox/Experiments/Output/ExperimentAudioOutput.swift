@@ -33,6 +33,7 @@ enum AudioParameter: Equatable {
 }
 
 struct ExperimentAudioOutputTone: Equatable {
+    let waveform: String
     let frequency: AudioParameter
     let amplitude: AudioParameter
     let duration: AudioParameter
