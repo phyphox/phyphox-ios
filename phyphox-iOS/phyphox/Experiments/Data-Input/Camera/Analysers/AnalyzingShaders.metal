@@ -20,7 +20,8 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
                         uint2 gid2D [[ thread_position_in_grid ]],
                         uint2 tid [[ thread_position_in_threadgroup ]],
                         uint2 groupSize [[ threads_per_threadgroup ]],
-                        uint2 groupId [[ threadgroup_position_in_grid ]]) {
+                        uint2 groupId [[ threadgroup_position_in_grid ]],
+                        uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
     
     
     float luma;
@@ -52,9 +53,7 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
                 totalGroupSum += localSums[i];
             }
             
-            uint selectionWidth = selectionState.x2 - selectionState.x1;
-            uint threadGroupCountX = selectionWidth / groupSize.x ;
-            partialSums[groupId.x + groupId.y * threadGroupCountX ] = totalGroupSum;
+            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
             threadgroup_barrier(mem_flags::mem_device);
         }
     }
@@ -70,7 +69,8 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
                              uint2 gid2D [[ thread_position_in_grid ]],
                              uint2 tid [[ thread_position_in_threadgroup ]],
                              uint2 groupSize [[ threads_per_threadgroup ]],
-                             uint2 groupId [[ threadgroup_position_in_grid ]]) {
+                             uint2 groupId [[ threadgroup_position_in_grid ]],
+                             uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
     
     
     float luminance;
@@ -113,13 +113,10 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
                 totalGroupSum += localSums[i];
             }
             
-            uint selectionWidth = selectionState.x2 - selectionState.x1;
-            uint threadGroupCountX = selectionWidth / groupSize.x ;
-            partialSums[groupId.x + groupId.y * threadGroupCountX ] = totalGroupSum;
+            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
             threadgroup_barrier(mem_flags::mem_device);
         }
     }
-    
 }
 
 kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
@@ -131,7 +128,8 @@ kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ tex
                        uint2 gid2D [[ thread_position_in_grid ]],
                        uint2 tid [[ thread_position_in_threadgroup ]],
                        uint2 groupSize [[ threads_per_threadgroup ]],
-                       uint2 groupId [[ threadgroup_position_in_grid ]]) {
+                       uint2 groupId [[ threadgroup_position_in_grid ]],
+                       uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
     
     float x, y;
     threadgroup float localSumsX[256];
@@ -194,11 +192,9 @@ kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ tex
                 totalGroupSumY += localSumsY[i];
                 totalGroupSumX += localSumsX[i];
             }
-            
-            uint selectionWidth = selectionState.x2 - selectionState.x1;
-            uint threadGroupCountX = selectionWidth / groupSize.x ;
-            partialSumsY[groupId.x + groupId.y * threadGroupCountX] = totalGroupSumY;
-            partialSumsX[groupId.x + groupId.y * threadGroupCountX] = totalGroupSumX;
+
+            partialSumsY[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumY;
+            partialSumsX[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumX;
             threadgroup_barrier(mem_flags::mem_device);
         }
     }
@@ -215,7 +211,8 @@ kernel void computeSaturationAndValue(texture2d<float, access::read> cameraImage
                                       uint2 gid2D [[ thread_position_in_grid ]],
                                       uint2 tid [[ thread_position_in_threadgroup ]],
                                       uint2 groupSize [[ threads_per_threadgroup ]],
-                                      uint2 groupId [[ threadgroup_position_in_grid ]]) {
+                                      uint2 groupId [[ threadgroup_position_in_grid ]],
+                                      uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
     
     float result;
     threadgroup float localSums[256];
@@ -279,9 +276,7 @@ kernel void computeSaturationAndValue(texture2d<float, access::read> cameraImage
                 totalGroupSum += localSums[i];
             }
             
-            uint selectionWidth = selectionState.x2 - selectionState.x1;
-            uint threadGroupCountX = selectionWidth / groupSize.x ;
-            partialSums[groupId.x + groupId.y * threadGroupCountX ] = totalGroupSum;
+            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
             threadgroup_barrier(mem_flags::mem_device);
         }
     }
