@@ -170,7 +170,7 @@ class AnalyzingRenderer {
                 analysisCommandBuffer.addCompletedHandler { commandBuffer in
                     let endTime = Date()
                     let executionTime = endTime.timeIntervalSince(startTime)
-                    print("executionTime : \(executionTime)")
+                    //print("executionTime : \(executionTime)")
                     
                     self.dataIn()
                     

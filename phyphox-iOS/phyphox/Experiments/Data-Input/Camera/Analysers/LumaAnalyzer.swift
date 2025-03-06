@@ -72,7 +72,6 @@ class LumaAnalyzer : AnalyzingModule {
             return
         }
         
-        print("analysis")
         //setup pipeline
         analysisEncoding.setComputePipelineState(analysLumaPipelineState)
         
