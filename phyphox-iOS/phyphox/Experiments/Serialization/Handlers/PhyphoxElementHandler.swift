@@ -51,7 +51,7 @@ private extension ExperimentCameraInput {
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, smooth: descriptor.smooth, autoExposure: descriptor.autoExposure, locked: descriptor.locked, feature: descriptor.feature, analysis: descriptor.analysis)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 
@@ -458,7 +458,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             
         case .camera(let descriptor):
-            return CameraViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, exposureAdjustmentLevel: (Int(descriptor.exposureAdjustmentLevel) ?? 3),
+            return CameraViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
                                         grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, translation: translations)
             
         case .image(let descriptor):

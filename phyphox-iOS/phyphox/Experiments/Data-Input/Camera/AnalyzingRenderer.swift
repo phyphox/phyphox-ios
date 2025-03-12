@@ -11,6 +11,10 @@ import MetalKit
 import AVFoundation
 import Accelerate
 
+protocol ExposureStatisticsListener {
+    func newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double)
+}
+
 @available(iOS 14.0, *)
 class AnalyzingRenderer {
     
@@ -36,6 +40,8 @@ class AnalyzingRenderer {
     var timeStampOfFrame: TimeInterval = TimeInterval()
         
     var analysingModules : [AnalyzingModule] = []
+    let exposureAnalyzer = ExposureAnalyzer()
+    var exposureStatisticsListener: ExposureStatisticsListener? = nil
         
     init(inFlightSemaphore: DispatchSemaphore) {
         if let metalDevice = MTLCreateSystemDefaultDevice() {
@@ -79,6 +85,7 @@ class AnalyzingRenderer {
         for analysingModule in analysingModules {
             analysingModule.loadMetal()
         }
+        exposureAnalyzer.loadMetal()
        
     }
         
@@ -161,36 +168,47 @@ class AnalyzingRenderer {
             
         }
         
-        if self.measuring {
+        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
             
-            if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+            let startTime = Date()
+            
+            analysisCommandBuffer.addCompletedHandler { commandBuffer in
+                let endTime = Date()
+                let executionTime = endTime.timeIntervalSince(startTime)
+                //print("executionTime : \(executionTime)")
                 
-                let startTime = Date()
-                
-                analysisCommandBuffer.addCompletedHandler { commandBuffer in
-                    let endTime = Date()
-                    let executionTime = endTime.timeIntervalSince(startTime)
-                    //print("executionTime : \(executionTime)")
-                    
-                    self.dataIn()
-                    
+                if (self.cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
+                    self.exposureAnalyzer.prepareWriteToBuffers()
+                    self.exposureStatisticsListener?.newExposureStatistics(minRGB: self.exposureAnalyzer.minRGB, maxRGB: self.exposureAnalyzer.maxRGB, meanLuma: self.exposureAnalyzer.meanLuma)
+                } else {
+                    self.exposureAnalyzer.reset()
                 }
                 
-                guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
-                guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
+                self.dataIn()
                 
+            }
+            
+            guard let textureY = CVMetalTextureGetTexture(cameraImageTextureY) else { return }
+            guard let textureCbCr = CVMetalTextureGetTexture(cameraImageTextureCbCr) else { return }
+            
+            if self.measuring {
                 for analysingModule in analysingModules {
                     analysingModule.update(selectionArea: cameraSpecificSelectionArea,
                                            metalCommandBuffer: analysisCommandBuffer,
                                            cameraImageTextureY: textureY,
                                            cameraImageTextureCbCr: textureCbCr)
                 }
-                
-                analysisCommandBuffer.commit()
-                analysisCommandBuffer.waitUntilCompleted()
-               
             }
             
+            if (cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
+                exposureAnalyzer.update(selectionArea: cameraSpecificSelectionArea, metalCommandBuffer: analysisCommandBuffer, cameraImageTextureY: textureY, cameraImageTextureCbCr: textureCbCr)
+            } else {
+                exposureAnalyzer.reset()
+            }
+            
+            analysisCommandBuffer.commit()
+            analysisCommandBuffer.waitUntilCompleted()
+           
         }
         
     }

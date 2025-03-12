@@ -13,8 +13,8 @@ import Combine
 
 
 @available(iOS 13.0, *)
-class CameraViewModel: ObservableObject {
-    @Published var cameraUIDataModel: CameraUIDataModel
+class CameraViewModel {
+    var cameraUIDataModel: CameraUIDataModel
     
     init(cameraUIDataModel: CameraUIDataModel) {
         self.cameraUIDataModel = cameraUIDataModel
@@ -23,9 +23,9 @@ class CameraViewModel: ObservableObject {
 
 
 @available(iOS 13.0, *)
-class CameraUIDataModel: ObservableObject {
-    @Published  var cameraIsMaximized: Bool = false
-    @Published var cameraSize: CGSize = CGSize(width: 0, height: 0)
+class CameraUIDataModel {
+    var cameraIsMaximized: Bool = false
+    var cameraSize: CGSize = CGSize(width: 0, height: 0)
 }
 
 protocol ZoomSliderViewDelegate: AnyObject {
@@ -33,13 +33,14 @@ protocol ZoomSliderViewDelegate: AnyObject {
 }
 
 @available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
     var cameraModelOwner: CameraModelOwner? {
         didSet {
             self.cameraPreviewRenderer.cameraModelOwner = cameraModelOwner
             cameraSettingUIView = cameraSettingViews(adjustmentLevel: descriptor.exposureAdjustmentLevel)
             cameraSettingUIView?.isHidden = true
+            cameraModelOwner?.cameraModel?.cameraSettingsModel.registerSettingsObserver(self)
             self.addSubview(cameraSettingUIView!)
             setupCameraSettingViews()
         }
@@ -54,10 +55,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     private let dataModel = CameraUIDataModel()
     private let cameraViewModel : CameraViewModel
-    
-    private var cancellableForCameraSettingMode = Set<AnyCancellable>()
-    private var cancellableForCameraSettingValues = Set<AnyCancellable>()
-    private var cancellableForCameraZoom = Set<AnyCancellable>()
     
     // Camera preview views
     private var cameraPreviewView: UIView
@@ -83,15 +80,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     // Camera Setting Views and its flags
     private var cameraSettingUIView: UIStackView?
-    @Published var cameraSettingMode: CameraSettingMode = .NONE
-    @Published private var isListVisible: Bool = false
+    var cameraSettingMode: CameraSettingMode = .NONE
+    private var isListVisible: Bool = false {
+        didSet {
+            self.collectionView.isHidden = isListVisible ? false : true
+            self.setNeedsLayout()
+        }
+    }
     private var rotation: Double = 0.0
     private var isFlipped: Bool = false
-    private var autoExposureOff: Bool = true
     
     var currentCameraSettingValuesIndex = 0
     
-    @Published private var isZoomSliderVisible: Bool = false
+    private var isZoomSliderVisible: Bool = false
     var showZoomSlider: Bool = false {
         didSet{
             onZoomSliderVisibilityChanged?(showZoomSlider)
@@ -184,10 +185,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         addSubview(collectionView)
         
         collectionView.isHidden = true
-        $isListVisible.sink(receiveValue: { value in
-            self.collectionView.isHidden = value ? false : true
-            self.setNeedsLayout()
-        }).store(in: &cancellableForCameraSettingValues)
     }
     
     @available(*, unavailable)
@@ -247,17 +244,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         //TODO This also does not seem to belong here...
         cameraModelOwner?.cameraModel?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
         
-        //TODO ...and neither does this.
-        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
-        cameraSettingsModel.onApertureCurrentValueChanged = { value in
-            DispatchQueue.main.async {
-                self.apertureText?.text = "f"+String(value)
-            }
-        }
-        
         updateCameraSettingsCurrentValues()
     }
-    
     
     private func setupCameraSettingViews() {
         if let cameraModel = cameraModelOwner?.cameraModel {
@@ -278,13 +266,44 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
         if((cameraSettingsModel.service?.isConfigured) != nil){
-            isoSettingText?.text = String(cameraSettingsModel.currentIso)
-            exposureText?.text = String(cameraSettingsModel.currentExposureValue)
-            apertureText?.text = "f"+String(cameraSettingsModel.currentApertureValue)
+            onIsoChange(newValue: cameraSettingsModel.currentIso)
+            onApertureChange(newValue: cameraSettingsModel.currentApertureValue)
             
-            guard let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed else { return }
-            guard let shutterSpeed = cameraSettingsModel.service?.findClosestPredefinedShutterSpeed(for: currentShutterSpeed) else { return }
-            shutterSpeedText?.text = "1/" + String(CMTimeScale(shutterSpeed.timescale))
+            let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed
+            onShutterSpeedChange(newValue: currentShutterSpeed)
+            
+            exposureText?.text = String(cameraSettingsModel.currentExposureValue)+"EV"
+            
+            if let aeState = cameraModelOwner?.cameraModel?.autoExposureEnabled {
+                autoExposureText?.text = aeState ? localize("on") : localize("off")
+            } else {
+                autoExposureText?.text = "?"
+            }
+        }
+    }
+    
+    func onShutterSpeedChange(newValue: CMTime) {
+        let shutterInverse = round(Float(newValue.timescale)/Float(newValue.value))
+        if shutterInverse.isFinite {
+            DispatchQueue.main.async {
+                self.shutterSpeedText?.text = "1/" + String(Int(shutterInverse))
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.shutterSpeedText?.text = "?"
+            }
+        }
+    }
+    
+    func onIsoChange(newValue: Int) {
+        DispatchQueue.main.async {
+            self.isoSettingText?.text = String(newValue)
+        }
+    }
+    
+    func onApertureChange(newValue: Float) {
+        DispatchQueue.main.async {
+            self.apertureText?.text = "f/"+String(newValue)
         }
     }
 
@@ -312,6 +331,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
             panGestureRecognizer = nil
             self.cameraModelOwner?.cameraModel?.isOverlayEditable = false
+            cameraSettingMode = .NONE
+            manageVisiblity()
         }
     }
     
@@ -350,21 +371,19 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     // MARK: - Camera settings Views
    
     /// This view contains the collections of stacked camera settings views
-    private func cameraSettingViews(adjustmentLevel: Int) -> UIStackView {
+    private func cameraSettingViews(adjustmentLevel: CameraSettingLevel) -> UIStackView {
         let settingStackView = createStackView(axis: .horizontal, distribution: .fillEqually)
         
         switch adjustmentLevel {
-        case 0:
-            break
-        case 1:
+        case .BASIC:
             settingStackView.addArrangedSubview(getCameraSettingView(for: .flipCamera))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .zoom))
-        case 2:
+        case .INTERMEDIATE:
             settingStackView.addArrangedSubview(getCameraSettingView(for: .flipCamera))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .autoExposure))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .exposure))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .zoom))
-        case 3:
+        case .ADVANCE:
             settingStackView.addArrangedSubview(getCameraSettingView(for: .flipCamera))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .autoExposure))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .iso))
@@ -445,7 +464,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         UIView.animate(withDuration: 0.3) { rotateButton(sender) }
         
-        handleButtonTapped(mode: .SWITCH_LENS, additionalActions: {
+        handleButtonTapped(mode: .NONE, additionalActions: {
             
             self.cameraModelOwner?.cameraModel?.cameraSettingsModel.switchCamera()
  
@@ -454,9 +473,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     @objc private func autoExposureButtonTapped(_ sender: UIButton) {
-        handleButtonTapped(mode: .AUTO_EXPOSURE, additionalActions: {
-            self.autoExposureText?.text = self.autoExposureOff ? localize("off") : localize("on")
-            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.autoExposure(auto: !self.autoExposureOff)
+        handleButtonTapped(mode: .NONE, additionalActions: {
+            let autoExposureState = !(self.cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false)
+            self.autoExposureText?.text = autoExposureState ? localize("on") : localize("off")
+            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.autoExposure(auto: autoExposureState)
         })
     }
 
@@ -524,7 +544,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(cameraSettingsModel.currentIso)}) ?? 0
         } 
         else if(cameraSettingMode == .SHUTTER_SPEED){
-            guard let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed else { return }
+            let currentShutterSpeed = cameraSettingsModel.currentShutterSpeed
             guard let shutterSpeed = cameraSettingsModel.service?.findClosestPredefinedShutterSpeed(for: currentShutterSpeed) else { return }
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(shutterSpeed.timescale)}) ?? 0
         }
@@ -738,20 +758,16 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     private func manageVisiblity(){
         switch cameraSettingMode {
-        case .NONE, .SWITCH_LENS:
+        case .NONE:
             isListVisible = false
             showZoomSlider = false
         case .ZOOM:
             showZoomSlider.toggle()
             isListVisible = showZoomSlider
-        case .AUTO_EXPOSURE:
-            autoExposureOff.toggle()
-            isListVisible = false
-            showZoomSlider = false
         case .ISO, .SHUTTER_SPEED, .EXPOSURE:
             isListVisible.toggle()
             showZoomSlider = false
-        case .WHITE_BAlANCE:
+        case .WHITE_BALANCE:
             showZoomSlider = false
         }
         
@@ -778,6 +794,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         if(cameraSettingMode == .SHUTTER_SPEED){
             value = "1/\(Int(self.cameraSettingValues[indexPath.row]))"
+        } else if (cameraSettingMode == .EXPOSURE) {
+            value = String(self.cameraSettingValues[indexPath.row]) + "EV"
         } else if(cameraSettingMode == .ZOOM){
             value = String(self.cameraSettingValues[indexPath.row])
         } else {
@@ -800,7 +818,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
             
             switch cameraSettingMode {
-            case .NONE, .WHITE_BAlANCE, .AUTO_EXPOSURE, .SWITCH_LENS:
+            case .NONE, .WHITE_BALANCE:
                 break
             case .ZOOM:
                 buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue)
@@ -813,7 +831,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 self.shutterSpeedText?.text = "1/" + String(Int(currentCameraSettingValue))
             case .EXPOSURE:
                 cameraSettingsModel.exposure(value: currentCameraSettingValue)
-                self.exposureText?.text = String(Int(currentCameraSettingValue))
+                self.exposureText?.text = String(currentCameraSettingValue)+"EV"
            
             }
         }

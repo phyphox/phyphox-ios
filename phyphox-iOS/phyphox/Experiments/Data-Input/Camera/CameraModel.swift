@@ -11,45 +11,62 @@ import AVFoundation
 import MetalKit
 
 @available(iOS 14.0, *)
-class CameraSettingsModel: ObservableObject {
+class CameraSettingsModel {
     
-    var cameraSettingLevel: CameraSettingLevel = .ADVANCE
+    protocol SettingsChangeObserver {
+        func onShutterSpeedChange(newValue: CMTime)
+        func onIsoChange(newValue: Int)
+        func onApertureChange(newValue: Float)
+    }
+    
+    var changeObservers: [SettingsChangeObserver] = []
     
     var zoomOpticalLensValues : [Float] = []
-    @Published var maxOpticalZoom: Int = 1
+    var maxOpticalZoom: Int = 1
     var ultraWideCamera: Bool = false
-    @Published var minZoom: Int = 1
-    @Published var maxZoom: Int = 1
+    var minZoom: Int = 1
+    var maxZoom: Int = 1
     var currentZoom: Int = 1
     
     var shutterSpeedValues: [Float] = []
-    var minShutterSpeed: Double = 1.0
-    var maxShutterSpeed: Double = 1.0
-    @Published var currentShutterSpeed: CMTime?
+    var minShutterSpeed: CMTime = CMTime(value: 1, timescale: 1000)
+    var maxShutterSpeed: CMTime = CMTime(value: 1, timescale: 1)
+    var currentShutterSpeed: CMTime = CMTime(value: 1, timescale: 30) {
+        didSet {
+            for changeObserver in changeObservers {
+                changeObserver.onShutterSpeedChange(newValue: currentShutterSpeed)
+            }
+        }
+    }
     
     var isoValues: [Float] = []
     var minIso: Float = 30.0
     var maxIso: Float = 100.0
-    @Published var currentIso: Int = 30
+    var currentIso: Int = 30 {
+        didSet {
+            for changeObserver in changeObservers {
+                changeObserver.onIsoChange(newValue: currentIso)
+            }
+        }
+    }
     
     var apertureValue: Float = 1.0
     var currentApertureValue: Float = 1.0 {
         didSet {
-            onApertureCurrentValueChanged?(currentApertureValue)
+            for changeObserver in changeObservers {
+                changeObserver.onApertureChange(newValue: currentApertureValue)
+            }
         }
     }
-    var onApertureCurrentValueChanged: ((Float) -> Void)?
     
     var exposureValues: [Float] = []
     var minExposureValue: Float = 0.0
     var maxExposureValue: Float = 1.0
-    @Published var currentExposureValue: Float = 0.0
-    
-    var autoAxposureEnable: Bool = true
+    var currentExposureValue: Float = 0.0
     
     var minwhiteBalance: Float = 1.0
     var maxWhiteBalance: Float = 1.0
-    @Published var currentWhiteBalance: Float = 1.0
+    var currentWhiteBalance: Float = 1.0
     
     private var zoomScale: Float = 1.0
     
@@ -57,9 +74,10 @@ class CameraSettingsModel: ObservableObject {
     
     var service: CameraService?
     
-    @Published var isDefaultCamera: Bool = true
+    var isDefaultCamera: Bool = true
     
     var resolution: CGSize? = nil
+    var maxFrameDuration = 1.0/30.0
     
     @available(iOS 14.0, *)
     init(service: CameraService){
@@ -68,6 +86,9 @@ class CameraSettingsModel: ObservableObject {
     
     init(){}
     
+    func registerSettingsObserver(_ observer: SettingsChangeObserver) {
+        changeObservers.append(observer)
+    }
     
     func getZoomScale() -> CGFloat {
         service?.zoomScale ?? 1.0
@@ -113,14 +134,14 @@ class CameraSettingsModel: ObservableObject {
         if(!isDefaultCamera){
             return
         }
-        service?.changeISO(value)
+        service?.changeIso(value)
     }
     
     func shutterSpeed(value: Double) {
         if(!isDefaultCamera){
             return
         }
-        service?.changeExposureDuration(value)
+        service?.changeExposureDuration(CMTime(value: Int64(1e9/value), timescale: 1_000_000_000))
     }
     
     func zoom() {}
@@ -130,15 +151,12 @@ class CameraSettingsModel: ObservableObject {
     }
     
     func whiteBalance() {}
-    
-    func getDeviceNames(){
-        service?.getAvailableDevices(position: service?.defaultVideoDevice?.position)
-    }
+
 }
 
 
 @available(iOS 14.0, *)
-final class CameraModel: ObservableObject {
+final class CameraModel {
     
     var x1: Float = 0.4
     var x2: Float = 0.6
@@ -161,7 +179,10 @@ final class CameraModel: ObservableObject {
         }
     }
     
-    var exposureSettingLevel: Int = 3
+    var exposureSettingLevel = CameraSettingLevel.ADVANCE
+    
+    var autoExposureEnabled: Bool = true
+    var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
     
     var locked: String = ""
     
@@ -197,6 +218,7 @@ final class CameraModel: ObservableObject {
         service.checkForPermisssion()
         service.configure()
         service.analyzingRenderer = analyzingRenderer
+        analyzingRenderer.exposureStatisticsListener = service
         service.setupTextures()
     }
     
@@ -252,11 +274,9 @@ enum CameraSettingMode {
     case NONE
     case ZOOM
     case EXPOSURE
-    case AUTO_EXPOSURE
-    case SWITCH_LENS
     case ISO
     case SHUTTER_SPEED
-    case WHITE_BAlANCE
+    case WHITE_BALANCE
     
 }
 

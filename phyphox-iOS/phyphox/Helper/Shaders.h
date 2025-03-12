@@ -42,7 +42,7 @@ struct PartialBufferLength {
     uint length;
 };
 
-
 struct Mode_HSV {
     float mode; // 0.0 for Hue, 1.0 for Staturation, 2.0 for Value
 };
+

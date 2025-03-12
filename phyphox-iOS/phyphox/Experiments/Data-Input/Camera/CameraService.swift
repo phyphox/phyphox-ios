@@ -19,7 +19,7 @@ protocol CameraMetalTextureProvider {
 }
 
 @available(iOS 14.0, *)
-public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraMetalTextureProvider {
+public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraMetalTextureProvider, ExposureStatisticsListener {
     
     var cameraImageTextureY: CVMetalTexture?
     var cameraImageTextureCbCr: CVMetalTexture?
@@ -39,9 +39,9 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var isSessionRunning = false
     
-    @Published public var shouldShowAlertView = false
+    public var shouldShowAlertView = false
     
-    @Published public var isCameraUnavailable = true
+    public var isCameraUnavailable = true
     
     private var queue =  DispatchQueue(label: "video output queue")
     
@@ -50,7 +50,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         
     var cameraModelOwner: CameraModelOwner? = nil
-    var cameraSettingModel: CameraSettingsModel = CameraSettingsModel()
     
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
     
@@ -146,8 +145,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         cameraSettingsModel.maxIso = defaultVideoDevice.activeFormat.maxISO
         cameraSettingsModel.currentIso = 100
         
-        cameraSettingsModel.minShutterSpeed = CMTimeGetSeconds(defaultVideoDevice.activeFormat.minExposureDuration)
-        cameraSettingsModel.maxShutterSpeed = CMTimeGetSeconds(defaultVideoDevice.activeFormat.maxExposureDuration)
+        cameraSettingsModel.minShutterSpeed = defaultVideoDevice.activeFormat.minExposureDuration
+        cameraSettingsModel.maxShutterSpeed = defaultVideoDevice.activeFormat.maxExposureDuration
         
         cameraSettingsModel.apertureValue = defaultVideoDevice.lensAperture
         
@@ -166,6 +165,93 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
     }
     
+    func newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double) {
+        guard let cameraModel = cameraModelOwner?.cameraModel else {
+            return
+        }
+        if !cameraModel.autoExposureEnabled {
+            return
+        }
+        var adjust = 1.0
+        var targetExposure = Double(0.5 * pow(2.0, cameraModel.cameraSettingsModel.currentExposureValue))
+        if targetExposure > 0.95 {
+            targetExposure = 0.95
+        }
+        
+        let framerate = min(1.0/cameraModel.cameraSettingsModel.maxFrameDuration, Double(cameraModel.cameraSettingsModel.currentShutterSpeed.timescale) / Double(cameraModel.cameraSettingsModel.currentShutterSpeed.value))
+        let speedfactor = 30.0/framerate
+        
+        switch cameraModel.aeStrategy {
+        case .mean:
+            adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
+        case .avoidUnderexposure:
+            if minRGB > 0.2 {
+                adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
+            } else if minRGB > 0.1 {
+                adjust = 1.0 - speedfactor * 0.1 * (minRGB - 0.25)
+            } else {
+                adjust = 1.0 - speedfactor * 0.2 * (minRGB - 0.25)
+            }
+        case .avoidOverexposure:
+            if maxRGB < 0.8 {
+                adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
+            } else if maxRGB < 0.9 {
+                adjust = 1.0 - speedfactor * 0.1 * (maxRGB - 0.75)
+            } else {
+                adjust = 1.0 - speedfactor * 0.2 * (maxRGB - 0.75)
+            }
+        }
+        
+        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel)
+        
+        changeExposureDurationIso(duration: shutter, iso: iso)
+    }
+    
+    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel) -> (shutter: CMTime, iso: Int) {
+        let shutterTarget = state.maxFrameDuration
+        let shutterUsabilityLimit = CMTime(value: 1, timescale: 15)
+        
+        var iso = state.currentIso
+        var shutter = state.currentShutterSpeed
+        
+        func isoShutterRating(iso: Int, shutter: CMTime) -> Double {
+            let isoPenalty = abs(log(Double(iso)/50.0)/log(2.0)) //Prefer ISO 100
+            let shutterPenalty = 10*abs(log(shutter.seconds/shutterTarget)/log(2.0)) //Strongly prefer shutter time of maxFrameDuration
+            let slowExposurePenalty = shutter.seconds > shutterTarget ? 1000.0 : 0.0 //Big penalty for exposure times that reduce the frame rate
+            return isoPenalty + shutterPenalty + slowExposurePenalty
+        }
+        
+        var shutterOption = shutter
+        var isoOption = iso
+        var optionRating = isoShutterRating(iso: iso, shutter: shutter) + 10000 //Old value is only a fallback
+        for isoCandidate in state.isoValues {
+            let thisIso = Int(isoCandidate)
+            let idealShutter = shutter.seconds * adjust * Double(iso) / Double(isoCandidate)
+            if idealShutter < state.minShutterSpeed.seconds || idealShutter > state.maxShutterSpeed.seconds {
+                continue
+            }
+            let thisShutter = CMTime(value: Int64(idealShutter*1_000_000_000), timescale: 1_000_000_000)
+            let rating = isoShutterRating(iso: thisIso, shutter: thisShutter)
+            if rating < optionRating {
+                shutterOption = thisShutter
+                isoOption = thisIso
+                optionRating = rating
+            }
+        }
+        shutter = shutterOption
+        iso = isoOption
+        if shutter.seconds > state.maxShutterSpeed.seconds {
+            shutter = state.maxShutterSpeed
+        }
+        if shutter.seconds > shutterUsabilityLimit.seconds {
+            shutter = shutterUsabilityLimit
+        }
+        if shutter.seconds < state.minShutterSpeed.seconds {
+            shutter = state.minShutterSpeed
+        }
+
+        return (shutter, iso)
+    }
    
     public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
         
@@ -199,9 +285,9 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                         
                         
                         if(preferredDevice == .builtInWideAngleCamera){
-                            self.cameraSettingModel.isDefaultCamera = true
+                            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.isDefaultCamera = true
                         } else {
-                            self.cameraSettingModel.isDefaultCamera = false
+                            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.isDefaultCamera = false
                         }
                         
                         self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
@@ -408,6 +494,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             print("Resolution: \(dimension.width)x\(dimension.height)")
             print("Max frame duration: \(videoDevice.activeVideoMaxFrameDuration)")
             cameraModelOwner?.updateResolution(CGSize(width: Int(dimension.width), height: Int(dimension.height)))
+            cameraModelOwner?.cameraModel?.cameraSettingsModel.maxFrameDuration = videoDevice.activeVideoMaxFrameDuration.seconds
             
             analyzingRenderer?.defaultVideoDevice = defaultVideoDevice
             setCameraSettinginfo()
@@ -536,7 +623,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var configLocked = false
     
-    @Published var zoomScale: CGFloat = 1.0
+    var zoomScale: CGFloat = 1.0
     
     
     func lockConfig(complete: () -> ()) {
@@ -553,55 +640,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             }
         }
     }
-    
-    
-    func getAvailableDevices(position: AVCaptureDevice.Position?) -> [Dictionary<String, String>]{
-        let devices: [AVCaptureDevice]
-        if #available(iOS 15.4, *) {
-            devices = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera, .builtInDualWideCamera, .builtInLiDARDepthCamera, .builtInTelephotoCamera, .builtInTripleCamera, .builtInUltraWideCamera, ], mediaType: .video, position: position ?? .back).devices
-            
-        } else {
-            devices = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera, .builtInDualWideCamera, .builtInTelephotoCamera, .builtInTripleCamera, .builtInUltraWideCamera, ], mediaType: .video, position: position ?? .back).devices
-        }
-        
-        return devices.compactMap { device in
-            if #available(iOS 15.4, *), device.deviceType == .builtInLiDARDepthCamera {
-                return getNewDevicesName(device: device.deviceType)
-            } else {
-                return getDevicesName(device: device.deviceType)
-            }
-        }
-        
-    }
-    
-    private func getDevicesName(device: AVCaptureDevice.DeviceType) -> [String: String]{
-        return switch(device) {
-        case  .builtInDualCamera : ["Dual Camera": "Camera device type that consists of a wide-angle and telephoto camera."]
-        case  .builtInDualWideCamera : ["Dual Wide Camera": "Camera device type that consists of two cameras of fixed focal length, one ultrawide angle and one wide angle."]
-        case  .builtInTripleCamera : ["Triple Camera":"Camera device type that consists of three cameras of fixed focal length, one ultrawide angle, one wide angle, and one telephoto."]
-        case  .builtInTelephotoCamera : ["Telephoto Camera":"Camera device type with a longer focal length than a wide-angle camera"]
-        case  .builtInTrueDepthCamera : ["True Depth Camera":"A device that consists of two cameras, one Infrared and one YUV."]
-        case  .builtInUltraWideCamera  : ["Ultra Wide Camera":"Camera device type with a shorter focal length than a wide-angle camera."]
-        case  .builtInWideAngleCamera : ["Wide Angle Camera":"A default wide-angle camera device type."]
-        default : ["not available": ""]
-        }
-        
-    }
-    
-    
-    @available(iOS 15.4, *)
-    private func getNewDevicesName(device: AVCaptureDevice.DeviceType) -> [String: String]{
-        switch(device) {
-        case  .builtInLiDARDepthCamera : return ["LiDAR Depth Camera": "A device that consists of two cameras, one LiDAR and one YUV."]
-        default : return ["not available": ""]
-        }
-        
-    }
-    
-    
-    // optical zoom range, normal zoom range.
-    // iphone 12 mini: Dual 12MP, wide and ultra wide, wide : f/1,6, ultra wide: f/2.4 120 degree field of view, 2x optical zoom out , digital zoom upto 5x,
-    
     
     func updateZoom(scale: CGFloat){
         lockConfig { () -> () in
@@ -779,133 +817,47 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return nearestNumber
     }
     
+    func changeIso(_ iso: Int) {
+        guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+        changeExposureDurationIso(duration: cameraSettingModel.currentShutterSpeed, iso: iso)
+    }
     
-    func changeISO(_ iso: Int) {
-        
-        let duration_seconds = (cameraModelOwner?.cameraModel?.cameraSettingsModel.currentShutterSpeed) ?? defaultMinExposureCMTime
-        
+    func changeExposureDuration(_ duration: CMTime) {
+        guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+        changeExposureDurationIso(duration: duration, iso: cameraSettingModel.currentIso)
+    }
+    
+    func changeExposureDurationIso(duration: CMTime, iso: Int) {
+        guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         if (defaultVideoDevice?.isExposureModeSupported(.custom) == true){
             lockConfig { () -> () in
                 defaultVideoDevice?.exposureMode = .custom
-                defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: Float(iso), completionHandler: nil)
-                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentIso = iso
-                
+                defaultVideoDevice?.setExposureModeCustom(duration: duration , iso: Float(iso), completionHandler: nil)
+                cameraSettingModel.currentShutterSpeed = duration
+                cameraSettingModel.currentIso = iso
             }
         } else {
             print("custom exposure setting not supported")
         }
-        
     }
-    
-    func changeExposureDuration(_ p: Double) {
-        let seconds = 1.0 / Float64(p)
-        let duration_seconds = CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000*1000*1000 )
-        if (defaultVideoDevice?.isExposureModeSupported(.custom) == true){
-            lockConfig { () -> () in
-                defaultVideoDevice?.exposureMode = .custom
-                defaultVideoDevice?.setExposureModeCustom(duration: duration_seconds , iso: AVCaptureDevice.currentISO, completionHandler: nil)
-                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentShutterSpeed = duration_seconds
-            }
-        } else {
-            print("custom exposure setting not supported")
-        }
-        
-    }
-    
-    func changeExpoDuration(){
-        if (defaultVideoDevice?.isExposureModeSupported(.locked) == true){
-            do {
-                try defaultVideoDevice?.lockForConfiguration()
-                defaultVideoDevice?.exposureMode = .custom
-                defaultVideoDevice?.unlockForConfiguration()
-            } catch {
-                print("Error setting camera shutter speed: \(error.localizedDescription)")
-            }
-        }
-        else {
-            print("custom exposure setting not supported")
-        }
-    }
-    
-    private func changeExposureMode(mode: AVCaptureDevice.ExposureMode){
-        lockConfig { () -> () in
-            if ((self.defaultVideoDevice?.isExposureModeSupported(mode)) != nil) {
-                self.defaultVideoDevice?.exposureMode = mode
-            }
-        }
-    }
-    
-    // the custom setting is not supported in the dual wide camera but it does supports
-    // in the wide angle camera. don't support RAW capture and manual controls.
-    //  if you want to achieve manual control you have to select wide-angle or telephoto camera.
-    // https://developer.apple.com/library/archive/releasenotes/General/WhatsNewIniOS/Articles/iOS10.html
     
     func setExposureTo(auto: Bool){
-        print("setExposureTo auto, ", auto)
-        
-        if(defaultVideoDevice?.isExposureModeSupported(.locked) == true){
-            print("locked exposure setting  supported")
-        }
-        
-        if(defaultVideoDevice?.isExposureModeSupported(.autoExpose) == true){
-            print("autoexposure exposure setting  supported")
-        }
-        
-        if(defaultVideoDevice?.isExposureModeSupported(.continuousAutoExposure) == true){
-            print("continuos auto exposure setting  supported")
-        }
-        
-        if(defaultVideoDevice?.isExposureModeSupported(.custom) == true){
-            print("custom exposure setting  supported")
-        }
-        if(defaultVideoDevice?.isExposureModeSupported(.autoExpose) == true){
-            lockConfig { () -> () in
-                //defaultVideoDevice?.exposureMode = auto ? .autoExpose :
-            }
-        } else {
-            print("custom exposure setting not supported")
-        }
-        
+        cameraModelOwner?.cameraModel?.autoExposureEnabled = auto
     }
     
     func changeExposure(value: Float) {
-        
-        if (defaultVideoDevice?.isExposureModeSupported(.locked)  == true && defaultVideoDevice?.isExposureModeSupported(.continuousAutoExposure) == true){
-            do {
-                try defaultVideoDevice?.lockForConfiguration()
-                defaultVideoDevice?.exposureMode = .continuousAutoExposure
-                defaultVideoDevice!.setExposureTargetBias(value, completionHandler: nil)
-                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentExposureValue = value
-                defaultVideoDevice?.unlockForConfiguration()
-            } catch {
-                print("Error setting camera expsoure: \(error.localizedDescription)")
-            }
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+
+        if !(cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
+            let adjust = pow(2.0, value - cameraSettingsModel.currentExposureValue)
+            let (shutter, iso) = calculateAdjustedExposure(adjust: Double(adjust), state: cameraSettingsModel)
+            changeExposureDurationIso(duration: shutter, iso: iso)
         }
-        else {
-            print("custom exposure setting not supported")
-        }
+        cameraSettingsModel.currentExposureValue = value
     }
     
     func getExposureValues() -> [Float] {
-        return getExposureValuesFromRange(min: Int(cameraModelOwner?.cameraModel?.cameraSettingsModel.exposureCompensationRange?.lowerBound ?? -8.0),
-                                          max: Int(cameraModelOwner?.cameraModel?.cameraSettingsModel.exposureCompensationRange?.upperBound ?? 8.0),
-                                          step: 1)
+        //Since we use our own AE implementation, we can offer any selection of exposure compensation presets. However, since in practice our AE is applied to a selected area only mild corrections should be necessary.
+        return [-1.0, -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
     }
-    
-    func getExposureValuesFromRange(min: Int, max: Int, step: Float) -> [Float] {
-        var exposureValues = [Float]()
-        
-        for value in min...max {
-            let exposureCompensation = Float(value) * step
-            let decimalPlaces = 1
-            let powerOf10 = pow(10.0, Float(decimalPlaces))
-            let roundedNumber = round(exposureCompensation * powerOf10) / powerOf10
-            exposureValues.append(roundedNumber)
-        }
-        
-        return exposureValues.filter { (Int($0 * 10) % 5) == 0 }
-    }
-    
-    
-    
 }

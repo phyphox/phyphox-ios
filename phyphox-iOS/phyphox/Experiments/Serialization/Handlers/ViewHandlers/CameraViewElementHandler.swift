@@ -10,7 +10,7 @@ import Foundation
 
 struct CameraViewElementDescriptor {
     let label: String
-    let exposureAdjustmentLevel: String
+    let exposureAdjustmentLevel: CameraSettingLevel
     let aspectRatio: CGFloat
     let grayscale: Bool
     let markOverexposure: UIColor?
@@ -36,7 +36,13 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         
         let label = attributes.optionalString(for: .label) ?? ""
         
-        let exposureAdjustmentLevel = attributes.optionalString(for: .exposure_adjustment_level) ?? ""
+        let exposureAdjustmentLevelVal: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 0
+        let exposureAdjustmentLevel = switch exposureAdjustmentLevelVal {
+        case 1: CameraSettingLevel.BASIC
+        case 2: CameraSettingLevel.INTERMEDIATE
+        case 3: CameraSettingLevel.ADVANCE
+        default: CameraSettingLevel.BASIC
+        }
         
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
         

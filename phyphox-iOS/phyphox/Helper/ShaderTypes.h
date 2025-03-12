@@ -73,4 +73,9 @@ struct ShaderColorModifier {
     vector_float3 underexposureColor;
 };
 
+struct MinMax {
+    float min;
+    float max;
+};
+
 #endif /* ShaderTypes_h */

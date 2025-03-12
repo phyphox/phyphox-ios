@@ -9,6 +9,10 @@
 import Foundation
 
 final class ExperimentCameraInput {
+
+    enum AutoExposureStrategy: String, LosslessStringConvertible {
+        case mean, avoidOverexposure, avoidUnderexposure
+    }
     
     let initx1: Float
     let initx2: Float
@@ -19,15 +23,15 @@ final class ExperimentCameraInput {
     
     var experimentCameraBuffers: ExperimentCameraBuffers?
     let autoExposure: Bool
+    let aeStrategy: AutoExposureStrategy
 
     let locked: String
     let feature: String
-    let analysis: String
     
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, smooth: Bool, autoExposure: Bool,  locked: String, feature: String, analysis: String) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: String, feature: String) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -49,10 +53,10 @@ final class ExperimentCameraInput {
       
         self.timeReference = timeReference
         self.autoExposure = autoExposure
+        self.aeStrategy = aeStrategy
        
         self.locked = locked
         self.feature = feature
-        self.analysis = analysis
         
         guard #available(iOS 14.0, *) else {
             return
@@ -82,10 +86,10 @@ final class ExperimentCameraInput {
         session.timeReference = timeReference
         
         session.autoExposure = autoExposure
+        session.aeStrategy = aeStrategy
       
         session.locked = locked
         session.feature = feature
-        session.analysis = analysis
     }
     
     func start(queue: DispatchQueue) throws {

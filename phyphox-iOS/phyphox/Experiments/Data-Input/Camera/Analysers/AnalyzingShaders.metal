@@ -119,6 +119,76 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
     }
 }
 
+kernel void computeMinMaxRGB(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
+                        texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
+                        device float *partialMins [[ buffer(0) ]],
+                        device float *partialMaxs [[ buffer(1) ]],
+                        constant SelectionState& selectionState [[ buffer(2) ]],
+                        constant PartialBufferLength& partialBufferLength [[ buffer(3) ]],
+                        uint2 gid2D [[ thread_position_in_grid ]],
+                        uint2 tid [[ thread_position_in_threadgroup ]],
+                        uint2 groupSize [[ threads_per_threadgroup ]],
+                        uint2 groupId [[ threadgroup_position_in_grid ]],
+                        uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
+    
+    
+    float min;
+    float max;
+    threadgroup float localMins[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
+    threadgroup float localMaxs[256];
+    
+    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
+    if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
+        min = INFINITY;
+        max = -INFINITY;
+    } else {
+        float4 rgb = ycbcrToRGBTransform(
+                                         cameraImageTextureY.read(globalID),
+                                         cameraImageTextureCbCr.read(globalID/2)
+                                         );
+        min = min3(rgb.r, rgb.g, rgb.b);
+        max = max3(rgb.r, rgb.g, rgb.b);
+    }
+    
+    uint index = (tid.x + tid.y * groupSize.x);
+    localMins[index] = min;
+    localMaxs[index] = max;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+    if (tid.x == 0) {
+        min = INFINITY;
+        max = -INFINITY;
+        for (uint i = 0; i < groupSize.x; i++) {
+            index = tid.y * groupSize.x + i;
+            if (localMins[index] < min)
+                min = localMins[index];
+            if (localMaxs[index] > max)
+                max = localMaxs[index];
+        }
+        
+        localMins[tid.y * groupSize.x] = min;
+        localMaxs[tid.y * groupSize.x] = max;
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+        
+        if (tid.y == 0) {
+            min = INFINITY;
+            max = -INFINITY;
+            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+                if (localMins[i] < min)
+                    min = localMins[i];
+                if (localMaxs[i] > max)
+                    max = localMaxs[i];
+            }
+            
+            index = groupId.x + groupId.y * groupsPerGrid.x;
+            partialMins[index] = min;
+            partialMaxs[index] = max;
+            threadgroup_barrier(mem_flags::mem_device);
+        }
+    }
+    
+}
+
 kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
                        texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
                        device float *partialSumsX [[ buffer(0) ]],
@@ -309,6 +379,49 @@ kernel void computeFinalSum(device float *partialSums [[ buffer(0) ]],
     
     if (gid == 0) {
         *result = localSums[0];
+        threadgroup_barrier(mem_flags::mem_device);
+    }
+}
+
+kernel void computeFinalMinMax(device float *partialMins [[ buffer(0) ]],
+                               device float *partialMaxs [[ buffer(1) ]],
+                               device MinMax *result [[ buffer(2) ]],
+                            constant PartialBufferLength& partialBufferLength [[ buffer(3) ]],
+                            uint gid [[ thread_position_in_grid ]],
+                            uint tid [[ thread_position_in_threadgroup ]],
+                            uint groupSize [[ threads_per_threadgroup ]]
+                            ) {
+    
+    threadgroup float localMins[256];
+    threadgroup float localMaxs[256];
+    
+    float min = INFINITY;
+    float max = -INFINITY;
+    for (uint i = tid; i < partialBufferLength.length; i += groupSize) {
+        if (partialMins[i] < min)
+            min = partialMins[i];
+        if (partialMaxs[i] > max)
+            max = partialMaxs[i];
+    }
+    localMins[tid] = min;
+    localMaxs[tid] = max;
+    
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+    // Perform parallel reduction
+    for (uint threads = groupSize / 2; threads > 0; threads /= 2) {
+        if (tid < threads && (tid + threads) < groupSize) {
+            if (localMins[tid + threads] < localMins[tid])
+                localMins[tid] = localMins[tid + threads];
+            if (localMaxs[tid + threads] > localMaxs[tid])
+                localMaxs[tid] = localMaxs[tid + threads];
+        }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+    
+    if (gid == 0) {
+        result->min = localMins[0];
+        result->max = localMaxs[0];
         threadgroup_barrier(mem_flags::mem_device);
     }
 }

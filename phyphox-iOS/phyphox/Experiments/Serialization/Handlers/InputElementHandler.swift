@@ -123,11 +123,10 @@ struct CameraInputDescriptor: SensorDescriptor {
     let x2: Float
     let y1: Float
     let y2: Float
-    let smooth: Bool
     let autoExposure: Bool
+    let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
     let locked: String
     let feature: String
-    let analysis: String
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -146,16 +145,14 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
     
     // spelling in the xml should match with it
     private enum Attribute: String, AttributeKey {
-        case mode
         case x1
         case x2
         case y1
         case y2
-        case smooth
         case auto_exposure
+        case aeStrategy
         case locked
         case feature
-        case analysis
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -171,20 +168,19 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         let x2 = 1.0-y2user
         let y1 = 1.0-x1user
         let y2 = 1.0-x2user
-        
-        let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
-        
+                
         let autoExposure: Bool = try attributes.optionalValue(for: .auto_exposure) ?? true
-        
-        //let exposureAdjustmentLevel: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 3
         
         let locked: String = try attributes.optionalValue(for: .locked) ?? ""
         
-        let feature: String = try attributes.optionalString(for: .feature) ?? ""
+        let feature: String = attributes.optionalString(for: .feature) ?? "photometric"
+        if feature != "photometric" {
+            throw ElementHandlerError.unexpectedAttributeValue("Unsupported camera feature \"\(feature)\"")
+        }
         
-        let analysis: String = try attributes.optionalString(for: .analysis) ?? ""
-        
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, autoExposure: autoExposure, locked: locked, feature: feature, analysis: analysis, outputs: outputHandler.results))
+        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
+                
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature, outputs: outputHandler.results))
     }
 }
 

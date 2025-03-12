@@ -33,9 +33,9 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
     var sessionInitialized = false
     
     var autoExposure: Bool = true
+    var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
     var locked: String = ""
     var feature: String = ""
-    var analysis: String = ""
     
     var delegates : [CameraGUIDelegate] = []
     
@@ -53,7 +53,9 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         cameraModel?.analyzingRenderer.timeReference = timeReference
         cameraModel?.analyzingRenderer.initializeCameraBuffer(cameraBuffers: experimentCameraBuffers)
         
+        cameraModel?.autoExposureEnabled = autoExposure
         cameraModel?.locked = locked
+        cameraModel?.aeStrategy = aeStrategy
         
         sessionInitialized = true
     }
