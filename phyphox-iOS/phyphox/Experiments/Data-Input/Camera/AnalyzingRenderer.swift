@@ -197,7 +197,9 @@ class AnalyzingRenderer {
                     self.exposureAnalyzer.reset()
                 }
                 
-                self.dataIn()
+                if self.measuring {
+                    self.dataIn()
+                }
                 
             }
             
