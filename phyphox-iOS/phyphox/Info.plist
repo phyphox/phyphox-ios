@@ -35,6 +35,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleSpokenName</key>
+	<string></string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -49,7 +51,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>12675</string>
+	<string>12698</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -115,6 +117,10 @@
 				<string>phyphox</string>
 			</dict>
 		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict/>
 	</array>
 </dict>
 </plist>
