@@ -112,7 +112,7 @@ class LumaAnalyzer : AnalyzingModule {
         
     }
     
-    override func prepareWriteToBuffers() {
+    override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         let resultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
         latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
     }

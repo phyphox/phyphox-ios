@@ -58,8 +58,8 @@ class HSVAnalyzer: AnalyzingModule {
     }
     
     override func doUpdate(metalCommandBuffer: MTLCommandBuffer,
-                         cameraImageTextureY: MTLTexture,
-                         cameraImageTextureCbCr: MTLTexture ){
+                           cameraImageTextureY: MTLTexture,
+                           cameraImageTextureCbCr: MTLTexture){
         
         if(mode == .Hue){
             
@@ -228,7 +228,7 @@ class HSVAnalyzer: AnalyzingModule {
     
     
     
-    override func prepareWriteToBuffers() {
+    override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         
         if(mode == .Hue){
             

@@ -118,9 +118,10 @@ class LuminanceAnalyzer: AnalyzingModule {
         
     }
     
-    override func prepareWriteToBuffers() {
+    override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         let resultBuffer = luminanceValue?.contents().bindMemory(to: Float.self, capacity: 0)
-        latestResult = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+        let unscaledLuminance = Double(resultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
+        latestResult = Double(cameraSettings.currentApertureValue) * 100.0/Double(cameraSettings.currentIso) * (1.0/60.0)/(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale)) * unscaledLuminance
     }
     
     override func writeToBuffers() {

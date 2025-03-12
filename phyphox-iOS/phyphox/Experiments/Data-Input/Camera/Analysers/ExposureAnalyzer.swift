@@ -170,7 +170,7 @@ class ExposureAnalyzer : AnalyzingModule {
         
     }
     
-    override func prepareWriteToBuffers() {
+    override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         let lumaResultBuffer = lumaValue?.contents().bindMemory(to: Float.self, capacity: 0)
         meanLuma = Double(lumaResultBuffer?.pointee ?? 0.0) / Double((getSelectedArea().width * getSelectedArea().height))
         let minMaxResultBuffer = minMaxValue?.contents().bindMemory(to: MinMax.self, capacity: 0)

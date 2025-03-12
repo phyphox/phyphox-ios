@@ -101,7 +101,7 @@ class AnalyzingRenderer {
     
     private func dataIn() {
      
-        guard let timeReference = timeReference else {
+        guard let timeReference = timeReference, let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
             print("Error: time reference not set")
             return
         }
@@ -111,13 +111,25 @@ class AnalyzingRenderer {
         if t >= timeReference.timeMappings.last?.experimentTime ?? 0.0 {
             
             for analysingModule in self.analysingModules {
-                analysingModule.prepareWriteToBuffers()
+                analysingModule.prepareWriteToBuffers(cameraSettings: cameraSettings)
             }
             
             queue?.async {
                 autoreleasepool(invoking: {
                     if let tBuffer = self.cameraBuffers?.tBuffer {
                         tBuffer.append(t)
+                    }
+                    
+                    if let shutterSpeedBuffer = self.cameraBuffers?.shutterSpeedBuffer {
+                        shutterSpeedBuffer.append(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
+                    }
+                    
+                    if let isoBuffer = self.cameraBuffers?.isoBuffer {
+                        isoBuffer.append(Double(cameraSettings.currentIso))
+                    }
+                    
+                    if let apertureBuffer = self.cameraBuffers?.apertureBuffer {
+                        apertureBuffer.append(Double(cameraSettings.currentApertureValue))
                     }
                     
                     for analysingModule in self.analysingModules {
@@ -168,7 +180,8 @@ class AnalyzingRenderer {
             
         }
         
-        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer() {
+        if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer(),
+           let cameraModel = cameraModelOwner?.cameraModel {
             
             let startTime = Date()
             
@@ -177,8 +190,8 @@ class AnalyzingRenderer {
                 let executionTime = endTime.timeIntervalSince(startTime)
                 //print("executionTime : \(executionTime)")
                 
-                if (self.cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
-                    self.exposureAnalyzer.prepareWriteToBuffers()
+                if (cameraModel.autoExposureEnabled) {
+                    self.exposureAnalyzer.prepareWriteToBuffers(cameraSettings: cameraModel.cameraSettingsModel)
                     self.exposureStatisticsListener?.newExposureStatistics(minRGB: self.exposureAnalyzer.minRGB, maxRGB: self.exposureAnalyzer.maxRGB, meanLuma: self.exposureAnalyzer.meanLuma)
                 } else {
                     self.exposureAnalyzer.reset()

@@ -51,7 +51,7 @@ class AnalyzingModule {
         //fatalError("Subclasses must implement doUpdate method()")
     }
     
-    func prepareWriteToBuffers() {
+    func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         //fatalError("Subclasses must implement writeToBuffers()")
     }
     
