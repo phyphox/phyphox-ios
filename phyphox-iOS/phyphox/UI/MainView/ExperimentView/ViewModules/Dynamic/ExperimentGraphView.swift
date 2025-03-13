@@ -907,7 +907,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var points3D: [[GraphPoint3D<GLfloat>]] = []
 
         for i in 0..<descriptor.yInputBuffers.count {
-            yValues.append(descriptor.yInputBuffers[i].toArray())
+            yValues.insert(descriptor.yInputBuffers[i].toArray(), at: i)
 
             count.append(yValues[i].count)
 
