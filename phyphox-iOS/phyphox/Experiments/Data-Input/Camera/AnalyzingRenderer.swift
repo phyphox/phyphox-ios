@@ -23,8 +23,6 @@ class AnalyzingRenderer {
     var metalCommandQueue: MTLCommandQueue!
     var imagePlaneVertexBuffer: MTLBuffer!
     
-    var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
-    
     // An object that defines the Metal shaders that render the camera image.
     var pipelineState: MTLRenderPipelineState!
     
@@ -152,7 +150,7 @@ class AnalyzingRenderer {
         guard let selectionArea = cameraModelOwner?.cameraModel?.selectionArea else {
             return
         }
-        let isMirroredCamera = cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front
+        let isMirroredCamera = cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition == .front
         let cameraSpecificSelectionArea = if isMirroredCamera {
             selectionArea.offsetBy(dx: 0, dy: 1.0 - selectionArea.maxY - selectionArea.minY)
         } else {

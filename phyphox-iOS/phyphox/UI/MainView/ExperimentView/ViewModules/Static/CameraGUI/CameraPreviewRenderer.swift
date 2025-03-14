@@ -202,7 +202,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     // Updates any app state.
     func updateAppState() {
         // Update the destination-rendering vertex info if the size of the screen changed.
-        if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position {
+        if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition {
             drawableSizeDidChange = false
             updateImagePlane()
         }
@@ -210,7 +210,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     // Sets up vertex data (source and destination rectangles) rendering.
     func updateImagePlane() {
-        cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position
+        cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition
         displayToCameraTransform = transformForDeviceOrientation()
         let cameraSpecificTransform = if cameraOrientation == .front {
             //Image of fron facing camera needs to be mirrored for intuitive use

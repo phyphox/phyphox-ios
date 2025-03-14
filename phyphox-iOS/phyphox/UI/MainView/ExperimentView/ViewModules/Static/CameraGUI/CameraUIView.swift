@@ -61,7 +61,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private let emptyView : UIView
     private let previewResizingButton : UIButton
     private var headerView: UIView!
-    private var zoomSlider: UISlider?
+    private var zoomSlider: ZoomSlider?
     
     //Metal
     private let metalView = MTKView()
@@ -254,6 +254,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             zoomSlider?.isHidden = true
             onZoomSliderVisibilityChanged = { value in
+                self.zoomSlider?.updateSlider()
                 self.zoomSlider?.isHidden = value ? false : true
                 self.setNeedsLayout()
             }
@@ -511,9 +512,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
-        if(cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.defaultVideoDevice?.position == .front){
-            return
-        }
         handleButtonTapped(mode: .ZOOM, additionalActions: {
             self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
@@ -553,18 +551,21 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentExposureValue)}) ?? 0
         }
         else if(cameraSettingMode == .ZOOM){
-            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(1)}) ?? 0
+            let currentZoom = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoom ?? 1.0
+            currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentZoom)}) ?? -1
         }
         else {
             currentSelectionIndex = 0
         }
         
-        DispatchQueue.main.async {
-            if (self.cameraSettingValues.count > 0){
-                self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
-                self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
+        if currentSelectionIndex >= 0 {
+            DispatchQueue.main.async {
+                if (self.cameraSettingValues.count > 0){
+                    self.collectionView.selectItem(at: IndexPath(item: currentSelectionIndex , section: 0), animated: false, scrollPosition: .centeredHorizontally)
+                    self.collectionView(self.collectionView, didSelectItemAt: IndexPath(item: currentSelectionIndex, section: 0))
+                }
+                
             }
-            
         }
         
     }
@@ -658,7 +659,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         case .EXPOSURE:
             return cameraSettingsModel.exposureValues
         case .ZOOM:
-            return cameraSettingsModel.zoomOpticalLensValues
+            return cameraSettingsModel.currentZoomParameters.zoomPresets
         default:
             return []
         }
@@ -822,7 +823,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 break
             case .ZOOM:
                 buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue)
-                cameraSettingsModel.setZoomScale(scale: CGFloat(currentCameraSettingValue))
+                cameraSettingsModel.setZoom(zoom: currentCameraSettingValue)
             case .ISO:
                 cameraSettingsModel.iso(value: Int(currentCameraSettingValue))
                 self.isoSettingText?.text = String(Int(currentCameraSettingValue))
@@ -927,35 +928,48 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
         fatalError("init(coder:) has not been implemented")
     }
     
+    func positionToZoomValue(pos: Float) -> Float {
+        let min = cameraModel.currentZoomParameters.minZoom
+        let max = cameraModel.currentZoomParameters.maxZoom
+        return min * pow(max/min, pos)
+    }
+    
+    func valueToPosition(val: Float) -> Float {
+        let min = cameraModel.currentZoomParameters.minZoom
+        let max = cameraModel.currentZoomParameters.maxZoom
+        return log(val/min) / log(max/min)
+    }
+    
+    func updateSlider() {
+        self.value = valueToPosition(val: cameraModel.currentZoom)
+    }
+    
     private func setupSlider() {
-        self.minimumValue = minimumZoomValue
-        self.maximumValue = maximumZoomValue
-        self.value = 1
         self.minimumValueImage = UIImage(systemName: "minus.magnifyingglass")
         self.maximumValueImage = UIImage(systemName: "plus.magnifyingglass")
+        self.minimumValue = 0.0
+        self.maximumValue = 1.0
         self.thumbTintColor = UIColor(named: "highlightColor")
         self.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
     }
     
-    
-    
     @objc func sliderValueChanged(_ sender :UISlider) {
-        self.cameraModel.setZoomScale(scale: CGFloat(sender.value))
+        self.cameraModel.setZoom(zoom: positionToZoomValue(pos: sender.value))
     }
     
     lazy private var minimumZoomValue : Float =  {
-        return Float(self.cameraModel.service?.getMinimumZoomValue(defaultCamera: true) ?? 1.0)
+        return Float(self.cameraModel.currentZoomParameters.minZoom)
         
     }()
    
     
     lazy private var maximumZoomValue: Float =  {
-        return Float(self.cameraModel.service?.getMaxZoom() ?? 2)
+        return Float(self.cameraModel.currentZoomParameters.maxZoom)
     }()
         
     
     func buttonTapped(for value: Float) {
-        self.value = value
+        self.value = valueToPosition(val: value)
     }
     
 }

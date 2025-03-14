@@ -12,6 +12,14 @@ import MetalKit
 
 @available(iOS 14.0, *)
 class CameraSettingsModel {
+    let updateLock = DispatchSemaphore(value: 1)
+    func safeAccess(_ block: () -> Void) {
+        updateLock.wait()
+        defer {
+            updateLock.signal()
+        }
+        block()
+    }
     
     protocol SettingsChangeObserver {
         func onShutterSpeedChange(newValue: CMTime)
@@ -19,14 +27,49 @@ class CameraSettingsModel {
         func onApertureChange(newValue: Float)
     }
     
+    struct ZoomParameters {
+        var cameras: [Float: AVCaptureDevice.DeviceType]
+        var zoomPresets: [Float]
+        var minZoom: Float
+        var maxZoom: Float
+    }
+    
     var changeObservers: [SettingsChangeObserver] = []
     
-    var zoomOpticalLensValues : [Float] = []
-    var maxOpticalZoom: Int = 1
-    var ultraWideCamera: Bool = false
-    var minZoom: Int = 1
-    var maxZoom: Int = 1
-    var currentZoom: Int = 1
+    private var currentCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+    var cameraPosition: AVCaptureDevice.Position {
+        get {
+            return currentCamera?.position ?? .unspecified
+        }
+    }
+    func changeCamera(_ newCamera: AVCaptureDevice) {
+        safeAccess {
+            self.currentCamera = newCamera
+            service?.setCameraSettinginfo()
+        }
+    }
+    func getCamera() -> AVCaptureDevice? {
+        return currentCamera
+    }
+    
+    var zoomParameters: [AVCaptureDevice.Position: ZoomParameters] = [
+        .front: ZoomParameters(
+            cameras: [1.0: .builtInWideAngleCamera],
+            zoomPresets: [1.0, 2.0], minZoom: 1.0, maxZoom: 4.0
+        ),
+        .back: ZoomParameters(
+            cameras: [1.0: .builtInWideAngleCamera],
+            zoomPresets: [1.0, 2.0], minZoom: 1.0, maxZoom: 4.0
+        )]
+    var currentZoomParameters: ZoomParameters {
+        get {
+            return self.zoomParameters[cameraPosition] ?? ZoomParameters(
+                cameras: [1.0: .builtInWideAngleCamera],
+                zoomPresets: [1.0, 2.0], minZoom: 1.0, maxZoom: 4.0
+            )
+        }
+    }
+    var currentZoom: Float = 1
     
     var shutterSpeedValues: [Float] = []
     var minShutterSpeed: CMTime = CMTime(value: 1, timescale: 1000)
@@ -67,15 +110,11 @@ class CameraSettingsModel {
     var minwhiteBalance: Float = 1.0
     var maxWhiteBalance: Float = 1.0
     var currentWhiteBalance: Float = 1.0
-    
-    private var zoomScale: Float = 1.0
-    
+        
     var exposureCompensationRange: ClosedRange<Float>?
     
     var service: CameraService?
-    
-    var isDefaultCamera: Bool = true
-    
+        
     var resolution: CGSize? = nil
     var maxFrameDuration = 1.0/30.0
     
@@ -90,29 +129,12 @@ class CameraSettingsModel {
         changeObservers.append(observer)
     }
     
-    func getZoomScale() -> CGFloat {
-        service?.zoomScale ?? 1.0
-        
-    }
-    
-    func setZoomScale(scale: CGFloat) {
-        var deviceType : AVCaptureDevice.DeviceType
-        
-        
-        // IF the device has ultra wide camera
-        if(scale < 1.0 && scale >= 0.9 || scale == 0.5) {
-            deviceType = .builtInDualWideCamera
-            service?.changeBuiltInCameraDevice(preferredDevice: deviceType)
-        } else if(scale >= 1.0 && scale <= 1.1 ) {
-            deviceType = .builtInWideAngleCamera
-            service?.changeBuiltInCameraDevice(preferredDevice: deviceType)
-        }
-        
-        service?.updateZoom(scale: scale)
+    func setZoom(zoom: Float) {
+        service?.updateZoom(zoom: zoom)
     }
     
     func switchCamera(){
-        service?.changeCamera()
+        service?.toggleCameraPosition()
     }
     
     func setLisOfCameraSettingsValue() {
@@ -131,25 +153,13 @@ class CameraSettingsModel {
     func aperture() {}
     
     func iso(value: Int) {
-        if(!isDefaultCamera){
-            return
-        }
         service?.changeIso(value)
     }
     
     func shutterSpeed(value: Double) {
-        if(!isDefaultCamera){
-            return
-        }
         service?.changeExposureDuration(CMTime(value: Int64(1e9/value), timescale: 1_000_000_000))
     }
-    
-    func zoom() {}
-    
-    func getAvailableOpticalZoomValues() -> [ Int]{
-        return service?.getAvailableOpticalZoomList(maxOpticalZoom_: 5) ?? []
-    }
-    
+        
     func whiteBalance() {}
 
 }

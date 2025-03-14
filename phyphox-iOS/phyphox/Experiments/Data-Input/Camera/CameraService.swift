@@ -46,12 +46,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     private var queue =  DispatchQueue(label: "video output queue")
     
     var analyzingRenderer : AnalyzingRenderer?
-    
-    var defaultVideoDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         
     var cameraModelOwner: CameraModelOwner? = nil
-    
-    private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTrueDepthCamera], mediaType: .video, position: .unspecified)
     
     let defaultMinExposureCMTime = CMTime(value: 14, timescale: 1000000, flags: CMTimeFlags(rawValue: 1), epoch: 0)
     let defaultMaxExposureCMTime = CMTime(value: 1, timescale: 1, flags: CMTimeFlags(rawValue: 1), epoch: 0)
@@ -113,56 +109,100 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
-        cameraSettingModel.zoomOpticalLensValues =  getOpticalZoomList()
+        cameraSettingModel.zoomParameters = getZoomParameters()
         cameraSettingModel.exposureValues =  getExposureValues()
         cameraSettingModel.isoValues = getIsoRange(min: (cameraSettingModel.minIso), max: (cameraSettingModel.maxIso))
         cameraSettingModel.shutterSpeedValues =  getShutterSpeedRange()
         
     }
     
-    
-    func getMaxZoom() -> Int{
-        if(self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.isEmpty == true){
-            return Int(3)
-        } else {
-            return (self.defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1) * 3
+    func getZoomParameters() -> [AVCaptureDevice.Position: CameraSettingsModel.ZoomParameters] {
+        var deviceList: [AVCaptureDevice.Position: CameraSettingsModel.ZoomParameters] = [:]
+        for position in [AVCaptureDevice.Position.back, AVCaptureDevice.Position.front] {
+            let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera], mediaType: .video, position: position)
+            for device in videoDeviceDiscoverySession.devices {
+                if device.isVirtualDevice {
+                    //We have a group of cameras. Let's dissect it.
+                    guard device.constituentDevices.count == device.virtualDeviceSwitchOverVideoZoomFactors.count+1 else {
+                        print("Warning: Virtual device has inconsistent constituent devices (\(device.constituentDevices.count)) and zoom factors (\(device.virtualDeviceSwitchOverVideoZoomFactors.count))")
+                        continue
+                    }
+                    var zoomFactors: [NSNumber] = [1.0]
+                    var zoomFactorWideCamera = Float(1.0)
+                    zoomFactors.append(contentsOf: device.virtualDeviceSwitchOverVideoZoomFactors)
+                    for (subdevice, zoomFactor) in zip(device.constituentDevices, zoomFactors) {
+                        if subdevice.deviceType == .builtInWideAngleCamera {
+                            zoomFactorWideCamera = zoomFactor.floatValue
+                        }
+                    }
+                    
+                    //Build zoom infos
+                    var cameras: [Float: AVCaptureDevice.DeviceType] = [:]
+                    var presets: [Float] = []
+                    var minZoom: Float = 1.0
+                    var maxZoom: Float = 1.0
+                    for (subdevice, zoomFactor) in zip(device.constituentDevices, zoomFactors) {
+                        let actualZoomFactor = zoomFactor.floatValue/zoomFactorWideCamera
+                        cameras[actualZoomFactor] = subdevice.deviceType
+                        presets.append(actualZoomFactor)
+                        if (actualZoomFactor < minZoom) {
+                            minZoom = actualZoomFactor
+                        }
+                        let thisMaxZoom = actualZoomFactor * Float(min(4.0, subdevice.maxAvailableVideoZoomFactor))
+                        if (thisMaxZoom > maxZoom) {
+                            maxZoom = thisMaxZoom
+                        }
+                    }
+                    for i in (0..<presets.count-1).reversed() {
+                        if presets[i] * 2.0 < presets[i+1] {
+                            presets.insert(presets[i] * 2.0, at: i+1)
+                        }
+                    }
+                    deviceList[position] = CameraSettingsModel.ZoomParameters(
+                        cameras: cameras,
+                        zoomPresets: presets,
+                        minZoom: minZoom,
+                        maxZoom: maxZoom
+                    )
+                    break
+                } else {
+                    //Fallback: We only have the basic standard camera here
+                    deviceList[position] = CameraSettingsModel.ZoomParameters(
+                        cameras: [1.0: device.deviceType],
+                        zoomPresets: [1.0, 2.0],
+                        minZoom: 1.0,
+                        maxZoom: min(4.0, Float(device.maxAvailableVideoZoomFactor))
+                    )
+                }
+            }
         }
+        
+        return deviceList
     }
     
     func setCameraSettinginfo(){
-        guard let defaultVideoDevice = self.defaultVideoDevice else { return }
         guard let cameraModel = cameraModelOwner?.cameraModel else { return }
+        guard let videoDevice = cameraModel.cameraSettingsModel.getCamera() else { return }
         
         let cameraSettingsModel = cameraModel.cameraSettingsModel
         
-        cameraSettingsModel.minZoom = Int((defaultVideoDevice.minAvailableVideoZoomFactor))
-        cameraSettingsModel.maxZoom = getMaxZoom()
-        cameraSettingsModel.maxOpticalZoom = defaultVideoDevice.virtualDeviceSwitchOverVideoZoomFactors.last?.intValue ?? 1
-        
-        if defaultVideoDevice.deviceType != .builtInWideAngleCamera { return }
-        
-        cameraSettingsModel.minIso = defaultVideoDevice.activeFormat.minISO
-        cameraSettingsModel.maxIso = defaultVideoDevice.activeFormat.maxISO
+        cameraSettingsModel.minIso = videoDevice.activeFormat.minISO
+        cameraSettingsModel.maxIso = videoDevice.activeFormat.maxISO
         cameraSettingsModel.currentIso = 100
         
-        cameraSettingsModel.minShutterSpeed = defaultVideoDevice.activeFormat.minExposureDuration
-        cameraSettingsModel.maxShutterSpeed = defaultVideoDevice.activeFormat.maxExposureDuration
+        cameraSettingsModel.minShutterSpeed = videoDevice.activeFormat.minExposureDuration
+        cameraSettingsModel.maxShutterSpeed = videoDevice.activeFormat.maxExposureDuration
         
-        cameraSettingsModel.apertureValue = defaultVideoDevice.lensAperture
+        cameraSettingsModel.apertureValue = videoDevice.lensAperture
         
-        if defaultVideoDevice.deviceType == .builtInDualWideCamera || defaultVideoDevice.deviceType == .builtInTripleCamera {
-            cameraSettingsModel.ultraWideCamera = true
-        }
+        cameraSettingsModel.currentApertureValue = videoDevice.lensAperture
+        cameraSettingsModel.currentShutterSpeed = findClosestPredefinedShutterSpeed(for: videoDevice.exposureDuration)
         
-        cameraSettingsModel.currentApertureValue = defaultVideoDevice.lensAperture
-        cameraSettingsModel.currentShutterSpeed = findClosestPredefinedShutterSpeed(for: defaultVideoDevice.exposureDuration)
-        
-        let minExposure = defaultVideoDevice.minExposureTargetBias
-        let maxExposure = defaultVideoDevice.maxExposureTargetBias
+        let minExposure = videoDevice.minExposureTargetBias
+        let maxExposure = videoDevice.maxExposureTargetBias
         cameraSettingsModel.exposureCompensationRange = minExposure...maxExposure
         
         setValuesForCameraSettingsList()
-        
     }
     
     func newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double) {
@@ -253,121 +293,50 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return (shutter, iso)
     }
    
-    public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType){
-        
+    public func changeBuiltInCameraDevice(preferredDevice: AVCaptureDevice.DeviceType, position: AVCaptureDevice.Position, afterCommit: (() -> ())?){
         sessionQueue.async {
-            let ultraWideDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [preferredDevice], mediaType: .video, position: .back)
+            let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [preferredDevice], mediaType: .video, position: position)
+                        
+            let newVideoDevice: AVCaptureDevice? = deviceDiscoverySession.devices.first
             
-            let device = ultraWideDeviceDiscoverySession.devices
-            
-            let newVideoDevice: AVCaptureDevice? = device.first
-            
-            if(!ultraWideDeviceDiscoverySession.devices.isEmpty){
-                
-                if let videoDevice = newVideoDevice {
-                    do {
-                        let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
-                        
-                        self.session.beginConfiguration()
-                        
-                        self.session.removeInput(self.videoDeviceInput)
-                        
-                        if self.session.canAddInput(videoDeviceInput) {
-                            self.session.addInput(videoDeviceInput)
-                            self.videoDeviceInput = videoDeviceInput
-                        } else {
-                            self.session.addInput(self.videoDeviceInput)
-                        }
-                        self.defaultVideoDevice = videoDevice
-                        self.setBestInputFormat(for: videoDevice)
-                    
-                        self.setCameraSettinginfo()
-                        
-                        
-                        if(preferredDevice == .builtInWideAngleCamera){
-                            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.isDefaultCamera = true
-                        } else {
-                            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.isDefaultCamera = false
-                        }
-                        
-                        self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
-                        
-                        self.session.commitConfiguration()
-                    } catch {
-                        print("Error occurred while creating video device input: \(error)")
-                    }
-                    
-                }
+            guard let newVideoDevice = newVideoDevice else {
+                print( "No suitable camera found for \(preferredDevice) at position \(position)." )
+                return
             }
+                
+            do {
+                let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
+                
+                self.session.beginConfiguration()
+                
+                self.session.removeInput(self.videoDeviceInput)
+                
+                if self.session.canAddInput(videoDeviceInput) {
+                    self.session.addInput(videoDeviceInput)
+                    self.videoDeviceInput = videoDeviceInput
+                } else {
+                    self.session.addInput(self.videoDeviceInput)
+                }
+
+                self.setBestInputFormat(for: newVideoDevice)
             
+                self.cameraModelOwner?.cameraModel?.cameraSettingsModel.changeCamera(newVideoDevice)
+                                        
+                self.session.commitConfiguration()
+                
+                afterCommit?()
+            } catch {
+                print("Error occurred while creating video device input: \(error)")
+            }
         }
     }
     
-    public func changeCamera() {
+    public func toggleCameraPosition() {
+        guard let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         
-        sessionQueue.async {
-            let currentVideoDevice = self.videoDeviceInput.device
-            let currentPosition = currentVideoDevice.position
-            
-            let preferredPosition: AVCaptureDevice.Position
-            let preferredDeviceType: AVCaptureDevice.DeviceType
-            
-            switch currentPosition {
-            case .unspecified, .front:
-                preferredPosition = .back
-                preferredDeviceType = .builtInWideAngleCamera
-                
-            case .back:
-                preferredPosition = .front
-                preferredDeviceType = .builtInWideAngleCamera
-                
-            @unknown default:
-                print("Unknown capture position. Defaulting to back, dual-camera.")
-                preferredPosition = .back
-                preferredDeviceType = .builtInWideAngleCamera
-            }
-            let devices = self.videoDeviceDiscoverySession.devices
-            var newVideoDevice: AVCaptureDevice? = nil
-            
-            // First, seek a device with both the preferred position and device type. Otherwise, seek a device with only the preferred position.
-            if let device = devices.first(where: { $0.position == preferredPosition && $0.deviceType == preferredDeviceType }) {
-                newVideoDevice = device
-            } else if let device = devices.first(where: { $0.position == preferredPosition }) {
-                newVideoDevice = device
-            }
-            
-            if let videoDevice = newVideoDevice {
-                do {
-                    let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
-                    
-                    self.session.beginConfiguration()
-                    
-                    // Remove the existing device input first, because AVCaptureSession doesn't support
-                    // simultaneous use of the rear and front cameras.
-                    self.session.removeInput(self.videoDeviceInput)
-                    
-                    if self.session.canAddInput(videoDeviceInput) {
-                        self.session.addInput(videoDeviceInput)
-                        self.videoDeviceInput = videoDeviceInput
-                    } else {
-                        self.session.addInput(self.videoDeviceInput)
-                    }
-                    self.defaultVideoDevice = videoDevice
-                    self.setBestInputFormat(for: videoDevice)
-                                        
-                    self.setCameraSettinginfo()
-                    
-                    self.analyzingRenderer?.defaultVideoDevice = self.defaultVideoDevice
-                    
-                    
-                    self.session.commitConfiguration()
-                } catch {
-                    print("Error occurred while creating video device input: \(error)")
-                }
-                
-            }
-        }
-        
+        let newPosition: AVCaptureDevice.Position = cameraSettings.cameraPosition == .front ? .back : .front
+        let newCamera = cameraSettings.zoomParameters[newPosition]?.cameras[1.0] ?? .builtInWideAngleCamera
+        changeBuiltInCameraDevice(preferredDevice: newCamera, position: newPosition, afterCommit: nil)
     }
     
     public func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -439,18 +408,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         session.beginConfiguration()
         do {
-            // builtInDualWideCamera -m virtualDeviceSwitchOverVideoZoomFactors [2]
-            let defaultCameraType = defaultVideoDevice?.deviceType ?? AVCaptureDevice.DeviceType.builtInWideAngleCamera
-            print("defaultCameraType ", defaultCameraType)
-            if let backCameraDevice = AVCaptureDevice.default(defaultCameraType, for: .video, position: .back) {
-                // If a rear dual camera is not available, default to the rear wide angle camera.
-                defaultVideoDevice = backCameraDevice
-            } else if let frontCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-                // If the rear wide angle camera isn't available, default to the front wide angle camera.
-                defaultVideoDevice = frontCameraDevice
-            }
-            
-            guard let videoDevice = defaultVideoDevice else {
+
+            guard let videoDevice = cameraModelOwner?.cameraModel?.cameraSettingsModel.getCamera() else {
                 print("Default video device is unavailable.")
                 setupResult = .configurationFailed
                 session.commitConfiguration()
@@ -496,7 +455,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             cameraModelOwner?.updateResolution(CGSize(width: Int(dimension.width), height: Int(dimension.height)))
             cameraModelOwner?.cameraModel?.cameraSettingsModel.maxFrameDuration = videoDevice.activeVideoMaxFrameDuration.seconds
             
-            analyzingRenderer?.defaultVideoDevice = defaultVideoDevice
             setCameraSettinginfo()
             
         } catch {
@@ -623,101 +581,59 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var configLocked = false
     
-    var zoomScale: CGFloat = 1.0
-    
-    
-    func lockConfig(complete: () -> ()) {
+    func lockConfig(complete: (_ camera: AVCaptureDevice) -> ()) {
+        guard let settingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
+            return
+        }
         if isConfigured {
-            configLocked = true
-            do{
-                try defaultVideoDevice?.lockForConfiguration()
-                complete()
-                defaultVideoDevice?.unlockForConfiguration()
-                configLocked = false
-            } catch {
-                configLocked = false
-                
+            settingsModel.safeAccess {
+                guard let camera = settingsModel.getCamera() else {
+                    return
+                }
+                configLocked = true
+                do{
+                    try camera.lockForConfiguration()
+                    complete(camera)
+                    camera.unlockForConfiguration()
+                    configLocked = false
+                } catch {
+                    configLocked = false
+                }
             }
         }
     }
     
-    func updateZoom(scale: CGFloat){
-        lockConfig { () -> () in
-            defaultVideoDevice?.videoZoomFactor = max(1.0, min(zoomScale, (defaultVideoDevice?.activeFormat.videoMaxZoomFactor) ?? 1.0))
-            zoomScale = scale
+    func updateZoom(zoom: Float){
+        guard let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
+            return
         }
-    }
-    
-    
-    func getAvailableOpticalZoomList(maxOpticalZoom_: Int?) -> [Int] {
-        guard let maxOpticalZoom = maxOpticalZoom_ else {
-            return []
-        }
-        
-        if maxOpticalZoom == 1 {
-            return [1]
+        var index = 0
+        let cameraForZoom = cameraSettings.currentZoomParameters.cameras
+            .sorted(by: {$0.key < $1.key})
+            .last(where: {$0.key <= zoom})
+        guard let cameraForZoom = cameraForZoom else {
+            print("Zoom value out of camera range")
+            return
         }
         
-        if maxOpticalZoom < 5 {
-            return [1,2]
+        func applyZoom() {
+            lockConfig { (_ camera: AVCaptureDevice) -> () in
+                camera.videoZoomFactor = min(CGFloat(max(1.0, zoom / cameraForZoom.key)), camera.activeFormat.videoMaxZoomFactor)
+                cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoom = zoom
+            }
         }
         
-        if maxOpticalZoom < 10 {
-            return [1,2,5]
+        if cameraForZoom.value != cameraSettings.getCamera()?.deviceType {
+            changeBuiltInCameraDevice(preferredDevice: cameraForZoom.value, position: cameraSettings.cameraPosition, afterCommit: applyZoom)
+        } else {
+            applyZoom()
         }
         
-        if maxOpticalZoom < 15 {
-            return [1,2,5,10]
-        }
-        
-        return []
     }
     
     func getOpticalZoomList() -> [Float] {
-        var zoomList: [Double] = []
-        
-        zoomList.append(getMinimumZoomValue(defaultCamera: false))
-        
-        if let virtualDeviceZoomFactors = defaultVideoDevice?.virtualDeviceSwitchOverVideoZoomFactors {
-            print("virtualDeviceZoomFactors", virtualDeviceZoomFactors)
-            if(virtualDeviceZoomFactors.isEmpty){
-                zoomList.append(1.0)
-            }
-            zoomList.append(contentsOf: virtualDeviceZoomFactors.map { Double(truncating: $0) / 2.0 })
-        }
-        
-        
-        if #available(iOS 16.0, *) {
-            if let secondaryZoomFactors = defaultVideoDevice?.activeFormat.secondaryNativeResolutionZoomFactors {
-                print("secondaryZoomFactors ", secondaryZoomFactors)
-                zoomList.append(contentsOf: secondaryZoomFactors.map { Double($0) / 2.0 })
-            }
-        }
-        let array = Array(Set(zoomList)) // to make sure there are not duplicate numbers
-        return array.sorted().map{Float($0)}
-        
+        return cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoomParameters.zoomPresets ?? [1.0]
     }
-    
-    func getMinimumZoomValue(defaultCamera: Bool) -> Double {
-        
-        if(defaultCamera){
-            return 1.0
-        }
-        
-        let additionalCameras = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualWideCamera, .builtInTripleCamera, .builtInUltraWideCamera], mediaType: .video, position: .back)
-        
-        if(!additionalCameras.devices.isEmpty){
-            let minZoomFactor = Double(defaultVideoDevice?.minAvailableVideoZoomFactor ?? 2) / 2.0
-            if minZoomFactor < 1.0 {
-                return Double(String(format: "%.1f", minZoomFactor)) ?? 1.0
-            } else {
-                return Double(minZoomFactor)
-            }
-        } else {
-            return 1.0
-        }
-    }
-    
     
     func shutterSpeedRange(min: Int, max: Int) -> [Int] {
         let filteredShutterSpeedRange = shutters.filter{$0 >= min && $0 <= max}
@@ -728,10 +644,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func getShutterSpeedRange() -> [Float] {
         var shutters_available: [Float] = []
         
-        guard let defaultCamera = defaultVideoDevice else { return [] }
+        guard let camera = cameraModelOwner?.cameraModel?.cameraSettingsModel.getCamera() else { return [] }
         
-        let min_seconds = defaultCamera.activeFormat.minExposureDuration.seconds
-        let max_seconds = defaultCamera.activeFormat.maxExposureDuration.seconds
+        let min_seconds = camera.activeFormat.minExposureDuration.seconds
+        let max_seconds = camera.activeFormat.maxExposureDuration.seconds
         
         for one_shutter in shutters {
             let seconds = 1.0 / Float64(one_shutter)
@@ -829,15 +745,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func changeExposureDurationIso(duration: CMTime, iso: Int) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
-        if (defaultVideoDevice?.isExposureModeSupported(.custom) == true){
-            lockConfig { () -> () in
-                defaultVideoDevice?.exposureMode = .custom
-                defaultVideoDevice?.setExposureModeCustom(duration: duration , iso: Float(iso), completionHandler: nil)
-                cameraSettingModel.currentShutterSpeed = duration
-                cameraSettingModel.currentIso = iso
-            }
-        } else {
-            print("custom exposure setting not supported")
+        lockConfig { (_ camera: AVCaptureDevice) -> () in
+            //Note: lockConfig also locks the updateLock of cameraSettingsModel. This is very important as this function can be rapidly called for auto exposure updates and the falling checks may let an invalid parameter slip through if camera changes in just the wrong moment.
+            let safeIso = min(max(cameraSettingModel.minIso, Float(iso)), cameraSettingModel.maxIso)
+            let safeDuration = min(max(cameraSettingModel.minShutterSpeed, duration), cameraSettingModel.maxShutterSpeed)
+            camera.exposureMode = .custom
+            camera.setExposureModeCustom(duration: safeDuration , iso: safeIso, completionHandler: nil)
+            cameraSettingModel.currentShutterSpeed = safeDuration
+            cameraSettingModel.currentIso = Int(safeIso)
         }
     }
     
