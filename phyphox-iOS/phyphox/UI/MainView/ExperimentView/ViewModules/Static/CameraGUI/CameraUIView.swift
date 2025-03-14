@@ -108,6 +108,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var apertureButton: UIButton!
     private var exposureButton: UIButton!
     private var zoomButton: UIButton!
+    private var whiteBalanceButton: UIButton!
     
     private var cameraPositionText: UILabel!
     private var autoExposureText: UILabel!
@@ -116,6 +117,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var exposureText: UILabel!
     private var apertureText: UILabel!
     private var zoomText: UILabel!
+    private var whiteBalanceText: UILabel!
     
     // size definitions
     private let spacing: CGFloat = 1.0
@@ -161,6 +163,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                                       action: #selector(apertureButtonTapped(_:)))
         zoomButton = createButton(image: .assetImageName("ic_zoom"),
                                   action: #selector(zoomButtonTapped(_:)))
+        whiteBalanceButton = createButton(image: .assetImageName("ic_white_balance"),
+                                  action: #selector(whiteBalanceButtonTapped(_:)))
         
         
         cameraPositionText = createLabel(withText: localize("back"))
@@ -169,7 +173,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         shutterSpeedText = createLabel(withText:localize("notSet"))
         exposureText = createLabel(withText: localize("notSet"))
         apertureText = createDisabledLabel(withText: localize("notSet"))
-        zoomText = createLabel(withText: "Zoom")
+        zoomText = createLabel(withText: localize("cameraZoom"))
+        whiteBalanceText = createLabel(withText: localize("notSet"))
         
         headerView = previewViewHeader()
         
@@ -274,6 +279,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             onShutterSpeedChange(newValue: currentShutterSpeed)
             
             exposureText?.text = String(cameraSettingsModel.currentExposureValue)+"EV"
+            
+            whiteBalanceText?.text = localize( "wb_"+cameraSettingsModel.whiteBalanceColorTemperaturePresets[cameraSettingsModel.currentWhiteBalancePreset].label
+            )
             
             if let aeState = cameraModelOwner?.cameraModel?.autoExposureEnabled {
                 autoExposureText?.text = aeState ? localize("on") : localize("off")
@@ -391,6 +399,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             settingStackView.addArrangedSubview(getCameraSettingView(for: .shutterSpeed))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .aperture))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .zoom))
+            settingStackView.addArrangedSubview(getCameraSettingView(for: .whiteBalance))
             break
         default:
             break
@@ -424,6 +433,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             case .zoom:
                 vStack.addArrangedSubview(zoomButton)
                 vStack.addArrangedSubview(zoomText)
+            case .whiteBalance:
+                vStack.addArrangedSubview(whiteBalanceButton)
+                vStack.addArrangedSubview(whiteBalanceText)
             }
             
             return vStack
@@ -432,7 +444,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     // MARK: - SettingType Enum
     
     enum SettingType {
-        case flipCamera, autoExposure, iso, shutterSpeed, exposure, aperture, zoom
+        case flipCamera, autoExposure, iso, shutterSpeed, exposure, aperture, zoom, whiteBalance
     }
 
 
@@ -459,7 +471,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             button.transform = isFlipped ? .identity : clockwiseRotation
             isFlipped.toggle()
             
-            cameraPositionText?.text = isFlipped ? localize("front") : localize("back")
+            cameraPositionText?.text = isFlipped ? localize("cameraFront") : localize("cameraBack")
             
         }
         
@@ -467,7 +479,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         handleButtonTapped(mode: .NONE, additionalActions: {
             
-            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.switchCamera()
+            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.toggleCameraPosition()
  
         })
        
@@ -477,7 +489,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         handleButtonTapped(mode: .NONE, additionalActions: {
             let autoExposureState = !(self.cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false)
             self.autoExposureText?.text = autoExposureState ? localize("on") : localize("off")
-            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.autoExposure(auto: autoExposureState)
+            self.cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.setExposureTo(auto: autoExposureState)
         })
     }
 
@@ -519,6 +531,14 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         })
     }
     
+    @objc private func whiteBalanceButtonTapped(_ sender: UIButton) {
+        handleButtonTapped(mode: .WHITE_BALANCE, additionalActions: {
+            self.collectionView.reloadData()
+            self.selectDefaultItemInCollectionView()
+            self.updateContentInset(startListFromMiddle: false)
+        })
+    }
+    
     private func updateContentInset(startListFromMiddle: Bool){
         if(startListFromMiddle){
             self.collectionView.contentInset = UIEdgeInsets(top: 0, left: self.frame.width / 2, bottom: 0, right: self.frame.width / 2)
@@ -554,6 +574,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             let currentZoom = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoom ?? 1.0
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentZoom)}) ?? -1
         }
+        else if(cameraSettingMode == .WHITE_BALANCE){
+            currentSelectionIndex = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentWhiteBalancePreset ?? 0
+        }
         else {
             currentSelectionIndex = 0
         }
@@ -573,7 +596,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
      
     @objc func panned(_ sender: UIPanGestureRecognizer) {
         
-        guard var model = cameraModelOwner?.cameraModel else {
+        guard let model = cameraModelOwner?.cameraModel else {
             return
         }
         
@@ -660,6 +683,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             return cameraSettingsModel.exposureValues
         case .ZOOM:
             return cameraSettingsModel.currentZoomParameters.zoomPresets
+        case .WHITE_BALANCE:
+            return Array(stride(from: 0.0, to: Float(cameraSettingsModel.whiteBalanceColorTemperaturePresets.count), by: 1.0))
         default:
             return []
         }
@@ -770,6 +795,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             showZoomSlider = false
         case .WHITE_BALANCE:
             showZoomSlider = false
+            isListVisible.toggle()
         }
         
         
@@ -783,6 +809,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         self.cameraSettingValues.count
     }
     
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: cameraSettingMode == .WHITE_BALANCE ? 100 : 40, height: ExperimentCameraUIView.controlExtraHeight + 20)
+
+    }
+    
     var index : IndexPath = IndexPath(row: 0, section: 0)
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -793,13 +824,20 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         index = indexPath
         var value : String
         
-        if(cameraSettingMode == .SHUTTER_SPEED){
-            value = "1/\(Int(self.cameraSettingValues[indexPath.row]))"
-        } else if (cameraSettingMode == .EXPOSURE) {
-            value = String(self.cameraSettingValues[indexPath.row]) + "EV"
-        } else if(cameraSettingMode == .ZOOM){
+        switch cameraSettingMode {
+        case .ZOOM:
             value = String(self.cameraSettingValues[indexPath.row]) + "X"
-        } else {
+        case .EXPOSURE:
+            value = String(self.cameraSettingValues[indexPath.row]) + "EV"
+        case .SHUTTER_SPEED:
+            value = "1/\(Int(self.cameraSettingValues[indexPath.row]))"
+        case .WHITE_BALANCE:
+            if let settings = cameraModelOwner?.cameraModel?.cameraSettingsModel {
+                value = localize("wb_" + settings.whiteBalanceColorTemperaturePresets[indexPath.row].label)
+            } else {
+                value = String(Int(self.cameraSettingValues[indexPath.row]))
+            }
+        default:
             value = String(Int(self.cameraSettingValues[indexPath.row]))
         }
         
@@ -816,24 +854,26 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             let currentCameraSettingValue = self.cameraSettingValues[indexPath.row]
             
-            guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+            guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel,
+                  let service = cameraSettingsModel.service else { return }
             
             switch cameraSettingMode {
-            case .NONE, .WHITE_BALANCE:
+            case .NONE:
                 break
             case .ZOOM:
                 buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue)
-                cameraSettingsModel.setZoom(zoom: currentCameraSettingValue)
+                service.setZoom(currentCameraSettingValue)
             case .ISO:
-                cameraSettingsModel.iso(value: Int(currentCameraSettingValue))
+                service.setIso(Int(currentCameraSettingValue))
                 self.isoSettingText?.text = String(Int(currentCameraSettingValue))
             case .SHUTTER_SPEED:
-                cameraSettingsModel.shutterSpeed(value: Double(currentCameraSettingValue))
+                service.setExposureDuration(CMTime(value: Int64(1e9/currentCameraSettingValue), timescale: 1_000_000_000))
                 self.shutterSpeedText?.text = "1/" + String(Int(currentCameraSettingValue))
             case .EXPOSURE:
-                cameraSettingsModel.exposure(value: currentCameraSettingValue)
+                service.setExposureValue(currentCameraSettingValue)
                 self.exposureText?.text = String(currentCameraSettingValue)+"EV"
-           
+            case .WHITE_BALANCE:
+                service.setWhiteBalancePreset(index: Int(currentCameraSettingValue))
             }
         }
     }
@@ -871,7 +911,6 @@ class CameraSettingValueViewCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
     }
     
     required init?(coder: NSCoder) {
@@ -885,7 +924,8 @@ class CameraSettingValueViewCell: UICollectionViewCell {
     
     private func setupUI(){
         self.addSubview(self.settingValueView)
-        self.settingValueView.frame = CGRect(x: 0, y: 10, width: 50, height: ExperimentCameraUIView.controlExtraHeight)
+        self.settingValueView.frame = CGRect(x: 0, y: 10, width: frame.width, height: ExperimentCameraUIView.controlExtraHeight)
+        
     }
     
     override func prepareForReuse() {
@@ -954,7 +994,7 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     }
     
     @objc func sliderValueChanged(_ sender :UISlider) {
-        self.cameraModel.setZoom(zoom: positionToZoomValue(pos: sender.value))
+        self.cameraModel.service?.setZoom(positionToZoomValue(pos: sender.value))
     }
     
     lazy private var minimumZoomValue : Float =  {

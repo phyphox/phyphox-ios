@@ -107,10 +107,15 @@ class CameraSettingsModel {
     var maxExposureValue: Float = 1.0
     var currentExposureValue: Float = 0.0
     
-    var minwhiteBalance: Float = 1.0
-    var maxWhiteBalance: Float = 1.0
-    var currentWhiteBalance: Float = 1.0
-        
+    let whiteBalanceColorTemperaturePresets:[(label: String, temperature: Float?)] = [
+        ("auto",            nil),
+        ("incandescent", 2600.0),
+        ("fluorescent",  4200.0),
+        ("daylight",     5600.0),
+        ("cloudy",       6500.0)
+    ]
+    var currentWhiteBalancePreset: Int = 0
+    
     var exposureCompensationRange: ClosedRange<Float>?
     
     var service: CameraService?
@@ -128,39 +133,6 @@ class CameraSettingsModel {
     func registerSettingsObserver(_ observer: SettingsChangeObserver) {
         changeObservers.append(observer)
     }
-    
-    func setZoom(zoom: Float) {
-        service?.updateZoom(zoom: zoom)
-    }
-    
-    func switchCamera(){
-        service?.toggleCameraPosition()
-    }
-    
-    func setLisOfCameraSettingsValue() {
-        service?.setValuesForCameraSettingsList()
-    }
-    
-    
-    func autoExposure(auto: Bool) {
-        service?.setExposureTo(auto: auto)
-    }
-    
-    func exposure(value: Float) {
-        service?.changeExposure(value: value)
-    }
-    
-    func aperture() {}
-    
-    func iso(value: Int) {
-        service?.changeIso(value)
-    }
-    
-    func shutterSpeed(value: Double) {
-        service?.changeExposureDuration(CMTime(value: Int64(1e9/value), timescale: 1_000_000_000))
-    }
-        
-    func whiteBalance() {}
 
 }
 

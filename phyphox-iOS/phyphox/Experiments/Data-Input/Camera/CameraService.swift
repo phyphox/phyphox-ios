@@ -56,7 +56,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var isConfigured = false
     
-    
     public func checkForPermisssion(){
         
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -323,6 +322,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 self.cameraModelOwner?.cameraModel?.cameraSettingsModel.changeCamera(newVideoDevice)
                                         
                 self.session.commitConfiguration()
+                
+                self.setWhiteBalancePreset(index: self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentWhiteBalancePreset ?? 0)
                 
                 afterCommit?()
             } catch {
@@ -603,7 +604,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
-    func updateZoom(zoom: Float){
+    func setZoom(_ zoom: Float){
         guard let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
             return
         }
@@ -629,10 +630,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             applyZoom()
         }
         
-    }
-    
-    func getOpticalZoomList() -> [Float] {
-        return cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoomParameters.zoomPresets ?? [1.0]
     }
     
     func shutterSpeedRange(min: Int, max: Int) -> [Int] {
@@ -733,12 +730,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return nearestNumber
     }
     
-    func changeIso(_ iso: Int) {
+    func setIso(_ iso: Int) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         changeExposureDurationIso(duration: cameraSettingModel.currentShutterSpeed, iso: iso)
     }
     
-    func changeExposureDuration(_ duration: CMTime) {
+    func setExposureDuration(_ duration: CMTime) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         changeExposureDurationIso(duration: duration, iso: cameraSettingModel.currentIso)
     }
@@ -760,7 +757,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         cameraModelOwner?.cameraModel?.autoExposureEnabled = auto
     }
     
-    func changeExposure(value: Float) {
+    func setExposureValue(_ value: Float) {
         guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
 
         if !(cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
@@ -774,5 +771,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     func getExposureValues() -> [Float] {
         //Since we use our own AE implementation, we can offer any selection of exposure compensation presets. However, since in practice our AE is applied to a selected area only mild corrections should be necessary.
         return [-1.0, -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+    }
+    
+    func setWhiteBalancePreset(index: Int) {
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+        lockConfig { (_ camera: AVCaptureDevice) -> () in
+            let preset = cameraSettingsModel.whiteBalanceColorTemperaturePresets[index]
+            if let temperature = preset.temperature {
+                let tempAndTint = AVCaptureDevice.WhiteBalanceTemperatureAndTintValues(temperature: temperature, tint: 0.0)
+                let gains = camera.deviceWhiteBalanceGains(for: tempAndTint)
+                camera.setWhiteBalanceModeLocked(with: gains)
+            } else {
+                camera.whiteBalanceMode = .continuousAutoWhiteBalance
+            }
+        }
+        cameraSettingsModel.currentWhiteBalancePreset = index
     }
 }
