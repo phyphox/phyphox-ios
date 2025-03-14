@@ -80,7 +80,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     // Camera Setting Views and its flags
     private var cameraSettingUIView: UIStackView?
-    var cameraSettingMode: CameraSettingMode = .NONE
+    var cameraSettingMode: CameraSettingMode = .NONE {
+        didSet {
+            self.collectionView.reloadData()
+        }
+    }
     private var isListVisible: Bool = false {
         didSet {
             self.collectionView.isHidden = isListVisible ? false : true
@@ -496,7 +500,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func isoSettingButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .ISO, additionalActions: {
-            self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
             self.updateContentInset(startListFromMiddle: false)
         })
@@ -505,7 +508,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func shutterSpeedButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .SHUTTER_SPEED, additionalActions: {
-            self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
             self.updateContentInset(startListFromMiddle: false)
         })
@@ -513,7 +515,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func exposureButtonTapped(_ sender: UIButton){
         handleButtonTapped(mode: .EXPOSURE, additionalActions: {
-            self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
             self.updateContentInset(startListFromMiddle: false)
         })
@@ -525,7 +526,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func zoomButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .ZOOM, additionalActions: {
-            self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
             self.updateContentInset(startListFromMiddle: true)
         })
@@ -533,7 +533,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func whiteBalanceButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .WHITE_BALANCE, additionalActions: {
-            self.collectionView.reloadData()
             self.selectDefaultItemInCollectionView()
             self.updateContentInset(startListFromMiddle: false)
         })
@@ -547,8 +546,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
     }
     
-    private func handleButtonTapped(mode: CameraSettingMode, additionalActions: (() -> Void)?){
-        cameraSettingMode = mode
+    private func handleButtonTapped(mode: CameraSettingMode, additionalActions: (() -> Void)?) {
+        cameraSettingMode = cameraSettingMode == mode ? .NONE : mode
         manageVisiblity()
         additionalActions?()
     }
@@ -788,14 +787,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             isListVisible = false
             showZoomSlider = false
         case .ZOOM:
-            showZoomSlider.toggle()
-            isListVisible = showZoomSlider
-        case .ISO, .SHUTTER_SPEED, .EXPOSURE:
-            isListVisible.toggle()
+            showZoomSlider = true
+            isListVisible = true
+        case .ISO, .SHUTTER_SPEED, .EXPOSURE, .WHITE_BALANCE:
+            isListVisible = true
             showZoomSlider = false
-        case .WHITE_BALANCE:
-            showZoomSlider = false
-            isListVisible.toggle()
         }
         
         
