@@ -798,7 +798,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         } else if (cameraSettingMode == .EXPOSURE) {
             value = String(self.cameraSettingValues[indexPath.row]) + "EV"
         } else if(cameraSettingMode == .ZOOM){
-            value = String(self.cameraSettingValues[indexPath.row])
+            value = String(self.cameraSettingValues[indexPath.row]) + "X"
         } else {
             value = String(Int(self.cameraSettingValues[indexPath.row]))
         }
