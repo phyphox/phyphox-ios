@@ -121,13 +121,12 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                     }
                 }
 
-                update(commandBuffer: commandBuffer, cameraImageTextureY: cameraTextureProvider?.cameraImageTextureY, cameraImageTextureCbCr: cameraTextureProvider?.cameraImageTextureCbCr, viewportSize: view.frame)
+                update(commandBuffer: commandBuffer, viewportSize: view.frame)
             }
         }
     }
     
-    func update(commandBuffer: MTLCommandBuffer,
-                cameraImageTextureY: CVMetalTexture?, cameraImageTextureCbCr: CVMetalTexture?, viewportSize: CGRect){
+    func update(commandBuffer: MTLCommandBuffer, viewportSize: CGRect){
 
         updateAppState()
         
@@ -137,11 +136,6 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 
                 // Set a label to identify this render pass in a captured Metal frame.
                 renderEncoder.label = "CameraGUIPreview"
-                
-                guard let cameraImageY = cameraImageTextureY, let cameraImageCbCr = cameraImageTextureCbCr else {
-                    renderEncoder.endEncoding()
-                    return
-                }
                 
                 // Push a debug group that enables you to identify this render pass in a Metal frame capture.
                 renderEncoder.pushDebugGroup("CameraPass")
@@ -177,9 +171,29 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
                 renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 1)
                 
-                // Setup textures for the camera fragment shader.
-                renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageY), index: 0)
-                renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageCbCr), index: 1)
+                
+                guard let cameraTextureProvider = cameraTextureProvider else {
+                        renderEncoder.endEncoding()
+                        return
+                }
+                
+                
+                var aborted = false
+                cameraTextureProvider.safeTextureAccess {
+                    guard let cameraImageTextureY = cameraTextureProvider.cameraImageTextureY,
+                          let cameraImageTextureCbCr = cameraTextureProvider.cameraImageTextureCbCr
+                        else {
+                            renderEncoder.endEncoding()
+                            aborted = true
+                            return
+                    }
+                    renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureY), index: 0)
+                    renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureCbCr), index: 1)
+                }
+                if aborted {
+                    return
+                }
+                
                 
                 // Draw final quad to display
                 renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)

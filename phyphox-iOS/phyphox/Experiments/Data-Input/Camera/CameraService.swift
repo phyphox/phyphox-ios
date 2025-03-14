@@ -16,6 +16,7 @@ protocol CameraMetalTextureProvider {
     var cameraImageTextureY: CVMetalTexture? { get }
     var cameraImageTextureCbCr: CVMetalTexture? { get }
     var inFlightSemaphore: DispatchSemaphore { get }
+    func safeTextureAccess(_ block: () -> Void)
 }
 
 @available(iOS 14.0, *)
@@ -24,6 +25,18 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     var cameraImageTextureY: CVMetalTexture?
     var cameraImageTextureCbCr: CVMetalTexture?
     let inFlightSemaphore = DispatchSemaphore(value: kMaxBuffersInFlight)
+    
+    //We are seeing some rare crashes from the preview renderer with a bad access to the textures.
+    //This probably happens when a new camera image is captured and the textures are replaced just when the UI thread decides to update the preview image.
+    //This synchronizes the texture update and the preview renderer. Note, that the analyzing renderer is NOT synchronized as it may read in parallel to the preview renderer and should not collide with texture writes as it runs on the same thread (i.e. is called after the textures have been written)
+    let textureAccessLock = DispatchSemaphore(value: 1)
+    func safeTextureAccess(_ block: () -> Void) {
+        textureAccessLock.wait()
+        defer {
+            textureAccessLock.signal()
+        }
+        block()
+    }
 
     var cameraImageTextureCache: CVMetalTextureCache!
     
@@ -387,8 +400,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             print("updateCameraImageTextures less than 2")
             return
         }
-        cameraImageTextureY = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .r8Unorm, planeIndex: 0)
-        cameraImageTextureCbCr = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .rg8Unorm, planeIndex: 1)
+        safeTextureAccess {
+            cameraImageTextureY = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .r8Unorm, planeIndex: 0)
+            cameraImageTextureCbCr = createTexture(fromPixelBuffer: imageBuffer, pixelFormat: .rg8Unorm, planeIndex: 1)
+        }
         
         guard let cameraImageTextureY = cameraImageTextureY, let cameraImageTextureCbCr = cameraImageTextureCbCr else {
             return
@@ -397,7 +412,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         self.analyzingRenderer?.updateFrame(time: seconds,
                 cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr
         )
-        
     }
     
     //MARK: Camera Configuration
