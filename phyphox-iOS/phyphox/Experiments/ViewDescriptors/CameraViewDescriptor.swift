@@ -17,7 +17,7 @@ struct CameraViewDescriptor: ViewDescriptor, Equatable {
 
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, aspectRatio: CGFloat, exposureAdjustmentLevel: CameraSettingLevel, grayscale: Bool, markOverexposure: UIColor?, markUnderexposure: UIColor?, translation: ExperimentTranslationCollection?) {
+    init(label: String, exposureAdjustmentLevel: CameraSettingLevel, grayscale: Bool, markOverexposure: UIColor?, markUnderexposure: UIColor?, translation: ExperimentTranslationCollection?) {
         self.label = label
         self.exposureAdjustmentLevel = exposureAdjustmentLevel
         self.grayscale = grayscale

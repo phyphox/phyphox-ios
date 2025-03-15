@@ -11,7 +11,6 @@ import Foundation
 struct CameraViewElementDescriptor {
     let label: String
     let exposureAdjustmentLevel: CameraSettingLevel
-    let aspectRatio: CGFloat
     let grayscale: Bool
     let markOverexposure: UIColor?
     let markUnderexposure: UIColor?
@@ -24,7 +23,6 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
     
     private enum Attribute: String, AttributeKey {
         case label
-        case aspectRatio
         case exposure_adjustment_level
         case grayscale
         case markOverexposure
@@ -43,16 +41,14 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         case 3: CameraSettingLevel.ADVANCE
         default: CameraSettingLevel.BASIC
         }
-        
-        let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
-        
+                
         let grayScale = try attributes.optionalValue(for: .grayscale) ?? false
         
         let markOverexposure = mapColorString(attributes.optionalString(for: .markOverexposure))
         
         let markUnderexposure = mapColorString(attributes.optionalString(for: .markUnderexposure))
         
-        results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, aspectRatio: aspectRatio, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure)))
+        results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure)))
     }
     
     func nextResult() throws -> ViewElementDescriptor {

@@ -458,7 +458,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             
         case .camera(let descriptor):
-            return CameraViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
+            return CameraViewDescriptor(label: descriptor.label, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
                                         grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, translation: translations)
             
         case .image(let descriptor):
