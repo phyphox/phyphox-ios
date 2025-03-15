@@ -32,6 +32,18 @@ protocol ZoomSliderViewDelegate: AnyObject {
     func buttonTapped(for value: Float)
 }
 
+enum CameraSettingLevel {
+    case BASIC // auto exposure ON (Level 1)
+    case INTERMEDIATE // auto exposure OFF, only adjust exposure (Level 2)
+    case ADVANCE // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
+}
+
+enum CameraShowControlsState {
+    case ALWAYS
+    case FULL_VIEW_ONLY
+    case NEVER
+}
+
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
@@ -39,10 +51,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         didSet {
             self.cameraPreviewRenderer.cameraModelOwner = cameraModelOwner
             cameraSettingUIView = cameraSettingViews(adjustmentLevel: descriptor.exposureAdjustmentLevel)
-            cameraSettingUIView?.isHidden = true
+            cameraSettingUIView?.isHidden = !controlsVisible
             cameraModelOwner?.cameraModel?.cameraSettingsModel.registerSettingsObserver(self)
             self.addSubview(cameraSettingUIView!)
             setupCameraSettingViews()
+            manageLockedButtons()
         }
     }
     var cameraTextureProvider: CameraMetalTextureProvider? {
@@ -72,6 +85,15 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var isViewMaximized = false
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
     var resizableState: ResizableViewModuleState =  .normal
+    var controlsVisible: Bool {
+        get {
+            switch descriptor.showControls {
+            case .ALWAYS: return true
+            case .NEVER: return false
+            case .FULL_VIEW_ONLY: return resizableState == .exclusive
+            }
+        }
+    }
     
     // Resizing the Passepartout
     private var panGestureRecognizer: UIPanGestureRecognizer? = nil
@@ -116,7 +138,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     private var cameraPositionText: UILabel!
     private var autoExposureText: UILabel!
-    private var isoSettingText: UILabel!
+    private var isoText: UILabel!
     private var shutterSpeedText: UILabel!
     private var exposureText: UILabel!
     private var apertureText: UILabel!
@@ -173,10 +195,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         
         cameraPositionText = createLabel(withText: localize("back"))
         autoExposureText = createLabel(withText: localize("off"))
-        isoSettingText = createLabel(withText: localize("notSet"))
+        isoText = createLabel(withText: localize("notSet"))
         shutterSpeedText = createLabel(withText:localize("notSet"))
         exposureText = createLabel(withText: localize("notSet"))
-        apertureText = createDisabledLabel(withText: localize("notSet"))
+        apertureText = createLabel(withText: localize("notSet"))
         zoomText = createLabel(withText: localize("cameraZoom"))
         whiteBalanceText = createLabel(withText: localize("notSet"))
         
@@ -224,7 +246,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         headerView.frame = CGRect(x: sideMargins, y: spacing, width: frame.width-2*sideMargins, height: headSize.height)
         
         //Controls
-        let controlsVisible = resizableState == .exclusive //TODO controls can be allowed in non-exclusive state
         let controlSize = controlsVisible ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
         let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlExtraHeight)
         let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlZoomHeight)
@@ -310,7 +331,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     func onIsoChange(newValue: Int) {
         DispatchQueue.main.async {
-            self.isoSettingText?.text = String(newValue)
+            self.isoText?.text = String(newValue)
         }
     }
     
@@ -328,16 +349,16 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
-            cameraSettingUIView?.isHidden = false
+            cameraSettingUIView?.isHidden = !controlsVisible
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
             if let gr = panGestureRecognizer {
                 metalView.addGestureRecognizer(gr)
             }
             self.cameraModelOwner?.cameraModel?.isOverlayEditable = true
-            
+            manageVisiblity()
             
         } else {
-            cameraSettingUIView?.isHidden = true
+            cameraSettingUIView?.isHidden = !controlsVisible
             if let gr = panGestureRecognizer {
                 metalView.removeGestureRecognizer(gr)
             }
@@ -424,7 +445,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 vStack.addArrangedSubview(autoExposureText)
             case .iso:
                 vStack.addArrangedSubview(isoButton)
-                vStack.addArrangedSubview(isoSettingText)
+                vStack.addArrangedSubview(isoText)
             case .shutterSpeed:
                 vStack.addArrangedSubview(shutterSpeedButton)
                 vStack.addArrangedSubview(shutterSpeedText)
@@ -714,18 +735,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
         }
         
-        func disabledImage(){
-            button.isEnabled = false
-            button.alpha = 0.5
-        }
-        
         switch image {
         case .systemImageName(let systemName):
             button.setImage(UIImage(systemName: systemName), for: .normal)
             rescaleImage(transform: CGAffineTransform(scaleX: 1.2, y: 1.2))
-            if(systemName == "camera.aperture"){
-                disabledImage()
-            }
         case .assetImageName(let imageName):
             let image = UIImage(named: imageName)
             button.setImage(image, for: .normal)
@@ -764,14 +777,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         return label
     }
     
-    private func createDisabledLabel(withText text: String) -> UILabel {
-        let label = createLabel(withText: text)
-        label.isEnabled = false
-        label.alpha = 0.5
-        return label
-    }
-    
-    
     private func createTextButton(label: String, color: UIColor, action: Selector) {
         let textButton = UIButton(type:.custom)
         
@@ -793,8 +798,20 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             isListVisible = true
             showZoomSlider = false
         }
+    }
+    
+    private func manageLockedButtons(){
+        apertureText.setLocked(true)
+        apertureButton.setLocked(true)
         
+        guard let lockedControls = cameraModelOwner?.cameraModel?.locked.keys else { return }
         
+        shutterSpeedButton.setLocked(lockedControls.contains("shutter_speed"))
+        shutterSpeedText.setLocked(lockedControls.contains("shutter_speed"))
+        isoButton.setLocked(lockedControls.contains("iso"))
+        isoText.setLocked(lockedControls.contains("iso"))
+        exposureButton.setLocked(lockedControls.contains("exposure"))
+        exposureText.setLocked(lockedControls.contains("exposure"))
     }
     
     //MARK: Collection views functions
@@ -861,7 +878,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 service.setZoom(currentCameraSettingValue)
             case .ISO:
                 service.setIso(Int(currentCameraSettingValue))
-                self.isoSettingText?.text = String(Int(currentCameraSettingValue))
+                self.isoText?.text = String(Int(currentCameraSettingValue))
             case .SHUTTER_SPEED:
                 service.setExposureDuration(CMTime(value: Int64(1e9/currentCameraSettingValue), timescale: 1_000_000_000))
                 self.shutterSpeedText?.text = "1/" + String(Int(currentCameraSettingValue))

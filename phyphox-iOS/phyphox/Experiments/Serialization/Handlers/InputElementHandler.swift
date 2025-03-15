@@ -125,7 +125,7 @@ struct CameraInputDescriptor: SensorDescriptor {
     let y2: Float
     let autoExposure: Bool
     let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
-    let locked: String
+    let locked: [String:Float?]
     let feature: String
     let outputs: [SensorOutputDescriptor]
 }
@@ -171,7 +171,28 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
                 
         let autoExposure: Bool = try attributes.optionalValue(for: .auto_exposure) ?? true
         
-        let locked: String = try attributes.optionalValue(for: .locked) ?? ""
+        let lockedStr: String = try attributes.optionalValue(for: .locked) ?? ""
+        var locked: [String:Float?] = [:]
+        for lockedSetting in lockedStr.split(separator: ",") {
+            if lockedSetting.contains("=") {
+                let parts = lockedSetting.split(separator: "=", maxSplits: 1)
+                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                var value: Float? = nil
+                if setting == "shutter_speed" && parts[1].contains("/") {
+                    let fraction = parts[1].split(separator: "/")
+                    let a = Float(String(fraction[0].trimmingCharacters(in: .whitespaces)))
+                    let b = Float(String(fraction[1].trimmingCharacters(in: .whitespaces)))
+                    if let a = a, let b = b {
+                        value = a/b
+                    }
+                } else {
+                    value = Float(String(parts[1].trimmingCharacters(in: .whitespaces)))
+                }
+                locked[setting] = value
+            } else {
+                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces))] = nil
+            }
+        }
         
         let feature: String = attributes.optionalString(for: .feature) ?? "photometric"
         if feature != "photometric" {

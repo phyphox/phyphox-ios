@@ -14,6 +14,7 @@ struct CameraViewElementDescriptor {
     let grayscale: Bool
     let markOverexposure: UIColor?
     let markUnderexposure: UIColor?
+    let showControls: CameraShowControlsState
 }
 
 final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
@@ -27,6 +28,7 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         case grayscale
         case markOverexposure
         case markUnderexposure
+        case show_controls
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -48,7 +50,16 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         
         let markUnderexposure = mapColorString(attributes.optionalString(for: .markUnderexposure))
         
-        results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure)))
+        let showControlsStr = attributes.optionalString(for: .show_controls)
+        let showControls: CameraShowControlsState = switch showControlsStr?.lowercased() {
+        case nil: .FULL_VIEW_ONLY
+        case "always": .ALWAYS
+        case "full_view_only": .FULL_VIEW_ONLY
+        case "never": .NEVER
+        default: throw ElementHandlerError.unexpectedAttributeValue(showControlsStr ?? "")
+        }
+        
+        results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure, showControls: showControls)))
     }
     
     func nextResult() throws -> ViewElementDescriptor {

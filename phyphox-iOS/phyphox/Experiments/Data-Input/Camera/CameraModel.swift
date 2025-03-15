@@ -166,7 +166,7 @@ final class CameraModel {
     var autoExposureEnabled: Bool = true
     var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
     
-    var locked: String = ""
+    var locked: [String:Float?] = [:]
     
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel
@@ -262,10 +262,4 @@ enum CameraSettingMode {
     
 }
 
-
-enum CameraSettingLevel {
-    case BASIC // auto exposure ON (Level 1)
-    case INTERMEDIATE // auto exposure OFF, only adjust exposure (Level 2)
-    case ADVANCE // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
-}
 

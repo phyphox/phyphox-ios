@@ -171,7 +171,7 @@ final class Experiment {
         if !gpsInputs.isEmpty {
             requiredPermissions.insert(.location)
         }
-        print(ProcessInfo().operatingSystemVersion)
+        //print(ProcessInfo().operatingSystemVersion)
         if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion == 4 {
             for sensorInput in sensorInputs {
                 if sensorInput.sensorType == .pressure {

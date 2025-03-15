@@ -34,7 +34,7 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
     
     var autoExposure: Bool = true
     var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
-    var locked: String = ""
+    var locked: [String:Float?] = [:]
     var feature: String = ""
     
     var delegates : [CameraGUIDelegate] = []

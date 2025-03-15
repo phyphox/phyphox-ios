@@ -256,7 +256,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel)
         
-        changeExposureDurationIso(duration: shutter, iso: iso)
+        setExposureDurationIso(duration: shutter, iso: iso)
     }
     
     func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel) -> (shutter: CMTime, iso: Int) {
@@ -337,6 +337,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 self.session.commitConfiguration()
                 
                 self.setWhiteBalancePreset(index: self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentWhiteBalancePreset ?? 0)
+                
+                self.applyLockedSettings();
                 
                 afterCommit?()
             } catch {
@@ -483,6 +485,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         
         self.isConfigured = true
         
+        applyLockedSettings()
+                
         self.start()
         
     }
@@ -548,7 +552,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 }
             }
         }
-        print("Best format: \(bestFormat.debugDescription) with frame rate range \(bestFrameRateRange), aspect ratio \(bestAspectRatio), height \(bestHeight)")
+        //print("Best format: \(bestFormat.debugDescription) with frame rate range \(bestFrameRateRange), aspect ratio \(bestAspectRatio), height \(bestHeight)")
         
         if let bestFormat = bestFormat, let bestFrameRateRange = bestFrameRateRange {
             do {
@@ -618,11 +622,42 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
     
+    func applyLockedSettings() {
+        guard let cameraModel = cameraModelOwner?.cameraModel else {
+            return
+        }
+        if cameraModel.locked.isEmpty {
+            return
+        }
+        var lockedIso: Int? = nil
+        var lockedShutterSpeed: Float? = nil
+        
+        for (lockedSetting, value) in cameraModel.locked {
+            if let value = value {
+                switch lockedSetting {
+                case "exposure": setExposureValue(value)
+                case "aperture": print("Aperture not implemented on iOS as there is no device with variable aperture.")
+                case "iso": lockedIso = Int(value)
+                case "shutter_speed": lockedShutterSpeed = value
+                default: print("Unknown locked setting: \(lockedSetting)")
+                }
+            }
+        }
+        if let lockedIso = lockedIso, let lockedShutterSpeed = lockedShutterSpeed {
+            let duration = CMTime(value: Int64(lockedShutterSpeed*1_000_000_000), timescale: 1_000_000_000)
+            setExposureDurationIso(duration: duration, iso: lockedIso)
+        } else if let lockedShutterSpeed = lockedShutterSpeed {
+            let duration = CMTime(value: Int64(lockedShutterSpeed*1_000_000_000), timescale: 1_000_000_000)
+            setExposureDuration(duration)
+        } else if let lockedIso = lockedIso {
+            setIso(lockedIso)
+        }
+    }
+    
     func setZoom(_ zoom: Float){
         guard let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
             return
         }
-        var index = 0
         let cameraForZoom = cameraSettings.currentZoomParameters.cameras
             .sorted(by: {$0.key < $1.key})
             .last(where: {$0.key <= zoom})
@@ -746,15 +781,15 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func setIso(_ iso: Int) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
-        changeExposureDurationIso(duration: cameraSettingModel.currentShutterSpeed, iso: iso)
+        setExposureDurationIso(duration: cameraSettingModel.currentShutterSpeed, iso: iso)
     }
     
     func setExposureDuration(_ duration: CMTime) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
-        changeExposureDurationIso(duration: duration, iso: cameraSettingModel.currentIso)
+        setExposureDurationIso(duration: duration, iso: cameraSettingModel.currentIso)
     }
     
-    func changeExposureDurationIso(duration: CMTime, iso: Int) {
+    func setExposureDurationIso(duration: CMTime, iso: Int) {
         guard let cameraSettingModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
         lockConfig { (_ camera: AVCaptureDevice) -> () in
             //Note: lockConfig also locks the updateLock of cameraSettingsModel. This is very important as this function can be rapidly called for auto exposure updates and the falling checks may let an invalid parameter slip through if camera changes in just the wrong moment.
@@ -777,7 +812,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if !(cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
             let adjust = pow(2.0, value - cameraSettingsModel.currentExposureValue)
             let (shutter, iso) = calculateAdjustedExposure(adjust: Double(adjust), state: cameraSettingsModel)
-            changeExposureDurationIso(duration: shutter, iso: iso)
+            setExposureDurationIso(duration: shutter, iso: iso)
         }
         cameraSettingsModel.currentExposureValue = value
     }
