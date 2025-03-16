@@ -233,9 +233,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let framerate = min(1.0/cameraModel.cameraSettingsModel.maxFrameDuration, Double(cameraModel.cameraSettingsModel.currentShutterSpeed.timescale) / Double(cameraModel.cameraSettingsModel.currentShutterSpeed.value))
         let speedfactor = 30.0/framerate
         
+        let maxExposureTime: CMTime
         switch cameraModel.aeStrategy {
         case .mean:
             adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
+            maxExposureTime = CMTime(value: 1, timescale: 15)
+        case .prioritizeFramerate:
+            adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
+            maxExposureTime = CMTime(value: Int64(1_000_000_000*cameraModel.cameraSettingsModel.maxFrameDuration), timescale: 1_000_000_000)
         case .avoidUnderexposure:
             if minRGB > 0.2 {
                 adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
@@ -244,6 +249,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             } else {
                 adjust = 1.0 - speedfactor * 0.2 * (minRGB - 0.25)
             }
+            maxExposureTime = CMTime(value: 1, timescale: 15)
         case .avoidOverexposure:
             if maxRGB < 0.8 {
                 adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
@@ -252,16 +258,16 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             } else {
                 adjust = 1.0 - speedfactor * 0.2 * (maxRGB - 0.75)
             }
+            maxExposureTime = CMTime(value: 1, timescale: 15)
         }
         
-        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel)
+        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel, maxExposureTime: maxExposureTime)
         
         setExposureDurationIso(duration: shutter, iso: iso)
     }
     
-    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel) -> (shutter: CMTime, iso: Int) {
+    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel, maxExposureTime: CMTime) -> (shutter: CMTime, iso: Int) {
         let shutterTarget = state.maxFrameDuration
-        let shutterUsabilityLimit = CMTime(value: 1, timescale: 15)
         
         var iso = state.currentIso
         var shutter = state.currentShutterSpeed
@@ -295,8 +301,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if shutter.seconds > state.maxShutterSpeed.seconds {
             shutter = state.maxShutterSpeed
         }
-        if shutter.seconds > shutterUsabilityLimit.seconds {
-            shutter = shutterUsabilityLimit
+        if shutter.seconds > maxExposureTime.seconds {
+            shutter = maxExposureTime
         }
         if shutter.seconds < state.minShutterSpeed.seconds {
             shutter = state.minShutterSpeed
@@ -811,7 +817,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
         if !(cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false) {
             let adjust = pow(2.0, value - cameraSettingsModel.currentExposureValue)
-            let (shutter, iso) = calculateAdjustedExposure(adjust: Double(adjust), state: cameraSettingsModel)
+            let (shutter, iso) = calculateAdjustedExposure(adjust: Double(adjust), state: cameraSettingsModel, maxExposureTime: CMTime(value: 1, timescale: 15))
             setExposureDurationIso(duration: shutter, iso: iso)
         }
         cameraSettingsModel.currentExposureValue = value

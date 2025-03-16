@@ -11,7 +11,7 @@ import Foundation
 final class ExperimentCameraInput {
 
     enum AutoExposureStrategy: String, LosslessStringConvertible {
-        case mean, avoidOverexposure, avoidUnderexposure
+        case mean, avoidOverexposure, avoidUnderexposure, prioritizeFramerate
     }
     
     let initx1: Float
