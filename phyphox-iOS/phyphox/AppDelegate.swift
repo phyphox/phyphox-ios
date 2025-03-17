@@ -46,7 +46,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        UserDefaultManager.shared.isMaximized = false
         return initApp(url: launchOptions?[.url] as? URL)
     }
     

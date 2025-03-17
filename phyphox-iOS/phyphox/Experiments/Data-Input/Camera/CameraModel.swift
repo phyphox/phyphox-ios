@@ -219,39 +219,6 @@ final class CameraModel {
     }
 }
 
-final class UserDefaultManager {
-    static let shared = UserDefaultManager()
-    
-    private init() {}
-    
-    private let userDefaults = UserDefaults.standard
-    
-    private enum Keys {
-        static let isMaximizedKey = "isMaximizedKey"
-    }
-    
-    var isMaximized: Bool {
-        get {
-            return userDefaults.bool(forKey: Keys.isMaximizedKey)
-        }
-        set{
-            userDefaults.set(newValue, forKey: Keys.isMaximizedKey)
-        }
-    }
-    
-    
-}
-
-extension Bool {
-    
-    mutating func toggleThatPersists() {
-        self.toggle()
-        UserDefaultManager.shared.isMaximized = self
-    }
-    
-}
-
-
 enum CameraSettingMode {
     case NONE
     case ZOOM

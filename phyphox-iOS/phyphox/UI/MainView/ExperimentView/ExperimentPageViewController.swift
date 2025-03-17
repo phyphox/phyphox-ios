@@ -227,8 +227,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
             navBar.isTranslucent = false
         }
-        
-        UserDefaultManager.shared.isMaximized = false
     }
     
     func updateSegControlDesign() {
