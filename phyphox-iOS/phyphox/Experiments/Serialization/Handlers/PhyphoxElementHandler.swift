@@ -226,7 +226,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let depthInput = depthInputs?.first
         
         let cameraInputs = inputDescriptor?.camera.map {ExperimentCameraInput(descriptor: $0, timeReference: timeReference, buffers: buffers) }
-        if cameraInputs != nil && depthInputs!.count > 1 {
+        if cameraInputs != nil && cameraInputs!.count > 1 {
             throw ElementHandlerError.message("Camera is only allowed once.")
         }
         let cameraInput = cameraInputs?.first
