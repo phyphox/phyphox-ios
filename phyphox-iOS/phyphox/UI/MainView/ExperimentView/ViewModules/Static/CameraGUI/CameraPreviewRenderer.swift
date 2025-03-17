@@ -38,6 +38,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     var drawableSizeDidChange: Bool = false
     var cameraOrientation: AVCaptureDevice.Position? = nil
     
+    var isOverlayEditable: Bool = false
+    
     init(metalDevice: MTLDevice, renderDestination: MTKView, descriptor: CameraViewDescriptor) {
         self.metalDevice = metalDevice
         self.renderDestination = renderDestination
@@ -145,7 +147,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
                 renderEncoder.setRenderPipelineState(pipelineState)
                 
                 let selectionArea = cameraModel.selectionArea
-                let selectionState = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: cameraModel.isOverlayEditable)
+                let selectionState = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: isOverlayEditable)
                 let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying(displayToCameraTransform.inverted())
                 let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
                 

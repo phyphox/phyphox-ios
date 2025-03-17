@@ -160,9 +160,7 @@ final class CameraModel {
             return CGRect(x: sel.minX * res.width, y: sel.minY * res.height, width: sel.maxX * res.width, height: sel.maxY * res.height)
         }
     }
-    
-    var exposureSettingLevel = CameraSettingLevel.ADVANCE
-    
+        
     var autoExposureEnabled: Bool = true
     var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
     
@@ -177,9 +175,7 @@ final class CameraModel {
     var timeReference: ExperimentTimeReference?
     var zBuffer: DataBuffer?
     var tBuffer: DataBuffer?
-    
-    var isOverlayEditable: Bool = false
-    
+        
     init(owner: CameraModelOwner) {
         self.service.cameraModelOwner = owner
         

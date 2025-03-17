@@ -270,10 +270,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             w = h * aspect
         }
         self.metalView.frame = CGRect(x: (frame.width - w) / 2, y: headSize.height + 2*spacing + (metalAvailableHeight - h) / 2, width: w, height: h)
-        
-        //TODO This also does not seem to belong here...
-        cameraModelOwner?.cameraModel?.exposureSettingLevel = descriptor.exposureAdjustmentLevel
-        
+      
         updateCameraSettingsCurrentValues()
     }
     
@@ -354,7 +351,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             if let gr = panGestureRecognizer {
                 metalView.addGestureRecognizer(gr)
             }
-            self.cameraModelOwner?.cameraModel?.isOverlayEditable = true
+            cameraPreviewRenderer.isOverlayEditable = true
             manageVisiblity()
             
         } else {
@@ -364,7 +361,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
     
             panGestureRecognizer = nil
-            self.cameraModelOwner?.cameraModel?.isOverlayEditable = false
+            cameraPreviewRenderer.isOverlayEditable = false
             cameraSettingMode = .NONE
             manageVisiblity()
         }
