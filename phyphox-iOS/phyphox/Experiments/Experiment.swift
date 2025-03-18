@@ -89,7 +89,7 @@ final class Experiment {
         }
     }
     var resourceFolder: URL? {
-        if local {
+        if local && source != nil {
             return localResourceFolder
         } else {
             return source?.deletingLastPathComponent().appendingPathComponent("res")
