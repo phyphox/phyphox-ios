@@ -225,9 +225,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.historyLength = descriptor.history
         glGraph.mapWidth = descriptor.mapWidth
         glGraph.colorMap = descriptor.colorMap
-        showColorScale = descriptor.showColorScale
         
         hasZData = glGraph.style[0] == .map
+        
+        showColorScale = descriptor.showColorScale && hasZData
         
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -1857,7 +1858,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let s4 = zLabel?.sizeThatFits(frame.size) ?? .zero
         zLabel?.frame = CGRect(x: (frame.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
         
-        let yCoOrd = s1.height+spacing+(showColorScale ? zScaleHeight + s4.height + spacing : 5)
+        let yCoOrd = s1.height+spacing+(showColorScale ? zScaleHeight + s4.height + spacing : 0)
         let graphHeight = frame.size.height - s1.height - spacing - bottom - (showColorScale ? zScaleHeight + spacing + s4.height : 0)
         
         gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: yCoOrd, width: frame.size.width - s3.width - spacing - 2*sideMargins, height:  graphHeight)
