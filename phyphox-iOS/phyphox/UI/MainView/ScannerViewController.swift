@@ -76,6 +76,14 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         
         updateOrientation()
         
+        do {
+            try avCaptureDevice.lockForConfiguration()
+            avCaptureDevice.exposureMode = .continuousAutoExposure
+            avCaptureDevice.unlockForConfiguration()
+        } catch {
+            print("Could not set auto exposure for QR scanner.")
+        }
+        
         avCaptureSession.startRunning()
     }
     
