@@ -80,6 +80,9 @@ final class Experiment {
 
     var local: Bool = false
     var source: URL?
+    var custom: Bool {
+        return !(source?.absoluteString.starts(with: experimentsBaseURL.absoluteString) ?? true)
+    }
     var crc32: UInt?
     var localResourceFolder: URL? {
         if let crc32 = crc32 {
@@ -89,7 +92,7 @@ final class Experiment {
         }
     }
     var resourceFolder: URL? {
-        if local && source != nil {
+        if local && custom {
             return localResourceFolder
         } else {
             return source?.deletingLastPathComponent().appendingPathComponent("res")
