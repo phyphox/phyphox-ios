@@ -54,7 +54,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         super.init(frame: .zero)
         
         
-        guard Float(descriptor.minValue ?? 0.0) < Float(descriptor.maxValue ?? 1.0) else {
+        guard Float(descriptor.minValue) < Float(descriptor.maxValue) else {
             fatalError("minValue must be less than maxValue")
         }
         
@@ -65,14 +65,14 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         label.textAlignment = .center
         
         minValueLabel.numberOfLines = 0
-        minValueLabel.text = numberFormatter(for: descriptor.minValue ?? 0.0)
+        minValueLabel.text = numberFormatter(for: descriptor.minValue)
         minValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         minValueLabel.textColor = UIColor(named: "textColor")
         minValueLabel.textAlignment = .center
         minValueLabel.adjustsFontSizeToFitWidth = true
         
         maxValueLabel.numberOfLines = 0
-        maxValueLabel.text = numberFormatter(for: descriptor.maxValue ?? 0.0)
+        maxValueLabel.text = numberFormatter(for: descriptor.maxValue)
         maxValueLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         maxValueLabel.textColor = UIColor(named: "textColor")
         maxValueLabel.textAlignment = .center
@@ -89,8 +89,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             
             sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
             
-            uiSlider.minimumValue = Float(descriptor.minValue ?? 0.0)
-            uiSlider.maximumValue = Float(descriptor.maxValue ?? 0.0)
+            uiSlider.minimumValue = Float(descriptor.minValue)
+            uiSlider.maximumValue = Float(descriptor.maxValue)
             uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
             uiSlider.isUserInteractionEnabled = true
             
@@ -108,29 +108,29 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         
         if(descriptor.type == SliderType.Range){
             
-            sliderValue.text = String(descriptor.minValue ?? 0.0) + " - " + String(descriptor.maxValue ?? 0.0)
+            sliderValue.text = String(descriptor.minValue) + " - " + String(descriptor.maxValue)
             
             
-            rangeSlider.upperValue = descriptor.maxValue ?? 1.0
-            rangeSlider.maximumValue = descriptor.maxValue ?? 1.0
-            rangeSlider.minimumValue = descriptor.minValue ?? 0.0
-            rangeSlider.lowerValue = descriptor.minValue ?? 0.0
+            rangeSlider.upperValue = descriptor.maxValue
+            rangeSlider.maximumValue = descriptor.maxValue
+            rangeSlider.minimumValue = descriptor.minValue
+            rangeSlider.lowerValue = descriptor.minValue
             
-            rangeSlider.stepSize = descriptor.stepSize ?? 1.0
-           
+            rangeSlider.stepSize = descriptor.stepSize
+                       
             addSubview(rangeSlider)
             
             if let upperValueBuffer = descriptor.outputBuffers[.UpperValue]  {
                 rangeSliderUpperBuffer = upperValueBuffer
                 registerForUpdatesFromBuffer(rangeSliderUpperBuffer!)
-                rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue ?? 1.0])
+                rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue])
                 rangeSliderUpperBuffer?.triggerUserInput()
             }
             
             if let lowerValueBuffer = descriptor.outputBuffers[.LowerValue] {
                 rangeSliderLowerBuffer = lowerValueBuffer
                 registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
-                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue ?? 0.0])
+                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue])
                 rangeSliderLowerBuffer?.triggerUserInput()
             }
             
@@ -225,7 +225,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     
     @objc func sliderValueChanged(_ sender: UISlider){
       
-        updateSlider(from: Float(sender.value))
+        updateSlider(from: Double(sender.value))
         
     }
     
@@ -251,52 +251,31 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             let lowerValue = rangeSliderLowerBuffer?.last ?? descriptor.minValue
             let upperValue = rangeSliderUpperBuffer?.last ?? descriptor.maxValue
             
-            rangeSlider.lowerValue = lowerValue ?? 0.0
-            rangeSlider.upperValue = upperValue ?? 1.0
+            rangeSlider.lowerValue = lowerValue
+            rangeSlider.upperValue = upperValue
             
         
-            sliderValue.text = numberFormatter(for: lowerValue ?? 0.0) + " - "  + numberFormatter(for: upperValue ?? 0.0)
+            sliderValue.text = numberFormatter(for: lowerValue) + " - "  + numberFormatter(for: upperValue)
 
         }
     }
     
-    
-    func isEven(value: Double) -> Bool{
-        return Double(Int(value)).remainder(dividingBy: 2.0) == 0.0
-    }
-    
-    func updateSlider(from oldValue: Float) {
+    func updateSlider(from oldValue: Double) {
         
-        if(descriptor.stepSize == 0){
-            uiSlider.value = oldValue
-            
-            sliderValue.text = numberFormatter(for: Double(oldValue))
-            sliderBuffer?.replaceValues([Double(oldValue)])
-            sliderBuffer?.triggerUserInput()
-            return
+        let steppedValue = if descriptor.stepSize == 0 {
+            oldValue
+        } else {
+            round(oldValue / descriptor.stepSize) * descriptor.stepSize
         }
+        let newValue = min(max(steppedValue, descriptor.minValue), descriptor.maxValue)
         
-         let stepSize = Float(descriptor.stepSize ?? 1.0)
-         let defaultValue = descriptor.defaultValue ?? 0.0
-         let minValue = Float(descriptor.minValue ?? 0.0)
-         let flooredValue = floor((oldValue - minValue)/stepSize )
-         
-         let newValue: Float = (stepSize * flooredValue + minValue )
-         
-         guard let maxValue = descriptor.maxValue, let minValue = descriptor.minValue,
-               newValue <= Float(maxValue), newValue >= Float(minValue) else {
-             return
-         }
+        uiSlider.value = Float(newValue)
+        sliderValue.text = numberFormatter(for: newValue)
         
-        uiSlider.value = newValue
-        sliderValue.text = numberFormatter(for: Double(newValue))
-        
-        sliderBuffer?.replaceValues([Double(newValue)])
+        sliderBuffer?.replaceValues([newValue])
         sliderBuffer?.triggerUserInput()
         
     }
-    
-    
     
     func numberFormatter(for value: Double) -> String{
         let formatter = NumberFormatter()
@@ -358,9 +337,7 @@ class RangeSlider: UIControl{
     let trackLayer = RangeSliderTrackLayer()
     let lowerThumbLayer = RangeSliderThumbLayer()
     let upperThumbLayer = RangeSliderThumbLayer()
-    
-    var previousLocation = CGPoint()
-    
+        
     var thumbWidth: CGFloat {
         return CGFloat(bounds.height)
     }
@@ -392,9 +369,6 @@ class RangeSlider: UIControl{
         }
     }
     
-    // To determine the next slide for the descrete slider mode
-    var cumulativeDeltaValue = 0.0
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -421,12 +395,12 @@ class RangeSlider: UIControl{
     }
     
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        previousLocation = touch.location(in: self)
+        let initialLocation = touch.location(in: self)
 
         // Hit test the thumb layers
-        if lowerThumbLayer.frame.contains(previousLocation) {
+        if lowerThumbLayer.frame.insetBy(dx: -thumbWidth/2.0, dy: -thumbWidth/2.0).contains(initialLocation) {
             lowerThumbLayer.highlighted = true
-        } else if upperThumbLayer.frame.contains(previousLocation) {
+        } else if upperThumbLayer.frame.insetBy(dx: -thumbWidth/2.0, dy: -thumbWidth/2.0).contains(initialLocation) {
             upperThumbLayer.highlighted = true
         }
 
@@ -441,33 +415,28 @@ class RangeSlider: UIControl{
         let location = touch.location(in: self)
 
         // 1. Determine by how much the user has dragged
-        let deltaLocation = Double(location.x - previousLocation.x)
+        let relativeLocation = Double(location.x - bounds.minX - 0.5*thumbWidth) / Double(bounds.width - thumbWidth)
 
-        let deltaValue = (maximumValue - minimumValue) * deltaLocation / Double(bounds.width - thumbWidth)
-        
-        cumulativeDeltaValue += deltaValue
-        
-        var stepThreshold = (stepSize == 0.0) ? 0.0 : (stepSize - 0.1)
-        
-        if(cumulativeDeltaValue >= stepThreshold || cumulativeDeltaValue <= -stepThreshold) {
-            
-            let newValueWithStepSize = ((location.x >  previousLocation.x) ? stepSize : -stepSize)
-            let newValue = (stepSize == 0.0) ? deltaValue : newValueWithStepSize
-                                    
-            // 2. Update the values
-            if lowerThumbLayer.highlighted {
-                lowerValue += newValue
-                lowerValue = boundValue(value: lowerValue, toLowerValue: minimumValue, upperValue: upperValue)
-            } else if upperThumbLayer.highlighted {
-                upperValue += newValue
-                upperValue = boundValue(value: upperValue, toLowerValue: lowerValue, upperValue: maximumValue)
-            }
-            cumulativeDeltaValue = 0.0
+        var newValue = minimumValue + (maximumValue - minimumValue) * relativeLocation
+                
+        if stepSize > 0 {
+            newValue = round(newValue / stepSize) * stepSize
         }
-
-        previousLocation = location
-        
-        sendActions(for: .valueChanged)
+                         
+        // 2. Update the values
+        if lowerThumbLayer.highlighted {
+            let boundLowerValue = boundValue(value: newValue, toLowerValue: minimumValue, upperValue: upperValue)
+            if (boundLowerValue != lowerValue) {
+                lowerValue = boundLowerValue
+                sendActions(for: .valueChanged)
+            }
+        } else if upperThumbLayer.highlighted {
+            let boundUpperValue = boundValue(value: newValue, toLowerValue: lowerValue, upperValue: maximumValue)
+            if (boundUpperValue != upperValue) {
+                upperValue = boundUpperValue
+                sendActions(for: .valueChanged)
+            }
+        }
 
         return true
     }
@@ -477,6 +446,15 @@ class RangeSlider: UIControl{
         upperThumbLayer.highlighted = false
     }
     
+    //Enlarge touchable area beyond the rather small bounds
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        return bounds.insetBy(dx: -thumbWidth, dy: -thumbWidth).contains(point)
+    }
+    
+    //Never use input on the slider for a gesture
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        return false
+    }
 
     func updateLayerFrames() {
         
@@ -486,20 +464,20 @@ class RangeSlider: UIControl{
         trackLayer.frame = bounds.insetBy(dx: 0.5, dy: bounds.height / 2.50)
         trackLayer.setNeedsDisplay()
         
-        let thumbVerticlePlacement = -7.0
         let thumbSize = thumbWidth * 1.45
+        let thumbVerticalPlacement = (thumbWidth - thumbSize) / 2.0
         
         let lowerThumbCenter = CGFloat(positionForValue(value: lowerValue))
         let lowerThumbHorizontalPlacement = lowerThumbCenter - thumbWidth / 1.5
         
-        lowerThumbLayer.frame = CGRect(x: lowerThumbHorizontalPlacement, y: thumbVerticlePlacement,
+        lowerThumbLayer.frame = CGRect(x: lowerThumbHorizontalPlacement, y: thumbVerticalPlacement,
                                        width: thumbSize, height: thumbSize)
         lowerThumbLayer.setNeedsDisplay()
         
         let upperThumbCenter = CGFloat(positionForValue(value: upperValue))
         let upperThumbHorizontalPlacement = upperThumbCenter - thumbWidth / 1.4
         
-        upperThumbLayer.frame = CGRect(x: upperThumbHorizontalPlacement, y: thumbVerticlePlacement,
+        upperThumbLayer.frame = CGRect(x: upperThumbHorizontalPlacement, y: thumbVerticalPlacement,
                                        width: thumbSize, height: thumbSize)
         upperThumbLayer.setNeedsDisplay()
         

@@ -10,9 +10,9 @@ import Foundation
 
 struct SliderViewElementDescriptor{
     var label: String
-    var minValue: Double?
-    var maxValue: Double?
-    var stepSize: Double?
+    var minValue: Double
+    var maxValue: Double
+    var stepSize: Double
     var defaultValue: Double?
     let outputBufferName: String?
     let lowerBufferName: String
@@ -49,7 +49,7 @@ private final class RangeSliderOutputElementHandler: ResultElementHandler, Child
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         
-        var value = try attributes.optionalValue(for: .value) ?? ""
+        let value = try attributes.optionalValue(for: .value) ?? ""
      
         results.append(RangeSliderOutputDescriptor(value: value, bufferName: text))
     }
