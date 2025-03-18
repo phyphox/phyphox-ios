@@ -154,6 +154,8 @@
 "graph_fit_label" = "Linear fit: y = a x + b";
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
 "remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
+"remoteCameraWarning" = "Previewing and controlling the camera sensor on the remote interface is not supported.";
+"remoteImageWarning" = "Loading of the image on the remote interface is not supported.";
 "applyZoomTitle" = "Apply zoom";
 "applyZoomExplanation" = "As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.";
 "applyZoomAdvanced" = "Advanced options";
@@ -245,6 +247,18 @@
 "depthAggregationModeAverage" = "Average";
 "depthAggregationModeWeighted" = "Weighted";
 "settings" = "Settings";
+"off" = "Off";
+"on" = "On";
+"cameraBack" = "Back";
+"cameraFront" = "Front";
+"cameraZoom" = "Zoom";
+"notSet" = "Not set";
+"preview" = "Preview";
+"wb_auto" = "Auto";
+"wb_incandescent" = "Incandescent";
+"wb_fluorescent" = "Fluorescent";
+"wb_daylight" = "Daylight";
+"wb_cloudy" = "Cloudy";
 "common_unit_short_arbitrary_unit" = "arb. unit";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";
@@ -264,6 +278,7 @@
 "common_unit_short_hecto_pascal" = "hPa";
 "common_unit_short_decibel" = "dB";
 "common_unit_short_percent" = "%";
+"common_unit_short_luminance" = "lum";
 "common_quantity_short_time" = "t";
 "common_quantity_short_angular_velocity" = "ω";
 "common_quantity_short_magnetic_field" = "B";
@@ -279,6 +294,7 @@
 "common_quantity_short_latitude" = "φ";
 "common_quantity_short_longitude" = "λ";
 "common_quantity_short_altitude" = "z";
+"common_quantity_short_luminance" = "Lv";
 "common_direction_short_north" = "N";
 "common_direction_short_south" = "S";
 "common_direction_short_east" = "E";

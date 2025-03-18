@@ -38,6 +38,23 @@ private extension ExperimentDepthInput {
     }
 }
 
+private extension ExperimentCameraInput {
+    convenience init(descriptor: CameraInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
+        let tBuffer = descriptor.buffer(for: "t", from: buffers)
+        let luminanceBuffer = descriptor.buffer(for: "luminance", from: buffers)
+        let lumaBuffer = descriptor.buffer(for: "luma", from: buffers)
+        let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
+        let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
+        let valueBuffer = descriptor.buffer(for: "value", from: buffers)
+        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
+        let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
+        let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
+        let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
+
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, locked: descriptor.locked, feature: descriptor.feature)
+    }
+}
+
 private extension ExperimentGPSInput {
     convenience init(descriptor: LocationInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
         let latBuffer = descriptor.buffer(for: "lat", from: buffers)
@@ -207,6 +224,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("Depth is only allowed once.")
         }
         let depthInput = depthInputs?.first
+        
+        let cameraInputs = inputDescriptor?.camera.map {ExperimentCameraInput(descriptor: $0, timeReference: timeReference, buffers: buffers) }
+        if cameraInputs != nil && cameraInputs!.count > 1 {
+            throw ElementHandlerError.message("Camera is only allowed once.")
+        }
+        let cameraInput = cameraInputs?.first
+        
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
@@ -347,7 +371,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.missingElement("view")
         }
         
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -510,7 +534,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, type: descriptor.type, showValue: descriptor.showValue)
             
+            
+            
+        case .camera(let descriptor):
+            return CameraViewDescriptor(label: descriptor.label, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
+                                        grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, showControls: descriptor.showControls, translation: translations)
+            
         }
+        
     }
 
     private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {

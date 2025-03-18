@@ -204,6 +204,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -511,6 +512,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         session.attachDelegate(delegate: depthGUI)
                         depthGUI.depthGUISelectionDelegate = session
                     }
+                    
+                    if let cameraGUI = view as? ExperimentCameraUIView {
+                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
+                            continue
+                        }
+                        cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
+                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
+    
+                    }
+                
                 }
             }
         }
@@ -534,10 +545,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
                 session.stopSession()
             }
+            
+            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+                camSession.endSession()
+            }
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-        
+
         if isMovingFromParent {
             tearDownWebServer()
             

@@ -783,7 +783,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
-
+print("\(url)")
         var fileType = FileType.unknown
         var experiment: Experiment?
         var finalURL = url
