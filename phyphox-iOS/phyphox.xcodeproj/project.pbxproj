@@ -159,7 +159,6 @@
 		86147C122D78EC03008BAAD2 /* CameraGUIShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */; };
 		86147C192D78FB80008BAAD2 /* MovingAverageAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86147C182D78FB80008BAAD2 /* MovingAverageAnalysis.swift */; };
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
-		864AEBC22BEA36E5009DBAF2 /* EventStreamAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864AEBC12BEA36E5009DBAF2 /* EventStreamAnalysis.swift */; };
 		864F0BAC2D86287400FAE5E2 /* CameraButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864F0BA32D86286700FAE5E2 /* CameraButtons.swift */; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
 		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
@@ -1404,8 +1403,9 @@
 		6B7BF7721C130425007408FB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1420;
-				LastUpgradeCheck = 0930;
+				LastUpgradeCheck = 1620;
 				ORGANIZATIONNAME = "RWTH Aachen";
 				TargetAttributes = {
 					6B7BF7791C130425007408FB = {
@@ -1454,7 +1454,6 @@
 				"sr-Latn",
 				es,
 				tr,
-				English,
 				hi,
 				ka,
 			);
@@ -1588,6 +1587,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		6B7BF7AB1C130436007408FB /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 12;
 			files = (
 			);
@@ -1663,7 +1663,6 @@
 				C0A97FE72477DCBF00A630EE /* SortAnalysis.swift in Sources */,
 				4B47B0371DA6AF2400CCBA6E /* SinhAnalysis.swift in Sources */,
 				C060904E21E28727000BEE30 /* ExperimentPickerViewController.swift in Sources */,
-				864AEBC22BEA36E5009DBAF2 /* EventStreamAnalysis.swift in Sources */,
 				4BE7CAF91E4CD73D00C31090 /* ExperimentSeparatorView.swift in Sources */,
 				A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */,
 				C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */,
@@ -1959,6 +1958,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -1970,6 +1970,7 @@
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1984,7 +1985,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -2017,6 +2018,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -2029,6 +2031,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = s;
@@ -2038,10 +2041,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = singlefile;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -2071,9 +2074,11 @@
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"GLES_SILENCE_DEPRECATION=1",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -2098,7 +2103,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.16;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
@@ -2139,7 +2144,9 @@
 				CURRENT_PROJECT_VERSION = 8453;
 				DEVELOPMENT_TEAM = 44GTV4NJA9;
 				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.framework *.gch *.xcode* *.xcassets (*) .DS_Store CVS .svn .git .hg *.pbproj *.pbxproj";
+				GCC_PREPROCESSOR_DEFINITIONS = "GLES_SILENCE_DEPRECATION=1";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -2161,7 +2168,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.1.16;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphox";
 				PRODUCT_NAME = "$(TARGET_NAME)";

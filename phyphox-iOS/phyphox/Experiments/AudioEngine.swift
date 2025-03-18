@@ -323,7 +323,7 @@ final class AudioEngine {
             stop()
             return
         }
-        buffer.floatChannelData?[0].assign(from: &data, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[0].update(from: &data, count: Int(bufferFrameCount))
         buffer.frameLength = UInt32(bufferFrameCount)
         
         if !playing {

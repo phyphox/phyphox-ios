@@ -43,10 +43,10 @@ final class SimpleExperimentSerializer {
         
         let experimentTemplete = SimpleExperimentTemplete(rate: rate)
         
-        var containers = experimentTemplete.getContainers(sensors: sensors)
-        var input = experimentTemplete.getInputs(sensors: sensors)
-        var views = experimentTemplete.getViews(sensors: sensors)
-        var export = experimentTemplete.getExports(sensors: sensors)
+        let containers = experimentTemplete.getContainers(sensors: sensors)
+        let input = experimentTemplete.getInputs(sensors: sensors)
+        let views = experimentTemplete.getViews(sensors: sensors)
+        let export = experimentTemplete.getExports(sensors: sensors)
         
         let simpleExperiment = """
                     <phyphox version=\"1.14\">

@@ -327,7 +327,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
-        signalLevel = Int(RSSI)
+        signalLevel = Int(truncating: RSSI)
         connectedDeviceName = peripheral.name ?? ""
         let  connectedDevice = ConnectedDevicesDataModel(deviceIdentifier: peripheral.identifier,
                                                          signalStrength: signalLevel,

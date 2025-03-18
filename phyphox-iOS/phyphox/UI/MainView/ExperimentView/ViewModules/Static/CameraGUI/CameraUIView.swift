@@ -277,7 +277,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func setupCameraSettingViews() {
         if let cameraModel = cameraModelOwner?.cameraModel {
             zoomSlider = ZoomSlider(cameraSettingModel: cameraModel.cameraSettingsModel)
-            buttonClickedDelegate = zoomSlider as? any ZoomSliderViewDelegate
+            buttonClickedDelegate = zoomSlider
             
             zoomSlider?.isHidden = true
             onZoomSliderVisibilityChanged = { value in
@@ -422,8 +422,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             settingStackView.addArrangedSubview(getCameraSettingView(for: .aperture))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .zoom))
             settingStackView.addArrangedSubview(getCameraSettingView(for: .whiteBalance))
-            break
-        default:
             break
         }
         

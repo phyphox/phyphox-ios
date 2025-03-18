@@ -181,11 +181,11 @@ class AnalyzingRenderer {
         if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer(),
            let cameraModel = cameraModelOwner?.cameraModel {
             
-            let startTime = Date()
+            //let startTime = Date()
             
             analysisCommandBuffer.addCompletedHandler { commandBuffer in
-                let endTime = Date()
-                let executionTime = endTime.timeIntervalSince(startTime)
+                //let endTime = Date()
+                //let executionTime = endTime.timeIntervalSince(startTime)
                 //print("executionTime : \(executionTime)")
                 
                 if (cameraModel.autoExposureEnabled) {

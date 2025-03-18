@@ -96,7 +96,6 @@ class LumaAnalyzer : AnalyzingModule {
             
         
         lumaValue = metalDevice.makeBuffer(length: MemoryLayout<Float>.stride, options: .storageModeShared)!
-        let countResultBuffer = metalDevice.makeBuffer(length: MemoryLayout<Float>.size, options: .storageModeShared)!
         
         //setup pipeline state
         analysisEncoding.setComputePipelineState(finalSumPipelineState)

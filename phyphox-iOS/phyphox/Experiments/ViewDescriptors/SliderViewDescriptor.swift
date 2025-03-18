@@ -49,11 +49,11 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         if(self.stepSize == 0){
             stepSize_ = Double(1 / pow(10, precisionValue))
         } else {
-            stepSize_ = self.stepSize ?? 1
+            stepSize_ = self.stepSize
         }
         
-        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
-        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let minValueFormatted = numberFormatter(for: minValue)
+        let maxValueFormatted = numberFormatter(for: maxValue)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
         let bufferName = outputBuffers[.Empty]?.name ?? ""
@@ -64,8 +64,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     }
     
     private func generateTwoSlidersHTML(_ id: Int) -> String{
-        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
-        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let minValueFormatted = numberFormatter(for: minValue)
+        let maxValueFormatted = numberFormatter(for: maxValue)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
         return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" +
@@ -74,7 +74,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                                     "<div class=\"sliderContainer\">" +
                                                     "<span class=\"minValue\" >\(minValueFormatted)</span>" +
                                                         "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +
-                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize ?? 0.0)\"" +
+                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize)\"" +
                                                             ">" +
                                                         "</input>" +
                                                     "<span class=\"maxValue\"></span>" +
@@ -82,7 +82,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                                     "<div class=\"sliderContainer\">" +
                                                     "<span class=\"minValue\"></span>" +
                                                     "<input type=\"range\" class=\"slider\" id=\"input11\(id)\"" +
-                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize ?? 0.0)\"" +
+                                                            "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize)\"" +
                                                             ">" +
                                                             "</input>" +
                                                         "<span class=\"maxValue\">\(maxValueFormatted)</span>" +
@@ -106,8 +106,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     func setDataHTMLWithID(_ id: Int) -> String {
         
         let bufferName = outputBuffers[.Empty]?.name ?? ""
-        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
-        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let minValueFormatted = numberFormatter(for: minValue)
+        let maxValueFormatted = numberFormatter(for: maxValue)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
 
         return (type == SliderType.Range) ? setDataHTMLWithIDForRangeSlider(id) :
@@ -155,8 +155,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     private func setDataHTMLWithIDForRangeSlider(_ id: Int) -> String {
         let lowerValueBufferName = outputBuffers[.LowerValue]?.name ?? ""
         let upperValueBufferName = outputBuffers[.UpperValue]?.name ?? ""
-        let minValueFormatted = numberFormatter(for: minValue ?? 0.0)
-        let maxValueFormatted = numberFormatter(for: maxValue ?? 1.0)
+        let minValueFormatted = numberFormatter(for: minValue)
+        let maxValueFormatted = numberFormatter(for: maxValue)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
         let lowerBuffer = outputBuffers[.LowerValue]?.last ?? 0.0
@@ -184,8 +184,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                 sliderElementTwo.min = \(minValueFormatted)
                                 sliderElementOne.max = \(maxValueFormatted)
                                 sliderElementTwo.max = \(maxValueFormatted)
-                                sliderElementOne.step = \(stepSize ?? 0.0)
-                                sliderElementTwo.step = \(stepSize ?? 0.0)
+                                sliderElementOne.step = \(stepSize)
+                                sliderElementTwo.step = \(stepSize)
                                 sliderElementOne.value = selectedValueX || \(defaultValueFormatted)
                                 sliderElementTwo.value = selectedValueY || \(defaultValueFormatted)
                             }

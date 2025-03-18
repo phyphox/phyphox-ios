@@ -452,14 +452,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             isStateTitleNull = true
         }
         
-        var saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
+        let saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
             let vc = UIActivityViewController(activityItems: [experiment.source!], applicationActivities: nil)
             vc.popoverPresentationController?.sourceView = self.navigationController!.view
             vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
             self.navigationController!.present(vc, animated: true)
         })
         
-        var renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+        let renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
             self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: experiment.stateTitle!)
         })
         
@@ -614,7 +614,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             catch {}
         }
         
-        if let depthInput = experiment.experiment.depthInput {
+        if experiment.experiment.depthInput != nil {
             do {
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
@@ -957,7 +957,7 @@ print("\(url)")
             catch {}
         }
         
-        if let depthInput = loadedExperiment.depthInput {
+        if loadedExperiment.depthInput != nil {
             do {
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
