@@ -15,6 +15,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     var imageView: UIView
 
     private let sideMargins:CGFloat = 10.0
+    private let verticalMargins:CGFloat = 10.0
     
     required init?(descriptor: ImageViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
@@ -86,7 +87,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
         if let image = image {
             let aspect = image.size.width / image.size.height
             let w = descriptor.scale * size.width - 2*sideMargins
-            return CGSize(width: w, height:  w / aspect)
+            return CGSize(width: w, height:  w / aspect + 2*verticalMargins)
         } else {
             return (imageView as! UITextView).sizeThatFits(CGSize(width: size.width - 2*sideMargins, height: size.height))
         }
@@ -94,7 +95,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        imageView.frame = bounds
+        imageView.frame = bounds.insetBy(dx: 0, dy: verticalMargins)
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
