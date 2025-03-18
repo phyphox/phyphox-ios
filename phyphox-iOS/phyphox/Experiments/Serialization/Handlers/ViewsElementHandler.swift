@@ -82,8 +82,6 @@ private final class ViewElementHandler: ResultElementHandler {
             handler = sliderHandler
         case "camera-gui":
             handler = cameraHandler
-        case "image":
-            handler = imageHandler
         default:
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }
