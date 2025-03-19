@@ -390,8 +390,17 @@ class RangeSlider: UIControl{
         // Hit test the thumb layers
         if lowerThumbLayer.frame.insetBy(dx: -thumbWidth/2.0, dy: -thumbWidth/2.0).contains(initialLocation) {
             lowerThumbLayer.highlighted = true
-        } else if upperThumbLayer.frame.insetBy(dx: -thumbWidth/2.0, dy: -thumbWidth/2.0).contains(initialLocation) {
+        }
+        if upperThumbLayer.frame.insetBy(dx: -thumbWidth/2.0, dy: -thumbWidth/2.0).contains(initialLocation) {
             upperThumbLayer.highlighted = true
+        }
+        if lowerThumbLayer.highlighted && upperThumbLayer.highlighted {
+            //Both sliders overlap, decide if slider has been touched from left or right
+            if initialLocation.x < (lowerThumbLayer.frame.midX + upperThumbLayer.frame.midX)/2 {
+                upperThumbLayer.highlighted = false
+            } else {
+                lowerThumbLayer.highlighted = false
+            }
         }
 
         return lowerThumbLayer.highlighted || upperThumbLayer.highlighted
