@@ -53,7 +53,7 @@ final class AudioOutputSubInputElementHandler: ResultElementHandler, ChildlessEl
 }
 
 struct AudioOutputToneDescriptor {
-    let waveform: String
+    let waveform: AudioWaveform
     let inputs: [AudioOutputSubInputDescriptor]
 }
 
@@ -75,17 +75,13 @@ private final class AudioToneElementHandler: ResultElementHandler, LookupElement
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
-        let attribute = attributes.attributes(keyedBy: Attribute.self)
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
         
-        let waveform = attribute.optionalString(for: .waveform) ?? "sine"
-        
-        if(waveform != "sine" && waveform != "square" && waveform != "sawtooth"){
-            throw ElementHandlerError.unexpectedAttributeValue("Invalid waveform: \(waveform)")
-        }
+        let waveform: AudioWaveform = (try? attributes.value(for: .waveform) as AudioWaveform) ?? .sine
         
         let inputs = inputsHandler.results
         
-        results.append(AudioOutputToneDescriptor( waveform: waveform.lowercased(), inputs: inputs))
+        results.append(AudioOutputToneDescriptor( waveform: waveform, inputs: inputs))
     }
 }
 

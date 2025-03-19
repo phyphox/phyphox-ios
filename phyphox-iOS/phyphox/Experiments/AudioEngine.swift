@@ -265,21 +265,27 @@ final class AudioEngine {
                 //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
                 let phaseStep = f / (Double)(format.sampleRate)
                 var phase = phases[i]
-                for i in 0..<end {
-                    let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                    if(tone.waveform == "sine"){
+                switch tone.waveform {
+                case .sine:
+                    for i in 0..<end {
+                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
                         data[i] += Float(a)*sineLookup[lookupIndex]
-                    } else if(tone.waveform == "square"){
-                        data[i] += (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
-                    } else if(tone.waveform == "sawtooth"){
-                        data[i] += Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        phase += phaseStep
                     }
-                    
-                    phase += phaseStep
+                case .square:
+                    for i in 0..<end {
+                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                        data[i] += (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                        phase += phaseStep
+                    }
+                case .sawtooth:
+                    for i in 0..<end {
+                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                        data[i] += Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        phase += phaseStep
+                    }
                 }
-                while phase > 100000 {
-                    phase -= 100000
-                }
+
                 phases[i] = phase
             }
 
