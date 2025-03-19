@@ -9,23 +9,23 @@
 import Foundation
 
 struct DropdownViewMap: Equatable {
-    let value: String
+    let value: Double
     let replacement: String?
 }
 
 struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     var label: String
-    let defaultValue: String?
+    let defaultValue: Double
     let buffer: DataBuffer
     var mappings: [DropdownViewMap]
     
     var value: Double {
-        return buffer.last ?? 0.0
+        return buffer.last ?? defaultValue
     }
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, defaultValue: String?, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection? = nil) {
+    init(label: String, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection? = nil) {
         self.label = label
         self.defaultValue = defaultValue
         self.buffer = buffer

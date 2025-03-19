@@ -13,7 +13,7 @@ struct SliderViewElementDescriptor{
     var minValue: Double
     var maxValue: Double
     var stepSize: Double
-    var defaultValue: Double?
+    var defaultValue: Double
     let outputBufferName: String?
     let lowerBufferName: String
     let upperBufferName: String
@@ -75,7 +75,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         case minValue
         case maxValue
         case stepSize
-        case defaultValue
+        case defaultValue = "default"
         case precision
         case type
         case showValue

@@ -106,13 +106,16 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         for option in descriptor.mappings {
             
-            let title: String = option.replacement == "" ? option.value : (option.replacement ?? option.value)
+            let title: String = if let replacement = option.replacement, replacement != "" {
+                replacement
+            } else {
+                String(option.value)
+            }
            
             let action = UIAlertAction(title: title, style: .default) { _ in
                 self.setDropdownTitleAsDefaultValue = false
-                let value: Double = Double(option.value) ?? 0.0
                 self.dropdown.setTitle(title, for: .normal)
-                self.descriptor.buffer.replaceValues([value])
+                self.descriptor.buffer.replaceValues([option.value])
                 self.descriptor.buffer.triggerUserInput()
                }
                actionSheet.addAction(action)
@@ -140,18 +143,21 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         if(setDropdownTitleAsDefaultValue){
             let defaultTitle = descriptor.mappings.first?.replacement
-            let defaultValue = descriptor.mappings.first?.value
+            let defaultValue = descriptor.mappings.first?.value ?? 0.0
             if(defaultTitle == ""){
-                self.dropdown.setTitle(defaultValue, for: .normal)
+                self.dropdown.setTitle(String(defaultValue), for: .normal)
             } else {
-                self.dropdown.setTitle(defaultTitle ?? defaultValue, for: .normal)
+                self.dropdown.setTitle(defaultTitle ?? String(defaultValue), for: .normal)
             }
             
         } else {
             for option in descriptor.mappings {
-                if(String(Double(option.value) ?? 0.0) == String(descriptor.value)){
-                    let title: String = option.replacement == "" ? option.value : (option.replacement ?? option.value)
-                    self.dropdown.setTitle(title, for: .normal)
+                if(option.value == descriptor.value){
+                    if let replacement = option.replacement, replacement != "" {
+                        self.dropdown.setTitle(replacement, for: .normal)
+                    } else {
+                        self.dropdown.setTitle(String(option.value), for: .normal)
+                    }
                     self.descriptor.buffer.replaceValues([descriptor.value])
                     self.descriptor.buffer.triggerUserInput()
                 }

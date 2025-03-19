@@ -23,7 +23,7 @@ final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElemen
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let value = attributes.optionalString(for: .value) ?? ""
+        let value = try attributes.optionalValue(for: .value) ?? 0.0
         
         let replacementText: String = text.isEmpty ? "" : text
 
@@ -35,7 +35,7 @@ final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElemen
 struct DropdownViewElementDescriptor {
     var label: String
     
-    let defaultValue: String?
+    let defaultValue: Double
     
     let outputBufferName: String
     
@@ -58,7 +58,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
     
     private enum Attribute: String, AttributeKey {
         case label
-        case defaultValue
+        case defaultValue = "default"
     }
     
     func nextResult() throws -> ViewElementDescriptor {
@@ -78,7 +78,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
-        let defaultValue: String? = attributes.optionalString(for: .defaultValue) ?? ""
+        let defaultValue: Double = try attributes.optionalValue(for: .defaultValue) ?? 0.0
         
         let mappings = mapHandler.results
         

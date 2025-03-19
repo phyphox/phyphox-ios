@@ -479,10 +479,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ElementHandlerError.missingElement("data-container")
             }
             
-            if let defaultValue = descriptor.defaultValue {
-                buffer.append(defaultValue)
-            } else {
-                buffer.append(0)
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
             }
             
             return SwitchViewDescriptor(label: descriptor.label, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
@@ -492,13 +490,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ElementHandlerError.missingElement("data-container")
             }
             
-            if let defaultValue = descriptor.defaultValue {
-                if(descriptor.mappings.first?.value == defaultValue){
-                    buffer.append(Double(descriptor.mappings.first?.replacement ?? "0.0") ?? 0.0)
-                }
-                
-            } else {
-                buffer.append(0.0)
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
             }
             
             return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings)
@@ -528,6 +521,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 
                 guard let outputBuffer = buffers[outputBufferName] else {
                     throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                if outputBuffer.isEmpty {
+                    outputBuffer.append(descriptor.defaultValue)
                 }
                 
                 outputBuffers[.Empty] = outputBuffer

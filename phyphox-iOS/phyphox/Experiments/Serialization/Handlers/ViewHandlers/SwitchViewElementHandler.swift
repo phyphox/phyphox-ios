@@ -11,7 +11,7 @@ import Foundation
 
 struct SwitchViewElementDescriptor {
     let label: String
-    let defaultValue: Double?
+    let defaultValue: Double
     
     let outputBufferName: String
 }
@@ -30,7 +30,7 @@ final class SwitchViewElementHandler: ResultElementHandler, LookupElementHandler
     
     private enum Attribute: String, AttributeKey {
         case label
-        case defaultValue
+        case defaultValue = "default"
     }
     
     

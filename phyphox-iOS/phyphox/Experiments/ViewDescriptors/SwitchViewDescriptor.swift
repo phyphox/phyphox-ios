@@ -10,16 +10,16 @@ import Foundation
 
 struct SwitchViewDescriptor: ViewDescriptor, Equatable {
     
-    let defaultValue: Double?
+    let defaultValue: Double
     let buffer: DataBuffer
     let label: String
     let translation: ExperimentTranslationCollection?
     
     var value: Double {
-        return buffer.last ?? 0.0
+        return buffer.last ?? defaultValue
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?, defaultValue: Double?, buffer: DataBuffer) {
+    init(label: String, translation: ExperimentTranslationCollection?, defaultValue: Double, buffer: DataBuffer) {
         
         self.defaultValue = defaultValue
         self.buffer = buffer

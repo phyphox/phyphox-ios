@@ -86,12 +86,9 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         sliderValue.adjustsFontSizeToFitWidth = true
         
         if(descriptor.type == SliderType.Normal){
-            
-            sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
-            
+                        
             uiSlider.minimumValue = Float(descriptor.minValue)
             uiSlider.maximumValue = Float(descriptor.maxValue)
-            uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
             uiSlider.isUserInteractionEnabled = true
             
             
@@ -101,6 +98,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             
             if let buffer = descriptor.outputBuffers[.Empty] {
                 sliderBuffer = buffer
+                sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? descriptor.defaultValue)
+                uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
                 registerForUpdatesFromBuffer(sliderBuffer!)
             }
             
@@ -123,15 +122,11 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             if let upperValueBuffer = descriptor.outputBuffers[.UpperValue]  {
                 rangeSliderUpperBuffer = upperValueBuffer
                 registerForUpdatesFromBuffer(rangeSliderUpperBuffer!)
-                rangeSliderUpperBuffer?.replaceValues([descriptor.maxValue])
-                rangeSliderUpperBuffer?.triggerUserInput()
             }
             
             if let lowerValueBuffer = descriptor.outputBuffers[.LowerValue] {
                 rangeSliderLowerBuffer = lowerValueBuffer
                 registerForUpdatesFromBuffer(rangeSliderLowerBuffer!)
-                rangeSliderLowerBuffer?.replaceValues([descriptor.minValue])
-                rangeSliderLowerBuffer?.triggerUserInput()
             }
             
 
@@ -237,13 +232,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     func update(){
        
         if(SliderType.Normal == descriptor.type){
-            if(sliderBuffer?.last == 0.0){
-                uiSlider.value = Float(descriptor.defaultValue ?? 0.0)
-                sliderValue.text = numberFormatter(for: descriptor.defaultValue ?? 0.0)
-            } else {
-                uiSlider.value = Float(sliderBuffer?.last ?? 0.0)
-                sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? 0.0)
-            }
+            uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
+            sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? descriptor.defaultValue)
         }
         
         if(SliderType.Range == descriptor.type){
