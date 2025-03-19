@@ -96,7 +96,10 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
 
     @objc private func buttonPressed() {
         button.isEnabled = false
-        button.alpha = 0.5
+        button.backgroundColor = UIColor(named: "lightBackgroundHoverColor")
+        UIView.animate(withDuration: 0.5, delay: 0.0, options: .allowUserInteraction) {
+            self.button.backgroundColor = UIColor(named: "lightBackgroundColor")
+        }
         buttonTappedCallback?()
     }
     
