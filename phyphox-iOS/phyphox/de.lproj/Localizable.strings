@@ -365,3 +365,4 @@
 "wb_fluorescent" = "Leuchtstoffröhre";
 "wb_daylight" = "Tageslicht";
 "wb_cloudy" = "Bewölkt";
+"common_quantity_short_luminance" = "Lv";
