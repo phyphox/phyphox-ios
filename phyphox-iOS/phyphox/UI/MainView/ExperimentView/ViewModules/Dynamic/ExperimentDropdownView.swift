@@ -9,7 +9,7 @@
 import Foundation
 
 private let spacing: CGFloat = 10.0
-private let textFieldWidth: CGFloat = 100.0
+private let minTextFieldWidth: CGFloat = 100.0
 
 
 final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
@@ -74,28 +74,27 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
+        let s2 = dropdown.sizeThatFits(size)
         
-        let s1 = label.sizeThatFits(size)
-        var s2 = dropdown.sizeThatFits(size)
-        s2.width = textFieldWidth
+        let maxLabelWidth = (size.width-3*spacing)/2.0
+        let labelWidth = s2.width > maxLabelWidth ? 2*maxLabelWidth - s2.width : maxLabelWidth
         
-        let left = s1.width + spacing/2.0
-        let right = s2.width + spacing/2.0
-        
-        dynamicLabelHeight = Utility.measureHeightOfText(label.text ?? "-") * 2.5
-        let width = min(2.0 * max(left, right), size.width)
-        
-        return CGSize(width: width, height: dynamicLabelHeight)
+        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: size.height))
+        return CGSize(width: size.width, height: max(s1.height, s2.height))
     }
     
     override func layoutSubviews() {
+        let s2 = dropdown.sizeThatFits(self.bounds.size)
         
-        let h2 = dropdown.sizeThatFits(self.bounds.size).height
-        let w = (bounds.width - spacing)/2.0
+        let maxLabelWidth = (self.bounds.width-3*spacing)/2.0
+        let labelWidth = s2.width > maxLabelWidth ? 2*maxLabelWidth - s2.width : maxLabelWidth
+
+        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: self.bounds.height))
         
-        label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
+        let totalHeight = max(s1.height, s2.height)
         
-        dropdown.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0), size: CGSize(width: textFieldWidth + 20.0, height: h2))
+        label.frame = CGRect(x: spacing, y: 0, width: labelWidth, height: totalHeight)
+        dropdown.frame = CGRect(x: 2*spacing + labelWidth, y: 0, width: max(s2.width, minTextFieldWidth), height: totalHeight)
         
     }
     
@@ -114,7 +113,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
            
             let action = UIAlertAction(title: title, style: .default) { _ in
                 self.setDropdownTitleAsDefaultValue = false
-                self.dropdown.setTitle(title, for: .normal)
+                self.setDropdownLabel(title)
                 self.descriptor.buffer.replaceValues([option.value])
                 self.descriptor.buffer.triggerUserInput()
                }
@@ -139,6 +138,13 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
 
     }
     
+    func setDropdownLabel(_ label: String) {
+        if label != dropdown.title(for: .normal) {
+            dropdown.setTitle(label, for: .normal)
+            setNeedsLayout()
+        }
+    }
+    
     func update(){
         
         if(setDropdownTitleAsDefaultValue){
@@ -146,18 +152,17 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
             let defaultTitle = firstElement?.replacement
             let defaultValue = firstElement?.value ?? 0.0
             if(defaultTitle == ""){
-                self.dropdown.setTitle(String(defaultValue), for: .normal)
+                setDropdownLabel(String(defaultValue))
             } else {
-                self.dropdown.setTitle(defaultTitle ?? String(defaultValue), for: .normal)
+                setDropdownLabel(defaultTitle ?? String(defaultValue))
             }
-            
         } else {
             for option in descriptor.localizedMappings {
                 if(option.value == descriptor.value){
                     if let replacement = option.replacement, replacement != "" {
-                        self.dropdown.setTitle(replacement, for: .normal)
+                        setDropdownLabel(replacement)
                     } else {
-                        self.dropdown.setTitle(String(option.value), for: .normal)
+                        setDropdownLabel(String(option.value))
                     }
                     self.descriptor.buffer.replaceValues([descriptor.value])
                     self.descriptor.buffer.triggerUserInput()
