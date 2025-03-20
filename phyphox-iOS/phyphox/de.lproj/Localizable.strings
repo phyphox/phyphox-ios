@@ -353,3 +353,15 @@
 "select" = "--auswählen--";
 "chooseOption" = "Wähle eine Option";
 "remoteCameraWarning" = "Vorschau und Steuerung der Kamera wird im Fernzugriff nicht unterstützt.";
+"off" = "Aus";
+"on" = "An";
+"cameraBack" = "Hinten";
+"cameraFront" = "Vorne";
+"cameraZoom" = "Zoom";
+"notSet" = "N/A";
+"preview" = "Vorschau";
+"wb_auto" = "Auto";
+"wb_incandescent" = "Glühlampe";
+"wb_fluorescent" = "Leuchtstoffröhre";
+"wb_daylight" = "Tageslicht";
+"wb_cloudy" = "Bewölkt";
