@@ -155,7 +155,6 @@
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
 "remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
 "remoteCameraWarning" = "Previewing and controlling the camera sensor on the remote interface is not supported.";
-"remoteImageWarning" = "Loading of the image on the remote interface is not supported.";
 "applyZoomTitle" = "Apply zoom";
 "applyZoomExplanation" = "As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.";
 "applyZoomAdvanced" = "Advanced options";
