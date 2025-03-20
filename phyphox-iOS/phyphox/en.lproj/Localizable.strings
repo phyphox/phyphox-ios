@@ -277,7 +277,6 @@
 "common_unit_short_hecto_pascal" = "hPa";
 "common_unit_short_decibel" = "dB";
 "common_unit_short_percent" = "%";
-"common_unit_short_luminance" = "lum";
 "common_quantity_short_time" = "t";
 "common_quantity_short_angular_velocity" = "ω";
 "common_quantity_short_magnetic_field" = "B";
