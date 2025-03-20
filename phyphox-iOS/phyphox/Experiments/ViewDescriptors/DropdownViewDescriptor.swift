@@ -19,13 +19,26 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     let buffer: DataBuffer
     var mappings: [DropdownViewMap]
     
+    var localizedMappings: [DropdownViewMap] {
+        get {
+            return mappings.map { (map) -> (DropdownViewMap) in
+                if let replacement = map.replacement {
+                    return DropdownViewMap(value: map.value, replacement: translation?.localizeString(replacement) ?? map.replacement)
+                } else {
+                    return DropdownViewMap(value: map.value, replacement: nil)
+                }
+
+            }
+        }
+    }
+    
     var value: Double {
         return buffer.last ?? defaultValue
     }
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection? = nil) {
+    init(label: String, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection?) {
         self.label = label
         self.defaultValue = defaultValue
         self.buffer = buffer

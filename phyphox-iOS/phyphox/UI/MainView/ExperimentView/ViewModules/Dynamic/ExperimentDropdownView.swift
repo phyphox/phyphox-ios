@@ -104,7 +104,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         
         let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
         
-        for option in descriptor.mappings {
+        for option in descriptor.localizedMappings {
             
             let title: String = if let replacement = option.replacement, replacement != "" {
                 replacement
@@ -142,8 +142,9 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     func update(){
         
         if(setDropdownTitleAsDefaultValue){
-            let defaultTitle = descriptor.mappings.first?.replacement
-            let defaultValue = descriptor.mappings.first?.value ?? 0.0
+            let firstElement = descriptor.localizedMappings.first
+            let defaultTitle = firstElement?.replacement
+            let defaultValue = firstElement?.value ?? 0.0
             if(defaultTitle == ""){
                 self.dropdown.setTitle(String(defaultValue), for: .normal)
             } else {
@@ -151,7 +152,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
             }
             
         } else {
-            for option in descriptor.mappings {
+            for option in descriptor.localizedMappings {
                 if(option.value == descriptor.value){
                     if let replacement = option.replacement, replacement != "" {
                         self.dropdown.setTitle(replacement, for: .normal)

@@ -494,7 +494,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer.append(descriptor.defaultValue)
             }
             
-            return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings)
+            return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations)
             
         case .slider(let descriptor):
             
@@ -531,7 +531,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 
             }
             
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, type: descriptor.type, showValue: descriptor.showValue)
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue)
             
             
             

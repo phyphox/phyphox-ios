@@ -30,7 +30,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection? = nil, type: SliderType, showValue: Bool) {
+    init(label: String, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
         self.label = label
         self.minValue = minValue
         self.maxValue = maxValue
