@@ -10,6 +10,7 @@ import Foundation
 import AVFoundation
 import MetalKit
 
+
 @available(iOS 14.0, *)
 class CameraSettingsModel {
     let updateLock = DispatchSemaphore(value: 1)
@@ -26,6 +27,8 @@ class CameraSettingsModel {
         func onIsoChange(newValue: Int)
         func onApertureChange(newValue: Float)
     }
+    
+    
     
     struct ZoomParameters {
         var cameras: [Float: AVCaptureDevice.DeviceType]

@@ -21,6 +21,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
 
     var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 0)
+    
 
     var active = false {
         didSet {
@@ -90,7 +91,16 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
             }
             
             if !mapped {
-                unitLabel.text = descriptor.localizedUnit
+                if(descriptor.positiveUnit != nil && last >= 0){
+                    unitLabel.text = descriptor.localizedPositiveUnit
+                    
+                } else if(descriptor.negetiveUnit != nil && last < 0){
+                    unitLabel.text = descriptor.localizedNegativeUnit
+                    
+                } else {
+                    unitLabel.text = descriptor.localizedUnit
+                }
+               
                 
                 let formatter = NumberFormatter()
                 formatter.numberStyle = descriptor.scientific ? .scientific : .decimal
@@ -99,7 +109,13 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
                 formatter.minimumIntegerDigits = 1
 
                 let number = NSNumber(value: last * descriptor.factor)
-                valueLabel.text = (formatter.string(from: number) ?? "-") + " "
+            
+                if let format = descriptor.gpsFormat {
+                    valueLabel.text = formatGeoCoordinates(coordinate: Double(number), outputFormat: format, formatter: formatter)
+                } else {
+                    valueLabel.text = (formatter.string(from: number) ?? "-") + " "
+                }
+                
             }
         }
         else {
@@ -107,6 +123,27 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         }
 
         setNeedsLayout()
+    }
+    
+    private func formatGeoCoordinates(coordinate : Double , outputFormat: GpsFormat, formatter : NumberFormatter) -> String{
+        
+        let degree = Int(coordinate)
+        let decibleMinutes = fabs((coordinate - Double(degree)) * 60)
+        
+        let integralMinutes = Int(decibleMinutes)
+        let decibleSeconds = fabs(decibleMinutes - Double(integralMinutes)) * 60
+      
+        switch(outputFormat){
+            
+        case .FLOAT:
+            return (formatter.string(from: NSNumber(value: coordinate)) ?? "-") + " "
+        case .DEGREE_MINUTES:
+            return String(degree) + "° " + (formatter.string(from: NSNumber(value: decibleMinutes))  ?? "-") + "' "
+        case .DEGREE_MINUTES_SECONDS:
+            let seconds = (formatter.string(from: NSNumber(value: decibleSeconds)) ?? "-" )
+            return (String(degree) + "° " + String(integralMinutes) + "' "  + seconds + "'' ")
+        }
+        
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {

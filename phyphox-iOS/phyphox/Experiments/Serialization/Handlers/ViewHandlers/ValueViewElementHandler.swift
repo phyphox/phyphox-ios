@@ -47,6 +47,10 @@ struct ValueViewElementDescriptor {
 
     let inputBufferName: String
     let mappings: [ValueViewMap]
+    
+    let positiveUnit: String?
+    let negativeUnit: String?
+    let gpsFormat: String?
 }
 
 final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -71,6 +75,9 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         case scientific
         case unit
         case factor
+        case positiveUnit
+        case negativeUnit
+        case format
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -87,8 +94,12 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let scientific = try attributes.optionalValue(for: .scientific) ?? false
         let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
+        
+        let positiveUnit = attributes.optionalString(for: .positiveUnit)
+        let negativeUnit = attributes.optionalString(for: .negativeUnit)
+        let gpsFormat = attributes.optionalString(for: .format)
 
-        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings)))
+        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings, positiveUnit: positiveUnit, negativeUnit: negativeUnit, gpsFormat: gpsFormat)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {
