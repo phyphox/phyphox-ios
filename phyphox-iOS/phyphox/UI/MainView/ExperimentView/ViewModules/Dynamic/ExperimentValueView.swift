@@ -109,8 +109,6 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
                 formatter.minimumIntegerDigits = 1
 
                 let number = NSNumber(value: last * descriptor.factor)
-                
-                print("descriptor.gpsFormat ", descriptor.gpsFormat)
             
                 if let format = descriptor.gpsFormat {
                     valueLabel.text = formatGeoCoordinates(coordinate: Double(number), outputFormat: format, formatter: formatter)
@@ -134,9 +132,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         
         let integralMinutes = Int(decibleMinutes)
         let decibleSeconds = fabs(decibleMinutes - Double(integralMinutes)) * 60
-        
-        print("outputFormat ", outputFormat)
-        
+      
         switch(outputFormat){
             
         case .FLOAT:

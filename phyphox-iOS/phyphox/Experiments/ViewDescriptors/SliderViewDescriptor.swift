@@ -200,10 +200,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                         if (valueDisplay) {
                                             valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
                                         }
-                                        console.log("sliderElementOne")
-                                        console.log(parseFloat(sliderElementOne.value).toFixed(\(precision)))
-                                        console.log("lowerBuffer")
-                                        console.log(\(lowerBuffer))
+                                       
                                         ajax('control?cmd=set&buffer=\(lowerValueBufferName)&value='+sliderElementOne.value)
                                     }
                                 }
@@ -215,10 +212,6 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                               valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
                                               }
                                         
-                                        console.log("sliderElementTwo")
-                                        console.log(parseFloat(sliderElementTwo.value).toFixed(\(precision)))
-                                        console.log("upperBuffer")
-                                        console.log(\(upperBuffer))
                                         ajax('control?cmd=set&buffer=\(upperValueBufferName)&value='+sliderElementTwo.value)
                                         }
                                 }

@@ -63,17 +63,3 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
     }
 }
 
-
-/**
- 
- <multiply>
-     <input clear="false">dropdown</input>
-     <input type="value">10</input>
-     <output clear="false">slider</output>
- </multiply>
- <add>
-     <input clear="false">dropdown</input>
-     <input type="value">0</input>
-     <output clear="false">toggle</output>
- </add>
- */

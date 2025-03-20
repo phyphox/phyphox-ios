@@ -40,14 +40,14 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     }
     
     var localizedPositiveUnit: String? {
-        if unit == nil {
+        if positiveUnit == nil {
             return nil
         }
         return translation?.localizeString(positiveUnit!) ?? positiveUnit!
     }
     
     var localizedNegativeUnit: String? {
-        if unit == nil {
+        if negetiveUnit == nil {
             return nil
         }
         return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
