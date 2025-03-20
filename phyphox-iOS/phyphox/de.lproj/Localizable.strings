@@ -350,3 +350,6 @@
 "url_invalid" = "Ungültige URL";
 "url_invalid_msg" = "Dieses Experiment ist nur ein Link, aber keine gültige URL wurde gefunden.";
 "showQRCodeForRemoteURL" = "QR-Code für Zugriff auf URL";
+"select" = "--auswählen--";
+"chooseOption" = "Wähle eine Option";
+"remoteCameraWarning" = "Vorschau und Steuerung der Kamera wird im Fernzugriff nicht unterstützt.";
