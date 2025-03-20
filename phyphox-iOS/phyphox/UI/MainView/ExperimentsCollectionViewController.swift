@@ -605,7 +605,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 
                 let state = experiment.experiment.stateTitle ?? ""
                 let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
-                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") + "\n\n" +  (experiment.experiment.localizedDescription ?? "")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
                 
                 showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
             
@@ -621,7 +621,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             catch DepthInputError.sensorUnavailable {
                 let state = experiment.experiment.stateTitle ?? ""
                 let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
-                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") + "\n\n" +  (experiment.experiment.localizedDescription ?? "")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
                 
                 showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
          
@@ -638,11 +638,18 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     func showSensorNotAvailableDialogWithExperimentDetails(_ title: String, _ message: String, _ links: [ExperimentLink]){
         let al = UIAlertController(title: title, message: message, preferredStyle: .alert)
         
+        /* Showing the original links seems more confusing than helpful.
         for link in links {
             al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
                 UIApplication.shared.open(link.url)
             }))
         }
+         */
+        
+        al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+            UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+        }))
+        
         al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
             UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
         }))
@@ -948,7 +955,7 @@ print("\(url)")
             catch SensorError.sensorUnavailable(let type) {
                 let state = loadedExperiment.stateTitle ?? ""
                 let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
-                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") + "\n\n" +  (loadedExperiment.localizedDescription ?? "")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (loadedExperiment.localizedDescription ?? "") */
                 
                 showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
            
@@ -965,7 +972,7 @@ print("\(url)")
                 
                 let state = loadedExperiment.stateTitle ?? ""
                 let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
-                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") + "\n\n" +  (loadedExperiment.localizedDescription ?? "")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (loadedExperiment.localizedDescription ?? "") */
                 
                 showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
          
