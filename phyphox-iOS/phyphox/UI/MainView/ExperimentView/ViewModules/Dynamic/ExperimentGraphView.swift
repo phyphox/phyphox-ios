@@ -1260,7 +1260,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 markerLabel?.textColor = UIColor(named: "textColor")
                 markerLabel?.numberOfLines = 0
                 markerLabelFrame = UIView()
-                markerLabelFrame?.backgroundColor = UIColor(named: "secondaryBackground")
+                markerLabelFrame?.backgroundColor = UIColor(named: "lightBackgroundColor")
                 markerLabelFrame?.layer.cornerRadius = 5.0
                 markerLabelFrame?.layer.masksToBounds = true
                 markerLabelFrame?.addSubview(markerLabel!)
