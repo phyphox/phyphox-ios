@@ -10,11 +10,6 @@ import Foundation
 import AVFoundation
 import MetalKit
 
-protocol SettingsChangeObserver {
-    func onShutterSpeedChange(newValue: CMTime)
-    func onIsoChange(newValue: Int)
-    func onApertureChange(newValue: Float)
-}
 
 @available(iOS 14.0, *)
 class CameraSettingsModel {
@@ -25,6 +20,12 @@ class CameraSettingsModel {
             updateLock.signal()
         }
         block()
+    }
+    
+    protocol SettingsChangeObserver {
+        func onShutterSpeedChange(newValue: CMTime)
+        func onIsoChange(newValue: Int)
+        func onApertureChange(newValue: Float)
     }
     
     
