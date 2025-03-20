@@ -7,8 +7,7 @@
 //
 
 import Foundation
-import GCDWebServers
-import SwiftUI
+import GCDWebServer
 
 protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)
@@ -46,6 +45,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     let flowLayout = UICollectionViewFlowLayout()
     
     var numOfConnectedDevices = 0
+    
+    var customCollectionView = ConnectedBluetoothDevicesViewController(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout(), data: [])
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -125,7 +126,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
-                let m = ExperimentViewModuleFactory.createViews(collection)
+                let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
                 
                 modules.append(m)
                 
@@ -203,6 +204,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -317,7 +319,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.automaticallyAdjustsScrollViewInsets = false
         self.edgesForExtendedLayout = UIRectEdge()
         
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
         actionItem?.accessibilityLabel = localize("actions")
@@ -388,11 +390,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
-        refreshTheAdjustedGraphColorForLightMode()
+        refreshAppTheme()
         if (experiment.viewDescriptors!.count > 1) {
             updateSegControlDesign()
             tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
         }
+        
     }
     
     class NetworkServiceRequestCallbackWrapper: NetworkServiceRequestCallback {
@@ -424,7 +427,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
                 output.replaceValues(buffer.toArray())
                 output.triggerUserInput()
             case .value(let value, usedAs: _):
@@ -509,6 +512,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         session.attachDelegate(delegate: depthGUI)
                         depthGUI.depthGUISelectionDelegate = session
                     }
+                    
+                    if let cameraGUI = view as? ExperimentCameraUIView {
+                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
+                            continue
+                        }
+                        cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
+                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
+    
+                    }
+                
                 }
             }
         }
@@ -532,10 +545,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
                 session.stopSession()
             }
+            
+            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+                camSession.endSession()
+            }
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-        
+
         if isMovingFromParent {
             tearDownWebServer()
             
@@ -616,7 +633,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == "" {
                 print("Fallback to generate URL from IP.")
-                var ip: String? = nil
+                var ip: [String] = []
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
                 if getifaddrs(&interfaceAdresses) == 0 {
                     var iPtr = interfaceAdresses
@@ -626,21 +643,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         let interface = iPtr?.pointee
                         if interface?.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
                             if let name = String(validatingUTF8: (interface?.ifa_name)!) {
-                                if name == "bridge100" { //This is the "hotspot interface"
+                                if ["en0", "bridge100"].contains(name) {
                                     var addr = interface?.ifa_addr.pointee
                                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
                                     getnameinfo(&addr!, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
-                                    ip = String(cString: hostname)
+                                    ip.append(String(cString: hostname))
                                 }
                             }
                         }
                     }
                 }
-                if ip != nil {
-                    if webServer.port != 80 {
-                        url = "http://\(ip!):\(webServer.port)"
-                    } else {
-                        url = "http://\(ip!)"
+                if ip.count > 0 {
+                    for addr in ip {
+                        if url != "" {
+                            url += "\n"
+                        }
+                        if webServer.port != 80 {
+                            url += "http://\(addr):\(webServer.port)"
+                        } else {
+                            url += "http://\(addr)"
+                        }
                     }
                 } else {
                     url = "Error: No active network."
@@ -1195,13 +1217,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             label.text = countdownFormatter.string(from: dt as NSNumber)
             label.sizeToFit()
-            
-            var items = navigationItem.rightBarButtonItems
-            
-            items?.removeLast()
-            items?.append(UIBarButtonItem(customView: label))
-            
-            navigationItem.rightBarButtonItems = items
         }
         
         after(0.02) {
@@ -1270,16 +1285,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     
                     label.text = countdownFormatter.string(from: dt as NSNumber)
                     label.sizeToFit()
-                    
-                    var items = navigationItem.rightBarButtonItems
-                    
-                    items?.removeLast()
-                    items?.append(UIBarButtonItem(customView: label))
-                    
-                    navigationItem.rightBarButtonItems = items
                 }
                 
-                after(0.2) {
+                after(0.02) {
                     updateT()
                 }
                 
@@ -1386,6 +1394,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func clearData() {
+        self.experiment.timeReference.registerEvent(event: .CLEAR)
+        self.experiment.bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: self.experiment.timeReference.timeMappings.last) }
+        
         self.stopExperiment()
         self.experiment.clear(byUser: true)
         
@@ -1470,12 +1481,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func refreshTheAdjustedGraphColorForLightMode(){
+    func refreshAppTheme(){
         if #available(iOS 12.0, *) {
             if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
-               UIScreen.main.traitCollection.userInterfaceStyle == .light){
+               (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .light
+                } else {
+                    // Fallback on earlier versions
+                }
+            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
+                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                if #available(iOS 13.0, *) {
+                    view.overrideUserInterfaceStyle = .dark
                 } else {
                     // Fallback on earlier versions
                 }
@@ -1486,6 +1504,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
+        
+        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
+        customCollectionView.removeFromSuperview()
+        
         numOfConnectedDevices = connectedDevice.count
         var adjustedHeight = 48.0
         if( numOfConnectedDevices == 0){
@@ -1494,7 +1516,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             adjustedHeight = 100.0
         }
      
-        let customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
+        customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
         view.addSubview(customCollectionView)
         
     }

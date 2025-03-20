@@ -11,7 +11,7 @@ import Foundation
 final class FormulaAnalysis: AutoClearingExperimentAnalysisModule {
     let parser: FormulaParser
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         
         let formula = try attributes.optionalValue(for: "formula") ?? ""
@@ -27,7 +27,7 @@ final class FormulaAnalysis: AutoClearingExperimentAnalysisModule {
         var inArrays: [[Double]] = []
         for input in inputs {
             switch input {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 inArrays.append(data.data)
             case .value(value: let value, usedAs: _):
                 inArrays.append([value])
@@ -38,9 +38,8 @@ final class FormulaAnalysis: AutoClearingExperimentAnalysisModule {
         
         if let output = outputs.first {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            default: break
             }
         }
         

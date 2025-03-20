@@ -299,7 +299,9 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         characteristics_map = [:]
         servicesToBeDiscovered = []
+        connectedDevices = []
         centralManager?.stopScan()
+        
     }
     
     override func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
@@ -325,7 +327,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
-        signalLevel = Int(RSSI)
+        signalLevel = Int(truncating: RSSI)
         connectedDeviceName = peripheral.name ?? ""
         let  connectedDevice = ConnectedDevicesDataModel(deviceIdentifier: peripheral.identifier,
                                                          signalStrength: signalLevel,
@@ -517,6 +519,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                     out.append(0x00)
                 case .START:
                     out.append(0x01)
+                case .CLEAR:
+                    out.append(0x02)
                 }
                 experimentTime = Int64(timeMapping.experimentTime * 1000)
                 systemTime = Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000)

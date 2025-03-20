@@ -10,15 +10,16 @@ import Foundation
 
 extension UIColor {
     func autoLightColor() -> UIColor {
+        guard #available(iOS 13.0, *) else {
+            return ColorConverterHelper().adjustColorForLightTheme(colorName: self)
+        }
         if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
             return ColorConverterHelper().adjustColorForLightTheme(colorName: self)
         } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
             return self
         } else {
-            if #available(iOS 12.0, *) {
-                if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
-                    return self
-                }
+            if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
+                return self
             }
             return ColorConverterHelper().adjustColorForLightTheme(colorName: self)
         }

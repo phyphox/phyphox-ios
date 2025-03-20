@@ -20,12 +20,18 @@ struct MapSensorType: OptionSet {
     static let Barometer = MapSensorType(rawValue: 1 << 4) //16
     static let Proximity = MapSensorType(rawValue: 1 << 5) //32
     static let GPS = MapSensorType(rawValue: 1 << 6) //64
+    static let Attitude = MapSensorType(rawValue: 1 << 7) //128
+    static let Gravity = MapSensorType(rawValue: 1 << 8) //256
 }
 
 class CreateExperimentViewController: UITableViewController {
     private var selectedSensors = MapSensorType.None
     private var experimentTitle: String?
     private var rateString: String?
+    
+    private final let TOTAL_NUM_OF_SENSORS = 9
+    
+    public var onExperimentCreated: ((String)->())?
     
     func actualInit() {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
@@ -81,7 +87,8 @@ class CreateExperimentViewController: UITableViewController {
         hud.show(in: self.presentingViewController!.view)
         
         do {
-            try _ = SimpleExperimentSerializer.writeSimpleExperiment(title: title, bufferSize: 0, rate: rate, sensors: selected)
+            let path = try SimpleExperimentSerializer.writeSimpleExperiment(title: title, rate: rate, sensors: selected)
+            onExperimentCreated?(path)
             hud.dismiss()
         }
         catch let error as NSError {
@@ -105,7 +112,7 @@ class CreateExperimentViewController: UITableViewController {
             return 1
         }
         else {
-            return 7
+            return TOTAL_NUM_OF_SENSORS
         }
     }
     
@@ -130,25 +137,31 @@ class CreateExperimentViewController: UITableViewController {
             
             switch indexPath.row {
             case 0:
-                cell.textLabel!.text = localize("sensorAccelerometer")
+                cell.textLabel?.text = localize("sensorAccelerometer")
                 cell.accessoryType = selectedSensors.contains(.Accelerometer) ? .checkmark : .none
             case 1:
-                cell.textLabel!.text = localize("sensorLinearAcceleration")
-                cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .checkmark : .none
+                cell.textLabel?.text = localize("sensorAttitude")
+                cell.accessoryType = selectedSensors.contains(.Attitude) ? .checkmark : .none
             case 2:
-                cell.textLabel!.text = localize("location")
-                cell.accessoryType = selectedSensors.contains(.GPS) ? .checkmark : .none
+                cell.textLabel?.text = localize("sensorGravity")
+                cell.accessoryType = selectedSensors.contains(.Gravity) ? .checkmark : .none
             case 3:
-                cell.textLabel!.text = localize("sensorGyroscope")
+                cell.textLabel?.text = localize("sensorGyroscope")
                 cell.accessoryType = selectedSensors.contains(.Gyroscope) ? .checkmark : .none
             case 4:
-                cell.textLabel!.text = localize("sensorMagneticField")
-                cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .checkmark : .none
+                cell.textLabel?.text = localize("sensorLinearAcceleration")
+                cell.accessoryType = selectedSensors.contains(.LinearAccelerometer) ? .checkmark : .none
             case 5:
-                cell.textLabel!.text = localize("sensorPressure")
-                cell.accessoryType = selectedSensors.contains(.Barometer) ? .checkmark : .none
+                cell.textLabel?.text = localize("location")
+                cell.accessoryType = selectedSensors.contains(.GPS) ? .checkmark : .none
             case 6:
-                cell.textLabel!.text = localize("sensorProximity")
+                cell.textLabel?.text = localize("sensorMagneticField")
+                cell.accessoryType = selectedSensors.contains(.Magnetometer) ? .checkmark : .none
+            case 7:
+                cell.textLabel?.text = localize("sensorPressure")
+                cell.accessoryType = selectedSensors.contains(.Barometer) ? .checkmark : .none
+            case 8:
+                cell.textLabel?.text = localize("sensorProximity")
                 cell.accessoryType = selectedSensors.contains(.Proximity) ? .checkmark : .none
             default:
                 break
@@ -207,21 +220,27 @@ class CreateExperimentViewController: UITableViewController {
                 t = .Accelerometer
                 
             case 1:
-                t = .LinearAccelerometer
+                t = .Attitude
                 
             case 2:
-                t = .GPS
+                t = .Gravity
                 
             case 3:
                 t = .Gyroscope
                 
             case 4:
-                t = .Magnetometer
+                t = .LinearAccelerometer
                 
             case 5:
-                t = .Barometer
+                t = .GPS
                 
             case 6:
+                t = .Magnetometer
+                
+            case 7:
+                t = .Barometer
+                
+            case 8:
                 t = .Proximity
                 
             default:

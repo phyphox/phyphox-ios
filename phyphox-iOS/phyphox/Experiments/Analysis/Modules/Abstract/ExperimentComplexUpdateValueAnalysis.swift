@@ -43,11 +43,11 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
         var values: [ValueSource] = []
         var maxCount = 0
-        var maxNonScalarCount = -1 //Scalar and an empty vector should give an empty result
+        var emptyVector = false //Scalar and an empty vector should give an empty result
         
         for input in inputs {
             switch input {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let array = data.data
 
                 let src = ValueSource(vector: array)
@@ -59,7 +59,9 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
                     values.append(src)
                 }
 
-                maxNonScalarCount = Swift.max(maxNonScalarCount, array.count)
+                if (array.count == 0) {
+                    emptyVector = true
+                }
                 maxCount = Swift.max(maxCount, array.count)
                 
                 if array.count == 0 {
@@ -82,7 +84,7 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
         
         let result: [Double]
         
-        if values.count == 0 || maxCount == 0 || maxNonScalarCount == 0 {
+        if values.count == 0 || maxCount == 0 || emptyVector {
             result = []
         }
         else {
@@ -112,10 +114,8 @@ class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule
                 
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

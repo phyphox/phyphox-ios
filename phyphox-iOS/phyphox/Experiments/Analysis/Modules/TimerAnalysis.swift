@@ -11,17 +11,17 @@ import Foundation
 final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
     let linearTime: Bool;
     
-    private var outOutput: ExperimentAnalysisDataIO?
-    private var offset1970Output: ExperimentAnalysisDataIO?
+    private var outOutput: ExperimentAnalysisDataOutput?
+    private var offset1970Output: ExperimentAnalysisDataOutput?
         
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         linearTime = try attributes.optionalValue(for: "linearTime") ?? false
         
-        var out: ExperimentAnalysisDataIO? = nil
-        var offset1970: ExperimentAnalysisDataIO? = nil
+        var out: ExperimentAnalysisDataOutput? = nil
+        var offset1970: ExperimentAnalysisDataOutput? = nil
         for output in outputs {
             if output.asString == "offset1970" || out != nil {
                 offset1970 = output
@@ -39,18 +39,14 @@ final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         if let output = outOutput {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.append(linearTime ? analysisLinearTime : analysisTime)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         if let output = offset1970Output {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.append(linearTime ? analysisLinearTimeOffset1970 : analysisTimeOffset1970)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

@@ -12,14 +12,14 @@ import Accelerate
 final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray!
-    private var thresholdIn: ExperimentAnalysisDataIO?
+    private var thresholdIn: ExperimentAnalysisDataInput?
     
-    private var maxOut: ExperimentAnalysisDataIO?
-    private var positionOut: ExperimentAnalysisDataIO?
+    private var maxOut: ExperimentAnalysisDataOutput?
+    private var positionOut: ExperimentAnalysisDataOutput?
     
     private var multiple: Bool
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
@@ -28,7 +28,7 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -36,7 +36,7 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -90,10 +90,8 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
                         
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     buffer.append(max)
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
 
@@ -125,19 +123,15 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
                         
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     buffer.appendFromArray(max)
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
             
             if let positionOut = positionOut {
                 switch positionOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     buffer.appendFromArray(x)
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
         }
@@ -158,19 +152,15 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
                         
             if let maxOut = maxOut {
                 switch maxOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     buffer.append(max)
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
             
             if let positionOut = positionOut {
                 switch positionOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     buffer.append(x)
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
 

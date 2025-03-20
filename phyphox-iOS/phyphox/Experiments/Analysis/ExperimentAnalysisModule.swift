@@ -12,8 +12,8 @@ import Foundation
  Abstract class providing an Analysis module for Experiments
  */
 class ExperimentAnalysisModule {
-    let inputs: [ExperimentAnalysisDataIO]
-    let outputs: [ExperimentAnalysisDataIO]
+    let inputs: [ExperimentAnalysisDataInput]
+    let outputs: [ExperimentAnalysisDataOutput]
     
     var cycles: [(Int,Int)] = []
     
@@ -24,7 +24,7 @@ class ExperimentAnalysisModule {
 
     let attributeContainer: AttributeContainer
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         self.inputs = inputs
         self.outputs = outputs
         self.attributeContainer = additionalAttributes

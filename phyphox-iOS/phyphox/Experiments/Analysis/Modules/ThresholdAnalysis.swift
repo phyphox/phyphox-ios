@@ -13,9 +13,9 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
     
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray!
-    private var thresholdIn: ExperimentAnalysisDataIO?
+    private var thresholdIn: ExperimentAnalysisDataInput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         falling = try attributes.optionalValue(for: "falling") ?? false
@@ -26,7 +26,7 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -34,7 +34,7 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -52,21 +52,21 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
         var threshold = 0.0
         
         if let v = thresholdIn?.getSingleValue() {
-            threshold = v
+            threshold = v.isNaN ? 0.0 : v
         }
         
-        var x: Double?
+        var x: Double = -1.0
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
         
         for (i, value) in yIn.data.enumerated() {
+            if let xIn = xIn, i < xIn.data.count {
+                x = xIn.data[i]
+            }
+            else {
+                x += 1.0
+            }
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
-                    if let xIn = xIn, i < xIn.data.count {
-                        x = xIn.data[i]
-                    }
-                    else {
-                        x = Double(i)
-                    }
                     break
                 }
             } else {
@@ -74,27 +74,10 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
         
-        guard let xValue = x else {
-            for output in outputs {
-                switch output {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: let clear):
-                    if clear {
-                        buffer.clear(reset: false)
-                    }
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            
-            return
-        }
-        
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
-                buffer.append(xValue)
-            case .value(value: _, usedAs: _):
-                break
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+                buffer.append(x)
             }
         }
     }

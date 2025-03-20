@@ -80,7 +80,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let color = mapColorString(attributes.optionalString(for: .color)) ?? kFullWhiteColor
 
         let mappings = mapHandler.results
-        let inpurBufferName = try inputHandler.expectSingleResult()
+        let inputBufferName = try inputHandler.expectSingleResult()
 
         let size = try attributes.optionalValue(for: .size) ?? 1.0
         let precision = try attributes.optionalValue(for: .precision) ?? 2
@@ -88,7 +88,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
 
-        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings)))
+        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

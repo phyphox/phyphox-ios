@@ -9,6 +9,7 @@
 import Foundation
 import AVFoundation
 import CoreLocation
+import CoreMotion
 
 private struct ExperimentRequiredPermission: OptionSet {
     let rawValue: Int
@@ -16,6 +17,7 @@ private struct ExperimentRequiredPermission: OptionSet {
     static let none = ExperimentRequiredPermission([])
     static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
     static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
+    static let motionFitness = ExperimentRequiredPermission(rawValue: (1 << 2))
 }
 
 struct ExperimentLink: Equatable {
@@ -78,7 +80,39 @@ final class Experiment {
 
     var local: Bool = false
     var source: URL?
+    var custom: Bool {
+        return !(source?.absoluteString.starts(with: experimentsBaseURL.absoluteString) ?? true)
+    }
     var crc32: UInt?
+    var localResourceFolder: URL? {
+        if let crc32 = crc32 {
+            return customExperimentsURL.appendingPathComponent(String(crc32, radix: 16))
+        } else {
+            return nil
+        }
+    }
+    var resourceFolder: URL? {
+        if local && custom {
+            return localResourceFolder
+        } else {
+            return source?.deletingLastPathComponent().appendingPathComponent("res")
+        }
+    }
+    var resources: [String] {
+        var res: Set<String> = []
+        if let viewDescriptors = viewDescriptors {
+            for viewDescriptor in viewDescriptors {
+                for view in viewDescriptor.views {
+                    if let view = view as? ResourceViewDescriptor {
+                        for resource in view.resources {
+                            res.insert(resource)
+                        }
+                    }
+                }
+            }
+        }
+        return Array(res)
+    }
     
     var appleBan: Bool
     var invalid = false
@@ -91,6 +125,7 @@ final class Experiment {
 
     let sensorInputs: [ExperimentSensorInput]
     let depthInput: ExperimentDepthInput?
+    let cameraInput: ExperimentCameraInput?
     let gpsInputs: [ExperimentGPSInput]
     let audioInputs: [ExperimentAudioInput]
     
@@ -116,7 +151,7 @@ final class Experiment {
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -141,6 +176,7 @@ final class Experiment {
         self.buffers = buffers
         self.sensorInputs = sensorInputs
         self.depthInput = depthInput
+        self.cameraInput = cameraInput
         self.gpsInputs = gpsInputs
         self.audioInputs = audioInputs
         
@@ -167,12 +203,21 @@ final class Experiment {
         if !gpsInputs.isEmpty {
             requiredPermissions.insert(.location)
         }
+        //print(ProcessInfo().operatingSystemVersion)
+        if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion == 4 {
+            for sensorInput in sensorInputs {
+                if sensorInput.sensorType == .pressure {
+                    requiredPermissions.insert(.motionFitness)
+                    break
+                }
+            }
+        }
         
         analysis.delegate = self
     }
 
     convenience init(file: String, error: String) {
-        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, cameraInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
         invalid = true;
     }
     
@@ -229,6 +274,17 @@ final class Experiment {
 
         func moveFile(from fileURL: URL) throws {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
+            
+            if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
+                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: false)
+                for resource in self.resources {
+                    do {
+                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: localResourceFolder.appendingPathComponent(resource))
+                    } catch {
+                        print("Could not save \(resource).")
+                    }
+                }
+            }
             
             self.source = experimentURL
             local = true
@@ -307,6 +363,32 @@ final class Experiment {
             default:
                 break
             }
+        } else if requiredPermissions.contains(.motionFitness) {
+            print("Motion and Fitness permission required.")
+            let status = CMAltimeter.authorizationStatus()
+            switch status {
+            case .denied:
+                failed()
+                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+            case .restricted:
+                failed()
+                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been restricted. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                
+            case .notDetermined:
+                print("Trying CMSensorRecorder workaround.")
+                let recorder = CMSensorRecorder()
+                DispatchQueue.global().async {
+                    recorder.recordAccelerometer(forDuration: 0.1)
+                }
+                break
+                
+            default:
+                break
+            }
         }
     }
     
@@ -362,6 +444,7 @@ final class Experiment {
         sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
         try depthInput?.start(queue: queue)
+        try cameraInput?.start(queue: queue)
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
@@ -380,6 +463,7 @@ final class Experiment {
                 
         sensorInputs.forEach { $0.stop() }
         depthInput?.stop()
+        cameraInput?.stop()
         gpsInputs.forEach { $0.stop() }
         bluetoothInputs.forEach { $0.stop() }
         networkConnections.forEach { $0.stop() }
@@ -390,8 +474,10 @@ final class Experiment {
         
         running = false
         
-        timeReference.registerEvent(event: .PAUSE)
-        bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        if (timeReference.timeMappings.last?.event != .CLEAR) {
+            timeReference.registerEvent(event: .PAUSE)
+            bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
+        }
     }
     
     func clear(byUser: Bool) {
@@ -407,6 +493,7 @@ final class Experiment {
 
         sensorInputs.forEach { $0.clear() }
         depthInput?.clear()
+        cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
         
         if byUser {

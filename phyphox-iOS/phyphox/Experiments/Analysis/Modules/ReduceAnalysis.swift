@@ -13,14 +13,14 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
     private var averageY = false
     private var sumY = false
     
-    private var factor: ExperimentAnalysisDataIO? = nil
+    private var factor: ExperimentAnalysisDataInput? = nil
     private var inX: MutableDoubleArray? = nil
     private var inY: MutableDoubleArray? = nil
     
-    private var outX: ExperimentAnalysisDataIO? = nil
-    private var outY: ExperimentAnalysisDataIO? = nil
+    private var outX: ExperimentAnalysisDataOutput? = nil
+    private var outY: ExperimentAnalysisDataOutput? = nil
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         averageX = try attributes.optionalValue(for: "averageX") ?? false
@@ -30,7 +30,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                         inX = data
                     default:
                         throw SerializationError.genericError(message: "Error: Input x for reduce module has to be a buffer.")
@@ -38,7 +38,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                         inY = data
                     default:
                         throw SerializationError.genericError(message: "Error: Input y for reduce module has to be a buffer.")
@@ -139,18 +139,14 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         }
                 
         switch outX! {
-        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
             buffer.appendFromArray(resX)
-        default:
-            break
         }
         
         if let yOut = outY {
             switch yOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(resY)
-            default:
-                break
             }
         }
 

@@ -16,6 +16,7 @@ final class ExperimentTimeReference: Equatable {
     public enum TimeMappingEvent: String {
         case START
         case PAUSE
+        case CLEAR
     }
     
     public struct TimeMapping: Equatable {
@@ -43,15 +44,17 @@ final class ExperimentTimeReference: Equatable {
         if let last = timeMappings.last {
             switch last.event {
             case .START:
-                if event != .PAUSE {
+                if event == .START {
                     return
                 }
                 timeMappings.append(TimeMapping(event: event, experimentTime: getExperimentTimeFromEvent(eventTime: eventTime), eventTime: eventTime, systemTime: systemTime))
             case .PAUSE:
-                if (event != .START) {
+                if (event == .PAUSE) {
                     return
                 }
                 timeMappings.append(TimeMapping(event: event, experimentTime: last.experimentTime, eventTime: eventTime, systemTime: systemTime))
+            default:
+                return
             }
         } else {
             if event != .START {

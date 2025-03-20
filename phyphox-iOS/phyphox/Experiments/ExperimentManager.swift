@@ -36,14 +36,35 @@ final class ExperimentManager {
 
     func deleteExperiment(_ experiment: Experiment) throws {
         guard let source = experiment.source else { return }
+        print("Deleting " + source.absoluteString + "...")
         try FileManager.default.removeItem(at: source)
+        do {
+            if let resFolder = experiment.resourceFolder {
+                print("Deleting " + resFolder.absoluteString + "...")
+                try FileManager.default.removeItem(at: resFolder)
+            }
+            print("Done.")
+        } catch {
+            print("Failed.")
+            // Most experiments do not have a ressource folder, so that's fine.
+        }
         reloadUserExperiments()
     }
     
     func renameExperiment(_ experiment: Experiment, newTitle: String) throws {
         guard let source = experiment.source else { return }
+        print("Renaming experiment in \(source)")
+        let oldResFolder = experiment.resourceFolder
         try LegacyStateSerializer.renameStateFile(customTitle: newTitle, file: source)
+        if let oldResFolder = oldResFolder, let inputStream = InputStream(url: source) {
+            let newCRC32 = CRC32InputStream(inputStream).crcValue
+            let newResFolder = customExperimentsURL.appendingPathComponent(String(newCRC32, radix: 16))
+
+            print("Also renaming resource folder from \(oldResFolder.lastPathComponent) to \(newResFolder.lastPathComponent)")
+            try FileManager.default.moveItem(at: oldResFolder, to: newResFolder)
+        }
         reloadUserExperiments()
+        
     }
 
     let filteredServices: [String] = [CBUUID(string: "0x1812").uuid128String]

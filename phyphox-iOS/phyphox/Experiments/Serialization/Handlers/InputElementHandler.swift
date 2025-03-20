@@ -118,6 +118,93 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
+struct CameraInputDescriptor: SensorDescriptor {
+    let x1: Float
+    let x2: Float
+    let y1: Float
+    let y2: Float
+    let autoExposure: Bool
+    let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
+    let locked: [String:Float?]
+    let feature: String
+    let outputs: [SensorOutputDescriptor]
+}
+
+private final class CameraElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [CameraInputDescriptor]()
+
+    private let outputHandler = SensorOutputElementHandler()
+
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["output": outputHandler]
+    }
+
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    // spelling in the xml should match with it
+    private enum Attribute: String, AttributeKey {
+        case x1
+        case x2
+        case y1
+        case y2
+        case auto_exposure
+        case aeStrategy
+        case locked
+        case feature
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let x1user: Float = try attributes.optionalValue(for: .x1) ?? 0.4
+        let x2user: Float = try attributes.optionalValue(for: .x2) ?? 0.6
+        let y1user: Float = try attributes.optionalValue(for: .y1) ?? 0.4
+        let y2user: Float = try attributes.optionalValue(for: .y2) ?? 0.6
+
+        //Careful: We will now switch from the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+        let x1 = 1.0-y1user
+        let x2 = 1.0-y2user
+        let y1 = 1.0-x1user
+        let y2 = 1.0-x2user
+                
+        let autoExposure: Bool = try attributes.optionalValue(for: .auto_exposure) ?? true
+        
+        let lockedStr: String = try attributes.optionalValue(for: .locked) ?? ""
+        var locked: [String:Float?] = [:]
+        for lockedSetting in lockedStr.split(separator: ",") {
+            if lockedSetting.contains("=") {
+                let parts = lockedSetting.split(separator: "=", maxSplits: 1)
+                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                var value: Float? = nil
+                if setting == "shutter_speed" && parts[1].contains("/") {
+                    let fraction = parts[1].split(separator: "/")
+                    let a = Float(String(fraction[0].trimmingCharacters(in: .whitespaces)))
+                    let b = Float(String(fraction[1].trimmingCharacters(in: .whitespaces)))
+                    if let a = a, let b = b {
+                        value = a/b
+                    }
+                } else {
+                    value = Float(String(parts[1].trimmingCharacters(in: .whitespaces)))
+                }
+                locked[setting] = value
+            } else {
+                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces))] = nil
+            }
+        }
+        
+        let feature: String = attributes.optionalString(for: .feature) ?? "photometric"
+        if feature != "photometric" {
+            throw ElementHandlerError.unexpectedAttributeValue("Unsupported camera feature \"\(feature)\"")
+        }
+        
+        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
+                
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature, outputs: outputHandler.results))
+    }
+}
+
 struct SensorInputDescriptor: SensorDescriptor {
     let sensor: SensorType
     let rate: Double
@@ -163,6 +250,8 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         case average
         case stride
         case ignoreUnavailable
+        case nameFilter // ignored, only part of the file format for Android sensors
+        case typeFilter // ignored, only part of the file format for Android sensors
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -177,10 +266,6 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
-
-        if average && rate == 0.0 {
-            throw ElementHandlerError.message("Averaging is enabled but rate is 0")
-        }
 
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
     }
@@ -413,7 +498,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
 }
 
 final class InputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
-    typealias Result = (sensors: [SensorInputDescriptor], depth: [DepthInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
+    typealias Result = (sensors: [SensorInputDescriptor], depth: [DepthInputDescriptor], camera: [CameraInputDescriptor], audio: [AudioInputDescriptor], location: [LocationInputDescriptor], bluetooth: [BluetoothInputBlockDescriptor])
 
     var results = [Result]()
 
@@ -422,11 +507,12 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
     private let audioHandler = AudioElementHandler()
     private let locationHandler = LocationElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
+    private let cameraHandler = CameraElementHandler()
 
     var childHandlers: [String: ElementHandler]
 
     init() {
-        childHandlers = ["sensor": sensorHandler, "depth": depthHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["sensor": sensorHandler, "depth": depthHandler, "camera": cameraHandler, "audio": audioHandler, "location": locationHandler, "bluetooth": bluetoothHandler]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -434,9 +520,10 @@ final class InputElementHandler: ResultElementHandler, LookupElementHandler, Att
         let location = locationHandler.results
         let sensors = sensorHandler.results
         let depth = depthHandler.results
+        let camera = cameraHandler.results
         let bluetooth = bluetoothHandler.results
 
-        results.append((sensors, depth, audio, location, bluetooth))
+        results.append((sensors, depth, camera, audio, location, bluetooth))
     }
 }
 

@@ -75,6 +75,9 @@ class SettingBundleHelper {
     
     
     static func getTextColorWhenDarkModeNotSupported() -> UIColor{
+        guard #available(iOS 13.0, *) else {
+            return UIColor(white: 0.0, alpha: 1.0)
+        }
         let white = UIColor(white: 1.0, alpha: 1.0)
         let black = UIColor(white: 0.0, alpha: 1.0)
         if(getAppMode() == Utility.LIGHT_MODE){
@@ -82,32 +85,27 @@ class SettingBundleHelper {
         } else if(getAppMode() == Utility.DARK_MODE){
             return white
         } else {
-            if #available(iOS 12.0, *) {
-                if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
-                    return white
-                } else{
-                    return black
-                }
-            } else {
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
                 return white
+            } else{
+                return black
             }
         }
     }
     
     static func getLightBackgroundColorWhenDarkModeNotSupported() -> UIColor{
+        guard #available(iOS 13.0, *) else {
+            return kLightBackgroundColorForLight
+        }
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             return kLightBackgroundColorForLight
         } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
            return kLightBackgroundColor
         } else {
-            if #available(iOS 12.0, *) {
-                if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
-                    return kLightBackgroundColor
-                } else{
-                    return kLightBackgroundColorForLight
-                }
-            } else {
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .dark){
                 return kLightBackgroundColor
+            } else{
+                return kLightBackgroundColorForLight
             }
         }
     }

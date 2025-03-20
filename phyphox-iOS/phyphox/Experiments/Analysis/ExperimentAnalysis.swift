@@ -69,7 +69,7 @@ final class ExperimentAnalysis {
         for module in modules {
             for input in module.inputs {
                 switch input {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
                     buffer.addObserver(self)
                 case .value(value: _, usedAs: _):
                     continue
@@ -176,8 +176,8 @@ final class ExperimentAnalysis {
         let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
         
         if (c >= 0) {
-            for (i, analysis) in modulesInCycle.enumerated() {
-                queue?.async(execute: {
+            queue?.async(execute: {
+                for (i, analysis) in modulesInCycle.enumerated() {
                     analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
                     if i == c {
                         for audioInput in self.audioInputs {
@@ -190,8 +190,8 @@ final class ExperimentAnalysis {
                             completion(true)
                         }
                     }
-                })
-            }
+                }
+            })
         } else {
             mainThread {
                 self.cycle += 1

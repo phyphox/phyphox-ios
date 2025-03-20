@@ -10,11 +10,11 @@ import Foundation
 import Accelerate
 
 final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
-    private var startInput: ExperimentAnalysisDataIO!
-    private var stopInput: ExperimentAnalysisDataIO!
-    private var lengthInput: ExperimentAnalysisDataIO?
+    private var startInput: ExperimentAnalysisDataInput!
+    private var stopInput: ExperimentAnalysisDataInput!
+    private var lengthInput: ExperimentAnalysisDataInput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "start" {
                 startInput = input
@@ -54,10 +54,8 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
 
         if length == 0 {
             switch firstOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 length = buffer.size
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
@@ -77,10 +75,8 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
                 
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

@@ -20,7 +20,7 @@ final class MatchAnalysis: AutoClearingExperimentAnalysisModule {
             var values = [Double]()
             for input in inputs {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     if i < data.data.count {
                         let value = data.data[i]
                         if !value.isFinite {
@@ -47,9 +47,7 @@ final class MatchAnalysis: AutoClearingExperimentAnalysisModule {
                 
         for (i, output) in outputs.enumerated() {
             switch output {
-            case .value(value: _, usedAs: _):
-                break
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(out[i])
             }
         }

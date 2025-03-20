@@ -126,6 +126,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let yPrecision: Int
     let zPrecision: Int
     
+    let suppressScientificNotation: Bool
+    
     enum ScaleMode: String, LosslessStringConvertible {
         case auto, extend, fixed
     }
@@ -169,11 +171,12 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
 
     let mapWidth: UInt
     let colorMap: [UIColor]
+    let showColorScale: Bool
     
     let label: String
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor]) {
+    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         self.zLabel = zLabel
@@ -224,6 +227,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         self.yPrecision = yPrecision
         self.zPrecision = zPrecision
         
+        self.suppressScientificNotation = suppressScientificNotation
+        
         self.minX = minX
         self.maxX = maxX
         self.minY = minY
@@ -258,6 +263,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         } else {
             self.colorMap = [UIColor(white: 0.0, alpha: 1.0), kHighlightColor, UIColor(white: 1.0, alpha: 1.0)]
         }
+        self.showColorScale = showColorScale
         
         self.label = label
         self.translation = translation

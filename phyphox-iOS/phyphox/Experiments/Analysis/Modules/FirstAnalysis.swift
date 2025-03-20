@@ -14,7 +14,7 @@ final class FirstAnalysis: AutoClearingExperimentAnalysisModule {
         
         for input in inputs {
             switch input {
-            case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 if data.data.count > 0 {
                     result.append(data.data[0])
                 }
@@ -25,10 +25,8 @@ final class FirstAnalysis: AutoClearingExperimentAnalysisModule {
         
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

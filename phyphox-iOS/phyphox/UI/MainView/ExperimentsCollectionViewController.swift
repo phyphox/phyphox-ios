@@ -327,6 +327,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     func createSimpleExperiment() {
         let vc = CreateExperimentViewController()
         let nav = UINavigationController(rootViewController: vc)
+        vc.onExperimentCreated = {(path) -> () in
+            nav.dismiss(animated: true)
+            _ = self.launchExperimentByURL(URL(fileURLWithPath: path), chosenPeripheral: nil)
+        }
         
         if iPad {
             nav.modalPresentationStyle = .formSheet
@@ -370,9 +374,8 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     
     private func showStateTitleEditForExperiment(_ experiment: Experiment, button: UIButton, oldTitle: String) {
         
-        
-        UIAlertController.PhyphoxUIAlertBuilder()
-            .title(title: localize("rename"))
+        let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
+        alertBuilder.title(title: localize("rename"))
             .message(message: "")
             .preferredStyle(style: .alert)
             .addTextField(configHandler: {(textfield: UITextField!) -> Void in
@@ -381,7 +384,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             })
             .addActionWithTitle(localize("rename"), style: .default, handler: { [unowned self] action in
                 do {
-                    let textField = UIAlertController.PhyphoxUIAlertBuilder().getTextFieldValue()
+                    let textField = alertBuilder.getTextFieldValue()
                 
                     if let newTitle = textField.text, newTitle.replacingOccurrences(of: " ", with: "") != "" {
                         try ExperimentManager.shared.renameExperiment(experiment, newTitle: newTitle)
@@ -449,14 +452,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             isStateTitleNull = true
         }
         
-        var saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
+        let saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
             let vc = UIActivityViewController(activityItems: [experiment.source!], applicationActivities: nil)
             vc.popoverPresentationController?.sourceView = self.navigationController!.view
             vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
             self.navigationController!.present(vc, animated: true)
         })
         
-        var renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
+        let renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
             self.showStateTitleEditForExperiment(experiment, button: button, oldTitle: experiment.stateTitle!)
         })
         
@@ -600,38 +603,28 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
             catch SensorError.sensorUnavailable(let type) {
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title: localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
-           
+                let state = experiment.experiment.stateTitle ?? ""
+                let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
+            
                 return
             }
             catch {}
         }
         
-        if let depthInput = experiment.experiment.depthInput {
+        if experiment.experiment.depthInput != nil {
             do {
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
+                let state = experiment.experiment.stateTitle ?? ""
+                let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
-           
-                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
+         
                 return
             }
             catch {}
@@ -640,6 +633,26 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func showSensorNotAvailableDialogWithExperimentDetails(_ title: String, _ message: String, _ links: [ExperimentLink]){
+        let al = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        /* Showing the original links seems more confusing than helpful.
+        for link in links {
+            al.addAction(UIAlertAction(title: localize(link.label), style: .default, handler: { _ in
+                UIApplication.shared.open(link.url)
+            }))
+        }
+         */
+        
+        al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
+            UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
+        }))
+         
+        al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
+        
+        self.navigationController!.present(al, animated: true, completion: nil)
     }
     
     enum FileType {
@@ -681,11 +694,14 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             if (entry.fileMode & S_IFDIR) > 0 {
                 continue
             }
+            let fileName = tmp.appendingPathComponent(entry.fileName)
             if entry.fileName.hasSuffix(".phyphox") {
-                let fileName = tmp.appendingPathComponent(entry.fileName)
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
                 try entry.newData().write(to: fileName, options: .atomic)
                 files.append(fileName)
+            } else if fileName.deletingLastPathComponent().lastPathComponent == "res" {
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try entry.newData().write(to: fileName, options: .atomic)
             }
         }
         
@@ -770,7 +786,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
-
+print("\(url)")
         var fileType = FileType.unknown
         var experiment: Experiment?
         var finalURL = url
@@ -831,8 +847,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 let data = try Data(contentsOf: url)
                 fileType = detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
-                    try data.write(to: tmp, options: .atomic)
-                    finalURL = tmp
+                    if (url.absoluteString.starts(with: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString)) {
+                        finalURL = url
+                    } else {
+                        try data.write(to: tmp, options: .atomic)
+                        finalURL = tmp
+                    }
                 }
             }
             catch let error {
@@ -929,37 +949,29 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 }
             }
             catch SensorError.sensorUnavailable(let type) {
+                let state = loadedExperiment.stateTitle ?? ""
+                let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message = localize("sensorNotAvailableWarningText1") + " \(type.getLocalizedName()) " + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (loadedExperiment.localizedDescription ?? "") */
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " \(type) " +  localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: navigationController!, animated: true)
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
            
                 return false
             }
             catch {}
         }
         
-        if let depthInput = loadedExperiment.depthInput {
+        if loadedExperiment.depthInput != nil {
             do {
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
             }
             catch DepthInputError.sensorUnavailable {
                 
-                UIAlertController.PhyphoxUIAlertBuilder()
-                    .title(title:localize("sensorNotAvailableWarningTitle"))
-                    .message(message: localize("sensorNotAvailableWarningText1") + " " + localize("sensorDepth") + " " + localize("sensorNotAvailableWarningText2"))
-                    .preferredStyle(style: .alert)
-                    .addActionWithTitle(localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-                        UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-                    })
-                    .addOkAction()
-                    .show(in: self, animated: true)
+                let state = loadedExperiment.stateTitle ?? ""
+                let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (loadedExperiment.localizedDescription ?? "") */
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
+         
                 
                 return false
             }

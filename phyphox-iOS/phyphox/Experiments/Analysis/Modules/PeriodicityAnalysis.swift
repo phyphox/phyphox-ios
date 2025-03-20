@@ -21,19 +21,19 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
     //output1 is the periodicity in units of input1
     private var xInput: MutableDoubleArray!
     private var yInput: MutableDoubleArray!
-    private var dxInput: ExperimentAnalysisDataIO!
-    private var overlapInput: ExperimentAnalysisDataIO?
-    private var minInput: ExperimentAnalysisDataIO?
-    private var maxInput: ExperimentAnalysisDataIO?
+    private var dxInput: ExperimentAnalysisDataInput!
+    private var overlapInput: ExperimentAnalysisDataInput?
+    private var minInput: ExperimentAnalysisDataInput?
+    private var maxInput: ExperimentAnalysisDataInput?
     
-    private var timeOutput: ExperimentAnalysisDataIO?
-    private var periodOutput: ExperimentAnalysisDataIO?
+    private var timeOutput: ExperimentAnalysisDataOutput?
+    private var periodOutput: ExperimentAnalysisDataOutput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xInput = data
                 case .value(value: _, usedAs: _):
                     throw SerializationError.genericError(message: "x input can only be a buffer")
@@ -41,7 +41,7 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yInput = data
                 case .value(value: _, usedAs: _):
                     throw SerializationError.genericError(message: "y input can only be a buffer")
@@ -186,19 +186,15 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
         
         if let timeOutput = timeOutput {
             switch timeOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(timeOut)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
         if let periodOutput = periodOutput {
             switch periodOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(periodOut)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

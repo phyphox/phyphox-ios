@@ -74,14 +74,14 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
     
     private let hasImagInBuffer: Bool
     
-    private var realOutput: ExperimentAnalysisDataIO?
-    private var imagOutput: ExperimentAnalysisDataIO?
+    private var realOutput: ExperimentAnalysisDataOutput?
+    private var imagOutput: ExperimentAnalysisDataOutput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "im" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     imagInput = data
                 case .value(value: _, usedAs: _):
                     break
@@ -89,7 +89,7 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     realInput = data
                 case .value(value: _, usedAs: _):
                     break
@@ -168,19 +168,15 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
 
         if let realOutput = realOutput {
             switch realOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(realOutputArray)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
         if let imagOutput = imagOutput {
             switch imagOutput {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(imagOutputArray)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

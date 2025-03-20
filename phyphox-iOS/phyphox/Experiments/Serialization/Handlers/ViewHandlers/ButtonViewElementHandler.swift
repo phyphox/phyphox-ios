@@ -18,9 +18,12 @@ enum ButtonInputDescriptor {
 
 struct ButtonViewElementDescriptor {
     let label: String
+    let dynamicLabel: String
 
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
     let triggers: [String]
+    
+    let mappings: [ValueViewMap]
 }
 
 enum DataInputTypeAttribute: String, LosslessStringConvertible {
@@ -74,21 +77,25 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
     private let outputHandler = TextElementHandler()
     private let inputHandler = ButtonInputElementHandler()
     private let triggerHandler = TextElementHandler()
+    
+    private let mapHandler = ValueViewMapElementHandler()
 
     init() {
-        childHandlers = ["output": outputHandler, "input": inputHandler, "trigger": triggerHandler]
+        childHandlers = ["output": outputHandler, "input": inputHandler, "trigger": triggerHandler, "map": mapHandler]
     }
 
     func startElement(attributes: AttributeContainer) throws {}
 
     private enum Attribute: String, AttributeKey {
         case label
+        case dynamicLabel
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
+        let dynamicLabel = attributes.optionalString(for: .dynamicLabel) ?? ""
 
         guard inputHandler.results.count == outputHandler.results.count else {
             throw ElementHandlerError.missingChildElement(inputHandler.results.count > outputHandler.results.count ? "output" : "input")
@@ -96,8 +103,10 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
 
         let dataFlow = Array(zip(inputHandler.results, outputHandler.results))
         let triggers = triggerHandler.results
+        
+        let mappings = mapHandler.results
 
-        results.append(.button(ButtonViewElementDescriptor(label: label, dataFlow: dataFlow, triggers: triggers)))
+        results.append(.button(ButtonViewElementDescriptor(label: label, dynamicLabel: dynamicLabel, dataFlow: dataFlow, triggers: triggers, mappings: mappings)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

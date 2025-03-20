@@ -18,6 +18,11 @@ enum ViewElementDescriptor {
     case button(ButtonViewElementDescriptor)
     case graph(GraphViewElementDescriptor)
     case depthGUI(DepthGUIViewElementDescriptor)
+    case image(ImageViewElementDescriptor)
+    case switchView(SwitchViewElementDescriptor)
+    case dropdown(DropdownViewElementDescriptor)
+    case slider(SliderViewElementDescriptor)
+    case camera(CameraViewElementDescriptor)
 }
 
 protocol ViewComponentElementHandler: ElementHandler {
@@ -39,6 +44,11 @@ private final class ViewElementHandler: ResultElementHandler {
     private let buttonhandler = ButtonViewElementHandler()
     private let graphHandler = GraphViewElementHandler()
     private let depthGUIHandler = DepthGUIViewElementHandler()
+    private let imageHandler = ImageViewElementHandler()
+    private let switchHandler = SwitchViewElementHandler()
+    private let dropdownHandler = DropdownViewElementHandler()
+    private let sliderHandler = SliderViewElementHandler()
+    private let cameraHandler = CameraViewElementHandler()
 
     private var elementOrder = [ViewComponentElementHandler]()
 
@@ -62,6 +72,16 @@ private final class ViewElementHandler: ResultElementHandler {
             handler = graphHandler
         case "depth-gui":
             handler = depthGUIHandler
+        case "image":
+            handler = imageHandler
+        case "toggle":
+            handler = switchHandler
+        case "dropdown":
+            handler = dropdownHandler
+        case "slider":
+            handler = sliderHandler
+        case "camera-gui":
+            handler = cameraHandler
         default:
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }
@@ -95,6 +115,11 @@ private final class ViewElementHandler: ResultElementHandler {
         buttonhandler.clear()
         graphHandler.clear()
         depthGUIHandler.clear()
+        imageHandler.clear()
+        switchHandler.clear()
+        dropdownHandler.clear()
+        sliderHandler.clear()
+        cameraHandler.clear()
     }
 }
 

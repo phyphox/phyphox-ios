@@ -20,14 +20,14 @@ final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
         guard inputs.count == 2 else { return }
 
         switch inputs[0] {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             firstBuffer = data.data
         case .value(value: _, usedAs: _):
             return
         }
 
         switch inputs[1] {
-        case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
             secondBuffer = data.data
         case .value(value: _, usedAs: _):
             return
@@ -64,10 +64,8 @@ final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
 
         for output in outputs {
             switch output {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

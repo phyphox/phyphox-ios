@@ -16,21 +16,21 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
     }
     private var zMode = ZMode.average
     
-    private var mapWidth: ExperimentAnalysisDataIO
-    private var minX: ExperimentAnalysisDataIO
-    private var maxX: ExperimentAnalysisDataIO
-    private var mapHeight: ExperimentAnalysisDataIO
-    private var minY: ExperimentAnalysisDataIO
-    private var maxY: ExperimentAnalysisDataIO
+    private var mapWidth: ExperimentAnalysisDataInput
+    private var minX: ExperimentAnalysisDataInput
+    private var maxX: ExperimentAnalysisDataInput
+    private var mapHeight: ExperimentAnalysisDataInput
+    private var minY: ExperimentAnalysisDataInput
+    private var maxY: ExperimentAnalysisDataInput
     private var x: MutableDoubleArray
     private var y: MutableDoubleArray
     private var z: MutableDoubleArray? = nil
     
-    private var outX: ExperimentAnalysisDataIO? = nil
-    private var outY: ExperimentAnalysisDataIO? = nil
-    private var outZ: ExperimentAnalysisDataIO? = nil
+    private var outX: ExperimentAnalysisDataOutput? = nil
+    private var outY: ExperimentAnalysisDataOutput? = nil
+    private var outZ: ExperimentAnalysisDataOutput? = nil
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         if let mode: String = try attributes.optionalValue(for: "zMode") {
@@ -46,12 +46,12 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
         
-        var mapWidth: ExperimentAnalysisDataIO? = nil
-        var minX: ExperimentAnalysisDataIO? = nil
-        var maxX: ExperimentAnalysisDataIO? = nil
-        var mapHeight: ExperimentAnalysisDataIO? = nil
-        var minY: ExperimentAnalysisDataIO? = nil
-        var maxY: ExperimentAnalysisDataIO? = nil
+        var mapWidth: ExperimentAnalysisDataInput? = nil
+        var minX: ExperimentAnalysisDataInput? = nil
+        var maxX: ExperimentAnalysisDataInput? = nil
+        var mapHeight: ExperimentAnalysisDataInput? = nil
+        var minY: ExperimentAnalysisDataInput? = nil
+        var maxY: ExperimentAnalysisDataInput? = nil
         var x: MutableDoubleArray? = nil
         var y: MutableDoubleArray? = nil
         
@@ -76,7 +76,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     x = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
@@ -84,7 +84,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     y = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
@@ -92,7 +92,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             }
             else if input.asString == "z" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     z = data
                 default:
                     throw SerializationError.genericError(message: "Error: Input z for map module has to be a buffer.")
@@ -228,28 +228,22 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
                 
         if let xOut = outX {
             switch xOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(resX)
-            default:
-                break
             }
         }
         
         if let yOut = outY {
             switch yOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(resY)
-            default:
-                break
             }
         }
         
         if let zOut = outZ {
             switch zOut {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(resZ)
-            default:
-                break
             }
         }
         

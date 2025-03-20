@@ -225,7 +225,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         
         after(5) {
             if self.loadFromBluetoothDeviceStage == .connecting {
-                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_connection") + " (1)")
             }
         }
     }
@@ -250,7 +250,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
     }
     
-    func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?) {
+    func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?, message: String) {
         if let char = characteristic, char.properties.contains(.notify) {
             peripheral.setNotifyValue(false, for: char)
         }
@@ -264,7 +264,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         loadHud?.dismiss()
         loadHud = nil
         
-        let alert = UIAlertController(title: localize("warning"), message: localize("newExperimentBTReadErrorTitle"), preferredStyle: .alert)
+        let alert = UIAlertController(title: localize("newExperimentBTReadErrorTitle"), message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .default, handler: { _ in
             
         }))
@@ -275,7 +275,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_connection") + " (2)")
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -283,21 +283,21 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         peripheral.discoverServices([CBUUID(nsuuid: phyphoxServiceUUID)])
         after(5) {
             if self.loadFromBluetoothDeviceStage == .discoveringServices {
-                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_services"))
             }
         }
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard let service = peripheral.services?.first(where: {$0.uuid.uuid128String == phyphoxServiceUUID.uuidString}) else {
-            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_uuid") + " " + phyphoxServiceUUID.uuidString + " " + localize("bt_exception_uuid2") + " (no phyphox service)")
             return
         }
         loadFromBluetoothDeviceStage = .discoveringCharacteristics
         peripheral.discoverCharacteristics([CBUUID(nsuuid: phyphoxExperimentCharacteristicUUID),CBUUID(nsuuid: phyphoxExperimentControlCharacteristicUUID)], for: service)
         after(5) {
             if self.loadFromBluetoothDeviceStage == .discoveringCharacteristics {
-                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_uuid") + " " + phyphoxServiceUUID.uuidString + " " + localize("bt_exception_uuid2") + " (characteristic discovery timed out)")
             }
         }
     }
@@ -305,7 +305,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         
         guard let characteristic = service.characteristics?.first(where: {$0.uuid.uuid128String == phyphoxExperimentCharacteristicUUID.uuidString}) else {
-            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil)
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_uuid") + " " + phyphoxServiceUUID.uuidString + " " + localize("bt_exception_uuid2") + " (no phyphox experiment characteristic)")
             return
         }
         if characteristic.properties.contains(.notify) {
@@ -321,7 +321,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         after(30) {
             if self.loadFromBluetoothDeviceStage != .done && self.loadFromBluetoothDeviceStage != .failed {
                 print("Timeout.")
-                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("bt_fail_reading") + " (timeout)")
             }
         }
     }
@@ -334,7 +334,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         if let newData = characteristic.value {
             if let currentBluetoothDataSize = currentBluetoothDataSize, let currentBluetoothDataCRC32 = currentBluetoothDataCRC32 {
                 guard currentBluetoothData != nil else {
-                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (unexpected nil)")
                     return
                 }
                 currentBluetoothData!.append(newData)
@@ -360,7 +360,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     //print("\(transmittedExperimentData.map{String(format: "%02hhx", $0)}.joined(separator: " "))")
                     guard receivedCRC32 == currentBluetoothDataCRC32 else {
                         print("CRC32 mismatch")
-                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (CRC mismatch)")
                         return
                     }
                     
@@ -369,7 +369,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     do {
                         try transmittedExperimentData.write(to: tmp, options: .atomic)
                     } catch {
-                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorTitle") + " (write failed)")
                         return
                     }
                     
@@ -384,7 +384,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             } else {
                 if !newData.starts(with: "phyphox".data(using: .utf8)!) {
                     print("Bad header: \(newData.map{ String(format: "%02d", $0)}.joined()) from \(characteristic.uuid)")
-                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (bad header)")
                 } else {
                     let sizeData = newData.subdata(in: (7..<7+4))
                     currentBluetoothDataSize = UInt32(bigEndian: sizeData.withUnsafeBytes{$0.load(as: UInt32.self)})
@@ -398,7 +398,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             }
         } else {
             print("No data.")
-            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic)
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (no data)")
         }
     }
 }

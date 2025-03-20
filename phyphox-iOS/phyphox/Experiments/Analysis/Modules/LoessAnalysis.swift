@@ -12,29 +12,29 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
     
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray?
-    private var dIn: ExperimentAnalysisDataIO?
+    private var dIn: ExperimentAnalysisDataInput?
     private var xLocIn: MutableDoubleArray?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         for input in inputs {
             if input.asString == "x" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             } else if input.asString == "y" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
             } else if input.asString == "xi" {
                 switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, clear: _):
+                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xLocIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -173,27 +173,21 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         switch outputs[0] {
-        case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
             buffer.appendFromArray(result_yi0)
-        case .value(value: _, usedAs: _):
-            break
         }
         
         if outputs.count > 1 {
             switch outputs[1] {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result_yi1)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
         
         if outputs.count > 2 {
             switch outputs[2] {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result_yi2)
-            case .value(value: _, usedAs: _):
-                break
             }
         }
     }

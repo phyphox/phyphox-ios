@@ -9,10 +9,10 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
-    private var lengthInput: ExperimentAnalysisDataIO?
-    private var valueInput: ExperimentAnalysisDataIO?
+    private var lengthInput: ExperimentAnalysisDataInput?
+    private var valueInput: ExperimentAnalysisDataInput?
     
-    required init(inputs: [ExperimentAnalysisDataIO], outputs: [ExperimentAnalysisDataIO], additionalAttributes: AttributeContainer) throws {
+    required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
             if input.asString == "value" {
                 valueInput = input
@@ -43,10 +43,8 @@ final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
         if length == 0 {
             outputs.first.map {
                 switch $0 {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                     length = buffer.size
-                case .value(value: _, usedAs: _):
-                    break
                 }
             }
         }
@@ -63,9 +61,7 @@ final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
                 
         for output in outputs {
             switch output {
-            case .value(value: _, usedAs: _):
-                break
-            case .buffer(buffer: let buffer, data: _, usedAs: _, clear: _):
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(result)
             }
         }

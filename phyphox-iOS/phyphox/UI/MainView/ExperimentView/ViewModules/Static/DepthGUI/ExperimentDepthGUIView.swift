@@ -39,6 +39,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     var depthGUISelectionDelegate: DepthGUISelectionDelegate?
     
     func updateResolution(resolution: CGSize) {
+        print("updateResolution resolution ", resolution)
         self.resolution = resolution
         setNeedsLayout()
     }
@@ -73,7 +74,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     private let buttonPadding: CGFloat = 20.0
 
 
-    private let label = UILabel()
+    private let label = UILabel() 
     private let arView = MTKView()
     let renderer: ExperimentDepthGUIRenderer
     private let aggregationBtn = UIButton()
@@ -81,7 +82,7 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     
     var panGestureRecognizer: UIPanGestureRecognizer? = nil
     
-    required init?(descriptor: DepthGUIViewDescriptor) {
+    required init?(descriptor: DepthGUIViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
         unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
@@ -89,14 +90,18 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         
         arView.device = MTLCreateSystemDefaultDevice()
         arView.backgroundColor = UIColor.clear
-        
+ 
         renderer = ExperimentDepthGUIRenderer(metalDevice: arView.device!, renderDestination: arView)
         
         aggregationBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
+        aggregationBtn.setTitleColor(aggregationBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        aggregationBtn.setTitleColor(kHighlightColor, for: .highlighted)
         aggregationBtn.setTitle(localize("depthAggregationMode"), for: UIControl.State())
         aggregationBtn.isHidden = true
         
         cameraBtn.backgroundColor = UIColor(named: "lightBackgroundColor")
+        cameraBtn.setTitleColor(cameraBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        cameraBtn.setTitleColor(kHighlightColor, for: .highlighted)
         cameraBtn.setTitle(localize("sensorCamera"), for: UIControl.State())
         cameraBtn.isHidden = true
         
@@ -191,6 +196,9 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
             w = frame.width - 2*sideMargins
             h = frame.height - 2*spacing - s.height - buttonH - button2H
         }
+        
+        print("updateResolution w ", w)
+        print("updateResolution h ", h)
         arView.frame = CGRect(x: (frame.width - w)/2, y: 2*spacing + s.height, width: w, height: h)
         if resizableState == .exclusive {
             aggregationBtn.frame = CGRect(x: (frame.width - buttonS.width)/2, y: 2*spacing + s.height + h + 2*spacing, width: buttonS.width, height: buttonS.height)
@@ -336,5 +344,13 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
                 
         layoutDelegate?.presentDialog(al)
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            aggregationBtn.setTitleColor(aggregationBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+            cameraBtn.setTitleColor(cameraBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
+        }
     }
 }

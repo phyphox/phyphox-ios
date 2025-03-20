@@ -56,7 +56,7 @@ class HttpGetService: NetworkService {
         var queryItems: [URLQueryItem] = url.queryItems ?? []
         for item in send.keys {
             switch send[item]?.source {
-            case .Buffer(let buffer, clear: _):
+            case .Buffer(let buffer, keep: _):
                 queryItems.append(URLQueryItem(name: item, value: String(buffer.last ?? Double.nan)))
             case .Metadata(let metadata):
                 queryItems.append(URLQueryItem(name: item, value: metadata.get(hash: address)))
@@ -138,7 +138,7 @@ class HttpPostService: NetworkService {
             var json = [String:Any]()
             for item in send.keys {
                 switch send[item]?.source {
-                case .Buffer(let buffer, clear: _):
+                case .Buffer(let buffer, keep: _):
                     if send[item]?.additionalAttributes["datatype"] == "number" {
                         if let last = buffer.last {
                             json[item] = last.isFinite ? last as AnyObject : NSNull() as AnyObject
@@ -346,7 +346,7 @@ class MqttCsvService: NetworkService {
         for item in send.keys {
             let payload: String
             switch send[item]?.source {
-            case .Buffer(let buffer, clear: _):
+            case .Buffer(let buffer, keep: _):
                 if send[item]?.additionalAttributes["datatype"] == "number" {
                     if let last = buffer.last {
                         payload = last.isFinite ? String(last) : "null"
@@ -407,7 +407,7 @@ class MqttJsonService: NetworkService {
         var json = [String:Any]()
         for item in send.keys {
             switch send[item]?.source {
-            case .Buffer(let buffer, clear: _):
+            case .Buffer(let buffer, keep: _):
                 if send[item]?.additionalAttributes["datatype"] == "number" {
                     if let last = buffer.last {
                         json[item] = last.isFinite ? last as AnyObject : NSNull() as AnyObject

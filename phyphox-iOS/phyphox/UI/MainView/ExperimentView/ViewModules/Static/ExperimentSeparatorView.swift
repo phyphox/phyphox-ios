@@ -14,7 +14,7 @@ final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
     let descriptor: SeparatorViewDescriptor
     let fontScale = UIFont.preferredFont(forTextStyle: .footnote).pointSize
 
-    required init?(descriptor: SeparatorViewDescriptor) {
+    required init?(descriptor: SeparatorViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         super.init(frame: .zero)
         backgroundColor = descriptor.color.autoLightColor()
