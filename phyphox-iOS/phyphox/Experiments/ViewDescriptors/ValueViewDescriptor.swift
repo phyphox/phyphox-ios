@@ -27,6 +27,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let negetiveUnit: String?
     
     var gpsFormat: GpsFormat?
+    var gpsFormatString: String?
 
     let label: String
     let color: UIColor
@@ -71,6 +72,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         
         self.positiveUnit = positiveUnit
         self.negetiveUnit = negativeUnit
+        self.gpsFormatString = gpsFormat
         
         switch gpsFormat {
             case "float":
@@ -113,17 +115,55 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                "        return;" +
                "    var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
                "    var v = null;" +
-               mappingCode +
+                mappingCode +
+        
+                "\(setUnit())" +
+        
+                "\(setFormatedCoordinate())" +
+                 
                "    var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
                "     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];" +
                "     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];" +
                "    if (v == null) {" +
-               "        v = (x*\(factor)).to\(scientific ? "Exponential" : "Fixed")(\(precision));" +
-               "        valueUnit.textContent = \"\(localizedUnit ?? "")\";" +
+               "        v = x;" +
+               "        valueUnit.textContent = unitLabel;" +
                "    } else { " +
                "        valueUnit.textContent = \"\";" +
                "    } " +
                "    valueNumber.textContent = v;" +
                "}"
+    }
+    
+    func setUnit() -> String {
+             return     """
+                                var unitLabel = \"\"
+                                if(\"\(positiveUnit ?? "null")\" != \"null\" && x >= 0 ){
+                                    unitLabel = \"\(localizedPositiveUnit ?? "")\"
+                                } else if(\"\(negetiveUnit ?? "null")\" != \"null\" && x < 0 ) {
+                                    unitLabel = \"\(localizedNegativeUnit ?? "")\"
+                                } else {
+                                    unitLabel = \"\(localizedUnit ?? "")\"
+                                }
+                            """
+    }
+    
+    func setFormatedCoordinate() -> String {
+                return   """
+                                var degree = Math.floor(x);
+                                var decibelMinutes = Math.abs((x - degree) * 60);
+                                var integralMinutes = Math.floor(decibelMinutes);
+                                var decibelSeconds = Math.abs(decibelMinutes - integralMinutes) * 60;
+                                x =  x*\(factor)
+                                
+                                if(\"\(gpsFormatString ?? "float")\" == \"degree-minutes\" ){
+                                    x = degree + "° " + (decibelMinutes).to\(scientific ? "Exponential" : "Fixed")(\(precision)) +  "' "; ;
+                                
+                                } else if(\"\(gpsFormatString ?? "float")\" == \"degree-minutes-seconds\"){
+                                    x = degree + "° " + integralMinutes + "' " + (decibelSeconds).to\(scientific ? "Exponential" : "Fixed")(\(precision)) + "'' "; ;
+                                } else {
+                                    x = x.to\(scientific ? "Exponential" : "Fixed")(\(precision));
+                                }
+                                 
+                            """
     }
 }
