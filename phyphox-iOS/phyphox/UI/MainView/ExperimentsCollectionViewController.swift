@@ -649,10 +649,6 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
             UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
         }))
-        
-        al.addAction(UIAlertAction(title: localize("sensorNotAvailableWarningMoreInfo"), style: .default, handler: { _ in
-            UIApplication.shared.open(URL(string: localize("sensorNotAvailableWarningMoreInfoURL"))!)
-        }))
          
         al.addAction(UIAlertAction(title: localize("close"), style: .cancel, handler: nil))
         
