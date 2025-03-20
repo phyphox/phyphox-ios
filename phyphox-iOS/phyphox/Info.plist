@@ -18,6 +18,7 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>de.rwth-aachen.physics.phyphox.UTIHandler.phyphox</string>
+				<string>com.pkware.zip-archive</string>
 			</array>
 		</dict>
 	</array>
@@ -51,7 +52,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>16925</string>
+	<string>16926</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
