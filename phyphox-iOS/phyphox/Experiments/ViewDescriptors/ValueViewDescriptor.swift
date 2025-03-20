@@ -23,6 +23,10 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let buffer: DataBuffer
     let size: Double
     let mappings: [ValueViewMap]
+    let positiveUnit: String?
+    let negetiveUnit: String?
+    
+    var gpsFormat: GpsFormat?
 
     let label: String
     let color: UIColor
@@ -35,7 +39,21 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(unit!) ?? unit!
     }
     
-    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap]) {
+    var localizedPositiveUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localizeString(positiveUnit!) ?? positiveUnit!
+    }
+    
+    var localizedNegativeUnit: String? {
+        if unit == nil {
+            return nil
+        }
+        return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
+    }
+    
+    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, gpsFormat: String?) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -50,6 +68,21 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         self.label = label
         self.color = color
         self.translation = translation
+        
+        self.positiveUnit = positiveUnit
+        self.negetiveUnit = negativeUnit
+        
+        switch gpsFormat {
+            case "float":
+                self.gpsFormat = .FLOAT
+            case "degree-minutes":
+                self.gpsFormat =  .DEGREE_MINUTES
+            case "degree-minutes-seconds":
+                self.gpsFormat =  .DEGREE_MINUTES_SECONDS
+            default:
+                self.gpsFormat = nil
+        }
+        
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

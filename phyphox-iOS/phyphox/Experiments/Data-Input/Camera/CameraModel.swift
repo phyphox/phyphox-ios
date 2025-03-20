@@ -10,6 +10,12 @@ import Foundation
 import AVFoundation
 import MetalKit
 
+protocol SettingsChangeObserver {
+    func onShutterSpeedChange(newValue: CMTime)
+    func onIsoChange(newValue: Int)
+    func onApertureChange(newValue: Float)
+}
+
 @available(iOS 14.0, *)
 class CameraSettingsModel {
     let updateLock = DispatchSemaphore(value: 1)
@@ -21,11 +27,7 @@ class CameraSettingsModel {
         block()
     }
     
-    protocol SettingsChangeObserver {
-        func onShutterSpeedChange(newValue: CMTime)
-        func onIsoChange(newValue: Int)
-        func onApertureChange(newValue: Float)
-    }
+    
     
     struct ZoomParameters {
         var cameras: [Float: AVCaptureDevice.DeviceType]

@@ -52,7 +52,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
+<<<<<<< HEAD
 	<string>16928</string>
+=======
+	<string>16906</string>
+>>>>>>> c4d5dd17 (feat: format geo coordinate with the DMS and DMM with addition to the directional unit.)
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

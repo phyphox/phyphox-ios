@@ -45,7 +45,7 @@ enum CameraShowControlsState {
 }
 
 @available(iOS 14.0, *)
-final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
+final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, SettingsChangeObserver {
     
     var cameraModelOwner: CameraModelOwner? {
         didSet {
