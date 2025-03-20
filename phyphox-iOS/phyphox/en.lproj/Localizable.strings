@@ -293,6 +293,7 @@
 "common_quantity_short_longitude" = "λ";
 "common_quantity_short_altitude" = "z";
 "common_quantity_short_luminance" = "Lv";
+"common_quantity_short_luma" = "L'";
 "common_direction_short_north" = "N";
 "common_direction_short_south" = "S";
 "common_direction_short_east" = "E";
