@@ -26,8 +26,8 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let positiveUnit: String?
     let negetiveUnit: String?
     
-    var gpsFormat: GpsFormat?
-    var gpsFormatString: String?
+    var valueFormat: ValueFormat?
+    var valueFormatString: String?
 
     let label: String
     let color: UIColor
@@ -54,7 +54,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
     }
     
-    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, gpsFormat: String?) {
+    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -72,23 +72,35 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         
         self.positiveUnit = positiveUnit
         self.negetiveUnit = negativeUnit
-        self.gpsFormatString = gpsFormat
+        self.valueFormatString = valueFormat
         
-        switch gpsFormat {
+        switch valueFormat {
             case "float":
-                self.gpsFormat = .FLOAT
+                self.valueFormat = .FLOAT
             case "degree-minutes":
-                self.gpsFormat =  .DEGREE_MINUTES
+                self.valueFormat =  .DEGREE_MINUTES
             case "degree-minutes-seconds":
-                self.gpsFormat =  .DEGREE_MINUTES_SECONDS
+                self.valueFormat =  .DEGREE_MINUTES_SECONDS
+            case "ascii":
+                self.valueFormat = .ASCII_
             default:
-                self.gpsFormat = nil
+                self.valueFormat = nil
         }
         
     }
     
+    
+    
     func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:105%;color:#\(color.hexStringValue!)\" class=\"valueElement adjustableColor\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
+    }
+    
+    func updateMode() -> String {
+        if(self.valueFormat == .ASCII_){
+            return "full"
+        } else {
+            return "single"
+        }
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {
@@ -110,6 +122,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                 mappingCode += "else if (true) {v = \"\(str)\";}"
             }
         }
+        
         return "function (data) {" +
                "    if (!data.hasOwnProperty(\"\(bufferName)\"))" +
                "        return;" +
@@ -120,6 +133,8 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                 "\(setUnit())" +
         
                 "\(setFormatedCoordinate())" +
+        
+                "\(setAsciiFormat(bufferName: bufferName))" +
                  
                "    var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
                "     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];" +
@@ -155,15 +170,40 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                                 var decibelSeconds = Math.abs(decibelMinutes - integralMinutes) * 60;
                                 x =  x*\(factor)
                                 
-                                if(\"\(gpsFormatString ?? "float")\" == \"degree-minutes\" ){
+                                if(\"\(valueFormatString ?? "float")\" == \"degree-minutes\" ){
                                     x = degree + "° " + (decibelMinutes).to\(scientific ? "Exponential" : "Fixed")(\(precision)) +  "' "; ;
                                 
-                                } else if(\"\(gpsFormatString ?? "float")\" == \"degree-minutes-seconds\"){
+                                } else if(\"\(valueFormatString ?? "float")\" == \"degree-minutes-seconds\"){
                                     x = degree + "° " + integralMinutes + "' " + (decibelSeconds).to\(scientific ? "Exponential" : "Fixed")(\(precision)) + "'' "; ;
                                 } else {
                                     x = x.to\(scientific ? "Exponential" : "Fixed")(\(precision));
                                 }
                                  
                             """
+    }
+    
+    func setAsciiFormat(bufferName: String) -> String {
+        return """
+                    
+                    if(\"\(valueFormatString ?? "float")\" == \"ascii\" ){
+                    
+                      var decimals = data[\"\(bufferName)\"][\"data\"];
+                    var x_ = "";
+                            decimals.forEach(decimal => {
+                             if (decimal !== null && decimal !== undefined) {
+                                 const intDecimal = Math.round(decimal);
+                                 if (intDecimal > 31 && intDecimal < 126) {
+                                     const asciiCharacter = String.fromCharCode(intDecimal);
+                                        console.log(asciiCharacter);
+                                    x_ += asciiCharacter;
+                                     
+                                 } else {
+                                     console.log(`No valid ASCII character for decimal ${intDecimal}.`);
+                                 }
+                             }
+                        x = x_
+                         });
+                    }
+                """
     }
 }

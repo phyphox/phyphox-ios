@@ -9,10 +9,11 @@
 import Foundation
 import CoreLocation
 
-enum GpsFormat {
+enum ValueFormat {
     case FLOAT
     case DEGREE_MINUTES
     case DEGREE_MINUTES_SECONDS
+    case ASCII_
 }
 
 final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {

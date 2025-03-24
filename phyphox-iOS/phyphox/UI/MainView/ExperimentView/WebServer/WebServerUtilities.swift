@@ -125,7 +125,7 @@ final class WebServerUtilities {
                         viewLayout += ", \"updateMode\": \"none\""
                     }
                     else if let value = element as? ValueViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
+                        viewLayout += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
                     }
                     else if let edit = element as? EditViewDescriptor {
                         viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"

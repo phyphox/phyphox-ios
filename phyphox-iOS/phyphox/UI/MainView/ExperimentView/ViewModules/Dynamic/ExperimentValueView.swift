@@ -101,7 +101,6 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
                     unitLabel.text = descriptor.localizedUnit
                 }
                
-                
                 let formatter = NumberFormatter()
                 formatter.numberStyle = descriptor.scientific ? .scientific : .decimal
                 formatter.maximumFractionDigits = descriptor.precision
@@ -110,8 +109,13 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
 
                 let number = NSNumber(value: last * descriptor.factor)
             
-                if let format = descriptor.gpsFormat {
-                    valueLabel.text = formatGeoCoordinates(coordinate: Double(number), outputFormat: format, formatter: formatter)
+                if let format = descriptor.valueFormat {
+                    if(format == .ASCII_){
+                        valueLabel.text = convertDecimalToAscii(decimals: descriptor.buffer.toArray())
+                    } else {
+                        valueLabel.text = formatGeoCoordinates(coordinate: Double(number), outputFormat: format, formatter: formatter)
+                    }
+                    
                 } else {
                     valueLabel.text = (formatter.string(from: number) ?? "-") + " "
                 }
@@ -125,7 +129,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         setNeedsLayout()
     }
     
-    private func formatGeoCoordinates(coordinate : Double , outputFormat: GpsFormat, formatter : NumberFormatter) -> String{
+    private func formatGeoCoordinates(coordinate : Double , outputFormat: ValueFormat, formatter : NumberFormatter) -> String{
         
         let degree = Int(coordinate)
         let decibleMinutes = fabs((coordinate - Double(degree)) * 60)
@@ -142,8 +146,31 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         case .DEGREE_MINUTES_SECONDS:
             let seconds = (formatter.string(from: NSNumber(value: decibleSeconds)) ?? "-" )
             return (String(degree) + "° " + String(integralMinutes) + "' "  + seconds + "'' ")
+        case .ASCII_:
+            return ""
         }
         
+    }
+    
+    private func convertDecimalToAscii(decimals : [Double?]) -> String{
+        var asciiString = ""
+        for decimal in decimals {
+            if let decimal_ = decimal {
+                let intDecimal = Int(round(decimal_))
+                if(intDecimal > 31 && intDecimal < 126){
+                    if let asciiCharacter = UnicodeScalar(intDecimal) {
+                        asciiString +=  Character(asciiCharacter).description
+                        print(asciiString)
+                    } else {
+                        print("No valid ASCII character for decimal \(intDecimal).")
+                    }
+                }
+            } else{
+                continue
+            }
+            
+        }
+        return asciiString
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {

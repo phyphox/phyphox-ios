@@ -393,8 +393,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, gpsFormat: descriptor.gpsFormat)
-            
+            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat)
+                
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
