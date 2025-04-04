@@ -8,6 +8,10 @@
 
 import Foundation
 
+enum CameraInputError : Error {
+    case sensorUnavailable
+}
+
 final class ExperimentCameraInput {
 
     enum AutoExposureStrategy: String, LosslessStringConvertible {
@@ -58,14 +62,18 @@ final class ExperimentCameraInput {
         self.locked = locked
         self.feature = feature
         
-        guard #available(iOS 14.0, *) else {
-            return
+        if #available(iOS 14.0, *) {
+            session = ExperimentCameraInputSession()
+            applyCameraInputAttributes()
         }
         
-        session = ExperimentCameraInputSession()
         
-        applyCameraInputAttributes()
-        
+    }
+    
+    static func verifySensorAvaibility() throws{
+        guard #available(iOS 14.0, *) else {
+            throw CameraInputError.sensorUnavailable
+        }
     }
     
     func applyCameraInputAttributes() {

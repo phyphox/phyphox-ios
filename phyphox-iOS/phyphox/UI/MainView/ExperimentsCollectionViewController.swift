@@ -614,6 +614,21 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             catch {}
         }
         
+        if experiment.experiment.cameraInput != nil {
+            do{
+                try ExperimentCameraInput.verifySensorAvaibility()
+            } catch CameraInputError.sensorUnavailable{
+                let state = experiment.experiment.stateTitle ?? ""
+                let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("cameraNotAvailableWarningText")
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
+                return
+            }
+            
+            catch{}
+        }
+        
         if experiment.experiment.depthInput != nil {
             do {
                 try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
@@ -621,7 +636,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             catch DepthInputError.sensorUnavailable {
                 let state = experiment.experiment.stateTitle ?? ""
                 let title = experiment.experiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
-                let message =  localize("sensorNotAvailableWarningText1") + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
+                let message =  localize("sensorNotAvailableWarningText1")  + localize("sensorDepth") + localize("sensorNotAvailableWarningText2") /* + "\n\n" +  (experiment.experiment.localizedDescription ?? "") */
                 
                 showSensorNotAvailableDialogWithExperimentDetails(title, message, experiment.experiment.localizedLinks)
          
@@ -958,6 +973,22 @@ print("\(url)")
                 return false
             }
             catch {}
+        }
+        
+        if loadedExperiment.cameraInput != nil {
+            do{
+                try ExperimentCameraInput.verifySensorAvaibility()
+            } catch CameraInputError.sensorUnavailable{
+                let state = loadedExperiment.stateTitle ?? ""
+                let title = loadedExperiment.localizedTitle + (state != "" ? "\n\n" + state : "\n")
+                let message =  localize("cameraNotAvailableWarningText")
+                
+                showSensorNotAvailableDialogWithExperimentDetails(title, message, loadedExperiment.localizedLinks)
+                
+                return false
+            }
+            
+            catch{}
         }
         
         if loadedExperiment.depthInput != nil {

@@ -41,6 +41,7 @@
 "sensorDepth" = "Depth (LiDAR/ToF)";
 "sensorCamera" = "Camera";
 "location" = "Location";
+"cameraNotAvailableWarningText" = "This experiment is not available, as your device is not compatible with the minimum iOS version to run analysis with camera.";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
 "sensorNotAvailableWarningText1" = "The sensor";
 "sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
