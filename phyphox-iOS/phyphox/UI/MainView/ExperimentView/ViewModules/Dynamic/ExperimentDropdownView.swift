@@ -53,9 +53,8 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         dropdown = UIButton(type : .system)
         dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2)
         dropdown.layer.cornerRadius = 8
-        dropdown.contentHorizontalAlignment = .left
-        dropdown.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-        
+        dropdown.contentHorizontalAlignment = .center
+                
         super.init(frame: .zero)
         
         dropdown.addTarget(self, action: #selector(showAlertController), for: .touchUpInside)
@@ -101,7 +100,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
    
     @objc private func showAlertController(sender: UIButton) {
         
-        let actionSheet = UIAlertController(title: "Choose an Option", message: "", preferredStyle: .actionSheet)
+        let actionSheet = UIAlertController(title: localize("chooseOption"), message: "", preferredStyle: .actionSheet)
         
         for option in descriptor.localizedMappings {
             
