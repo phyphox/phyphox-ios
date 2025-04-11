@@ -18,6 +18,7 @@ private struct ExperimentRequiredPermission: OptionSet {
     static let microphone = ExperimentRequiredPermission(rawValue: (1 << 0))
     static let location = ExperimentRequiredPermission(rawValue: (1 << 1))
     static let motionFitness = ExperimentRequiredPermission(rawValue: (1 << 2))
+    static let camera = ExperimentRequiredPermission(rawValue: (1 << 3))
 }
 
 struct ExperimentLink: Equatable {
@@ -203,8 +204,12 @@ final class Experiment {
         if !gpsInputs.isEmpty {
             requiredPermissions.insert(.location)
         }
-        //print(ProcessInfo().operatingSystemVersion)
-        if ProcessInfo().operatingSystemVersion.majorVersion == 17 && ProcessInfo().operatingSystemVersion.minorVersion == 4 {
+        
+        if (cameraInput != nil) {
+            requiredPermissions.insert(.camera)
+        }
+        
+        if #available(iOS 17.4, *){
             for sensorInput in sensorInputs {
                 if sensorInput.sensorType == .pressure {
                     requiredPermissions.insert(.motionFitness)
@@ -212,6 +217,7 @@ final class Experiment {
                 }
             }
         }
+        
         
         analysis.delegate = self
     }
@@ -379,7 +385,6 @@ final class Experiment {
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
             case .notDetermined:
-                print("Trying CMSensorRecorder workaround.")
                 let recorder = CMSensorRecorder()
                 DispatchQueue.global().async {
                     recorder.recordAccelerometer(forDuration: 0.1)
@@ -390,6 +395,34 @@ final class Experiment {
                 break
             }
         }
+        
+        else if requiredPermissions.contains(.camera) {
+           print("Camera permission required.")
+            let status = AVCaptureDevice.authorizationStatus(for: .video)
+           switch status {
+           case .denied:
+               failed()
+               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera Services", preferredStyle: .alert)
+               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+           case .restricted:
+               failed()
+               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera Services", preferredStyle: .alert)
+               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+               
+           case .notDetermined:
+               AVCaptureDevice.requestAccess(for: .video, completionHandler: { (allowed) in
+                   if !allowed {
+                       failed()
+                   }
+               })
+               break
+               
+           default:
+               break
+           }
+       }
     }
     
     public func startAudio(countdown: Bool, stopExperimentDelegate: StopExperimentDelegate) throws {
