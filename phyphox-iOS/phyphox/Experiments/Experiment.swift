@@ -209,6 +209,10 @@ final class Experiment {
             requiredPermissions.insert(.camera)
         }
         
+        if (depthInput != nil) {
+            requiredPermissions.insert(.camera)
+        }
+        
         if #available(iOS 17.4, *){
             for sensorInput in sensorInputs {
                 if sensorInput.sensorType == .pressure {
@@ -402,12 +406,12 @@ final class Experiment {
            switch status {
            case .denied:
                failed()
-               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera Services", preferredStyle: .alert)
+               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera", preferredStyle: .alert)
                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
            case .restricted:
                failed()
-               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera Services", preferredStyle: .alert)
+               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera", preferredStyle: .alert)
                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                
