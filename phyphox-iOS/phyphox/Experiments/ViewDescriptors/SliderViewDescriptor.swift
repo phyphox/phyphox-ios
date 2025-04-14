@@ -43,14 +43,16 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         self.showValue = showValue
     }
     
-    func generateViewHTMLWithID(_ id: Int) -> String {
-        var stepSize_ = 1.0
+    func getStepSize() -> Double {
         let precisionValue = Double(self.precision)
         if(self.stepSize == 0){
-            stepSize_ = Double(1 / pow(10, precisionValue))
+            return Double(1 / pow(10, precisionValue))
         } else {
-            stepSize_ = self.stepSize
+            return self.stepSize
         }
+    }
+    
+    func generateViewHTMLWithID(_ id: Int) -> String {
         
         let minValueFormatted = numberFormatter(for: minValue)
         let maxValueFormatted = numberFormatter(for: maxValue)
@@ -58,9 +60,11 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         
         let bufferName = outputBuffers[.Empty]?.name ?? ""
         
+        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" : ""
+        
         return (type == SliderType.Range) ? generateTwoSlidersHTML(id) :
         
-        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span><div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(stepSize_) onchange=\"ajax('control?cmd=set&buffer=\(bufferName)&value='+this.value)\" ></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValueFormatted)</span></div></div>"
+        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValueFormatted)</span></div></div>"
     }
     
     private func generateTwoSlidersHTML(_ id: Int) -> String{
@@ -68,9 +72,10 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         let maxValueFormatted = numberFormatter(for: maxValue)
         let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
         
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" +
-                                                    "<span class=\"label\">\(localizedLabel)</span>" +
-                                                    "<span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" +
+        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span>" +
+        "<span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" : ""
+        
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" + valueTag +
                                                     "<div class=\"sliderContainer\">" +
                                                     "<span class=\"minValue\" >\(minValueFormatted)</span>" +
                                                         "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +
@@ -118,7 +123,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                 if (!data.hasOwnProperty("\(bufferName)"))
                        return;
                 var x = data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1];
-                var selectedValue = parseFloat(x)
+                var selectedValue = parseFloat(x).toFixed("+precision+")
                 var sliderElement = document.getElementById("input\(id)")
                            
                 var valueDisplay = document.getElementById("value\(id)");
@@ -126,27 +131,33 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                 if (sliderElement) {
                    sliderElement.min = \(minValueFormatted);
                    sliderElement.max = \(maxValueFormatted);
-                   sliderElement.value = x || \(defaultValueFormatted);
+                   sliderElement.step = \(getStepSize());
                 }
-                if (valueDisplay) {
-                   if(x.toFixed(1) == 0.0){
-                       valueDisplay.textContent = \(defaultValueFormatted);
-                   } else {
-                       valueDisplay.textContent = x.toFixed(\(self.precision));
-                   }
-                   
+                
+                if (!sliderElement.classList.contains(\"isSliderUpdating\")) {
+                    sliderElement.value = selectedValue || \(defaultValueFormatted) ;
                 }
+            
+                if(valueDisplay){
+                    valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(\(self.precision));
+                }
+            
+                sliderElement.addEventListener('input', function() {
+                    if (!sliderElement.classList.contains(\"isSliderUpdating\")) {
+                        sliderElement.classList.add(\"isSliderUpdating\");
+                     }
+               });
 
-                if (sliderElement){
-                   sliderElement.addEventListener('input', function () {
-                       if (valueDisplay) {
-                           valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(\(self.precision));
-                       }
-                       x = parseFloat(parseFloat(sliderElement.value).toFixed(\(self.precision)))
-                       data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1] = x
-                   });
-                   
-                }
+                sliderElement.addEventListener('change', function() {
+                     if (valueDisplay) {
+                        valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(\(self.precision));
+                     }
+                     if (sliderElement.classList.contains(\"isSliderUpdating\")) {
+                        ajax('control?cmd=set&buffer=\(bufferName)&value='+sliderElement.value)
+                        sliderElement.classList.remove(\"isSliderUpdating\");
+                     }
+                });
+
             }
 
             """
@@ -186,36 +197,60 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                 sliderElementTwo.max = \(maxValueFormatted)
                                 sliderElementOne.step = \(stepSize)
                                 sliderElementTwo.step = \(stepSize)
-                                sliderElementOne.value = selectedValueX || \(defaultValueFormatted)
-                                sliderElementTwo.value = selectedValueY || \(defaultValueFormatted)
+                            } else { return; }
+            
+                             if (!sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {
+                                 sliderElementOne.value = selectedValueX;
+                              }
+                            if (!sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {
+                                 sliderElementTwo.value = selectedValueY;
                             }
 
                             if(valueDisplay){
                                 valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
                             }
+            
+                            sliderElementOne.addEventListener('input', function() {
+                                if (!sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {
+                                    sliderElementOne.classList.add(\"isSliderOneUpdating\")
+                                }
+                                if(Number(sliderElementOne.value) > Number(sliderElementTwo.value)) {
+                                    sliderElementOne.value = sliderElementTwo.value
+                                    }
+                             });
 
-                            if (sliderElementOne || sliderElementTwo){
-                                sliderElementOne.onchange = function() {
-                                    if(sliderElementOne.value <= sliderElementTwo.value) {
+                             sliderElementOne.addEventListener('change', function() {
+                                if(Number(sliderElementOne.value) <= Number(sliderElementTwo.value)) {
+                                    if (valueDisplay) {
+                                        valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
+                                    }
+                                if (sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {
+                                    ajax('control?cmd=set&buffer=\(lowerValueBufferName)&value='+sliderElementOne.value)
+                                    sliderElementOne.classList.remove(\"isSliderOneUpdating\")
+                                    }
+                                }
+                              });
+
+                              sliderElementTwo.addEventListener('input', function() {
+                                 if (!sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {
+                                    sliderElementTwo.classList.add(\"isSliderTwoUpdating\")
+                                }
+                                if(Number(sliderElementOne.value) > Number(sliderElementTwo.value)) {
+                                    sliderElementTwo.value = sliderElementOne.value
+                                }
+                              });
+
+                               sliderElementTwo.addEventListener('change', function() {
+                                    if(Number(sliderElementOne.value) <= Number(sliderElementTwo.value)) {
                                         if (valueDisplay) {
                                             valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
                                         }
-                                       
-                                        ajax('control?cmd=set&buffer=\(lowerValueBufferName)&value='+sliderElementOne.value)
-                                    }
-                                }
-            
-
-                                sliderElementTwo.onchange = function() {
-                                      if(sliderElementOne.value <= sliderElementTwo.value) {
-                                        if (valueDisplay) {
-                                              valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed(\(precision)).concat(\" - \", parseFloat(sliderElementTwo.value).toFixed(\(precision)))
-                                              }
-                                        
-                                        ajax('control?cmd=set&buffer=\(upperValueBufferName)&value='+sliderElementTwo.value)
+                                        if (sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {
+                                            ajax('control?cmd=set&buffer=\(upperValueBufferName)&value='+sliderElementTwo.value)
+                                            sliderElementTwo.classList.remove(\"isSliderTwoUpdating\")
                                         }
-                                }
-                        }
+                                    }
+                               });
                 }
             """
     }
