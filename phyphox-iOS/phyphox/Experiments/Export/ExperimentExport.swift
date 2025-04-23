@@ -8,6 +8,7 @@
 
 import Foundation
 import ZipZap
+import libxlsxwriter
 
 struct ExperimentExport: Equatable {
     let sets: [ExperimentExportSet]
@@ -121,72 +122,85 @@ struct ExperimentExport: Equatable {
                         }
                     }
                 case .excel:
-                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).xls")
                     
-                    do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
+                    let tmpFileXLSX = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).xlsx")
+                    do { try FileManager.default.removeItem(atPath: tmpFileXLSX) } catch {}
+                    let tmpFileURL = URL(fileURLWithPath: tmpFileXLSX)
                     
-                    let tmpFileURL = URL(fileURLWithPath: tmpFile)
+                    let workbook: UnsafeMutablePointer<lxw_workbook>? = workbook_new(tmpFileXLSX)
+                    let worksheet: UnsafeMutablePointer<lxw_worksheet>? = workbook_add_worksheet(workbook, "Metadata Device")
                     
-                    let workbook = JXLSWorkBook()
+                    let format_header: UnsafeMutablePointer<lxw_format>?
+                    let format_1: UnsafeMutablePointer<lxw_format>?
                     
                     for set in self.sets {
-                        _ = set.serialize(format, additionalInfo: workbook)
+                        _ = set.serialize(format, additionalInfo: workbook as AnyObject?)
                     }
                     
                     if !singleSet {
-                        //Metadata
-                        let metaSheet = workbook.workSheet(withName: "Metadata Device")
-                        metaSheet?.setCellAtRow(0, column: 0, to: "property")
-                        metaSheet?.setCellAtRow(0, column: 1, to: "value")
+                       
+                        format_header = workbook_add_format(workbook)
+                        format_set_bold(format_header)
+                        format_1 = workbook_add_format(workbook)
+                        format_set_bg_color(format_1, 0xDDDDDD)
+                        
+                        worksheet_write_string(worksheet, 0, 0, "property", nil)
+                        worksheet_write_string(worksheet, 0, 1, "value", nil)
+                        
                         var i: UInt32 = 1;
                         for metadata in Metadata.allNonSensorCases {
                             switch metadata {
                             case .uniqueId:
                                 continue
                             default:
-                                metaSheet?.setCellAtRow(i, column: 0, to: metadata.identifier)
-                                metaSheet?.setCellAtRow(i, column: 1, to: metadata.get(hash: "") ?? "")
+                                worksheet_write_string(worksheet, i, 0, metadata.identifier, nil)
+                                worksheet_write_string(worksheet, i, 1, metadata.get(hash: "") ?? "", nil)
+                                _ = worksheet_set_column(worksheet, 0, 1, 25, nil)
                                 i += 1
                             }
                         }
-
+                        
                         //Time references
                         if let reference = timeReference {
                             let dateFormatter = DateFormatter()
                             dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX"
                             
-                            let timeSheet = workbook.workSheet(withName: "Metadata Time")
-                            timeSheet?.setCellAtRow(0, column: 0, to: "event")
-                            timeSheet?.setCellAtRow(0, column: 1, to: "experiment time")
-                            timeSheet?.setCellAtRow(0, column: 2, to: "system time")
-                            timeSheet?.setCellAtRow(0, column: 3, to: "system time text")
+                            let timeSheet = workbook_add_worksheet(workbook, "Metadata Time")
+                            worksheet_write_string(timeSheet, 0, 0, "event", nil)
+                            worksheet_write_string(timeSheet, 0, 1, "experiment time", nil)
+                            worksheet_write_string(timeSheet, 0, 2, "system time", nil)
+                            worksheet_write_string(timeSheet, 0, 3, "system time text", nil)
+                            _ = worksheet_set_column(worksheet, 0, 3, 25, nil)
                             
                             i = 1
                             for mapping in reference.timeMappings {
                                 let dateString = dateFormatter.string(from: mapping.systemTime)
+                                worksheet_write_string(timeSheet, i, 0, mapping.event.rawValue, nil)
+                                worksheet_write_string(timeSheet, i, 1, String(mapping.experimentTime), nil)
+                                worksheet_write_string(timeSheet, i, 2, String(mapping.systemTime.timeIntervalSince1970), nil)
+                                worksheet_write_string(timeSheet, i, 3, dateString, nil)
+                                _ = worksheet_set_column(worksheet, 0, 3, 25, nil)
                                 
-                                timeSheet?.setCellAtRow(i, column: 0, to: mapping.event.rawValue)
-                                timeSheet?.setCellAtRow(i, column: 1, toDoubleValue: mapping.experimentTime)
-                                timeSheet?.setCellAtRow(i, column: 2, toDoubleValue: mapping.systemTime.timeIntervalSince1970)
-                                timeSheet?.setCellAtRow(i, column: 3, to: dateString)
                                 i += 1
                             }
                         }
+                        
                     }
                     
-                    let err = workbook.write(toFile: tmpFile)
+                    let error = workbook_close(workbook)
                     
-                    if err == 0 {
+                    if error == LXW_NO_ERROR {
                         mainThread {
                             callback(nil, tmpFileURL)
                         }
-                    }
-                    else {
-                        print("Excel error: \(err)")
+                    } else {
+                        let message = String(cString: lxw_strerror(error))
+                        print("Excel error: \(message)")
                         mainThread {
                             callback("Could not create xls file", nil)
                         }
                     }
+                    
                 }
             }
         }

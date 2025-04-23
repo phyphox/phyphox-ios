@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import libxlsxwriter
 
 enum ExportFileFormat {
     case csv(separator: String, decimalPoint: String)
@@ -50,7 +51,7 @@ struct ExperimentExportSet {
         case .csv(let separator, let decimalPoint):
             return serializeToCSVWithSeparator(separator, decimalPoint: decimalPoint) as AnyObject
         case .excel:
-            return serializeToExcel(additionalInfo as! JXLSWorkBook)
+            return serializeToExcel(additionalInfo as? UnsafeMutablePointer<lxw_workbook>) as AnyObject
         }
     }
     
@@ -119,8 +120,9 @@ struct ExperimentExportSet {
         return string.count > 0 ? string.data(using: .utf8) : nil
     }
     
-    private func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
-        let sheet = workbook.workSheet(withName: name)
+    private func serializeToExcel(_ workbook: UnsafeMutablePointer<lxw_workbook>?) -> UnsafeMutablePointer<lxw_worksheet>?{
+        
+        let worksheet = workbook_add_worksheet(workbook, name)
         
         var i = 0
         
@@ -130,16 +132,19 @@ struct ExperimentExportSet {
             if i == 0 {
                 addedValue = true
                 for (j, entry) in data.enumerated() {
-                    _ = sheet?.setCellAtRow(0, column: UInt32(j), to: getSecureName(entry.name))
+                    
+                    _ = worksheet_write_string(worksheet, 0, lxw_col_t(UInt32(j)), getSecureName(entry.name), nil)
+                    _ = worksheet_set_column(worksheet, lxw_col_t(UInt32(j)), lxw_col_t(UInt32(j)), 30, nil)
                 }
             }
             else {
-                for (j, entry) in data.enumerated() {
+                for(j, entry) in data.enumerated() {
                     let value = entry.buffer.objectAtIndex(i-1)
                     
-                    if value != nil {
+                    if value != nil{
                         addedValue = true
-                        _ = sheet?.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
+                        _ = worksheet_write_string(worksheet, UInt32(i), lxw_col_t(UInt32(j)), String(value!), nil)
+                        _ = worksheet_set_column(worksheet, lxw_col_t(UInt32(j)), lxw_col_t(UInt32(j)), 30, nil)
                     }
                 }
             }
@@ -149,10 +154,13 @@ struct ExperimentExportSet {
             }
             
             i += 1
+            
         }
         
-        return sheet!
+        return worksheet
+        
     }
+
 }
 
 extension ExperimentExportSet: Equatable {

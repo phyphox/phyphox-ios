@@ -10,3 +10,6 @@
 [submodule "phyphox-iOS/JXLS"]
 	path = phyphox-iOS/JXLS
 	url = https://github.com/JanX2/JXLS.git
+[submodule "phyphox-iOS/CoreXLSX"]
+	path = phyphox-iOS/CoreXLSX
+	url = https://github.com/CoreOffice/CoreXLSX.git
