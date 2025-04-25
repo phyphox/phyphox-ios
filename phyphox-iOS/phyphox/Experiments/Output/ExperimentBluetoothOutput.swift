@@ -71,9 +71,11 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
                     if !out.keys.contains(input.char) {
                         out[input.char] = Data()
                     }
-                    
-                    let start = min(Int(input.offset), out[input.char]!.count)
-                    let end = min(Int(input.offset)+dataConverted.count, out[input.char]!.count)
+                    let start = Int(input.offset)
+                    let end = start+dataConverted.count
+                    if end > out[input.char]!.count {
+                        out[input.char] = out[input.char]! + Data(repeating: 0, count: end - out[input.char]!.count)
+                    }
                     out[input.char]!.replaceSubrange(start..<end, with: dataConverted)
                     if !input.keep {
                         input.buffer.clear(reset: false)
