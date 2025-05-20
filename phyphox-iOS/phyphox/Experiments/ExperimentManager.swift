@@ -301,6 +301,7 @@ final class ExperimentManager {
         for collection in experimentCollections {
             collection.experiments.removeAll(where: {$0.custom})
         }
+        experimentCollections.removeAll(where: {$0.experiments.count == 0})
         loadCustomExperiments()
         loadSavedExperiments()
         
