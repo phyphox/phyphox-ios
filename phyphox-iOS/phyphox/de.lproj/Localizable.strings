@@ -367,3 +367,4 @@
 "wb_cloudy" = "Bewölkt";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
+"cameraNotAvailableWarningText" = "Dieses Experiment ist nicht verfügbar, da eine neuere iOS-Version für die Auswertung der Kamera benötigt wird.";
