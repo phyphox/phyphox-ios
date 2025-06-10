@@ -69,8 +69,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     var isConfigured = false
     
-    var isShowingCameraError = false
-    
     public func checkForPermisssion(){
         
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -326,7 +324,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 
             do {
                 let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
-                print("changeBuiltInCameraDevice")
                 
                 self.session.beginConfiguration()
                 
@@ -446,7 +443,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
                         
             if session.canAddInput(videoDeviceInput) {
-                showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage3"))
                 session.addInput(videoDeviceInput)
                 self.videoDeviceInput = videoDeviceInput
                 setBestInputFormat(for: videoDevice)
@@ -468,7 +464,6 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             captureOutput.setSampleBufferDelegate(self, queue: captureSessionQueue)
             
             if session.canAddOutput(captureOutput) {
-                showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage4"))
                 session.addOutput(captureOutput)
             } else {
                 showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage4"))
@@ -501,13 +496,9 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
     
     func showCameraConfigurationFailAlert(message: String){
-        if(!isShowingCameraError){
             NotificationCenter.default.post(name: .cameraConfigurationFailed,
                                             object: nil,
                                             userInfo: ["message": message])
-            isShowingCameraError = true
-        }
-        
         
     }
     
