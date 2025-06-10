@@ -170,3 +170,7 @@ func queryDictionary(_ query: String) -> [String: String] {
     return dict
 }
 
+extension Notification.Name {
+    static let cameraConfigurationFailed = Notification.Name("CameraConfigurationFailed")
+}
+

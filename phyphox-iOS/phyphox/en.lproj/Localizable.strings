@@ -42,6 +42,15 @@
 "sensorCamera" = "Camera";
 "location" = "Location";
 "cameraNotAvailableWarningText" = "This experiment is not available, as your device is not compatible with the minimum iOS version to run analysis with camera.";
+"cameraLoadingErrorTitle" = "Camera Loading Error";
+"cameraLoadingErrorMessage1" = "Failed to configure the camera. ";
+"cameraLoadingErrorMessage2" = "Default video device is unavailable. ";
+"cameraLoadingErrorMessage3" = "Couldn't add video device input to the camera session. ";
+"cameraLoadingErrorMessage4" = "Cannot add the output to the camera session. ";
+"cameraLoadingErrorMessage5" = "Couldn't create video device input. ";
+"cameraLoadingErrorMessage6" = "Camera could not be loaded properly. ";
+"cameraLoadingErrorSecondMessage" = "This might be due to several reasons. Please reopen the experiment.";
+"cameraConfigErrorMessage" = "Camera configuration failed. Either your device camera is not available or its missing permissions.";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
 "sensorNotAvailableWarningText1" = "The sensor";
 "sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
@@ -50,6 +59,7 @@
 "appleBanWarningMoreInfo" = "More info";
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
 "ok" = "OK";
+"accept" = "Accept";
 "tryagain" = "Try again";
 "doContinue" = "Continue";
 "close" = "Close";

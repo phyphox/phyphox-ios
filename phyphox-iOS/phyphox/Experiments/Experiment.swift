@@ -401,7 +401,6 @@ final class Experiment {
         }
         
         else if requiredPermissions.contains(.camera) {
-           print("Camera permission required.")
             let status = AVCaptureDevice.authorizationStatus(for: .video)
            switch status {
            case .denied:
