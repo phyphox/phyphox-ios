@@ -194,7 +194,7 @@ final class Experiment {
         self.export = export
         
         defer {
-            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: .endBackgroundMotionSessionNotification, object: nil)
         }
         
         if !audioInputs.isEmpty {

@@ -8,9 +8,6 @@
 
 import UIKit
 
-let EndBackgroundMotionSessionNotification = "EndBackgroundMotionSessionNotification"
-let ResignActiveNotification = "ResignActiveNotification"
-let DidBecomeActiveNotification = "DidBecomeActiveNotification"
 
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -62,7 +59,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillResignActive(_ application: UIApplication) {
         
-        NotificationCenter.default.post(name: Notification.Name(rawValue: ResignActiveNotification), object: nil)
+        NotificationCenter.default.post(name: .resignActiveNotification, object: nil)
         
         
         //Original implementation below by Jonas. Should be re-enabled at some point as it "usually" nicely leaves the measurement running in the background.
@@ -93,13 +90,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-         NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         SettingBundleHelper.registerDefaults()
         SettingBundleHelper.setAppMode(window: window)
-        NotificationCenter.default.post(name: Notification.Name(rawValue: DidBecomeActiveNotification), object: nil)
+        NotificationCenter.default.post(name: .didBecomeActiveNotification, object: nil)
         
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }

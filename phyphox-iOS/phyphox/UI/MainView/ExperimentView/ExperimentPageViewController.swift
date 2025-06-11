@@ -176,8 +176,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         countdownFormatter.minimumFractionDigits = 1
         
         defer {
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: NSNotification.Name(rawValue: DidBecomeActiveNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: .resignActiveNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: .didBecomeActiveNotification, object: nil)
         }
     }
     
