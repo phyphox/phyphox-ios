@@ -184,7 +184,6 @@
 		A171F0672CF5ECB400D5F9F2 /* SliderViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A171F0662CF5ECB400D5F9F2 /* SliderViewDescriptor.swift */; };
 		A171F0692CF5EE6000D5F9F2 /* SliderViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A171F0682CF5EE6000D5F9F2 /* SliderViewElementHandler.swift */; };
 		A171F06B2CF5F5B700D5F9F2 /* ExperimentSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A171F06A2CF5F5B700D5F9F2 /* ExperimentSliderView.swift */; };
-		A177CAD32DB11208008C0720 /* libxlsxwriter in Frameworks */ = {isa = PBXBuildFile; productRef = A177CAD22DB11208008C0720 /* libxlsxwriter */; };
 		A182CEDF2B025B41000385D2 /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDE2B025B41000385D2 /* CameraModel.swift */; };
 		A182CEE12B025B53000385D2 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE02B025B53000385D2 /* CameraService.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
@@ -264,6 +263,7 @@
 		C0C529002254C01E001E5EFD /* ReduceAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C528FF2254C01E001E5EFD /* ReduceAnalysis.swift */; };
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
+		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
 		C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; };
 		C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -282,6 +282,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 6B7BF7791C130425007408FB;
 			remoteInfo = phyphox;
+		};
+		C0FC14852707C15200512064 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = DEF79A2216E80B5200E4B803;
+			remoteInfo = JXLS;
 		};
 		C0FC14922707C19900512064 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -649,6 +656,7 @@
 		C0F2A7C522E5E14E00CC2C2A /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0F2A7C622E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C0F2A7C722E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JXLSiOS.xcodeproj; path = JXLS/JXLSiOS.xcodeproj; sourceTree = "<group>"; };
 		C0FC14882707C19900512064 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = ZipZap/ZipZap.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -666,7 +674,7 @@
 				860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */,
 				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
-				A177CAD32DB11208008C0720 /* libxlsxwriter in Frameworks */,
+				C0FC14872707C16300512064 /* libJXLS.a in Frameworks */,
 				C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */,
 				C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */,
 			);
@@ -1298,8 +1306,17 @@
 				C06BCD342707AAE900B29595 /* Foundation.framework */,
 				C06BCD262707AADC00B29595 /* ImageIO.framework */,
 				C0FC14882707C19900512064 /* ZipZap.xcodeproj */,
+				C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C0FC14822707C15200512064 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0FC14862707C15200512064 /* libJXLS.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		C0FC14892707C19900512064 /* Products */ = {
@@ -1339,7 +1356,6 @@
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
-				A177CAD22DB11208008C0720 /* libxlsxwriter */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1448,11 +1464,14 @@
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */,
-				A177CAD12DB11208008C0720 /* XCRemoteSwiftPackageReference "libxlsxwriter" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = C0FC14822707C15200512064 /* Products */;
+					ProjectRef = C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */;
+				},
 				{
 					ProductGroup = C0FC14892707C19900512064 /* Products */;
 					ProjectRef = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
@@ -1468,6 +1487,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		C0FC14862707C15200512064 /* libJXLS.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libJXLS.a;
+			remoteRef = C0FC14852707C15200512064 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		C0FC14932707C19900512064 /* ZipZap.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -2344,14 +2370,6 @@
 				minimumVersion = 1.1.0;
 			};
 		};
-		A177CAD12DB11208008C0720 /* XCRemoteSwiftPackageReference "libxlsxwriter" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/jmcnamara/libxlsxwriter.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JonasGessner/JGProgressHUD";
@@ -2380,11 +2398,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
 			productName = CocoaMQTT;
-		};
-		A177CAD22DB11208008C0720 /* libxlsxwriter */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A177CAD12DB11208008C0720 /* XCRemoteSwiftPackageReference "libxlsxwriter" */;
-			productName = libxlsxwriter;
 		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;
