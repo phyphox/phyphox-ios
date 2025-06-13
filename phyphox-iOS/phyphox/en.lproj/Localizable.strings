@@ -49,7 +49,7 @@
 "cameraLoadingErrorMessage4" = "Cannot add the output to the camera session. ";
 "cameraLoadingErrorMessage5" = "Couldn't create video device input. ";
 "cameraLoadingErrorMessage6" = "Camera could not be loaded properly. ";
-"cameraLoadingErrorSecondMessage" = "This might be due to several reasons. Please reopen the experiment.";
+"cameraLoadingErrorSecondMessage" = "Please reopen the experiment.";
 "cameraConfigErrorMessage" = "Camera configuration failed. Either your device camera is not available or its missing permissions.";
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
 "sensorNotAvailableWarningText1" = "The sensor";

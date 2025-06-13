@@ -146,7 +146,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var whiteBalanceText: UILabel!
     
     // size definitions
-    private let spacing: CGFloat = 1.0
+    private let spacing: CGFloat = 10.0
     private let sideMargins:CGFloat = 10.0
     static let defaultHeight = 300.0
     static let controlHeight = 60.0
