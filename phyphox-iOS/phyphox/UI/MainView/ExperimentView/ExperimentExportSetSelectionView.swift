@@ -46,9 +46,10 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             
             
             let la = UILabel()
-            la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption1)
+            la.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.caption2)
             
             la.text = string
+            la.adjustsFontSizeToFitWidth = true
             
             fl.append(la)
         }
@@ -126,7 +127,13 @@ final class ExperimentExportSetSelectionView: UIView, BEMCheckBoxDelegate {
             
             let heightDelta = (switchSize.height-s.height)/2.0
             
-            label.frame = CGRect(x: xSpacing, y: h+2*ySpacing+heightDelta, width: s.width, height: s.height)
+            var requiredWidthOfLabel = s.width
+            // Check if the width of the label view overlaps with switch view
+            if((bounds.size.width - switchSize.width - 2 * xSpacing) < s.width ){
+                requiredWidthOfLabel = s.width - switchSize.width - xSpacing
+            }
+            
+            label.frame = CGRect(x: xSpacing, y: h+2*ySpacing+heightDelta, width: requiredWidthOfLabel, height: s.height)
             
             sw.frame = CGRect(x: self.bounds.size.width-switchSize.width-xSpacing, y: label.center.y-switchSize.height/2.0, width: switchSize.width, height: switchSize.height)
             
