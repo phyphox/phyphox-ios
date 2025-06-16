@@ -28,8 +28,8 @@ class CameraUIDataModel {
     var cameraSize: CGSize = CGSize(width: 0, height: 0)
 }
 
-protocol ZoomSliderViewDelegate: AnyObject {
-    func buttonTapped(for value: Float)
+protocol ZoomButtonViewDelegate: AnyObject {
+    func buttonTapped(for value: Float, for index: IndexPath)
 }
 
 enum CameraSettingLevel {
@@ -276,7 +276,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     private func setupCameraSettingViews() {
         if let cameraModel = cameraModelOwner?.cameraModel {
-            zoomSlider = ZoomSlider(cameraSettingModel: cameraModel.cameraSettingsModel)
+            zoomSlider = ZoomSlider(cameraSettingModel: cameraModel.cameraSettingsModel, collectionView: collectionView )
             buttonClickedDelegate = zoomSlider
             
             zoomSlider?.isHidden = true
@@ -811,7 +811,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     //MARK: Collection views functions
     
-    weak var buttonClickedDelegate: ZoomSliderViewDelegate?
+    weak var buttonClickedDelegate: ZoomButtonViewDelegate?
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         self.cameraSettingValues.count
@@ -869,7 +869,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             case .NONE:
                 break
             case .ZOOM:
-                buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue)
+                buttonClickedDelegate?.buttonTapped(for: currentCameraSettingValue, for: indexPath)
                 service.setZoom(currentCameraSettingValue)
             case .ISO:
                 service.setIso(Int(currentCameraSettingValue))
@@ -959,14 +959,17 @@ extension UIView
 }
 
 
-
 @available(iOS 14.0, *)
-class ZoomSlider : UISlider , ZoomSliderViewDelegate{
+class ZoomSlider : UISlider , ZoomButtonViewDelegate{
     
     let cameraModel: CameraSettingsModel
+    let zoomButtonsCollectionView: UICollectionView
+    var currentIndexPath: IndexPath
     
-    init(cameraSettingModel: CameraSettingsModel) {
+    init(cameraSettingModel: CameraSettingsModel, collectionView: UICollectionView) {
         self.cameraModel = cameraSettingModel
+        self.zoomButtonsCollectionView = collectionView
+        currentIndexPath = IndexPath(item: 0, section: 0)
         super.init(frame: CGRect.zero)
         
         setupSlider()
@@ -1003,6 +1006,7 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     
     @objc func sliderValueChanged(_ sender :UISlider) {
         self.cameraModel.service?.setZoom(positionToZoomValue(pos: sender.value))
+        zoomButtonsCollectionView.deselectItem(at: currentIndexPath, animated: false)
     }
     
     lazy private var minimumZoomValue : Float =  {
@@ -1016,8 +1020,9 @@ class ZoomSlider : UISlider , ZoomSliderViewDelegate{
     }()
         
     
-    func buttonTapped(for value: Float) {
+    func buttonTapped(for value: Float, for index: IndexPath) {
         self.value = valueToPosition(val: value)
+        self.currentIndexPath = index
     }
     
 }
