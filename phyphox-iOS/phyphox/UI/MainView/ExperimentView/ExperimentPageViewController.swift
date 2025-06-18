@@ -1344,8 +1344,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alertController.view.addSubview(imageView)
         
         // Set the image view's constraints
-        alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
-        alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        alertController.view.heightAnchor.constraint(equalToConstant: 350).isActive = true
+        alertController.view.widthAnchor.constraint(equalToConstant: 350).isActive = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
         imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true

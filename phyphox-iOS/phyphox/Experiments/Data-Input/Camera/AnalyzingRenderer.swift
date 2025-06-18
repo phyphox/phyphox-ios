@@ -176,6 +176,10 @@ class AnalyzingRenderer {
                 }
             }
             
+            commandBuffer.commit()
+            
+        } else {
+           inFlightSemaphore.signal()
         }
         
         if let analysisCommandBuffer = metalCommandQueue.makeCommandBuffer(),
@@ -198,6 +202,7 @@ class AnalyzingRenderer {
                 if self.measuring {
                     self.dataIn()
                 }
+                self.inFlightSemaphore.signal()
                 
             }
             
