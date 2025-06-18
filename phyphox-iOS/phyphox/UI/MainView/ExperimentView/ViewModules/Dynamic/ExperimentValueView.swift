@@ -130,7 +130,9 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
             valueLabel.text = "- "
         }
 
-        onResize?()
+        if valueLabel.frame.height != calculateFrames(width: frame.width).valueFrame.height {
+            onResize?()
+        }
         setNeedsLayout()
     }
     
