@@ -113,106 +113,116 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     func draw(in view: MTKView) {
         if let strongSemaphore = self.inFlightSemaphore {
             _ = strongSemaphore.wait(timeout: DispatchTime.distantFuture)
+           
+            guard let commandBuffer = metalCommandQueue.makeCommandBuffer() else {
+                strongSemaphore.signal()
+                return
+            }
             
-            if let commandBuffer = metalCommandQueue.makeCommandBuffer() {
-                commandBuffer.label = "CameraPreviewCommand"
-                
-                commandBuffer.addCompletedHandler { [weak self] commandBuffer in
-                    if let strongSemaphore = self?.inFlightSemaphore {
-                        strongSemaphore.signal()
-                    }
+            commandBuffer.label = "CameraPreviewCommand"
+            
+            commandBuffer.addCompletedHandler { [weak self] commandBuffer in
+                if let strongSemaphore = self?.inFlightSemaphore {
+                    strongSemaphore.signal()
                 }
-
-                update(commandBuffer: commandBuffer, viewportSize: view.frame)
+            }
+            
+            let success = update(commandBuffer: commandBuffer, viewportSize: view.frame)
+            
+            if !success {
+                // If update failed, we must not wait for GPU
+                // and also signal the semaphore manually
+                strongSemaphore.signal()
+            }else {
+                if commandBuffer.status == .notEnqueued {
+                    print("WARNING: Command buffer was never committed. Committing manually.")
+                    commandBuffer.commit()
+                }
             }
         }
     }
-    
-    func update(commandBuffer: MTLCommandBuffer, viewportSize: CGRect){
-
+        
+    func update(commandBuffer: MTLCommandBuffer, viewportSize: CGRect) -> Bool {
         updateAppState()
         
-        if let renderPassDescriptor = renderDestination.currentRenderPassDescriptor, let currentDrawable = renderDestination.currentDrawable {
-
-            if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor), let cameraModel = cameraModelOwner?.cameraModel {
-                
-                // Set a label to identify this render pass in a captured Metal frame.
-                renderEncoder.label = "CameraGUIPreview"
-                
-                // Push a debug group that enables you to identify this render pass in a Metal frame capture.
-                renderEncoder.pushDebugGroup("CameraPass")
-                
-                // Set render command encoder state.
-                renderEncoder.setCullMode(.none)
-                renderEncoder.setRenderPipelineState(pipelineState)
-                
-                let selectionArea = cameraModel.selectionArea
-                let selectionState = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: isOverlayEditable)
-                let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying(displayToCameraTransform.inverted())
-                let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
-                
-                //Scale to resolution of the metal view drawable. Important: This is not viewportSize, which is in screen coordinates, drawableSize which is in pixels! Also, the camera resolution does not play a role here as it is rendered to a texture which is simply accessed by the shader via normalized texture coordinates.
-                var scaledSelectionState = SelectionState(x1: Float(min(p1.x, p2.x)*drawableSize.width), x2: Float(max(p1.x, p2.x)*drawableSize.width), y1: Float(min(p1.y, p2.y)*drawableSize.height), y2: Float(max(p1.y, p2.y)*drawableSize.height), editable: selectionState.editable)
-           
-                renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionState>.stride, index: 2)
-                
-                var shaderColorModifier = ShaderColorModifier(
-                    grayscale: descriptor.grayscale,
-                    overexposureColor: vector_float3(
-                        Float(descriptor.markOverexposure?.red ?? .nan),
-                        Float(descriptor.markOverexposure?.green ?? .nan),
-                        Float(descriptor.markOverexposure?.blue ?? .nan)
-                    ), underexposureColor: vector_float3(
-                        Float(descriptor.markUnderexposure?.red ?? .nan),
-                        Float(descriptor.markUnderexposure?.green ?? .nan),
-                        Float(descriptor.markUnderexposure?.blue ?? .nan)
-                    ))
-                renderEncoder.setFragmentBytes(&shaderColorModifier, length: MemoryLayout<ShaderColorModifier>.stride, index: 3)
-                
-                // Setup plane vertex buffers.
-                renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
-                renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 1)
-                
-                
-                guard let cameraTextureProvider = cameraTextureProvider else {
-                        renderEncoder.endEncoding()
-                        return
-                }
-                
-                
-                var aborted = false
-                cameraTextureProvider.safeTextureAccess {
-                    guard let cameraImageTextureY = cameraTextureProvider.cameraImageTextureY,
-                          let cameraImageTextureCbCr = cameraTextureProvider.cameraImageTextureCbCr
-                        else {
-                            renderEncoder.endEncoding()
-                            aborted = true
-                            return
-                    }
-                    renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureY), index: 0)
-                    renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureCbCr), index: 1)
-                }
-                if aborted {
-                    return
-                }
-                
-                
-                // Draw final quad to display
-                renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
-                renderEncoder.popDebugGroup()
-                
-                // Finish encoding commands.
-                renderEncoder.endEncoding()
-            }
-            
-            // Schedule a present once the framebuffer is complete using the current drawable.
-            commandBuffer.present(currentDrawable)
+        guard let renderPassDescriptor = renderDestination.currentRenderPassDescriptor,
+              let currentDrawable = renderDestination.currentDrawable else {
+            return false
         }
+        
+        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor),
+              let cameraModel = cameraModelOwner?.cameraModel else {
+            return false
+        }
+        // Set a label to identify this render pass in a captured Metal frame.
+        renderEncoder.label = "CameraGUIPreview"
+        // Push a debug group that enables you to identify this render pass in a Metal frame capture.
+        renderEncoder.pushDebugGroup("CameraPass")
+        // Set render command encoder state.
+        renderEncoder.setCullMode(.none)
+        renderEncoder.setRenderPipelineState(pipelineState)
+        
+        
+        let selectionArea = cameraModel.selectionArea
+        let selectionState = SelectionState(x1: Float(selectionArea.minX), x2: Float(selectionArea.maxX), y1: Float(selectionArea.minY), y2: Float(selectionArea.maxY), editable: isOverlayEditable)
+        let p1 = CGPoint(x: CGFloat(selectionState.x1), y: CGFloat(selectionState.y1)).applying(displayToCameraTransform.inverted())
+        let p2 = CGPoint(x: CGFloat(selectionState.x2), y: CGFloat(selectionState.y2)).applying(displayToCameraTransform.inverted())
+        
+        //Scale to resolution of the metal view drawable. Important: This is not viewportSize, which is in screen coordinates, drawableSize which is in pixels! Also, the camera resolution does not play a role here as it is rendered to a texture which is simply accessed by the shader via normalized texture coordinates.
+        var scaledSelectionState = SelectionState(x1: Float(min(p1.x, p2.x)*drawableSize.width), x2: Float(max(p1.x, p2.x)*drawableSize.width), y1: Float(min(p1.y, p2.y)*drawableSize.height), y2: Float(max(p1.y, p2.y)*drawableSize.height), editable: selectionState.editable)
+        
+        renderEncoder.setFragmentBytes(&scaledSelectionState, length: MemoryLayout<SelectionState>.stride, index: 2)
+        
+        var shaderColorModifier = ShaderColorModifier(
+            grayscale: descriptor.grayscale,
+            overexposureColor: vector_float3(
+                Float(descriptor.markOverexposure?.red ?? .nan),
+                Float(descriptor.markOverexposure?.green ?? .nan),
+                Float(descriptor.markOverexposure?.blue ?? .nan)
+            ), underexposureColor: vector_float3(
+                Float(descriptor.markUnderexposure?.red ?? .nan),
+                Float(descriptor.markUnderexposure?.green ?? .nan),
+                Float(descriptor.markUnderexposure?.blue ?? .nan)
+            ))
+        renderEncoder.setFragmentBytes(&shaderColorModifier, length: MemoryLayout<ShaderColorModifier>.stride, index: 3)
+        
+        // Setup plane vertex buffers.
+        renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 0)
+        renderEncoder.setVertexBuffer(imagePlaneVertexBuffer, offset: 0, index: 1)
+        
+        guard let cameraTextureProvider = cameraTextureProvider else {
+            renderEncoder.endEncoding()
+            return false
+        }
+        
+        var aborted = false
+        cameraTextureProvider.safeTextureAccess {
+            guard let cameraImageTextureY = cameraTextureProvider.cameraImageTextureY,
+                  let cameraImageTextureCbCr = cameraTextureProvider.cameraImageTextureCbCr
+            else {
+                renderEncoder.endEncoding()
+                aborted = true
+                return
+            }
+            renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureY), index: 0)
+            renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(cameraImageTextureCbCr), index: 1)
+        }
+        if aborted {
+            return false
+        }
+        
+        // Draw final quad to display
+        renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
+        renderEncoder.popDebugGroup()
+        
+        // Finish encoding commands.
+        renderEncoder.endEncoding()
+        commandBuffer.present(currentDrawable)
         
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
         
-        
+        return true
     }
    
     // Updates any app state.
