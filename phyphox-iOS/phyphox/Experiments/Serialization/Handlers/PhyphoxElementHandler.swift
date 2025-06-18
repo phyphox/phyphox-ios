@@ -305,6 +305,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "depthBackSensor": metadata = .Metadata(.depthBackSensor)
                         case "depthBackResolution": metadata = .Metadata(.depthBackResolution)
                         case "depthBackRate": metadata = .Metadata(.depthBackRate)
+                        case "camera2api": metadata = .Metadata(.camera2api)
+                        case "camera2apiFull": metadata = .Metadata(.camera2apiFull)
                         default:
                             func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
                                 if name.starts(with: sensor.description) {
