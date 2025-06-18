@@ -176,8 +176,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         countdownFormatter.minimumFractionDigits = 1
         
         defer {
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: NSNotification.Name(rawValue: DidBecomeActiveNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: .resignActiveNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: .didBecomeActiveNotification, object: nil)
         }
     }
     
@@ -373,8 +373,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .forward, animated: false, completion: nil)
         pageViewControler.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
-        
-        
         updateLayout()
         
         self.addChild(pageViewControler)
@@ -384,6 +382,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+        if(experiment.cameraInput != nil){
+            NotificationCenter.default.addObserver(self, selector: #selector(handleCameraError(notification:)), name: .cameraConfigurationFailed, object: nil)
+        }
         
     }
     
@@ -717,42 +718,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     
-    @objc func showQr(){
-        let data = remoteUrl.data(using: .utf8)
-        let qrFilter = CIFilter(name: "CIQRCodeGenerator")
-        
-        qrFilter?.setValue(data, forKey: "inputMessage")
-        qrFilter?.setValue("Q", forKey: "inputCorrectionLevel")
-        
-        let qrImage = qrFilter?.outputImage
-        
-        let displayImage = UIImage(ciImage: qrImage!).resize(size: CGSize(width: 150, height: 150))
-        
-        let imageView = UIImageView(image: displayImage)
-        
-        showQrInDialog(imageView: imageView)
-        
-        
-    }
-    
-    @objc func showQrInDialog(imageView: UIImageView) {
-        imageView.contentMode = .scaleAspectFit
-        
-        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
-        alertController.view.addSubview(imageView)
-        
-        // Set the image view's constraints
-        alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
-        alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
-        imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
-       
-        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
-        alertController.addAction(closeButton)
-        
-        present(alertController, animated: true, completion: nil)
-    }
     
     private func tearDownWebServer() {
         webServer.stop()
@@ -1169,63 +1134,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    @objc func stopTimerFired() {
-        if timerBeep.stop {
-            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
-        }
-        stopExperiment()
-    }
-    
-    @objc func startTimerFired() {
-        if timerBeep.start {
-            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
-        }
-        actuallyStartExperiment()
-        
-        experimentStartTimer?.invalidate()
-        experimentStartTimer = nil
-        
-        let d = timerDuration
-        var nextBeep = floor(d-0.6)
-        
-        var items = navigationItem.rightBarButtonItems
-        
-        guard let label = items?.last?.customView as? UILabel else { return }
-        
-        label.text = countdownFormatter.string(from: d as NSNumber)
-        label.sizeToFit()
-        
-        items?.removeLast()
-        items?.append(UIBarButtonItem(customView: label))
-        
-        navigationItem.rightBarButtonItems = items
-        
-        func updateT() {
-            guard let experimentRunTimer = experimentRunTimer else { return }
-            
-            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
-            if dt <= nextBeep && nextBeep > 0 {
-                nextBeep -= 1
-                if timerBeep.running {
-                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
-                }
-            }
-            
-            after(0.02) {
-                updateT()
-            }
-            
-            label.text = countdownFormatter.string(from: dt as NSNumber)
-            label.sizeToFit()
-        }
-        
-        after(0.02) {
-            updateT()
-        }
-        
-        experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
-    }
-    
     func startExperiment() {
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
@@ -1380,6 +1288,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    @objc func handleCameraError(notification: Notification) {
+        DispatchQueue.main.async {
+            
+            guard self.presentedViewController == nil else {
+                        // Optionally, dismiss the current one before showing alert
+                        self.presentedViewController?.dismiss(animated: false) {
+                            self.handleCameraError(notification: notification)
+                        }
+                        return
+                    }
+            
+            let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
+                                          message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
+                                          preferredStyle: .alert)
+            
+            let okAction = UIAlertAction(title: localize("ok"), style: .default) { [weak self] _ in
+                if let nav = self?.navigationController {
+                    nav.popViewController(animated: true)
+                } else {
+                    self?.dismiss(animated: true, completion: nil)
+                }
+            }
+            
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
     @objc func clearDataDialog() {
         hintBubble?.dismiss(animated: true, completion: nil)
         
@@ -1392,6 +1328,101 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         self.navigationController!.present(al, animated: true, completion: nil)
     }
+    
+    @objc func showQr(){
+        let data = remoteUrl.data(using: .utf8)
+        let qrFilter = CIFilter(name: "CIQRCodeGenerator")
+        
+        qrFilter?.setValue(data, forKey: "inputMessage")
+        qrFilter?.setValue("Q", forKey: "inputCorrectionLevel")
+        
+        let qrImage = qrFilter?.outputImage
+        
+        let displayImage = UIImage(ciImage: qrImage!).resize(size: CGSize(width: 150, height: 150))
+        
+        let imageView = UIImageView(image: displayImage)
+        
+        showQrInDialog(imageView: imageView)
+        
+        
+    }
+    
+    @objc func showQrInDialog(imageView: UIImageView) {
+        imageView.contentMode = .scaleAspectFit
+        
+        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
+        alertController.view.addSubview(imageView)
+        
+        // Set the image view's constraints
+        alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
+        alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
+        imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
+       
+        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
+        alertController.addAction(closeButton)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    @objc func stopTimerFired() {
+        if timerBeep.stop {
+            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
+        }
+        stopExperiment()
+    }
+    
+    @objc func startTimerFired() {
+        if timerBeep.start {
+            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
+        }
+        actuallyStartExperiment()
+        
+        experimentStartTimer?.invalidate()
+        experimentStartTimer = nil
+        
+        let d = timerDuration
+        var nextBeep = floor(d-0.6)
+        
+        var items = navigationItem.rightBarButtonItems
+        
+        guard let label = items?.last?.customView as? UILabel else { return }
+        
+        label.text = countdownFormatter.string(from: d as NSNumber)
+        label.sizeToFit()
+        
+        items?.removeLast()
+        items?.append(UIBarButtonItem(customView: label))
+        
+        navigationItem.rightBarButtonItems = items
+        
+        func updateT() {
+            guard let experimentRunTimer = experimentRunTimer else { return }
+            
+            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
+            if dt <= nextBeep && nextBeep > 0 {
+                nextBeep -= 1
+                if timerBeep.running {
+                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
+                }
+            }
+            
+            after(0.02) {
+                updateT()
+            }
+            
+            label.text = countdownFormatter.string(from: dt as NSNumber)
+            label.sizeToFit()
+        }
+        
+        after(0.02) {
+            updateT()
+        }
+        
+        experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
+    }
+    
     
     func clearData() {
         self.experiment.timeReference.registerEvent(event: .CLEAR)
@@ -1520,6 +1551,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         view.addSubview(customCollectionView)
         
     }
+    
 }
 
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {

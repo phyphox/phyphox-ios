@@ -194,7 +194,7 @@ final class Experiment {
         self.export = export
         
         defer {
-            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: NSNotification.Name(rawValue: EndBackgroundMotionSessionNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(Experiment.endBackgroundSession), name: .endBackgroundMotionSessionNotification, object: nil)
         }
         
         if !audioInputs.isEmpty {
@@ -329,13 +329,13 @@ final class Experiment {
             switch status {
             case .denied:
                 failed()
-                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_microphone_required"), message: localize("permission_microphone_denied"), preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: "Microphone Required", message: "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->General->Restrctions->Microphone", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_microphone_required"), message: "permission_microphone_restricted", preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
@@ -356,13 +356,13 @@ final class Experiment {
             switch status {
             case .denied:
                 failed()
-                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been denied. Please enable access to the location in Settings->Privacy->Location Services", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_denied"), preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: "Location/GPS Required", message: "This experiment requires access to the location (GPS), but the access has been restricted. Please enable access to the location in Settings->General->Restrctions->Location Services", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_restricted"), preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
@@ -379,12 +379,12 @@ final class Experiment {
             switch status {
             case .denied:
                 failed()
-                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_denied"), preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: "iOS >= 17.4 issue", message: "This experiment requires access to the pressure sensor. Normally, this would not require a permission, but iOS 17.4 introduced a bug that requires additional permissions. The access has been restricted. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness", preferredStyle: .alert)
+                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_restricted"), preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                 UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                 
@@ -401,17 +401,16 @@ final class Experiment {
         }
         
         else if requiredPermissions.contains(.camera) {
-           print("Camera permission required.")
             let status = AVCaptureDevice.authorizationStatus(for: .video)
            switch status {
            case .denied:
                failed()
-               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera", preferredStyle: .alert)
+               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), preferredStyle: .alert)
                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
            case .restricted:
                failed()
-               let alert = UIAlertController(title: "Camera required", message: "This experiment requires access to the camera sensor. but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera", preferredStyle: .alert)
+               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_restricted"), preferredStyle: .alert)
                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
                

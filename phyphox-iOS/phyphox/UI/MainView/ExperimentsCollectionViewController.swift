@@ -139,7 +139,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         reload()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
       
         ExperimentManager.shared.reloadUserExperiments()
 

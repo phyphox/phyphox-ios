@@ -170,3 +170,11 @@ func queryDictionary(_ query: String) -> [String: String] {
     return dict
 }
 
+extension Notification.Name {
+    static let cameraConfigurationFailed = Notification.Name("CameraConfigurationFailed")
+    static let resignActiveNotification = Notification.Name(rawValue: "ResignActiveNotification")
+    static let experimentsReloadedNotification = Notification.Name(rawValue: "ExperimentsReloadedNotification")
+    static let didBecomeActiveNotification = Notification.Name(rawValue: "DidBecomeActiveNotification")
+    static let endBackgroundMotionSessionNotification = Notification.Name(rawValue: "EndBackgroundMotionSessionNotification")
+}
+

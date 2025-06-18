@@ -23,8 +23,6 @@ let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDo
 let savedExperimentStatesURL = documentsURL.appendingPathComponent("Saved-States")
 let customExperimentsURL = documentsURL.appendingPathComponent("Experiments")
 
-let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
-
 enum FileError: Error {
     case genericError
 }
@@ -205,7 +203,7 @@ final class ExperimentManager {
             }
             DispatchQueue.main.async {
                 loadHud.dismiss()
-                NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+                NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
             }
             #if DEBUG
             let time = CFAbsoluteTimeGetCurrent() - timestamp
@@ -235,7 +233,7 @@ final class ExperimentManager {
             }
         }
 
-        NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
         
         #if DEBUG
         let time = CFAbsoluteTimeGetCurrent() - timestamp

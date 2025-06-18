@@ -369,7 +369,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
     }
     
     @objc func reload(){

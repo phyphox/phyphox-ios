@@ -426,6 +426,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     
     func configureSession(){
         if setupResult != .success {
+            showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage1"))
             return
         }
         
@@ -433,9 +434,9 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         do {
 
             guard let videoDevice = cameraModelOwner?.cameraModel?.cameraSettingsModel.getCamera() else {
-                print("Default video device is unavailable.")
                 setupResult = .configurationFailed
                 session.commitConfiguration()
+                showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage2"))
                 return
             }
             
@@ -444,17 +445,15 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             if session.canAddInput(videoDeviceInput) {
                 session.addInput(videoDeviceInput)
                 self.videoDeviceInput = videoDeviceInput
-                
                 setBestInputFormat(for: videoDevice)
                 
             } else {
-                print("Couldn't add video device input to the session.")
                 setupResult = .configurationFailed
                 session.commitConfiguration()
+                showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage3"))
                 return
             }
             
-            // setup output, add output to our capture session
             let captureOutput = AVCaptureVideoDataOutput()
             
             captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
@@ -467,21 +466,20 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             if session.canAddOutput(captureOutput) {
                 session.addOutput(captureOutput)
             } else {
-                print("Error: Cannot add the Output to the session")
+                showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage4"))
+                return
             }
             
             let formatDescription = videoDevice.activeFormat.formatDescription
             let dimension = CMVideoFormatDescriptionGetDimensions(formatDescription)
             
-            print("Resolution: \(dimension.width)x\(dimension.height)")
-            print("Max frame duration: \(videoDevice.activeVideoMaxFrameDuration)")
             cameraModelOwner?.updateResolution(CGSize(width: Int(dimension.width), height: Int(dimension.height)))
             cameraModelOwner?.cameraModel?.cameraSettingsModel.maxFrameDuration = videoDevice.activeVideoMaxFrameDuration.seconds
             
             setCameraSettinginfo()
             
         } catch {
-            print("Couldn't create video device input: \(error)")
+            showCameraConfigurationFailAlert(message: localize("cameraLoadingErrorMessage5"))
             setupResult = .configurationFailed
             session.commitConfiguration()
             return
@@ -494,6 +492,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         applyLockedSettings()
                 
         self.start()
+        
+    }
+    
+    func showCameraConfigurationFailAlert(message: String){
+            NotificationCenter.default.post(name: .cameraConfigurationFailed,
+                                            object: nil,
+                                            userInfo: ["message": message])
         
     }
     
@@ -592,7 +597,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                     print("Application not authorized to use camera")
                     
                     DispatchQueue.main.async {
-                        self.alertError = AlertError(title: "Camera Error", message: "Camera configuration failed. Either your device camera is not available or its missing permissions", primaryButtonTitle: "Accept", secondaryButtonTitle: nil, primaryAction: nil, secondaryAction: nil)
+                        self.alertError = AlertError(title: localize("cameraLoadingErrorTitle"), message: localize("cameraConfigErrorMessage"), primaryButtonTitle: localize("accept"), secondaryButtonTitle: nil, primaryAction: nil, secondaryAction: nil)
                         self.shouldShowAlertView = true
                         self.isCameraUnavailable = true
                     }
