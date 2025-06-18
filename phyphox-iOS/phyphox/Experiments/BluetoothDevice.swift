@@ -78,7 +78,7 @@ protocol BluetoothDeviceDelegate {
 }
 
 protocol UpdateConnectedDeviceDelegate {
-    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel])
+    func showUpdatedConnectedDevices(connectedDevices: [ConnectedDevicesDataModel])
 }
 
 enum BluetoothDeviceError: Error {
@@ -355,7 +355,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         ExperimentBluetoothDevice
             .updateDelegate?
-            .showUpdatedConnectedDevices(connectedDevice: connectedDevices)
+            .showUpdatedConnectedDevices(connectedDevices: connectedDevices)
         
     }
     

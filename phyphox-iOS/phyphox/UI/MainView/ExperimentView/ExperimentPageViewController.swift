@@ -42,11 +42,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     private let viewModules: [[UIView]]
     
-    let flowLayout = UICollectionViewFlowLayout()
-    
     var numOfConnectedDevices = 0
     
-    var customCollectionView = ConnectedBluetoothDevicesViewController(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout(), data: [])
+    var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -153,13 +151,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 exportingViewModule.exportDelegate = self
             }
         }
-        
-        
-        flowLayout.scrollDirection = .vertical
-        flowLayout.minimumLineSpacing = 10
-        flowLayout.minimumInteritemSpacing = 10
-
-        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
         
         ExperimentBluetoothDevice.updateDelegate = self
         
@@ -271,7 +262,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if (experiment.viewDescriptors!.count > 1) {
             offsetTop += tabBarHeight
         }
-        let offsetBottom: CGFloat = self.bottomLayoutGuide.length
+        var offsetBottom: CGFloat = self.bottomLayoutGuide.length
         let offsetFrame: CGRect
         if #available(iOS 11, *) {
             offsetFrame = self.view.safeAreaLayoutGuide.layoutFrame
@@ -281,34 +272,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         
-        var adjustableHeightS1 = 0.0
-        var adjustableHeightS2 = 0.0
-        if(  numOfConnectedDevices == 1){
-            adjustableHeightS1 = 30.0
-            adjustableHeightS2 = 20.0
-        } else if(numOfConnectedDevices > 1){
-            adjustableHeightS1 = 82.0
-            adjustableHeightS2 = 72.0
-        }
-        
         if let label = self.serverLabel, let labelBackground = self.serverLabelBackground {
             let s = label.sizeThatFits(CGSize(width: offsetFrame.width, height: 300))
-            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height-offsetBottom - adjustableHeightS1))
             
-            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS1  , width: pageViewControlerRect.width, height: s.height + offsetBottom - adjustableHeightS2)
-            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS2  , width: offsetFrame.width, height: s.height  )
+            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom, width: pageViewControlerRect.width, height: s.height + offsetBottom)
+            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom, width: offsetFrame.width, height: s.height)
             label.frame = labelFrame
             labelBackground.frame = labelBackgroundFrame
             label.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
             labelBackground.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
+            
+            offsetBottom += s.height
         }
         
         if self.serverQRIcon != nil {
             NSLayoutConstraint.activate([
                 self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -15.0),
-                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -20.0 )
+                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabel!.bottomAnchor, constant: -20.0 )
             ])
         }
+        
+        if let bluetoothStatusBar = bluetoothStatusBar {
+            let bluetoothStatusBarRect = bluetoothStatusBar.sizeThatFits(self.view.frame.size)
+            bluetoothStatusBar.frame = CGRect(x: 0, y: self.view.frame.height - bluetoothStatusBarRect.height - offsetBottom, width: self.view.frame.width, height: bluetoothStatusBarRect.height)
+            offsetBottom += bluetoothStatusBarRect.height
+        }
+        
+        pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-offsetBottom))
         
         self.pageViewControler.view.frame = pageViewControlerRect
     }
@@ -708,7 +698,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             self.view.addSubview(self.serverQRIcon!)
-            
+                        
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             
@@ -1534,22 +1524,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
-        
-        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
-        customCollectionView.removeFromSuperview()
-        
-        numOfConnectedDevices = connectedDevice.count
-        var adjustedHeight = 48.0
-        if( numOfConnectedDevices == 0){
-            return
-        } else if(numOfConnectedDevices > 1){
-            adjustedHeight = 100.0
+    func showUpdatedConnectedDevices(connectedDevices: [ConnectedDevicesDataModel]) {
+        if let bluetoothStatusBar = bluetoothStatusBar {
+            if (bluetoothStatusBar.updateData(connectedDevices)) {
+                self.updateLayout()
+            }
+        } else {
+            let statusBar = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: 0), data: connectedDevices)
+            self.view.addSubview(statusBar)
+            bluetoothStatusBar = statusBar
+            self.updateLayout()
         }
-     
-        customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
-        view.addSubview(customCollectionView)
-        
     }
     
 }

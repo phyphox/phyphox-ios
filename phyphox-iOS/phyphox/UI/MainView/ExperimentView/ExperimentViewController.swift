@@ -68,8 +68,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
             return 0
         }
         
-        let availableSize = CGSize(width: view.frame.width, height: view.frame.height - bottomLayoutGuide.length)
-        let size = module.sizeThatFits(availableSize)
+        let availableSize = view.frame.inset(by: tableView.contentInset).size
+        let size = module.sizeThatFits(CGSize(width: availableSize.width, height: max(availableSize.height-20, 0)))
+        //TODO: The source for the value -20 is not clear. It seems like the scroll features adds a padding, but I could not find how to control it or read the correct value programmatically
 
         if indexPath.row > 0 {
             return size.height + (((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0)
@@ -92,7 +93,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         else {
             cell.topInset = ((module as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0
         }
-
+        
         // Add to new cell
         cell.module = module
 
