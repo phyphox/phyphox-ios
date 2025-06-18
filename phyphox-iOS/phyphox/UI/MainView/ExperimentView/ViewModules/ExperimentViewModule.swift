@@ -40,6 +40,10 @@ extension DynamicViewModule where Self: DisplayLinkListener {
     }
 }
 
+protocol ResizingViewModule {
+    var onResize: (() -> Void)? { get set }
+}
+
 enum ResizableViewModuleState {
     case normal
     case exclusive

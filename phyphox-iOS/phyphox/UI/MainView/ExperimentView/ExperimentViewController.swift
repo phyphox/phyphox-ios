@@ -28,6 +28,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         didSet {
             for module in modules {
                 (module as? DynamicViewModule)?.active = active
+                if var resizingModule = module as? ResizingViewModule {
+                    resizingModule.onResize = tableView?.reloadData
+                }
             }
             if !active {
                 restoreLayout()

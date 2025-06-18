@@ -10,7 +10,9 @@ import UIKit
 
 private let spacing: CGFloat = 10.0
 
-final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
+final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
+    var onResize: (() -> Void)?
+    
     let descriptor: ValueViewDescriptor
 
     private let label = UILabel()
@@ -46,6 +48,8 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         label.textColor = descriptor.color.autoLightColor()
         label.textAlignment = .right
 
+        valueLabel.numberOfLines = 0
+        valueLabel.lineBreakMode = .byWordWrapping
         valueLabel.text = "- "
         valueLabel.textColor = descriptor.color.autoLightColor()
         let defaultFont = UIFont.preferredFont(forTextStyle: .headline)
@@ -126,6 +130,7 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
             valueLabel.text = "- "
         }
 
+        onResize?()
         setNeedsLayout()
     }
     
@@ -160,7 +165,6 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
                 if(intDecimal > 31 && intDecimal < 126){
                     if let asciiCharacter = UnicodeScalar(intDecimal) {
                         asciiString +=  Character(asciiCharacter).description
-                        print(asciiString)
                     } else {
                         print("No valid ASCII character for decimal \(intDecimal).")
                     }
@@ -173,35 +177,47 @@ final class ExperimentValueView: UIView, DynamicViewModule, DescriptorBoundViewM
         return asciiString
     }
     
+    func calculateFrames(width: CGFloat) -> (labelFrame: CGRect, valueFrame: CGRect, unitFrame: CGRect) {
+        let unrestrictedBounds = CGSize(width: width, height: CGFLOAT_MAX)
+        let labelIdeal = label.sizeThatFits(unrestrictedBounds).width
+        let valueIdeal = valueLabel.sizeThatFits(unrestrictedBounds).width
+        let unitWidth = unitLabel.sizeThatFits(unrestrictedBounds).width
+        let valueUnitIdeal = valueIdeal + unitWidth
+        
+        let defaultWidth = (width - 3*spacing)/2.0
+        var labelWidth = defaultWidth
+        var valueUnitWidth = defaultWidth
+        
+        //Allow value+unit to take up additional space if label has room
+        if valueUnitIdeal > defaultWidth && labelIdeal < defaultWidth {
+            let availableWidth = 2*defaultWidth - labelIdeal
+            valueUnitWidth = min(availableWidth, valueUnitIdeal)
+            labelWidth = 2*defaultWidth - valueUnitWidth
+        }
+        
+        let valueWidth = min(valueIdeal, valueUnitWidth - unitWidth)
+        
+        let labelHeight = label.sizeThatFits(CGSize(width: labelWidth, height: CGFLOAT_MAX)).height
+        let valueHeight = valueLabel.sizeThatFits(CGSize(width: valueWidth, height: CGFLOAT_MAX)).height
+        let unitHeight = unitLabel.sizeThatFits(CGSize(width: unitWidth, height: CGFLOAT_MAX)).height
+
+        let height = max(labelHeight, valueHeight, unitHeight)
+        
+        let labelFrame = CGRect(x: spacing, y: 0, width: labelWidth, height: height)
+        let valueFrame = CGRect(x: 2*spacing + labelWidth, y: 0, width: valueWidth, height: height)
+        let unitFrame = CGRect(x: 2*spacing + labelWidth + valueWidth, y: 0, width: unitWidth, height: height)
+        
+        return (labelFrame, valueFrame, unitFrame)
+        
+    }
+    
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let s2 = valueLabel.sizeThatFits(size)
-        let s3 = unitLabel.sizeThatFits(size)
-        let valueUnitWidth = s2.width + s3.width
-        
-        let maxLabelWidth = (size.width-3*spacing)/2.0
-        let labelWidth = valueUnitWidth > maxLabelWidth ? 2*maxLabelWidth - valueUnitWidth : maxLabelWidth
-        
-        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: size.height))
-        return CGSize(width: size.width, height: max(s1.height, s2.height, s3.height))
+        return CGSize(width: size.width, height: calculateFrames(width: size.width).valueFrame.height)
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        let s2 = valueLabel.sizeThatFits(self.bounds.size)
-        let s3 = unitLabel.sizeThatFits(self.bounds.size)
-        let valueUnitWidth = s2.width + s3.width
-        let maxLabelWidth = (self.bounds.width-3*spacing)/2.0
-        let labelWidth = valueUnitWidth > maxLabelWidth ? 2*maxLabelWidth - valueUnitWidth : maxLabelWidth
-
-        let s1 = label.sizeThatFits(CGSize(width: labelWidth, height: self.bounds.height))
-        
-        let totalHeight = max(s1.height, s2.height, s3.height)
-        
-        label.frame = CGRect(x: spacing, y: 0, width: labelWidth, height: totalHeight)
-        valueLabel.frame = CGRect(x: 2*spacing + labelWidth, y: 0, width: s2.width, height: totalHeight)
-        unitLabel.frame = CGRect(x: 2*spacing + labelWidth + s2.width, y: 0, width: s3.width, height: totalHeight)
-       
+        (label.frame, valueLabel.frame, unitLabel.frame) = calculateFrames(width: self.bounds.size.width)
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
