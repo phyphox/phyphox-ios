@@ -60,6 +60,28 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
     
 }
 
+/**
+
+kernel void readLuminaceValues(
+     texture2d<float, access::read> yTexture [[texture(0)]],
+     device uint8_t* outBuffer [[buffer(0)]],
+     constant uint2& regionSize [[buffer(1)]],
+     constant SelectionState& selectionState [[ buffer(2) ]],
+     uint2 gid2D [[thread_position_in_grid]])
+{
+    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
+    
+    if(globalID.x <= selectionState.x2 || globalID.y <= selectionState.y2){
+ 
+    }
+
+    float y = yTexture.read(<#ushort2 coord#>)
+    uint regionWidth = regionSize.x;
+    uint index = gid.y * regionWidth + gid.x;
+    outBuffer[index] = static_cast<uint8_t>(round(y * 255.0));
+}
+ */
+
 
 kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
                              texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],

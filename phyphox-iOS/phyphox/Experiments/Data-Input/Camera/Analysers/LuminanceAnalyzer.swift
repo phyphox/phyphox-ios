@@ -85,6 +85,20 @@ class LuminanceAnalyzer: AnalyzingModule {
         
         analyzeEncoding.setComputePipelineState(analysisPipelineState)
         
+        let sizeOfSelectedPixel = getSelectedArea().width * getSelectedArea().height
+        
+        let pixelBytesPointer = UnsafeMutableRawPointer.allocate(byteCount: sizeOfSelectedPixel , alignment: 1)
+        let pixelRegions = MTLRegionMake2D(0, getSelectedArea().height/2, getSelectedArea().width, 1)
+        
+        var pixelBuffer = [UInt8](repeating: 0, count: getSelectedArea().width)
+        
+        //cameraImageTextureY?.getBytes(pixelBytesPointer, bytesPerRow: <#T##Int#>, bytesPerImage: <#T##Int#>, from: pixelRegions, mipmapLevel: 0, slice: 0)
+        cameraImageTextureY?.getBytes(&pixelBuffer, bytesPerRow: getSelectedArea().width, from: pixelRegions, mipmapLevel: 0)
+        
+        for (index_, yVal) in pixelBuffer.enumerated() {
+            print("Pixel \(index_): Y + \(yVal)")
+        }
+                
         let calculatedGridAndGroupSize = calculateThreadSize(selectedWidth: getSelectedArea().width, selectedHeight: getSelectedArea().height)
         
         let partialBufferLength = calculatedGridAndGroupSize.numOfThreadGroups
@@ -148,3 +162,62 @@ class LuminanceAnalyzer: AnalyzingModule {
     }
     
 }
+
+
+/**
+ 
+ func dumpYRegionFromTexture(device: MTLDevice,
+                             commandQueue: MTLCommandQueue,
+                             textureY: MTLTexture,
+                             origin: MTLOrigin,
+                             size: MTLSize) -> [UInt8]? {
+     guard let lib = try? device.makeDefaultLibrary(bundle: .main),
+           let function = lib.makeFunction(name: "readYTexture"),
+           let pipeline = try? device.makeComputePipelineState(function: function) else {
+         return nil
+     }
+
+     let regionWidth = size.width
+     let regionHeight = size.height
+     let bufferSize = regionWidth * regionHeight
+     let outputBuffer = device.makeBuffer(length: bufferSize, options: .storageModeShared)!
+
+     // Buffers for region origin and size
+     let originBuffer = device.makeBuffer(bytes: [UInt32(origin.x), UInt32(origin.y)],
+                                          length: MemoryLayout<simd_uint2>.stride,
+                                          options: [])
+     let sizeBuffer = device.makeBuffer(bytes: [UInt32(size.width), UInt32(size.height)],
+                                        length: MemoryLayout<simd_uint2>.stride,
+                                        options: [])
+
+     let commandBuffer = commandQueue.makeCommandBuffer()!
+     let encoder = commandBuffer.makeComputeCommandEncoder()!
+     encoder.setComputePipelineState(pipeline)
+     encoder.setTexture(textureY, index: 0)
+     encoder.setBuffer(outputBuffer, offset: 0, index: 0)
+     encoder.setBuffer(originBuffer, offset: 0, index: 1)
+     encoder.setBuffer(sizeBuffer, offset: 0, index: 2)
+
+     let threadGroupSize = MTLSizeMake(16, 16, 1)
+     let threadGroups = MTLSize(width: (regionWidth + 15) / 16,
+                                height: (regionHeight + 15) / 16,
+                                depth: 1)
+
+     encoder.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadGroupSize)
+     encoder.endEncoding()
+     commandBuffer.commit()
+     commandBuffer.waitUntilCompleted()
+
+     let rawPointer = outputBuffer.contents().bindMemory(to: UInt8.self, capacity: bufferSize)
+     return Array(UnsafeBufferPointer(start: rawPointer, count: bufferSize))
+ }
+ 
+ let origin = MTLOrigin(x: 0, y: 377, z: 0) // start row
+ let size = MTLSize(width: 1024, height: 1, depth: 1) // 1 row
+ let yValues = dumpYRegionFromTexture(device: device,
+                                      commandQueue: queue,
+                                      textureY: texture,
+                                      origin: origin,
+                                      size: size)
+ 
+ */

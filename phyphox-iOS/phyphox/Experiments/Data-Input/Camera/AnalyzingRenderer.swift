@@ -50,14 +50,18 @@ class AnalyzingRenderer {
         initializeMetal()
     }
     
-    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
+    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?, feature: CameraFeature){
         self.cameraBuffers = cameraBuffers
         
         AnalyzingModule.initialize(metalDevice: metalDevice)
         
         
         if(cameraBuffers?.luminanceBuffer != nil){
-            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            if(feature == CameraFeature.PHOTOMETRIC){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            } else if(feature == CameraFeature.SPECTROSCOPY){
+                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            }
         }
         
         if(cameraBuffers?.lumaBuffer != nil){

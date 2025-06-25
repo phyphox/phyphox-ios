@@ -178,6 +178,7 @@
 		86F38FD02BA4A66700C2D643 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 86F38FCF2BA4A66700C2D643 /* PrivacyInfo.xcprivacy */; };
 		A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */; };
 		A15891F22B10BFED00A169C3 /* AnalyzingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15891F12B10BFED00A169C3 /* AnalyzingRenderer.swift */; };
+		A15A010C2E0BC13500264D1A /* SpectroscopyAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15A010B2E0BC12300264D1A /* SpectroscopyAnalyzer.swift */; };
 		A16D80082CC671F300485DDB /* ExperimentSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16D80072CC671F300485DDB /* ExperimentSwitchView.swift */; };
 		A16D800A2CC672ED00485DDB /* SwitchViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16D80092CC672ED00485DDB /* SwitchViewDescriptor.swift */; };
 		A16D800C2CC7924B00485DDB /* SwitchViewElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16D800B2CC7924B00485DDB /* SwitchViewElementHandler.swift */; };
@@ -543,6 +544,7 @@
 		86F38FCF2BA4A66700C2D643 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A101AB0729BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedBluetoothDeviceViewController.swift; sourceTree = "<group>"; };
 		A15891F12B10BFED00A169C3 /* AnalyzingRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingRenderer.swift; sourceTree = "<group>"; };
+		A15A010B2E0BC12300264D1A /* SpectroscopyAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectroscopyAnalyzer.swift; sourceTree = "<group>"; };
 		A16D80072CC671F300485DDB /* ExperimentSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentSwitchView.swift; sourceTree = "<group>"; };
 		A16D80092CC672ED00485DDB /* SwitchViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchViewDescriptor.swift; sourceTree = "<group>"; };
 		A16D800B2CC7924B00485DDB /* SwitchViewElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchViewElementHandler.swift; sourceTree = "<group>"; };
@@ -1227,6 +1229,7 @@
 		86E752122CC2552600E9E9C8 /* Analysers */ = {
 			isa = PBXGroup;
 			children = (
+				A15A010B2E0BC12300264D1A /* SpectroscopyAnalyzer.swift */,
 				86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */,
 				86E7520E2CC2552600E9E9C8 /* AnalyzingModule.swift */,
 				86BEF3382D7F2BEF000283DF /* ExposureAnalyzer.swift */,
@@ -1793,6 +1796,7 @@
 				6B612FE9207E5ABC001DA8D9 /* LinkElementHandler.swift in Sources */,
 				A101AB0829BB801600B82311 /* ConnectedBluetoothDeviceViewController.swift in Sources */,
 				A16D800C2CC7924B00485DDB /* SwitchViewElementHandler.swift in Sources */,
+				A15A010C2E0BC13500264D1A /* SpectroscopyAnalyzer.swift in Sources */,
 				C05CD336258BA0DF00662BDF /* ExperimentTimeReference.swift in Sources */,
 				A171F0692CF5EE6000D5F9F2 /* SliderViewElementHandler.swift in Sources */,
 				6B7BF7F81C1374A6007408FB /* ExperimentAnalysisModule.swift in Sources */,

@@ -30,12 +30,12 @@ final class ExperimentCameraInput {
     let aeStrategy: AutoExposureStrategy
 
     let locked: [String:Float?]
-    let feature: String
+    let feature: CameraFeature
     
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: String) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,

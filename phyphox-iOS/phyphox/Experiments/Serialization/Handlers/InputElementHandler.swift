@@ -126,7 +126,7 @@ struct CameraInputDescriptor: SensorDescriptor {
     let autoExposure: Bool
     let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
     let locked: [String:Float?]
-    let feature: String
+    let feature: CameraFeature
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -194,14 +194,29 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
             }
         }
         
-        let feature: String = attributes.optionalString(for: .feature) ?? "photometric"
-        if feature != "photometric" {
-            throw ElementHandlerError.unexpectedAttributeValue("Unsupported camera feature \"\(feature)\"")
-        }
+        let featureString = attributes.optionalString(for: .feature) ?? "photometric"
+        
+        let feature_: CameraFeature = CameraFeature(rawValue: featureString) ?? CameraFeature.PHOTOMETRIC
         
         let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
                 
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature, outputs: outputHandler.results))
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature_, outputs: outputHandler.results))
+    }
+}
+
+enum CameraFeature: String {
+    case PHOTOMETRIC = "photometric"
+    case SPECTROSCOPY = "spectroscopy"
+    
+    public init?(rawValue: String) {
+        switch(rawValue){
+        case "photometric":
+            self = .PHOTOMETRIC
+        case "spectroscopy":
+            self = .SPECTROSCOPY
+        default:
+            self = .PHOTOMETRIC
+        }
     }
 }
 
