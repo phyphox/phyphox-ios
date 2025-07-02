@@ -38,6 +38,23 @@ private extension ExperimentDepthInput {
     }
 }
 
+private extension ExperimentCameraInput {
+    convenience init(descriptor: CameraInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
+        let tBuffer = descriptor.buffer(for: "t", from: buffers)
+        let luminanceBuffer = descriptor.buffer(for: "luminance", from: buffers)
+        let lumaBuffer = descriptor.buffer(for: "luma", from: buffers)
+        let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
+        let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
+        let valueBuffer = descriptor.buffer(for: "value", from: buffers)
+        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
+        let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
+        let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
+        let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
+
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, locked: descriptor.locked, feature: descriptor.feature)
+    }
+}
+
 private extension ExperimentGPSInput {
     convenience init(descriptor: LocationInputDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer]) {
         let latBuffer = descriptor.buffer(for: "lat", from: buffers)
@@ -91,7 +108,7 @@ private extension ExperimentBluetoothOutput {
             guard let inBuffer = buffers[input.bufferName] else {
                 throw ElementHandlerError.message("No such buffer: \(input.bufferName)")
             }
-            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, offset: input.offset, buffer: inBuffer))
+            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, offset: input.offset, buffer: inBuffer, keep: input.keep))
         }
         
         self.init(device: device, inputList: inputs, configList: descriptor.configs)
@@ -99,7 +116,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 17, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 19, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -207,6 +224,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("Depth is only allowed once.")
         }
         let depthInput = depthInputs?.first
+        
+        let cameraInputs = inputDescriptor?.camera.map {ExperimentCameraInput(descriptor: $0, timeReference: timeReference, buffers: buffers) }
+        if cameraInputs != nil && cameraInputs!.count > 1 {
+            throw ElementHandlerError.message("Camera is only allowed once.")
+        }
+        let cameraInput = cameraInputs?.first
+        
         let gpsInputs = inputDescriptor?.location.map { ExperimentGPSInput(descriptor: $0, timeReference: timeReference, buffers: buffers) } ?? []
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
@@ -281,6 +305,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         case "depthBackSensor": metadata = .Metadata(.depthBackSensor)
                         case "depthBackResolution": metadata = .Metadata(.depthBackResolution)
                         case "depthBackRate": metadata = .Metadata(.depthBackRate)
+                        case "camera2api": metadata = .Metadata(.camera2api)
+                        case "camera2apiFull": metadata = .Metadata(.camera2apiFull)
                         default:
                             func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
                                 if name.starts(with: sensor.description) {
@@ -343,7 +369,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) })  }
 
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        if !isLink {
+            guard viewDescriptors != nil else {
+                throw ElementHandlerError.missingElement("view")
+            }
+        }
+        
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -354,6 +386,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         switch descriptor {
         case .separator(let descriptor):
             return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
+        case .image(let descriptor):
+            return ImageViewDescriptor(src: descriptor.src, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
         case .info(let descriptor):
             return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
         case .value(let descriptor):
@@ -361,8 +395,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 throw ElementHandlerError.missingElement("data-container")
             }
 
-            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings)
-            
+            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat)
+                
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
@@ -397,8 +431,18 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
                 return (input, outputBuffer)
             }
-
-            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers)
+            
+            let buffer: DataBuffer?
+            if descriptor.dynamicLabel != "" {
+                buffer = buffers[descriptor.dynamicLabel]
+                if(buffer == nil){
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+            } else {
+                buffer = nil
+            }
+            
+            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers, mappings: descriptor.mappings, buffer: buffer)
 
         case .graph(let descriptor):
             let xBuffers = try descriptor.xInputBufferNames.map({ name -> DataBuffer? in
@@ -428,10 +472,77 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 return buffer
             })
 
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap)
+            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale)
         case .depthGUI(let descriptor):
             return DepthGUIViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, translation: translations)
+            
+        case .switchView(let descriptor):
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+            
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
+            }
+            
+            return SwitchViewDescriptor(label: descriptor.label, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
+            
+        case .dropdown(let descriptor):
+            guard let buffer = buffers[descriptor.outputBufferName] else {
+                throw ElementHandlerError.missingElement("data-container")
+            }
+            
+            if buffer.isEmpty {
+                buffer.append(descriptor.defaultValue)
+            }
+            
+            return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations)
+            
+        case .slider(let descriptor):
+            
+            var outputBuffers : [SliderOutputValueType : DataBuffer] = [:]
+            
+            if(SliderType.Range == descriptor.type){
+                
+                guard let lowerValue = buffers[descriptor.lowerBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                guard let upperValue = buffers[descriptor.upperBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                outputBuffers[.LowerValue] = lowerValue
+                outputBuffers[.UpperValue] = upperValue
+                
+            } else {
+                
+                guard let outputBufferName = descriptor.outputBufferName else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                guard let outputBuffer = buffers[outputBufferName] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                
+                if outputBuffer.isEmpty {
+                    outputBuffer.append(descriptor.defaultValue)
+                }
+                
+                outputBuffers[.Empty] = outputBuffer
+                
+            }
+            
+            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue)
+            
+            
+            
+        case .camera(let descriptor):
+            return CameraViewDescriptor(label: descriptor.label, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
+                                        grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, showControls: descriptor.showControls, translation: translations)
+            
         }
+        
     }
 
     private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {
@@ -477,7 +588,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     }
                 }
                 
-                let tone = ExperimentAudioOutputTone(frequency: frequency, amplitude: amplitude, duration: duration)
+                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration)
                 tones.append(tone)
             }
             

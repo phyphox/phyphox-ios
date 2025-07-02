@@ -8,7 +8,6 @@
 
 import Foundation
 import GCDWebServer
-import SwiftUI
 
 protocol ExportDelegate {
     func showExport(_ export: ExperimentExport, singleSet: Bool)
@@ -43,11 +42,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     private let viewModules: [[UIView]]
     
-    let flowLayout = UICollectionViewFlowLayout()
-    
     var numOfConnectedDevices = 0
     
-    var customCollectionView = ConnectedBluetoothDevicesViewController(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout(), data: [])
+    var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -127,7 +124,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
-                let m = ExperimentViewModuleFactory.createViews(collection)
+                let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
                 
                 modules.append(m)
                 
@@ -155,13 +152,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
         
-        
-        flowLayout.scrollDirection = .vertical
-        flowLayout.minimumLineSpacing = 10
-        flowLayout.minimumInteritemSpacing = 10
-
-        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
-        
         ExperimentBluetoothDevice.updateDelegate = self
         
         
@@ -177,8 +167,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         countdownFormatter.minimumFractionDigits = 1
         
         defer {
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: NSNotification.Name(rawValue: ResignActiveNotification), object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: NSNotification.Name(rawValue: DidBecomeActiveNotification), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onResignActiveNotification), name: .resignActiveNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(ExperimentPageViewController.onDidBecomeActiveNotification), name: .didBecomeActiveNotification, object: nil)
         }
     }
     
@@ -205,6 +195,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         if isMovingToParent {
             experiment.willBecomeActive {
                 DispatchQueue.main.async {
@@ -271,7 +262,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if (experiment.viewDescriptors!.count > 1) {
             offsetTop += tabBarHeight
         }
-        let offsetBottom: CGFloat = self.bottomLayoutGuide.length
+        var offsetBottom: CGFloat = self.bottomLayoutGuide.length
         let offsetFrame: CGRect
         if #available(iOS 11, *) {
             offsetFrame = self.view.safeAreaLayoutGuide.layoutFrame
@@ -281,34 +272,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         
-        var adjustableHeightS1 = 0.0
-        var adjustableHeightS2 = 0.0
-        if(  numOfConnectedDevices == 1){
-            adjustableHeightS1 = 30.0
-            adjustableHeightS2 = 20.0
-        } else if(numOfConnectedDevices > 1){
-            adjustableHeightS1 = 82.0
-            adjustableHeightS2 = 72.0
-        }
-        
         if let label = self.serverLabel, let labelBackground = self.serverLabelBackground {
             let s = label.sizeThatFits(CGSize(width: offsetFrame.width, height: 300))
-            pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-s.height-offsetBottom - adjustableHeightS1))
             
-            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS1  , width: pageViewControlerRect.width, height: s.height + offsetBottom - adjustableHeightS2)
-            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom - adjustableHeightS2  , width: offsetFrame.width, height: s.height  )
+            let labelBackgroundFrame = CGRect(x: 0, y: self.view.frame.height - s.height - offsetBottom, width: pageViewControlerRect.width, height: s.height + offsetBottom)
+            let labelFrame = CGRect(x: offsetFrame.minX, y: self.view.frame.height - s.height - offsetBottom, width: offsetFrame.width, height: s.height)
             label.frame = labelFrame
             labelBackground.frame = labelBackgroundFrame
             label.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
             labelBackground.autoresizingMask = [.flexibleTopMargin, .flexibleWidth]
+            
+            offsetBottom += s.height
         }
         
         if self.serverQRIcon != nil {
             NSLayoutConstraint.activate([
                 self.serverQRIcon!.trailingAnchor.constraint(equalTo: self.serverLabelBackground!.trailingAnchor, constant: -15.0),
-                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabelBackground!.bottomAnchor, constant: -20.0 )
+                self.serverQRIcon!.bottomAnchor.constraint(equalTo: self.serverLabel!.bottomAnchor, constant: -20.0 )
             ])
         }
+        
+        if let bluetoothStatusBar = bluetoothStatusBar {
+            let bluetoothStatusBarRect = bluetoothStatusBar.sizeThatFits(self.view.frame.size)
+            bluetoothStatusBar.frame = CGRect(x: 0, y: self.view.frame.height - bluetoothStatusBarRect.height - offsetBottom, width: self.view.frame.width, height: bluetoothStatusBarRect.height)
+            offsetBottom += bluetoothStatusBarRect.height
+        }
+        
+        pageViewControlerRect = CGRect(origin: pageViewControlerRect.origin, size: CGSize(width: pageViewControlerRect.width, height: pageViewControlerRect.height-offsetBottom))
         
         self.pageViewControler.view.frame = pageViewControlerRect
     }
@@ -373,8 +363,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .forward, animated: false, completion: nil)
         pageViewControler.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
-        
-        
         updateLayout()
         
         self.addChild(pageViewControler)
@@ -384,6 +372,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         updateSelectedViewCollection()
         
+        if(experiment.cameraInput != nil){
+            NotificationCenter.default.addObserver(self, selector: #selector(handleCameraError(notification:)), name: .cameraConfigurationFailed, object: nil)
+        }
         
     }
     
@@ -512,6 +503,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         session.attachDelegate(delegate: depthGUI)
                         depthGUI.depthGUISelectionDelegate = session
                     }
+                    
+                    if let cameraGUI = view as? ExperimentCameraUIView {
+                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
+                            continue
+                        }
+                        cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
+                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
+    
+                    }
+                
                 }
             }
         }
@@ -535,10 +536,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
                 session.stopSession()
             }
+            
+            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
+                camSession.endSession()
+            }
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-        
+
         if isMovingFromParent {
             tearDownWebServer()
             
@@ -619,7 +624,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //This does not work when using the mobile hotspot, so if we did not get a valid address, we will have to determine it ourselves...
             if url == "" {
                 print("Fallback to generate URL from IP.")
-                var ip: String? = nil
+                var ip: [String] = []
                 var interfaceAdresses: UnsafeMutablePointer<ifaddrs>? = nil
                 if getifaddrs(&interfaceAdresses) == 0 {
                     var iPtr = interfaceAdresses
@@ -629,21 +634,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         let interface = iPtr?.pointee
                         if interface?.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
                             if let name = String(validatingUTF8: (interface?.ifa_name)!) {
-                                if name == "bridge100" { //This is the "hotspot interface"
+                                if ["en0", "bridge100"].contains(name) {
                                     var addr = interface?.ifa_addr.pointee
                                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
                                     getnameinfo(&addr!, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
-                                    ip = String(cString: hostname)
+                                    ip.append(String(cString: hostname))
                                 }
                             }
                         }
                     }
                 }
-                if ip != nil {
-                    if webServer.port != 80 {
-                        url = "http://\(ip!):\(webServer.port)"
-                    } else {
-                        url = "http://\(ip!)"
+                if ip.count > 0 {
+                    for addr in ip {
+                        if url != "" {
+                            url += "\n"
+                        }
+                        if webServer.port != 80 {
+                            url += "http://\(addr):\(webServer.port)"
+                        } else {
+                            url += "http://\(addr)"
+                        }
                     }
                 } else {
                     url = "Error: No active network."
@@ -688,7 +698,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             self.view.addSubview(self.serverQRIcon!)
-            
+                        
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             
@@ -698,42 +708,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     
-    @objc func showQr(){
-        let data = remoteUrl.data(using: .utf8)
-        let qrFilter = CIFilter(name: "CIQRCodeGenerator")
-        
-        qrFilter?.setValue(data, forKey: "inputMessage")
-        qrFilter?.setValue("Q", forKey: "inputCorrectionLevel")
-        
-        let qrImage = qrFilter?.outputImage
-        
-        let displayImage = UIImage(ciImage: qrImage!).resize(size: CGSize(width: 150, height: 150))
-        
-        let imageView = UIImageView(image: displayImage)
-        
-        showQrInDialog(imageView: imageView)
-        
-        
-    }
-    
-    @objc func showQrInDialog(imageView: UIImageView) {
-        imageView.contentMode = .scaleAspectFit
-        
-        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
-        alertController.view.addSubview(imageView)
-        
-        // Set the image view's constraints
-        alertController.view.heightAnchor.constraint(equalToConstant: 300).isActive = true
-        alertController.view.widthAnchor.constraint(equalToConstant: 300).isActive = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
-        imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
-       
-        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
-        alertController.addAction(closeButton)
-        
-        present(alertController, animated: true, completion: nil)
-    }
     
     private func tearDownWebServer() {
         webServer.stop()
@@ -1150,70 +1124,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    @objc func stopTimerFired() {
-        if timerBeep.stop {
-            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
-        }
-        stopExperiment()
-    }
-    
-    @objc func startTimerFired() {
-        if timerBeep.start {
-            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
-        }
-        actuallyStartExperiment()
-        
-        experimentStartTimer?.invalidate()
-        experimentStartTimer = nil
-        
-        let d = timerDuration
-        var nextBeep = floor(d-0.6)
-        
-        var items = navigationItem.rightBarButtonItems
-        
-        guard let label = items?.last?.customView as? UILabel else { return }
-        
-        label.text = countdownFormatter.string(from: d as NSNumber)
-        label.sizeToFit()
-        
-        items?.removeLast()
-        items?.append(UIBarButtonItem(customView: label))
-        
-        navigationItem.rightBarButtonItems = items
-        
-        func updateT() {
-            guard let experimentRunTimer = experimentRunTimer else { return }
-            
-            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
-            if dt <= nextBeep && nextBeep > 0 {
-                nextBeep -= 1
-                if timerBeep.running {
-                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
-                }
-            }
-            
-            after(0.02) {
-                updateT()
-            }
-            
-            label.text = countdownFormatter.string(from: dt as NSNumber)
-            label.sizeToFit()
-            
-            var items = navigationItem.rightBarButtonItems
-            
-            items?.removeLast()
-            items?.append(UIBarButtonItem(customView: label))
-            
-            navigationItem.rightBarButtonItems = items
-        }
-        
-        after(0.02) {
-            updateT()
-        }
-        
-        experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
-    }
-    
     func startExperiment() {
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
@@ -1273,16 +1183,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     
                     label.text = countdownFormatter.string(from: dt as NSNumber)
                     label.sizeToFit()
-                    
-                    var items = navigationItem.rightBarButtonItems
-                    
-                    items?.removeLast()
-                    items?.append(UIBarButtonItem(customView: label))
-                    
-                    navigationItem.rightBarButtonItems = items
                 }
                 
-                after(0.2) {
+                after(0.02) {
                     updateT()
                 }
                 
@@ -1375,6 +1278,34 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    @objc func handleCameraError(notification: Notification) {
+        DispatchQueue.main.async {
+            
+            guard self.presentedViewController == nil else {
+                        // Optionally, dismiss the current one before showing alert
+                        self.presentedViewController?.dismiss(animated: false) {
+                            self.handleCameraError(notification: notification)
+                        }
+                        return
+                    }
+            
+            let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
+                                          message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
+                                          preferredStyle: .alert)
+            
+            let okAction = UIAlertAction(title: localize("ok"), style: .default) { [weak self] _ in
+                if let nav = self?.navigationController {
+                    nav.popViewController(animated: true)
+                } else {
+                    self?.dismiss(animated: true, completion: nil)
+                }
+            }
+            
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
     @objc func clearDataDialog() {
         hintBubble?.dismiss(animated: true, completion: nil)
         
@@ -1388,7 +1319,105 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController!.present(al, animated: true, completion: nil)
     }
     
+    @objc func showQr(){
+        let data = remoteUrl.data(using: .utf8)
+        let qrFilter = CIFilter(name: "CIQRCodeGenerator")
+        
+        qrFilter?.setValue(data, forKey: "inputMessage")
+        qrFilter?.setValue("Q", forKey: "inputCorrectionLevel")
+        
+        let qrImage = qrFilter?.outputImage
+        
+        let displayImage = UIImage(ciImage: qrImage!).resize(size: CGSize(width: 150, height: 150))
+        
+        let imageView = UIImageView(image: displayImage)
+        
+        showQrInDialog(imageView: imageView)
+        
+        
+    }
+    
+    @objc func showQrInDialog(imageView: UIImageView) {
+        imageView.contentMode = .scaleAspectFit
+        
+        let alertController = UIAlertController(title: localize("showQRCodeForRemoteURL"), message: nil, preferredStyle: .alert)
+        alertController.view.addSubview(imageView)
+        
+        // Set the image view's constraints
+        alertController.view.heightAnchor.constraint(equalToConstant: 350).isActive = true
+        alertController.view.widthAnchor.constraint(equalToConstant: 350).isActive = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
+        imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
+       
+        let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
+        alertController.addAction(closeButton)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    @objc func stopTimerFired() {
+        if timerBeep.stop {
+            experiment.audioEngine?.beep(frequency: 800, duration: 0.5)
+        }
+        stopExperiment()
+    }
+    
+    @objc func startTimerFired() {
+        if timerBeep.start {
+            experiment.audioEngine?.beep(frequency: 1000, duration: 0.5)
+        }
+        actuallyStartExperiment()
+        
+        experimentStartTimer?.invalidate()
+        experimentStartTimer = nil
+        
+        let d = timerDuration
+        var nextBeep = floor(d-0.6)
+        
+        var items = navigationItem.rightBarButtonItems
+        
+        guard let label = items?.last?.customView as? UILabel else { return }
+        
+        label.text = countdownFormatter.string(from: d as NSNumber)
+        label.sizeToFit()
+        
+        items?.removeLast()
+        items?.append(UIBarButtonItem(customView: label))
+        
+        navigationItem.rightBarButtonItems = items
+        
+        func updateT() {
+            guard let experimentRunTimer = experimentRunTimer else { return }
+            
+            let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
+            if dt <= nextBeep && nextBeep > 0 {
+                nextBeep -= 1
+                if timerBeep.running {
+                    experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
+                }
+            }
+            
+            after(0.02) {
+                updateT()
+            }
+            
+            label.text = countdownFormatter.string(from: dt as NSNumber)
+            label.sizeToFit()
+        }
+        
+        after(0.02) {
+            updateT()
+        }
+        
+        experimentRunTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(stopTimerFired), userInfo: nil, repeats: false)
+    }
+    
+    
     func clearData() {
+        self.experiment.timeReference.registerEvent(event: .CLEAR)
+        self.experiment.bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: self.experiment.timeReference.timeMappings.last) }
+        
         self.stopExperiment()
         self.experiment.clear(byUser: true)
         
@@ -1495,23 +1524,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel]) {
-        
-        flowLayout.itemSize = CGSize(width: self.view.frame.width, height: 40)
-        customCollectionView.removeFromSuperview()
-        
-        numOfConnectedDevices = connectedDevice.count
-        var adjustedHeight = 48.0
-        if( numOfConnectedDevices == 0){
-            return
-        } else if(numOfConnectedDevices > 1){
-            adjustedHeight = 100.0
+    func showUpdatedConnectedDevices(connectedDevices: [ConnectedDevicesDataModel]) {
+        if let bluetoothStatusBar = bluetoothStatusBar {
+            if (bluetoothStatusBar.updateData(connectedDevices)) {
+                self.updateLayout()
+            }
+        } else {
+            let statusBar = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: 0), data: connectedDevices)
+            self.view.addSubview(statusBar)
+            bluetoothStatusBar = statusBar
+            self.updateLayout()
         }
-     
-        customCollectionView = ConnectedBluetoothDevicesViewController(frame: CGRect(x: 0, y: self.view.frame.height - adjustedHeight, width: self.view.frame.width, height: adjustedHeight ), collectionViewLayout: flowLayout, data: connectedDevice)
-        view.addSubview(customCollectionView)
-        
     }
+    
 }
 
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {

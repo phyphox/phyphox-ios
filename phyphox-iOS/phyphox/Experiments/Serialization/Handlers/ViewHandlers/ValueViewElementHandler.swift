@@ -47,6 +47,10 @@ struct ValueViewElementDescriptor {
 
     let inputBufferName: String
     let mappings: [ValueViewMap]
+    
+    let positiveUnit: String?
+    let negativeUnit: String?
+    let valueFormat: String?
 }
 
 final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -71,6 +75,9 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         case scientific
         case unit
         case factor
+        case positiveUnit
+        case negativeUnit
+        case format
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -80,15 +87,19 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let color = mapColorString(attributes.optionalString(for: .color)) ?? kFullWhiteColor
 
         let mappings = mapHandler.results
-        let inpurBufferName = try inputHandler.expectSingleResult()
+        let inputBufferName = try inputHandler.expectSingleResult()
 
         let size = try attributes.optionalValue(for: .size) ?? 1.0
         let precision = try attributes.optionalValue(for: .precision) ?? 2
         let scientific = try attributes.optionalValue(for: .scientific) ?? false
         let unit = attributes.optionalString(for: .unit) ?? ""
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
+        
+        let positiveUnit = attributes.optionalString(for: .positiveUnit)
+        let negativeUnit = attributes.optionalString(for: .negativeUnit)
+        let valueFormat = attributes.optionalString(for: .format)
 
-        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inpurBufferName, mappings: mappings)))
+        results.append(.value(ValueViewElementDescriptor(label: label, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings, positiveUnit: positiveUnit, negativeUnit: negativeUnit, valueFormat: valueFormat)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

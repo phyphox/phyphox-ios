@@ -176,8 +176,8 @@ final class ExperimentAnalysis {
         let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
         
         if (c >= 0) {
-            for (i, analysis) in modulesInCycle.enumerated() {
-                queue?.async(execute: {
+            queue?.async(execute: {
+                for (i, analysis) in modulesInCycle.enumerated() {
                     analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
                     if i == c {
                         for audioInput in self.audioInputs {
@@ -190,8 +190,8 @@ final class ExperimentAnalysis {
                             completion(true)
                         }
                     }
-                })
-            }
+                }
+            })
         } else {
             mainThread {
                 self.cycle += 1

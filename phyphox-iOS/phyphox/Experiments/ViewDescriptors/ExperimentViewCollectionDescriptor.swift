@@ -63,6 +63,26 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? ImageViewDescriptor {
+                guard let rr = r as? ImageViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
+            else if let ll = l as? SwitchViewDescriptor {
+                guard let rr = r as? SwitchViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
+            else if let ll = l as? DropdownViewDescriptor {
+                guard let rr = r as? DropdownViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
+            else if let ll = l as? SliderViewDescriptor {
+                guard let rr = r as? SliderViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
                 return false
             }

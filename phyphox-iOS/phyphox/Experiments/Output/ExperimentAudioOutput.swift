@@ -32,7 +32,14 @@ enum AudioParameter: Equatable {
     }
 }
 
+enum AudioWaveform: String, LosslessStringConvertible {
+    case sine
+    case square
+    case sawtooth
+}
+
 struct ExperimentAudioOutputTone: Equatable {
+    let waveform: AudioWaveform
     let frequency: AudioParameter
     let amplitude: AudioParameter
     let duration: AudioParameter

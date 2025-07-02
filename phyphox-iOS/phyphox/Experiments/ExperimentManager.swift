@@ -23,8 +23,6 @@ let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDo
 let savedExperimentStatesURL = documentsURL.appendingPathComponent("Saved-States")
 let customExperimentsURL = documentsURL.appendingPathComponent("Experiments")
 
-let ExperimentsReloadedNotification = "ExperimentsReloadedNotification"
-
 enum FileError: Error {
     case genericError
 }
@@ -36,14 +34,35 @@ final class ExperimentManager {
 
     func deleteExperiment(_ experiment: Experiment) throws {
         guard let source = experiment.source else { return }
+        print("Deleting " + source.absoluteString + "...")
         try FileManager.default.removeItem(at: source)
+        do {
+            if let resFolder = experiment.resourceFolder {
+                print("Deleting " + resFolder.absoluteString + "...")
+                try FileManager.default.removeItem(at: resFolder)
+            }
+            print("Done.")
+        } catch {
+            print("Failed.")
+            // Most experiments do not have a ressource folder, so that's fine.
+        }
         reloadUserExperiments()
     }
     
     func renameExperiment(_ experiment: Experiment, newTitle: String) throws {
         guard let source = experiment.source else { return }
+        print("Renaming experiment in \(source)")
+        let oldResFolder = experiment.resourceFolder
         try LegacyStateSerializer.renameStateFile(customTitle: newTitle, file: source)
+        if let oldResFolder = oldResFolder, let inputStream = InputStream(url: source) {
+            let newCRC32 = CRC32InputStream(inputStream).crcValue
+            let newResFolder = customExperimentsURL.appendingPathComponent(String(newCRC32, radix: 16))
+
+            print("Also renaming resource folder from \(oldResFolder.lastPathComponent) to \(newResFolder.lastPathComponent)")
+            try FileManager.default.moveItem(at: oldResFolder, to: newResFolder)
+        }
         reloadUserExperiments()
+        
     }
 
     let filteredServices: [String] = [CBUUID(string: "0x1812").uuid128String]
@@ -184,7 +203,7 @@ final class ExperimentManager {
             }
             DispatchQueue.main.async {
                 loadHud.dismiss()
-                NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+                NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
             }
             #if DEBUG
             let time = CFAbsoluteTimeGetCurrent() - timestamp
@@ -214,7 +233,7 @@ final class ExperimentManager {
             }
         }
 
-        NotificationCenter.default.post(name: Notification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
         
         #if DEBUG
         let time = CFAbsoluteTimeGetCurrent() - timestamp
@@ -280,6 +299,7 @@ final class ExperimentManager {
         for collection in experimentCollections {
             collection.experiments.removeAll(where: {$0.custom})
         }
+        experimentCollections.removeAll(where: {$0.experiments.count == 0})
         loadCustomExperiments()
         loadSavedExperiments()
         

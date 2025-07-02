@@ -18,6 +18,7 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>de.rwth-aachen.physics.phyphox.UTIHandler.phyphox</string>
+				<string>com.pkware.zip-archive</string>
 			</array>
 		</dict>
 	</array>
@@ -35,6 +36,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleSpokenName</key>
+	<string></string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -49,7 +52,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>11182</string>
+	<string>17271</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -64,11 +67,13 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>phyphox has the ability to read from external Bluetooth sensors and write data to external Bluetooth devices. You can learn more about this feature and supported devices on http://phyphox.org/ble.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>phyphox uses the camera to scan QR codes, which can be used to add custom experiment configurations.</string>
+	<string>phyphox uses the camera to scan QR codes, which can be used to add custom experiment configurations. It also uses camera for image analysis.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>phyphox records location data from GPS like from other sensors and analyzes it according to the selected experiment. The data will only be exported from the app if the user elects to do so using the export function.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>phyphox records audio from the microphone like from other sensors and analyzes it according to the selected experiment. The data will only be exported from the app if the user elects to do so using the export function.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>phyphox reads your phone's sensors to allow using them in physics experiments.</string>
 	<key>UIBackgroundModes</key>
 	<array/>
 	<key>UILaunchStoryboardName</key>
@@ -113,6 +118,10 @@
 				<string>phyphox</string>
 			</dict>
 		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict/>
 	</array>
 </dict>
 </plist>

@@ -1,6 +1,6 @@
 #import "UIColor+Expanded.h"
 
-CGColorSpaceRef DeviceRGBSpace() {
+CGColorSpaceRef DeviceRGBSpace(void) {
     static CGColorSpaceRef rgbSpace = NULL;
     if (rgbSpace == NULL)
         rgbSpace = CGColorSpaceCreateDeviceRGB();

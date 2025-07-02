@@ -52,21 +52,21 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
         var threshold = 0.0
         
         if let v = thresholdIn?.getSingleValue() {
-            threshold = v
+            threshold = v.isNaN ? 0.0 : v
         }
         
-        var x: Double?
+        var x: Double = -1.0
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
         
         for (i, value) in yIn.data.enumerated() {
+            if let xIn = xIn, i < xIn.data.count {
+                x = xIn.data[i]
+            }
+            else {
+                x += 1.0
+            }
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
-                    if let xIn = xIn, i < xIn.data.count {
-                        x = xIn.data[i]
-                    }
-                    else {
-                        x = Double(i)
-                    }
                     break
                 }
             } else {
@@ -74,23 +74,10 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
         
-        guard let xValue = x else {
-            for output in outputs {
-                switch output {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: let append):
-                    if !append {
-                        buffer.clear(reset: false)
-                    }
-                }
-            }
-            
-            return
-        }
-        
         for output in outputs {
             switch output {
             case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                buffer.append(xValue)
+                buffer.append(x)
             }
         }
     }

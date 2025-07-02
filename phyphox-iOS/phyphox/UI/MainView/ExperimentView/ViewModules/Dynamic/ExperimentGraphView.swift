@@ -75,6 +75,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private let zGridView: GraphGridView?
     let hasZData: Bool
     let zScaleHeight: CGFloat = 40
+    var showColorScale = true
     
     private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
     
@@ -202,7 +203,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     
-    required init?(descriptor: GraphViewDescriptor) {
+    required init?(descriptor: GraphViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
         logX = descriptor.logX
@@ -226,6 +227,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.colorMap = descriptor.colorMap
         
         hasZData = glGraph.style[0] == .map
+        
+        showColorScale = descriptor.showColorScale && hasZData
         
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -335,11 +338,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         graphArea.addSubview(gridView)
         graphArea.addSubview(xLabel)
         graphArea.addSubview(yLabel)
-        if let glZScale = glZScale, let zGridView = zGridView, let zLabel = zLabel {
-            graphArea.addSubview(glZScale)
-            graphArea.addSubview(zGridView)
-            graphArea.addSubview(zLabel)
+        
+        if(showColorScale){
+            if let glZScale = glZScale, let zGridView = zGridView, let zLabel = zLabel {
+                graphArea.addSubview(glZScale)
+                graphArea.addSubview(zGridView)
+                graphArea.addSubview(zLabel)
+            }
         }
+        
         graphArea.addSubview(markerOverlayView)
         
         addSubview(graphArea)
@@ -362,7 +369,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: NSNotification.Name(rawValue: ExperimentsReloadedNotification), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
     }
     
     @objc func reload(){
@@ -901,7 +908,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         var points3D: [[GraphPoint3D<GLfloat>]] = []
 
         for i in 0..<descriptor.yInputBuffers.count {
-            yValues.append(descriptor.yInputBuffers[i].toArray())
+            yValues.insert(descriptor.yInputBuffers[i].toArray(), at: i)
 
             count.append(yValues[i].count)
 
@@ -1253,7 +1260,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 markerLabel?.textColor = UIColor(named: "textColor")
                 markerLabel?.numberOfLines = 0
                 markerLabelFrame = UIView()
-                markerLabelFrame?.backgroundColor = UIColor(named: "secondaryBackground")
+                markerLabelFrame?.backgroundColor = UIColor(named: "lightBackgroundColor")
                 markerLabelFrame?.layer.cornerRadius = 5.0
                 markerLabelFrame?.layer.masksToBounds = true
                 markerLabelFrame?.addSubview(markerLabel!)
@@ -1844,17 +1851,23 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         let s2 = xLabel.sizeThatFits(frame.size)
         let s3 = yLabel.sizeThatFits(frame.size).applying(yLabel.transform)
         
-        xLabel.frame = CGRect(x: (frame.size.width+s3.width-s2.width)/2.0, y: frame.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height)
+        xLabel.frame = CGRect(x: (frame.size.width+s3.width-s2.width)/2.0, y: frame.size.height-s2.height-spacing-bottom, width: s2.width, height: s2.height )
         
         bottom += s2.height+spacing
         
         let s4 = zLabel?.sizeThatFits(frame.size) ?? .zero
         zLabel?.frame = CGRect(x: (frame.size.width+s3.width-s4.width)/2.0, y: s1.height + spacing + zScaleHeight, width: s4.width, height: s4.height)
         
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing+(hasZData ? zScaleHeight + s4.height + spacing : 0), width: frame.size.width - s3.width - spacing - 2*sideMargins, height: frame.size.height - s1.height - spacing - bottom - (hasZData ? zScaleHeight + spacing + s4.height : 0))
-        zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: frame.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
+        let yCoOrd = s1.height+spacing+(showColorScale ? zScaleHeight + s4.height + spacing : 0)
+        let graphHeight = frame.size.height - s1.height - spacing - bottom - (showColorScale ? zScaleHeight + spacing + s4.height : 0)
         
-        yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0, width: s3.width, height: s3.height - bottom)
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: yCoOrd, width: frame.size.width - s3.width - spacing - 2*sideMargins, height:  graphHeight)
+        
+        if(showColorScale){
+            zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: frame.size.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
+        }
+        
+        yLabel.frame = CGRect(x: sideMargins, y: graphFrame.origin.y+(graphFrame.size.height-s3.height)/2.0 , width: s3.width, height: s3.height - bottom)
         
         updatePlotArea()
     }

@@ -187,22 +187,40 @@ final class GraphGridView: UIView {
         let formatterX = NumberFormatter()
         let descPrecisionX = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? -1)
         if descPrecisionX >= 0 {
-            formatterX.usesSignificantDigits = true
-            formatterX.minimumSignificantDigits = descPrecisionX
+            if (descriptor?.suppressScientificNotation ?? false) {
+                formatterX.usesSignificantDigits = false
+                formatterX.minimumFractionDigits = descPrecisionX
+                formatterX.numberStyle = .decimal
+            } else {
+                formatterX.usesSignificantDigits = true
+                formatterX.minimumSignificantDigits = descPrecisionX
+            }
         }
         
         let formatterY = NumberFormatter()
         let descPrecisionY = Int(descriptor?.yPrecision ?? -1)
         if descPrecisionY >= 0 {
-            formatterY.usesSignificantDigits = true
-            formatterY.minimumSignificantDigits = descPrecisionY
+            if (descriptor?.suppressScientificNotation ?? false) {
+                formatterY.usesSignificantDigits = false
+                formatterY.minimumFractionDigits = descPrecisionY
+                formatterY.numberStyle = .decimal
+            } else {
+                formatterY.usesSignificantDigits = true
+                formatterY.minimumSignificantDigits = descPrecisionY
+            }
         }
         
         let expFormatter = NumberFormatter()
-        expFormatter.numberStyle = .scientific
-        expFormatter.usesSignificantDigits = true
-        expFormatter.minimumSignificantDigits = 2
-        expFormatter.maximumSignificantDigits = 3
+        if (descriptor?.suppressScientificNotation ?? false) {
+            expFormatter.numberStyle = .decimal
+            expFormatter.usesSignificantDigits = false
+            expFormatter.minimumSignificantDigits = 2
+        } else {
+            expFormatter.numberStyle = .scientific
+            expFormatter.usesSignificantDigits = true
+            expFormatter.minimumSignificantDigits = 2
+            expFormatter.maximumSignificantDigits = 3
+        }
         
         func format(_ n: Double, formatter: NumberFormatter, isTime: Bool, systemTimeOffset: Double) -> String {
             if isTime && systemTimeOffset > 0 {
@@ -218,6 +236,8 @@ final class GraphGridView: UIView {
                     dateFormatter.timeStyle = .medium
                 }
                 return dateFormatter.string(from: t)
+            } else if (descriptor?.suppressScientificNotation ?? false) {
+                return formatter.string(from: NSNumber(value: n as Double))!
             } else {
                 let expThreshold = formatter.usesSignificantDigits ? max(formatter.minimumSignificantDigits, 3) : 4
                 if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
@@ -246,6 +266,7 @@ final class GraphGridView: UIView {
                 label.textColor = UIColor(named: "textColor")
 
                 if descPrecisionX < 0 {
+                    formatterX.usesSignificantDigits = false
                     formatterX.minimumFractionDigits = max(line.precision, 0)
                     formatterX.maximumFractionDigits = max(line.precision, 0)
                 }

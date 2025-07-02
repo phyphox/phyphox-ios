@@ -95,7 +95,7 @@ final class WebServerUtilities {
                     let escapedHTML = element.generateViewHTMLWithID(idx).replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
                     
                     viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
-
+                    
                     if let graph = element as? GraphViewDescriptor {
                         var dataInput = ""
                         let updateMode: String
@@ -125,12 +125,33 @@ final class WebServerUtilities {
                         viewLayout += ", \"updateMode\": \"none\""
                     }
                     else if let value = element as? ValueViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
+                        viewLayout += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
                     }
                     else if let edit = element as? EditViewDescriptor {
                         viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
                     }
-                    else if element is ButtonViewDescriptor {
+                    else if let button = element as? ButtonViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
+                    }
+                    else if let toggle = element as? SwitchViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
+                    }
+                    else if let dropdown = element as? DropdownViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
+                    } else if let slider = element as? SliderViewDescriptor {
+                        
+                        var bufferName = ""
+                        
+                        if(slider.type == SliderType.Normal){
+                            bufferName = "\"" + (slider.outputBuffers[.Empty]?.name ?? "") + "\""
+                        } else {
+                            bufferName = "\"" + (slider.outputBuffers[.LowerValue]?.name ?? " ").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\","
+                            bufferName += "\"" + (slider.outputBuffers[.UpperValue]?.name ?? " ").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+                        }
+                        
+                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\(bufferName)], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
+                    }
+                    else if element is ImageViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""
                     }
                     

@@ -213,11 +213,7 @@ extension UIAlertController {
         
         let vc = JGAlertAccessoryViewController(view: accessoryView)
         
-        do {
-            try self.setValue(vc, forKey: key)
-        } catch let exception {
-            print("Failed setting content view controller: \(exception)")
-        }
+        self.setValue(vc, forKey: key)
     }
 
 }

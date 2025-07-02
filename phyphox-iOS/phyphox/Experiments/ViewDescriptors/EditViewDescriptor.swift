@@ -75,6 +75,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
             "if (!data.hasOwnProperty(\"\(bufferName)\"))" +
             "    return;" +
             "var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
+            "console.log(\"editElement buffer value is \" +x);" +
             "if (valueElement !== document.activeElement)" +
             "   valueElement.value = (x*\(factor))" +
         "}"

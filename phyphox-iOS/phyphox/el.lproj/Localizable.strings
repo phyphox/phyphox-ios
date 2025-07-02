@@ -220,7 +220,7 @@
 "beeperStop" = "Ήχος λήξης";
 "activate_all" = "Ενεργοποίηση όλων";
 "deactivate_all" = "Απενεργοποίηση όλων";
-"common_unit_short_arbitrary_unit" = "α.μ";
+"common_unit_short_arbitrary_unit" = "αυθ.μονάδα";
 "common_quantity_short_acceleration" = "α";
 "common_direction_short_north" = "Β";
 "common_direction_short_south" = "Ν";
@@ -336,7 +336,14 @@
 "sensorGravity" = "Βαρύτητα";
 "settings" = "Ρυθμίσεις";
 "cameraFrontFacing" = "Μπροστινή κάμερα";
-"cameraBackFacing" = "Οπίσθια κάμερα";
+"cameraBackFacing" = "Πίσω κάμερα";
 "url_invalid" = "Άκυρο URL";
 "url_invalid_msg" = "Αυτό το πείραμα είναι απλά ένας σύνδεσμος, αλλά δεν βρέθηκε έγκυρο URL.";
 "showQRCodeForRemoteURL" = "Κωδικός QR για την πρόσβαση σε URL";
+"cameraZoom" = "Μεγέθυνση";
+"wb_auto" = "Αυτόματα";
+"wb_incandescent" = "Πυρακτώσεως";
+"wb_fluorescent" = "Φθορισμού";
+"wb_daylight" = "Ημερήσιο Φως";
+"wb_cloudy" = "Συννεφιά";
+"common_quantity_short_luma" = "Y'";

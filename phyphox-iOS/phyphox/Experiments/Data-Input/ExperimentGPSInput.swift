@@ -9,6 +9,13 @@
 import Foundation
 import CoreLocation
 
+enum ValueFormat {
+    case FLOAT
+    case DEGREE_MINUTES
+    case DEGREE_MINUTES_SECONDS
+    case ASCII_
+}
+
 final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     var locationManager = CLLocationManager()
     private(set) var latBuffer: DataBuffer?

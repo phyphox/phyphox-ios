@@ -20,11 +20,13 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
         let conversion: OutputConversion?
         let offset: UInt16
         let buffer: DataBuffer
+        let keep: Bool
         
         static func ==(lhs: BluetoothInput, rhs: BluetoothInput) -> Bool {
             return lhs.char == rhs.char &&
                 lhs.buffer == rhs.buffer &&
-                lhs.offset == rhs.offset
+                lhs.offset == rhs.offset &&
+                lhs.keep == rhs.keep
         }
     }
     
@@ -69,10 +71,15 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
                     if !out.keys.contains(input.char) {
                         out[input.char] = Data()
                     }
-                    
-                    let start = min(Int(input.offset), out[input.char]!.count)
-                    let end = min(Int(input.offset)+dataConverted.count, out[input.char]!.count)
+                    let start = Int(input.offset)
+                    let end = start+dataConverted.count
+                    if end > out[input.char]!.count {
+                        out[input.char] = out[input.char]! + Data(repeating: 0, count: end - out[input.char]!.count)
+                    }
                     out[input.char]!.replaceSubrange(start..<end, with: dataConverted)
+                    if !input.keep {
+                        input.buffer.clear(reset: false)
+                    }
                 }
             }
             for uuid in out.keys {

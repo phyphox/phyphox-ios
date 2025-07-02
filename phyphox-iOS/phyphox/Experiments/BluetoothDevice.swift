@@ -78,7 +78,7 @@ protocol BluetoothDeviceDelegate {
 }
 
 protocol UpdateConnectedDeviceDelegate {
-    func showUpdatedConnectedDevices(connectedDevice: [ConnectedDevicesDataModel])
+    func showUpdatedConnectedDevices(connectedDevices: [ConnectedDevicesDataModel])
 }
 
 enum BluetoothDeviceError: Error {
@@ -111,6 +111,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var connectedDeviceName: String = ""
     var signalLevel = 100
     var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
+    
+    var pendingWrites = 0
     
     init(delegate: UpdateConnectedDeviceDelegate) {
         ExperimentBluetoothDevice.updateDelegate = delegate
@@ -315,6 +317,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     override func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected: \(peripheral.name ?? "No Name")")
+        pendingWrites = 0
         peripheral.readRSSI()
         peripheral.discoverServices(nil)
         after(10) {
@@ -327,7 +330,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral,didReadRSSI RSSI: NSNumber, error: Error?){
-        signalLevel = Int(RSSI)
+        signalLevel = Int(truncating: RSSI)
         connectedDeviceName = peripheral.name ?? ""
         let  connectedDevice = ConnectedDevicesDataModel(deviceIdentifier: peripheral.identifier,
                                                          signalStrength: signalLevel,
@@ -352,7 +355,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         ExperimentBluetoothDevice
             .updateDelegate?
-            .showUpdatedConnectedDevices(connectedDevice: connectedDevices)
+            .showUpdatedConnectedDevices(connectedDevices: connectedDevices)
         
     }
     
@@ -394,10 +397,17 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     public func writeCharacteristic(uuid: CBUUID, data: Data) throws {
         if let char = characteristics_map[uuid.uuid128String] {
-            peripheral?.writeValue(data, for: char, type: char.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
+            if pendingWrites < 10 {
+                pendingWrites += 1
+                peripheral?.writeValue(data, for: char, type: char.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
+            }
         } else {
             throw BluetoothDeviceError.generic(localize("bt_error_writing") + " \(uuid)")
         }
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: (any Error)?) {
+        pendingWrites -= 1
     }
     
     override func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
@@ -519,6 +529,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
                     out.append(0x00)
                 case .START:
                     out.append(0x01)
+                case .CLEAR:
+                    out.append(0x02)
                 }
                 experimentTime = Int64(timeMapping.experimentTime * 1000)
                 systemTime = Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000)

@@ -40,6 +40,10 @@ extension DynamicViewModule where Self: DisplayLinkListener {
     }
 }
 
+protocol ResizingViewModule {
+    var onResize: (() -> Void)? { get set }
+}
+
 enum ResizableViewModuleState {
     case normal
     case exclusive
@@ -85,7 +89,7 @@ protocol DescriptorBoundViewModule {
 
     var descriptor: Descriptor { get }
 
-    init?(descriptor: Descriptor)
+    init?(descriptor: Descriptor, resourceFolder: URL?)
 }
 
 protocol DisplayLinkListener: AnyObject {

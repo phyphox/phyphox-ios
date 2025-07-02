@@ -149,7 +149,17 @@ class ExperimentCell: UICollectionViewCell {
                         catch {}
                     }
                     
-                    if let depthInput = experiment.depthInput {
+                    if experiment.cameraInput != nil {
+                        do {
+                            try ExperimentCameraInput.verifySensorAvaibility()
+                        }
+                        catch CameraInputError.sensorUnavailable {
+                            available = false
+                        }
+                        catch {}
+                    }
+                    
+                    if experiment.depthInput != nil {
                         do {
                             try ExperimentDepthInput.verifySensorAvailibility(cameraOrientation: nil)
                         }

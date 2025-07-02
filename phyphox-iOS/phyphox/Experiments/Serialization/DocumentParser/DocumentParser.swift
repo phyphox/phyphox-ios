@@ -17,7 +17,7 @@ protocol AttributeKey {
     var rawValue: String { get }
 }
 
-/// This tructure provides readonly access to attribute values for a specific `AttributeKey` key type.
+/// This structure provides readonly access to attribute values for a specific `AttributeKey` key type.
 struct KeyedAttributeContainer<Key: AttributeKey> {
     /// The raw, underlying attribute dictionary
     private let attributes: [String: String]
@@ -81,7 +81,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
     }
 }
 
-/// Contiains attributes. Provides `KeyedAttributeContainer` for specific `AttributeKey` key types, which allows reading values.
+/// Contains attributes. Provides `KeyedAttributeContainer` for specific `AttributeKey` key types, which allows reading values.
 struct AttributeContainer: Equatable {
     /// The raw, underlying attribute dictionary
     private let attributes: [String: String]

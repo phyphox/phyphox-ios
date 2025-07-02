@@ -13,12 +13,37 @@ class ConnectedBluetoothDevicesViewController: UICollectionView, UICollectionVie
     private var data: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
     let cellIdentifier: String = "ConnectedBleDeviceCell"
     
-    init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout, data: [ConnectedDevicesDataModel]) {
-        super.init(frame: frame, collectionViewLayout: layout)
+    let flowLayout = UICollectionViewFlowLayout()
+    
+    init(frame: CGRect, data: [ConnectedDevicesDataModel]) {
+        flowLayout.scrollDirection = .vertical
+        flowLayout.minimumLineSpacing = 10
+        flowLayout.minimumInteritemSpacing = 10
+        flowLayout.itemSize = CGSize(width: frame.width, height: 40)
+        flowLayout.collectionView?.backgroundColor = UIColor(named: "backgroundDark")
+        super.init(frame: frame, collectionViewLayout: flowLayout)
         self.register(ConnectedBleDeviceCell.self, forCellWithReuseIdentifier: cellIdentifier)
         self.dataSource = self
         self.data = data
-        layout.collectionView?.backgroundColor = UIColor(named: "backgroundDark")
+    }
+    
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        let cellHeights = CGFloat(data.count) * flowLayout.itemSize.height
+        let spaceHeights = CGFloat(max(data.count - 1, 0)) * flowLayout.minimumLineSpacing
+        return CGSize(width: frame.width, height: cellHeights + spaceHeights)
+    }
+    
+    func updateData(_ data: [ConnectedDevicesDataModel]) -> Bool {
+        let oldCount = self.data.count
+        self.data = data
+        self.reloadData()
+        
+        if (oldCount == data.count) {
+            return false
+        } else {
+            self.setNeedsLayout()
+            return true
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -52,6 +77,11 @@ class ConnectedBluetoothDevicesViewController: UICollectionView, UICollectionVie
         // handle cell selection
     }
     
+    override func layoutSubviews() {
+        flowLayout.itemSize = CGSize(width: frame.width, height: 40)
+        super.layoutSubviews()
+    }
+    
 }
 
 class ConnectedBleDeviceCell: UICollectionViewCell {
@@ -80,8 +110,8 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
         NSLayoutConstraint.activate([
             batteryImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             batteryImageView.leadingAnchor.constraint(equalTo: deviceLabel.trailingAnchor, constant: 8),
-            
-            batteryImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8)
+            batteryImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8),
+            batteryImageView.heightAnchor.constraint(equalTo: batteryImageView.widthAnchor)
         ])
         
         signalImageView.contentMode = .scaleAspectFit
@@ -91,7 +121,8 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
             signalImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             signalImageView.leadingAnchor.constraint(equalTo: batteryImageView.trailingAnchor, constant: 8),
             signalImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            signalImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8)
+            signalImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,  constant: -8),
+            signalImageView.heightAnchor.constraint(equalTo: signalImageView.widthAnchor)
         ])
         
     }
