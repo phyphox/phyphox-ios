@@ -60,27 +60,76 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
     
 }
 
-/**
+kernel void readLuminaceVal(
+     texture2d<float, access::read> yTexture [[texture(0)]],
+     device float *outBuffer [[buffer(0)]],
+     uint2 gid2D [[thread_position_in_grid]],
+     uint2 tid [[ thread_position_in_threadgroup ]],
+     uint2 groupSize [[ threads_per_threadgroup ]],
+     uint2 groupId [[ threadgroup_position_in_grid ]],
+     uint2 groupsPerGrid [[ threadgroups_per_grid ]])
+{
+    float textureValue;
+    float4 textureVal = yTexture.read(gid2D);
+    float intensityVal = textureVal.r;
+   
+    uint threadsPerRow = groupsPerGrid.x * groupSize.x;
+    outBuffer[gid2D.x + gid2D.y * threadsPerRow] = intensityVal;
+    
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+}
+
 
 kernel void readLuminaceValues(
      texture2d<float, access::read> yTexture [[texture(0)]],
-     device uint8_t* outBuffer [[buffer(0)]],
-     constant uint2& regionSize [[buffer(1)]],
-     constant SelectionState& selectionState [[ buffer(2) ]],
-     uint2 gid2D [[thread_position_in_grid]])
+     texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
+     device float *outBuffer [[buffer(0)]],
+     constant SelectionState& selectionState [[ buffer(1) ]],
+     uint2 gid2D [[thread_position_in_grid]],
+     uint2 tid [[ thread_position_in_threadgroup ]],
+     uint2 groupSize [[ threads_per_threadgroup ]],
+     uint2 groupId [[ threadgroup_position_in_grid ]],
+     uint2 groupsPerGrid [[ threadgroups_per_grid ]])
 {
+    float luminance;
+    threadgroup float localSums[256];
+    
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
     
-    if(globalID.x <= selectionState.x2 || globalID.y <= selectionState.y2){
- 
+    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2) {
+        luminance = 0;
+    } else {
+        
+        // Sample this pixel's camera image color.
+        float4 rgb = ycbcrToRGBTransform(
+                                         yTexture.read(globalID),
+                                         cameraImageTextureCbCr.read(globalID/2)
+                                         );
+        
+        float red = rgb.r;
+        float green = rgb.g;
+        float blue = rgb.b;
+            
+        luminance = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
+        
+    }
+    
+    uint index = tid.y;
+    localSums[index] = luminance;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+    if (tid.x == 0) {
+        float totalColumnSum = 0.0;
+        
+        for (uint i = 0; i < groupSize.y; i++) {
+            totalColumnSum += localSums[i];
+        }
+        
+        outBuffer[groupId.x + groupId.y * groupsPerGrid.x ] = totalColumnSum;
     }
 
-    float y = yTexture.read(<#ushort2 coord#>)
-    uint regionWidth = regionSize.x;
-    uint index = gid.y * regionWidth + gid.x;
-    outBuffer[index] = static_cast<uint8_t>(round(y * 255.0));
 }
- */
 
 
 kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],

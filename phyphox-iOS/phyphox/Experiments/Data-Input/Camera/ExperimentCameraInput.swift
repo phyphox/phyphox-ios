@@ -35,7 +35,7 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: CameraFeature) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -47,7 +47,8 @@ final class ExperimentCameraInput {
             shutterSpeedBuffer: shutterSpeedBuffer,
             isoBuffer: isoBuffer,
             apertureBuffer: apertureBuffer,
-            tBuffer: tBuffer
+            tBuffer: tBuffer,
+            pixelPosition: pixelPosition
         )
         
         self.initx1 = x1
@@ -134,9 +135,9 @@ final class ExperimentCameraInput {
 }
 
 class ExperimentCameraBuffers {
-    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, tBuffer: DataBuffer?
+    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, pixelPosition, tBuffer: DataBuffer?
     
-    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil) {
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil) {
         self.luminanceBuffer = luminanceBuffer
         self.lumaBuffer = lumaBuffer
         self.hueBuffer = hueBuffer
@@ -147,6 +148,7 @@ class ExperimentCameraBuffers {
         self.isoBuffer = isoBuffer
         self.apertureBuffer = apertureBuffer
         self.tBuffer = tBuffer
+        self.pixelPosition = pixelPosition
     }
 }
 
@@ -165,6 +167,7 @@ extension ExperimentCameraInput: Equatable {
                 lhs.experimentCameraBuffers?.shutterSpeedBuffer == rhs.experimentCameraBuffers?.shutterSpeedBuffer &&
                 lhs.experimentCameraBuffers?.isoBuffer == rhs.experimentCameraBuffers?.isoBuffer &&
                 lhs.experimentCameraBuffers?.apertureBuffer == rhs.experimentCameraBuffers?.apertureBuffer &&
-                lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer
+                lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer &&
+                lhs.experimentCameraBuffers?.pixelPosition == rhs.experimentCameraBuffers?.pixelPosition
     }
 }

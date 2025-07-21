@@ -84,20 +84,6 @@ class LuminanceAnalyzer: AnalyzingModule {
         }
         
         analyzeEncoding.setComputePipelineState(analysisPipelineState)
-        
-        let sizeOfSelectedPixel = getSelectedArea().width * getSelectedArea().height
-        
-        let pixelBytesPointer = UnsafeMutableRawPointer.allocate(byteCount: sizeOfSelectedPixel , alignment: 1)
-        let pixelRegions = MTLRegionMake2D(0, getSelectedArea().height/2, getSelectedArea().width, 1)
-        
-        var pixelBuffer = [UInt8](repeating: 0, count: getSelectedArea().width)
-        
-        //cameraImageTextureY?.getBytes(pixelBytesPointer, bytesPerRow: <#T##Int#>, bytesPerImage: <#T##Int#>, from: pixelRegions, mipmapLevel: 0, slice: 0)
-        cameraImageTextureY?.getBytes(&pixelBuffer, bytesPerRow: getSelectedArea().width, from: pixelRegions, mipmapLevel: 0)
-        
-        for (index_, yVal) in pixelBuffer.enumerated() {
-            print("Pixel \(index_): Y + \(yVal)")
-        }
                 
         let calculatedGridAndGroupSize = calculateThreadSize(selectedWidth: getSelectedArea().width, selectedHeight: getSelectedArea().height)
         

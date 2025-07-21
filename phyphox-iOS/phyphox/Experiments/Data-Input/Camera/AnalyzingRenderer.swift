@@ -55,12 +55,13 @@ class AnalyzingRenderer {
         
         AnalyzingModule.initialize(metalDevice: metalDevice)
         
+        exposureAnalyzer.loadMetal()
         
         if(cameraBuffers?.luminanceBuffer != nil){
             if(feature == CameraFeature.PHOTOMETRIC){
                 analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
             } else if(feature == CameraFeature.SPECTROSCOPY){
-                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer))
+                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition))
             }
         }
         
@@ -87,7 +88,7 @@ class AnalyzingRenderer {
         for analysingModule in analysingModules {
             analysingModule.loadMetal()
         }
-        exposureAnalyzer.loadMetal()
+        
        
     }
         
