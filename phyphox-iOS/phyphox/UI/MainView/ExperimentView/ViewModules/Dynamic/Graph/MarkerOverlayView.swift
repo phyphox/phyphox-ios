@@ -29,6 +29,8 @@ final class MarkerOverlayView: UIView {
     
     var showMarkers: Bool = true
     
+    var drawTheLine: Bool = true
+    
     private var markerLayers: [CAShapeLayer] = []
     private var lineLayers: [CAShapeLayer] = []
     
@@ -72,6 +74,10 @@ final class MarkerOverlayView: UIView {
                 let newCircle = makeCircle(rx: markers![i].x, ry: markers![i].y)
                 markerLayers[i].path = newCircle.cgPath
             }
+        }
+        
+        if(!drawTheLine){
+            return
         }
         
         for i in (0..<max((markers?.count ?? 0)-1, lineLayers.count)).reversed() {

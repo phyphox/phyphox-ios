@@ -13,6 +13,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     let unfoldMoreImageView: UIImageView
     let unfoldLessImageView: UIImageView
     
+    var calibrationMode : Bool = true
+    
     private let sideMargins:CGFloat = 10.0
     
     let descriptor: GraphViewDescriptor
@@ -363,7 +365,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
         attachDisplayLink(displayLink)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.executePlotTapp(_:)))
         graphArea.addGestureRecognizer(tapGesture)
         
         let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
@@ -405,6 +407,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                     glZScale.addGestureRecognizer(gr)
                 }
             }
+            
+            deactivateCalibrationMode()
         } else {
             unfoldMoreImageView.isHidden = false
             unfoldLessImageView.isHidden = true
@@ -431,7 +435,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    @objc func tapped(_ sender: UITapGestureRecognizer) {
+    @objc func executePlotTapp(_ sender: UITapGestureRecognizer) {
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
@@ -552,17 +556,52 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
+    func activateCalibrationMode(){
+        mode = .pick
+        self.markerOverlayView.drawTheLine = false
+        showCalibrationDialog = true
+    }
+    
+    func deactivateCalibrationMode(){
+        self.markerOverlayView.drawTheLine = true
+        showCalibrationDialog = false
         if resizableState == .normal {
-            tapped(sender)
+            mode = .none
+        } else if resizableState == .exclusive {
+            mode = .pan_zoom
         }
+    }
+    
+    fileprivate func addMarker(for point: (set: Int, index: Int)) {
+        if(calibrationMode){
+            if(markers.count > 2){
+                // remove all and add from start
+                markers = []
+                markers.append(point)
+            } else {
+                markers.append(point)
+                showLinearFit = false
+            }
+        } else {
+            markers = [point]
+            showLinearFit = false
+        }
+    }
+    
+    
+    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
+        
+        if resizableState == .normal {
+            calibrationMode ? activateCalibrationMode() : executePlotTapp(sender)
+        }
+        
         if mode != .pick {
             return
         }
         
         if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
-            markers = [point]
-            showLinearFit = false
+            addMarker(for: point)
+
         } else {
             markers = []
         }
@@ -1280,6 +1319,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
+    var showCalibrationDialog = true
+    var currentXCount = 0
+    
     private func refreshMarkers() {
         var relativeCoordinates: [(CGFloat, CGFloat)] = []
         
@@ -1352,63 +1394,91 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         formatter.minimumSignificantDigits = 4
         formatter.maximumSignificantDigits = 8
         
-        if n == 1 {
-            self.markerOverlayView.showMarkers = true
-            self.markerOverlayView.markers = relativeCoordinates
+        if(calibrationMode){
             
-            var labelText = localize("graph_point_label")
-            let x = (logX ? exp(xlist[0]) : xlist[0])
-            labelText += "\n    "+(formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let y = (logY ? exp(ylist[0]) : ylist[0])
-            labelText += "\n    "+(formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-            if hasZData {
-                let z = (logZ ? exp(zlist[0]) : zlist[0])
-                labelText += "\n    "+(formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+            if(n > 0 && n < 3){
+                if(showCalibrationDialog){
+                    self.markerOverlayView.showMarkers = true
+                    self.markerOverlayView.markers = relativeCoordinates
+                    let x = (logX ? exp(xlist[0]) : xlist[0])
+                    
+                    UIAlertController.PhyphoxUIAlertBuilder()
+                        .title(title: "Calibrate")
+                        .message(message: "Enter the value for calibration for value: " + String(x))
+                        .preferredStyle(style: .alert)
+                        .addTextField(configHandler: { textField in
+                            textField.addTarget(self, action: #selector(self.calibrationValueTextField(_:)), for: .editingDidEnd)
+                        })
+                        .addOkAction()
+                        .show(in: parentViewController(), animated: true)
+                    showCalibrationDialog = false
+                    
+                }
+                
+            } else {
+                self.markerOverlayView.markers = []
             }
-            setMarkerLabel(labelText)
-        } else if n == 2 {
-            self.markerOverlayView.showMarkers = true
-            self.markerOverlayView.markers = relativeCoordinates
             
-            var labelText = localize("graph_difference_label")
-            let dx = abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-            labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let dy = abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))
-            labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-            if hasZData {
-                let dz = abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1]))
-                labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
-            }
-            labelText += "\n" + localize("graph_slope_label")
-            let slope = ((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-            labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-            setMarkerLabel(labelText)
-        } else if showLinearFit {
-            if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
-                let a: GLfloat, b: GLfloat
-                (a, b) = calculateLinearRegression(dataSet.data2D)
-                
-                let x1 = GLfloat(min.x)
-                let y1 = a * GLfloat(min.x) + b
-                appendMarker(x1, y1, GLfloat.nan)
-                let x2 = GLfloat(max.x)
-                let y2 = a * GLfloat(max.x) + b
-                appendMarker(x2, y2, GLfloat.nan)
-                
-                self.markerOverlayView.showMarkers = false
+        } else{
+          
+            if n == 1 {
+                self.markerOverlayView.showMarkers = true
                 self.markerOverlayView.markers = relativeCoordinates
                 
-                var labelText = localize("graph_fit_label")
-                labelText += "\na = " + (formatter.string(from: a as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-                labelText += "\nb = " + (formatter.string(from: b as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                var labelText = localize("graph_point_label")
+                let x = (logX ? exp(xlist[0]) : xlist[0])
+                labelText += "\n    "+(formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+                let y = (logY ? exp(ylist[0]) : ylist[0])
+                labelText += "\n    "+(formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                if hasZData {
+                    let z = (logZ ? exp(zlist[0]) : zlist[0])
+                    labelText += "\n    "+(formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                }
                 setMarkerLabel(labelText)
+            } else if n == 2 {
+                self.markerOverlayView.showMarkers = true
+                self.markerOverlayView.markers = relativeCoordinates
+                
+                var labelText = localize("graph_difference_label")
+                let dx = abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
+                labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
+                let dy = abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))
+                labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                if hasZData {
+                    let dz = abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1]))
+                    labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
+                }
+                labelText += "\n" + localize("graph_slope_label")
+                let slope = ((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
+                labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
+                setMarkerLabel(labelText)
+            } else if showLinearFit {
+                if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
+                    let a: GLfloat, b: GLfloat
+                    (a, b) = calculateLinearRegression(dataSet.data2D)
+                    
+                    let x1 = GLfloat(min.x)
+                    let y1 = a * GLfloat(min.x) + b
+                    appendMarker(x1, y1, GLfloat.nan)
+                    let x2 = GLfloat(max.x)
+                    let y2 = a * GLfloat(max.x) + b
+                    appendMarker(x2, y2, GLfloat.nan)
+                    
+                    self.markerOverlayView.showMarkers = false
+                    self.markerOverlayView.markers = relativeCoordinates
+                    
+                    var labelText = localize("graph_fit_label")
+                    labelText += "\na = " + (formatter.string(from: a as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
+                    labelText += "\nb = " + (formatter.string(from: b as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
+                    setMarkerLabel(labelText)
+                } else {
+                    setMarkerLabel(nil)
+                    self.markerOverlayView.markers = []
+                }
             } else {
                 setMarkerLabel(nil)
                 self.markerOverlayView.markers = []
-            }
-        } else {
-            setMarkerLabel(nil)
-            self.markerOverlayView.markers = []
+        }
         }
         
         if let markerLabelFrame = markerLabelFrame, n > 0 {
@@ -1423,6 +1493,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             
             markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
         }
+    }
+    
+    @objc func calibrationValueTextField(_ sender: UITextField){
+        print("Text changed - ", sender.text!)
     }
     
     private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
@@ -1908,3 +1982,4 @@ extension ExperimentGraphView: DisplayLinkListener {
         }
     }
 }
+
