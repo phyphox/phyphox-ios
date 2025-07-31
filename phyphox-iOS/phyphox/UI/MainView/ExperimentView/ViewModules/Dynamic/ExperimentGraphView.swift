@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate, AnalysisLimitedViewModule {
+final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, UITabBarDelegate, ExportingViewModule, UITableViewDataSource, UITableViewDelegate  {
     
     // MARK: Properties for UI Elements
     let unfoldMoreImageView: UIImageView
@@ -48,7 +48,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             setNeedsUpdate()
         }
     }
-    var resizableState: ResizableViewModuleState = .normal
     let descriptor: GraphViewDescriptor
     let timeReference: ExperimentTimeReference
     var logX, logY, logZ: Bool
@@ -72,6 +71,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     let hasZData: Bool
     var showLinearFit = false
+    
+    //ResizableViewModule properties
+    var resizableState: ResizableViewModuleState = .normal
     var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
 
     //MARK: Propeties that are used in Extensions
@@ -466,56 +468,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         
     }
     
-    func resizableStateChanged(_ newState: ResizableViewModuleState) {
-        if newState == .exclusive {
-            unfoldMoreImageView.isHidden = true
-            unfoldLessImageView.isHidden = false
-            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
-            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
-            if let gr = panGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
-            }
-            if let gr = pinchGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
-            }
-            if let glZScale = glZScale {
-                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
-                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
-                if let gr = zPanGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-            }
-            
-            deactivateCalibrationMode()
-        } else {
-            unfoldMoreImageView.isHidden = false
-            unfoldLessImageView.isHidden = true
-            markers = []
-            showLinearFit = false
-            if let gr = panGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            if let gr = pinchGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            panGestureRecognizer = nil
-            pinchGestureRecognizer = nil
-            if let glZScale = glZScale {
-                if let gr = zPanGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                zPanGestureRecognizer = nil
-                zPinchGestureRecognizer = nil
-            }
-        }
-    }
-    
     
     @objc func reload(){
         self.refreshView()
@@ -602,131 +554,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
-        
-        previouslyKept = !(modeX == .reset && modeY == .reset)
-        
-        layoutDelegate?.restoreLayout()
-        
-        if zoomMin == nil || zoomMax == nil {
-            zoomMin = GraphPoint3D(x: min.x, y: min.y, z: min.z)
-            zoomMax = GraphPoint3D(x: max.x, y: max.y, z: max.z)
-            
-            if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
-                return
-            }
-        }
-        
-        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
-        if (applyToX != .this || applyToY != .this) {
-            let targetX: String?
-            let targetY: String?
-            
-            switch applyToX {
-            case .sameUnit:
-                targetX = descriptor.localizedXUnit
-            case .sameVariable:
-                targetX = descriptor.xInputBuffers[0]?.name
-            default:
-                targetX = nil
-            }
-            
-            switch applyToY {
-            case .sameUnit:
-                targetY = descriptor.localizedYUnit
-            case .sameVariable:
-                targetY = descriptor.yInputBuffers[0].name
-            default:
-                targetY = nil
-            }
-
-            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
-        }
-    }
-    
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
-        
-        var applyX = false
-        var applyY = false
-        
-        switch applyToX {
-        case .this:
-            applyX = true
-        case .sameAxis:
-            applyX = true
-        case .sameUnit:
-            if targetX == descriptor.localizedXUnit {
-                applyX = true
-            }
-        case .sameVariable:
-            if targetX == descriptor.xInputBuffers[0]?.name {
-                applyX = true
-            }
-        case .none:
-            break
-        }
-        
-        switch applyToY {
-        case .this:
-            applyY = true
-        case .sameAxis:
-            applyY = true
-        case .sameUnit:
-            if targetY == descriptor.localizedYUnit {
-                applyY = true
-            }
-        case .sameVariable:
-            if targetY == descriptor.yInputBuffers[0].name {
-                applyY = true
-            }
-        case .none:
-            break
-        }
-        
-        if applyX {
-            switch modeX {
-            case .reset:
-                zoomFollows = descriptor.followX
-                if descriptor.followX {
-                    self.zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
-                    self.zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
-                } else {
-                    self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                    self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-                }
-            case .keep:
-                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-            case .follow:
-                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-                zoomFollows = true
-            case .none:
-                break
-            }
-            if descriptor.timeOnX {
-                self.systemTime = systemTime
-            }
-        }
-        
-        if applyY {
-            switch modeY {
-            case .reset:
-                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
-            case .keep:
-                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
-            default:
-                break
-            }
-            if descriptor.timeOnY {
-                self.systemTime = systemTime
-            }
-        }
-        
-        update()
-    }
     
     func limitRange(_ v: Double?, isLog: Bool) -> Double {
         guard let v = v, v.isFinite else {
@@ -1653,16 +1480,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    func clearData() {
-        dataSets.removeAll()
-        historicMinX = +Double.infinity
-        historicMaxX = -Double.infinity
-        historicMinY = +Double.infinity
-        historicMaxY = -Double.infinity
-        historicMinZ = +Double.infinity
-        historicMaxZ = -Double.infinity
-        clearGraph()
-    }
     
     private func clearGraph() {
         gridView.grid = nil
@@ -1969,7 +1786,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
 //MARK: - Extensions
 
-extension ExperimentGraphView: GraphGridDelegate {
+extension ExperimentGraphView: GraphGridDelegate, GraphViewModule {
     func updatePlotArea() {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
@@ -1980,9 +1797,20 @@ extension ExperimentGraphView: GraphGridDelegate {
             refreshMarkers()
         }
     }
+    
+    func clearData() {
+        dataSets.removeAll()
+        historicMinX = +Double.infinity
+        historicMaxX = -Double.infinity
+        historicMinY = +Double.infinity
+        historicMaxY = -Double.infinity
+        historicMinZ = +Double.infinity
+        historicMaxZ = -Double.infinity
+        clearGraph()
+    }
 }
 
-extension ExperimentGraphView: DisplayLinkListener {
+extension ExperimentGraphView: DisplayLinkListener, AnalysisLimitedViewModule {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate && !analysisRunning {
             update()
@@ -1990,3 +1818,186 @@ extension ExperimentGraphView: DisplayLinkListener {
     }
 }
 
+extension ExperimentGraphView: ResizableViewModule {
+    
+    func resizableStateChanged(_ newState: ResizableViewModuleState) {
+        if newState == .exclusive {
+            unfoldMoreImageView.isHidden = true
+            unfoldLessImageView.isHidden = false
+            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
+            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
+            if let gr = panGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let glZScale = glZScale {
+                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
+                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
+                if let gr = zPanGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+            }
+            
+            deactivateCalibrationMode()
+        } else {
+            unfoldMoreImageView.isHidden = false
+            unfoldLessImageView.isHidden = true
+            markers = []
+            showLinearFit = false
+            if let gr = panGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            panGestureRecognizer = nil
+            pinchGestureRecognizer = nil
+            if let glZScale = glZScale {
+                if let gr = zPanGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                zPanGestureRecognizer = nil
+                zPinchGestureRecognizer = nil
+            }
+        }
+    }
+    
+}
+
+extension ExperimentGraphView: ApplyZoomDelegate, ZoomableViewModule, ApplyZoomDialogResultDelegate {
+    
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+        
+        var applyX = false
+        var applyY = false
+        
+        switch applyToX {
+        case .this:
+            applyX = true
+        case .sameAxis:
+            applyX = true
+        case .sameUnit:
+            if targetX == descriptor.localizedXUnit {
+                applyX = true
+            }
+        case .sameVariable:
+            if targetX == descriptor.xInputBuffers[0]?.name {
+                applyX = true
+            }
+        case .none:
+            break
+        }
+        
+        switch applyToY {
+        case .this:
+            applyY = true
+        case .sameAxis:
+            applyY = true
+        case .sameUnit:
+            if targetY == descriptor.localizedYUnit {
+                applyY = true
+            }
+        case .sameVariable:
+            if targetY == descriptor.yInputBuffers[0].name {
+                applyY = true
+            }
+        case .none:
+            break
+        }
+        
+        if applyX {
+            switch modeX {
+            case .reset:
+                zoomFollows = descriptor.followX
+                if descriptor.followX {
+                    self.zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
+                    self.zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
+                } else {
+                    self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                    self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                }
+            case .keep:
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+            case .follow:
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                zoomFollows = true
+            case .none:
+                break
+            }
+            if descriptor.timeOnX {
+                self.systemTime = systemTime
+            }
+        }
+        
+        if applyY {
+            switch modeY {
+            case .reset:
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+            case .keep:
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
+            default:
+                break
+            }
+            if descriptor.timeOnY {
+                self.systemTime = systemTime
+            }
+        }
+        
+        update()
+    }
+    
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        
+        previouslyKept = !(modeX == .reset && modeY == .reset)
+        
+        layoutDelegate?.restoreLayout()
+        
+        if zoomMin == nil || zoomMax == nil {
+            zoomMin = GraphPoint3D(x: min.x, y: min.y, z: min.z)
+            zoomMax = GraphPoint3D(x: max.x, y: max.y, z: max.z)
+            
+            if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
+                return
+            }
+        }
+        
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+        if (applyToX != .this || applyToY != .this) {
+            let targetX: String?
+            let targetY: String?
+            
+            switch applyToX {
+            case .sameUnit:
+                targetX = descriptor.localizedXUnit
+            case .sameVariable:
+                targetX = descriptor.xInputBuffers[0]?.name
+            default:
+                targetX = nil
+            }
+            
+            switch applyToY {
+            case .sameUnit:
+                targetY = descriptor.localizedYUnit
+            case .sameVariable:
+                targetY = descriptor.yInputBuffers[0].name
+            default:
+                targetY = nil
+            }
+
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+        }
+    }
+    
+}
