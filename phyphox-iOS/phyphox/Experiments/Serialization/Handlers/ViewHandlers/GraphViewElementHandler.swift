@@ -118,6 +118,8 @@ struct GraphViewElementDescriptor {
     let color: [UIColor]
     let style: [GraphViewDescriptor.GraphStyle]
     let showColorScale: Bool
+    
+    let calibrationMode: Bool
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -184,6 +186,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case mapColor8
         case mapColor9
         case showColorScale
+        case calibrationMode
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -253,6 +256,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             partialUpdate = true
         }
         
+        let calibrationMode: Bool = try attributes.optionalValue(for: .calibrationMode) ?? false
+        
         let inputBuffers = inputHandler.results
         guard inputBuffers.count > 0 else {
             throw ElementHandlerError.missingElement("input")
@@ -308,7 +313,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
         
-        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale)))
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, calibrationMode: calibrationMode)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

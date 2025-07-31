@@ -116,6 +116,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
         
         showColorScale = descriptor.showColorScale && hasZData
         
+        calibrationMode = descriptor.calibrationMode
+        
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
         gridView.gridOffset = CGPoint(x: 0.0, y: 0)
@@ -477,24 +479,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
     
     //MARK: - Calibration Mode
     
-    var calibrationMode : Bool = true
+    var calibrationMode : Bool = false
     var showCalibrationDialog = true
-    var currentXCount = 0
     
     func activateCalibrationMode(){
         mode = .pick
         self.markerOverlayView.drawTheLine = false
         showCalibrationDialog = true
-    }
-    
-    func deactivateCalibrationMode(){
-        self.markerOverlayView.drawTheLine = true
-        showCalibrationDialog = false
-        if resizableState == .normal {
-            mode = .none
-        } else if resizableState == .exclusive {
-            mode = .pan_zoom
-        }
     }
     
     @objc func calibrationValueTextField(_ sender: UITextField){
@@ -1843,7 +1834,6 @@ extension ExperimentGraphView: ResizableViewModule {
                 }
             }
             
-            deactivateCalibrationMode()
         } else {
             unfoldMoreImageView.isHidden = false
             unfoldLessImageView.isHidden = true
