@@ -9,18 +9,33 @@
 import UIKit
 
 final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate, AnalysisLimitedViewModule {
-        
+    
+    // MARK: Properties for UI Elements
     let unfoldMoreImageView: UIImageView
     let unfoldLessImageView: UIImageView
+    private var graphTools: UITabBar?
+    private var graphArea = UIView()
+    private let label = UILabel()
+    private var xLabel: UILabel
+    private var yLabel: UILabel
+    private let zLabel: UILabel?
+    var markerLabel: UILabel? = nil
+    var markerLabelFrame: UIView? = nil
     
-    var calibrationMode : Bool = true
+    // MARK: Properties for UI Gestures
+    var panGestureRecognizer: UIPanGestureRecognizer? = nil
+    var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
+    var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
     
-    private let sideMargins:CGFloat = 10.0
-    
-    let descriptor: GraphViewDescriptor
-    let timeReference: ExperimentTimeReference
-    var logX, logY, logZ: Bool
-    
+    // MARK: Properties for Custom UI
+    private let glGraph: GLGraphView
+    private let gridView: GraphGridView
+    private let markerOverlayView: MarkerOverlayView
+    private let glZScale: GLGraphView?
+    private let zGridView: GraphGridView?
+  
+    //MARK: Properties that are used Class wide
     var systemTime: Bool {
         didSet {
             glGraph.systemTime = systemTime
@@ -33,16 +48,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             setNeedsUpdate()
         }
     }
-    
-    var exportDelegate: ExportDelegate? = nil
-    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
-    var zoomDelegate: ApplyZoomDelegate? = nil
     var resizableState: ResizableViewModuleState = .normal
-
-    var analysisRunning: Bool = false
-    private let displayLink = DisplayLink(refreshRate: 0)
-
-    private var graphTools: UITabBar?
+    let descriptor: GraphViewDescriptor
+    let timeReference: ExperimentTimeReference
+    var logX, logY, logZ: Bool
     enum Mode: Int {
         case pan_zoom = 0, pick, none
     }
@@ -53,8 +62,21 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
     }
-    private var graphArea = UIView()
-    
+    private var zoomMin: GraphPoint3D<Double>?
+    private var zoomMax: GraphPoint3D<Double>?
+    private var zoomFollows = false
+    var markers: [(set: Int, index: Int)] = [] {
+        didSet {
+            refreshMarkers()
+        }
+    }
+    let hasZData: Bool
+    var showLinearFit = false
+    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
+
+    //MARK: Propeties that are used in Extensions
+    var analysisRunning: Bool = false
+    private let displayLink = DisplayLink(refreshRate: 0)
     var active = false {
         didSet {
             displayLink.active = active
@@ -63,148 +85,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
     }
-
-    private let label = UILabel()
-    private var xLabel: UILabel
-    private var yLabel: UILabel
-    private let zLabel: UILabel?
     
-    private let glGraph: GLGraphView
-    private let gridView: GraphGridView
-    private let markerOverlayView: MarkerOverlayView
-    
-    private let glZScale: GLGraphView?
-    private let zGridView: GraphGridView?
-    let hasZData: Bool
-    let zScaleHeight: CGFloat = 40
-    var showColorScale = true
-    
-    private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
-    
-    //Keeping track of old max/min for extend zoom strategy
-    private var historicMinX = +Double.infinity
-    private var historicMaxX = -Double.infinity
-    private var historicMinY = +Double.infinity
-    private var historicMaxY = -Double.infinity
-    private var historicMinZ = +Double.infinity
-    private var historicMaxZ = -Double.infinity
-    
-    private var zoomMin: GraphPoint3D<Double>?
-    private var zoomMax: GraphPoint3D<Double>?
-    private var zoomFollows = false
-
-    var panGestureRecognizer: UIPanGestureRecognizer? = nil
-    var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
-    var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
-    var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
-    
-    var markers: [(set: Int, index: Int)] = [] {
-        didSet {
-            refreshMarkers()
-        }
-    }
-    var markerLabel: UILabel? = nil
-    var markerLabelFrame: UIView? = nil
-    
-    var showLinearFit = false
-    
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
-
-    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
-    
-    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
-        if descriptor.history > 1 {
-            if dataSets.count >= Int(descriptor.history) {
-                dataSets.removeFirst()
-            }
-            dataSets.append(sets[0])
-        } else {
-            dataSets = sets
-        }
-    }
-    
-    private var max: GraphPoint3D<Double> {
-        if dataSets.count > 0 {
-            var maxX = -Double.infinity
-            var maxY = -Double.infinity
-            var maxZ = -Double.infinity
-            
-            for set in dataSets {
-                let maxPoint = set.bounds.max
-                
-                maxX = Swift.max(maxX, maxPoint.x)
-                maxY = Swift.max(maxY, maxPoint.y)
-                maxZ = Swift.max(maxZ, maxPoint.z)
-            }
-
-            return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
-        }
-        else {
-            return dataSets.first?.bounds.max ?? GraphPoint3D.zero
-        }
-    }
-    
-    private var min: GraphPoint3D<Double> {
-        if dataSets.count > 0{
-            var minX = Double.infinity
-            var minY = Double.infinity
-            var minZ = Double.infinity
-            
-            for set in dataSets {
-                let minPoint = set.bounds.min
-                
-                minX = Swift.min(minX, minPoint.x)
-                minY = Swift.min(minY, minPoint.y)
-                minZ = Swift.min(minZ, minPoint.z)
-            }
-
-            return GraphPoint3D(x: minX, y: minY, z: minZ)
-        }
-        else {
-            return GraphPoint3D.zero
-        }
-    }
-    
-    private var points2D: [[GraphPoint2D<GLfloat>]] {
-        return dataSets.map { $0.data2D }
-    }
-    
-    private var points3D: [[GraphPoint3D<GLfloat>]] {
-        return dataSets.map { $0.data3D }
-    }
-    
-    private var timeReferenceSets: [[TimeReferenceSet]] {
-        return dataSets.map { $0.timeReferenceSets }
-    }
-    
-    private func refreshView(){
-        glGraph.lineWidth = []
-        glGraph.lineColor = []
-        for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
-            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
-            
-            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
-            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
-        }
-        
-        
-        graphArea.willRemoveSubview(label)
-        
-
-        label.numberOfLines = 0
-        label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
-        label.textColor = UIColor(named: "textColor")
-
-        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
-        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
-        
-        graphArea.addSubview(label)
-        
-    }
-    
-    
+    //MARK: - Init
     required init?(descriptor: GraphViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
@@ -374,79 +256,78 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
     }
     
-    @objc func reload(){
-        self.refreshView()
-        self.layoutSubviews()
-        self.setNeedsDisplay()
-    }
-
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    //MARK: - Datasets and its points in graph
 
-    func resizableStateChanged(_ newState: ResizableViewModuleState) {
-        if newState == .exclusive {
-            unfoldMoreImageView.isHidden = true
-            unfoldLessImageView.isHidden = false
-            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
-            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
-            if let gr = panGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
+    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
+    
+    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
+        if descriptor.history > 1 {
+            if dataSets.count >= Int(descriptor.history) {
+                dataSets.removeFirst()
             }
-            if let gr = pinchGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
-            }
-            if let glZScale = glZScale {
-                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
-                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
-                if let gr = zPanGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-            }
-            
-            deactivateCalibrationMode()
+            dataSets.append(sets[0])
         } else {
-            unfoldMoreImageView.isHidden = false
-            unfoldLessImageView.isHidden = true
-            markers = []
-            showLinearFit = false
-            if let gr = panGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            if let gr = pinchGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            panGestureRecognizer = nil
-            pinchGestureRecognizer = nil
-            if let glZScale = glZScale {
-                if let gr = zPanGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                zPanGestureRecognizer = nil
-                zPinchGestureRecognizer = nil
-            }
+            dataSets = sets
         }
     }
     
-    @objc func executePlotTapp(_ sender: UITapGestureRecognizer) {
-        if resizableState == .normal {
-            layoutDelegate?.presentExclusiveLayout(self)
-        } else {
-            if (zoomFollows || zoomMax != nil || systemTime) {
-                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
-                dialog.resultDelegate = self
-                dialog.show()
-            } else {
-                layoutDelegate?.restoreLayout()
+    private var max: GraphPoint3D<Double> {
+        if dataSets.count > 0 {
+            var maxX = -Double.infinity
+            var maxY = -Double.infinity
+            var maxZ = -Double.infinity
+            
+            for set in dataSets {
+                let maxPoint = set.bounds.max
+                
+                maxX = Swift.max(maxX, maxPoint.x)
+                maxY = Swift.max(maxY, maxPoint.y)
+                maxZ = Swift.max(maxZ, maxPoint.z)
             }
+
+            return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
+        else {
+            return dataSets.first?.bounds.max ?? GraphPoint3D.zero
+        }
+    }
+    
+    private var min: GraphPoint3D<Double> {
+        if dataSets.count > 0{
+            var minX = Double.infinity
+            var minY = Double.infinity
+            var minZ = Double.infinity
+            
+            for set in dataSets {
+                let minPoint = set.bounds.min
+                
+                minX = Swift.min(minX, minPoint.x)
+                minY = Swift.min(minY, minPoint.y)
+                minZ = Swift.min(minZ, minPoint.z)
+            }
+
+            return GraphPoint3D(x: minX, y: minY, z: minZ)
+        }
+        else {
+            return GraphPoint3D.zero
+        }
+    }
+    
+    private var points2D: [[GraphPoint2D<GLfloat>]] {
+        return dataSets.map { $0.data2D }
+    }
+    
+    private var points3D: [[GraphPoint3D<GLfloat>]] {
+        return dataSets.map { $0.data3D }
+    }
+    
+    private var timeReferenceSets: [[TimeReferenceSet]] {
+        return dataSets.map { $0.timeReferenceSets }
     }
     
     func getIndexOfNearestPoint(at: CGPoint) -> (set: Int, index: Int)? {
@@ -556,6 +437,98 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
+    //MARK: - RefreshView and data
+    
+    private func refreshView(){
+        glGraph.lineWidth = []
+        glGraph.lineColor = []
+        for i in 0..<descriptor.yInputBuffers.count {
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
+            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+            
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
+            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
+        }
+        
+        
+        graphArea.willRemoveSubview(label)
+        
+
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
+        label.textColor = UIColor(named: "textColor")
+
+        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        
+        graphArea.addSubview(label)
+        
+    }
+    
+    func resizableStateChanged(_ newState: ResizableViewModuleState) {
+        if newState == .exclusive {
+            unfoldMoreImageView.isHidden = true
+            unfoldLessImageView.isHidden = false
+            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
+            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
+            if let gr = panGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let glZScale = glZScale {
+                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
+                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
+                if let gr = zPanGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+            }
+            
+            deactivateCalibrationMode()
+        } else {
+            unfoldMoreImageView.isHidden = false
+            unfoldLessImageView.isHidden = true
+            markers = []
+            showLinearFit = false
+            if let gr = panGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            panGestureRecognizer = nil
+            pinchGestureRecognizer = nil
+            if let glZScale = glZScale {
+                if let gr = zPanGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                zPanGestureRecognizer = nil
+                zPinchGestureRecognizer = nil
+            }
+        }
+    }
+    
+    
+    @objc func reload(){
+        self.refreshView()
+        self.layoutSubviews()
+        self.setNeedsDisplay()
+    }
+    
+    //MARK: - Calibration Mode
+    
+    var calibrationMode : Bool = true
+    var showCalibrationDialog = true
+    var currentXCount = 0
+    
     func activateCalibrationMode(){
         mode = .pick
         self.markerOverlayView.drawTheLine = false
@@ -570,6 +543,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         } else if resizableState == .exclusive {
             mode = .pan_zoom
         }
+    }
+    
+    @objc func calibrationValueTextField(_ sender: UITextField){
+        print("Text changed - ", sender.text!)
     }
     
     fileprivate func addMarker(for point: (set: Int, index: Int)) {
@@ -588,6 +565,24 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
+    //MARK: - Pinch, pan and taps
+    
+    private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
+    var zoomDelegate: ApplyZoomDelegate? = nil
+    
+    @objc func executePlotTapp(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            layoutDelegate?.presentExclusiveLayout(self)
+        } else {
+            if (zoomFollows || zoomMax != nil || systemTime) {
+                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
+                dialog.resultDelegate = self
+                dialog.show()
+            } else {
+                layoutDelegate?.restoreLayout()
+            }
+        }
+    }
     
     @objc func plotTapped(_ sender: UITapGestureRecognizer) {
         
@@ -933,10 +928,20 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.update()
     }
     
-    //MARK - Graph
+    //MARK: - Graph
+    
+    //Keeping track of old max/min for extend zoom strategy
+    private var historicMinX = +Double.infinity
+    private var historicMaxX = -Double.infinity
+    private var historicMinY = +Double.infinity
+    private var historicMaxY = -Double.infinity
+    private var historicMinZ = +Double.infinity
+    private var historicMaxZ = -Double.infinity
     
     private var lastIndexXArray: [Double]?
     private var lastCount: Int?
+    
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
     private func runUpdate() {
         var xValues: [[Double]] = []
@@ -1318,10 +1323,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             markerLabelFrame = nil
         }
     }
-    
-    var showCalibrationDialog = true
-    var currentXCount = 0
-    
+   
     private func refreshMarkers() {
         var relativeCoordinates: [(CGFloat, CGFloat)] = []
         
@@ -1495,9 +1497,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    @objc func calibrationValueTextField(_ sender: UITextField){
-        print("Text changed - ", sender.text!)
-    }
     
     private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
         var sumX:GLfloat = 0.0
@@ -1676,7 +1675,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.setPoints(points2D: [], points3D: [], min: .zero, max: .zero, timeReferenceSets: [])
     }
     
-    //Mark - Toolbar and interaction
+    //MARK: - Toolbar and interaction
+    
+    var exportDelegate: ExportDelegate? = nil
     
     func setupToolbar() -> UITabBar {
         let graphTools = UITabBar()
@@ -1862,7 +1863,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.update()
     }
     
-    //Mark - General UI
+    //MARK: - General UI
+    
+    private let sideMargins:CGFloat = 10.0
+    let zScaleHeight: CGFloat = 40
+    var showColorScale = true
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         switch resizableState {
@@ -1961,6 +1966,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
 }
+
+//MARK: - Extensions
 
 extension ExperimentGraphView: GraphGridDelegate {
     func updatePlotArea() {
