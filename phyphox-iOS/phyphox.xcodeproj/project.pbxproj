@@ -187,6 +187,7 @@
 		A171F06B2CF5F5B700D5F9F2 /* ExperimentSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A171F06A2CF5F5B700D5F9F2 /* ExperimentSliderView.swift */; };
 		A182CEDF2B025B41000385D2 /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEDE2B025B41000385D2 /* CameraModel.swift */; };
 		A182CEE12B025B53000385D2 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A182CEE02B025B53000385D2 /* CameraService.swift */; };
+		A1984D2E2E3BE65D00C21D16 /* GraphCalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1984D252E3BE65A00C21D16 /* GraphCalibrationView.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
 		A1AD56E92BC8463800FD3255 /* CameraUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AD56E82BC8463800FD3255 /* CameraUIView.swift */; };
@@ -553,6 +554,7 @@
 		A171F06A2CF5F5B700D5F9F2 /* ExperimentSliderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentSliderView.swift; sourceTree = "<group>"; };
 		A182CEDE2B025B41000385D2 /* CameraModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraModel.swift; sourceTree = "<group>"; };
 		A182CEE02B025B53000385D2 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
+		A1984D252E3BE65A00C21D16 /* GraphCalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphCalibrationView.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
 		A1AD56E82BC8463800FD3255 /* CameraUIView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraUIView.swift; sourceTree = "<group>"; };
@@ -938,6 +940,7 @@
 		6BFE376920447B1E00301CA3 /* Graph */ = {
 			isa = PBXGroup;
 			children = (
+				A1984D252E3BE65A00C21D16 /* GraphCalibrationView.swift */,
 				6B6A4C2F2056A48F007586D0 /* PointCollection.swift */,
 				6BCD496620505DA70079E569 /* ExperimentGraphUtilities.swift */,
 				C063DA8A228C52D000367384 /* MarkerOverlayView.swift */,
@@ -1645,6 +1648,7 @@
 				6BAEC1DE1C1F749000FBD979 /* ValueViewDescriptor.swift in Sources */,
 				6B06C2161CC770200030BB7D /* ExperimentWebServer.swift in Sources */,
 				A171F06B2CF5F5B700D5F9F2 /* ExperimentSliderView.swift in Sources */,
+				A1984D2E2E3BE65D00C21D16 /* GraphCalibrationView.swift in Sources */,
 				C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */,
 				6B612FDF207E1648001DA8D9 /* DocumentParser.swift in Sources */,
 				86E752192CC2556700E9E9C8 /* SplitAnalysis.swift in Sources */,

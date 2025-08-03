@@ -267,6 +267,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
     
     //MARK: - Datasets and its points in graph
 
+    private typealias DataSet = (bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])
+    
     private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
     
     private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
@@ -1141,180 +1143,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
             markerLabelFrame = nil
         }
     }
-   
-    private func refreshMarkers() {
-        var relativeCoordinates: [(CGFloat, CGFloat)] = []
-        
-        let min = self.min
-        let max = self.max
-        
-        var xlist: [GLfloat] = []
-        var ylist: [GLfloat] = []
-        var zlist: [GLfloat] = []
-        var avgRX = CGFloat(0.0)
-        var minRY = CGFloat.infinity
-        var n = 0
-        
-        func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
-            let offsetX: Double
-            let offsetY: Double
-            if descriptor.timeOnX && systemTime && !descriptor.linearTime {
-                offsetX = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(x)))
-            } else if descriptor.timeOnX && !systemTime && descriptor.linearTime {
-                offsetX = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(x)))
-            } else {
-                offsetX = 0.0
-            }
-            if descriptor.timeOnY && systemTime && !descriptor.linearTime {
-                offsetY = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(y)))
-            } else if descriptor.timeOnY && !systemTime && descriptor.linearTime {
-                offsetY = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(y)))
-            } else {
-                offsetY = 0.0
-            }
-            let rx = CGFloat((Double(x) + offsetX - min.x) / (max.x-min.x))
-            let ry = CGFloat((max.y - Double(y) - offsetY) / (max.y-min.y))
-            
-            xlist.append(x)
-            ylist.append(y)
-            zlist.append(z)
-            
-            avgRX += rx
-            n += 1
-            if ry < minRY {
-                minRY = ry
-            }
-            
-            relativeCoordinates.append((rx, ry))
-        }
-        
-        for marker in markers {
-            if marker.set < dataSets.count {
-                let dataSet = dataSets[marker.set]
-                
-                let x: GLfloat, y: GLfloat, z: GLfloat
-                if marker.index < dataSet.data2D.count {
-                    x = dataSet.data2D[marker.index].x
-                    y = dataSet.data2D[marker.index].y
-                    z = GLfloat.nan
-                } else if marker.index < dataSet.data3D.count {
-                    x = dataSet.data3D[marker.index].x
-                    y = dataSet.data3D[marker.index].y
-                    z = dataSet.data3D[marker.index].z
-                } else {
-                    continue
-                }
-                
-                appendMarker(x, y, z)
-            }
-        }
-        
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
-        
-        if(calibrationMode){
-            
-            if(n > 0 && n < 3){
-                if(showCalibrationDialog){
-                    self.markerOverlayView.showMarkers = true
-                    self.markerOverlayView.markers = relativeCoordinates
-                    let x = (logX ? exp(xlist[0]) : xlist[0])
-                    
-                    UIAlertController.PhyphoxUIAlertBuilder()
-                        .title(title: "Calibrate")
-                        .message(message: "Enter the value for calibration for value: " + String(x))
-                        .preferredStyle(style: .alert)
-                        .addTextField(configHandler: { textField in
-                            textField.addTarget(self, action: #selector(self.calibrationValueTextField(_:)), for: .editingDidEnd)
-                        })
-                        .addOkAction()
-                        .show(in: parentViewController(), animated: true)
-                    showCalibrationDialog = false
-                    
-                }
-                
-            } else {
-                self.markerOverlayView.markers = []
-            }
-            
-        } else{
-          
-            if n == 1 {
-                self.markerOverlayView.showMarkers = true
-                self.markerOverlayView.markers = relativeCoordinates
-                
-                var labelText = localize("graph_point_label")
-                let x = (logX ? exp(xlist[0]) : xlist[0])
-                labelText += "\n    "+(formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-                let y = (logY ? exp(ylist[0]) : ylist[0])
-                labelText += "\n    "+(formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-                if hasZData {
-                    let z = (logZ ? exp(zlist[0]) : zlist[0])
-                    labelText += "\n    "+(formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
-                }
-                setMarkerLabel(labelText)
-            } else if n == 2 {
-                self.markerOverlayView.showMarkers = true
-                self.markerOverlayView.markers = relativeCoordinates
-                
-                var labelText = localize("graph_difference_label")
-                let dx = abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-                labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-                let dy = abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))
-                labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-                if hasZData {
-                    let dz = abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1]))
-                    labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
-                }
-                labelText += "\n" + localize("graph_slope_label")
-                let slope = ((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-                labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-                setMarkerLabel(labelText)
-            } else if showLinearFit {
-                if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
-                    let a: GLfloat, b: GLfloat
-                    (a, b) = calculateLinearRegression(dataSet.data2D)
-                    
-                    let x1 = GLfloat(min.x)
-                    let y1 = a * GLfloat(min.x) + b
-                    appendMarker(x1, y1, GLfloat.nan)
-                    let x2 = GLfloat(max.x)
-                    let y2 = a * GLfloat(max.x) + b
-                    appendMarker(x2, y2, GLfloat.nan)
-                    
-                    self.markerOverlayView.showMarkers = false
-                    self.markerOverlayView.markers = relativeCoordinates
-                    
-                    var labelText = localize("graph_fit_label")
-                    labelText += "\na = " + (formatter.string(from: a as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-                    labelText += "\nb = " + (formatter.string(from: b as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-                    setMarkerLabel(labelText)
-                } else {
-                    setMarkerLabel(nil)
-                    self.markerOverlayView.markers = []
-                }
-            } else {
-                setMarkerLabel(nil)
-                self.markerOverlayView.markers = []
-        }
-        }
-        
-        if let markerLabelFrame = markerLabelFrame, n > 0 {
-            avgRX /= CGFloat(n)
-            
-            let w = markerLabelFrame.frame.width
-            let h = markerLabelFrame.frame.height
-            
-            let frame = glGraph.frame
-            let x = Swift.min(Swift.max(frame.minX + avgRX * frame.width - 0.5*w, 0), bounds.width - w)
-            let y = Swift.min(Swift.max(frame.minY + minRY * frame.height - h - 15.0, 0), bounds.height - h)
-            
-            markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
-        }
-    }
-    
     
     private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
         var sumX:GLfloat = 0.0
@@ -1771,6 +1599,324 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
                 refreshMarkers()
             }
         }
+    }
+    
+}
+
+//MARK: - Extension that defines logics for refresh marker view
+
+extension ExperimentGraphView {
+    
+    private func refreshMarkers(){
+        let markerData = collectMarkerData()
+        let numberFormatter = createNumberFormatter()
+        
+        switch markerData.count {
+        case 1:
+            showSinglePointMarker(markerData: markerData, formatter: numberFormatter)
+            positionMarkerLabel(markerData: markerData)
+        case 2:
+            showDifferenceMarker(markerData: markerData, formatter: numberFormatter)
+            positionMarkerLabel(markerData: markerData)
+        default:
+            if showLinearFit {
+                showLinearFitMarker(formatter: numberFormatter)
+            } else {
+                clearMarkers()
+            }
+        }
+        
+        positionMarkerLabel(markerData: markerData)
+    }
+    
+    private func showSinglePointMarker(markerData: MarkerData, formatter: NumberFormatter) {
+        self.markerOverlayView.showMarkers = true
+        self.markerOverlayView.markers = markerData.relativeCoordinates
+        
+        let labelText = buildSinglePointLabel(
+                x: markerData.xValues[0],
+                y: markerData.yValues[0],
+                z: markerData.zValues[0],
+                formatter: formatter
+            )
+        
+        setMarkerLabel(labelText)
+    }
+    
+    private func showDifferenceMarker(markerData: MarkerData, formatter: NumberFormatter) {
+        markerOverlayView.showMarkers = true
+        markerOverlayView.markers = markerData.relativeCoordinates
+        
+        let labelText = buildDifferenceLabel(
+                x1: markerData.xValues[0], x2: markerData.xValues[1],
+                y1: markerData.yValues[0], y2: markerData.yValues[1],
+                z1: markerData.zValues[0], z2: markerData.zValues[1],
+                formatter: formatter
+            )
+            setMarkerLabel(labelText)
+        
+    }
+    
+    private func showLinearFitMarker(formatter: NumberFormatter) {
+        guard let dataSet = dataSets.first, dataSet.data2D.count >= 2 else {
+               clearMarkers()
+               return
+           }
+        
+        let (slope, intercept) = calculateLinearRegression(dataSet.data2D)
+        
+        let fitMarkerData = createLinearFitMarkerData(slope: slope, intercept: intercept)
+        
+        self.markerOverlayView.showMarkers = false
+        self.markerOverlayView.markers = fitMarkerData.relativeCoordinates
+        
+        let labelText = buildLinearFitLabel(slope: slope, intercept: intercept, formatter: formatter)
+        setMarkerLabel(labelText)
+        
+        positionMarkerLabel(markerData: fitMarkerData)
+        
+    }
+    
+    private func clearMarkers() {
+        setMarkerLabel(nil)
+        markerOverlayView.markers = []
+    }
+    
+    private struct MarkerData {
+        let relativeCoordinates: [(CGFloat, CGFloat)]
+        let xValues: [GLfloat]
+        let yValues: [GLfloat]
+        let zValues: [GLfloat]
+        let averageRelativeX: CGFloat
+        let minimumRelativeY: CGFloat
+        let count: Int
+    }
+    
+    private func collectMarkerData() -> MarkerData {
+        var relativeCoordinates: [(CGFloat, CGFloat)] = []
+        var xValues: [GLfloat] = []
+        var yValues: [GLfloat] = []
+        var zValues: [GLfloat] = []
+        var totalRelativeX = CGFloat(0.0)
+        var minimumRelativeY = CGFloat.infinity
+        var count = 0
+        
+        let minPoint = self.min
+        let maxPoint = self.max
+        
+        for marker in markers {
+            guard marker.set < dataSets.count else { continue }
+            
+            let dataset = dataSets[marker.set]
+            let coordinates = extractCoordinates(from: dataset, at: marker.index)
+            
+            guard let (x, y, z) = coordinates else { continue }
+            
+            let relativeCoordinate = calculateRelativeCoordinate(x: x, y: y, min: minPoint, max: maxPoint)
+            
+            xValues.append(x)
+            yValues.append(y)
+            zValues.append(z)
+            
+            relativeCoordinates.append(relativeCoordinate)
+            
+            totalRelativeX += relativeCoordinate.0
+            count += 1
+                    
+            if relativeCoordinate.1 < minimumRelativeY {
+                minimumRelativeY = relativeCoordinate.1
+            }
+            
+            
+        }
+        let averageRelativeX = count > 0 ? totalRelativeX / CGFloat(count) : 0
+        
+        
+        return MarkerData(
+                relativeCoordinates: relativeCoordinates,
+                xValues: xValues,
+                yValues: yValues,
+                zValues: zValues,
+                averageRelativeX: averageRelativeX,
+                minimumRelativeY: minimumRelativeY,
+                count: count
+            )
+    }
+    
+    private func extractCoordinates(from dataSet: DataSet, at index: Int) -> (GLfloat, GLfloat, GLfloat)? {
+        if index < dataSet.data2D.count {
+            let point = dataSet.data2D[index]
+            return (point.x, point.y, GLfloat.nan)
+        } else if index < dataSet.data3D.count {
+            let point = dataSet.data3D[index]
+            return (point.x, point.y, point.z)
+        }
+        return nil
+    }
+    
+    private func calculateRelativeCoordinate(x: GLfloat, y: GLfloat,min: GraphPoint3D<Double>, max: GraphPoint3D<Double>) -> (CGFloat, CGFloat) {
+        
+        let offsetX = calculateTimeOffset(value: x, isXAxis: true)
+        let offsetY = calculateTimeOffset(value: y, isXAxis: false)
+        
+        let relativeX = CGFloat((Double(x) + offsetX - min.x) / (max.x - min.x))
+        let relativeY = CGFloat((max.y - Double(y) - offsetY) / (max.y - min.y))
+        
+        return (relativeX, relativeY)
+        
+    }
+    
+    private func calculateTimeOffset(value: GLfloat, isXAxis: Bool) -> Double {
+        let isTimeAxis = isXAxis ? descriptor.timeOnX : descriptor.timeOnY
+        
+        guard isTimeAxis else { return 0.0 }
+        
+        if systemTime && !descriptor.linearTime {
+            return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(value)))
+        } else if !systemTime && descriptor.linearTime {
+            return -timeReference.getTotalGapByIndex(
+                i: timeReference.getReferenceIndexFromLinearTime(t: Double(value))
+            )
+        }
+        
+        return 0.0
+        
+        
+    }
+    
+    private func createNumberFormatter() -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.usesSignificantDigits = true
+        formatter.minimumSignificantDigits = 4
+        formatter.maximumSignificantDigits = 8
+        return formatter
+    }
+    
+    private func buildSinglePointLabel(x: GLfloat, y: GLfloat, z: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_point_label")
+        
+        let convertedX = convertValue(x, isLogarithmic: logX)
+        labelText += "\n    " + formatValue(convertedX, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
+        
+        let convertedY = convertValue(y, isLogarithmic: logY)
+            labelText += "\n    " + formatValue(convertedY, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+            
+        if hasZData {
+            let convertedZ = convertValue(z, isLogarithmic: logZ)
+            labelText += "\n    " + formatValue(convertedZ, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
+        }
+            
+        return labelText
+        
+    }
+    
+    private func buildDifferenceLabel(x1: GLfloat, x2: GLfloat, y1: GLfloat, y2: GLfloat, z1: GLfloat, z2: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_difference_label")
+        
+        let convertedX1 = convertValue(x1, isLogarithmic: logX)
+        let convertedX2 = convertValue(x2, isLogarithmic: logX)
+        let dx = abs(convertedX1 - convertedX2)
+        labelText += "\n    " + formatValue(dx, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
+        
+        let convertedY1 = convertValue(y1, isLogarithmic: logY)
+        let convertedY2 = convertValue(y2, isLogarithmic: logY)
+        let dy = abs(convertedY1 - convertedY2)
+        labelText += "\n    " + formatValue(dy, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+        
+        if hasZData {
+            let convertedZ1 = convertValue(z1, isLogarithmic: logZ)
+            let convertedZ2 = convertValue(z2, isLogarithmic: logZ)
+            let dz = abs(convertedZ1 - convertedZ2)
+            labelText += "\n    " + formatValue(dz, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
+        }
+        
+        labelText += "\n" + localize("graph_slope_label")
+        let slope = (convertedY1 - convertedY2) / (convertedX1 - convertedX2)
+        labelText += "\n    " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
+        
+        return labelText
+    }
+    
+    private func buildLinearFitLabel(slope: GLfloat, intercept: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_fit_label")
+        labelText += "\na = " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
+        labelText += "\nb = " + formatValue(intercept, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+        return labelText
+    }
+    
+    private func convertValue(_ value: GLfloat, isLogarithmic: Bool) -> GLfloat {
+        return isLogarithmic ? exp(value) : value
+    }
+
+    private func formatValue(_ value: GLfloat, formatter: NumberFormatter) -> String {
+        return formatter.string(from: value as NSNumber) ?? "N/A"
+    }
+
+    private func formatUnit(_ unit: String) -> String {
+        return unit.isEmpty ? "" : " " + unit
+    }
+    
+    private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
+        let minPoint = self.min
+        let maxPoint = self.max
+        
+        // Calculate the two endpoints of the fit line
+        let x1 = GLfloat(minPoint.x)
+        let y1 = slope * x1 + intercept
+        let coord1 = calculateRelativeCoordinate(x: x1, y: y1, min: minPoint, max: maxPoint)
+        
+        let x2 = GLfloat(maxPoint.x)
+        let y2 = slope * x2 + intercept
+        let coord2 = calculateRelativeCoordinate(x: x2, y: y2, min: minPoint, max: maxPoint)
+        
+        // Build the marker data similar to appendMarker logic
+        let relativeCoordinates = [coord1, coord2]
+        let xValues = [x1, x2]
+        let yValues = [y1, y2]
+        let zValues = [GLfloat.nan, GLfloat.nan]
+        
+        // Calculate average relative X and minimum relative Y
+        let averageRelativeX = (coord1.0 + coord2.0) / 2.0
+        let minimumRelativeY = Swift.min(coord1.1, coord2.1)
+        
+        return MarkerData(
+            relativeCoordinates: relativeCoordinates,
+            xValues: xValues,
+            yValues: yValues,
+            zValues: zValues,
+            averageRelativeX: averageRelativeX,
+            minimumRelativeY: minimumRelativeY,
+            count: 2
+        )
+    }
+    
+    private func positionMarkerLabel(markerData: MarkerData) {
+        guard let markerLabelFrame = markerLabelFrame, markerData.count > 0 else { return }
+        
+        let labelWidth = markerLabelFrame.frame.width
+        let labelHeight = markerLabelFrame.frame.height
+        
+        let graphFrame = glGraph.frame
+        
+        let x = Swift.min(
+            Swift.max(
+                graphFrame.minX + markerData.averageRelativeX * graphFrame.width - 0.5 * labelWidth,
+                0
+            ),
+            bounds.width - labelWidth
+        )
+        
+        let y = Swift.min(
+            Swift.max(
+                graphFrame.minY + markerData.minimumRelativeY * graphFrame.height - labelHeight - 15.0,
+                0
+            ),
+            bounds.height - labelHeight
+        )
+        
+        markerLabelFrame.frame = CGRect(x: x, y: y, width: labelWidth, height: labelHeight)
+        
+        
     }
     
 }
