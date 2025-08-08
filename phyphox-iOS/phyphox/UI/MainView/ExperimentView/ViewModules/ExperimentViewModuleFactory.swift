@@ -31,7 +31,7 @@ final class ExperimentViewModuleFactory {
                     views.append(ExperimentGraphView(descriptor: descriptor, resourceFolder: resourceFolder))
                 }
                 */
-                views.append(ExperimentGraphView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append(ExperimentGraphView2(descriptor: descriptor, resourceFolder: resourceFolder))
             }
             else if let descriptor = descriptor as? EditViewDescriptor {
                 views.append(ExperimentEditView(descriptor: descriptor, resourceFolder: resourceFolder))

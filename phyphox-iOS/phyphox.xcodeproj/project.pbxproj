@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -664,6 +664,10 @@
 		C0FC14882707C19900512064 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = ZipZap/ZipZap.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		A1984D2F2E3FB00500C21D16 /* ExperimentGraphViewModule */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ExperimentGraphViewModule; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		6B7BF7771C130425007408FB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -724,6 +728,7 @@
 		6B2E0F9D205939F3008FAA91 /* Dynamic */ = {
 			isa = PBXGroup;
 			children = (
+				A1984D2F2E3FB00500C21D16 /* ExperimentGraphViewModule */,
 				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
 				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
 				6B00F0A31C457B7200971941 /* ExperimentEditView.swift */,
@@ -1355,6 +1360,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A1984D2F2E3FB00500C21D16 /* ExperimentGraphViewModule */,
 			);
 			name = phyphox;
 			packageProductDependencies = (
