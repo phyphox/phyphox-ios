@@ -20,13 +20,7 @@ struct WavelengthCalibrationCoefficients {
     }
 }
 
-enum CalibrationState {
-    case inactive
-    case waitingForFirstPoint
-    case waitingForSecondPoint
-    case calibrated
-    case applied
-}
+
 
 class GraphCalibrationView : UIView {
     

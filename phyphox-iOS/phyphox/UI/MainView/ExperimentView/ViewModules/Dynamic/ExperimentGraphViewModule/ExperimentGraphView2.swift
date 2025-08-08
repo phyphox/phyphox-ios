@@ -20,6 +20,7 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
     let markerSystem: GraphMarkerSystem
     let toolbarManager: GraphToolbarManager
     let layoutManager: GraphLayoutManager
+    let spectroscopyManager: SpectroscopyCalibrationManager
     
     let descriptor: GraphViewDescriptor
     let timeReference: ExperimentTimeReference
@@ -39,6 +40,9 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         didSet { handleResizableStateChange() }
     }
     var analysisRunning: Bool = false
+    
+    private var isSpectroscopyMode: Bool = false
+    private var spectroscopyStatusLabel: UILabel?
     
     var active = false {
         didSet {
@@ -63,6 +67,9 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         self.logY = descriptor.logY
         self.logZ = descriptor.logZ
         
+        //TODO: For now the calibration mode is regarded as spectrosopy mode
+        self.isSpectroscopyMode = descriptor.calibrationMode
+        
         if #available(iOS 13.0, *) {
             let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
             unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
@@ -81,6 +88,7 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
             timeReference: timeReference,
             graphRenderer: graphRenderer)
         self.toolbarManager = GraphToolbarManager()
+        self.spectroscopyManager = SpectroscopyCalibrationManager()
         self.layoutManager = GraphLayoutManager(
             descriptor: descriptor,
             unfoldMoreImageView: unfoldMoreImageView,
@@ -97,6 +105,7 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         layoutManager.setupSubviews(renderer: graphRenderer, markerSystem: markerSystem)
         addSubview(layoutManager.graphArea)
    
+        setupSpectroscopyUI()
         setupDelegates()
         setupGestures()
         registerForBufferUpdates()
@@ -116,6 +125,7 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         zoomManager.delegate = self
         markerSystem.delegate = self
         toolbarManager.delegate = self
+        spectroscopyManager.delegate = self
     }
     
     private func setupGestures() {
@@ -144,6 +154,26 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         }
     }
     
+    private func setupSpectroscopyUI(){
+        if isSpectroscopyMode {
+            toolbarManager.setShouldShowCalibration(true)
+            
+            spectroscopyStatusLabel = UILabel()
+            spectroscopyStatusLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+            spectroscopyStatusLabel?.textColor = UIColor(named: "textColor")
+            spectroscopyStatusLabel?.numberOfLines = 2
+            spectroscopyStatusLabel?.textAlignment = .center
+            spectroscopyStatusLabel?.isHidden = true
+            spectroscopyStatusLabel?.text = localize("spectroscopy_uncalibrated")
+            
+            if let statusLabel = spectroscopyStatusLabel {
+                layoutManager.graphArea.addSubview(statusLabel)
+            }
+            
+        }
+        
+    }
+    
     // MARK: - DynamicViewModule Protocol
     func setNeedsUpdate() {
         dataManager.setNeedsUpdate()
@@ -165,14 +195,16 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
         toolbarManager.handleResizableStateChange(newState)
         markerSystem.handleResizableStateChange(newState)
         
+        spectroscopyStatusLabel?.isHidden = newState != .exclusive || !isSpectroscopyMode
+        
         if newState != .exclusive {
             toolbarManager.toolbar?.removeFromSuperview()
+            //TODO: spectroscopyManager.resetCalibration() Should it reset when not in exclusive mode? Come to it after basic functionality is done.
         }
     }
     
     // MARK: - Event Handlers
     @objc  func handleTapp(_ sender: UITapGestureRecognizer) {
-        print("handle tap: ", resizableState)
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
@@ -255,6 +287,16 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
             zScaleFrame: layoutManager.zScaleFrame
         )
         markerSystem.updateLayout(graphFrame: layoutManager.graphFrame)
+        
+        if let statusLabel = spectroscopyStatusLabel, !statusLabel.isHidden {
+            let statusSize = statusLabel.sizeThatFits(bounds.size)
+                        statusLabel.frame = CGRect(
+                            x: layoutManager.graphFrame.maxX - statusSize.width - 10,
+                            y: layoutManager.graphFrame.minY + 10,
+                            width: statusSize.width,
+                            height: statusSize.height
+                        )
+        }
         
     }
     
@@ -376,10 +418,63 @@ extension ExperimentGraphView2: GraphToolbarDelegate {
         if mode != .pick {
             markerSystem.clearMarkers()
         }
+        
+        if mode == .calibrate {
+            spectroscopyManager.startCalibration()
+        }
     }
     
     func toolbarManagerDidRequestMenu(_ manager: GraphToolbarManager) {
         showToolbarMenu()
+    }
+}
+
+extension ExperimentGraphView2: SpectroscopyCalibrationDelegate {
+    func spectroscopyCalibrationDidStart(_ manager: SpectroscopyCalibrationManager) {
+        spectroscopyStatusLabel?.text = localize("spectroscopy_tap_first_point")
+        spectroscopyStatusLabel?.isHidden = false
+        markerSystem.clearMarkers()
+    }
+    
+    func spectroscopyCalibrationDidUpdatePoints(_ manager: SpectroscopyCalibrationManager, points: [(pixelIntensity: Double, wavelength: Double)], state: SpectroscopyCalibrationManager.CalibrationState) {
+        switch state {
+        case .firstPointSelected:
+            spectroscopyStatusLabel?.text = localize("spectroscopy_tap_second_point")
+        case.secondPointSelected:
+            spectroscopyStatusLabel?.text = localize("spectroscopy_calculating")
+        default:
+            break
+        }
+        
+        ////TODO:  marker system need to show the calibration point
+    }
+    
+    func spectroscopyCalibrationDidComplete(_ manager: SpectroscopyCalibrationManager, slope: Double, intercept: Double) {
+        //TODO: calibration system here need to get the calibration info and show this into the status label.
+        
+        //TODO: Transform the data and update graph
+        
+        //TODO: After the transformation is done need to again select the pick mode so that recalibration is possible straigt up
+        //TODO: Or can go to normalize graph view and show the result into another calibrated graph.
+    }
+    
+    func spectroscopyCalibrationDidReset(_ manager: SpectroscopyCalibrationManager) {
+        spectroscopyStatusLabel?.text = localize("spectroscopy_uncalibrated")
+        markerSystem.clearMarkers()
+        
+        //TODO: Also might require to revert spectroscopy calibration.
+    }
+    
+    func spectroscopyCalibration(_ manager: SpectroscopyCalibrationManager, shouldPresentDialog dialog: UIAlertController) {
+        layoutDelegate?.presentDialog(dialog)
+    }
+    
+    func spectroscopy(_ manager: SpectroscopyCalibrationManager, didFailWithError error: String) {
+        spectroscopyStatusLabel?.text = localize("spectroscopy_calibration_failed")
+        
+        let alert = UIAlertController(title: localize("error"), message: error, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
+        layoutDelegate?.presentDialog(alert)
     }
 }
 
@@ -491,6 +586,10 @@ extension ExperimentGraphView2 {
             if let buffer = self.descriptor.xInputBuffers[i] {
                 data.append((name: self.descriptor.localizedXLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedXUnit != "" ? "(" + self.descriptor.localizedXUnit + ")" : ""), buffer: buffer))
             }
+            
+            //TODO: Export calibrated wavelength data if available
+            
+            
             data.append((name: self.descriptor.localizedYLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedYUnit != "" ? "(" + self.descriptor.localizedYUnit + ")" : ""), buffer: self.descriptor.yInputBuffers[i]))
             if let buffer = self.descriptor.zInputBuffers[i] {
                 data.append((name: self.descriptor.localizedZLabel + (i > 0 ? " \(i+1)" : "") + (self.descriptor.localizedZUnit != "" ? "(" + self.descriptor.localizedZUnit + ")" : ""), buffer: buffer))

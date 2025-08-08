@@ -14,10 +14,19 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
     private var _currentMode: GraphMode = .none
     
     enum GraphMode: Int {
-        case panZoom = 0, pick, none
+        case panZoom = 0, pick, calibrate, none
     }
     
     var currentMode: GraphMode { return _currentMode }
+    
+    private var shouldShowCalibration: Bool = false
+    
+    func setShouldShowCalibration(_ show: Bool){
+        shouldShowCalibration = show
+        if toolbar != nil{
+            setupToolbar()
+        }
+    }
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state == .exclusive {
@@ -37,9 +46,23 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         
         let panZoomButton = UITabBarItem(title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: GraphMode.panZoom.rawValue)
         let pickButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: GraphMode.pick.rawValue)
-        let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: GraphMode.none.rawValue)
         
-        tabBar.items = [panZoomButton, pickButton, menuButton]
+        
+        tabBar.items = [panZoomButton, pickButton]
+        
+        if shouldShowCalibration {
+            var calibrationButton : UITabBarItem
+            if #available(iOS 13.0, *) {
+                calibrationButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(systemName: "compass.drawing"), tag: GraphMode.calibrate.rawValue)
+            } else {
+                calibrationButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "calibration"), tag: GraphMode.calibrate.rawValue)
+            }
+            tabBar.items?.append(calibrationButton)
+        }
+        
+        let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: GraphMode.none.rawValue)
+        tabBar.items?.append(menuButton)
+        
         tabBar.delegate = self
         
         // Styling
@@ -65,6 +88,9 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         case .pick:
             _currentMode = .pick
             delegate?.toolbarManager(self, didSelectMode: .pick)
+        case .calibrate:
+            _currentMode = .calibrate
+            delegate?.toolbarManager(self, didSelectMode: .calibrate)
         case .none:
             delegate?.toolbarManagerDidRequestMenu(self)
             tabBar.selectedItem = tabBar.items?[_currentMode.rawValue]
@@ -108,6 +134,15 @@ extension ExperimentGraphView2 : UITableViewDataSource, UITableViewDelegate {
     
     private func getMenuElements() -> [(String, Bool, () -> ())] {
         var elements: [(String, Bool, () -> ())] = []
+        
+        elements.append((localize("spectroscopy_reset_calibration"), false, {
+            self.spectroscopyManager.resetCalibration()
+        }))
+                    
+        if spectroscopyManager.isCalibrated {
+            elements.append((localize("spectroscopy_calibration_complete"), true, {}))
+        }
+        
         
         if (descriptor.timeOnX || descriptor.timeOnY) && !graphRenderer.hasZData {
             elements.append((localize("graph_tools_system_time"), systemTime, toggleSystemTime))
