@@ -13,7 +13,7 @@ class GraphMarkerSystem {
     private let descriptor: GraphViewDescriptor
     private let timeReference: ExperimentTimeReference
     private var markers: [(set: Int, index: Int)] = []
-    private var calibrationPoints: [(pixelIntensity: Double, wavelength: Double)] = []
+    private var calibrationPoints: [(pixelPosition: Double, wavelength: Double)] = []
     private var showLinearFit = false
     private var isShowingCalibration = false
     let markerOverlayView: MarkerOverlayView
@@ -48,9 +48,9 @@ class GraphMarkerSystem {
         }
     }
     
-    func handleTap(at point: CGPoint, dataSets: [GraphDataSet], bounds: GraphBounds, frameSize: CGSize) {
-        if let nearestPoint = getIndexOfNearestPoint(at: point, in: dataSets, bounds: bounds, frameSize: frameSize) {
-            markers = [nearestPoint]
+    func handleTap(nearestPoint: (set: Int, index: Int)? ) {
+        if let nearestPoint_ = nearestPoint {
+            markers = [nearestPoint_]
             showLinearFit = false
             isShowingCalibration = false
         } else {
@@ -60,14 +60,16 @@ class GraphMarkerSystem {
     }
     
     func handlePanGesture(translation: CGPoint, state: UIGestureRecognizer.State, at point: CGPoint, dataSets: [GraphDataSet], bounds: GraphBounds, frameSize: CGSize, sender: UIPanGestureRecognizer) {
+        let nearestPoint = getIndexOfNearestPoint(at: sender.location(in: graphRenderer.plotView ), in: dataSets, bounds: bounds, frameSize: frameSize)
+        
         if state == .began {
-            handleTap(at: sender.location(in: graphRenderer.plotView ) , dataSets: dataSets, bounds: bounds, frameSize: frameSize)
+            handleTap(nearestPoint: nearestPoint)
         } else if state == .changed || state == .ended {
-            if let nearestPoint = getIndexOfNearestPoint(at: sender.location(in: graphRenderer.plotView ), in: dataSets, bounds: bounds, frameSize: frameSize) {
+            if let nearestPoint_ = nearestPoint {
                 if markers.count > 1 {
-                    markers[1] = nearestPoint
+                    markers[1] = nearestPoint_
                 } else {
-                    markers.append(nearestPoint)
+                    markers.append(nearestPoint_)
                 }
                 refreshMarkers()
             }
@@ -243,7 +245,7 @@ class GraphMarkerSystem {
         markerOverlayView.frame = graphFrame
     }
     
-    func showCalibrationPoints(_ points: [(pixelIntensity: Double, wavelength: Double)]){
+    func showCalibrationPoints(_ points: [(pixelPosition: Double, wavelength: Double)]){
         calibrationPoints = points
         isShowingCalibration = true
         refreshCalibrationDisplay()
@@ -259,20 +261,18 @@ class GraphMarkerSystem {
         
         for point in calibrationPoints {
             // Convert pixel index to relative coordinate
-            let relativeX = CGFloat((point.pixelIntensity - min.x) / (max.x - min.x))
+            let relativeX = CGFloat((point.pixelPosition - min.x) / (max.x - min.x))
                        
-                       // Find the Y value at this pixel index from the data
+            // Find the Y value at this pixel index from the data
             var relativeY: CGFloat = 0.5 // Default to middle
             
             if let dataSet = currentDataSets.first,
-               Int(point.pixelIntensity) < dataSet.points2D.count {
-                let yValue = Double(dataSet.points2D[Int(point.pixelIntensity)].y)
+               Int(point.pixelPosition) < dataSet.points2D.count {
+                let yValue = Double(dataSet.points2D[Int(point.pixelPosition)].y)
                 relativeY = CGFloat((max.y - yValue) / (max.y - min.y))
             }
             
             relativeCoordinates.append((relativeX, relativeY))
-            
-           
             
         }
         
@@ -280,12 +280,12 @@ class GraphMarkerSystem {
         markerOverlayView.markers = relativeCoordinates
         
         // Show calibration info
-                let calibrationText = buildCalibrationStatusText()
-                delegate?.markerSystem(self, shouldShowLabel: calibrationText)
+        let calibrationText = buildCalibrationStatusText()
+        delegate?.markerSystem(self, shouldShowLabel: calibrationText)
                 
-                if let firstPoint = relativeCoordinates.first {
-                    delegate?.markerSystem(self, shouldPositionLabel: (firstPoint.0, firstPoint.1))
-                }
+        if let firstPoint = relativeCoordinates.first {
+            delegate?.markerSystem(self, shouldPositionLabel: (firstPoint.0, firstPoint.1))
+        }
     }
     
     private func buildCalibrationStatusText() -> String {
@@ -294,9 +294,9 @@ class GraphMarkerSystem {
             for (index, point) in calibrationPoints.enumerated() {
                 let pointNum = index + 1
                 if point.wavelength > 0 {
-                    text += "\n\(pointNum): \(Int(point.pixelIntensity))px → \(point.wavelength)nm"
+                    text += "\n\(pointNum): \(Int(point.pixelPosition))px → \(point.wavelength)nm"
                 } else {
-                    text += "\n\(pointNum): \(Int(point.pixelIntensity))px"
+                    text += "\n\(pointNum): \(Int(point.pixelPosition))px"
                 }
             }
             

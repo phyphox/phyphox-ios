@@ -28,6 +28,10 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         }
     }
     
+    func setMode(mode: GraphMode){
+        self._currentMode = mode
+    }
+    
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state == .exclusive {
             setupToolbar()
@@ -53,9 +57,9 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         if shouldShowCalibration {
             var calibrationButton : UITabBarItem
             if #available(iOS 13.0, *) {
-                calibrationButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(systemName: "compass.drawing"), tag: GraphMode.calibrate.rawValue)
+                calibrationButton = UITabBarItem(title: localize("graph_tools_calibrate"), image: UIImage(systemName: "compass.drawing"), tag: GraphMode.calibrate.rawValue)
             } else {
-                calibrationButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "calibration"), tag: GraphMode.calibrate.rawValue)
+                calibrationButton = UITabBarItem(title: localize("graph_tools_calibrate"), image: UIImage(named: "calibration"), tag: GraphMode.calibrate.rawValue)
             }
             tabBar.items?.append(calibrationButton)
         }
