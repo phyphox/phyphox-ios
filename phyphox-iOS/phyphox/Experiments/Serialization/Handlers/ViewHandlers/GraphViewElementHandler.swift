@@ -24,6 +24,7 @@ private struct GraphInputDescriptor {
     let bufferName: String
 }
 
+
 extension CGFloat: LosslessStringConvertible {
     public init?(_ description: String) {
         guard let double = Double(description) else { return nil }
@@ -59,6 +60,40 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
 
         results.append(GraphInputDescriptor(axis: axis, color: color, lineWidth: lineWidth, style: style, bufferName: text))
     }
+}
+
+private enum GraphCalibrationParameter : String, LosslessStringConvertible {
+    case slope
+    case intercept
+}
+
+private struct GraphOutputDescriptor {
+    let calibrationParameter: GraphCalibrationParameter
+    let bufferName: String
+}
+
+private final class GraphOutputElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [GraphOutputDescriptor]()
+    
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    private enum Attribute: String, AttributeKey {
+        case calibrationParameter
+    }
+    
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        guard !text.isEmpty else {
+            throw ElementHandlerError.missingText
+        }
+
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let calibrationParameter: GraphCalibrationParameter = try attributes.value(for: .calibrationParameter)
+        
+        results.append(GraphOutputDescriptor(calibrationParameter: calibrationParameter, bufferName: text))
+    }
+    
+    
 }
 
 struct GraphViewElementDescriptor {
@@ -120,6 +155,8 @@ struct GraphViewElementDescriptor {
     let showColorScale: Bool
     
     let calibrationMode: Bool
+    var calibrationSlopeBufferName: String?
+    var calibrationInterceptBufferName: String?
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -128,9 +165,10 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
     var childHandlers: [String : ElementHandler]
 
     private let inputHandler = GraphInputElementHandler()
+    private let outputHandler = GraphOutputElementHandler()
 
     init() {
-        childHandlers = ["input": inputHandler]
+        childHandlers = ["input": inputHandler, "output": outputHandler]
     }
 
     func startElement(attributes: AttributeContainer) throws {}
@@ -256,8 +294,6 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             partialUpdate = true
         }
         
-        let calibrationMode: Bool = try attributes.optionalValue(for: .calibrationMode) ?? false
-        
         let inputBuffers = inputHandler.results
         guard inputBuffers.count > 0 else {
             throw ElementHandlerError.missingElement("input")
@@ -313,7 +349,25 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
         
-        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, calibrationMode: calibrationMode)))
+        let calibrationMode: Bool = try attributes.optionalValue(for: .calibrationMode) ?? false
+        
+        var calibrationSlopeBufferName: String?
+        var calibrationInterceptBufferName: String?
+        
+        let outputBuffers = outputHandler.results
+        if(calibrationMode){
+            guard outputBuffers.count > 0 else { throw ElementHandlerError.missingElement("output")}
+
+            for outputBuffer in outputBuffers {
+                switch outputBuffer.calibrationParameter {
+                case .intercept : calibrationSlopeBufferName = outputBuffer.bufferName
+                case .slope : calibrationInterceptBufferName = outputBuffer.bufferName
+                }
+            }
+        }
+        
+        
+        results.append(.graph(GraphViewElementDescriptor(label: label, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, calibrationMode: calibrationMode,calibrationSlopeBufferName: calibrationSlopeBufferName, calibrationInterceptBufferName: calibrationInterceptBufferName)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

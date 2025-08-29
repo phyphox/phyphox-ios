@@ -152,7 +152,18 @@ final class ExperimentGraphView2: UIView, DynamicViewModule, ResizableViewModule
                 registerForUpdatesFromBuffer(zBuffer)
             }
         }
+        
+        if(descriptor.calibrationMode){
+            if let slope = descriptor.calibrationSlope{
+                registerForUpdatesFromBuffer(slope)
+            }
+            
+            if let intercept = descriptor.calibrationIntercept{
+                registerForUpdatesFromBuffer(intercept)
+            }
+        }
     }
+        
     
     private func setupSpectroscopyUI(){
         if isSpectroscopyMode {
@@ -458,7 +469,6 @@ extension ExperimentGraphView2: SpectroscopyCalibrationDelegate {
         default:
             break
         }
-        
         markerSystem.showCalibrationPoints(points)
         
     }
@@ -470,10 +480,12 @@ extension ExperimentGraphView2: SpectroscopyCalibrationDelegate {
                 }
                 
         
-        spectroscopyManager.createWavelengthBuffer(from: descriptor.xInputBuffers)
         
         //TODO: Transform the data and update graph
         applySpectroscopyCalibration(slope: slope, intercept: intercept)
+        
+        descriptor.calibrationSlope?.replaceValues([slope])
+        descriptor.calibrationIntercept?.replaceValues([intercept])
         
         //TODO: After the transformation is done need to again select the pick mode so that recalibration is possible straigt up
         //TODO: Or can go to normalize graph view and show the result into another calibrated graph.

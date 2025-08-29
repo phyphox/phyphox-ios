@@ -355,9 +355,6 @@ class GraphDataManager {
             let pauseMarkers = descriptor.hideTimeMarkers ? nil : generatePauseMarkers()
             
             // Prepare final data for main thread
-            let finalPoints2D = self.points2D
-            let finalPoints3D = self.points3D
-            let finalTimeReferenceSets = self.timeReferenceSets
             let finalMin = self.min
             let finalMax = self.max
             let finalBounds = GraphBounds(min: finalMin, max: finalMax)

@@ -6,6 +6,12 @@
 //  Copyright © 2025 RWTH Aachen. All rights reserved.
 //
 
+/**
+ problem: I have pixel position, now need to convert this pixel position from 0 ... 720 tp wavelength 600 ... 800
+ 
+ what I have is 
+ 
+ */
 
 class SpectroscopyCalibrationManager {
     weak var delegate: SpectroscopyCalibrationDelegate?
@@ -126,6 +132,7 @@ class SpectroscopyCalibrationManager {
         let intercept = point1.wavelength - slope * point1.pixelPosition
         
         calibrationParameters = (slope: slope, intercept: intercept)
+        
         calibrationState = .calibrated
         
         delegate?.spectroscopyCalibrationDidComplete(self, slope: slope, intercept: intercept)
