@@ -360,8 +360,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
 
             for outputBuffer in outputBuffers {
                 switch outputBuffer.calibrationParameter {
-                case .intercept : calibrationSlopeBufferName = outputBuffer.bufferName
-                case .slope : calibrationInterceptBufferName = outputBuffer.bufferName
+                case .slope : calibrationSlopeBufferName = outputBuffer.bufferName
+                case .intercept : calibrationInterceptBufferName = outputBuffer.bufferName
                 }
             }
         }
