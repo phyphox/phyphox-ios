@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewModule, UITabBarDelegate, ExportingViewModule, UITableViewDataSource, UITableViewDelegate  {
+final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, DescriptorBoundViewModule, UITabBarDelegate, ExportingViewModule, UITableViewDataSource, UITableViewDelegate  {
     
     // MARK: Properties for UI Elements
     let unfoldMoreImageView: UIImageView
@@ -251,10 +251,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
 
         attachDisplayLink(displayLink)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.executePlotTapp(_:)))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.executePlotTapp(_:)))
         graphArea.addGestureRecognizer(tapGesture)
         
-        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
+        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
@@ -1605,7 +1605,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, DescriptorBoundViewM
 
 //MARK: - Extension that defines logics for refresh marker view
 
-extension ExperimentGraphView {
+extension ExperimentGraphViewDepreciated {
     
     private func refreshMarkers(){
         let markerData = collectMarkerData()
@@ -1923,7 +1923,7 @@ extension ExperimentGraphView {
 
 //MARK: - Extensions
 
-extension ExperimentGraphView: GraphGridDelegate, GraphViewModule {
+extension ExperimentGraphViewDepreciated: GraphGridDelegate, GraphViewModule {
     func updatePlotArea() {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
@@ -1947,7 +1947,7 @@ extension ExperimentGraphView: GraphGridDelegate, GraphViewModule {
     }
 }
 
-extension ExperimentGraphView: DisplayLinkListener, AnalysisLimitedViewModule {
+extension ExperimentGraphViewDepreciated: DisplayLinkListener, AnalysisLimitedViewModule {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate && !analysisRunning {
             update()
@@ -1955,14 +1955,14 @@ extension ExperimentGraphView: DisplayLinkListener, AnalysisLimitedViewModule {
     }
 }
 
-extension ExperimentGraphView: ResizableViewModule {
+extension ExperimentGraphViewDepreciated: ResizableViewModule {
     
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
             unfoldMoreImageView.isHidden = true
             unfoldLessImageView.isHidden = false
-            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
-            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
+            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.panned(_:)))
+            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.pinched(_:)))
             if let gr = panGestureRecognizer {
                 glGraph.addGestureRecognizer(gr)
             }
@@ -1970,8 +1970,8 @@ extension ExperimentGraphView: ResizableViewModule {
                 glGraph.addGestureRecognizer(gr)
             }
             if let glZScale = glZScale {
-                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
-                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
+                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.zPanned(_:)))
+                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.zPinched(_:)))
                 if let gr = zPanGestureRecognizer {
                     glZScale.addGestureRecognizer(gr)
                 }
@@ -2008,7 +2008,7 @@ extension ExperimentGraphView: ResizableViewModule {
     
 }
 
-extension ExperimentGraphView: ApplyZoomDelegate, ZoomableViewModule, ApplyZoomDialogResultDelegate {
+extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule, ApplyZoomDialogResultDelegate {
     
     func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         

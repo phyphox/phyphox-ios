@@ -116,4 +116,46 @@ class GraphGestureHandler {
     
 }
 
+extension ExperimentGraphView: GraphGestureDelegate {
+    func gestureHandler(_ handler: GraphGestureHandler, didTapAt point: CGPoint) {
+        let nearestPoint = markerSystem.getIndexOfNearestPoint(at: point, in: dataManager.currentDataSets, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size)
+        
+        if toolbarManager.currentMode == .pick {
+            markerSystem.handleTap(nearestPoint: nearestPoint)
+        } else if toolbarManager.currentMode == .calibrate {
+            if(nearestPoint != nil){
+                spectroscopyManager.addCalibrationReferencePoint(pixelIndex: Double(nearestPoint?.index ?? 0))
+            }
+            markerSystem.handleTap(nearestPoint: nearestPoint)
+            
+        }
+    }
+    
+    func gestureHandler(_ handler: GraphGestureHandler, didPanWithTranslation translation: CGPoint, state: UIGestureRecognizer.State, sender: UIPanGestureRecognizer) {
+        if toolbarManager.currentMode == .panZoom {
+            zoomManager.applyPanGesture(translation: translation,
+                                        bounds: dataManager.currentBounds,
+                                        frameSize: layoutManager.graphFrame.size,
+                                        state: state)
+        } else if toolbarManager.currentMode == .pick {
+            markerSystem.handlePanGesture(translation: translation, state: state, at: translation, dataSets: dataManager.currentDataSets, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size, sender: sender)
+        }
+    }
+    
+    func gestureHandler(_ handler: GraphGestureHandler, didPinchWithScale scale: CGFloat, state: UIGestureRecognizer.State, center: CGPoint, touches: (CGPoint, CGPoint)) {
+        guard toolbarManager.currentMode == .panZoom else { return }
+        zoomManager.applyPinchGesture(scale: scale, center: center, touches: touches, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size, state: state)
+    }
+    
+    func gestureHandler(_ handler: GraphGestureHandler, didZPanWithTranslation translation: CGPoint, state: UIGestureRecognizer.State) {
+        guard toolbarManager.currentMode == .panZoom else { return }
+        zoomManager.applyZPanGesture(translation: translation, bounds: dataManager.currentBounds, frameSize: layoutManager.zScaleFrame.size, state: state)
+    }
+    
+    func gestureHandler(_ handler: GraphGestureHandler, didZPinchWithScale scale: CGFloat, state: UIGestureRecognizer.State, center: CGPoint, touches: (CGPoint, CGPoint)) {
+        guard toolbarManager.currentMode == .panZoom else { return }
+        zoomManager.applyZPinchGesture(scale: scale, center: center, touches: touches, bounds: dataManager.currentBounds, frameSize: layoutManager.zScaleFrame.size, state: state)
+    }
+}
+
 

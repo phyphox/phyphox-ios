@@ -267,3 +267,108 @@ extension GraphZoomManager {
         )
     }
 }
+
+// MARK: - ZoomableViewModule Implementation
+extension ExperimentGraphView {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+        
+        var applyX = false
+        var applyY = false
+        
+        switch applyToX {
+        case .this, .sameAxis:
+            applyX = true
+        case .sameUnit:
+            if targetX == descriptor.localizedXUnit {
+                applyX = true
+            }
+        case .sameVariable:
+            if targetX == descriptor.xInputBuffers[0]?.name {
+                applyX = true
+            }
+        case .none:
+            break
+        }
+        
+        switch applyToY {
+        case .this, .sameAxis:
+            applyY = true
+        case .sameUnit:
+            if targetY == descriptor.localizedYUnit {
+                applyY = true
+            }
+        case .sameVariable:
+            if targetY == descriptor.yInputBuffers[0].name {
+                applyY = true
+            }
+        case .none:
+            break
+        }
+        
+        if applyX || applyY {
+            zoomManager.applyZoomSettings(modeX: applyX ? modeX : .none, applyToX: applyX ? applyToX : .none, modeY: applyY ? modeY : .none, applyToY: applyY ? applyToY : .none)
+        }
+        
+        if (applyX && descriptor.timeOnX) || (applyY && descriptor.timeOnY) {
+            self.systemTime = systemTime
+        }
+    }
+}
+
+extension ExperimentGraphView: GraphZoomDelegate {
+    func zoomManagerDidUpdate(_ manager: GraphZoomManager) {
+        manager.notifyDataManager(dataManager)
+        dataManager.setNeedsUpdate()
+    }
+}
+
+extension ExperimentGraphView: ApplyZoomDialogResultDelegate {
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        zoomManager.previouslyKept = !(modeX == .reset && modeY == .reset)
+        layoutDelegate?.restoreLayout()
+        
+        // Apply zoom settings
+        zoomManager.applyZoomSettings(modeX: modeX, applyToX: applyToX, modeY: modeY, applyToY: applyToY)
+        
+        // Propagate to other graphs if needed
+        if applyToX != .this || applyToY != .this {
+            propagateZoomToOtherGraphs(modeX: modeX, applyToX: applyToX, modeY: modeY, applyToY: applyToY)
+        }
+    }
+    
+    private func propagateZoomToOtherGraphs(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        let targetX: String?
+        let targetY: String?
+        
+        switch applyToX {
+        case .sameUnit:
+            targetX = descriptor.localizedXUnit
+        case .sameVariable:
+            targetX = descriptor.xInputBuffers[0]?.name
+        default:
+            targetX = nil
+        }
+        
+        switch applyToY {
+        case .sameUnit:
+            targetY = descriptor.localizedYUnit
+        case .sameVariable:
+            targetY = descriptor.yInputBuffers[0].name
+        default:
+            targetY = nil
+        }
+        
+        let zoomBounds = zoomManager.currentZoomBounds
+        zoomDelegate?.applyZoom(
+            modeX: applyToX == .this ? .none : modeX,
+            applyToX: applyToX == .this ? .none : applyToX,
+            targetX: targetX,
+            modeY: applyToY == .this ? .none : modeY,
+            applyToY: applyToY == .this ? .none : applyToY,
+            targetY: targetY,
+            zoomMin: GraphPoint2D(x: zoomBounds.min.x, y: zoomBounds.min.y),
+            zoomMax: GraphPoint2D(x: zoomBounds.max.x, y: zoomBounds.max.y),
+            systemTime: systemTime
+        )
+    }
+}

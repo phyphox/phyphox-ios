@@ -107,7 +107,7 @@ protocol GraphToolbarDelegate: AnyObject {
     func toolbarManagerDidRequestMenu(_ manager: GraphToolbarManager)
 }
 
-extension ExperimentGraphView2 : UITableViewDataSource, UITableViewDelegate {
+extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
     func showToolbarMenu() {
        menuController = GraphMenuController(graph: self)
         menuController?.show(from: self, sourceView: toolbarManager.toolbar)
@@ -181,10 +181,10 @@ extension ExperimentGraphView2 : UITableViewDataSource, UITableViewDelegate {
 }
 
 class GraphMenuController {
-    private weak var graph: ExperimentGraphView2?
+    private weak var graph: ExperimentGraphView?
     var menuAlertController: UIAlertController?
     
-    init(graph: ExperimentGraphView2) {
+    init(graph: ExperimentGraphView) {
         self.graph = graph
     }
     
@@ -213,5 +213,23 @@ class GraphMenuController {
         if let controller = menuAlertController {
             graph?.layoutDelegate?.presentDialog(controller)
         }
+    }
+}
+
+extension ExperimentGraphView: GraphToolbarDelegate {
+    func toolbarManager(_ manager: GraphToolbarManager, didSelectMode mode: GraphToolbarManager.GraphMode) {
+        if mode != .pick {
+            markerSystem.clearMarkers()
+        }
+        
+        if mode == .calibrate {
+            spectroscopyManager.startCalibration()
+        } else {
+            spectroscopyManager.setUncalibrateMode()
+        }
+    }
+    
+    func toolbarManagerDidRequestMenu(_ manager: GraphToolbarManager) {
+        showToolbarMenu()
     }
 }

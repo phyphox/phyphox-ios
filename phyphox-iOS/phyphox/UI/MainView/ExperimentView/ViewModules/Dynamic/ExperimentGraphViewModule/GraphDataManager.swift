@@ -789,3 +789,40 @@ struct GraphBounds {
     let max: GraphPoint3D<Double>
 }
 
+extension ExperimentGraphView: GraphDataManagerDelegate {
+    func dataManager(_ manager: GraphDataManager, didUpdateData data: GraphDataResult, pauseMarkers: PauseRanges?) {
+        
+        // Update grid with pause markers
+        graphRenderer.gridView.grid = data.grid
+        graphRenderer.gridView.pauseMarkers = pauseMarkers
+        graphRenderer.zGridView?.grid = data.grid
+        
+        markerSystem.updateDataContext(dataSets: data.dataSets, bounds: data.bounds, systemTime: systemTime)
+        
+        // Update renderer with new data
+        graphRenderer.updateData(data)
+        
+        // GridView might have new frame, so need to adapt the plotView with it
+        graphRenderer.updateFrames(graphFrame: layoutManager.graphFrame, zScaleFrame: layoutManager.zScaleFrame)
+        
+        // Update GL graph view
+        graphRenderer.plotView.setPoints(
+            points2D: data.dataSets.map { $0.points2D },
+            points3D: data.dataSets.map { $0.points3D },
+            min: data.bounds.min,
+            max: data.bounds.max,
+            timeReferenceSets: data.dataSets.map { $0.timeReferenceSets }
+        )
+        
+        // Refresh markers
+        markerSystem.refreshMarkers()
+    }
+    
+    
+    
+    func dataManagerDidClearData() {
+        graphRenderer.clearGraph()
+        markerSystem.clearMarkers()
+    }
+}
+

@@ -8,6 +8,7 @@
 
 // MARK: - Graph Layout Manager
 class GraphLayoutManager {
+    weak var delegate: GraphLayoutDelegate?
     let graphArea = UIView()
     
     private let descriptor: GraphViewDescriptor
@@ -23,6 +24,8 @@ class GraphLayoutManager {
     // Marker label for display
     private var markerLabel: UILabel?
     private var markerLabelFrame: UIView?
+    var buttonView: UIView?
+    var calibrationHintLabel: UILabel?
     
     private let sideMargins: CGFloat = 10.0
     private let zScaleHeight: CGFloat = 40
@@ -39,11 +42,17 @@ class GraphLayoutManager {
         return descriptor.showColorScale && descriptor.style[0] == .map
     }
     
-    init(descriptor: GraphViewDescriptor, unfoldMoreImageView: UIImageView, unfoldLessImageView: UIImageView, gridView: GraphGridView, zGridView: GraphGridView?) {
+    init(descriptor: GraphViewDescriptor, gridView: GraphGridView, zGridView: GraphGridView?) {
         self.descriptor = descriptor
         
-        self.unfoldMoreImageView = unfoldMoreImageView
-        self.unfoldLessImageView = unfoldLessImageView
+        if #available(iOS 13.0, *) {
+            let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
+            self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+            self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
+        } else {
+            self.unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
+            self.unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
+        }
         
         // Initialize labels
         self.xLabel = Self.makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
@@ -103,15 +112,8 @@ class GraphLayoutManager {
         graphArea.addSubview(unfoldMoreImageView)
         graphArea.addSubview(unfoldLessImageView)
         
-        let labelTapGesture = UITapGestureRecognizer(target: self, action: #selector(labelTapTest(_:)))
-        label.addGestureRecognizer(labelTapGesture)
     }
     
-    // MARK: - Event Handlers
-    @objc  func labelTapTest(_ sender: UITapGestureRecognizer) {
-        print("labelTapTest", sender.numberOfTapsRequired)
-        
-    }
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         unfoldMoreImageView.isHidden = (state == .exclusive)
@@ -134,7 +136,8 @@ class GraphLayoutManager {
         }
     }
     
-    func updateMarkerLabel(_ text: String?) {
+    func updateMarkerLabel(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode) {
+        
         if let text = text {
             if markerLabel == nil {
                 markerLabel = UILabel()
@@ -150,20 +153,43 @@ class GraphLayoutManager {
                 markerLabelFrame?.layer.borderColor = UIColor(named: "separatorColor")?.cgColor
                 markerLabelFrame?.addSubview(markerLabel!)
                 markerLabelFrame?.isUserInteractionEnabled = false
+                
+                if(graphToolBarState == .calibrate){
+                    calibrationHintLabel = UILabel()
+                    calibrationHintLabel?.textColor = UIColor(named: "textColor")
+                    calibrationHintLabel?.font = UIFont.preferredFont(forTextStyle: .footnote)
+                    calibrationHintLabel?.numberOfLines = 2
+                    calibrationHintLabel?.text = "Do you want to continue with this calibration point?"
+                    buttonView = createCalibrationButtons()
+                    markerLabelFrame?.addSubview(calibrationHintLabel!)
+                    markerLabelFrame?.addSubview(buttonView!)
+                    markerLabelFrame?.isUserInteractionEnabled = true
+                }
+                
                 graphArea.addSubview(markerLabelFrame!)
             }
             
+            let padding = 10.0
+            
             markerLabel?.text = text
             let minSize = markerLabel!.sizeThatFits(graphArea.bounds.size)
-            markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: minSize.width + 20.0, height: minSize.height + 20.0)
-            markerLabel?.frame = CGRect(x: 10.0, y: 10.0, width: minSize.width, height: minSize.height)
+            markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: minSize.width + 50.0, height: minSize.height + (buttonView != nil ? 100.0 : 20.0))
+            markerLabel?.frame = CGRect(x: padding, y: padding, width: minSize.width, height: minSize.height)
+            calibrationHintLabel?.frame = CGRect(x: padding, y: minSize.height + 20.0, width: minSize.width + 30 , height: 40.0)
+            buttonView?.frame = CGRect(x:padding, y: minSize.height + 70.0, width: minSize.width + 30, height: 20.0)
             
         } else if markerLabel != nil {
-            markerLabel?.removeFromSuperview()
-            markerLabelFrame?.removeFromSuperview()
-            markerLabel = nil
-            markerLabelFrame = nil
+            removeMarkerLabelFrame()
         }
+    }
+    
+    func removeMarkerLabelFrame(){
+        markerLabel?.removeFromSuperview()
+        markerLabelFrame?.removeFromSuperview()
+        buttonView?.removeFromSuperview()
+        markerLabel = nil
+        markerLabelFrame = nil
+        buttonView = nil
     }
     
     func positionMarkerLabel(averageX: CGFloat, minY: CGFloat, viewBounds: CGSize) {
@@ -177,7 +203,55 @@ class GraphLayoutManager {
             let y = Swift.min(Swift.max(frame.minY + minY * frame.height - h - 15.0, 0), viewBounds.height - h)
             
             markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
+    }
+    
+    //MARK: spectroscopy view creation
+    private func createCalibrationButtons() -> UIStackView {
+        
+        func createButton(title: String, action: Selector) -> UIButton {
+            let button = UIButton(type: .system)
+            button.setTitle(title, for: .normal)
+            button.setTitleColor(UIColor(named: "highlightColor"), for: .normal)
+            button.titleLabel?.font = .systemFont(ofSize: 15.0)
+            button.addTarget(self, action: action, for: .touchUpInside)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: 90.0).isActive = true
+            
+            return button
         }
+        
+        let confirmButton = createButton(title: "Continue", action: #selector(confirmCalibration))
+        let dismissButton = createButton(title: "Dismiss", action: #selector(dismissCalibration))
+        
+        let stackView = UIStackView(arrangedSubviews: [confirmButton, dismissButton])
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 10.0
+        
+        return stackView
+    }
+    
+    @objc private func confirmCalibration() {
+        delegate?.confirmCalibrationPoint(self)
+    }
+
+    @objc private func dismissCalibration() {
+        removeMarkerLabelFrame()
+        delegate?.clearMarker(self)
+    }
+    
+    func createSpectroscopyStatusLabel() -> UILabel{
+        let spectroscopyStatusLabel = UILabel()
+        spectroscopyStatusLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
+        spectroscopyStatusLabel.textColor = UIColor(named: "textColor")
+        spectroscopyStatusLabel.numberOfLines = 2
+        spectroscopyStatusLabel.textAlignment = .center
+        spectroscopyStatusLabel.isHidden = true
+        spectroscopyStatusLabel.text = localize("spectroscopy_uncalibrated")
+        return spectroscopyStatusLabel
+    }
+    
     
     func refresh() {
         label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
@@ -250,4 +324,38 @@ class GraphLayoutManager {
                              y: yCoord + (graphHeight - s3.height) / 2.0,
                              width: s3.width, height: s3.height)
     }
+}
+
+protocol GraphLayoutDelegate: AnyObject {
+    func clearMarker(_ manager: GraphLayoutManager)
+    func confirmCalibrationPoint(_ manager: GraphLayoutManager)
+}
+
+extension ExperimentGraphView: GraphLayoutDelegate {
+    func confirmCalibrationPoint(_ manager: GraphLayoutManager) {
+        manager.removeMarkerLabelFrame()
+        if(spectroscopyManager.getCalibrationState() == .firstPointSelected) {
+            spectroscopyManager.requestToAddCalibratedPoint(pixelIndex: spectroscopyManager.getCalibrationPoints()[1].pixelPosition)
+        } else {
+            spectroscopyManager.requestToAddCalibratedPoint(pixelIndex: spectroscopyManager.getCalibrationPoints()[0].pixelPosition)
+        }
+        
+    }
+    
+    func clearMarker(_ manager: GraphLayoutManager) {
+        var calibrationPoints = spectroscopyManager.getCalibrationPoints()
+        if(spectroscopyManager.getCalibrationState() == .firstPointSelected){
+            if(spectroscopyManager.getCalibrationPoints().count == 2){
+                spectroscopyManager.setCalibrationPoints(points: [calibrationPoints.removeLast()])
+                markerSystem.clearLastMarker()
+            }
+        } else {
+            if(calibrationPoints.count == 1){
+                spectroscopyManager.setCalibrationPoints(points: [])
+                markerSystem.clearMarkers()
+            }
+        }
+        
+    }
+    
 }

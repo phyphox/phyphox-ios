@@ -55,6 +55,7 @@ class GraphMarkerSystem {
             isShowingCalibration = false
         } else {
             markers = []
+            delegate?.clearCalibrationSelectedPoint(self)
         }
         refreshMarkers()
     }
@@ -245,13 +246,12 @@ class GraphMarkerSystem {
         markerOverlayView.frame = graphFrame
     }
     
-    func showCalibrationPoints(_ points: [(pixelPosition: Double, wavelength: Double)]){
-        calibrationPoints = points
+    
+    func showCalibrationPoints(){
         isShowingCalibration = true
-        refreshCalibrationDisplay()
     }
     
-    private func refreshCalibrationDisplay(){
+    func refreshCalibrationDisplay(){
         guard isShowingCalibration else { return }
         
         var relativeCoordinates: [(CGFloat, CGFloat)] = []
@@ -279,13 +279,7 @@ class GraphMarkerSystem {
         markerOverlayView.showMarkers = true
         markerOverlayView.markers = relativeCoordinates
         
-        // Show calibration info
-        let calibrationText = buildCalibrationStatusText()
-        delegate?.markerSystem(self, shouldShowLabel: calibrationText)
-                
-        if let firstPoint = relativeCoordinates.first {
-            delegate?.markerSystem(self, shouldPositionLabel: (firstPoint.0, firstPoint.1))
-        }
+     
     }
     
     private func buildCalibrationStatusText() -> String {
@@ -303,20 +297,30 @@ class GraphMarkerSystem {
             return text
         }
     
-    
-    
-    
     func toggleLinearFit() {
         showLinearFit = !showLinearFit
         markers = []
         delegate?.markerSystemDidUpdate(self)
     }
     
-    
     func clearMarkers() {
         markers = []
         markerOverlayView.markers = []
         delegate?.markerSystem(self, shouldShowLabel: nil)
+    }
+    
+    func clearLastMarker(){
+        // Crash is here during 2nd point selection and clicking dismiss or calling clearMark()
+        if(!markers.isEmpty){
+            markers.removeLast()
+        }
+        
+        if(!(markerOverlayView.markers?.isEmpty ?? true)){
+            markerOverlayView.markers?.removeLast()
+        }
+        
+        delegate?.markerSystem(self, shouldShowLabel: nil)
+        
     }
     
 
@@ -329,7 +333,7 @@ extension GraphMarkerSystem {
     func refreshMarkers(){
         
         if isShowingCalibration {
-            refreshCalibrationDisplay()
+            clearMarkers()
             return
         }
         
@@ -349,9 +353,9 @@ extension GraphMarkerSystem {
                 delegate?.markerSystem(self, shouldPositionLabel: (markerData.averageRelativeX,currentBounds.min.x))
             } else {
                 clearMarkers()
+                delegate?.clearCalibrationSelectedPoint(self)
             }
         }
-        
     }
     
     private func showSinglePointMarker(markerData: MarkerData, formatter: NumberFormatter) {
@@ -808,5 +812,31 @@ extension GraphMarkerSystem {
 protocol GraphMarkerDelegate: AnyObject {
     func markerSystemDidUpdate(_ markerSystem: GraphMarkerSystem)
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowLabel text: String?)
+    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowCalibrationConfirmation text: String?)
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldPositionLabel position: (CGFloat, CGFloat))
+    func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem)
+}
+
+extension ExperimentGraphView: GraphMarkerDelegate {
+    
+    func markerSystemDidUpdate(_ markerSystem: GraphMarkerSystem) {
+        dataManager.setNeedsUpdate()
+    }
+    
+    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowLabel text: String?) {
+        layoutManager.updateMarkerLabel(text, graphToolBarState: toolbarManager.currentMode)
+    }
+    
+    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowCalibrationConfirmation text: String?){
+        //layoutManager.showCalibrationPointConfirmation(text)
+    }
+    
+    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldPositionLabel position: (CGFloat, CGFloat)) {
+        // Position marker label based on average marker position
+        layoutManager.positionMarkerLabel(averageX: position.0, minY: position.1, viewBounds: bounds.size)
+    }
+    
+    func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem) {
+        layoutManager.delegate?.clearMarker(layoutManager)
+    }
 }
