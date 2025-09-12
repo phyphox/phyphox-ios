@@ -92,6 +92,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         fatalError("init(coder:) has not been implemented")
     }
     
+    func getSpectroscopyMode() -> Bool {
+        return isSpectroscopyMode
+    }
+    
     // MARK: - Setup
     private func setupDelegates() {
         dataManager.delegate = self

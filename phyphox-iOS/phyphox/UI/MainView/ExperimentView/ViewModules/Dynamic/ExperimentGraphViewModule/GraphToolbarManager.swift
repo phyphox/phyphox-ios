@@ -139,15 +139,17 @@ extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
     private func getMenuElements() -> [(String, Bool, () -> ())] {
         var elements: [(String, Bool, () -> ())] = []
         
-        elements.append((localize("spectroscopy_reset_calibration"), false, {
-            self.spectroscopyManager.resetCalibration()
-        }))
-                    
-        if spectroscopyManager.isCalibrated {
-            elements.append((localize("spectroscopy_calibration_complete"), true, {}))
+        if(getSpectroscopyMode()){
+            elements.append((localize("spectroscopy_reset_calibration"), false, {
+                self.spectroscopyManager.resetCalibration()
+            }))
+            
+            if spectroscopyManager.isCalibrated {
+                elements.append((localize("spectroscopy_calibration_complete"), true, {}))
+            }
         }
-        
-        
+                    
+        // Graph tools items
         if (descriptor.timeOnX || descriptor.timeOnY) && !graphRenderer.hasZData {
             elements.append((localize("graph_tools_system_time"), systemTime, toggleSystemTime))
         }
@@ -164,6 +166,7 @@ extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
         
         elements.append((localize("graph_tools_export"), false, exportGraphData))
         
+        // Log scale items
         if descriptor.logX {
             elements.append((localize("graph_tools_log_x"), logX, { self.dataManager.toggleLogX() }))
         }
