@@ -207,6 +207,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
     func spectroscopyUnCalibrated(_ manager: SpectroscopyCalibrationManager) {
         spectroscopyStatusLabel?.text = ""
         spectroscopyStatusLabel?.isHidden = true
+        markerSystem.markerOverlayView.drawTheLine = true
         layoutSubviews()
         markerSystem.clearMarkers()
     }
