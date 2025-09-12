@@ -346,13 +346,13 @@ extension ExperimentGraphView: GraphLayoutDelegate {
         var calibrationPoints = spectroscopyManager.getCalibrationPoints()
         if(spectroscopyManager.getCalibrationState() == .firstPointSelected){
             if(spectroscopyManager.getCalibrationPoints().count == 2){
-                spectroscopyManager.setCalibrationPoints(points: [calibrationPoints.removeLast()])
-                markerSystem.clearLastMarker()
+                //spectroscopyManager.setCalibrationPoints(points: [calibrationPoints.removeLast()])
+                //markerSystem.clearLastMarker()
             }
         } else {
             if(calibrationPoints.count == 1){
                 spectroscopyManager.setCalibrationPoints(points: [])
-                markerSystem.clearMarkers()
+                //markerSystem.clearMarkers()
             }
         }
         

@@ -118,16 +118,19 @@ class GraphGestureHandler {
 
 extension ExperimentGraphView: GraphGestureDelegate {
     func gestureHandler(_ handler: GraphGestureHandler, didTapAt point: CGPoint) {
-        let nearestPoint = markerSystem.getIndexOfNearestPoint(at: point, in: dataManager.currentDataSets, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size)
+        let nearestPoint = markerSystem.getIndexOfNearestPoint(
+            at: point,
+            in: dataManager.currentDataSets,
+            bounds: dataManager.currentBounds,
+            frameSize: layoutManager.graphFrame.size)
         
         if toolbarManager.currentMode == .pick {
             markerSystem.handleTap(nearestPoint: nearestPoint)
         } else if toolbarManager.currentMode == .calibrate {
+            markerSystem.handleCalibrationSelection(nearestPoint: nearestPoint)
             if(nearestPoint != nil){
                 spectroscopyManager.addCalibrationReferencePoint(pixelIndex: Double(nearestPoint?.index ?? 0))
             }
-            markerSystem.handleTap(nearestPoint: nearestPoint)
-            
         }
     }
     

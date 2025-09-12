@@ -117,6 +117,7 @@ class SpectroscopyCalibrationManager {
         
         delegate?.spectroscopyCalibrationDidUpdatePoints(self, points: calibrationPoints, state: calibrationState)
         
+        
         if calibrationPoints.count == 2 {
             performCalibration()
         }
@@ -194,7 +195,6 @@ class SpectroscopyCalibrationManager {
 protocol SpectroscopyCalibrationDelegate: AnyObject {
     func spectroscopyUnCalibrated(_ manager: SpectroscopyCalibrationManager)
     func spectroscopyCalibrationDidStart(_ manager: SpectroscopyCalibrationManager)
-    func spectroscopyCalibrationConfirmSelecetedPoint(_ manger: SpectroscopyCalibrationManager, pixelPosition: Double)
     func spectroscopyCalibrationDidUpdatePoints(_ manager: SpectroscopyCalibrationManager, points: [(pixelPosition: Double, wavelength: Double)], state: SpectroscopyCalibrationManager.CalibrationState)
     func spectroscopyCalibrationDidComplete(_ manager: SpectroscopyCalibrationManager, slope: Double, intercept: Double)
     func spectroscopyCalibrationDidReset(_ manager: SpectroscopyCalibrationManager)
@@ -215,53 +215,45 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         spectroscopyStatusLabel?.text = localize("spectroscopy_tap_first_point")
         spectroscopyStatusLabel?.isHidden = false
         layoutSubviews()
+        markerSystem.markerOverlayView.drawTheLine = false
         markerSystem.clearMarkers()
-    }
-    
-    func spectroscopyCalibrationConfirmSelecetedPoint(_ manager: SpectroscopyCalibrationManager, pixelPosition: Double){
-        //layoutManager.delegate?.confirmCalibrationPoint(layoutManager)
-    
-        //layoutManager.showCalibrationPointConfirmation(calibrationConfirmationText)
+        markerSystem.clearCalibrationMarkers()
     }
     
     func spectroscopyCalibrationDidUpdatePoints(_ manager: SpectroscopyCalibrationManager, points: [(pixelPosition: Double, wavelength: Double)], state: SpectroscopyCalibrationManager.CalibrationState) {
         switch state {
         case .firstPointSelected:
             spectroscopyStatusLabel?.text = localize("spectroscopy_tap_second_point")
+            markerSystem.showCalibrationPointMarkers(for: points)
         case .secondPointSelected:
             spectroscopyStatusLabel?.text = localize("spectroscopy_calculating")
+            markerSystem.showCalibrationPointMarkers(for: points)
             markerSystem.showCalibrationPoints()
-            //markerSystem.refreshCalibrationDisplay()
         default:
             break
         }
+    
     }
     
     func spectroscopyCalibrationDidComplete(_ manager: SpectroscopyCalibrationManager, slope: Double, intercept: Double) {
         //TODO: calibration system here need to get the calibration info and show this into the status label.
         if let calibrationInfo = manager.getCalibrationInfo() { spectroscopyStatusLabel?.text = calibrationInfo }
-         
-        //TODO: Transform the data and update graph
-        applySpectroscopyCalibration(slope: slope, intercept: intercept)
         
         descriptor.calibrationSlope?.replaceValues([slope])
         descriptor.calibrationIntercept?.replaceValues([intercept])
         
+        markerSystem.markerOverlayView.showMarkers = false
         markerSystem.refreshMarkers()
         layoutManager.removeMarkerLabelFrame()
         
-        //TODO: After the transformation is done need to again select the pick mode so that recalibration is possible straigt up
-        //TODO: Or can go to normalize graph view and show the result into another calibrated graph.
-        
-        //toolbarManager.toolbar?.selectedItem = toolbarManager.toolbar?.items?.first { $0.tag == GraphToolbarManager.GraphMode.pick.rawValue }
-        //toolbarManager.setMode(mode: .pick)
+        // Keep calibration markers visible after completion
+        // Or clear them if you prefer: markerSystem.clearCalibrationMarkers()
     }
      
     func spectroscopyCalibrationDidReset(_ manager: SpectroscopyCalibrationManager) {
         spectroscopyStatusLabel?.text = localize("spectroscopy_tap_first_point")
         markerSystem.clearMarkers()
-        
-        //TODO: Also might require to revert spectroscopy calibration.
+        markerSystem.clearCalibrationMarkers()
     }
     
     func spectroscopyCalibration(_ manager: SpectroscopyCalibrationManager, shouldPresentDialog dialog: UIAlertController) {
@@ -276,10 +268,6 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         layoutDelegate?.presentDialog(alert)
     }
     
-    private func applySpectroscopyCalibration(slope: Double, intercept: Double) {
-            // Create calibrated wavelength buffer and update the descriptor
-            guard let yBuffer = descriptor.yInputBuffers.first else { return }
-        }
     
     private func revertSpectroscopyCalibration() {
             // Revert axis labels back to original
