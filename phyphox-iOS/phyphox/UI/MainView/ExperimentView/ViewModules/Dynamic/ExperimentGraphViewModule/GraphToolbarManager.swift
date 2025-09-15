@@ -17,6 +17,8 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         case panZoom = 0, pick, calibrate, none
     }
     
+    var isCalibrated: Bool = false
+    
     var currentMode: GraphMode { return _currentMode }
     
     private var shouldShowCalibration: Bool = false
@@ -85,19 +87,13 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         guard let mode = GraphMode(rawValue: item.tag) else { return }
         
-        switch mode {
-        case .panZoom:
-            _currentMode = .panZoom
-            delegate?.toolbarManager(self, didSelectMode: .panZoom)
-        case .pick:
-            _currentMode = .pick
-            delegate?.toolbarManager(self, didSelectMode: .pick)
-        case .calibrate:
-            _currentMode = .calibrate
-            delegate?.toolbarManager(self, didSelectMode: .calibrate)
-        case .none:
+        if mode == .none {
             delegate?.toolbarManagerDidRequestMenu(self)
             tabBar.selectedItem = tabBar.items?[_currentMode.rawValue]
+        } else {
+            _currentMode = mode
+            delegate?.toolbarManager(self, didSelectMode: mode)
+            
         }
     }
 }
@@ -225,10 +221,13 @@ extension ExperimentGraphView: GraphToolbarDelegate {
             markerSystem.clearMarkers()
         }
         
-        if mode == .calibrate {
-            spectroscopyManager.startCalibration()
-        } else {
-            spectroscopyManager.setUncalibrateMode()
+        if(!spectroscopyManager.isCalibrated){
+            if mode == .calibrate {
+                spectroscopyManager.startCalibration()
+            } else {
+                spectroscopyManager.resetCalibration()
+                spectroscopyManager.setUncalibrateMode()
+            }
         }
     }
     

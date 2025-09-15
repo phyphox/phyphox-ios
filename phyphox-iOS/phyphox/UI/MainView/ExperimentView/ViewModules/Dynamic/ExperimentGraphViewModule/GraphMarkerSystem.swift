@@ -14,7 +14,7 @@ class GraphMarkerSystem {
     private let timeReference: ExperimentTimeReference
     private var markers: [(set: Int, index: Int)] = []
     private var showLinearFit = false
-    private var isShowingCalibration = false
+    private var calibrationDone = false
     let markerOverlayView: MarkerOverlayView
     let graphRenderer: GraphRenderer
     
@@ -38,7 +38,7 @@ class GraphMarkerSystem {
         if state != .exclusive {
             markers = []
             showLinearFit = false
-            isShowingCalibration = false
+            calibrationDone = false
         }
     }
     
@@ -46,7 +46,7 @@ class GraphMarkerSystem {
         if let nearestPoint_ = nearestPoint {
             markers.append(nearestPoint_)
             showLinearFit = false
-            isShowingCalibration = false
+            calibrationDone = false
         } else {
             markers = []
             delegate?.clearCalibrationSelectedPoint(self)
@@ -296,8 +296,12 @@ class GraphMarkerSystem {
         calibrationMarkerViews.append(markerView)
     }
     
-    func showCalibrationPoints(){
-        isShowingCalibration = true
+    func setCalibrationDone(){
+        calibrationDone = true
+    }
+    
+    func setCalibrationUnDone(){
+        calibrationDone = false
     }
     
     func showCalibrationPointMarkers(for points: [(pixelPosition: Double, wavelength: Double)]) {
@@ -364,7 +368,7 @@ extension GraphMarkerSystem {
     
     func refreshMarkers(){
         
-        if isShowingCalibration {
+        if calibrationDone {
             clearMarkers()
             return
         }

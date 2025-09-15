@@ -150,6 +150,7 @@ extension ExperimentGraphView: GraphGestureDelegate {
     }
     
     func gestureHandler(_ handler: GraphGestureHandler, didPanWithTranslation translation: CGPoint, state: UIGestureRecognizer.State, sender: UIPanGestureRecognizer) {
+        if(spectroscopyManager.isCalibrated) { return }
         if toolbarManager.currentMode == .panZoom {
             zoomManager.applyPanGesture(translation: translation,
                                         bounds: dataManager.currentBounds,
@@ -161,6 +162,7 @@ extension ExperimentGraphView: GraphGestureDelegate {
     }
     
     func gestureHandler(_ handler: GraphGestureHandler, didPinchWithScale scale: CGFloat, state: UIGestureRecognizer.State, center: CGPoint, touches: (CGPoint, CGPoint)) {
+        if(spectroscopyManager.isCalibrated) { return }
         guard toolbarManager.currentMode == .panZoom else { return }
         zoomManager.applyPinchGesture(scale: scale, center: center, touches: touches, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size, state: state)
     }

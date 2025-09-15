@@ -229,7 +229,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         case .secondPointSelected:
             spectroscopyStatusLabel?.text = localize("spectroscopy_calculating")
             markerSystem.showCalibrationPointMarkers(for: points)
-            markerSystem.showCalibrationPoints()
+            markerSystem.setCalibrationDone()
         default:
             break
         }
@@ -247,6 +247,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         markerSystem.refreshMarkers()
         layoutManager.removeMarkerLabelFrame()
         
+        toolbarManager.isCalibrated = true
         // Keep calibration markers visible after completion
         // Or clear them if you prefer: markerSystem.clearCalibrationMarkers()
     }
@@ -255,6 +256,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         spectroscopyStatusLabel?.text = localize("spectroscopy_tap_first_point")
         markerSystem.clearMarkers()
         markerSystem.clearCalibrationMarkers()
+        markerSystem.setCalibrationUnDone()
     }
     
     func spectroscopyCalibration(_ manager: SpectroscopyCalibrationManager, shouldPresentDialog dialog: UIAlertController) {
