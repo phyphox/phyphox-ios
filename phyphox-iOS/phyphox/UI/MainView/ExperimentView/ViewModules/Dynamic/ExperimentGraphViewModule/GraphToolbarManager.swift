@@ -37,13 +37,13 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state == .exclusive {
             setupToolbar()
-            _currentMode = .panZoom
-            toolbar?.selectedItem = toolbar?.items?[GraphMode.panZoom.rawValue]
+            delegate?.toolbarManagerSelectionMode(self)
         } else {
             toolbar?.removeFromSuperview()
             toolbar = nil
-            _currentMode = .none
-            
+            if(_currentMode != .calibrate){
+                _currentMode = .none
+            }
         }
     }
     
@@ -101,6 +101,7 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
 protocol GraphToolbarDelegate: AnyObject {
     func toolbarManager(_ manager: GraphToolbarManager, didSelectMode mode: GraphToolbarManager.GraphMode)
     func toolbarManagerDidRequestMenu(_ manager: GraphToolbarManager)
+    func toolbarManagerSelectionMode(_ manager: GraphToolbarManager)
 }
 
 extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
@@ -216,11 +217,25 @@ class GraphMenuController {
 }
 
 extension ExperimentGraphView: GraphToolbarDelegate {
+    func toolbarManagerSelectionMode(_ manager: GraphToolbarManager) {
+        
+        if(!spectroscopyManager.getCalibrationPoints().isEmpty){
+            manager.setMode(mode: .calibrate)
+            manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.calibrate.rawValue]
+        } else {
+            manager.setMode(mode: .panZoom)
+            manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.panZoom.rawValue]
+        }
+        
+    }
+    
     func toolbarManager(_ manager: GraphToolbarManager, didSelectMode mode: GraphToolbarManager.GraphMode) {
         if mode != .pick {
             markerSystem.clearMarkers()
         }
         
+        // current problem is that, when I confirm first calibration point and reopen the exclusive mode and
+        // then select  and confirm second point, the previous calibration marker is removed but the calibration is done
         if(!spectroscopyManager.isCalibrated){
             if mode == .calibrate {
                 spectroscopyManager.startCalibration()
@@ -228,6 +243,7 @@ extension ExperimentGraphView: GraphToolbarDelegate {
                 spectroscopyManager.resetCalibration()
                 spectroscopyManager.setUncalibrateMode()
             }
+            
         }
     }
     

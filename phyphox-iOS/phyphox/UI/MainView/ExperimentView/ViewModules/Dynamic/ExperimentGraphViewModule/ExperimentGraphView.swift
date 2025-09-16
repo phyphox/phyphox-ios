@@ -178,8 +178,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         markerSystem.handleResizableStateChange(newState)
         
         if newState != .exclusive {
-            spectroscopyStatusLabel?.isHidden = true
-            toolbarManager.toolbar?.removeFromSuperview()
+            if(!spectroscopyManager.getCalibrationPoints().isEmpty){
+                toolbarManager.setMode(mode: .calibrate)
+            }
+            if(toolbarManager.currentMode != .calibrate){
+                spectroscopyStatusLabel?.isHidden = true
+            }
         }
     }
     

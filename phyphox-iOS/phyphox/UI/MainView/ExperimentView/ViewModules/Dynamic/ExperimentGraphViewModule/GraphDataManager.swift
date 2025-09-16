@@ -814,7 +814,11 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
             timeReferenceSets: data.dataSets.map { $0.timeReferenceSets }
         )
         
-        // Refresh markers
+        // Dont need to refresh marker from data manager during calibration. As the marker will not be empty, so will create unneccessarfy marker labels.
+        if(!spectroscopyManager.getCalibrationPoints().isEmpty){
+            return
+        }
+        
         markerSystem.refreshMarkers()
     }
     

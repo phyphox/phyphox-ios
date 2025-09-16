@@ -36,9 +36,10 @@ class GraphMarkerSystem {
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state != .exclusive {
-            markers = []
+            if(calibrationMarkerViews.isEmpty){
+                markers = []
+            }
             showLinearFit = false
-            calibrationDone = false
         }
     }
     
@@ -383,11 +384,10 @@ extension GraphMarkerSystem {
         case 2:
             if(calibrationMarkerViews.count > 0){
                 showSinglePointMarker(markerData: markerData, formatter: numberFormatter)
-                delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX,currentBounds.min.x))
             } else {
                 showDifferenceMarker(markerData: markerData, formatter: numberFormatter)
-                delegate?.markerSystem(self, shouldPositionLabel: (markerData.averageRelativeX,currentBounds.min.x))
             }
+            delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX,currentBounds.min.x))
             
         default:
             if showLinearFit {

@@ -73,9 +73,6 @@ class SpectroscopyCalibrationManager {
         }
     }
     
-    
-   
-    
     private func showWavelengthInputDialog(for pointIndex: Int, pixelValue: Double){
         let title = pointIndex == 0 ?
         localize("spectroscopy_first_wavelength_title") :
@@ -248,8 +245,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         layoutManager.removeMarkerLabelFrame()
         
         toolbarManager.isCalibrated = true
-        // Keep calibration markers visible after completion
-        // Or clear them if you prefer: markerSystem.clearCalibrationMarkers()
+        
     }
      
     func spectroscopyCalibrationDidReset(_ manager: SpectroscopyCalibrationManager) {
