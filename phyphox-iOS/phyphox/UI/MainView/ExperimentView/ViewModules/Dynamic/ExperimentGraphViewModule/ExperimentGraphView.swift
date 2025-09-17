@@ -177,7 +177,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         toolbarManager.handleResizableStateChange(newState)
         markerSystem.handleResizableStateChange(newState)
         
-        if newState != .exclusive {
+        if newState == .normal {
             if(!spectroscopyManager.getCalibrationPoints().isEmpty){
                 toolbarManager.setMode(mode: .calibrate)
             }

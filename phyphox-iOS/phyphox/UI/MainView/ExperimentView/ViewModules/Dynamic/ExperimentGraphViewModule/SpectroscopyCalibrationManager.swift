@@ -93,7 +93,8 @@ class SpectroscopyCalibrationManager {
         }
         
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel) { _ in
-            self.resetCalibration()
+            self.reconfigureCalibrationState()
+            self.delegate?.spectroscopyCalibrationDidDismiss(self)
         })
         
         alert.addAction(UIAlertAction(title: localize("ok"), style: .default) { _ in
@@ -101,11 +102,20 @@ class SpectroscopyCalibrationManager {
                let wavelength = Double(wavelengthText) {
                 self.setWavelengthForPoint(pointIndex, wavelength: wavelength)
             } else {
-                self.resetCalibration()
+                self.reconfigureCalibrationState()
+                self.delegate?.spectroscopyCalibrationDidDismiss(self)
             }
         })
         
         delegate?.spectroscopyCalibration(self, shouldPresentDialog: alert)
+    }
+    
+    private func reconfigureCalibrationState(){
+        if( calibrationState == .firstPointSelected){
+            calibrationState = .start
+        } else if(calibrationState == .secondPointSelected){
+            calibrationState = .firstPointSelected
+        }
     }
     
     private func setWavelengthForPoint(_ pointIndex: Int, wavelength: Double) {
@@ -115,7 +125,7 @@ class SpectroscopyCalibrationManager {
         
         delegate?.spectroscopyCalibrationDidUpdatePoints(self, points: calibrationPoints, state: calibrationState)
         
-        
+
         if calibrationPoints.count == 2 {
             performCalibration()
         }
@@ -196,6 +206,7 @@ protocol SpectroscopyCalibrationDelegate: AnyObject {
     func spectroscopyCalibrationDidUpdatePoints(_ manager: SpectroscopyCalibrationManager, points: [(pixelPosition: Double, wavelength: Double)], state: SpectroscopyCalibrationManager.CalibrationState)
     func spectroscopyCalibrationDidComplete(_ manager: SpectroscopyCalibrationManager, slope: Double, intercept: Double)
     func spectroscopyCalibrationDidReset(_ manager: SpectroscopyCalibrationManager)
+    func spectroscopyCalibrationDidDismiss(_ manager: SpectroscopyCalibrationManager)
     func spectroscopyCalibration(_ manager: SpectroscopyCalibrationManager, shouldPresentDialog dialog: UIAlertController)
     func spectroscopy(_ manager: SpectroscopyCalibrationManager, didFailWithError error: String)
 }
@@ -254,6 +265,10 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
         markerSystem.clearMarkers()
         markerSystem.clearCalibrationMarkers()
         markerSystem.setCalibrationUnDone()
+    }
+    
+    func spectroscopyCalibrationDidDismiss(_ manager: SpectroscopyCalibrationManager){
+        layoutManager.dismissReferencePoint()
     }
     
     func spectroscopyCalibration(_ manager: SpectroscopyCalibrationManager, shouldPresentDialog dialog: UIAlertController) {
