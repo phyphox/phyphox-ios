@@ -55,10 +55,11 @@ class SpectroscopyCalibrationManager {
         delegate?.spectroscopyUnCalibrated(self)
     }
     
-    func addCalibrationReferencePoint(pixelIndex: Double) {
+    func addCalibrationReferencePoint(pixelIndex: Double, calibrationMarkerViewCount: Int) {
         //guard calibrationPoints.count < 2 else { return }
         let point = (pixelPosition: pixelIndex, wavelength: 0.0)
-        calibrationPoints.append(point)
+        CalibrationGraphUtility().manageCalibrationArray(&calibrationPoints, currentCount: calibrationMarkerViewCount, newItem: point)
+       
     }
     
     func requestToAddCalibratedPoint(pixelIndex: Double) {
@@ -274,4 +275,29 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
             setNeedsLayout()
             dataManager.setNeedsUpdate()
         }
+}
+
+
+class CalibrationGraphUtility {
+    
+    func manageCalibrationArray<T>(_ array: inout [T], currentCount: Int, newItem: T) {
+        switch currentCount {
+        case 0:
+            array = [newItem]
+        case 1:
+            array.append(newItem)
+            if array.count > 2 {
+                array.remove(at: 1)
+            }
+        case 2:
+            array.append(newItem)
+            if array.count > 3 {
+                array.remove(at: 2)
+            }
+        default:
+            if !array.isEmpty {
+                array.removeLast()
+            }
+        }
+    }
 }

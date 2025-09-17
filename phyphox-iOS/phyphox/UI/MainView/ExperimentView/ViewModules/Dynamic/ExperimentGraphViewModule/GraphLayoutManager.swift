@@ -343,10 +343,9 @@ extension ExperimentGraphView: GraphLayoutDelegate {
     }
     
     func clearMarker(_ manager: GraphLayoutManager) {
-        var calibrationPoints = spectroscopyManager.getCalibrationPoints()
+        let calibrationPoints = spectroscopyManager.getCalibrationPoints()
         if(spectroscopyManager.getCalibrationState() == .firstPointSelected){
             if(spectroscopyManager.getCalibrationPoints().count == 2){
-                //spectroscopyManager.setCalibrationPoints(points: [calibrationPoints.removeLast()])
                 markerSystem.clearLastMarker()
             }
         } else {

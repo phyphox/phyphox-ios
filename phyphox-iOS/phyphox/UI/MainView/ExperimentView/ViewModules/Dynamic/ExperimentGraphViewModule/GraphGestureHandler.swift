@@ -127,23 +127,21 @@ extension ExperimentGraphView: GraphGestureDelegate {
             )
         }
         
-        func handleCalibrateMode(nearestPoint: (set: Int, index: Int)? ) {
-            guard spectroscopyManager.getCalibrationState() != .calibrated else { return }
-            
-            markerSystem.handleCalibrationSelection(nearestPoint: nearestPoint)
-            
-            if let point = nearestPoint {
-                spectroscopyManager.addCalibrationReferencePoint(pixelIndex: Double(point.index))
-            }
-        }
-        
         let  nearestPoint = findNearestPoint()
         
         switch toolbarManager.currentMode {
         case .pick:
             markerSystem.handleTap(nearestPoint: nearestPoint)
         case .calibrate:
-            handleCalibrateMode(nearestPoint: nearestPoint)
+            guard spectroscopyManager.getCalibrationState() != .calibrated else { return }
+            
+            markerSystem.handleCalibrationSelection(nearestPoint: nearestPoint)
+            
+            if let point = nearestPoint {
+                spectroscopyManager.addCalibrationReferencePoint(
+                    pixelIndex: Double(point.index),
+                    calibrationMarkerViewCount: markerSystem.getCalibrationMarkerNumbers())
+            }
         case .panZoom, .none:
             break
         }

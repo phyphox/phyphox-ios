@@ -43,9 +43,16 @@ class GraphMarkerSystem {
         }
     }
     
+    func getCalibrationMarkerNumbers() -> Int {
+        return calibrationMarkerViews.count
+    }
+    
     func handleCalibrationSelection(nearestPoint: (set: Int, index: Int)?) {
         if let nearestPoint_ = nearestPoint {
-            markers.append(nearestPoint_)
+            
+            CalibrationGraphUtility().manageCalibrationArray(&markers,
+                                                             currentCount: calibrationMarkerViews.count,
+                                                             newItem: nearestPoint_)
             showLinearFit = false
             calibrationDone = false
         } else {
@@ -405,10 +412,10 @@ extension GraphMarkerSystem {
         self.markerOverlayView.markers = markerData.relativeCoordinates
         
         let labelText = buildSinglePointLabel(
-                x: markerData.xValues[0],
-                y: markerData.yValues[0],
-                z: markerData.zValues[0],
-                formatter: formatter
+            x: markerData.xValues.last ?? markerData.xValues[0] ,
+            y: markerData.yValues.last ?? markerData.yValues[0],
+            z:markerData.zValues.last ?? markerData.zValues[0],
+            formatter: formatter
             )
         
         delegate?.markerSystem(self, shouldShowLabel: labelText)
