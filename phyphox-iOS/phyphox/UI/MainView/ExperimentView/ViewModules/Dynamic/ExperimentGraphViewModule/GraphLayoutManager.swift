@@ -124,6 +124,7 @@ class GraphLayoutManager {
             let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
             unfoldMoreImageView.frame = unfoldRect
             unfoldLessImageView.frame = unfoldRect
+            removeMarkerLabelFrame()
         }
     }
     

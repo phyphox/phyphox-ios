@@ -35,11 +35,12 @@ class GraphMarkerSystem {
         }
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
-        if state != .exclusive {
-            if(calibrationMarkerViews.isEmpty){
-                markers = []
-            }
+        if state == .normal {
+            if calibrationMarkerViews.isEmpty { markers = [] }
             showLinearFit = false
+        } else {
+            guard calibrationMarkerViews.isEmpty else { return }
+            refreshMarkers()
         }
     }
     
