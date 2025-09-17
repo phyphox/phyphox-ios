@@ -49,18 +49,18 @@ class GraphMarkerSystem {
     }
     
     func handleCalibrationSelection(nearestPoint: (set: Int, index: Int)?) {
+        
         if let nearestPoint_ = nearestPoint {
-            
-            CalibrationGraphUtility().manageCalibrationArray(&markers,
+            CalibrationGraphUtility().manageCalibrationPoints(&markers,
                                                              currentCount: calibrationMarkerViews.count,
                                                              newItem: nearestPoint_)
             showLinearFit = false
             calibrationDone = false
+            refreshMarkers()
         } else {
-            markers = []
-            delegate?.clearCalibrationSelectedPoint(self)
+            delegate?.dissmissSelectedCalibrationPoint(self)
+            if calibrationMarkerViews.isEmpty { refreshMarkers() }
         }
-        refreshMarkers()
     }
     
     func handleTap(nearestPoint: (set: Int, index: Int)? ) {
@@ -866,6 +866,7 @@ protocol GraphMarkerDelegate: AnyObject {
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldPositionLabel position: (CGFloat, CGFloat))
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldHideMarker hideMarker: Bool)
     func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem)
+    func dissmissSelectedCalibrationPoint(_ markerSystem: GraphMarkerSystem)
 }
 
 extension ExperimentGraphView: GraphMarkerDelegate {
@@ -894,5 +895,9 @@ extension ExperimentGraphView: GraphMarkerDelegate {
     
     func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem) {
         layoutManager.delegate?.clearMarker(layoutManager)
+    }
+    
+    func dissmissSelectedCalibrationPoint(_ markerSystem: GraphMarkerSystem){
+        layoutManager.dismissReferencePoint()
     }
 }

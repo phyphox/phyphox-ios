@@ -238,6 +238,10 @@ class GraphLayoutManager {
     }
 
     @objc private func dismissCalibration() {
+        dismissReferencePoint()
+    }
+    
+    func dismissReferencePoint(){
         removeMarkerLabelFrame()
         delegate?.clearMarker(self)
     }

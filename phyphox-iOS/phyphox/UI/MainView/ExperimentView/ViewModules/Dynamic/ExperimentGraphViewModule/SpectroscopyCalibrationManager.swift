@@ -58,7 +58,7 @@ class SpectroscopyCalibrationManager {
     func addCalibrationReferencePoint(pixelIndex: Double, calibrationMarkerViewCount: Int) {
         //guard calibrationPoints.count < 2 else { return }
         let point = (pixelPosition: pixelIndex, wavelength: 0.0)
-        CalibrationGraphUtility().manageCalibrationArray(&calibrationPoints, currentCount: calibrationMarkerViewCount, newItem: point)
+        CalibrationGraphUtility().manageCalibrationPoints(&calibrationPoints, currentCount: calibrationMarkerViewCount, newItem: point)
        
     }
     
@@ -280,7 +280,7 @@ extension ExperimentGraphView: SpectroscopyCalibrationDelegate {
 
 class CalibrationGraphUtility {
     
-    func manageCalibrationArray<T>(_ array: inout [T], currentCount: Int, newItem: T) {
+    func manageCalibrationPoints<T>(_ array: inout [T], currentCount: Int, newItem: T) {
         switch currentCount {
         case 0:
             array = [newItem]
