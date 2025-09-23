@@ -13,10 +13,8 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     var xAxis: DataBuffer?
     
     var analyzisPipelineState : MTLComputePipelineState?
-    
     var outputBuffer: MTLBuffer?
-    
-    var latestResults = (0..<70).map { Double($0) }
+    var latestResults = (0..<720).map { Double($0) }
     
     init(result: DataBuffer?, xAxis: DataBuffer?) {
         self.result = result
@@ -36,7 +34,6 @@ class SpectroscopyAnalyzer: AnalyzingModule {
             print("Failed to create pipeline analysis state, error \(error)")
         }
         
-        
     }
     
     override func doUpdate(metalCommandBuffer: any MTLCommandBuffer, cameraImageTextureY: any MTLTexture, cameraImageTextureCbCr: any MTLTexture) {
@@ -53,31 +50,19 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         
         analyzeTexture(analyzeEncoding: analyzisEncoding, cameraImageTextureY: cameraImageTextureY)
         
-        //analyseWithSyntheticData()
-        //analyzisEncoding.endEncoding()
-        
-        //analyze(analyzeEncoding: analyzisEncoding,cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureY)
-        
     }
-    
-    var syntheticBufferValues = [Double]()
-    
-    func analyseWithSyntheticData(){
-        syntheticBufferValues = (0..<70).map{ _ in .random(in: 0...150) }
-    }
-    
-    var textureHeight = 0
     
     func analyzeTexture(analyzeEncoding : MTLComputeCommandEncoder, cameraImageTextureY: MTLTexture){
         guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
         let height = cameraImageTextureY.height // does the height corresponds to the textures height or orientations height // 720
-        textureHeight = height
         let width = cameraImageTextureY.width // 1280
+        
+        let resultWidth = height
         
         let calculatedThreadSize = calculateThreadSize(selectedWidth: height, selectedHeight: 1)
         
-        outputBuffer = metalDevice.makeBuffer(length: height * MemoryLayout<Float>.stride, options: .storageModeShared)
+        outputBuffer = metalDevice.makeBuffer(length: resultWidth * MemoryLayout<Float>.stride, options: .storageModeShared)
         
         analyzeEncoding.setTexture(cameraImageTextureY, index: 0)
         analyzeEncoding.setBuffer(outputBuffer, offset: 0, index: 0)
@@ -120,17 +105,17 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     
     override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         
-       
-         if let baseAddress = outputBuffer?.contents() {
-             let luminancePtr = baseAddress.bindMemory(to: Float.self, capacity: textureHeight * 1)
-             
-             for i in 0..<latestResults.count {
-                 latestResults[i] = Double(luminancePtr[i])
-             }
-             
-         } else {
-             print("Error: buffer.contents() returned nil")
-         }
+        guard let baseAddress = outputBuffer?.contents() else {
+            print("Error: buffer.contents() returned nil")
+            return
+        }
+        
+        let textureWidth = (outputBuffer?.length ?? 1) / MemoryLayout<Float>.stride
+        let luminancePtr = baseAddress.bindMemory(to: Float.self, capacity: textureWidth)
+        
+        for i in 0..<latestResults.count {
+            latestResults[i] = Double(luminancePtr[i])
+        }
         
     }
     
@@ -138,12 +123,11 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         self.xAxis?.clear(reset: true)
         self.result?.clear(reset: true)
         
-        let incrementedAxisValue = Array(0..<(((self.xAxis?.size ?? 1) - 1))).map{ Double($0) }
-        
-        self.xAxis?.appendFromArray(incrementedAxisValue)
+        let xAxisValue = Array(0..<(((self.xAxis?.size ?? 1) - 1))).map{ Double($0) }
+        self.xAxis?.appendFromArray(xAxisValue)
     
-        if let zBuffer = result {
-            zBuffer.appendFromArray(latestResults)
+        if let resultBuffer = result {
+            resultBuffer.appendFromArray(latestResults)
            
         }
         

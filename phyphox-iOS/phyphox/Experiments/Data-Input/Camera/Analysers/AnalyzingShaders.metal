@@ -67,16 +67,29 @@ kernel void readLuminaceVal(
      uint2 tid [[ thread_position_in_threadgroup ]],
      uint2 groupSize [[ threads_per_threadgroup ]],
      uint2 groupId [[ threadgroup_position_in_grid ]],
-     uint2 groupsPerGrid [[ threadgroups_per_grid ]])
+     uint2 groupsPerGrid [[ threadgroups_per_grid ]]
+                            )
 {
-    float textureValue;
-    float4 textureVal = yTexture.read(gid2D);
-    float intensityVal = textureVal.r;
-   
-    uint threadsPerRow = groupsPerGrid.x * groupSize.x;
-    outBuffer[gid2D.x + gid2D.y * threadsPerRow] = intensityVal;
+    uint textureWidth = yTexture.get_width();
+    uint textureHeight = yTexture.get_height();
     
-    threadgroup_barrier(mem_flags::mem_threadgroup);
+    uint columnIndex = gid2D.x;
+    
+    if(columnIndex >= textureHeight){
+        return;
+    }
+    
+    float columnSum = 0.0;
+    
+    for(uint row = 0; row < textureWidth ; row++){
+        uint2 pixelCoord = uint2(row, columnIndex);
+        float pixelVaue = yTexture.read(pixelCoord).r;
+        columnSum += pixelVaue;
+    }
+    
+    float columnAverage = columnSum / float(textureWidth);
+    
+    outBuffer[columnIndex] = columnAverage;
     
 }
 
