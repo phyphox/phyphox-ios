@@ -19,7 +19,6 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     init(result: DataBuffer?, xAxis: DataBuffer?) {
         self.result = result
         self.xAxis = xAxis
-    
     }
     
     override func loadMetal() {
@@ -48,24 +47,28 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         
         analyzisEncoding.setComputePipelineState(analysisPipelineState)
         
-        analyzeTexture(analyzeEncoding: analyzisEncoding, cameraImageTextureY: cameraImageTextureY)
-        
+        analyzeTexture(analyzeEncoding: analyzisEncoding, cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr)
+       
     }
     
-    func analyzeTexture(analyzeEncoding : MTLComputeCommandEncoder, cameraImageTextureY: MTLTexture){
+    func analyzeTexture(analyzeEncoding : MTLComputeCommandEncoder, cameraImageTextureY: MTLTexture, cameraImageTextureCbCr: MTLTexture){
         guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
-        let height = cameraImageTextureY.height // does the height corresponds to the textures height or orientations height // 720
-        let width = cameraImageTextureY.width // 1280
+        let height = cameraImageTextureY.height
+        let width = cameraImageTextureY.width
         
-        let resultWidth = height
+        let resultWidth = getSelectedArea().width
         
-        let calculatedThreadSize = calculateThreadSize(selectedWidth: height, selectedHeight: 1)
+        let calculatedThreadSize = calculateThreadSize(selectedWidth: getSelectedArea().width, selectedHeight: getSelectedArea().height)
         
         outputBuffer = metalDevice.makeBuffer(length: resultWidth * MemoryLayout<Float>.stride, options: .storageModeShared)
         
+        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState, length: MemoryLayout<SelectionState>.size, options: .storageModeShared)
+        
         analyzeEncoding.setTexture(cameraImageTextureY, index: 0)
+        analyzeEncoding.setTexture(cameraImageTextureCbCr, index: 1)
         analyzeEncoding.setBuffer(outputBuffer, offset: 0, index: 0)
+        analyzeEncoding.setBuffer(selectionBuffer, offset: 0, index: 1)
         
         analyzeEncoding.dispatchThreadgroups(calculatedThreadSize.gridSize, threadsPerThreadgroup: calculatedThreadSize.threadGroupSize)
         
@@ -113,24 +116,24 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         let textureWidth = (outputBuffer?.length ?? 1) / MemoryLayout<Float>.stride
         let luminancePtr = baseAddress.bindMemory(to: Float.self, capacity: textureWidth)
         
+        latestResults =  (0..<getSelectedArea().width).map { Double($0) }
         for i in 0..<latestResults.count {
             latestResults[i] = Double(luminancePtr[i])
         }
-        
     }
     
     override func writeToBuffers() {
         self.xAxis?.clear(reset: true)
         self.result?.clear(reset: true)
         
-        let xAxisValue = Array(0..<(((self.xAxis?.size ?? 1) - 1))).map{ Double($0) }
+        
+        let xAxisValue = Array(0..<(((self.getSelectedArea().width ) - 1))).map{ Double($0) }
         self.xAxis?.appendFromArray(xAxisValue)
     
         if let resultBuffer = result {
             resultBuffer.appendFromArray(latestResults)
            
         }
-        
     }
     
     func calculateThreadSize(selectedWidth: Int, selectedHeight: Int) -> (threadGroupSize: MTLSize, gridSize: MTLSize, numOfThreadGroups: Int) {

@@ -62,7 +62,9 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
 
 kernel void readLuminaceVal(
      texture2d<float, access::read> yTexture [[texture(0)]],
+     texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
      device float *outBuffer [[buffer(0)]],
+     constant SelectionState& selectionState [[buffer(1)]],
      uint2 gid2D [[thread_position_in_grid]],
      uint2 tid [[ thread_position_in_threadgroup ]],
      uint2 groupSize [[ threads_per_threadgroup ]],
@@ -70,78 +72,47 @@ kernel void readLuminaceVal(
      uint2 groupsPerGrid [[ threadgroups_per_grid ]]
                             )
 {
-    uint textureWidth = yTexture.get_width();
-    uint textureHeight = yTexture.get_height();
     
-    uint columnIndex = gid2D.x;
+    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
+    uint selectedWidth =  selectionState.x2 - selectionState.x1;
+    uint selectedHeight =  selectionState.y2 - selectionState.y1;
     
-    if(columnIndex >= textureHeight){
+    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2 ||
+        globalID.x < selectionState.x1 || globalID.y < selectionState.y1) {
+        return;
+    }
+    
+    // Get the column index relative to the selected region
+    uint columnIndex = globalID.x - selectionState.x1;
+    
+    if(columnIndex >= selectedWidth){
         return;
     }
     
     float columnSum = 0.0;
     
-    for(uint row = 0; row < textureWidth ; row++){
-        uint2 pixelCoord = uint2(row, columnIndex);
-        float pixelVaue = yTexture.read(pixelCoord).r;
-        columnSum += pixelVaue;
+    for(uint row = 0; row < selectedHeight ; row++){
+        uint2 pixelCoord = uint2(selectionState.x1 + columnIndex, selectionState.y1 + row);
+        
+        if (pixelCoord.x < yTexture.get_width() && pixelCoord.y < yTexture.get_height()) {
+            float4 rgb = ycbcrToRGBTransform(
+                                             yTexture.read(pixelCoord),
+                                             cameraImageTextureCbCr.read(pixelCoord/2)
+                                             );
+            
+            float red = rgb.r;
+            float green = rgb.g;
+            float blue = rgb.b;
+                
+            float pixelVaue = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
+            columnSum += pixelVaue;
+        }
     }
     
-    float columnAverage = columnSum / float(textureWidth);
+    float columnAverage = columnSum / float(selectedHeight);
     
     outBuffer[columnIndex] = columnAverage;
     
-}
-
-
-kernel void readLuminaceValues(
-     texture2d<float, access::read> yTexture [[texture(0)]],
-     texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
-     device float *outBuffer [[buffer(0)]],
-     constant SelectionState& selectionState [[ buffer(1) ]],
-     uint2 gid2D [[thread_position_in_grid]],
-     uint2 tid [[ thread_position_in_threadgroup ]],
-     uint2 groupSize [[ threads_per_threadgroup ]],
-     uint2 groupId [[ threadgroup_position_in_grid ]],
-     uint2 groupsPerGrid [[ threadgroups_per_grid ]])
-{
-    float luminance;
-    threadgroup float localSums[256];
-    
-    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2) {
-        luminance = 0;
-    } else {
-        
-        // Sample this pixel's camera image color.
-        float4 rgb = ycbcrToRGBTransform(
-                                         yTexture.read(globalID),
-                                         cameraImageTextureCbCr.read(globalID/2)
-                                         );
-        
-        float red = rgb.r;
-        float green = rgb.g;
-        float blue = rgb.b;
-            
-        luminance = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
-        
-    }
-    
-    uint index = tid.y;
-    localSums[index] = luminance;
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    
-    if (tid.x == 0) {
-        float totalColumnSum = 0.0;
-        
-        for (uint i = 0; i < groupSize.y; i++) {
-            totalColumnSum += localSums[i];
-        }
-        
-        outBuffer[groupId.x + groupId.y * groupsPerGrid.x ] = totalColumnSum;
-    }
-
 }
 
 
