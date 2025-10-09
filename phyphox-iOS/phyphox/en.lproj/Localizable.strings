@@ -178,6 +178,7 @@
 "spectroscopy_wavelength_placeholder" = "Wavelength (nm)";
 "spectroscopy_calibration_points" = "Calibration Points:";
 "spectroscopy_calibration_info" = "Calibrated: λ = %.4f×pixel + %.2f";
+"spectroscopy_calibration_message" = "Do you want to continue with this calibration point?";
 
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
 "remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";

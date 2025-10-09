@@ -137,7 +137,131 @@ class GraphLayoutManager {
         }
     }
     
+    func createMarkerLabelFrame(){
+        markerLabelFrame = UIView()
+        markerLabelFrame?.backgroundColor = UIColor(named: "lightBackgroundColor")
+        markerLabelFrame?.layer.cornerRadius = 8.0
+        markerLabelFrame?.layer.masksToBounds = true
+        markerLabelFrame?.layer.borderWidth = 1.0
+        markerLabelFrame?.layer.borderColor = UIColor(named: "separatorColor")?.cgColor
+        markerLabelFrame?.isUserInteractionEnabled = false
+    }
+    
+    func createMarkerLabel(){
+        markerLabel = UILabel()
+        markerLabel?.textColor = UIColor(named: "textColor")
+        markerLabel?.numberOfLines = 0
+        markerLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+    }
+    
+    func createCalibrationHintLabel(){
+        calibrationHintLabel = UILabel()
+        calibrationHintLabel?.textColor = UIColor(named: "textColor")
+        calibrationHintLabel?.font = UIFont.preferredFont(forTextStyle: .footnote)
+        calibrationHintLabel?.numberOfLines = 0 // Allow multiple lines
+        calibrationHintLabel?.text = localize("spectroscopy_calibration_message")
+    }
+    
     func updateMarkerLabel(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode) {
+        
+        guard let text = text else {
+            if markerLabel != nil {
+                removeMarkerLabelFrame()
+            }
+            return
+        }
+        
+        if markerLabel == nil {
+            createMarkerLabel()
+            createMarkerLabelFrame()
+            markerLabelFrame?.addSubview(markerLabel!)
+            graphArea.addSubview(markerLabelFrame!)
+        }
+        
+        if(graphToolBarState == .pick){
+            calibrationHintLabel?.removeFromSuperview()
+            calibrationHintLabel = nil
+            buttonView?.removeFromSuperview()
+            buttonView = nil
+        } else if(graphToolBarState == .calibrate) {
+            createCalibrationHintLabel()
+            buttonView = createCalibrationButtons()
+            markerLabelFrame?.addSubview(calibrationHintLabel!)
+            markerLabelFrame?.addSubview(buttonView!)
+            markerLabelFrame?.isUserInteractionEnabled = true
+        }
+        
+        markerLabel?.text = text
+        
+        let padding = 10.0
+        let verticalSpacing = 10.0
+        let availableWidth = graphArea.bounds.width * 0.8 // Use 80% of available width
+        let contentWidth = availableWidth - (2 * padding)
+        
+        let markerLabelSize = markerLabel!.sizeThatFits(graphArea.frame.size)
+        
+        // Only calculate these if they exist (calibrate mode)
+        let calibrationHintLabelSize: CGSize
+        if let hintLabel = calibrationHintLabel {
+            calibrationHintLabelSize = hintLabel.sizeThatFits(CGSize(width: contentWidth, height: .greatestFiniteMagnitude))
+        } else {
+            calibrationHintLabelSize = .zero
+        }
+        
+        let buttonViewSize: CGSize
+        if let buttonView = buttonView {
+            buttonView.setNeedsLayout()
+            buttonView.layoutIfNeeded()
+            buttonViewSize = buttonView.systemLayoutSizeFitting(
+                CGSize(width: contentWidth, height: UIView.layoutFittingCompressedSize.height),
+                withHorizontalFittingPriority: .required,
+                verticalFittingPriority: .fittingSizeLevel
+            )
+        } else {
+            buttonViewSize = .zero
+        }
+        
+        // Calculate the width needed (use the widest element that exists)
+        var maxContentWidth = markerLabelSize.width
+        if calibrationHintLabelSize.width > 0 {
+            maxContentWidth = max(maxContentWidth, calibrationHintLabelSize.width)
+        }
+        if buttonViewSize.width > 0 {
+            maxContentWidth = max(maxContentWidth, buttonViewSize.width)
+        }
+        
+        let frameWidth = min(maxContentWidth + (2 * padding), availableWidth)
+        
+        // Calculate total height - only include elements that exist
+        var totalHeight = padding + markerLabelSize.height + padding
+        
+        if calibrationHintLabelSize.height > 0 {
+            totalHeight += verticalSpacing + calibrationHintLabelSize.height
+        }
+        
+        if buttonViewSize.height > 0 {
+            totalHeight += verticalSpacing + buttonViewSize.height
+        }
+        
+        // Set markerLabelFrame
+        markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: frameWidth, height: totalHeight)
+        
+        var yOffset = padding
+        markerLabel?.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: markerLabelSize.height)
+        
+        // Only layout calibration elements if they exist
+        if let hintLabel = calibrationHintLabel, calibrationHintLabelSize.height > 0 {
+            yOffset += markerLabelSize.height + verticalSpacing
+            hintLabel.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: calibrationHintLabelSize.height)
+        }
+        
+        if let buttons = buttonView, buttonViewSize.height > 0 {
+            yOffset += calibrationHintLabelSize.height + verticalSpacing
+            buttons.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: buttonViewSize.height)
+        }
+    }
+    
+    func updateMarkerLabel_(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode) {
         
         if let text = text {
             if markerLabel == nil {
@@ -206,7 +330,6 @@ class GraphLayoutManager {
             markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
     }
     
-    //MARK: spectroscopy view creation
     private func createCalibrationButtons() -> UIStackView {
         
         func createButton(title: String, action: Selector) -> UIButton {
