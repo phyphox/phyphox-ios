@@ -360,7 +360,7 @@
 "cameraLoadingErrorTitle" = "Σφάλμα εκκίνησης της κάμερας";
 "cameraLoadingErrorMessage1" = "Αποτυχία ρύθμισης της κάμερας ";
 "cameraLoadingErrorMessage2" = "Η προεπιλεγμένη συσκεή βίντεο δεν είναι διαθέσιμη. ";
-"cameraLoadingErrorMessage3" = "Δεν ήταν δυνατή η προσθήκη εισόδου συσκευής βίντεο στη συνεδρία κάμερας. ";
+"cameraLoadingErrorMessage3" = "Δεν μπορεί να ενεργοποιηθεί το βίντεο στην κάμερα. ";
 "cameraLoadingErrorMessage5" = "Δεν μπορεί να δημιουργηθεί είσοδος συσκευής βίντεο ";
 "cameraLoadingErrorMessage6" = "Η κάμερα δεν μπορεί να φορτωθεί κανονικά. ";
 "cameraLoadingErrorSecondMessage" = "Παρακαλώ επανεκκινείστε το πείραμα.";
@@ -368,3 +368,5 @@
 "accept" = "Αποδοχή";
 "permission_microphone_required" = "Απαιτείται μικρόφωνο";
 "permission_microphone_denied" = "/Το πείραμα απαιτεί πρόβαση στο μικρόφωνο, αλλά το αίτημα της πρόσβασης έχει απορριφθεί. Παρακαλούμε ενεργοποιήστε την πρόσβαση στο μικρόφωνο στις ρυθμίσεις: Settings->Privacy->Microphone";
+"cameraLoadingErrorMessage4" = "Δεν είναι δυνατή η καταγραφή από την κάμερα. ";
+"permission_microphone_restricted" = "Το πείραμα χρειάζεται πρόσβαση στο μικρόφωνο. Παρακαλώ ενεργοποιείστε την πρόσβαση από τα Settings->Screen Time->Restrictions->Microphone";
