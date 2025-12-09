@@ -11,7 +11,8 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     
 
     private enum Constants {
-        static let kernelFunctionName = "readLuminaceVal"
+        static let kernelFunctionNameForVerticleDispersion = "readLuminaceValForVerticle"
+        static let kernelFunctionNameForHorizontalDispersion = "readLuminaceValForHorizontal"
         static let threadGroupWidth = 16
         static let threadGroupHeight = 16
     }
@@ -24,8 +25,7 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     private var latestResults: [Double] = []
     private var latestxAxis: [Double] = []
     
-    var selectedWidthForAnalysis  = 0
-    var selectedHeightForAnalysis  = 0
+    var dispersionWidth: Int = 0
     
     init(result: DataBuffer?, xAxis: DataBuffer?) {
         self.analysisResult = result
@@ -36,7 +36,10 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         guard let metalDevice = AnalyzingModule.metalDevice else { return }
         let gpuFunctionLibrary = AnalyzingModule.gpuFunctionLibrary
         
-        guard let readLuminanceFunction = gpuFunctionLibrary?.makeFunction(name: Constants.kernelFunctionName) else { return }
+        guard let readLuminanceFunction = gpuFunctionLibrary?.makeFunction(name:
+                                                                            isDispersionHorizontal() ?
+                                                                           Constants.kernelFunctionNameForHorizontalDispersion :
+                                                                            Constants.kernelFunctionNameForVerticleDispersion) else { return }
         
         do {
             analyzisPipelineState = try metalDevice.makeComputePipelineState(function: readLuminanceFunction)
@@ -65,16 +68,18 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     func analyzeTexture(computeEncoder : MTLComputeCommandEncoder, cameraImageTextureY: MTLTexture, cameraImageTextureCbCr: MTLTexture){
         guard let metalDevice = AnalyzingModule.metalDevice else { return }
         
-        selectedWidthForAnalysis = Int(selectionState.x2 - selectionState.x1)
-        selectedHeightForAnalysis = Int(selectionState.y2 - selectionState.y1)
+        let selectedWidthForAnalysis = Int(selectionState.x2 - selectionState.x1)
+        let selectedHeightForAnalysis = Int(selectionState.y2 - selectionState.y1)
+        
+        dispersionWidth = isDispersionHorizontal() ? selectedHeightForAnalysis : selectedWidthForAnalysis
         
         // Ensure dimensions are valid to prevent crashes
-        guard selectedWidthForAnalysis > 0, selectedHeightForAnalysis > 0 else {
+        guard dispersionWidth > 0 else {
             computeEncoder.endEncoding()
             return
         }
         
-        let requiredBytes = selectedWidthForAnalysis * MemoryLayout<Float>.stride
+        let requiredBytes = dispersionWidth * MemoryLayout<Float>.stride
         if metalOutputBuffer == nil || metalOutputBuffer!.length < requiredBytes {
             metalOutputBuffer = metalDevice.makeBuffer(length: requiredBytes, options: .storageModeShared)
         }
@@ -95,15 +100,15 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     
     override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         
-        guard let buffer = metalOutputBuffer, selectedWidthForAnalysis > 0 else { return }
+        guard let buffer = metalOutputBuffer, dispersionWidth > 0 else { return }
         
-        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: selectedWidthForAnalysis)
+        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: dispersionWidth)
         
-        if latestResults.count != selectedWidthForAnalysis {
-            latestResults = Array(repeating: 0.0, count: selectedWidthForAnalysis)
+        if latestResults.count != dispersionWidth {
+            latestResults = Array(repeating: 0.0, count: dispersionWidth)
         }
         
-        for i in 0..<selectedWidthForAnalysis {
+        for i in 0..<dispersionWidth {
             latestResults[i] = Double(luminancePointer[i])
         }
     }
@@ -112,10 +117,10 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         self.xAxis?.clear(reset: true)
         self.analysisResult?.clear(reset: true)
         
-        guard selectedWidthForAnalysis > 0 else { return }
+        guard dispersionWidth > 0 else { return }
         
-        if latestxAxis.count != (selectedWidthForAnalysis - 1) {
-            latestxAxis = (0..<(selectedWidthForAnalysis - 1)).map { Double($0) }
+        if latestxAxis.count != (dispersionWidth - 1) {
+            latestxAxis = (0..<(dispersionWidth - 1)).map { Double($0) }
                 }
         
         self.xAxis?.appendFromArray(latestxAxis)
@@ -136,6 +141,14 @@ class SpectroscopyAnalyzer: AnalyzingModule {
                 
         return (threadgroups, threadsPerGroup)
          
+    }
+    
+    func isDispersionHorizontal() -> Bool {
+        return false
+    }
+    
+    func needsInverseDispersion() -> Bool {
+        return false
     }
     
 }
