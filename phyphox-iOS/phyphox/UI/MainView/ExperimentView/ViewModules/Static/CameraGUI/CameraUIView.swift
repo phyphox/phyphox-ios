@@ -44,11 +44,28 @@ enum CameraShowControlsState {
     case NEVER
 }
 
-enum SpectrumAnalysisOrientation {
+enum SpectrumAnalysisOrientation: CaseIterable{
     case HorizontalRedRight
     case HorizontalBlueRight
     case VerticalRedTop
     case VerticalBlueTop
+    
+    var title: String {
+        switch self {
+        case .HorizontalRedRight:  return "Horizontal Red Right"
+        case .HorizontalBlueRight: return "Horizontal Blue Right"
+        case .VerticalRedTop:      return "Vertical Red Top"
+        case .VerticalBlueTop:     return "Vertical Blue Top"
+        }
+    }
+    
+    init?(title: String) {
+        if let matched = SpectrumAnalysisOrientation.allCases.first(where: { $0.title == title }) {
+            self = matched
+        } else {
+            return nil
+        }
+    }
 }
 
 @available(iOS 14.0, *)
@@ -475,34 +492,29 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             return vStack
         }
-    
+
     private func setUpSpectrumAnalysisControlView() {
         dropdownButton = UIButton(type: .system)
-        dropdownButton?.setTitle("Select analysis orientation for spectrum", for: .normal)
         dropdownButton?.showsMenuAsPrimaryAction = true
         dropdownButton?.translatesAutoresizingMaskIntoConstraints = false
-        
-        let staticOptions = ["Horizontal Red Right", "Horizontal Blue Right", "Vertical Red Top", "Vertical Blue Top"]
-        dropdownButton?.menu = UIMenu(title: "Choose one", children: staticOptions.map { title in
-            UIAction(title: title) { [weak self] action in
-                
-                var orientation = SpectrumAnalysisOrientation.HorizontalRedRight
-                if(title == "Horizontal Blue Right"){
-                    orientation = SpectrumAnalysisOrientation.HorizontalBlueRight
-                } else if(title == "Vertical Red Top"){
-                    orientation = SpectrumAnalysisOrientation.VerticalRedTop
-                } else if(title == "Vertical Blue Top"){
-                    orientation = SpectrumAnalysisOrientation.VerticalRedTop
+
+        dropdownButton?.menu = UIMenu(
+            title: "Choose one",
+            children: SpectrumAnalysisOrientation.allCases.map { orientation in
+                UIAction(title: orientation.title) { [weak self] _ in
+                    if let orientation = SpectrumAnalysisOrientation(title: orientation.title){
+                        self?.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: orientation)
+                        self?.dropdownButton?.setTitle(orientation.title, for: .normal)
+                    }
                 }
-                
-                self?.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: orientation)
-                
-                self?.dropdownButton?.setTitle(title, for: .normal)
             }
-        })
-        
+        )
+
+        dropdownButton?.setTitle(SpectrumAnalysisOrientation.allCases.first?.title, for: .normal)
+
         dropdownButton?.isHidden = !controlsVisible
-        if(cameraModelOwner?.cameraModel?.feature == CameraFeature.SPECTROSCOPY){
+        
+        if cameraModelOwner?.cameraModel?.feature == CameraFeature.SPECTROSCOPY {
             addSubview(dropdownButton!)
         }
     }
