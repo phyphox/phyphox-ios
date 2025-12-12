@@ -44,6 +44,13 @@ enum CameraShowControlsState {
     case NEVER
 }
 
+enum SpectrumAnalysisOrientation {
+    case HorizontalRedRight
+    case HorizontalBlueRight
+    case VerticalRedTop
+    case VerticalBlueTop
+}
+
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
@@ -51,6 +58,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         didSet {
             self.cameraPreviewRenderer.cameraModelOwner = cameraModelOwner
             cameraSettingUIView = cameraSettingViews(adjustmentLevel: descriptor.exposureAdjustmentLevel)
+            setUpSpectrumAnalysisControlView()
             cameraSettingUIView?.isHidden = !controlsVisible
             cameraModelOwner?.cameraModel?.cameraSettingsModel.registerSettingsObserver(self)
             self.addSubview(cameraSettingUIView!)
@@ -94,6 +102,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
         }
     }
+    
     
     // Resizing the Passepartout
     private var panGestureRecognizer: UIPanGestureRecognizer? = nil
@@ -144,6 +153,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var apertureText: UILabel!
     private var zoomText: UILabel!
     private var whiteBalanceText: UILabel!
+    
+    private var dropdownButton: UIButton?
     
     // size definitions
     private let spacing: CGFloat = 10.0
@@ -249,13 +260,15 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         let controlSize = controlsVisible ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
         let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlExtraHeight)
         let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlZoomHeight)
+        let controlSpectrumOrientationAnalysisSize = controlsVisible ? CGSize(width: frame.width - 2 * sideMargins, height: ExperimentCameraUIView.controlExtraHeight) : .zero
+        dropdownButton?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSpectrumOrientationAnalysisSize.height)
         cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
         collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: frame.width - 2*sideMargins, height: controlExtraSize.height)
         self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: frame.width - 2*sideMargins, height: controlZoomSize.height)
         
         //Metal view
         let h, w: CGFloat
-        let metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height
+        let metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height - controlSpectrumOrientationAnalysisSize.height
         let actualAspect = (frame.width - 2*sideMargins) / metalAvailableHeight
         let aspect = if orientation == .landscapeRight || orientation == .landscapeLeft {
             imageResolution.width / imageResolution.height
@@ -347,6 +360,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
             cameraSettingUIView?.isHidden = !controlsVisible
+            dropdownButton?.isHidden = !controlsVisible
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
             if let gr = panGestureRecognizer {
                 metalView.addGestureRecognizer(gr)
@@ -356,6 +370,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
         } else {
             cameraSettingUIView?.isHidden = !controlsVisible
+            dropdownButton?.isHidden = !controlsVisible
             if let gr = panGestureRecognizer {
                 metalView.removeGestureRecognizer(gr)
             }
@@ -460,6 +475,37 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             return vStack
         }
+    
+    private func setUpSpectrumAnalysisControlView() {
+        dropdownButton = UIButton(type: .system)
+        dropdownButton?.setTitle("Select analysis orientation for spectrum", for: .normal)
+        dropdownButton?.showsMenuAsPrimaryAction = true
+        dropdownButton?.translatesAutoresizingMaskIntoConstraints = false
+        
+        let staticOptions = ["Horizontal Red Right", "Horizontal Blue Right", "Vertical Red Top", "Vertical Blue Top"]
+        dropdownButton?.menu = UIMenu(title: "Choose one", children: staticOptions.map { title in
+            UIAction(title: title) { [weak self] action in
+                
+                var orientation = SpectrumAnalysisOrientation.HorizontalRedRight
+                if(title == "Horizontal Blue Right"){
+                    orientation = SpectrumAnalysisOrientation.HorizontalBlueRight
+                } else if(title == "Vertical Red Top"){
+                    orientation = SpectrumAnalysisOrientation.VerticalRedTop
+                } else if(title == "Vertical Blue Top"){
+                    orientation = SpectrumAnalysisOrientation.VerticalRedTop
+                }
+                
+                self?.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: orientation)
+                
+                self?.dropdownButton?.setTitle(title, for: .normal)
+            }
+        })
+        
+        dropdownButton?.isHidden = !controlsVisible
+        if(cameraModelOwner?.cameraModel?.feature == CameraFeature.SPECTROSCOPY){
+            addSubview(dropdownButton!)
+        }
+    }
     
     // MARK: - SettingType Enum
     

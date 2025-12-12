@@ -56,6 +56,7 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         cameraModel?.autoExposureEnabled = autoExposure
         cameraModel?.locked = locked
         cameraModel?.aeStrategy = aeStrategy
+        cameraModel?.feature = feature
         
         sessionInitialized = true
     }

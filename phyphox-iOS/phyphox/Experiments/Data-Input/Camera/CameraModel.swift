@@ -169,6 +169,8 @@ final class CameraModel {
     
     var locked: [String:Float?] = [:]
     
+    var feature: CameraFeature = CameraFeature.PHOTOMETRIC
+    
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel
     

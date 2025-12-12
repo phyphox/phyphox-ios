@@ -26,6 +26,7 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     private var latestxAxis: [Double] = []
     
     var dispersionWidth: Int = 0
+    var analysisOrientation: SpectrumAnalysisOrientation = SpectrumAnalysisOrientation.HorizontalBlueRight
     
     init(result: DataBuffer?, xAxis: DataBuffer?) {
         self.analysisResult = result
@@ -143,12 +144,18 @@ class SpectroscopyAnalyzer: AnalyzingModule {
          
     }
     
+    func setAnalysisOrientation(orientation: SpectrumAnalysisOrientation){
+        self.analysisOrientation = orientation
+    }
+    
     func isDispersionHorizontal() -> Bool {
-        return false
+        return analysisOrientation == SpectrumAnalysisOrientation.HorizontalBlueRight ||
+                analysisOrientation == SpectrumAnalysisOrientation.HorizontalRedRight
     }
     
     func needsInverseDispersion() -> Bool {
-        return false
+        return analysisOrientation == SpectrumAnalysisOrientation.HorizontalBlueRight ||
+        analysisOrientation == SpectrumAnalysisOrientation.VerticalRedTop
     }
     
 }

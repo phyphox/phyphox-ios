@@ -50,6 +50,19 @@ class AnalyzingRenderer {
         initializeMetal()
     }
     
+    func reinitializeSpectroscopyAnalyzer(orientation: SpectrumAnalysisOrientation){
+        for (index,analysingModule) in analysingModules.enumerated() {
+            if(analysingModule is SpectroscopyAnalyzer){
+                analysingModules.remove(at: index)
+                let analyzer = SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition)
+                analyzer.setAnalysisOrientation(orientation: orientation)
+                analysingModules.append(analyzer)
+                analyzer.loadMetal()
+                
+            }
+        }
+    }
+    
     func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?, feature: CameraFeature){
         self.cameraBuffers = cameraBuffers
         
