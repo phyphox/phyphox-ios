@@ -32,6 +32,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let color: UIColor
     let translation: ExperimentTranslationCollection?
+    let visibilityBuffer: DataBuffer?
 
     var localizedUnit: String? {
         if unit == nil {
@@ -54,7 +55,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
     }
     
-    init(label: String, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?) {
+    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?) {
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -67,6 +68,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         self.mappings = translatedMappings
 
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.color = color
         self.translation = translation
         

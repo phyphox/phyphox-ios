@@ -10,15 +10,16 @@ import UIKit
 
 final class ExperimentViewModuleFactory {
     
-    class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor, resourceFolder: URL?) -> [UIView] {
-        var views: [UIView?] = []
+    class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor, resourceFolder: URL?) -> [(UIView, Bool)] {
+        var views: [(UIView?, Bool)] = []
         
         for descriptor in viewDescriptor.views {
             if let descriptor = descriptor as? InfoViewDescriptor {
-                views.append(ExperimentInfoView(descriptor: descriptor, resourceFolder: resourceFolder))
+                
+                views.append((ExperimentInfoView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? ValueViewDescriptor {
-                views.append(ExperimentValueView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentValueView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? GraphViewDescriptor {
                 /*
@@ -31,48 +32,48 @@ final class ExperimentViewModuleFactory {
                     views.append(ExperimentGraphView(descriptor: descriptor, resourceFolder: resourceFolder))
                 }
                 */
-                views.append(ExperimentGraphView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentGraphView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? EditViewDescriptor {
-                views.append(ExperimentEditView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentEditView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? ButtonViewDescriptor {
-                views.append(ExperimentButtonView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentButtonView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? SeparatorViewDescriptor {
-                views.append(ExperimentSeparatorView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentSeparatorView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? DepthGUIViewDescriptor {
                 if #available(iOS 14.0, *) {
-                    views.append(ExperimentDepthGUIView(descriptor: descriptor, resourceFolder: resourceFolder))
+                    views.append((ExperimentDepthGUIView(descriptor: descriptor, resourceFolder: resourceFolder), true))
                 } else {
                     print("DepthGUI not supported below iOS 14")
                     //Should not happen as the depth input is marked as unavailable below iOS 14
                 }
             } else  if let descriptor = descriptor as? CameraViewDescriptor {
                 if #available(iOS 14.0, *) {
-                    views.append(ExperimentCameraUIView(descriptor: descriptor))
+                    views.append((ExperimentCameraUIView(descriptor: descriptor), true))
                 } else {
                     // Fallback on earlier versions
                 }
 
             }
             else if let descriptor = descriptor as? ImageViewDescriptor {
-                views.append(ExperimentImageView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentImageView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? SwitchViewDescriptor {
-                views.append(ExperimentSwitchView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentSwitchView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else if let descriptor = descriptor as? DropdownViewDescriptor {
-                views.append(ExperimentDropdownView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentDropdownView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             } else if let descriptor = descriptor as? SliderViewDescriptor {
-                views.append(ExperimentSliderView(descriptor: descriptor, resourceFolder: resourceFolder))
+                views.append((ExperimentSliderView(descriptor: descriptor, resourceFolder: resourceFolder), true))
             }
             else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }
         }
 
-        return views.compactMap { $0 }
+        return views.compactMap { ($0, $1 ) as? (UIView, Bool)}
     }
 }

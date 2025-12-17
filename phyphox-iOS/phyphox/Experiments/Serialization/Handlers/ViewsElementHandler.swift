@@ -31,6 +31,7 @@ protocol ViewComponentElementHandler: ElementHandler {
 
 struct ViewCollectionDescriptor {
     let label: String
+    let visibility: String
     let views: [ViewElementDescriptor]
 }
 
@@ -92,18 +93,21 @@ private final class ViewElementHandler: ResultElementHandler {
 
     private enum Attribute: String, AttributeKey {
         case label
+        case visibility
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = try attributes.nonEmptyString(for: .label)
+        
+        let visibility = attributes.optionalString(for: .visibility) ?? ""
 
         let views = try elementOrder.map { try $0.nextResult() }
 
         guard !views.isEmpty else { throw ElementHandlerError.missingChildElement("view-element") }
 
-        results.append(ViewCollectionDescriptor(label: label, views: views))
+        results.append(ViewCollectionDescriptor(label: label, visibility: visibility,  views: views))
     }
 
     func clearChildHandlers() {

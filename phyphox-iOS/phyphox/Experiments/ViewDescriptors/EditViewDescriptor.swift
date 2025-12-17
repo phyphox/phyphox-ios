@@ -34,8 +34,10 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
 
     let label: String
     let translation: ExperimentTranslationCollection?
+    
+    var visibilityBuffer : DataBuffer?
 
-    init(label: String, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer) {
+    init(label: String, visibilityBuffer : DataBuffer?, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer) {
         self.signed = signed
         self.decimal = decimal
         self.unit = unit
@@ -47,6 +49,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
 
         self.label = label
         self.translation = translation
+        self.visibilityBuffer = visibilityBuffer
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

@@ -53,6 +53,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     var logX, logY, logZ: Bool
     
+    var isViewVisible: Bool = true
+    
     // MARK: - Initialization
     required init?(descriptor: GraphViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
@@ -141,6 +143,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                 registerForUpdatesFromBuffer(intercept)
             }
         }
+        
+        if let visibilityBuffer = descriptor.visibilityBuffer {
+            registerForUpdatesFromBuffer(visibilityBuffer)
+        }
+        
     }
 
     
@@ -165,6 +172,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     func display(_ displayLink: DisplayLink) {
         if dataManager.wantsUpdate && !analysisRunning {
             dataManager.performUpdate()
+            if let visibilityBuffer = descriptor.visibilityBuffer?.last {
+                if(visibilityBuffer <= 0.0 || descriptor.visibilityBuffer?.size == 0){
+                    self.isHidden = true
+                    (parentViewController() as? ExperimentViewController)?.updateLayoutVisibilityState(view: self, visible: false)
+                    isViewVisible = false
+                } else {
+                    self.isHidden = false
+                    (parentViewController() as? ExperimentViewController)?.updateLayoutVisibilityState(view: self, visible: true)
+                    isViewVisible = true
+                }
+            }
         }
     }
     

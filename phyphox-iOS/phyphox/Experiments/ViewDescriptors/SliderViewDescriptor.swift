@@ -17,6 +17,7 @@ enum SliderOutputValueType {
 
 struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var label: String
+    var visibilityBuffer: DataBuffer?
     
     let minValue: Double
     let maxValue: Double
@@ -30,8 +31,10 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
+    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
+        
         self.minValue = minValue
         self.maxValue = maxValue
         self.stepSize = stepSize

@@ -18,6 +18,7 @@ enum ButtonInputDescriptor {
 
 struct ButtonViewElementDescriptor {
     let label: String
+    let visibility: String
     let dynamicLabel: String
 
     let dataFlow: [(input: ButtonInputDescriptor, outputBufferName: String)]
@@ -88,6 +89,7 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
 
     private enum Attribute: String, AttributeKey {
         case label
+        case visibility
         case dynamicLabel
     }
 
@@ -95,6 +97,7 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
+        let visibility = attributes.optionalString(for: .visibility) ?? ""
         let dynamicLabel = attributes.optionalString(for: .dynamicLabel) ?? ""
 
         guard inputHandler.results.count == outputHandler.results.count else {
@@ -106,7 +109,7 @@ final class ButtonViewElementHandler: ResultElementHandler, LookupElementHandler
         
         let mappings = mapHandler.results
 
-        results.append(.button(ButtonViewElementDescriptor(label: label, dynamicLabel: dynamicLabel, dataFlow: dataFlow, triggers: triggers, mappings: mappings)))
+        results.append(.button(ButtonViewElementDescriptor(label: label, visibility: visibility, dynamicLabel: dynamicLabel, dataFlow: dataFlow, triggers: triggers, mappings: mappings)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

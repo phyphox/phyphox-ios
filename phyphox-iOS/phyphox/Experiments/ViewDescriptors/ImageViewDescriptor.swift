@@ -13,6 +13,7 @@ struct ImageViewDescriptor: ResourceViewDescriptor, Equatable {
     
     let label = ""
     var translation: ExperimentTranslationCollection? = nil
+    var visibilityBuffer: DataBuffer?
         
     let src: String
     let scale: CGFloat
@@ -20,7 +21,8 @@ struct ImageViewDescriptor: ResourceViewDescriptor, Equatable {
     let lightFilter: ImageViewElementDescriptor.Filter
     let darkFilter: ImageViewElementDescriptor.Filter
     
-    init(src: String, scale: CGFloat, darkFilter: ImageViewElementDescriptor.Filter, lightFilter: ImageViewElementDescriptor.Filter) {
+    init(visibilityBuffer: DataBuffer?, src: String, scale: CGFloat, darkFilter: ImageViewElementDescriptor.Filter, lightFilter: ImageViewElementDescriptor.Filter) {
+        self.visibilityBuffer = visibilityBuffer
         self.src = src
         self.scale = scale
         self.darkFilter = darkFilter

@@ -10,6 +10,7 @@ import Foundation
 
 struct DepthGUIViewElementDescriptor {
     let label: String
+    let visibility: String
     let aspectRatio: CGFloat
 }
 
@@ -20,6 +21,7 @@ final class DepthGUIViewElementHandler: ResultElementHandler, ChildlessElementHa
 
     private enum Attribute: String, AttributeKey {
         case label
+        case visibility
         case aspectRatio
     }
 
@@ -27,10 +29,11 @@ final class DepthGUIViewElementHandler: ResultElementHandler, ChildlessElementHa
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
+        let visibility = attributes.optionalString(for: .visibility) ?? ""
         
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
 
-        results.append(.depthGUI(DepthGUIViewElementDescriptor(label: label, aspectRatio: aspectRatio)))
+        results.append(.depthGUI(DepthGUIViewElementDescriptor(label: label, visibility: visibility, aspectRatio: aspectRatio)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

@@ -13,18 +13,20 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
     let defaultValue: Double
     let buffer: DataBuffer
     let label: String
+    var visibilityBuffer: DataBuffer?
     let translation: ExperimentTranslationCollection?
     
     var value: Double {
         return buffer.last ?? defaultValue
     }
     
-    init(label: String, translation: ExperimentTranslationCollection?, defaultValue: Double, buffer: DataBuffer) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, defaultValue: Double, buffer: DataBuffer) {
         
         self.defaultValue = defaultValue
         self.buffer = buffer
         self.label = label
         self.translation = translation
+        self.visibilityBuffer = visibilityBuffer
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

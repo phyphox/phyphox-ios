@@ -10,6 +10,7 @@ import Foundation
 
 struct InfoViewDescriptor: ViewDescriptor, Equatable {
     let label: String
+    let visibilityBuffer: DataBuffer?
     let color: UIColor
     let fontSize: CGFloat
     let align: InfoViewElementDescriptor.TextAlignment
@@ -17,8 +18,9 @@ struct InfoViewDescriptor: ViewDescriptor, Equatable {
     let italic: Bool
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, color: UIColor, fontSize: CGFloat, align: InfoViewElementDescriptor.TextAlignment, bold: Bool, italic: Bool, translation: ExperimentTranslationCollection?) {
+    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, fontSize: CGFloat, align: InfoViewElementDescriptor.TextAlignment, bold: Bool, italic: Bool, translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.color = color
         self.fontSize = fontSize
         self.align = align
