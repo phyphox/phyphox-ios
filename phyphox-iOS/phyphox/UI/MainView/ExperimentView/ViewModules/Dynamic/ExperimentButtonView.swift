@@ -141,3 +141,7 @@ extension ExperimentButtonView: DisplayLinkListener {
         }
     }
 }
+
+extension ExperimentButtonView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

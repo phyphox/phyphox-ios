@@ -172,17 +172,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     func display(_ displayLink: DisplayLink) {
         if dataManager.wantsUpdate && !analysisRunning {
             dataManager.performUpdate()
-            if let visibilityBuffer = descriptor.visibilityBuffer?.last {
-                if(visibilityBuffer <= 0.0 || descriptor.visibilityBuffer?.size == 0){
-                    self.isHidden = true
-                    (parentViewController() as? ExperimentViewController)?.updateLayoutVisibilityState(view: self, visible: false)
-                    isViewVisible = false
-                } else {
-                    self.isHidden = false
-                    (parentViewController() as? ExperimentViewController)?.updateLayoutVisibilityState(view: self, visible: true)
-                    isViewVisible = true
-                }
-            }
         }
     }
     
@@ -314,4 +303,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
     }
+}
+
+
+extension ExperimentGraphView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

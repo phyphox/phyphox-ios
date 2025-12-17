@@ -134,3 +134,8 @@ extension ExperimentSwitchView: DisplayLinkListener {
         }
     }
 }
+
+
+extension ExperimentSwitchView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

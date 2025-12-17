@@ -135,3 +135,8 @@ protocol ExportingViewModule : AnyObject {
 protocol AnalysisLimitedViewModule : AnyObject {
     var analysisRunning: Bool { get set }
 }
+
+// Modules which has databuffer that defines the visibility of the view element.
+protocol VisibilityControllableViewModule: AnyObject {
+    var visibilityBuffer: DataBuffer? { get }
+}

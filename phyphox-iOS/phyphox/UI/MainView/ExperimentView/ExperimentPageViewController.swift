@@ -40,7 +40,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     let webServer: ExperimentWebServer
     
-    private var viewModules: [[(UIView, Bool)]]
+    private var viewModules: [[ExperimentModule]]
     
     var numOfConnectedDevices = 0
     
@@ -120,7 +120,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.timerDelay = experiment.analysis.timedRunStartDelay
         self.timerDuration = experiment.analysis.timedRunStopDelay
         
-        var modules: [[(UIView, Bool)]] = []
+        var modules: [[ExperimentModule]] = []
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
@@ -141,13 +141,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentViewControllers.first?.active = true
         
         for module in viewModules.flatMap({ $0 }) {
-            if let button = module.0 as? ExperimentButtonView {
+            if let button = module.view as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
                     self?.buttonPressed(viewDescriptor: button.descriptor, buttonViewTriggerCallback: button)
                 }
             }
-            if let exportingViewModule = module.0 as? ExportingViewModule {
+            if let exportingViewModule = module.view as? ExportingViewModule {
                 exportingViewModule.exportDelegate = self
             }
         }
@@ -496,7 +496,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if #available(iOS 14.0, *) {
             for vc in experimentViewControllers {
                 for view in vc.modules {
-                    if let depthGUI = view.0 as? ExperimentDepthGUIView {
+                    if let depthGUI = view.view as? ExperimentDepthGUIView {
                         guard let session = experiment.depthInput?.session as? ExperimentDepthInputSession else {
                             continue
                         }
@@ -504,7 +504,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
-                    if let cameraGUI = view.0 as? ExperimentCameraUIView {
+                    if let cameraGUI = view.view as? ExperimentCameraUIView {
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
@@ -1542,7 +1542,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.0 as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = true
             }
         }
@@ -1550,7 +1550,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.0 as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
@@ -1558,7 +1558,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisSkipped(_ analysis: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.0 as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }

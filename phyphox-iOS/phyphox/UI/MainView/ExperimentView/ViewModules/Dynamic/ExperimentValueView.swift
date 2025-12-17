@@ -242,3 +242,7 @@ extension ExperimentValueView: DisplayLinkListener {
         }
     }
 }
+
+extension ExperimentValueView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

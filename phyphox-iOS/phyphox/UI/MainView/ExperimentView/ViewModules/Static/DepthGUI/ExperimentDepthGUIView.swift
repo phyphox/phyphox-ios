@@ -354,3 +354,8 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
     }
 }
+
+@available(iOS 14.0, *)
+extension ExperimentDepthGUIView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

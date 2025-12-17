@@ -1101,3 +1101,9 @@ public struct AlertError {
         self.secondaryAction = secondaryAction
     }
 }
+
+
+@available(iOS 14.0, *)
+extension ExperimentCameraUIView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

@@ -79,3 +79,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule, DynamicViewMo
         }
     }
 }
+
+extension ExperimentInfoView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}
