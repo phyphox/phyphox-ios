@@ -154,7 +154,7 @@ struct GraphViewElementDescriptor {
     let style: [GraphViewDescriptor.GraphStyle]
     let showColorScale: Bool
     
-    let calibrationMode: Bool
+    let calibrationMode: String
     var calibrationSlopeBufferName: String?
     var calibrationInterceptBufferName: String?
 }
@@ -351,13 +351,13 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
         
-        let calibrationMode: Bool = try attributes.optionalValue(for: .calibrationMode) ?? false
+        let calibrationMode: String = attributes.optionalString(for: .calibrationMode) ?? ""
         
         var calibrationSlopeBufferName: String?
         var calibrationInterceptBufferName: String?
         
         let outputBuffers = outputHandler.results
-        if(calibrationMode){
+        if(calibrationMode == "xLinear"){
             guard outputBuffers.count > 0 else { throw ElementHandlerError.missingElement("output")}
 
             for outputBuffer in outputBuffers {

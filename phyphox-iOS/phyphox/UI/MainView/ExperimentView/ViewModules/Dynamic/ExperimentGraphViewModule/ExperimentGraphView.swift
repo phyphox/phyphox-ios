@@ -65,7 +65,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.logY = descriptor.logY
         self.logZ = descriptor.logZ
         
-        self.isSpectroscopyMode = descriptor.calibrationMode
+        self.isSpectroscopyMode = descriptor.calibrationMode == "xLinear"
         
         // Initialize components
         self.graphRenderer = GraphRenderer(descriptor: descriptor)
@@ -134,7 +134,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
         
-        if(descriptor.calibrationMode){
+        if(!descriptor.calibrationMode.isEmpty){
             if let slope = descriptor.calibrationSlope{
                 registerForUpdatesFromBuffer(slope)
             }
