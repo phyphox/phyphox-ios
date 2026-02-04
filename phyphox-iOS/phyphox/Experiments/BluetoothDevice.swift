@@ -186,7 +186,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         let alertController = UIAlertController(title: autoConnect ?  nil : localize("bt_pick_device"),
                                                 message: message,
-                                                preferredStyle: UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
+                                                preferredStyle: .alert)
         
         let cancelAction = UIAlertAction(title: localize("cancel"), style: .cancel)
         { (action) in
