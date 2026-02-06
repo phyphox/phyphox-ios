@@ -1,1 +1,10 @@
 
+
+"action_settings" = "الإعدادات";
+"graph_tools_more" = "أدوات إضافية";
+"graph_tools_system_time" = "إستخدام وقت النظام";
+"graph_tools_reset" = "إعادة التكبير للوضع الإفتراضي";
+"graph_tools_follow" = "متابعة البيانات الجديدة";
+"graph_tools_linear_fit" = "التقريب الخطي";
+"graph_tools_export" = "تصدير هذه البيانات";
+"graph_tools_log_x" = "لوغاريتم المحور X";
