@@ -39,3 +39,10 @@
 "newExperimentBluetoothLoadFromDevice" = "إستيراد من الجهاز";
 "activate_all" = "تفعيل الكل";
 "deactivate_all" = "إلغاء تفعيل الكل";
+"newExperimentQR" = "إضافة تجربة باستخدام رمز QR";
+"newExperimentQRscan" = "امسح رمز QR يحتوي على تجربة Phyphox";
+"newExperimentQRErrorTitle" = "خطأ في رمز QR";
+"newExperimentQRNoExperiment" = "يتعذر العثور على رمز QR الذي يحتوي على تجربة Phyphox";
+"newExperimentQRcrcMismatch" = "يبدو أن رمز QR الذي مسحته للتو لا يتطابق مع الرموز السابقة. يرجى التأكد من مسح الرموز التابعة لنفس التجربة فقط.";
+"newExperimentQRCodesMissing1" = "رمز QR الذي مسحته للتو هو جزء من مجموعة من";
+"newExperimentQRCodesMissing2" = "الرموز. يرجى الضغط على متابعة لمسح الرموز المتبقية. الرموز لا تزال مفقودة:";
