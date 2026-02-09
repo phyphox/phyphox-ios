@@ -495,15 +495,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
 
     private func setUpSpectrumAnalysisControlView() {
-        dialogButton.setTitle("Options", for: .normal)
-        if let image = UIImage(named: "ic_options") {
-            dialogButton.setImage(image, for: .normal)
-            dialogButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
-        }
-        dialogButton.tintColor = .systemBlue
+       
         dialogButton.addTarget(self, action: #selector(showCustomDialog), for: .touchUpInside)
-
-        dialogButton.setTitle(SpectrumAnalysisOrientation.allCases.first?.title, for: .normal)
+        
+        dialogButton.setImage(UIImage(named: "arrow_gradient_right"), for: .normal)
+        dialogButton.setTitle("Orientation", for: .normal)
+        dialogButton.backgroundColor = .clear
 
         dialogButton.isHidden = !controlsVisible
         
