@@ -65,3 +65,4 @@
 "newExperimentBTReadErrorTitle" = "خطأ في تجربة بلوتوث";
 "newExperimentBTReadErrorCorrupted" = "بيانات التجربة التي تم إرسالها تالفة.";
 "generalErrorDialog" = "حدث خطأ ما.";
+"creditsNames" = "الفكرة و التطوير:\nالدكتور.سيباستيان ستاك\nالفكرة:\nالبروقيسور.كريستوف ستامفر\nالبرمجة:\nقوراف تريباثي\nدومينيك دورسال\nجوناس جيسنر\nكاميلا لوميرزهايم";
