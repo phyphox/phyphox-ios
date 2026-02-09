@@ -498,7 +498,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
        
         dialogButton.addTarget(self, action: #selector(showCustomDialog), for: .touchUpInside)
         
-        dialogButton.setImage(UIImage(named: "arrow_gradient_right"), for: .normal)
+        let initialImageName = getArrowImageName(orientationIndex: lastFirstSelection, directionIndex: lastSecondSelection)
+        let initialImage = UIImage(named: initialImageName)?.withRenderingMode(.alwaysOriginal)
+        
+        dialogButton.setImage(initialImage, for: .normal)
         dialogButton.setTitle("Orientation", for: .normal)
         dialogButton.backgroundColor = .clear
 
@@ -727,17 +730,33 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc func showCustomDialog() {
         
-        let dialogView = CustomOptionsDialogViewController(image: UIImage(named: "calibration"), firstDescription: "Choose the orientation of the spectrum dispersion.", firstOptions: ["Horizontal","Verticle"], secondDescription: "Choose which direction should the analysis be done.", secondOptions: ["Left to Right","Right to Left"], initialFirstIndex: lastFirstSelection, initialSecondIndex: lastSecondSelection, completion: {firstIndex, secondIindex in
+        let dialogView = CustomOptionsDialogViewController(image: UIImage(named: "calibration"), firstDescription: "Choose the orientation of the spectrum dispersion.", firstOptions: ["Horizontal","Verticle"], secondDescription: "Choose which direction should the analysis be done.", secondOptions: ["Left to Right","Right to Left"], initialFirstIndex: lastFirstSelection, initialSecondIndex: lastSecondSelection, completion: {firstIndex, secondIndex in
             self.lastFirstSelection = firstIndex
-            self.lastSecondSelection = secondIindex
+            self.lastSecondSelection = secondIndex
+            
+            let imageName = self.getArrowImageName(orientationIndex: firstIndex, directionIndex: secondIndex)
+                        if let newImage = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
+                            self.dialogButton.setImage(newImage, for: .normal)
+                        }
         })
 
         UIAlertController.PhyphoxUIAlertBuilder()
             .title(title: "Spectrum Dispersion Configuration")
             .setAccessoryView(accessoryView: dialogView)
-            .addOkAction()
+            .addOkAction(handler: {_ in 
+                dialogView.okTapped()
+            })
             .show(in: self.parentViewController(), animated: true)
     }
+    
+    func getArrowImageName(orientationIndex: Int, directionIndex: Int) -> String {
+        if orientationIndex == 0 { // Horizontal
+            return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
+        } else { // Vertical
+            return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
+        }
+    }
+    
     
     // MARK: - camera setting exposure value generator
  
@@ -1163,7 +1182,7 @@ class CustomOptionsDialogViewController: UIView {
         self.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
-        if let img = dialogImage {
+        if let img = UIImage(named: getHeaderImageName(orientationIndex: selectedFirstIndex, directionIndex: selectedSecondIndex)) {
             imageView.image = img
             imageView.contentMode = .scaleAspectFit
             contentView.addSubview(imageView)
@@ -1296,6 +1315,23 @@ class CustomOptionsDialogViewController: UIView {
             
         }
     }
+    
+    // For now, this is only a placeholder, later other images will replace it.
+    func getHeaderImageName(orientationIndex: Int, directionIndex: Int) -> String {
+            if orientationIndex == 0 {
+                return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
+            } else {
+                return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
+            }
+        }
+    
+    private func updateDialogImage() {
+        
+        let imageName = getHeaderImageName(orientationIndex: selectedFirstIndex, directionIndex: selectedSecondIndex)
+        if let newImg = UIImage(named: imageName) {
+            self.imageView.image = newImg
+        }
+    }
 
     @objc private func firstToggleTapped(_ sender: UIButton) {
         selectedFirstIndex = sender.tag
@@ -1305,6 +1341,7 @@ class CustomOptionsDialogViewController: UIView {
             } else {
                 updateSecondOptions(titles: secondOptions)
             }
+        updateDialogImage()
     }
     
     private func updateSecondOptions(titles: [String]) {
@@ -1324,9 +1361,10 @@ class CustomOptionsDialogViewController: UIView {
     @objc private func secondToggleTapped(_ sender: UIButton) {
         selectedSecondIndex = sender.tag
         selectToggle(secondToggleButtons, index: selectedSecondIndex)
+        updateDialogImage()
     }
 
-    @objc private func okTapped() {
+    func okTapped() {
         parentViewController().dismiss(animated: true) {
             self.completion(self.selectedFirstIndex, self.selectedSecondIndex)
         }
