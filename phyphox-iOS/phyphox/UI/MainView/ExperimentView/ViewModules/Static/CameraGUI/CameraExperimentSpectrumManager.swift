@@ -10,16 +10,17 @@ protocol SpectrumOrientationUpdateable: AnyObject {
     func updateSpectrumState(spectrum: SpectrumOrientation)
 }
 
-protocol SpectrumDispersionOrientationDelegate: AnyObject {
+protocol SpectrumDispersionOrientationSelectionDelegate: AnyObject {
     func spectrumDidSelectNewOrientation(_ orientation: SpectrumOrientation)
 }
 
-enum SpectrumOrientation: Int {
+enum SpectrumOrientation: Int, CaseIterable {
     case horizontalRedRight = 0
     case verticalRedUp = 1
     case horizontalBlueRight = 2
     case verticalBlueUp = 3
     case invalid = 4
+    
 
     private static let rotationCycle: [SpectrumOrientation] = [
         .horizontalRedRight, .verticalRedUp, .horizontalBlueRight, .verticalBlueUp
@@ -124,11 +125,9 @@ extension ExperimentCameraUIView: SpectrumOrientationUpdateable {
         }
 }
 
-extension ExperimentPageViewController: SpectrumDispersionOrientationDelegate {
+extension ExperimentPageViewController: SpectrumDispersionOrientationSelectionDelegate {
     func spectrumDidSelectNewOrientation(_ orientation: SpectrumOrientation) {
         self.orientationManager.onUserDispersionSelected(orientation)
-        
-        //also trigger any camera hardware changes here via the session
     }
 }
 

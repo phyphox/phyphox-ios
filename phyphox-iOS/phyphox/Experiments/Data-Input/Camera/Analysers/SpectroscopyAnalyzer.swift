@@ -26,7 +26,7 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     private var latestxAxis: [Double] = []
     
     var dispersionWidth: Int = 0
-    var analysisOrientation: SpectrumAnalysisOrientation = SpectrumAnalysisOrientation.HorizontalRedRight
+    var analysisOrientation: SpectrumOrientation = SpectrumOrientation.horizontalRedRight
     
     init(result: DataBuffer?, xAxis: DataBuffer?) {
         self.analysisResult = result
@@ -148,21 +148,21 @@ class SpectroscopyAnalyzer: AnalyzingModule {
          
     }
     
-    func setAnalysisOrientation(orientation: SpectrumAnalysisOrientation){
+    func setAnalysisOrientation(orientation: SpectrumOrientation){
         self.analysisOrientation = orientation
     }
     
     func isDispersionHorizontal() -> Bool {
-        return analysisOrientation == SpectrumAnalysisOrientation.HorizontalBlueRight ||
-                analysisOrientation == SpectrumAnalysisOrientation.HorizontalRedRight
+        return analysisOrientation == SpectrumOrientation.horizontalBlueRight ||
+                analysisOrientation == SpectrumOrientation.horizontalRedRight
     }
     
     func needsInverseDispersion() -> Bool {
         // Its right question to ask why HorizontalRedRight needs to be inversed?
         
         // :- All textures sent in Metal by default is in landscape eventhough the preview is in portrait. The analysis is done from this direction.  So here the top part of the selected area is analysed first, which means in the portrait mode this selected area part lies in the right most (when seen with 90 degree clock wise rotation).
-        return analysisOrientation == SpectrumAnalysisOrientation.HorizontalRedRight ||
-        analysisOrientation == SpectrumAnalysisOrientation.VerticalRedTop
+        return analysisOrientation == SpectrumOrientation.horizontalRedRight ||
+        analysisOrientation == SpectrumOrientation.verticalRedUp
     }
     
 }

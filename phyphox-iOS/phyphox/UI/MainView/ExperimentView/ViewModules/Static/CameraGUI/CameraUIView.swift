@@ -44,30 +44,6 @@ enum CameraShowControlsState {
     case NEVER
 }
 
-enum SpectrumAnalysisOrientation: CaseIterable{
-    case HorizontalRedRight
-    case HorizontalBlueRight
-    case VerticalRedTop
-    case VerticalBlueTop
-    
-    var title: String {
-        switch self {
-        case .HorizontalRedRight:  return "Horizontal Red Right"
-        case .HorizontalBlueRight: return "Horizontal Blue Right"
-        case .VerticalRedTop:      return "Vertical Red Top"
-        case .VerticalBlueTop:     return "Vertical Blue Top"
-        }
-    }
-    
-    init?(title: String) {
-        if let matched = SpectrumAnalysisOrientation.allCases.first(where: { $0.title == title }) {
-            self = matched
-        } else {
-            return nil
-        }
-    }
-}
-
 @available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
@@ -171,7 +147,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var zoomText: UILabel!
     private var whiteBalanceText: UILabel!
     
-    private var dropdownButton: UIButton?
     let dialogButton = UIButton(type: .system)
     
     // size definitions
@@ -184,7 +159,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     var isHorizontal = true
     var isRedToBlue = false
-    weak var delegate: SpectrumDispersionOrientationDelegate?
+    weak var spectrumOrientationSelectionDelegate: SpectrumDispersionOrientationSelectionDelegate?
     
     required init?(descriptor: CameraViewDescriptor) {
         self.descriptor = descriptor
@@ -733,18 +708,30 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc func showCustomDialog() {
         
-        let dialogView = SpectrumAnalysisConfigurationDialogView(image: UIImage(named: "calibration"), firstDescription: "Choose the orientation of the spectrum dispersion.", firstOptions: ["Horizontal","Verticle"], secondDescription: "Choose which direction should the analysis be done.", secondOptions: ["Left to Right","Right to Left"], initialFirstIndex: lastFirstSelection, initialSecondIndex: lastSecondSelection, completion: {firstIndex, secondIndex in
-            self.lastFirstSelection = firstIndex
-            self.lastSecondSelection = secondIndex
+        let dialogView = SpectrumAnalysisConfigurationDialogView(
+            image: UIImage(named: "calibration"),
+            firstDescription: "Choose the orientation of the spectrum dispersion.",
+            firstOptions: ["Horizontal","Verticle"],
+            secondDescription: "Choose which direction should the analysis be done.",
+            secondOptions: ["Left to Right","Right to Left"],
+            initialFirstIndex: lastFirstSelection,
+            initialSecondIndex: lastSecondSelection,
+            completion: { firstIndex, secondIndex in
             
-            let selectedOrientation = self.getOrientationFromIndices(first: firstIndex, second: secondIndex)
-            self.delegate?.spectrumDidSelectNewOrientation(selectedOrientation)
-            
-            let imageName = self.getArrowImageName(orientationIndex: firstIndex, directionIndex: secondIndex)
-                        if let newImage = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
-                            self.dialogButton.setImage(newImage, for: .normal)
-                        }
-        })
+                self.lastFirstSelection = firstIndex
+                self.lastSecondSelection = secondIndex
+                
+                let selectedOrientation = self.getOrientationFromIndices(first: firstIndex, second: secondIndex)
+                self.spectrumOrientationSelectionDelegate?.spectrumDidSelectNewOrientation(selectedOrientation)
+                
+                let imageName = self.getArrowImageName(orientationIndex: firstIndex, directionIndex: secondIndex)
+                if let newImage = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
+                    self.dialogButton.setImage(newImage, for: .normal)
+                }
+                
+                self.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: selectedOrientation)
+                
+            })
 
         UIAlertController.PhyphoxUIAlertBuilder()
             .title(title: "Spectrum Dispersion Configuration")

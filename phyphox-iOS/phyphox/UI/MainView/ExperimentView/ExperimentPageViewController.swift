@@ -544,7 +544,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
                         
                         self.spectrumDispersionOrientation = cameraGUI
-                        cameraGUI.delegate = self
+                        cameraGUI.spectrumOrientationSelectionDelegate = self
                         
                     }
                     

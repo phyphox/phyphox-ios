@@ -50,7 +50,7 @@ class AnalyzingRenderer {
         initializeMetal()
     }
     
-    func reinitializeSpectroscopyAnalyzer(orientation: SpectrumAnalysisOrientation){
+    func reinitializeSpectroscopyAnalyzer(orientation: SpectrumOrientation){
         for (index,analysingModule) in analysingModules.enumerated() {
             if(analysingModule is SpectroscopyAnalyzer){
                 analysingModules.remove(at: index)
