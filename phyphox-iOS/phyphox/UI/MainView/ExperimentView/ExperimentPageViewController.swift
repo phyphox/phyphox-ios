@@ -46,7 +46,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
     
-    weak var cameraViewUpdateable: SpectrumOrientationUpdateable?
+    weak var spectrumDispersionOrientation: SpectrumOrientationUpdateable?
+    var orientationManager = SpectrumDispersionManager()
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -380,35 +381,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         if(experiment.cameraInput?.feature == CameraFeature.SPECTROSCOPY){
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-                    
-                    NotificationCenter.default.addObserver(
-                        self,
-                        selector: #selector(handleDeviceRotation),
-                        name: UIDevice.orientationDidChangeNotification,
-                        object: nil
-                    )
+            
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleDeviceRotationToControlSpectrumOrientation),
+                name: UIDevice.orientationDidChangeNotification,
+                object: nil
+            )
         }
         
     }
     
-    var orientationManager = SpectrumDispersionManager()
-    
-    @objc func handleDeviceRotation() {
-            let device = UIDevice.current.orientation
-            var newOrient: DeviceOrientation
-            
-            switch device {
-            case .portrait: newOrient = .portrait
-            case .portraitUpsideDown: return
-            case .landscapeLeft: newOrient = .landscapeLeft
-            case .landscapeRight: newOrient = .landscapeRight
-            default: return
-            }
-
-            orientationManager.onDeviceRotated(newOrient)
-            let spectrum = orientationManager.currentDispersionOrientation
-            cameraViewUpdateable?.updateSpectrumState(spectrum: spectrum)
+    @objc func handleDeviceRotationToControlSpectrumOrientation() {
+        let device = UIDevice.current.orientation
+        var newOrient: DeviceOrientation
+        
+        switch device {
+        case .portrait: newOrient = .portrait
+        case .portraitUpsideDown: return
+        case .landscapeLeft: newOrient = .landscapeLeft
+        case .landscapeRight: newOrient = .landscapeRight
+        default: return
         }
+        
+        orientationManager.onDeviceRotated(newOrient)
+        let spectrum = orientationManager.currentDispersionOrientation
+        spectrumDispersionOrientation?.updateSpectrumState(spectrum: spectrum)
+    }
     
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -544,11 +543,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
                         cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
                         
-                        self.cameraViewUpdateable = cameraGUI
+                        self.spectrumDispersionOrientation = cameraGUI
                         cameraGUI.delegate = self
-    
+                        
                     }
-                
+                    
                 }
             }
         }
@@ -579,7 +578,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-
+        
         if isMovingFromParent {
             tearDownWebServer()
             
@@ -734,7 +733,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             self.view.addSubview(self.serverQRIcon!)
-                        
+            
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             
@@ -742,7 +741,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             updateLayout()
         }
     }
-
+    
     
     
     private func tearDownWebServer() {
@@ -1318,12 +1317,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         DispatchQueue.main.async {
             
             guard self.presentedViewController == nil else {
-                        // Optionally, dismiss the current one before showing alert
-                        self.presentedViewController?.dismiss(animated: false) {
-                            self.handleCameraError(notification: notification)
-                        }
-                        return
-                    }
+                // Optionally, dismiss the current one before showing alert
+                self.presentedViewController?.dismiss(animated: false) {
+                    self.handleCameraError(notification: notification)
+                }
+                return
+            }
             
             let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
                                           message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
@@ -1385,7 +1384,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
         imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
-       
+        
         let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
         alertController.addAction(closeButton)
         
@@ -1548,7 +1547,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     // Fallback on earlier versions
                 }
             } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                      (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .dark
                 } else {
@@ -1600,20 +1599,3 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
         }
     }
 }
-
-protocol SpectrumOrientationUpdateable: AnyObject {
-    func updateSpectrumState(spectrum: SpectrumOrientation)
-}
-
-protocol ExperimentCameraUIDelegate: AnyObject {
-    func cameraViewDidSelectNewOrientation(_ orientation: SpectrumOrientation)
-}
-
-extension ExperimentPageViewController: ExperimentCameraUIDelegate {
-    func cameraViewDidSelectNewOrientation(_ orientation: SpectrumOrientation) {
-        self.orientationManager.onUserDispersionSelected(orientation)
-        
-        //also trigger any camera hardware changes here via the session
-    }
-}
-
