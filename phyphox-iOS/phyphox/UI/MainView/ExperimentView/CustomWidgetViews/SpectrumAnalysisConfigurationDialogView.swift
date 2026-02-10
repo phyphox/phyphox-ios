@@ -29,9 +29,9 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
     
     private var selectedFirstIndex: Int = 0
     private var selectedSecondIndex: Int = 0
-
+    
     init(image: UIImage?, firstDescription: String, firstOptions: [String], secondDescription: String, secondOptions: [String], initialFirstIndex: Int = 0,
-    initialSecondIndex: Int = 0, completion: @escaping (Int, Int) -> Void) {
+         initialSecondIndex: Int = 0, completion: @escaping (Int, Int) -> Void) {
         self.dialogImage = image
         self.firstDescription = firstDescription
         self.firstOptions = firstOptions
@@ -45,16 +45,16 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
         setupViews()
         
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     private func setupViews() {
         
         self.addSubview(scrollView)
         scrollView.addSubview(contentView)
-
+        
         if let img = UIImage(named: getHeaderImageName(orientationIndex: selectedFirstIndex, directionIndex: selectedSecondIndex)) {
             imageView.image = img
             imageView.contentMode = .scaleAspectFit
@@ -81,7 +81,7 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
             updateSecondOptions(titles: ["Bottom to Top", "Top to Bottom"])
         }
         selectToggle(secondToggleButtons, index: selectedSecondIndex)
-
+        
     }
     
     override func layoutSubviews() {
@@ -96,10 +96,8 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
         let buttonSpacing: CGFloat = 16
         
         let imageSize = 80.0
-        if dialogImage != nil {
-            imageView.frame = CGRect(x: (bounds.width - imageSize)/2, y: currentY, width: imageSize, height: imageSize)
-            currentY = imageView.frame.maxY + elementSpacing
-        }
+        imageView.frame = CGRect(x: (bounds.width - imageSize)/2, y: currentY, width: imageSize, height: imageSize)
+        currentY = imageView.frame.maxY + elementSpacing
         
         let firstSize = firstDescLabel.sizeThatFits(CGSize(width: contentWidth, height: .greatestFiniteMagnitude))
         firstDescLabel.frame = CGRect(x: startX, y: currentY, width: contentWidth, height: firstSize.height)
@@ -119,53 +117,52 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
         contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: finalHeight)
         scrollView.contentSize = CGSize(width: bounds.width, height: finalHeight)
         
-        
     }
     
     private func layoutButtonRow(_ buttons: [UIButton], startY: CGFloat, startX: CGFloat, spacing: CGFloat) {
-            var xOffset = startX
-            let btnWidth = (bounds.width - 48 - (spacing * CGFloat(buttons.count - 1))) / CGFloat(buttons.count)
-            
-            for button in buttons {
-                button.frame = CGRect(x: xOffset, y: startY, width: btnWidth, height: 45)
-                xOffset += btnWidth + spacing
-            }
+        var xOffset = startX
+        let btnWidth = (bounds.width - 48 - (spacing * CGFloat(buttons.count - 1))) / CGFloat(buttons.count)
+        
+        for button in buttons {
+            button.frame = CGRect(x: xOffset, y: startY, width: btnWidth, height: 45)
+            xOffset += btnWidth + spacing
         }
+    }
     
     private func configureLabel(_ label: UILabel, text: String) {
-            label.text = text
-            label.font = .systemFont(ofSize: 16)
-            label.numberOfLines = 0
+        label.text = text
+        label.font = .systemFont(ofSize: 16)
+        label.numberOfLines = 0
         if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
             label.textColor = UIColor.white
         } else{
             label.textColor = .black
         }
         contentView.addSubview(label)
-        }
+    }
     
     private func createToggleButton(title: String, tag: Int, action: Selector) -> UIButton {
-            let button = UIButton(type: .custom)
-            button.setTitle(title, for: .normal)
-            button.tag = tag
-            button.layer.cornerRadius = 8
-            button.titleLabel?.font = .systemFont(ofSize: 16)
-            button.titleLabel?.backgroundColor = .clear
-            button.titleLabel?.adjustsFontSizeToFitWidth = true
-            button.titleLabel?.minimumScaleFactor = 0.5
-            button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)
-            button.addTarget(self, action: action, for: .touchUpInside)
-            updateToggleAppearance(button)
-            return button
-        }
-
+        let button = UIButton(type: .custom)
+        button.setTitle(title, for: .normal)
+        button.tag = tag
+        button.layer.cornerRadius = 8
+        button.titleLabel?.font = .systemFont(ofSize: 16)
+        button.titleLabel?.backgroundColor = .clear
+        button.titleLabel?.adjustsFontSizeToFitWidth = true
+        button.titleLabel?.minimumScaleFactor = 0.5
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        updateToggleAppearance(button)
+        return button
+    }
+    
     private func selectToggle(_ buttons: [UIButton], index: Int) {
         for (i, button) in buttons.enumerated() {
             button.isSelected = (i == index)
             updateToggleAppearance(button)
         }
     }
-
+    
     private func updateToggleAppearance(_ button: UIButton) {
         if button.isSelected {
             button.backgroundColor = UIColor(named: "highlightColor")
@@ -191,12 +188,12 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
     
     // For now, this is only a placeholder, later other images will replace it.
     func getHeaderImageName(orientationIndex: Int, directionIndex: Int) -> String {
-            if orientationIndex == 0 {
-                return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
-            } else {
-                return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
-            }
+        if orientationIndex == 0 {
+            return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
+        } else {
+            return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
         }
+    }
     
     private func updateDialogImage() {
         
@@ -205,15 +202,15 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
             self.imageView.image = newImg
         }
     }
-
+    
     @objc private func firstToggleTapped(_ sender: UIButton) {
         selectedFirstIndex = sender.tag
         selectToggle(firstToggleButtons, index: selectedFirstIndex)
-            if firstOptions[selectedFirstIndex] == "Verticle" {
-                updateSecondOptions(titles: ["Bottom to Top", "Top to Bottom"])
-            } else {
-                updateSecondOptions(titles: secondOptions)
-            }
+        if firstOptions[selectedFirstIndex] == "Verticle" {
+            updateSecondOptions(titles: ["Bottom to Top", "Top to Bottom"])
+        } else {
+            updateSecondOptions(titles: secondOptions)
+        }
         updateDialogImage()
     }
     
@@ -223,26 +220,25 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
                 button.setTitle(titles[idx], for: .normal)
                 button.isHidden = false
             } else {
-                // Hide the button if there are fewer titles than buttons
                 button.isHidden = true
             }
         }
         
         setNeedsLayout()
     }
-
+    
     @objc private func secondToggleTapped(_ sender: UIButton) {
         selectedSecondIndex = sender.tag
         selectToggle(secondToggleButtons, index: selectedSecondIndex)
         updateDialogImage()
     }
-
+    
     func okTapped() {
         parentViewController().dismiss(animated: true) {
             self.completion(self.selectedFirstIndex, self.selectedSecondIndex)
         }
     }
-
+    
     @objc private func dismissIfAllowed() {
         parentViewController().dismiss(animated: true)
     }
