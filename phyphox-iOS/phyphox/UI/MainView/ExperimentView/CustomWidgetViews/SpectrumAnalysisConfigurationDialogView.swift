@@ -133,11 +133,8 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
         label.text = text
         label.font = .systemFont(ofSize: 16)
         label.numberOfLines = 0
-        if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
-            label.textColor = UIColor.white
-        } else{
-            label.textColor = .black
-        }
+        label.textColor = UIColor(named: "textColor")
+        
         contentView.addSubview(label)
     }
     
