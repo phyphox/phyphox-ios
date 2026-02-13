@@ -201,10 +201,11 @@ class GraphMenuController {
         menuAlertController?.setValue(tableViewController, forKey: "contentViewController")
         menuAlertController?.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         
+        let index = GraphToolbarManager.GraphMode.none.rawValue
         if let popover = menuAlertController?.popoverPresentationController, let toolbar = toolbar {
             let interactionViews = toolbar.subviews.filter { $0.isUserInteractionEnabled }
-            if !interactionViews.isEmpty {
-                let view = interactionViews.sorted(by: { $0.frame.minX < $1.frame.minX })[GraphToolbarManager.GraphMode.none.rawValue]
+            if(interactionViews.count > index) {
+                let view = interactionViews.sorted(by: { $0.frame.minX < $1.frame.minX })[index]
                 popover.sourceView = toolbar
                 popover.sourceRect = view.frame
             }
