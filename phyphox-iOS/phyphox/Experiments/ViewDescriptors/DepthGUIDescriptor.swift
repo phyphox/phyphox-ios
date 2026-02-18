@@ -43,7 +43,6 @@ struct DepthGUIViewDescriptor: ViewDescriptor, Equatable {
                          depthGuiElement.style.display = \"block\";
                      }
                 }
-                }
             """
     }
 }

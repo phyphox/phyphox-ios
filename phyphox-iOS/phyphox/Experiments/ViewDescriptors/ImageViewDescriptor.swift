@@ -50,7 +50,6 @@ struct ImageViewDescriptor: ResourceViewDescriptor, Equatable {
                          imageElement.style.display = \"block\";
                      }
                 }
-                }
             """
     }
     

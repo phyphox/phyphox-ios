@@ -263,9 +263,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     func setVisiblity(_ id: Int) -> String {
         
-        guard let visibilityLabel = visibilityBuffer?.name else {
-                    return ""
-                }
+        guard let visibilityLabel = visibilityBuffer?.name else { return "" }
         
         return """
                 if (data.hasOwnProperty(\"\(visibilityLabel)\")) {

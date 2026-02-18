@@ -226,6 +226,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                         } else {
                             valueMainElement.style.display = "block";
                         }
+                    }
                 """
     }
 }

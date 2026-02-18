@@ -51,7 +51,6 @@ struct CameraViewDescriptor: ViewDescriptor, Equatable {
                          cameraElement.style.display = \"block\";
                      }
                 }
-                }
             """
     }
 }
