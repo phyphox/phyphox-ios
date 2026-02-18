@@ -125,30 +125,36 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
             }
         }
         
-        return "function (data) {" +
-               "    if (!data.hasOwnProperty(\"\(bufferName)\"))" +
-               "        return;" +
-               "    var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
-               "    var v = null;" +
-                mappingCode +
+        let unitCode = setUnit()
+        let formatCode = setFormatedCoordinate()
+        let asciiCode = setAsciiFormat(bufferName: bufferName)
+        let visibilityCode = setVisibility(id, visibilityBuffer?.name ?? "")
         
-                "\(setUnit())" +
+        let dataSetupFunction = """
+        function (data) {
+            if (!data.hasOwnProperty(\"\(bufferName)\"))
+                return;
+            var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];
+            var v = null;
+            \(mappingCode)
+            \(unitCode)
+            \(formatCode)
+            \(asciiCode)
+            var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];
+            var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];
+            var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];
+            if (v == null) {
+                v = x;
+                valueUnit.textContent = unitLabel;
+            } else { 
+                valueUnit.textContent = \"\";
+            } 
+            valueNumber.textContent = v;
+            \(visibilityCode)
+        }
+        """
         
-                "\(setFormatedCoordinate())" +
-        
-                "\(setAsciiFormat(bufferName: bufferName))" +
-                 
-               "    var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
-               "     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];" +
-               "     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];" +
-               "    if (v == null) {" +
-               "        v = x;" +
-               "        valueUnit.textContent = unitLabel;" +
-               "    } else { " +
-               "        valueUnit.textContent = \"\";" +
-               "    } " +
-               "    valueNumber.textContent = v;" +
-               "}"
+        return dataSetupFunction
     }
     
     func setUnit() -> String {
@@ -208,4 +214,19 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                     }
                 """
     }
+    
+    func setVisibility(_ id: Int, _  visibilityLabel: String) -> String {
+        if visibilityLabel.isEmpty { return "" }
+        return """
+                    if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                        var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                        var valueMainElement = document.getElementById(\"element\(id)\");
+                        if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                             valueMainElement.style.display = "none";
+                        } else {
+                            valueMainElement.style.display = "block";
+                        }
+                """
+    }
 }
+
