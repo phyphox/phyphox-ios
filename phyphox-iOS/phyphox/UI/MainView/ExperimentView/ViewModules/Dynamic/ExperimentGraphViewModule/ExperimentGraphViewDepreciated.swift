@@ -8,17 +8,34 @@
 
 import UIKit
 
-final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule, DescriptorBoundViewModule, GraphViewModule, UITabBarDelegate, ApplyZoomDialogResultDelegate, ApplyZoomDelegate, ZoomableViewModule, ExportingViewModule, UITableViewDataSource, UITableViewDelegate, AnalysisLimitedViewModule {
-        
+final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, DescriptorBoundViewModule, UITabBarDelegate, ExportingViewModule, UITableViewDataSource, UITableViewDelegate  {
+    
+    // MARK: Properties for UI Elements
     let unfoldMoreImageView: UIImageView
     let unfoldLessImageView: UIImageView
+    private var graphTools: UITabBar?
+    private var graphArea = UIView()
+    private let label = UILabel()
+    private var xLabel: UILabel
+    private var yLabel: UILabel
+    private let zLabel: UILabel?
+    var markerLabel: UILabel? = nil
+    var markerLabelFrame: UIView? = nil
     
-    private let sideMargins:CGFloat = 10.0
+    // MARK: Properties for UI Gestures
+    var panGestureRecognizer: UIPanGestureRecognizer? = nil
+    var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
+    var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
+    var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
     
-    let descriptor: GraphViewDescriptor
-    let timeReference: ExperimentTimeReference
-    var logX, logY, logZ: Bool
-    
+    // MARK: Properties for Custom UI
+    private let glGraph: GLGraphView
+    private let gridView: GraphGridView
+    private let markerOverlayView: MarkerOverlayView
+    private let glZScale: GLGraphView?
+    private let zGridView: GraphGridView?
+  
+    //MARK: Properties that are used Class wide
     var systemTime: Bool {
         didSet {
             glGraph.systemTime = systemTime
@@ -31,16 +48,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             setNeedsUpdate()
         }
     }
-    
-    var exportDelegate: ExportDelegate? = nil
-    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
-    var zoomDelegate: ApplyZoomDelegate? = nil
-    var resizableState: ResizableViewModuleState = .normal
-
-    var analysisRunning: Bool = false
-    private let displayLink = DisplayLink(refreshRate: 0)
-
-    private var graphTools: UITabBar?
+    let descriptor: GraphViewDescriptor
+    let timeReference: ExperimentTimeReference
+    var logX, logY, logZ: Bool
     enum Mode: Int {
         case pan_zoom = 0, pick, none
     }
@@ -51,8 +61,24 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
     }
-    private var graphArea = UIView()
+    private var zoomMin: GraphPoint3D<Double>?
+    private var zoomMax: GraphPoint3D<Double>?
+    private var zoomFollows = false
+    var markers: [(set: Int, index: Int)] = [] {
+        didSet {
+            refreshMarkers()
+        }
+    }
+    let hasZData: Bool
+    var showLinearFit = false
     
+    //ResizableViewModule properties
+    var resizableState: ResizableViewModuleState = .normal
+    var layoutDelegate: ModuleExclusiveLayoutDelegate? = nil
+
+    //MARK: Propeties that are used in Extensions
+    var analysisRunning: Bool = false
+    private let displayLink = DisplayLink(refreshRate: 0)
     var active = false {
         didSet {
             displayLink.active = active
@@ -61,148 +87,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
     }
-
-    private let label = UILabel()
-    private var xLabel: UILabel
-    private var yLabel: UILabel
-    private let zLabel: UILabel?
     
-    private let glGraph: GLGraphView
-    private let gridView: GraphGridView
-    private let markerOverlayView: MarkerOverlayView
-    
-    private let glZScale: GLGraphView?
-    private let zGridView: GraphGridView?
-    let hasZData: Bool
-    let zScaleHeight: CGFloat = 40
-    var showColorScale = true
-    
-    private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
-    
-    //Keeping track of old max/min for extend zoom strategy
-    private var historicMinX = +Double.infinity
-    private var historicMaxX = -Double.infinity
-    private var historicMinY = +Double.infinity
-    private var historicMaxY = -Double.infinity
-    private var historicMinZ = +Double.infinity
-    private var historicMaxZ = -Double.infinity
-    
-    private var zoomMin: GraphPoint3D<Double>?
-    private var zoomMax: GraphPoint3D<Double>?
-    private var zoomFollows = false
-
-    var panGestureRecognizer: UIPanGestureRecognizer? = nil
-    var pinchGestureRecognizer: UIPinchGestureRecognizer? = nil
-    var zPanGestureRecognizer: UIPanGestureRecognizer? = nil
-    var zPinchGestureRecognizer: UIPinchGestureRecognizer? = nil
-    
-    var markers: [(set: Int, index: Int)] = [] {
-        didSet {
-            refreshMarkers()
-        }
-    }
-    var markerLabel: UILabel? = nil
-    var markerLabelFrame: UIView? = nil
-    
-    var showLinearFit = false
-    
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
-
-    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
-    
-    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
-        if descriptor.history > 1 {
-            if dataSets.count >= Int(descriptor.history) {
-                dataSets.removeFirst()
-            }
-            dataSets.append(sets[0])
-        } else {
-            dataSets = sets
-        }
-    }
-    
-    private var max: GraphPoint3D<Double> {
-        if dataSets.count > 0 {
-            var maxX = -Double.infinity
-            var maxY = -Double.infinity
-            var maxZ = -Double.infinity
-            
-            for set in dataSets {
-                let maxPoint = set.bounds.max
-                
-                maxX = Swift.max(maxX, maxPoint.x)
-                maxY = Swift.max(maxY, maxPoint.y)
-                maxZ = Swift.max(maxZ, maxPoint.z)
-            }
-
-            return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
-        }
-        else {
-            return dataSets.first?.bounds.max ?? GraphPoint3D.zero
-        }
-    }
-    
-    private var min: GraphPoint3D<Double> {
-        if dataSets.count > 0{
-            var minX = Double.infinity
-            var minY = Double.infinity
-            var minZ = Double.infinity
-            
-            for set in dataSets {
-                let minPoint = set.bounds.min
-                
-                minX = Swift.min(minX, minPoint.x)
-                minY = Swift.min(minY, minPoint.y)
-                minZ = Swift.min(minZ, minPoint.z)
-            }
-
-            return GraphPoint3D(x: minX, y: minY, z: minZ)
-        }
-        else {
-            return GraphPoint3D.zero
-        }
-    }
-    
-    private var points2D: [[GraphPoint2D<GLfloat>]] {
-        return dataSets.map { $0.data2D }
-    }
-    
-    private var points3D: [[GraphPoint3D<GLfloat>]] {
-        return dataSets.map { $0.data3D }
-    }
-    
-    private var timeReferenceSets: [[TimeReferenceSet]] {
-        return dataSets.map { $0.timeReferenceSets }
-    }
-    
-    private func refreshView(){
-        glGraph.lineWidth = []
-        glGraph.lineColor = []
-        for i in 0..<descriptor.yInputBuffers.count {
-            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
-            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
-            
-            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
-            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
-        }
-        
-        
-        graphArea.willRemoveSubview(label)
-        
-
-        label.numberOfLines = 0
-        label.text = descriptor.localizedLabel
-        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
-        label.textColor = UIColor(named: "textColor")
-
-        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
-        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
-        
-        graphArea.addSubview(label)
-        
-    }
-    
-    
+    //MARK: - Init
     required init?(descriptor: GraphViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
@@ -229,6 +115,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         hasZData = glGraph.style[0] == .map
         
         showColorScale = descriptor.showColorScale && hasZData
+        
+        calibrationMode = descriptor.calibrationMode == "xLinear"
         
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
@@ -363,86 +251,89 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
         attachDisplayLink(displayLink)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.tapped(_:)))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.executePlotTapp(_:)))
         graphArea.addGestureRecognizer(tapGesture)
         
-        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphView.plotTapped(_:)))
+        let plotTapGesture = UITapGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.plotTapped(_:)))
         glGraph.addGestureRecognizer(plotTapGesture)
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
     }
     
-    @objc func reload(){
-        self.refreshView()
-        self.layoutSubviews()
-        self.setNeedsDisplay()
-    }
-
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    //MARK: - Datasets and its points in graph
 
-    func resizableStateChanged(_ newState: ResizableViewModuleState) {
-        if newState == .exclusive {
-            unfoldMoreImageView.isHidden = true
-            unfoldLessImageView.isHidden = false
-            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.panned(_:)))
-            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.pinched(_:)))
-            if let gr = panGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
+    private typealias DataSet = (bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])
+    
+    private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
+    
+    private func addDataSets(_ sets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])]) {
+        if descriptor.history > 1 {
+            if dataSets.count >= Int(descriptor.history) {
+                dataSets.removeFirst()
             }
-            if let gr = pinchGestureRecognizer {
-                glGraph.addGestureRecognizer(gr)
-            }
-            if let glZScale = glZScale {
-                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPanned(_:)))
-                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphView.zPinched(_:)))
-                if let gr = zPanGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.addGestureRecognizer(gr)
-                }
-            }
+            dataSets.append(sets[0])
         } else {
-            unfoldMoreImageView.isHidden = false
-            unfoldLessImageView.isHidden = true
-            markers = []
-            showLinearFit = false
-            if let gr = panGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            if let gr = pinchGestureRecognizer {
-                glGraph.removeGestureRecognizer(gr)
-            }
-            panGestureRecognizer = nil
-            pinchGestureRecognizer = nil
-            if let glZScale = glZScale {
-                if let gr = zPanGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                if let gr = zPinchGestureRecognizer {
-                    glZScale.removeGestureRecognizer(gr)
-                }
-                zPanGestureRecognizer = nil
-                zPinchGestureRecognizer = nil
-            }
+            dataSets = sets
         }
     }
     
-    @objc func tapped(_ sender: UITapGestureRecognizer) {
-        if resizableState == .normal {
-            layoutDelegate?.presentExclusiveLayout(self)
-        } else {
-            if (zoomFollows || zoomMax != nil || systemTime) {
-                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
-                dialog.resultDelegate = self
-                dialog.show()
-            } else {
-                layoutDelegate?.restoreLayout()
+    private var max: GraphPoint3D<Double> {
+        if dataSets.count > 0 {
+            var maxX = -Double.infinity
+            var maxY = -Double.infinity
+            var maxZ = -Double.infinity
+            
+            for set in dataSets {
+                let maxPoint = set.bounds.max
+                
+                maxX = Swift.max(maxX, maxPoint.x)
+                maxY = Swift.max(maxY, maxPoint.y)
+                maxZ = Swift.max(maxZ, maxPoint.z)
             }
+
+            return GraphPoint3D(x: maxX, y: maxY, z: maxZ)
         }
+        else {
+            return dataSets.first?.bounds.max ?? GraphPoint3D.zero
+        }
+    }
+    
+    private var min: GraphPoint3D<Double> {
+        if dataSets.count > 0{
+            var minX = Double.infinity
+            var minY = Double.infinity
+            var minZ = Double.infinity
+            
+            for set in dataSets {
+                let minPoint = set.bounds.min
+                
+                minX = Swift.min(minX, minPoint.x)
+                minY = Swift.min(minY, minPoint.y)
+                minZ = Swift.min(minZ, minPoint.z)
+            }
+
+            return GraphPoint3D(x: minX, y: minY, z: minZ)
+        }
+        else {
+            return GraphPoint3D.zero
+        }
+    }
+    
+    private var points2D: [[GraphPoint2D<GLfloat>]] {
+        return dataSets.map { $0.data2D }
+    }
+    
+    private var points3D: [[GraphPoint3D<GLfloat>]] {
+        return dataSets.map { $0.data3D }
+    }
+    
+    private var timeReferenceSets: [[TimeReferenceSet]] {
+        return dataSets.map { $0.timeReferenceSets }
     }
     
     func getIndexOfNearestPoint(at: CGPoint) -> (set: Int, index: Int)? {
@@ -552,147 +443,110 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
-        if resizableState == .normal {
-            tapped(sender)
+    //MARK: - RefreshView and data
+    
+    private func refreshView(){
+        glGraph.lineWidth = []
+        glGraph.lineColor = []
+        for i in 0..<descriptor.yInputBuffers.count {
+            glGraph.lineWidth.append(Float(descriptor.lineWidth[i] * (descriptor.style[i] == .dots ? 4.0 : SettingBundleHelper.getGraphSettingWidth())))
+            var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+            
+            descriptor.color[i].autoLightColor().getRed(&r, green: &g, blue: &b, alpha: &a)
+            glGraph.lineColor.append(GLcolor(r: Float(r), g: Float(g), b: Float(b), a: Float(a)))
         }
+        
+        
+        graphArea.willRemoveSubview(label)
+        
+
+        label.numberOfLines = 0
+        label.text = descriptor.localizedLabel
+        label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
+        label.textColor = UIColor(named: "textColor")
+
+        xLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        yLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
+        
+        graphArea.addSubview(label)
+        
+    }
+    
+    
+    @objc func reload(){
+        self.refreshView()
+        self.layoutSubviews()
+        self.setNeedsDisplay()
+    }
+    
+    //MARK: - Calibration Mode
+    
+    var calibrationMode : Bool = false
+    var showCalibrationDialog = true
+    
+    func activateCalibrationMode(){
+        mode = .pick
+        self.markerOverlayView.drawTheLine = false
+        showCalibrationDialog = true
+    }
+    
+    @objc func calibrationValueTextField(_ sender: UITextField){
+        print("Text changed - ", sender.text!)
+    }
+    
+    fileprivate func addMarker(for point: (set: Int, index: Int)) {
+        if(calibrationMode){
+            if(markers.count > 2){
+                // remove all and add from start
+                markers = []
+                markers.append(point)
+            } else {
+                markers.append(point)
+                showLinearFit = false
+            }
+        } else {
+            markers = [point]
+            showLinearFit = false
+        }
+    }
+    
+    //MARK: - Pinch, pan and taps
+    
+    private var previouslyKept = false //Keeps track of the last choice of the user, whether he elected to keep is zoom level or reset it when leaving the interactive mode.
+    var zoomDelegate: ApplyZoomDelegate? = nil
+    
+    @objc func executePlotTapp(_ sender: UITapGestureRecognizer) {
+        if resizableState == .normal {
+            layoutDelegate?.presentExclusiveLayout(self)
+        } else {
+            if (zoomFollows || zoomMax != nil || systemTime) {
+                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
+                dialog.resultDelegate = self
+                dialog.show()
+            } else {
+                layoutDelegate?.restoreLayout()
+            }
+        }
+    }
+    
+    @objc func plotTapped(_ sender: UITapGestureRecognizer) {
+        
+        if resizableState == .normal {
+            calibrationMode ? activateCalibrationMode() : executePlotTapp(sender)
+        }
+        
         if mode != .pick {
             return
         }
         
         if let point = getIndexOfNearestPoint(at: sender.location(in: glGraph)) {
-            markers = [point]
-            showLinearFit = false
+            addMarker(for: point)
+
         } else {
             markers = []
         }
     }
     
-    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
-        
-        previouslyKept = !(modeX == .reset && modeY == .reset)
-        
-        layoutDelegate?.restoreLayout()
-        
-        if zoomMin == nil || zoomMax == nil {
-            zoomMin = GraphPoint3D(x: min.x, y: min.y, z: min.z)
-            zoomMax = GraphPoint3D(x: max.x, y: max.y, z: max.z)
-            
-            if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
-                return
-            }
-        }
-        
-        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
-        if (applyToX != .this || applyToY != .this) {
-            let targetX: String?
-            let targetY: String?
-            
-            switch applyToX {
-            case .sameUnit:
-                targetX = descriptor.localizedXUnit
-            case .sameVariable:
-                targetX = descriptor.xInputBuffers[0]?.name
-            default:
-                targetX = nil
-            }
-            
-            switch applyToY {
-            case .sameUnit:
-                targetY = descriptor.localizedYUnit
-            case .sameVariable:
-                targetY = descriptor.yInputBuffers[0].name
-            default:
-                targetY = nil
-            }
-
-            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
-        }
-    }
-    
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
-        
-        var applyX = false
-        var applyY = false
-        
-        switch applyToX {
-        case .this:
-            applyX = true
-        case .sameAxis:
-            applyX = true
-        case .sameUnit:
-            if targetX == descriptor.localizedXUnit {
-                applyX = true
-            }
-        case .sameVariable:
-            if targetX == descriptor.xInputBuffers[0]?.name {
-                applyX = true
-            }
-        case .none:
-            break
-        }
-        
-        switch applyToY {
-        case .this:
-            applyY = true
-        case .sameAxis:
-            applyY = true
-        case .sameUnit:
-            if targetY == descriptor.localizedYUnit {
-                applyY = true
-            }
-        case .sameVariable:
-            if targetY == descriptor.yInputBuffers[0].name {
-                applyY = true
-            }
-        case .none:
-            break
-        }
-        
-        if applyX {
-            switch modeX {
-            case .reset:
-                zoomFollows = descriptor.followX
-                if descriptor.followX {
-                    self.zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
-                    self.zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
-                } else {
-                    self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                    self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-                }
-            case .keep:
-                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-            case .follow:
-                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
-                zoomFollows = true
-            case .none:
-                break
-            }
-            if descriptor.timeOnX {
-                self.systemTime = systemTime
-            }
-        }
-        
-        if applyY {
-            switch modeY {
-            case .reset:
-                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
-            case .keep:
-                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y, z: Double.nan)
-                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
-            default:
-                break
-            }
-            if descriptor.timeOnY {
-                self.systemTime = systemTime
-            }
-        }
-        
-        update()
-    }
     
     func limitRange(_ v: Double?, isLog: Bool) -> Double {
         guard let v = v, v.isFinite else {
@@ -894,10 +748,20 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.update()
     }
     
-    //MARK - Graph
+    //MARK: - Graph
+    
+    //Keeping track of old max/min for extend zoom strategy
+    private var historicMinX = +Double.infinity
+    private var historicMaxX = -Double.infinity
+    private var historicMinY = +Double.infinity
+    private var historicMaxY = -Double.infinity
+    private var historicMinZ = +Double.infinity
+    private var historicMaxZ = -Double.infinity
     
     private var lastIndexXArray: [Double]?
     private var lastCount: Int?
+    
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
 
     private func runUpdate() {
         var xValues: [[Double]] = []
@@ -1280,151 +1144,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    private func refreshMarkers() {
-        var relativeCoordinates: [(CGFloat, CGFloat)] = []
-        
-        let min = self.min
-        let max = self.max
-        
-        var xlist: [GLfloat] = []
-        var ylist: [GLfloat] = []
-        var zlist: [GLfloat] = []
-        var avgRX = CGFloat(0.0)
-        var minRY = CGFloat.infinity
-        var n = 0
-        
-        func appendMarker(_ x: GLfloat, _ y: GLfloat, _ z: GLfloat) {
-            let offsetX: Double
-            let offsetY: Double
-            if descriptor.timeOnX && systemTime && !descriptor.linearTime {
-                offsetX = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(x)))
-            } else if descriptor.timeOnX && !systemTime && descriptor.linearTime {
-                offsetX = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(x)))
-            } else {
-                offsetX = 0.0
-            }
-            if descriptor.timeOnY && systemTime && !descriptor.linearTime {
-                offsetY = timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(y)))
-            } else if descriptor.timeOnY && !systemTime && descriptor.linearTime {
-                offsetY = -timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: Double(y)))
-            } else {
-                offsetY = 0.0
-            }
-            let rx = CGFloat((Double(x) + offsetX - min.x) / (max.x-min.x))
-            let ry = CGFloat((max.y - Double(y) - offsetY) / (max.y-min.y))
-            
-            xlist.append(x)
-            ylist.append(y)
-            zlist.append(z)
-            
-            avgRX += rx
-            n += 1
-            if ry < minRY {
-                minRY = ry
-            }
-            
-            relativeCoordinates.append((rx, ry))
-        }
-        
-        for marker in markers {
-            if marker.set < dataSets.count {
-                let dataSet = dataSets[marker.set]
-                
-                let x: GLfloat, y: GLfloat, z: GLfloat
-                if marker.index < dataSet.data2D.count {
-                    x = dataSet.data2D[marker.index].x
-                    y = dataSet.data2D[marker.index].y
-                    z = GLfloat.nan
-                } else if marker.index < dataSet.data3D.count {
-                    x = dataSet.data3D[marker.index].x
-                    y = dataSet.data3D[marker.index].y
-                    z = dataSet.data3D[marker.index].z
-                } else {
-                    continue
-                }
-                
-                appendMarker(x, y, z)
-            }
-        }
-        
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
-        
-        if n == 1 {
-            self.markerOverlayView.showMarkers = true
-            self.markerOverlayView.markers = relativeCoordinates
-            
-            var labelText = localize("graph_point_label")
-            let x = (logX ? exp(xlist[0]) : xlist[0])
-            labelText += "\n    "+(formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let y = (logY ? exp(ylist[0]) : ylist[0])
-            labelText += "\n    "+(formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-            if hasZData {
-                let z = (logZ ? exp(zlist[0]) : zlist[0])
-                labelText += "\n    "+(formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
-            }
-            setMarkerLabel(labelText)
-        } else if n == 2 {
-            self.markerOverlayView.showMarkers = true
-            self.markerOverlayView.markers = relativeCoordinates
-            
-            var labelText = localize("graph_difference_label")
-            let dx = abs((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-            labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let dy = abs((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))
-            labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-            if hasZData {
-                let dz = abs((logZ ? exp(zlist[0]) : zlist[0]) - (logZ ? exp(zlist[1]) : zlist[1]))
-                labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
-            }
-            labelText += "\n" + localize("graph_slope_label")
-            let slope = ((logY ? exp(ylist[0]) : ylist[0]) - (logY ? exp(ylist[1]) : ylist[1]))/((logX ? exp(xlist[0]) : xlist[0]) - (logX ? exp(xlist[1]) : xlist[1]))
-            labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-            setMarkerLabel(labelText)
-        } else if showLinearFit {
-            if let dataSet = dataSets.first, dataSet.data2D.count >= 2 {
-                let a: GLfloat, b: GLfloat
-                (a, b) = calculateLinearRegression(dataSet.data2D)
-                
-                let x1 = GLfloat(min.x)
-                let y1 = a * GLfloat(min.x) + b
-                appendMarker(x1, y1, GLfloat.nan)
-                let x2 = GLfloat(max.x)
-                let y2 = a * GLfloat(max.x) + b
-                appendMarker(x2, y2, GLfloat.nan)
-                
-                self.markerOverlayView.showMarkers = false
-                self.markerOverlayView.markers = relativeCoordinates
-                
-                var labelText = localize("graph_fit_label")
-                labelText += "\na = " + (formatter.string(from: a as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
-                labelText += "\nb = " + (formatter.string(from: b as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
-                setMarkerLabel(labelText)
-            } else {
-                setMarkerLabel(nil)
-                self.markerOverlayView.markers = []
-            }
-        } else {
-            setMarkerLabel(nil)
-            self.markerOverlayView.markers = []
-        }
-        
-        if let markerLabelFrame = markerLabelFrame, n > 0 {
-            avgRX /= CGFloat(n)
-            
-            let w = markerLabelFrame.frame.width
-            let h = markerLabelFrame.frame.height
-            
-            let frame = glGraph.frame
-            let x = Swift.min(Swift.max(frame.minX + avgRX * frame.width - 0.5*w, 0), bounds.width - w)
-            let y = Swift.min(Swift.max(frame.minY + minRY * frame.height - h - 15.0, 0), bounds.height - h)
-            
-            markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
-        }
-    }
-    
     private func calculateLinearRegression(_ data: [GraphPoint2D<GLfloat>]) -> (GLfloat, GLfloat) {
         var sumX:GLfloat = 0.0
         var sumX2:GLfloat = 0.0
@@ -1580,16 +1299,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
-    func clearData() {
-        dataSets.removeAll()
-        historicMinX = +Double.infinity
-        historicMaxX = -Double.infinity
-        historicMinY = +Double.infinity
-        historicMaxY = -Double.infinity
-        historicMinZ = +Double.infinity
-        historicMaxZ = -Double.infinity
-        clearGraph()
-    }
     
     private func clearGraph() {
         gridView.grid = nil
@@ -1602,7 +1311,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         glGraph.setPoints(points2D: [], points3D: [], min: .zero, max: .zero, timeReferenceSets: [])
     }
     
-    //Mark - Toolbar and interaction
+    //MARK: - Toolbar and interaction
+    
+    var exportDelegate: ExportDelegate? = nil
     
     func setupToolbar() -> UITabBar {
         let graphTools = UITabBar()
@@ -1788,7 +1499,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.update()
     }
     
-    //Mark - General UI
+    //MARK: - General UI
+    
+    private let sideMargins:CGFloat = 10.0
+    let zScaleHeight: CGFloat = 40
+    var showColorScale = true
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         switch resizableState {
@@ -1888,7 +1603,327 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
 }
 
-extension ExperimentGraphView: GraphGridDelegate {
+//MARK: - Extension that defines logics for refresh marker view
+
+extension ExperimentGraphViewDepreciated {
+    
+    private func refreshMarkers(){
+        let markerData = collectMarkerData()
+        let numberFormatter = createNumberFormatter()
+        
+        switch markerData.count {
+        case 1:
+            showSinglePointMarker(markerData: markerData, formatter: numberFormatter)
+            positionMarkerLabel(markerData: markerData)
+        case 2:
+            showDifferenceMarker(markerData: markerData, formatter: numberFormatter)
+            positionMarkerLabel(markerData: markerData)
+        default:
+            if showLinearFit {
+                showLinearFitMarker(formatter: numberFormatter)
+            } else {
+                clearMarkers()
+            }
+        }
+        
+        positionMarkerLabel(markerData: markerData)
+    }
+    
+    private func showSinglePointMarker(markerData: MarkerData, formatter: NumberFormatter) {
+        self.markerOverlayView.showMarkers = true
+        self.markerOverlayView.markers = markerData.relativeCoordinates
+        
+        let labelText = buildSinglePointLabel(
+                x: markerData.xValues[0],
+                y: markerData.yValues[0],
+                z: markerData.zValues[0],
+                formatter: formatter
+            )
+        
+        setMarkerLabel(labelText)
+    }
+    
+    private func showDifferenceMarker(markerData: MarkerData, formatter: NumberFormatter) {
+        markerOverlayView.showMarkers = true
+        markerOverlayView.markers = markerData.relativeCoordinates
+        
+        let labelText = buildDifferenceLabel(
+                x1: markerData.xValues[0], x2: markerData.xValues[1],
+                y1: markerData.yValues[0], y2: markerData.yValues[1],
+                z1: markerData.zValues[0], z2: markerData.zValues[1],
+                formatter: formatter
+            )
+            setMarkerLabel(labelText)
+        
+    }
+    
+    private func showLinearFitMarker(formatter: NumberFormatter) {
+        guard let dataSet = dataSets.first, dataSet.data2D.count >= 2 else {
+               clearMarkers()
+               return
+           }
+        
+        let (slope, intercept) = calculateLinearRegression(dataSet.data2D)
+        
+        let fitMarkerData = createLinearFitMarkerData(slope: slope, intercept: intercept)
+        
+        self.markerOverlayView.showMarkers = false
+        self.markerOverlayView.markers = fitMarkerData.relativeCoordinates
+        
+        let labelText = buildLinearFitLabel(slope: slope, intercept: intercept, formatter: formatter)
+        setMarkerLabel(labelText)
+        
+        positionMarkerLabel(markerData: fitMarkerData)
+        
+    }
+    
+    private func clearMarkers() {
+        setMarkerLabel(nil)
+        markerOverlayView.markers = []
+    }
+    
+    private struct MarkerData {
+        let relativeCoordinates: [(CGFloat, CGFloat)]
+        let xValues: [GLfloat]
+        let yValues: [GLfloat]
+        let zValues: [GLfloat]
+        let averageRelativeX: CGFloat
+        let minimumRelativeY: CGFloat
+        let count: Int
+    }
+    
+    private func collectMarkerData() -> MarkerData {
+        var relativeCoordinates: [(CGFloat, CGFloat)] = []
+        var xValues: [GLfloat] = []
+        var yValues: [GLfloat] = []
+        var zValues: [GLfloat] = []
+        var totalRelativeX = CGFloat(0.0)
+        var minimumRelativeY = CGFloat.infinity
+        var count = 0
+        
+        let minPoint = self.min
+        let maxPoint = self.max
+        
+        for marker in markers {
+            guard marker.set < dataSets.count else { continue }
+            
+            let dataset = dataSets[marker.set]
+            let coordinates = extractCoordinates(from: dataset, at: marker.index)
+            
+            guard let (x, y, z) = coordinates else { continue }
+            
+            let relativeCoordinate = calculateRelativeCoordinate(x: x, y: y, min: minPoint, max: maxPoint)
+            
+            xValues.append(x)
+            yValues.append(y)
+            zValues.append(z)
+            
+            relativeCoordinates.append(relativeCoordinate)
+            
+            totalRelativeX += relativeCoordinate.0
+            count += 1
+                    
+            if relativeCoordinate.1 < minimumRelativeY {
+                minimumRelativeY = relativeCoordinate.1
+            }
+            
+            
+        }
+        let averageRelativeX = count > 0 ? totalRelativeX / CGFloat(count) : 0
+        
+        
+        return MarkerData(
+                relativeCoordinates: relativeCoordinates,
+                xValues: xValues,
+                yValues: yValues,
+                zValues: zValues,
+                averageRelativeX: averageRelativeX,
+                minimumRelativeY: minimumRelativeY,
+                count: count
+            )
+    }
+    
+    private func extractCoordinates(from dataSet: DataSet, at index: Int) -> (GLfloat, GLfloat, GLfloat)? {
+        if index < dataSet.data2D.count {
+            let point = dataSet.data2D[index]
+            return (point.x, point.y, GLfloat.nan)
+        } else if index < dataSet.data3D.count {
+            let point = dataSet.data3D[index]
+            return (point.x, point.y, point.z)
+        }
+        return nil
+    }
+    
+    private func calculateRelativeCoordinate(x: GLfloat, y: GLfloat,min: GraphPoint3D<Double>, max: GraphPoint3D<Double>) -> (CGFloat, CGFloat) {
+        
+        let offsetX = calculateTimeOffset(value: x, isXAxis: true)
+        let offsetY = calculateTimeOffset(value: y, isXAxis: false)
+        
+        let relativeX = CGFloat((Double(x) + offsetX - min.x) / (max.x - min.x))
+        let relativeY = CGFloat((max.y - Double(y) - offsetY) / (max.y - min.y))
+        
+        return (relativeX, relativeY)
+        
+    }
+    
+    private func calculateTimeOffset(value: GLfloat, isXAxis: Bool) -> Double {
+        let isTimeAxis = isXAxis ? descriptor.timeOnX : descriptor.timeOnY
+        
+        guard isTimeAxis else { return 0.0 }
+        
+        if systemTime && !descriptor.linearTime {
+            return timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: Double(value)))
+        } else if !systemTime && descriptor.linearTime {
+            return -timeReference.getTotalGapByIndex(
+                i: timeReference.getReferenceIndexFromLinearTime(t: Double(value))
+            )
+        }
+        
+        return 0.0
+        
+        
+    }
+    
+    private func createNumberFormatter() -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.usesSignificantDigits = true
+        formatter.minimumSignificantDigits = 4
+        formatter.maximumSignificantDigits = 8
+        return formatter
+    }
+    
+    private func buildSinglePointLabel(x: GLfloat, y: GLfloat, z: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_point_label")
+        
+        let convertedX = convertValue(x, isLogarithmic: logX)
+        labelText += "\n    " + formatValue(convertedX, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
+        
+        let convertedY = convertValue(y, isLogarithmic: logY)
+            labelText += "\n    " + formatValue(convertedY, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+            
+        if hasZData {
+            let convertedZ = convertValue(z, isLogarithmic: logZ)
+            labelText += "\n    " + formatValue(convertedZ, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
+        }
+            
+        return labelText
+        
+    }
+    
+    private func buildDifferenceLabel(x1: GLfloat, x2: GLfloat, y1: GLfloat, y2: GLfloat, z1: GLfloat, z2: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_difference_label")
+        
+        let convertedX1 = convertValue(x1, isLogarithmic: logX)
+        let convertedX2 = convertValue(x2, isLogarithmic: logX)
+        let dx = abs(convertedX1 - convertedX2)
+        labelText += "\n    " + formatValue(dx, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
+        
+        let convertedY1 = convertValue(y1, isLogarithmic: logY)
+        let convertedY2 = convertValue(y2, isLogarithmic: logY)
+        let dy = abs(convertedY1 - convertedY2)
+        labelText += "\n    " + formatValue(dy, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+        
+        if hasZData {
+            let convertedZ1 = convertValue(z1, isLogarithmic: logZ)
+            let convertedZ2 = convertValue(z2, isLogarithmic: logZ)
+            let dz = abs(convertedZ1 - convertedZ2)
+            labelText += "\n    " + formatValue(dz, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
+        }
+        
+        labelText += "\n" + localize("graph_slope_label")
+        let slope = (convertedY1 - convertedY2) / (convertedX1 - convertedX2)
+        labelText += "\n    " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
+        
+        return labelText
+    }
+    
+    private func buildLinearFitLabel(slope: GLfloat, intercept: GLfloat, formatter: NumberFormatter) -> String {
+        var labelText = localize("graph_fit_label")
+        labelText += "\na = " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
+        labelText += "\nb = " + formatValue(intercept, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
+        return labelText
+    }
+    
+    private func convertValue(_ value: GLfloat, isLogarithmic: Bool) -> GLfloat {
+        return isLogarithmic ? exp(value) : value
+    }
+
+    private func formatValue(_ value: GLfloat, formatter: NumberFormatter) -> String {
+        return formatter.string(from: value as NSNumber) ?? "N/A"
+    }
+
+    private func formatUnit(_ unit: String) -> String {
+        return unit.isEmpty ? "" : " " + unit
+    }
+    
+    private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
+        let minPoint = self.min
+        let maxPoint = self.max
+        
+        // Calculate the two endpoints of the fit line
+        let x1 = GLfloat(minPoint.x)
+        let y1 = slope * x1 + intercept
+        let coord1 = calculateRelativeCoordinate(x: x1, y: y1, min: minPoint, max: maxPoint)
+        
+        let x2 = GLfloat(maxPoint.x)
+        let y2 = slope * x2 + intercept
+        let coord2 = calculateRelativeCoordinate(x: x2, y: y2, min: minPoint, max: maxPoint)
+        
+        // Build the marker data similar to appendMarker logic
+        let relativeCoordinates = [coord1, coord2]
+        let xValues = [x1, x2]
+        let yValues = [y1, y2]
+        let zValues = [GLfloat.nan, GLfloat.nan]
+        
+        // Calculate average relative X and minimum relative Y
+        let averageRelativeX = (coord1.0 + coord2.0) / 2.0
+        let minimumRelativeY = Swift.min(coord1.1, coord2.1)
+        
+        return MarkerData(
+            relativeCoordinates: relativeCoordinates,
+            xValues: xValues,
+            yValues: yValues,
+            zValues: zValues,
+            averageRelativeX: averageRelativeX,
+            minimumRelativeY: minimumRelativeY,
+            count: 2
+        )
+    }
+    
+    private func positionMarkerLabel(markerData: MarkerData) {
+        guard let markerLabelFrame = markerLabelFrame, markerData.count > 0 else { return }
+        
+        let labelWidth = markerLabelFrame.frame.width
+        let labelHeight = markerLabelFrame.frame.height
+        
+        let graphFrame = glGraph.frame
+        
+        let x = Swift.min(
+            Swift.max(
+                graphFrame.minX + markerData.averageRelativeX * graphFrame.width - 0.5 * labelWidth,
+                0
+            ),
+            bounds.width - labelWidth
+        )
+        
+        let y = Swift.min(
+            Swift.max(
+                graphFrame.minY + markerData.minimumRelativeY * graphFrame.height - labelHeight - 15.0,
+                0
+            ),
+            bounds.height - labelHeight
+        )
+        
+        markerLabelFrame.frame = CGRect(x: x, y: y, width: labelWidth, height: labelHeight)
+        
+        
+    }
+    
+}
+
+//MARK: - Extensions
+
+extension ExperimentGraphViewDepreciated: GraphGridDelegate, GraphViewModule {
     func updatePlotArea() {
         if (glGraph.frame != graphFrame) {
             glGraph.frame = graphFrame
@@ -1899,12 +1934,206 @@ extension ExperimentGraphView: GraphGridDelegate {
             refreshMarkers()
         }
     }
+    
+    func clearData() {
+        dataSets.removeAll()
+        historicMinX = +Double.infinity
+        historicMaxX = -Double.infinity
+        historicMinY = +Double.infinity
+        historicMaxY = -Double.infinity
+        historicMinZ = +Double.infinity
+        historicMaxZ = -Double.infinity
+        clearGraph()
+    }
 }
 
-extension ExperimentGraphView: DisplayLinkListener {
+extension ExperimentGraphViewDepreciated: DisplayLinkListener, AnalysisLimitedViewModule {
     func display(_ displayLink: DisplayLink) {
         if wantsUpdate && !analysisRunning {
             update()
         }
     }
+}
+
+extension ExperimentGraphViewDepreciated: ResizableViewModule {
+    
+    func resizableStateChanged(_ newState: ResizableViewModuleState) {
+        if newState == .exclusive {
+            unfoldMoreImageView.isHidden = true
+            unfoldLessImageView.isHidden = false
+            panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.panned(_:)))
+            pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.pinched(_:)))
+            if let gr = panGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.addGestureRecognizer(gr)
+            }
+            if let glZScale = glZScale {
+                zPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.zPanned(_:)))
+                zPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(ExperimentGraphViewDepreciated.zPinched(_:)))
+                if let gr = zPanGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.addGestureRecognizer(gr)
+                }
+            }
+            
+        } else {
+            unfoldMoreImageView.isHidden = false
+            unfoldLessImageView.isHidden = true
+            markers = []
+            showLinearFit = false
+            if let gr = panGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            if let gr = pinchGestureRecognizer {
+                glGraph.removeGestureRecognizer(gr)
+            }
+            panGestureRecognizer = nil
+            pinchGestureRecognizer = nil
+            if let glZScale = glZScale {
+                if let gr = zPanGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                if let gr = zPinchGestureRecognizer {
+                    glZScale.removeGestureRecognizer(gr)
+                }
+                zPanGestureRecognizer = nil
+                zPinchGestureRecognizer = nil
+            }
+        }
+    }
+    
+}
+
+extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule, ApplyZoomDialogResultDelegate {
+    
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+        
+        var applyX = false
+        var applyY = false
+        
+        switch applyToX {
+        case .this:
+            applyX = true
+        case .sameAxis:
+            applyX = true
+        case .sameUnit:
+            if targetX == descriptor.localizedXUnit {
+                applyX = true
+            }
+        case .sameVariable:
+            if targetX == descriptor.xInputBuffers[0]?.name {
+                applyX = true
+            }
+        case .none:
+            break
+        }
+        
+        switch applyToY {
+        case .this:
+            applyY = true
+        case .sameAxis:
+            applyY = true
+        case .sameUnit:
+            if targetY == descriptor.localizedYUnit {
+                applyY = true
+            }
+        case .sameVariable:
+            if targetY == descriptor.yInputBuffers[0].name {
+                applyY = true
+            }
+        case .none:
+            break
+        }
+        
+        if applyX {
+            switch modeX {
+            case .reset:
+                zoomFollows = descriptor.followX
+                if descriptor.followX {
+                    self.zoomMin = GraphPoint3D(x: descriptor.minX, y: Double.nan, z: Double.nan)
+                    self.zoomMax = GraphPoint3D(x: descriptor.maxX, y: Double.nan, z: Double.nan)
+                } else {
+                    self.zoomMax = GraphPoint3D(x: Double.nan, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                    self.zoomMin = GraphPoint3D(x: Double.nan, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                }
+            case .keep:
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+            case .follow:
+                self.zoomMax = GraphPoint3D(x: zoomMax.x, y: self.zoomMax?.y ?? Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: zoomMin.x, y: self.zoomMin?.y ?? Double.nan, z: Double.nan)
+                zoomFollows = true
+            case .none:
+                break
+            }
+            if descriptor.timeOnX {
+                self.systemTime = systemTime
+            }
+        }
+        
+        if applyY {
+            switch modeY {
+            case .reset:
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+            case .keep:
+                self.zoomMax = GraphPoint3D(x: self.zoomMax?.x ?? Double.nan, y: zoomMax.y, z: Double.nan)
+                self.zoomMin = GraphPoint3D(x: self.zoomMin?.x ?? Double.nan, y: zoomMin.y, z: Double.nan)
+            default:
+                break
+            }
+            if descriptor.timeOnY {
+                self.systemTime = systemTime
+            }
+        }
+        
+        update()
+    }
+    
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+        
+        previouslyKept = !(modeX == .reset && modeY == .reset)
+        
+        layoutDelegate?.restoreLayout()
+        
+        if zoomMin == nil || zoomMax == nil {
+            zoomMin = GraphPoint3D(x: min.x, y: min.y, z: min.z)
+            zoomMax = GraphPoint3D(x: max.x, y: max.y, z: max.z)
+            
+            if zoomMin == nil || zoomMax == nil || zoomMin!.x == zoomMax!.x || zoomMin!.y == zoomMax!.y {
+                return
+            }
+        }
+        
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+        if (applyToX != .this || applyToY != .this) {
+            let targetX: String?
+            let targetY: String?
+            
+            switch applyToX {
+            case .sameUnit:
+                targetX = descriptor.localizedXUnit
+            case .sameVariable:
+                targetX = descriptor.xInputBuffers[0]?.name
+            default:
+                targetX = nil
+            }
+            
+            switch applyToY {
+            case .sameUnit:
+                targetY = descriptor.localizedYUnit
+            case .sameVariable:
+                targetY = descriptor.yInputBuffers[0].name
+            default:
+                targetY = nil
+            }
+
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+        }
+    }
+    
 }

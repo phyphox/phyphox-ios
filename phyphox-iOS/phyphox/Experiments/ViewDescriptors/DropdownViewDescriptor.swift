@@ -15,6 +15,7 @@ struct DropdownViewMap: Equatable {
 
 struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     var label: String
+    var visibilityBuffer: DataBuffer?
     let defaultValue: Double
     let buffer: DataBuffer
     var mappings: [DropdownViewMap]
@@ -38,8 +39,9 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection?) {
+    init(label: String, visibilityBuffer: DataBuffer?, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.defaultValue = defaultValue
         self.buffer = buffer
         self.mappings = mappings

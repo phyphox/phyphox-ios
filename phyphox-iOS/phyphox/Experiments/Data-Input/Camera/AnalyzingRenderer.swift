@@ -50,14 +50,32 @@ class AnalyzingRenderer {
         initializeMetal()
     }
     
-    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
+    func reinitializeSpectroscopyAnalyzer(orientation: SpectrumOrientation){
+        for (index,analysingModule) in analysingModules.enumerated() {
+            if(analysingModule is SpectroscopyAnalyzer){
+                analysingModules.remove(at: index)
+                let analyzer = SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition)
+                analyzer.setAnalysisOrientation(orientation: orientation)
+                analysingModules.append(analyzer)
+                analyzer.loadMetal()
+                
+            }
+        }
+    }
+    
+    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?, feature: CameraFeature){
         self.cameraBuffers = cameraBuffers
         
         AnalyzingModule.initialize(metalDevice: metalDevice)
         
+        exposureAnalyzer.loadMetal()
         
         if(cameraBuffers?.luminanceBuffer != nil){
-            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            if(feature == CameraFeature.PHOTOMETRIC){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            } else if(feature == CameraFeature.SPECTROSCOPY){
+                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition))
+            }
         }
         
         if(cameraBuffers?.lumaBuffer != nil){
@@ -83,7 +101,7 @@ class AnalyzingRenderer {
         for analysingModule in analysingModules {
             analysingModule.loadMetal()
         }
-        exposureAnalyzer.loadMetal()
+        
        
     }
         

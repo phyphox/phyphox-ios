@@ -204,3 +204,7 @@ extension UIView {
         return nil
     }
 }
+
+extension ExperimentDropdownView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

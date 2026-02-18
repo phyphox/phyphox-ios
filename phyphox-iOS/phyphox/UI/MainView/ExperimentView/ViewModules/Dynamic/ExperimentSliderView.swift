@@ -567,3 +567,7 @@ class RangeSliderTrackLayer: CALayer {
 
 }
 
+
+extension ExperimentSliderView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

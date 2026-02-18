@@ -1,0 +1,169 @@
+//
+//  SpectroscopyAnalyzer.swift
+//  phyphox
+//
+//  Created by Gaurav Tripathee on 25.06.25.
+//  Copyright © 2025 RWTH Aachen. All rights reserved.
+//
+
+@available(iOS 14.0, *)
+class SpectroscopyAnalyzer: AnalyzingModule {
+    
+
+    private enum Constants {
+        static let kernelFunctionNameForVerticleDispersion = "readLuminaceValForVerticle"
+        static let kernelFunctionNameForHorizontalDispersion = "readLuminaceValForHorizontal"
+        static let threadGroupWidth = 16
+        static let threadGroupHeight = 16
+    }
+    
+    var analysisResult: DataBuffer?
+    var xAxis: DataBuffer?
+    
+    var analyzisPipelineState : MTLComputePipelineState?
+    var metalOutputBuffer: MTLBuffer?
+    private var latestResults: [Double] = []
+    private var latestxAxis: [Double] = []
+    
+    var dispersionWidth: Int = 0
+    var analysisOrientation: SpectrumOrientation = SpectrumOrientation.horizontalRedRight
+    
+    init(result: DataBuffer?, xAxis: DataBuffer?) {
+        self.analysisResult = result
+        self.xAxis = xAxis
+    }
+    
+    override func loadMetal() {
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
+        let gpuFunctionLibrary = AnalyzingModule.gpuFunctionLibrary
+        
+        guard let readLuminanceFunction = gpuFunctionLibrary?.makeFunction(name:
+                                                                            isDispersionHorizontal() ?
+                                                                           Constants.kernelFunctionNameForHorizontalDispersion :
+                                                                            Constants.kernelFunctionNameForVerticleDispersion) else { return }
+        
+        do {
+            analyzisPipelineState = try metalDevice.makeComputePipelineState(function: readLuminanceFunction)
+        } catch {
+            print("Failed to create pipeline analysis state, error \(error)")
+        }
+        
+    }
+    
+    override func doUpdate(metalCommandBuffer: any MTLCommandBuffer, cameraImageTextureY: any MTLTexture, cameraImageTextureCbCr: any MTLTexture) {
+        
+        guard let computeEncoder = metalCommandBuffer.makeComputeCommandEncoder() else { return }
+        
+        guard let analysisPipelineState = self.analyzisPipelineState else {
+            print("Failed to find pipeline state")
+            computeEncoder.endEncoding()
+            return
+        }
+        
+        computeEncoder.setComputePipelineState(analysisPipelineState)
+        
+        analyzeTexture(computeEncoder: computeEncoder, cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr)
+       
+    }
+    
+    func analyzeTexture(computeEncoder : MTLComputeCommandEncoder, cameraImageTextureY: MTLTexture, cameraImageTextureCbCr: MTLTexture){
+        guard let metalDevice = AnalyzingModule.metalDevice else { return }
+        
+        let selectedWidthForAnalysis = Int(selectionState.x2 - selectionState.x1)
+        let selectedHeightForAnalysis = Int(selectionState.y2 - selectionState.y1)
+        
+        dispersionWidth = isDispersionHorizontal() ? selectedHeightForAnalysis : selectedWidthForAnalysis
+        
+        // Ensure dimensions are valid to prevent crashes
+        guard dispersionWidth > 0 else {
+            computeEncoder.endEncoding()
+            return
+        }
+        
+        let requiredBytes = dispersionWidth * MemoryLayout<Float>.stride
+        if metalOutputBuffer == nil || metalOutputBuffer!.length < requiredBytes {
+            metalOutputBuffer = metalDevice.makeBuffer(length: requiredBytes, options: .storageModeShared)
+        }
+        
+        let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState, length: MemoryLayout<SelectionState>.size, options: .storageModeShared)
+        
+        computeEncoder.setTexture(cameraImageTextureY, index: 0)
+        computeEncoder.setTexture(cameraImageTextureCbCr, index: 1)
+        computeEncoder.setBuffer(metalOutputBuffer, offset: 0, index: 0)
+        computeEncoder.setBuffer(selectionBuffer, offset: 0, index: 1)
+        
+        let gridSize = calculateGridSize(width: selectedWidthForAnalysis, height: selectedHeightForAnalysis)
+        
+        computeEncoder.dispatchThreadgroups(gridSize.threadgroups, threadsPerThreadgroup: gridSize.threadsPerThreadgroup)
+        computeEncoder.endEncoding()
+        
+    }
+    
+    override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
+        
+        guard let buffer = metalOutputBuffer, dispersionWidth > 0 else { return }
+        
+        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: dispersionWidth)
+        
+        if latestResults.count != dispersionWidth {
+            latestResults = Array(repeating: 0.0, count: dispersionWidth)
+        }
+        
+        for i in 0..<dispersionWidth {
+            latestResults[i] = Double(luminancePointer[i])
+        }
+        
+        if(needsInverseDispersion()){
+            latestResults.reverse()
+        }
+    }
+    
+    override func writeToBuffers() {
+        self.xAxis?.clear(reset: true)
+        self.analysisResult?.clear(reset: true)
+        
+        guard dispersionWidth > 0 else { return }
+        
+        if latestxAxis.count != (dispersionWidth - 1) {
+            latestxAxis = (0..<(dispersionWidth - 1)).map { Double($0) }
+                }
+        
+        self.xAxis?.appendFromArray(latestxAxis)
+        self.analysisResult?.appendFromArray(latestResults)
+
+    }
+    
+    func calculateGridSize(width: Int, height: Int) -> (threadgroups: MTLSize, threadsPerThreadgroup: MTLSize) {
+       
+        let threadsPerGroup = MTLSize(width: Constants.threadGroupWidth,
+                                              height: Constants.threadGroupHeight,
+                                              depth: 1)
+        
+        let threadgroupsX = (width + threadsPerGroup.width - 1) / threadsPerGroup.width
+        let threadgroupsY = (height + threadsPerGroup.height - 1) / threadsPerGroup.height
+                
+        let threadgroups = MTLSize(width: threadgroupsX, height: threadgroupsY, depth: 1)
+                
+        return (threadgroups, threadsPerGroup)
+         
+    }
+    
+    func setAnalysisOrientation(orientation: SpectrumOrientation){
+        self.analysisOrientation = orientation
+    }
+    
+    func isDispersionHorizontal() -> Bool {
+        return analysisOrientation == SpectrumOrientation.horizontalBlueRight ||
+                analysisOrientation == SpectrumOrientation.horizontalRedRight
+    }
+    
+    func needsInverseDispersion() -> Bool {
+        // Its right question to ask why HorizontalRedRight needs to be inversed?
+        
+        // :- All textures sent in Metal by default is in landscape eventhough the preview is in portrait. The analysis is done from this direction.  So here the top part of the selected area is analysed first, which means in the portrait mode this selected area part lies in the right most (when seen with 90 degree clock wise rotation).
+        return analysisOrientation == SpectrumOrientation.horizontalRedRight ||
+        analysisOrientation == SpectrumOrientation.verticalRedUp
+    }
+    
+}
+

@@ -51,6 +51,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         didSet {
             self.cameraPreviewRenderer.cameraModelOwner = cameraModelOwner
             cameraSettingUIView = cameraSettingViews(adjustmentLevel: descriptor.exposureAdjustmentLevel)
+            setUpSpectrumAnalysisControlView()
             cameraSettingUIView?.isHidden = !controlsVisible
             cameraModelOwner?.cameraModel?.cameraSettingsModel.registerSettingsObserver(self)
             self.addSubview(cameraSettingUIView!)
@@ -94,6 +95,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
         }
     }
+    
     
     // Resizing the Passepartout
     private var panGestureRecognizer: UIPanGestureRecognizer? = nil
@@ -145,6 +147,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private var zoomText: UILabel!
     private var whiteBalanceText: UILabel!
     
+    let dialogButton = UIButton(type: .system)
+    
     // size definitions
     private let spacing: CGFloat = 10.0
     private let sideMargins:CGFloat = 10.0
@@ -153,6 +157,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     static let controlExtraHeight = 30.0
     static let controlZoomHeight = 30.0
     
+    var isHorizontal = true
+    var isRedToBlue = false
+    weak var spectrumOrientationSelectionDelegate: SpectrumDispersionOrientationSelectionDelegate?
     
     required init?(descriptor: CameraViewDescriptor) {
         self.descriptor = descriptor
@@ -249,13 +256,15 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         let controlSize = controlsVisible ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
         let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlExtraHeight)
         let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlZoomHeight)
+        let controlSpectrumOrientationAnalysisSize = controlsVisible ? CGSize(width: frame.width - 2 * sideMargins, height: ExperimentCameraUIView.controlExtraHeight) : .zero
+        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSpectrumOrientationAnalysisSize.height)
         cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
         collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: frame.width - 2*sideMargins, height: controlExtraSize.height)
         self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: frame.width - 2*sideMargins, height: controlZoomSize.height)
         
         //Metal view
         let h, w: CGFloat
-        let metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height
+        let metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height - controlSpectrumOrientationAnalysisSize.height
         let actualAspect = (frame.width - 2*sideMargins) / metalAvailableHeight
         let aspect = if orientation == .landscapeRight || orientation == .landscapeLeft {
             imageResolution.width / imageResolution.height
@@ -347,6 +356,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
         if newState == .exclusive {
             cameraSettingUIView?.isHidden = !controlsVisible
+            dialogButton.isHidden = !controlsVisible
             panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
             if let gr = panGestureRecognizer {
                 metalView.addGestureRecognizer(gr)
@@ -356,6 +366,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
         } else {
             cameraSettingUIView?.isHidden = !controlsVisible
+            dialogButton.isHidden = !controlsVisible
             if let gr = panGestureRecognizer {
                 metalView.removeGestureRecognizer(gr)
             }
@@ -460,6 +471,24 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             return vStack
         }
+
+    private func setUpSpectrumAnalysisControlView() {
+       
+        dialogButton.addTarget(self, action: #selector(showCustomDialog), for: .touchUpInside)
+        
+        let initialImageName = getArrowImageName(orientationIndex: lastFirstSelection, directionIndex: lastSecondSelection)
+        let initialImage = UIImage(named: initialImageName)?.withRenderingMode(.alwaysOriginal)
+        
+        dialogButton.setImage(initialImage, for: .normal)
+        dialogButton.setTitle("Orientation", for: .normal)
+        dialogButton.backgroundColor = .clear
+
+        dialogButton.isHidden = !controlsVisible
+        
+        if cameraModelOwner?.cameraModel?.feature == CameraFeature.SPECTROSCOPY {
+            addSubview(dialogButton)
+        }
+    }
     
     // MARK: - SettingType Enum
     
@@ -673,6 +702,63 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
         }
     }
+    
+    var lastFirstSelection = 0
+    var lastSecondSelection = 0
+    
+    @objc func showCustomDialog() {
+        
+        let dialogView = SpectrumAnalysisConfigurationDialogView(
+            image: UIImage(named: "calibration"),
+            firstDescription: "Choose the orientation of the spectrum dispersion.",
+            firstOptions: ["Horizontal","Verticle"],
+            secondDescription: "Choose which direction should the analysis be done.",
+            secondOptions: ["Left to Right","Right to Left"],
+            initialFirstIndex: lastFirstSelection,
+            initialSecondIndex: lastSecondSelection,
+            completion: { firstIndex, secondIndex in
+            
+                self.lastFirstSelection = firstIndex
+                self.lastSecondSelection = secondIndex
+                
+                let selectedOrientation = self.getOrientationFromIndices(first: firstIndex, second: secondIndex)
+                self.spectrumOrientationSelectionDelegate?.spectrumDidSelectNewOrientation(selectedOrientation)
+                
+                let imageName = self.getArrowImageName(orientationIndex: firstIndex, directionIndex: secondIndex)
+                if let newImage = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
+                    self.dialogButton.setImage(newImage, for: .normal)
+                }
+                
+                self.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: selectedOrientation)
+                
+            })
+
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: "Spectrum Dispersion Configuration")
+            .setAccessoryView(accessoryView: dialogView)
+            .addOkAction(handler: {_ in 
+                dialogView.okTapped()
+            })
+            .show(in: self.parentViewController(), animated: true)
+    }
+    
+    
+    func getOrientationFromIndices(first: Int, second: Int) -> SpectrumOrientation {
+        if first == 0 { // Horizontal
+            return second == 0 ? .horizontalRedRight : .horizontalBlueRight
+        } else { // Vertical
+            return second == 0 ? .verticalBlueUp : .verticalRedUp
+        }
+    }
+    
+    func getArrowImageName(orientationIndex: Int, directionIndex: Int) -> String {
+        if orientationIndex == 0 { // Horizontal
+            return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
+        } else { // Vertical
+            return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
+        }
+    }
+    
     
     // MARK: - camera setting exposure value generator
  
@@ -943,22 +1029,6 @@ class CameraSettingValueViewCell: UICollectionViewCell {
 }
 
 
-extension UIView
-{
-    //Get Parent View Controller from any view
-    func parentViewController() -> UIViewController {
-        var responder: UIResponder? = self
-        while !(responder is UIViewController) {
-            responder = responder?.next
-            if nil == responder {
-                break
-            }
-        }
-        return (responder as? UIViewController)!
-    }
-}
-
-
 @available(iOS 14.0, *)
 class ZoomSlider : UISlider , ZoomButtonViewDelegate{
     
@@ -1042,4 +1112,10 @@ public struct AlertError {
         self.primaryButtonTitle = primaryButtonTitle
         self.secondaryAction = secondaryAction
     }
+}
+
+
+@available(iOS 14.0, *)
+extension ExperimentCameraUIView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

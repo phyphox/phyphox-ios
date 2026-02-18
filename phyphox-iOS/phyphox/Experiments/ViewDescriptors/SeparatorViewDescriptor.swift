@@ -13,6 +13,7 @@ struct SeparatorViewDescriptor: ViewDescriptor, Equatable {
     let height: CGFloat
 
     let label = ""
+    var visibilityBuffer: DataBuffer?
     let translation: ExperimentTranslationCollection? = nil
 
     init(height: CGFloat, color: UIColor) {

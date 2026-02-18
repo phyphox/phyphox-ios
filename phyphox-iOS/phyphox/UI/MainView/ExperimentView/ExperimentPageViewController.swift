@@ -40,11 +40,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     let webServer: ExperimentWebServer
     
-    private let viewModules: [[UIView]]
+    private var viewModules: [[ExperimentModule]]
     
     var numOfConnectedDevices = 0
     
     var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
+    
+    weak var spectrumDispersionOrientation: SpectrumOrientationUpdateable?
+    var orientationManager = SpectrumDispersionManager()
     
     var timerRunning: Bool {
         return experimentRunTimer != nil
@@ -120,7 +123,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.timerDelay = experiment.analysis.timedRunStartDelay
         self.timerDuration = experiment.analysis.timedRunStopDelay
         
-        var modules: [[UIView]] = []
+        var modules: [[ExperimentModule]] = []
         
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
@@ -141,13 +144,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentViewControllers.first?.active = true
         
         for module in viewModules.flatMap({ $0 }) {
-            if let button = module as? ExperimentButtonView {
+            if let button = module.view as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
                     self?.buttonPressed(viewDescriptor: button.descriptor, buttonViewTriggerCallback: button)
                 }
             }
-            if let exportingViewModule = module as? ExportingViewModule {
+            if let exportingViewModule = module.view as? ExportingViewModule {
                 exportingViewModule.exportDelegate = self
             }
         }
@@ -376,7 +379,36 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             NotificationCenter.default.addObserver(self, selector: #selector(handleCameraError(notification:)), name: .cameraConfigurationFailed, object: nil)
         }
         
+        if(experiment.cameraInput?.feature == CameraFeature.SPECTROSCOPY){
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleDeviceRotationToControlSpectrumOrientation),
+                name: UIDevice.orientationDidChangeNotification,
+                object: nil
+            )
+        }
+        
     }
+    
+    @objc func handleDeviceRotationToControlSpectrumOrientation() {
+        let device = UIDevice.current.orientation
+        var newOrient: DeviceOrientation
+        
+        switch device {
+        case .portrait: newOrient = .portrait
+        case .portraitUpsideDown: return
+        case .landscapeLeft: newOrient = .landscapeLeft
+        case .landscapeRight: newOrient = .landscapeRight
+        default: return
+        }
+        
+        orientationManager.onDeviceRotated(newOrient)
+        let spectrum = orientationManager.currentDispersionOrientation
+        spectrumDispersionOrientation?.updateSpectrumState(spectrum: spectrum)
+    }
+    
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
@@ -496,7 +528,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         if #available(iOS 14.0, *) {
             for vc in experimentViewControllers {
                 for view in vc.modules {
-                    if let depthGUI = view as? ExperimentDepthGUIView {
+                    if let depthGUI = view.view as? ExperimentDepthGUIView {
                         guard let session = experiment.depthInput?.session as? ExperimentDepthInputSession else {
                             continue
                         }
@@ -504,15 +536,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
-                    if let cameraGUI = view as? ExperimentCameraUIView {
+                    if let cameraGUI = view.view as? ExperimentCameraUIView {
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
                         cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
                         cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
-    
+                        
+                        self.spectrumDispersionOrientation = cameraGUI
+                        cameraGUI.spectrumOrientationSelectionDelegate = self
+                        
                     }
-                
+                    
                 }
             }
         }
@@ -543,7 +578,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-
+        
         if isMovingFromParent {
             tearDownWebServer()
             
@@ -698,7 +733,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             self.view.addSubview(self.serverQRIcon!)
-                        
+            
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             
@@ -706,7 +741,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             updateLayout()
         }
     }
-
+    
     
     
     private func tearDownWebServer() {
@@ -1282,12 +1317,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         DispatchQueue.main.async {
             
             guard self.presentedViewController == nil else {
-                        // Optionally, dismiss the current one before showing alert
-                        self.presentedViewController?.dismiss(animated: false) {
-                            self.handleCameraError(notification: notification)
-                        }
-                        return
-                    }
+                // Optionally, dismiss the current one before showing alert
+                self.presentedViewController?.dismiss(animated: false) {
+                    self.handleCameraError(notification: notification)
+                }
+                return
+            }
             
             let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
                                           message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
@@ -1349,7 +1384,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
         imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
-       
+        
         let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
         alertController.addAction(closeButton)
         
@@ -1512,7 +1547,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     // Fallback on earlier versions
                 }
             } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                      (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .dark
                 } else {
@@ -1542,7 +1577,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = true
             }
         }
@@ -1550,7 +1585,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
@@ -1558,10 +1593,9 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisSkipped(_ analysis: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
     }
 }
-

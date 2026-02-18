@@ -10,6 +10,7 @@ import Foundation
 
 struct CameraViewDescriptor: ViewDescriptor, Equatable {
     let label: String
+    var visibilityBuffer: DataBuffer?
     let exposureAdjustmentLevel: CameraSettingLevel
     let grayscale: Bool
     let markOverexposure: UIColor?
@@ -18,8 +19,9 @@ struct CameraViewDescriptor: ViewDescriptor, Equatable {
 
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, exposureAdjustmentLevel: CameraSettingLevel, grayscale: Bool, markOverexposure: UIColor?, markUnderexposure: UIColor?, showControls: CameraShowControlsState, translation: ExperimentTranslationCollection?) {
+    init(label: String, visibilityBuffer: DataBuffer?, exposureAdjustmentLevel: CameraSettingLevel, grayscale: Bool, markOverexposure: UIColor?, markUnderexposure: UIColor?, showControls: CameraShowControlsState, translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.exposureAdjustmentLevel = exposureAdjustmentLevel
         self.grayscale = grayscale
         self.markOverexposure = markOverexposure

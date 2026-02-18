@@ -10,6 +10,7 @@ import Foundation
 
 struct CameraViewElementDescriptor {
     let label: String
+    let visibility: String
     let exposureAdjustmentLevel: CameraSettingLevel
     let grayscale: Bool
     let markOverexposure: UIColor?
@@ -24,6 +25,7 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
     
     private enum Attribute: String, AttributeKey {
         case label
+        case visibility
         case exposure_adjustment_level
         case grayscale
         case markOverexposure
@@ -35,6 +37,7 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         
         let label = attributes.optionalString(for: .label) ?? ""
+        let visibility = attributes.optionalString(for: .visibility) ?? ""
         
         let exposureAdjustmentLevelVal: Int = try attributes.optionalValue(for: .exposure_adjustment_level) ?? 0
         let exposureAdjustmentLevel = switch exposureAdjustmentLevelVal {
@@ -59,7 +62,7 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
         default: throw ElementHandlerError.unexpectedAttributeValue(showControlsStr ?? "")
         }
         
-        results.append(.camera(CameraViewElementDescriptor(label: label, exposureAdjustmentLevel: exposureAdjustmentLevel, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure, showControls: showControls)))
+        results.append(.camera(CameraViewElementDescriptor(label: label, visibility: visibility, exposureAdjustmentLevel: exposureAdjustmentLevel, grayscale: grayScale, markOverexposure: markOverexposure, markUnderexposure: markUnderexposure, showControls: showControls)))
     }
     
     func nextResult() throws -> ViewElementDescriptor {

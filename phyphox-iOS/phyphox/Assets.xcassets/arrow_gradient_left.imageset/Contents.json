@@ -1,14 +1,17 @@
 {
   "images" : [
     {
+      "filename" : "arrow_gradient_left.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "arrow_gradient_left 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "arrow_gradient_left 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }
@@ -18,6 +21,6 @@
     "version" : 1
   },
   "properties" : {
-    "template-rendering-intent" : "template"
+    "template-rendering-intent" : "original"
   }
 }
