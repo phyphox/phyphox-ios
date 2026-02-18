@@ -59,7 +59,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         
         let minValueFormatted = numberFormatter(for: minValue)
         let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
+        let defaultValueFormatted = numberFormatter(for: defaultValue)
         
         let bufferName = outputBuffers[.Empty]?.name ?? ""
         
@@ -73,7 +73,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     private func generateTwoSlidersHTML(_ id: Int) -> String{
         let minValueFormatted = numberFormatter(for: minValue)
         let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
+        let defaultValueFormatted = numberFormatter(for: defaultValue)
         
         let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span>" +
         "<span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" : ""
@@ -160,6 +160,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                         sliderElement.classList.remove(\"isSliderUpdating\");
                      }
                 });
+            
+            \(setVisiblity(id))
 
             }
 
@@ -258,5 +260,25 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
             """
     }
     
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else {
+                    return ""
+                }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                                       var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                                       var sliderElement = document.getElementById(\"element\(visibilityLabel)\");
+                                       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                                           sliderElement.style.display = \"none\";
+                                       } else {
+                                           sliderElement.style.display = \"block\";
+                                       }
+                                   }
+
+            """
+    }
     
 }

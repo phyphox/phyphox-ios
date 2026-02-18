@@ -92,8 +92,30 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
                       dropdownElement.selectedIndex = 0
                     }
             
+                    \(setVisiblity(id))
+            
              
             }
+
+            """
+    }
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else {
+                    return ""
+                }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                                       var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                                       var dropDownElement = document.getElementById(\"element\(id)\");
+                                       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                                           dropDownElement.style.display = \"none\";
+                                       } else {
+                                           dropDownElement.style.display = \"block\";
+                                       }
+                                    }
 
             """
     }
