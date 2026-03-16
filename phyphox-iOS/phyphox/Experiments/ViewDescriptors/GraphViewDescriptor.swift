@@ -584,9 +584,32 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
                 code += "elementData[\(id)][\"datasets\"][\(i)] = data[\"\(bufferName)\"];"
             }
         }
+        
+        code += setVisiblity(id)
+        
         code += "}"
         
         return code
+    }
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else { return "" }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                    var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                    var graphElement = document.getElementById(\"element\(id)\");
+                    if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                        graphElement.style.display = \"none\";
+                        if ((graphElement.classList && graphElement.classList.contains(\"exclusive\")) || (graphElement.className.indexOf(\"exclusive\") > -1)) {
+                            leaveExclusive(); 
+                        }
+                    } else {
+                        graphElement.style.display = \"block\";
+                    }
+                }
+            """
     }
     
 }

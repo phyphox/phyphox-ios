@@ -21,6 +21,10 @@ extension ViewDescriptor {
     var localizedLabel: String {
         return translation?.localizeString(label) ?? label
     }
+    
+    func getVisibilityUpdateMode() -> String {
+        return "single"
+    }
 
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         return "function() {}"

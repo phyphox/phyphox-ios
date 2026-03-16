@@ -77,7 +77,27 @@ struct ButtonViewDescriptor: ViewDescriptor, Equatable {
         mappingCode + " else {v = \"\(localizedLabel)\";}" +
         "    var valueNumber = document.getElementById(\"element\(id)\").getElementsByClassName(\"valueNumber\")[0];" +
         "    valueNumber.textContent = v;" +
+        " \(setVisiblity(id))" +
         "}"
     
+    }
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else {
+                    return ""
+                }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {"
+                     var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                     var buttonElement = document.getElementById(\"element\(id)\");
+                     if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                         buttonElement.style.display = \"none\";
+                     } else {
+                         buttonElement.style.display = \"block\";
+                     }
+                }
+            """
     }
 }

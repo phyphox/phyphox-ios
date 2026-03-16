@@ -58,9 +58,27 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
                     var value = radioButton.checked ? 1.0 : 0.0;
                     ajax('control?cmd=set&buffer=\(buffer.name)&value='+value);
                 };
+            
+                \(setVisiblity(id))
             }
             
-            
+            """
+    }
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else { return "" }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {"
+                     var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                     var toggleElement = document.getElementById(\"element\(id)\");
+                     if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                        toggleElement.style.display = \"none\";
+                     } else {
+                        toggleElement.style.display = \"block\";
+                     }
+                }
             """
     }
 }

@@ -73,15 +73,39 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
 
     func setDataHTMLWithID(_ id: Int) -> String {
         let bufferName = buffer.name.replacingOccurrences(of: "\"", with: "\\\"")
+       
+        
         return "function (data) {" +
             "var valueElement = document.getElementById(\"element\(id)\").getElementsByClassName(\"value\")[0];" +
             "if (!data.hasOwnProperty(\"\(bufferName)\"))" +
             "    return;" +
             "var x = data[\"\(bufferName)\"][\"data\"][data[\"\(bufferName)\"][\"data\"].length-1];" +
-            "console.log(\"editElement buffer value is \" +x);" +
+        
             "if (valueElement !== document.activeElement)" +
             "   valueElement.value = (x*\(factor))" +
+        
+            "\(setVisiblity(id))" +
         "}"
+    }
+    
+    func setVisiblity(_ id: Int) -> String {
+        
+        guard let visibilityLabel = visibilityBuffer?.name else {
+                    return ""
+                }
+        
+        return """
+                if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                    var editElement = document.getElementById(\"element\(id)\");
+                    var elementVisibilityIndicator = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+
+                   if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {
+                       editElement.style.display = \"none\";
+                    } else {
+                       editElement.style.display = \"block\";
+                    }
+                }
+            """
     }
 }
 

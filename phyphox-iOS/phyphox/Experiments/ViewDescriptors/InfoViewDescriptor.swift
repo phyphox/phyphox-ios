@@ -32,4 +32,24 @@ struct InfoViewDescriptor: ViewDescriptor, Equatable {
     func generateViewHTMLWithID(_ id: Int) -> String {
         return "<div style=\"font-size:90%;color:#\(color.hexStringValue!)\" class=\"infoElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
+    
+    func setDataHTMLWithID(_ id: Int) -> String {
+        guard let visibilityLabel = visibilityBuffer?.name else {
+            return ""
+        }
+        
+        return """
+                function (data) { 
+                      if (data.hasOwnProperty(\"\(visibilityLabel)\")) {
+                      var x = data[\"\(visibilityLabel)\"][\"data\"][data[\"\(visibilityLabel)\"][\"data\"].length-1];
+                          var infoElement = document.getElementById(\"element\(id)\");
+                          if (x <= 0.0) {
+                              infoElement.style.display = \"none\";
+                          } else {
+                              infoElement.style.display = \"block\";
+                          }
+                      }
+                 }
+            """
+    }
 }
