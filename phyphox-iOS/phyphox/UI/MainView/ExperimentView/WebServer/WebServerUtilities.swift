@@ -116,28 +116,53 @@ final class WebServerUtilities {
                             }
                             updateMode = "partial"
                         }
-                        viewLayout += ", \"updateMode\": \"\(graph.partialUpdate ? updateMode : "full")\", \"dataInput\": [\(dataInput)], \"dataInputFunction\":\n\(graph.setDataHTMLWithID(idx))\n"
+                        
+                        var keyValuePairForVisibilityInput = ""
+                        if let visibilityInput = graph.visibilityBuffer?.name {
+                            keyValuePairForVisibilityInput += ", \"visibilityInput\": [\"\(visibilityInput)\"] "
+                        }
+                        
+                        viewLayout += ", \"updateMode\": \"\(graph.partialUpdate ? updateMode : "full")\", \"visibilityUpdateMode\": \"single\" \(keyValuePairForVisibilityInput),  \"dataInput\": [\(dataInput)] ,\"dataInputFunction\":\n\(graph.setDataHTMLWithID(idx))\n"
                     }
-                    else if element is InfoViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                    else if let info = element as? InfoViewDescriptor {
+                        var keyValuePairForVisibilityInput = ""
+                        if let visibilityInput = info.visibilityBuffer?.name {
+                            keyValuePairForVisibilityInput += ", \"visibilityInput\": [\"\(visibilityInput)\"] "
+                        }
+                        
+                        viewLayout += ", \"updateMode\": \"none\", \"visibilityUpdateMode\": \"single\" \(keyValuePairForVisibilityInput), \"dataInputFunction\":\n\(info.setDataHTMLWithID(idx))\n"
                     }
                     else if element is SeparatorViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                        viewLayout += ", \"updateMode\": \"none\", \"visibilityUpdateMode\": \"single\""
                     }
                     else if let value = element as? ValueViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
+                        var keyValuePairForVisibilityInput = ""
+                        if let visibilityInput = value.visibilityBuffer?.name {
+                            keyValuePairForVisibilityInput += ", \"visibilityInput\": [\"\(visibilityInput)\"] "
+                        }
+                        
+                        viewLayout += ", \"updateMode\": \"\(value.updateMode())\", \"visibilityUpdateMode\": \"single\" \(keyValuePairForVisibilityInput),  \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
                     }
                     else if let edit = element as? EditViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
+                        var keyValuePairForVisibilityInput = ""
+                        if let visibilityInput = edit.visibilityBuffer?.name {
+                            keyValuePairForVisibilityInput += ", \"visibilityInput\": [\"\(visibilityInput)\"] "
+                        }
+                        viewLayout += ", \"updateMode\": \"input\", \"visibilityUpdateMode\": \"single\" \(keyValuePairForVisibilityInput),  \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
                     }
                     else if let button = element as? ButtonViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
+                        var keyValuePairForVisibilityInput = ""
+                        if let visibilityInput = button.visibilityBuffer?.name {
+                            keyValuePairForVisibilityInput += ", \"visibilityInput\": [\"\(visibilityInput)\"] "
+                        }
+                        
+                        viewLayout += ", \"updateMode\": \"single\", \"visibilityUpdateMode\": \"single\", \"visibilityInput\": [\"\(button.visibilityBuffer?.name ?? "")\"],  \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
                     }
                     else if let toggle = element as? SwitchViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
+                        viewLayout += ", \"updateMode\": \"single\", \"visibilityUpdateMode\": \"single\", \"visibilityInput\": [\"\(toggle.visibilityBuffer?.name ?? "")\"],  \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
                     }
                     else if let dropdown = element as? DropdownViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
+                        viewLayout += ", \"updateMode\": \"single\", \"visibilityUpdateMode\": \"single\", \"visibilityInput\": [\"\(dropdown.visibilityBuffer?.name ?? "")\"],  \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
                     } else if let slider = element as? SliderViewDescriptor {
                         
                         var bufferName = ""
@@ -149,10 +174,10 @@ final class WebServerUtilities {
                             bufferName += "\"" + (slider.outputBuffers[.UpperValue]?.name ?? " ").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
                         }
                         
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\(bufferName)], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
+                        viewLayout += ", \"updateMode\": \"single\", \"visibilityUpdateMode\": \"single\", \"visibilityInput\": [\"\(slider.visibilityBuffer?.name ?? "")\"],  \"dataInput\": [\(bufferName)], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
                     }
-                    else if element is ImageViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                    else if let image = element as? ImageViewDescriptor {
+                        viewLayout += ", \"updateMode\": \"none\", \"visibilityUpdateMode\": \"single\", \"visibilityInput\": [\"\(image.visibilityBuffer?.name ?? "")\"], \"dataInputFunction\":\n\(image.setDataHTMLWithID(idx))\n"
                     }
                     
                     viewLayout += "}"

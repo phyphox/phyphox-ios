@@ -225,6 +225,8 @@ final class ExperimentWebServer {
                 if value.count > 0 {
                     let raw = b.toArray()
                     
+                    dict["visibilityUpdateMode"] = "single" as AnyObject
+                    
                     if value == "full" || (value == "partial" && self.forceFullUpdate == true) {
                         dict["updateMode"] = "full" as AnyObject
                         dict["buffer"] = raw.map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
