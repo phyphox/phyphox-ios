@@ -257,9 +257,73 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     }
 }
 
+enum FlashlightOutputSubInputDescriptor {
+    case value(value: Double, usedAs: String)
+    case buffer(name: String, usedAs: String)
+}
+
+final class FlashlightOutputSubInputElementHandler: ResultElementHandler, ChildlessElementHandler {
+    var results = [FlashlightOutputSubInputDescriptor]()
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    private enum Attribute: String, AttributeKey {
+        case type
+        case clear
+        case usedAs = "parameter"
+    }
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        let type = try attributes.optionalValue(for: .type) ?? DataInputTypeAttribute.buffer
+        let usedAs = attributes.optionalString(for: .usedAs) ?? ""
+
+        switch type {
+        case .buffer:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
+
+            results.append(.buffer(name: text, usedAs: usedAs))
+        case .value:
+            guard !text.isEmpty else { throw ElementHandlerError.missingText }
+
+            guard let value = Double(text) else {
+                throw ElementHandlerError.unreadableData
+            }
+
+            results.append(.value(value: value, usedAs: usedAs))
+        case .empty:
+            break
+        }
+    }
+}
+
+struct FlashlightOutputDescriptor {
+    let inputs: [FlashlightOutputSubInputDescriptor]
+}
+
+private final class FlashlightElementHandler : ResultElementHandler, LookupElementHandler {
+    var results = [FlashlightOutputDescriptor]()
+
+    private let inputHandler = FlashlightOutputSubInputElementHandler()
+    
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["input": inputHandler]
+    }
+    
+    func startElement(attributes: AttributeContainer) throws {}
+    
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        results.append(FlashlightOutputDescriptor(inputs: inputHandler.results))
+    }
+    
+}
 struct OutputDescriptor {
     let audioOutput: AudioOutputDescriptor?
     let bluetooth: [BluetoothOutputBlockDescriptor]
+    let flashlight: FlashlightOutputDescriptor?
 }
 
 final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
@@ -269,14 +333,18 @@ final class OutputElementHandler: ResultElementHandler, LookupElementHandler, At
 
     private let audioHandler = AudioElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
+    private let flightlightHandler = FlashlightElementHandler()
 
     var childHandlers: [String : ElementHandler]
 
     init() {
-        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler, "flashlight": flightlightHandler ]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult(), bluetooth: bluetoothHandler.results))
+        results.append(OutputDescriptor(
+            audioOutput: try audioHandler.expectOptionalResult(),
+            bluetooth: bluetoothHandler.results,
+            flashlight: try flightlightHandler.expectOptionalResult()))
     }
 }
