@@ -132,8 +132,6 @@ final class Experiment {
     
     let audioOutput: ExperimentAudioOutput?
     
-    let flashlightOutput : ExperimentFlashlightOutput?
-    
     let bluetoothDevices: [ExperimentBluetoothDevice]
     let bluetoothInputs: [ExperimentBluetoothInput]
     let bluetoothOutputs: [ExperimentBluetoothOutput]
@@ -152,9 +150,11 @@ final class Experiment {
 
     public var audioEngine: AudioEngine?
     
+    public var flashlightOutput : FlashlightOutput?
+    
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, flashlightOutput: ExperimentFlashlightOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, flashlightOutput: FlashlightOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -480,6 +480,8 @@ final class Experiment {
         
         try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
         
+        flashlightOutput?.start()
+        
         MotionSession.sharedSession().resetConfig()
         sensorInputs.forEach{ $0.configureMotionSession() }
         sensorInputs.forEach { $0.start(queue: queue) }
@@ -509,6 +511,8 @@ final class Experiment {
         networkConnections.forEach { $0.stop() }
         
         stopAudio()
+        
+        flashlightOutput?.stop()
         
         setKeepScreenOn(false)
         

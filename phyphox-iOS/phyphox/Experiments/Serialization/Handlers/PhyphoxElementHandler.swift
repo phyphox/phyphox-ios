@@ -240,6 +240,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let flashlightOutput = try makeFlashlightOutput(from: outputDescriptor?.flashlight, buffers: buffers)
         
+        
         let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
         let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, requireFill: analysisDescriptor.requireFillName.map { buffers[$0] } ?? nil, requireFillThreshold: analysisDescriptor.requireFillThreshold, requireFillDynamic: analysisDescriptor.requireFillDynamicName.map { buffers[$0] } ?? nil, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs, audioInputs: audioInputs)
         
@@ -594,37 +595,44 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
     }
     
-    private func makeFlashlightOutput(from descriptor: FlashlightOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentFlashlightOutput? {
+    private func makeFlashlightOutput(from descriptor: FlashlightOutputDescriptor?, buffers: [String: DataBuffer]) throws -> FlashlightOutput? {
+        guard let inputs = descriptor?.inputs else { return nil }
         
-        if let flashlightOutput = descriptor?.inputs {
-            var frequency = FlashlightParameter.value(value: 0.0)
-            var intensity = FlashlightParameter.value(value: 0)
-            for flashlightOutputDescriptor in flashlightOutput {
-                let target: String
-                let parameter: FlashlightParameter
-                switch flashlightOutputDescriptor {
+        let flashlightOutput = FlashlightOutput()
+        let manager = flashlightOutput.getInternalManager()
+        
+        for inputDescriptor in inputs {
+            let target: String
+            let parameter: FlashlightParameter
+            
+            switch inputDescriptor {
                 case .buffer(name: let name, usedAs: let usedAs):
                     target = usedAs
                     guard let buffer = buffers[name] else {
                         throw ElementHandlerError.missingElement("data-container")
                     }
-                    parameter = FlashlightParameter.buffer(buffer: buffer)
+                    parameter = .buffer(buffer: buffer)
+                        
                 case .value(value: let value, usedAs: let usedAs):
                     target = usedAs
-                    parameter = FlashlightParameter.value(value: value)
+                    parameter = .value(value: value)
                 }
-                switch target {
-                case "frequency": frequency = parameter
-                case "intensity": intensity = parameter
-                default: throw ElementHandlerError.message("Invalid parameter of flashlight output.")
-                }
-            }
             
-        
-            return ExperimentFlashlightOutput(intensity: intensity, frequency: frequency)
+            switch target {
+                case "frequency":
+                    let strobe = FlashlightOutput.StrobeController(manager: manager, parameter: parameter)
+                    flashlightOutput.attachController(strobe)
+                        
+                case "intensity":
+                    let intensity = FlashlightOutput.IntensityController(manager: manager, parameter: parameter)
+                    flashlightOutput.attachController(intensity)
+                        
+                default:
+                    throw ElementHandlerError.message("Invalid parameter of flashlight output.")
+                }
+            
         }
-        
-        return nil
+        return flashlightOutput
         
     }
 
