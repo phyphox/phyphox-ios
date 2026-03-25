@@ -565,6 +565,7 @@ extension Experiment: ExperimentAnalysisDelegate {
                 networkConnection.pushDataToBuffers()
                 networkConnection.doExecute()
             }
+            flashlightOutput?.start()
         }
     }
     

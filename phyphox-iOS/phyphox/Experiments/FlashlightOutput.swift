@@ -104,19 +104,12 @@ class FlashlightManager {
         return device?.hasTorch ?? false
     }
 
-
     func setIntensity(_ level: Float) {
         hardwareQueue.async { [weak self] in
             guard let self = self else { return }
-            self.currentIntensity = max(0.0, min(level, 1.0))
             
-            if !self.isStrobeActive {
-                    if self.currentIntensity > 0 {
-                        self.applyTorch(on: true, level: self.currentIntensity)
-                    } else {
-                        self.applyTorch(on: false, level: 0)
-                    }
-                }
+            self.currentIntensity = level
+            self.applyTorch(on: self.currentIntensity > 0, level: self.currentIntensity)
         }
     }
 
@@ -194,11 +187,15 @@ class FlashlightManager {
                 print("Flashlight: Torch is unavailable. Is the camera in use?")
                 return
             }
+        guard device.isTorchModeSupported(.on) else {
+            return
+        }
         
         do {
             try device.lockForConfiguration()
             if on {
-                try device.setTorchModeOn(level: level)
+                let safeLevel = max(0.01, min(level, 1.0))
+                try device.setTorchModeOn(level: safeLevel)
             } else {
                 device.torchMode = .off
             }
