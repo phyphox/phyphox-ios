@@ -6,15 +6,58 @@ import Foundation
 class FlashlightOutput {
     private let manager = FlashlightManager()
     private var controllers: [FlashlightController] = []
-
+    
+    var onThermalWarning: ((ProcessInfo.ThermalState) -> Void)?
+    private(set) var isOverheated: Bool = false
+    
+    init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(thermalStateDidChange),
+            name: ProcessInfo.thermalStateDidChangeNotification,
+            object: nil
+        )
+        checkThermalState()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     func start() {
+        guard !isOverheated else {
+            onThermalWarning?(ProcessInfo.processInfo.thermalState)
+            return
+        }
+        
         controllers.forEach { $0.start() }
     }
-
+    
     func stop() {
         controllers.forEach { $0.stop() }
     }
-
+    
+    @objc private func thermalStateDidChange() {
+        checkThermalState()
+    }
+    
+    private func checkThermalState() {
+        let state = ProcessInfo.processInfo.thermalState
+        
+        if state == .serious || state == .critical {
+            isOverheated = true
+            manager.isOverheated = true
+            stop()
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onThermalWarning?(state)
+            }
+        } else {
+            isOverheated = false
+            manager.isOverheated = false
+        }
+    }
+    
     func attachController(_ controller: FlashlightController) {
         controllers.append(controller)
     }
@@ -41,29 +84,29 @@ class FlashlightOutput {
         }
         return strobe.isBufferSource()
     }
-
+    
     protocol FlashlightController {
         func start()
         func stop()
         var isActive: Bool { get }
     }
-
+    
     // MARK: - Strobe Controller
     class StrobeController: FlashlightController {
         private let manager: FlashlightManager
         private let parameter: FlashlightParameter
         private(set) var isActive: Bool = false
         private var lastFrequency: Double = -1.0
-
+        
         init(manager: FlashlightManager, parameter: FlashlightParameter) {
             self.manager = manager
             self.parameter = parameter
         }
         
         func getCurrentFrequency() -> Double { return parameter.getValue() ?? 0.0 }
-
+        
         func isBufferSource() -> Bool { return parameter.isBuffer }
-
+        
         func start() {
             let currentFreq = parameter.getValue() ?? 0.0
             
@@ -80,7 +123,7 @@ class FlashlightOutput {
                 manager.pokeLoop()
             }
         }
-
+        
         func stop() {
             guard isActive else { return }
             isActive = false
@@ -88,30 +131,29 @@ class FlashlightOutput {
             manager.stopStrobe()
         }
     }
-
+    
     // MARK: - Intensity Controller
     class IntensityController: FlashlightController {
         private let manager: FlashlightManager
         private let parameter: FlashlightParameter
         private(set) var isActive: Bool = false
         private var lastValue: Float = -1.0
-
+        
         init(manager: FlashlightManager, parameter: FlashlightParameter) {
             self.manager = manager
             self.parameter = parameter
         }
-
+        
         func start() {
             isActive = true
             let val = Float(parameter.getValue() ?? 1.0)
             
-            // Value-tracking prevents redundant hardware commands if start() is called in a fast loop.
             if abs(val - lastValue) > 0.001 {
                 lastValue = val
                 manager.setIntensity(val)
             }
         }
-
+        
         func stop() {
             isActive = false
             lastValue = -1.0
@@ -122,11 +164,10 @@ class FlashlightOutput {
 
 // MARK: - Flashlight Manager Engine
 
-/// The engine responsible for thread safety and direct interaction with AVCaptureDevice.
+/// The manager responsible for thread safety and direct interaction with AVCaptureDevice.
 class FlashlightManager {
     private let device = AVCaptureDevice.default(for: .video)
     
-    /// Dedicated queue for all hardware interactions to prevent UI blocking and race conditions.
     private let hardwareQueue = DispatchQueue(label: "de.rwth.flashlight.hardware", qos: .userInteractive)
     /// Used to manage the strobe timing and allow immediate interruption of "sleep" states.
     private let strobeCondition = NSCondition()
@@ -138,7 +179,8 @@ class FlashlightManager {
     // Hardware state cache used to guard the redudent calls
     private var lastAppliedLevel: Float = -1.0
     private var lastAppliedOn: Bool = false
-
+    
+    var isOverheated: Bool = false
     
     func setIntensity(_ level: Float) {
         hardwareQueue.async { [weak self] in
@@ -151,14 +193,14 @@ class FlashlightManager {
             }
         }
     }
-
+    
     /// Forces the background strobe thread to wake up from its current wait interval.
     func pokeLoop() {
         strobeCondition.lock()
         strobeCondition.broadcast() // Wakes any thread currently at strobeCondition.wait()
         strobeCondition.unlock()
     }
-
+    
     /// Initializes and starts the background strobe thread.
     func startStrobe(provider: @escaping () -> Double) {
         hardwareQueue.async { [weak self] in
@@ -174,7 +216,7 @@ class FlashlightManager {
             }
         }
     }
-
+    
     /// The core logic loop running on a background thread.
     private func runStrobeLoop() {
         // Keeps track of which phase we are in so rapid changes don't "restart" the pulse
@@ -222,7 +264,7 @@ class FlashlightManager {
             strobeCondition.unlock()
         }
     }
-
+    
     func stopStrobe() {
         hardwareQueue.async { [weak self] in
             self?.isStrobeActive = false
@@ -236,27 +278,29 @@ class FlashlightManager {
             self?.applyTorch(on: false, level: 0)
         }
     }
-
+    
     /// Ensures that strobe-thread requests are passed through the serial hardwareQueue.
     private func applyTorchInQueue(on: Bool, level: Float) {
         hardwareQueue.sync {
             self.applyTorch(on: on, level: level)
         }
     }
-
+    
     /// The only point in the code that talks to AVCaptureDevice.
     private func applyTorch(on: Bool, level: Float) {
         guard let device = device, device.hasTorch, device.isTorchAvailable else { return }
         
+        if isOverheated { return }
+        
         let safeLevel = max(0.01, min(level, 1.0))
         let targetOn = on && level > 0
-
+        
         // REDUNDANCY GUARD:
         // Comparing current request with last applied hardware state.
         // This prevents the "Lag" caused by spamming hardware locks.
         if targetOn == lastAppliedOn && abs(safeLevel - lastAppliedLevel) < 0.001 && targetOn == true { return }
         if targetOn == false && lastAppliedOn == false { return }
-
+        
         do {
             try device.lockForConfiguration()
             if targetOn {

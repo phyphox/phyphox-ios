@@ -395,6 +395,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             )
         }
         
+        setupThermalWarningHandler()
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -1656,6 +1658,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.updateLayout()
         }
     }
+    
+    private func setupThermalWarningHandler() {
+            experiment.flashlightOutput?.onThermalWarning = { [weak self] state in
+                
+                let title = localize("device_overheating")
+                let message: String
+                
+                if state == .critical {
+                    message = localize("device_heating_critical")
+                } else {
+                    message = localize("device_heating_serious")
+                }
+                
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                
+                self?.present(alert, animated: true, completion: nil)
+            }
+        }
     
 }
 
