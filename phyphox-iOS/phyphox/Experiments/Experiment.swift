@@ -246,9 +246,11 @@ final class Experiment {
     /**
      Called when the experiment view controller will be presented.
      */
-    func willBecomeActive(_ dismiss: @escaping () -> Void) {
+    func willBecomeActive(onSuccess: @escaping () -> Void, _ dismiss: @escaping () -> Void) {
         if requiredPermissions != .none {
-            checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
+            checkAndAskForPermissions(onSuccess: onSuccess, dismiss)
+        } else {
+            onSuccess()
         }
         analysis.queue = queue
         analysis.setNeedsUpdate(isPreRun: true)
@@ -326,31 +328,23 @@ final class Experiment {
         }
     }
     
-    private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
+    private func checkAndAskForPermissions(onSuccess: @escaping () -> Void, _ failed: @escaping () -> Void) {
         if requiredPermissions.contains(.microphone) {
             let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
             
             switch status {
-            case .denied:
+            case .authorized:
+                onSuccess()
+            case .denied, .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_microphone_required"), message: localize("permission_microphone_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
-            case .restricted:
-                failed()
-                let alert = UIAlertController(title: localize("permission_microphone_required"), message: "permission_microphone_restricted", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                showPermissionAlert(title: localize("permission_microphone_required"), message: localize("permission_microphone_denied"), onDismiss: failed)
             case .notDetermined:
                 AVCaptureDevice.requestAccess(for: AVMediaType.audio, completionHandler: { (allowed) in
-                    if !allowed {
-                        failed()
+                    DispatchQueue.main.async {
+                        if allowed { onSuccess() } else { failed() }
                     }
                 })
-                
-            default:
+            @unknown default:
                 break
             }
         } else if requiredPermissions.contains(.location) {
@@ -358,48 +352,55 @@ final class Experiment {
             let status = CLLocationManager.authorizationStatus()
             
             switch status {
-            case .denied:
+            case .authorizedAlways, .authorizedWhenInUse:
+                onSuccess()
+            case .denied, .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
-            case .restricted:
-                failed()
-                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_restricted"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                showPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_denied"),onDismiss: failed)
             case .notDetermined:
-                locationManager?.requestWhenInUseAuthorization()
-                break
+                guard let gpsInput = gpsInputs.first else {
+                    onSuccess()
+                    return
+                }
+                gpsInput.onAuthorizationChange = { [weak gpsInput] newStatus in
+                    DispatchQueue.main.async {
+                        switch newStatus {
+                            case .authorizedAlways, .authorizedWhenInUse:
+                                onSuccess()
+                            case .denied, .restricted:
+                                failed()    // Stop waterfall!
+                            self.showPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_denied"), onDismiss: failed)
+                            case .notDetermined:
+                                return
+                            @unknown default:
+                                break
+                            }
+                            gpsInput?.onAuthorizationChange = nil
+                    }
+                }
                 
-            default:
+                gpsInput.locationManager.requestWhenInUseAuthorization()
+                
+            @unknown default:
                 break
             }
         } else if requiredPermissions.contains(.motionFitness) {
-            print("Motion and Fitness permission required.")
             let status = CMAltimeter.authorizationStatus()
             switch status {
-            case .denied:
+            case .authorized:
+                onSuccess()
+            case .denied, .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-            case .restricted:
-                failed()
-                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_restricted"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                showPermissionAlert(title: localize("permission_motion_required"), message: localize("permission_motion_denied"), onDismiss: failed)
             case .notDetermined:
                 let recorder = CMSensorRecorder()
                 DispatchQueue.global().async {
                     recorder.recordAccelerometer(forDuration: 0.1)
+                    DispatchQueue.main.async { onSuccess() }
                 }
                 break
                 
-            default:
+            @unknown default:
                 break
             }
         }
@@ -407,30 +408,32 @@ final class Experiment {
         else if requiredPermissions.contains(.camera) {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
            switch status {
-           case .denied:
+           case .denied, .restricted:
                failed()
-               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), preferredStyle: .alert)
-               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-           case .restricted:
-               failed()
-               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_restricted"), preferredStyle: .alert)
-               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-               
+               showPermissionAlert(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), onDismiss: failed)
            case .notDetermined:
                AVCaptureDevice.requestAccess(for: .video, completionHandler: { (allowed) in
-                   if !allowed {
-                       failed()
-                   }
+                   DispatchQueue.main.async {
+                        if allowed { onSuccess() } else { failed() }
+                    }
                })
-               break
-               
            default:
                break
            }
        }
     }
+    
+    private func showPermissionAlert(title: String, message: String, onDismiss: @escaping () -> Void) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+   
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
+                    onDismiss()
+                }))
+                
+                DispatchQueue.main.async {
+                    UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true, completion: nil)
+                }
+        }
     
     public func startAudio(countdown: Bool, stopExperimentDelegate: StopExperimentDelegate) throws {
         if audioEngine != nil { //Do not start twice. It could have been already started for a beeping countdown.
