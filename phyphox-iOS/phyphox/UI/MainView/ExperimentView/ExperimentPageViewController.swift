@@ -85,6 +85,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    private var hasCompletedInitialPermissionCheck = false
+    
+    private enum DialogSequence {
+        // Sequence is a per the priority
+        case systemPermissions
+        case dataPolicy
+        case bluetoothConnections
+        case networkConnections
+        case photosensitivity
+        case saveLocally
+        case hints
+    }
+    
     func updateTabScrollPosition(_ target: Int) {
         if segControl == nil {
             return
@@ -198,14 +211,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if isMovingToParent {
-            experiment.willBecomeActive {
-                DispatchQueue.main.async {
-                    self.navigationController?.popToRootViewController(animated: true)
-                }
-            }
-        }
         
         guard let navBar = self.navigationController?.navigationBar else {
             return
@@ -390,6 +395,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             )
         }
         
+        setupThermalWarningHandler()
+        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if let floatingBubble = hintBubble {
+            floatingBubble.dismiss(animated: false, completion: nil)
+            hintBubble = nil
+        }
     }
     
     @objc func handleDeviceRotationToControlSpectrumOrientation() {
@@ -468,62 +484,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return .none
     }
     
-    func showOptionalDialogsAndHints() {
-        
-        //Ask to save the experiment locally if it has been loaded from a remote source
-        if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
-            UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("save_locally"))
-                .message(message: localize("save_locally_message"))
-                .preferredStyle(style: .alert)
-                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: { _ in
-                    do {
-                        try self.saveLocally()
-                    }
-                    catch {
-                        print(error)
-                    }
-                })
-                .addCancelAction()
-                .show(in: self.navigationController!, animated: true)
-            
-            //Show a hint for the experiment info
-        } else {
-            if let playItem = playItem, hintBubble == nil {
-                let defaults = UserDefaults.standard
-                let key = "experiment_start_hint_dismiss_count"
-                if (defaults.integer(forKey: key) < 3) {
-                    hintBubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
-                    })
-                    guard let hintBubble = hintBubble else {
-                        return
-                    }
-                    hintBubble.popoverPresentationController?.delegate = self
-                    hintBubble.popoverPresentationController?.barButtonItem = playItem
-                    
-                    self.present(hintBubble, animated: true, completion: nil)
-                }
-            }
-            
-            if let actionItem = actionItem, hintBubble == nil && (experiment.localizedCategory != localize("categoryRawSensor")) {
-                let defaults = UserDefaults.standard
-                let key = "experiment_info_hint_dismiss_count"
-                if (defaults.integer(forKey: key) < 3) {
-                    hintBubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
-                        defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
-                    })
-                    guard let hintBubble = hintBubble else {
-                        return
-                    }
-                    hintBubble.popoverPresentationController?.delegate = self
-                    hintBubble.popoverPresentationController?.barButtonItem = actionItem
-                    
-                    self.present(hintBubble, animated: true, completion: nil)
-                }
-            }
-        }
-    }
-    
     override func viewDidAppear(_ animated: Bool) {
         if #available(iOS 14.0, *) {
             for vc in experimentViewControllers {
@@ -551,18 +511,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
             }
         }
-        if let networkConnection = experiment.networkConnections.first {
-            var sensorList: [String] = []
-            for sensorInput in experiment.sensorInputs {
-                sensorList.append(sensorInput.sensorType.getLocalizedName())
-            }
-            networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
-        } else if experiment.bluetoothDevices.count > 0 {
-            connectToBluetoothDevices()
-        } else {
-            showOptionalDialogsAndHints()
+        
+        if isMovingToParent && !hasCompletedInitialPermissionCheck {
+            executeSequence(from: .systemPermissions)
         }
+        
     }
+    
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -1467,17 +1422,158 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    //MARK: - Dialog waterfall flow
+    
+    private func executeSequence(from step: DialogSequence){
+        switch step {
+        case .systemPermissions:
+            experiment.willBecomeActive(
+                onSuccess: { [weak self] in
+                    DispatchQueue.main.async {
+                        guard let self = self as? ExperimentPageViewController else { return }
+                        self.hasCompletedInitialPermissionCheck = true
+                        self.executeSequence(from: .dataPolicy)
+                    }
+                },
+                { [weak self] in
+                    DispatchQueue.main.async {
+                        self?.navigationController?.popToRootViewController(animated: true)
+                    }
+                }
+            )
+            
+        case .dataPolicy:
+            if let networkConnection = experiment.networkConnections.first {
+                let sensorList = experiment.sensorInputs.map { $0.sensorType.getLocalizedName() }
+                networkConnection.showDataAndPolicy(
+                    infoMicrophone: experiment.audioInputs.count > 0,
+                    infoLocation: experiment.gpsInputs.count > 0,
+                    infoSensorData: experiment.sensorInputs.count > 0,
+                    infoSensorDataList: sensorList,
+                    callback: self
+                )
+            } else {
+                executeSequence(from: .bluetoothConnections)
+            }
+            
+        case .bluetoothConnections:
+            if experiment.bluetoothDevices.count > 0 {
+                connectToBluetoothDevices()
+            } else {
+                executeSequence(from: .networkConnections)
+            }
+        case .networkConnections:
+            if experiment.networkConnections.count > 0 {
+                connectToNetworkDevices()
+            } else {
+                executeSequence(from: .photosensitivity)
+            }
+        case .photosensitivity:
+            if let flashlight = experiment.flashlightOutput,
+               flashlight.hasStrobeController() && SafetyManager.needsWarning {
+                if flashlight.isStrobeActiveWithFrequency() || flashlight.isStrobeUsingBuffer() {
+                    showStrobeWarning { [weak self] in
+                        self?.executeSequence(from: .saveLocally)
+                    }
+                    return
+                }
+            }
+            executeSequence(from: .saveLocally)
+        case .saveLocally:
+            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("save_locally"))
+                    .message(message: localize("save_locally_message"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("save_locally_button"), style: .default, handler: { [weak self] _ in
+                        do { try self?.saveLocally() } catch { print(error) }
+                        self?.executeSequence(from: .hints)
+                    })
+                    .addCancelAction { [weak self] _ in
+                        self?.executeSequence(from: .hints)
+                    }
+                    .show(in: self.navigationController!, animated: true)
+            } else {
+                executeSequence(from: .hints)
+            }
+        case .hints:
+            presentNextHint()
+        }
+    }
+    
+    func showStrobeWarning(completion: @escaping () -> Void) {
+        let alert = UIAlertController(
+            title: localize("warning_photosensitivity"),
+            message: localize("warning_photosensitivity_message"),
+            preferredStyle: .alert
+        )
+        
+        let proceedAction = UIAlertAction(title: localize("dont_remind"), style: .default) { _ in
+            SafetyManager.acknowledge()
+            completion()
+        }
+        
+        let okAction = UIAlertAction(title: localize("ok"), style: .cancel) { _ in
+            completion()
+        }
+        
+        alert.addAction(proceedAction)
+        alert.addAction(okAction)
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    private var hasShownStartHintThisSession = false
+    private var hasShownInfoHintThisSession = false
+    
+    private func presentNextHint() {
+        let defaults = UserDefaults.standard
+        
+        if let playItem = playItem, hintBubble == nil, !hasShownStartHintThisSession {
+            hasShownStartHintThisSession = true
+            
+            let key = "experiment_start_hint_dismiss_count"
+            if defaults.integer(forKey: key) < 3 {
+                showHintBubble(text: localize("start_hint"), item: playItem, defaultsKey: key)
+                return // Pause for this hint
+            }
+        }
+        
+        if let actionItem = actionItem, hintBubble == nil, !hasShownInfoHintThisSession && (experiment.localizedCategory != localize("categoryRawSensor")) {
+            hasShownInfoHintThisSession = true
+            
+            let key = "experiment_info_hint_dismiss_count"
+            if defaults.integer(forKey: key) < 3 {
+                showHintBubble(text: localize("experimentinfo_hint"), item: actionItem, defaultsKey: key)
+                return
+            }
+        }
+    }
+    
+    private func showHintBubble(text: String, item: UIBarButtonItem, defaultsKey: String) {
+        hintBubble = HintBubbleViewController(text: text, onDismiss: { [weak self] in
+            let defaults = UserDefaults.standard
+            defaults.set(defaults.integer(forKey: defaultsKey) + 1, forKey: defaultsKey)
+            self?.hintBubble = nil
+            self?.presentNextHint()
+        })
+        
+        hintBubble?.popoverPresentationController?.delegate = self
+        hintBubble?.popoverPresentationController?.barButtonItem = item
+        
+        if let bubble = hintBubble {
+            self.present(bubble, animated: true, completion: nil)
+        }
+    }
+    
     func connectToBluetoothDevices() {
         
         if experiment.bluetoothDevices.count == 1, let input = experiment.bluetoothDevices.first {
             if input.deviceAddress != nil {
                 input.stopExperimentDelegate = self
                 input.scanToConnect()
-                if (experiment.networkConnections.count > 0) {
-                    connectToNetworkDevices()
-                } else {
-                    showOptionalDialogsAndHints()
-                }
+                
+                executeSequence(from: .networkConnections)
                 return
             }
         }
@@ -1491,16 +1587,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
         
-        //No more dialogs shown. Now show any other dialog that had to wait.
-        if (experiment.networkConnections.count > 0) {
-            connectToNetworkDevices()
-        } else {
-            showOptionalDialogsAndHints()
-        }
+        executeSequence(from: .networkConnections)
     }
     
     func bluetoothScanDialogDismissed() {
-        connectToBluetoothDevices()
+        executeSequence(from: .networkConnections)
     }
     
     func disconnectFromBluetoothDevices(){
@@ -1516,7 +1607,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 return
             }
         }
-        showOptionalDialogsAndHints()
+        executeSequence(from: .photosensitivity)
     }
     
     func networkScanDialogDismissed() {
@@ -1530,11 +1621,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func dataPolicyInfoDismissed() {
-        if experiment.bluetoothDevices.count > 0 {
-            connectToBluetoothDevices()
-        } else {
-            connectToNetworkDevices()
-        }
+        executeSequence(from: .bluetoothConnections)
     }
     
     func refreshAppTheme(){
@@ -1571,6 +1658,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.updateLayout()
         }
     }
+    
+    private func setupThermalWarningHandler() {
+            experiment.flashlightOutput?.onThermalWarning = { [weak self] state in
+                
+                let title = localize("device_overheating")
+                let message: String
+                
+                if state == .critical {
+                    message = localize("device_heating_critical")
+                } else {
+                    message = localize("device_heating_serious")
+                }
+                
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                
+                self?.present(alert, animated: true, completion: nil)
+            }
+        }
     
 }
 

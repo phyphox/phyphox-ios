@@ -35,6 +35,8 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     
     private var queue: DispatchQueue?
     
+    var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
+    
     init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?, timeReference: ExperimentTimeReference) {
         
         self.latBuffer = latBuffer
@@ -79,6 +81,16 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             let satellites = -1.0
             self.dataIn(lat, lon: lon, z: z, zWgs84: zWgs84, v: v, dir: dir, accuracy: accuracy, zAccuracy: zAccuracy, t: t, status: status, satellites: satellites)
         }
+    }
+    
+    @available(iOS 14.0, *)
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        onAuthorizationChange?(manager.authorizationStatus)
+    }
+
+    // For iOS 13 and older
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        onAuthorizationChange?(status)
     }
     
     func clear() {

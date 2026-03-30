@@ -238,6 +238,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
         
+        let flashlightOutput = try makeFlashlightOutput(from: outputDescriptor?.flashlight, buffers: buffers)
+        
+        
         let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
         let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, requireFill: analysisDescriptor.requireFillName.map { buffers[$0] } ?? nil, requireFillThreshold: analysisDescriptor.requireFillThreshold, requireFillDynamic: analysisDescriptor.requireFillDynamicName.map { buffers[$0] } ?? nil, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs, audioInputs: audioInputs)
         
@@ -377,7 +380,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
         }
         
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, flashlightOutput: flashlightOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -589,6 +592,47 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                                         grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, showControls: descriptor.showControls, translation: translations)
             
         }
+        
+    }
+    
+    private func makeFlashlightOutput(from descriptor: FlashlightOutputDescriptor?, buffers: [String: DataBuffer]) throws -> FlashlightOutput? {
+        guard let inputs = descriptor?.inputs else { return nil }
+        
+        let flashlightOutput = FlashlightOutput()
+        let manager = flashlightOutput.getInternalManager()
+        
+        for inputDescriptor in inputs {
+            let target: String
+            let parameter: FlashlightParameter
+            
+            switch inputDescriptor {
+                case .buffer(name: let name, usedAs: let usedAs):
+                    target = usedAs
+                    guard let buffer = buffers[name] else {
+                        throw ElementHandlerError.missingElement("data-container")
+                    }
+                    parameter = .buffer(buffer: buffer)
+                        
+                case .value(value: let value, usedAs: let usedAs):
+                    target = usedAs
+                    parameter = .value(value: value)
+                }
+            
+            switch target {
+                case "frequency":
+                    let strobe = FlashlightOutput.StrobeController(manager: manager, parameter: parameter)
+                    flashlightOutput.attachController(strobe)
+                        
+                case "intensity":
+                    let intensity = FlashlightOutput.IntensityController(manager: manager, parameter: parameter)
+                    flashlightOutput.attachController(intensity)
+                        
+                default:
+                    throw ElementHandlerError.message("Invalid parameter of flashlight output.")
+                }
+            
+        }
+        return flashlightOutput
         
     }
 
