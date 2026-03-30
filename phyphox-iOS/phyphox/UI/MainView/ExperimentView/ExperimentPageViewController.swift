@@ -524,6 +524,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    func showStrobeWarning() {
+        let alert = UIAlertController(
+            title: localize("warning_photosensitivity"),
+            message: localize("warning_photosensitivity_message"),
+            preferredStyle: .alert
+        )
+        
+        let proceedAction = UIAlertAction(title: localize("dont_remind"), style: .default) { _ in
+            SafetyManager.acknowledge()
+        }
+        
+        let okAction = UIAlertAction(title: localize("ok"), style: .cancel, handler: nil)
+        
+        alert.addAction(proceedAction)
+        alert.addAction(okAction)
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         if #available(iOS 14.0, *) {
             for vc in experimentViewControllers {
@@ -562,6 +581,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         } else {
             showOptionalDialogsAndHints()
         }
+        
+        if let flashlightOutput = experiment.flashlightOutput {
+            if flashlightOutput.hasStrobeController() && SafetyManager.needsWarning{
+                if flashlightOutput.isStrobeActiveWithFrequency() || flashlightOutput.isStrobeUsingBuffer()  {
+                    showStrobeWarning()
+                }
+            }
+        }
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {

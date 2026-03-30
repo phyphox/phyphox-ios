@@ -22,6 +22,25 @@ class FlashlightOutput {
     public func getInternalManager() -> FlashlightManager {
         return manager
     }
+    
+    public func hasStrobeController() -> Bool {
+        return controllers.contains{ $0 is StrobeController}
+    }
+    
+    func isStrobeActiveWithFrequency() -> Bool {
+        guard let strobe = controllers.first(where: { $0 is StrobeController }) as? StrobeController else {
+            return false
+        }
+        
+        return strobe.getCurrentFrequency() > 0
+    }
+    
+    func isStrobeUsingBuffer() -> Bool {
+        guard let strobe = controllers.first(where: { $0 is StrobeController }) as? StrobeController else {
+            return false
+        }
+        return strobe.isBufferSource()
+    }
 
     protocol FlashlightController {
         func start()
@@ -40,6 +59,10 @@ class FlashlightOutput {
             self.manager = manager
             self.parameter = parameter
         }
+        
+        func getCurrentFrequency() -> Double { return parameter.getValue() ?? 0.0 }
+
+        func isBufferSource() -> Bool { return parameter.isBuffer }
 
         func start() {
             let currentFreq = parameter.getValue() ?? 0.0

@@ -57,3 +57,16 @@ extension UIView
     }
 }
 
+
+struct SafetyManager {
+    static let strobeWarningKey = "didAcknowledgeStrobeWarning"
+    
+    static var needsWarning: Bool {
+        return !UserDefaults.standard.bool(forKey: strobeWarningKey)
+    }
+    
+    static func acknowledge() {
+        UserDefaults.standard.set(true, forKey: strobeWarningKey)
+    }
+}
+
