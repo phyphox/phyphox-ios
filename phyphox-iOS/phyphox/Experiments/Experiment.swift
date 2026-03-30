@@ -63,9 +63,9 @@ final class Experiment {
         }
         return translation?.selectedTranslation?.categoryString ?? category
     }
-
+    
     weak var analysisDelegate: ExperimentAnalysisDelegate?
-
+    
     let icon: ExperimentIcon
     
     let rawColor: UIColor?
@@ -78,7 +78,7 @@ final class Experiment {
             return kHighlightColor
         }
     }
-
+    
     var local: Bool = false
     var source: URL?
     var custom: Bool {
@@ -123,7 +123,7 @@ final class Experiment {
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
     
     let translation: ExperimentTranslationCollection?
-
+    
     let sensorInputs: [ExperimentSensorInput]
     let depthInput: ExperimentDepthInput?
     let cameraInput: ExperimentCameraInput?
@@ -142,18 +142,18 @@ final class Experiment {
     let export: ExperimentExport?
     
     let buffers: [String: DataBuffer]
-
+    
     private var requiredPermissions: ExperimentRequiredPermission = .none
     
     private(set) var running = false
     private(set) var hasStarted = false
-
+    
     public var audioEngine: AudioEngine?
     
     public var flashlightOutput : FlashlightOutput?
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
-
+    
     init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, flashlightOutput: FlashlightOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
@@ -164,16 +164,16 @@ final class Experiment {
         
         self.description = description
         self.links = links
-
+        
         self.localizedLinks = links.map { ExperimentLink(label: translation?.localizeString($0.label) ?? $0.label, url: translation?.localizeLink($0.label, fallback: $0.url) ?? $0.url, highlighted: $0.highlighted) }
-
+        
         self.category = category
         
         self.icon = icon
         self.rawColor = color
         
         self.translation = translation
-
+        
         self.timeReference = timeReference
         
         self.buffers = buffers
@@ -229,7 +229,7 @@ final class Experiment {
         
         analysis.delegate = self
     }
-
+    
     convenience init(file: String, error: String) {
         self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, cameraInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, flashlightOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
         invalid = true;
@@ -273,7 +273,7 @@ final class Experiment {
     
     func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
         guard let source = self.source else { throw FileError.genericError }
-
+        
         if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
             try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
         }
@@ -281,13 +281,13 @@ final class Experiment {
         var i = 1
         let cleanedTitle = title.replacingOccurrences(of: "/", with: "")
         var experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle).appendingPathExtension(experimentFileExtension)
-
+        
         while FileManager.default.fileExists(atPath: experimentURL.path) {
             experimentURL = customExperimentsURL.appendingPathComponent(cleanedTitle + "-\(i)").appendingPathExtension(experimentFileExtension)
             
             i += 1
         }
-
+        
         func moveFile(from fileURL: URL) throws {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
@@ -315,7 +315,7 @@ final class Experiment {
                 }
             }
         }
-
+        
         if source.isFileURL {
             try moveFile(from: source)
         }
@@ -365,17 +365,17 @@ final class Experiment {
                 gpsInput.onAuthorizationChange = { [weak gpsInput] newStatus in
                     DispatchQueue.main.async {
                         switch newStatus {
-                            case .authorizedAlways, .authorizedWhenInUse:
-                                onSuccess()
-                            case .denied, .restricted:
-                                failed()    // Stop waterfall!
+                        case .authorizedAlways, .authorizedWhenInUse:
+                            onSuccess()
+                        case .denied, .restricted:
+                            failed()    // Stop waterfall!
                             self.showPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_denied"), onDismiss: failed)
-                            case .notDetermined:
-                                return
-                            @unknown default:
-                                break
-                            }
-                            gpsInput?.onAuthorizationChange = nil
+                        case .notDetermined:
+                            return
+                        @unknown default:
+                            break
+                        }
+                        gpsInput?.onAuthorizationChange = nil
                     }
                 }
                 
@@ -407,33 +407,33 @@ final class Experiment {
         
         else if requiredPermissions.contains(.camera) {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
-           switch status {
-           case .denied, .restricted:
-               failed()
-               showPermissionAlert(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), onDismiss: failed)
-           case .notDetermined:
-               AVCaptureDevice.requestAccess(for: .video, completionHandler: { (allowed) in
-                   DispatchQueue.main.async {
+            switch status {
+            case .denied, .restricted:
+                failed()
+                showPermissionAlert(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), onDismiss: failed)
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video, completionHandler: { (allowed) in
+                    DispatchQueue.main.async {
                         if allowed { onSuccess() } else { failed() }
                     }
-               })
-           default:
-               break
-           }
-       }
+                })
+            default:
+                break
+            }
+        }
     }
     
     private func showPermissionAlert(title: String, message: String, onDismiss: @escaping () -> Void) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-   
-                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
-                    onDismiss()
-                }))
-                
-                DispatchQueue.main.async {
-                    UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true, completion: nil)
-                }
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
+            onDismiss()
+        }))
+        
+        DispatchQueue.main.async {
+            UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true, completion: nil)
         }
+    }
     
     public func startAudio(countdown: Bool, stopExperimentDelegate: StopExperimentDelegate) throws {
         if audioEngine != nil { //Do not start twice. It could have been already started for a beeping countdown.
@@ -471,14 +471,14 @@ final class Experiment {
                 return
             }
         }
-
+        
         timeReference.registerEvent(event: .START)
         bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: timeReference.timeMappings.last) }
-
+        
         running = true
-
+        
         hasStarted = true
-
+        
         setKeepScreenOn(true)
         
         try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
@@ -493,7 +493,7 @@ final class Experiment {
         gpsInputs.forEach { $0.start(queue: queue) }
         bluetoothInputs.forEach { $0.start(queue: queue) }
         networkConnections.forEach { $0.start() }
-
+        
         analysis.running = true
         analysis.queue = queue
         analysis.setNeedsUpdate()
@@ -505,7 +505,7 @@ final class Experiment {
         }
         
         analysis.running = false
-                
+        
         sensorInputs.forEach { $0.stop() }
         depthInput?.stop()
         cameraInput?.stop()
@@ -531,13 +531,13 @@ final class Experiment {
         stop()
         timeReference.reset()
         hasStarted = false
-
+        
         for buffer in buffers.values {
             if !buffer.attachedToTextField {
                 buffer.clear(reset: true)
             }
         }
-
+        
         sensorInputs.forEach { $0.clear() }
         depthInput?.clear()
         cameraInput?.clear()
@@ -556,7 +556,7 @@ extension Experiment: ExperimentAnalysisDelegate {
             networkConnection.pushDataToBuffers()
         }
     }
-
+    
     func analysisDidUpdate(_ analysis: ExperimentAnalysis) {
         analysisDelegate?.analysisDidUpdate(analysis)
         if running {
@@ -581,45 +581,45 @@ extension Experiment {
     func metadataEqual(to rhs: Experiment?) -> Bool {
         guard let rhs = rhs else { return false }
         return localizedTitle == rhs.localizedTitle &&
-            localizedCategory == rhs.localizedCategory &&
-            localizedDescription == rhs.localizedDescription &&
-            icon == rhs.icon &&
-            color == rhs.color &&
-            stateTitle == rhs.stateTitle &&
-            appleBan == rhs.appleBan &&
-            isLink == rhs.isLink &&
-            localizedLinks == rhs.localizedLinks
+        localizedCategory == rhs.localizedCategory &&
+        localizedDescription == rhs.localizedDescription &&
+        icon == rhs.icon &&
+        color == rhs.color &&
+        stateTitle == rhs.stateTitle &&
+        appleBan == rhs.appleBan &&
+        isLink == rhs.isLink &&
+        localizedLinks == rhs.localizedLinks
     }
 }
 
 extension Experiment: Equatable {
     static func ==(lhs: Experiment, rhs: Experiment) -> Bool {
         return lhs.title == rhs.title &&
-            lhs.localizedDescription == rhs.localizedDescription &&
-            lhs.localizedLinks == rhs.localizedLinks &&
-            lhs.localizedCategory == rhs.localizedCategory &&
-            lhs.icon == rhs.icon &&
-            lhs.color == rhs.color &&
-            lhs.local == rhs.local &&
-            lhs.translation == rhs.translation &&
-            lhs.buffers == rhs.buffers &&
-            lhs.sensorInputs.elementsEqual(rhs.sensorInputs, by: { (l, r) -> Bool in
-                ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
-            }) &&
-            lhs.depthInput == rhs.depthInput &&
-            lhs.gpsInputs == rhs.gpsInputs &&
-            lhs.audioInputs == rhs.audioInputs &&
-            lhs.audioOutput == rhs.audioOutput &&
-            lhs.bluetoothDevices == rhs.bluetoothDevices &&
-            lhs.bluetoothInputs == rhs.bluetoothInputs &&
-            lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
-            lhs.networkConnections == rhs.networkConnections &&
-            lhs.viewDescriptors == rhs.viewDescriptors &&
-            lhs.analysis == rhs.analysis &&
-            lhs.export == rhs.export &&
-            lhs.stateTitle == rhs.stateTitle &&
-            lhs.appleBan == rhs.appleBan &&
-            lhs.isLink == rhs.isLink
+        lhs.localizedDescription == rhs.localizedDescription &&
+        lhs.localizedLinks == rhs.localizedLinks &&
+        lhs.localizedCategory == rhs.localizedCategory &&
+        lhs.icon == rhs.icon &&
+        lhs.color == rhs.color &&
+        lhs.local == rhs.local &&
+        lhs.translation == rhs.translation &&
+        lhs.buffers == rhs.buffers &&
+        lhs.sensorInputs.elementsEqual(rhs.sensorInputs, by: { (l, r) -> Bool in
+            ExperimentSensorInput.valueEqual(lhs: l, rhs: r)
+        }) &&
+        lhs.depthInput == rhs.depthInput &&
+        lhs.gpsInputs == rhs.gpsInputs &&
+        lhs.audioInputs == rhs.audioInputs &&
+        lhs.audioOutput == rhs.audioOutput &&
+        lhs.bluetoothDevices == rhs.bluetoothDevices &&
+        lhs.bluetoothInputs == rhs.bluetoothInputs &&
+        lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
+        lhs.networkConnections == rhs.networkConnections &&
+        lhs.viewDescriptors == rhs.viewDescriptors &&
+        lhs.analysis == rhs.analysis &&
+        lhs.export == rhs.export &&
+        lhs.stateTitle == rhs.stateTitle &&
+        lhs.appleBan == rhs.appleBan &&
+        lhs.isLink == rhs.isLink
     }
 }
 
