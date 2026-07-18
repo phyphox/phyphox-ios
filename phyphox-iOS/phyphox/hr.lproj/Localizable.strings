@@ -353,8 +353,8 @@
 "notSet" = "Nije postavljeno";
 "preview" = "Pregled";
 "wb_auto" = "Automatski";
-"wb_incandescent" = "žarulja";
-"wb_fluorescent" = "fluorescentna svjetiljka";
+"wb_incandescent" = "Žarulja";
+"wb_fluorescent" = "Fluorescentna svjetiljka";
 "wb_daylight" = "Dnevno svijetlo";
 "wb_cloudy" = "Oblačno";
 "common_quantity_short_luminance" = "Lv";
@@ -363,7 +363,7 @@
 "cameraLoadingErrorTitle" = "Greška prilikom učitavanja kamere";
 "cameraLoadingErrorMessage1" = "Neuspjeh prilikom namještanja kamere. ";
 "cameraLoadingErrorMessage2" = "Zadani video uređaj nije dostupan. ";
-"cameraLoadingErrorMessage3" = "Dodavanje ulaznog video uređaja u kamera sesiju. ";
+"cameraLoadingErrorMessage3" = "Neuspiješno dodavanje video uređaja u sesiji kamere. ";
 "cameraLoadingErrorMessage4" = "Nije moguće dodati izlaz u kamera sesiju. ";
 "cameraLoadingErrorMessage5" = "Nije moguće stvoriti ulaz video uređaja. ";
 "cameraLoadingErrorMessage6" = "Nije bilo moguće ispravno učitati kameru. ";
