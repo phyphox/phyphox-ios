@@ -201,8 +201,8 @@
 "common_unit_short_lux" = "lx (勒克斯)";
 "common_unit_short_degree" = "°";
 "common_unit_short_centi_meter" = "cm";
-"common_unit_short_kilo_meter" = "公里";
-"common_unit_short_meter_per_second" = "米/秒";
+"common_unit_short_kilo_meter" = "km";
+"common_unit_short_meter_per_second" = "m/s";
 "common_quantity_short_time" = "时间 (t)";
 "common_quantity_short_illuminance" = "曝光值 (Ev)";
 "common_direction_short_north" = "北";
