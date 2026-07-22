@@ -190,8 +190,8 @@
 "bt_error_writing" = "写入UUID特征时出错";
 "bt_error_reading" = "读取UUID特征时出错";
 "bt_error_discovering" = "发现蓝牙设备时出错。";
-"bt_fail_reading" = "读取操作不成功。";
-"bt_fail_writing" = "写入操作不成功。";
+"bt_fail_reading" = "读取操作未成功。";
+"bt_fail_writing" = "写入操作未成功。";
 "bt_more_info_link_text" = "若你的设备不被支持，选择“更多信息”，以便在我们的网站上了解更多关于灵活的低功耗蓝牙技术支持。";
 "bt_more_info_link_button" = "更多信息";
 "bt_more_info_link_url" = "https://phyphox.org/ble";
