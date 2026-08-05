@@ -13,11 +13,11 @@ final class phyphoxTests: XCTestCase {
     
     var colorHelper: ColorConverterHelper!
     
-    override class func setUp() {
+    override func setUp() {
         colorHelper = ColorConverterHelper()
     }
-    
-    override class func tearDown() {
+
+    override func tearDown() {
         colorHelper = nil
     }
     

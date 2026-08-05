@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import ZipZap
+import ZIPFoundation
 
 struct ExperimentExport: Equatable {
     let sets: [ExperimentExportSet]
@@ -58,18 +58,24 @@ struct ExperimentExport: Equatable {
                         let tmpFileURL = URL(fileURLWithPath: tmpFile)
                         
                         do {
-                            let archive = try ZZArchive(url: tmpFileURL, options: [ZZOpenOptionsCreateIfMissingKey : NSNumber(value: true)])
-                            
-                            var entries = [ZZArchiveEntry]()
-                            
+                            let archive = try Archive(url: tmpFileURL, accessMode: .create)
+
+                            func addEntry(fileName: String, data: Data?) throws {
+                                guard let data = data else {
+                                    throw SerializationError.genericError(message: "No data for \(fileName).")
+                                }
+                                try archive.addEntry(with: fileName, type: .file, uncompressedSize: Int64(data.count), compressionMethod: .deflate, provider: { position, size in
+                                    let start = Int(position)
+                                    return data.subdata(in: start..<(start + size))
+                                })
+                            }
+
                             for set in self.sets {
                                 let data = set.serialize(format, additionalInfo: nil) as! Data?
-                                
-                                entries.append(ZZArchiveEntry(fileName: set.name + ".csv", compress: true, dataBlock: { error -> Data? in
-                                    return data
-                                }))
+
+                                try addEntry(fileName: set.name + ".csv", data: data)
                             }
-                            
+
                             //Metadata
                             var metaCSV = "\"property\"\(separator)\"value\"\n"
                             for metadata in Metadata.allNonSensorCases {
@@ -80,10 +86,7 @@ struct ExperimentExport: Equatable {
                                     metaCSV += "\"\(metadata.identifier)\"\(separator)\"\(metadata.get(hash: "") ?? "")\"\n"
                                 }
                             }
-                            let data = metaCSV.data(using: .utf8)
-                            entries.append(ZZArchiveEntry(fileName: "meta/device.csv", compress: true, dataBlock: { error -> Data? in
-                                return data
-                            }))
+                            try addEntry(fileName: "meta/device.csv", data: metaCSV.data(using: .utf8))
                             
                             //Time references
                             if let reference = timeReference {
@@ -100,14 +103,9 @@ struct ExperimentExport: Equatable {
                                     let dateString = dateFormatter.string(from: mapping.systemTime)
                                     timeCSV += "\"\(mapping.event.rawValue)\"\(separator)\(formatter.string(from: NSNumber(value: mapping.experimentTime)) ?? "NaN")\(separator)\(formatter.string(from: NSNumber(value: mapping.systemTime.timeIntervalSince1970)) ?? "NaN")\(separator)\"\(dateString)\"\n"
                                 }
-                                let timeData = timeCSV.data(using: .utf8)
-                                entries.append(ZZArchiveEntry(fileName: "meta/time.csv", compress: true, dataBlock: { error -> Data? in
-                                    return timeData
-                                }))
+                                try addEntry(fileName: "meta/time.csv", data: timeCSV.data(using: .utf8))
                             }
-                            
-                            try archive.updateEntries(entries)
-                            
+
                             mainThread {
                                 callback(nil, tmpFileURL)
                             }

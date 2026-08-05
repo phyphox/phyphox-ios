@@ -8,7 +8,7 @@
 
 import UIKit
 import CoreBluetooth
-import ZipZap
+import ZIPFoundation
 
 private let minCellWidth: CGFloat = 320.0
 private let phyphoxCatHintRelease = "1.1.12" //If this is updated to the current version, the hint bubble for the support menu is shown again
@@ -702,20 +702,22 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         try? FileManager.default.removeItem(at: tmp)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
         
-        let archive = try ZZArchive(url: url)
+        let archive = try Archive(url: url, accessMode: .read)
         var files: [URL] = []
-        for entry in archive.entries {
-            if (entry.fileMode & S_IFDIR) > 0 {
+        for entry in archive {
+            if entry.type != .file {
                 continue
             }
-            let fileName = tmp.appendingPathComponent(entry.fileName)
-            if entry.fileName.hasSuffix(".phyphox") {
+            let fileName = tmp.appendingPathComponent(entry.path)
+            if entry.path.hasSuffix(".phyphox") {
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-                try entry.newData().write(to: fileName, options: .atomic)
+                try? FileManager.default.removeItem(at: fileName)
+                _ = try archive.extract(entry, to: fileName)
                 files.append(fileName)
             } else if fileName.deletingLastPathComponent().lastPathComponent == "res" {
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-                try entry.newData().write(to: fileName, options: .atomic)
+                try? FileManager.default.removeItem(at: fileName)
+                _ = try archive.extract(entry, to: fileName)
             }
         }
         

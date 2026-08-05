@@ -267,8 +267,7 @@
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
 		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
-		C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; };
-		C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14932707C19900512064 /* ZipZap.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F52E42AA0100000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -293,55 +292,6 @@
 			remoteGlobalIDString = DEF79A2216E80B5200E4B803;
 			remoteInfo = JXLS;
 		};
-		C0FC14922707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D87BA1F81B3D6DEA00ED7EB3;
-			remoteInfo = "ZipZap (iOS Framework)";
-		};
-		C0FC14942707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D899CFB0162C5EEB00112F49;
-			remoteInfo = "ZipZap (iOS Static Library)";
-		};
-		C0FC14962707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D8D140D31B423B1100C411B0;
-			remoteInfo = "ZipZap (macOS Framework)";
-		};
-		C0FC14982707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D899CF82162C5EC100112F49;
-			remoteInfo = "ZipZap (macOS Static Library)";
-		};
-		C0FC149A2707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = BF8624CB1BB7495200C12EEE;
-			remoteInfo = "ZipZap (tvOS Framework)";
-		};
-		C0FC149C2707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = BF8624EF1BB74B1F00C12EEE;
-			remoteInfo = "ZipZap (tvOS Static Library)";
-		};
-		C0FC149E2707C19900512064 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = D899CF96162C5EC100112F49;
-			remoteInfo = ZipZapTests;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -351,7 +301,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				C0FC14A22707C1AE00512064 /* ZipZap.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -663,7 +612,6 @@
 		C0F2A7C622E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C0F2A7C722E5E16F00CC2C2A /* sr_Latn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr_Latn; path = sr_Latn.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JXLSiOS.xcodeproj; path = JXLS/JXLSiOS.xcodeproj; sourceTree = "<group>"; };
-		C0FC14882707C19900512064 /* ZipZap.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZipZap.xcodeproj; path = ZipZap/ZipZap.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -676,7 +624,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */,
-				C0FC14A12707C1AE00512064 /* ZipZap.framework in Frameworks */,
+				860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */,
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
 				867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */,
@@ -1327,7 +1275,6 @@
 				C06BCD362707AAFE00B29595 /* libz.tbd */,
 				C06BCD342707AAE900B29595 /* Foundation.framework */,
 				C06BCD262707AADC00B29595 /* ImageIO.framework */,
-				C0FC14882707C19900512064 /* ZipZap.xcodeproj */,
 				C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */,
 			);
 			name = Frameworks;
@@ -1337,20 +1284,6 @@
 			isa = PBXGroup;
 			children = (
 				C0FC14862707C15200512064 /* libJXLS.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		C0FC14892707C19900512064 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				C0FC14932707C19900512064 /* ZipZap.framework */,
-				C0FC14952707C19900512064 /* libZipZap.a */,
-				C0FC14972707C19900512064 /* ZipZap.framework */,
-				C0FC14992707C19900512064 /* libZipZap.a */,
-				C0FC149B2707C19900512064 /* ZipZap.framework */,
-				C0FC149D2707C19900512064 /* libZipZap.a */,
-				C0FC149F2707C19900512064 /* ZipZapTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1381,6 +1314,7 @@
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
 				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
+				860E13F52E42AA0100000002 /* ZIPFoundation */,
 			);
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
@@ -1489,6 +1423,7 @@
 				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */,
+				860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -1496,10 +1431,6 @@
 				{
 					ProductGroup = C0FC14822707C15200512064 /* Products */;
 					ProjectRef = C0FC14812707C15200512064 /* JXLSiOS.xcodeproj */;
-				},
-				{
-					ProductGroup = C0FC14892707C19900512064 /* Products */;
-					ProjectRef = C0FC14882707C19900512064 /* ZipZap.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -1517,55 +1448,6 @@
 			fileType = archive.ar;
 			path = libJXLS.a;
 			remoteRef = C0FC14852707C15200512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC14932707C19900512064 /* ZipZap.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = ZipZap.framework;
-			remoteRef = C0FC14922707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC14952707C19900512064 /* libZipZap.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libZipZap.a;
-			remoteRef = C0FC14942707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC14972707C19900512064 /* ZipZap.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = ZipZap.framework;
-			remoteRef = C0FC14962707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC14992707C19900512064 /* libZipZap.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libZipZap.a;
-			remoteRef = C0FC14982707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC149B2707C19900512064 /* ZipZap.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = ZipZap.framework;
-			remoteRef = C0FC149A2707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC149D2707C19900512064 /* libZipZap.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libZipZap.a;
-			remoteRef = C0FC149C2707C19900512064 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		C0FC149F2707C19900512064 /* ZipZapTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = ZipZapTests.xctest;
-			remoteRef = C0FC149E2707C19900512064 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -2123,7 +2005,6 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_LABEL = NO;
 				GCC_WARN_UNUSED_PARAMETER = NO;
-				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -2188,7 +2069,6 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_LABEL = NO;
 				GCC_WARN_UNUSED_PARAMETER = NO;
-				HEADER_SEARCH_PATHS = ../ZipZap;
 				INFOPLIST_FILE = phyphox/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -2374,6 +2254,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.17;
+			};
+		};
 		860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/yene/GCDWebServer";
@@ -2417,6 +2305,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		860E13F52E42AA0100000002 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
 		860E13F22B514703008FAFC6 /* GCDWebServer */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */;
