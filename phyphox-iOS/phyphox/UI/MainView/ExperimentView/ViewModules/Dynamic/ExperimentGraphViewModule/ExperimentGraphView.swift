@@ -19,8 +19,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     let markerSystem: GraphMarkerSystem
     let toolbarManager: GraphToolbarManager
     let layoutManager: GraphLayoutManager
-    let spectroscopyManager: SpectroscopyCalibrationManager
-    
+
     let descriptor: GraphViewDescriptor
     let timeReference: ExperimentTimeReference
     private let displayLink = DisplayLink(refreshRate: 0)
@@ -39,10 +38,13 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         didSet { handleResizableStateChange() }
     }
     var analysisRunning: Bool = false
-    
-    private var isSpectroscopyMode: Bool = false
-    var spectroscopyStatusLabel: UILabel?
-    
+
+    //Data picker state: values written so far, aligned with descriptor.pickOutputs slots.
+    private var pickData: [Double?]
+    var hasPickOutputs: Bool {
+        return descriptor.pickOutputs.contains(where: { $0 != nil })
+    }
+
     var active = false {
         didSet {
             dataManager.active = active
@@ -64,25 +66,24 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.logX = descriptor.logX
         self.logY = descriptor.logY
         self.logZ = descriptor.logZ
-        
-        self.isSpectroscopyMode = descriptor.calibrationMode == "xLinear"
-        
+
+        self.pickData = [Double?](repeating: nil, count: descriptor.pickOutputs.count)
+
         // Initialize components
         self.graphRenderer = GraphRenderer(descriptor: descriptor)
         self.zoomManager = GraphZoomManager(descriptor: descriptor)
         self.gestureHandler = GraphGestureHandler()
         self.markerSystem = GraphMarkerSystem(descriptor: descriptor, timeReference: timeReference, graphRenderer: graphRenderer)
         self.toolbarManager = GraphToolbarManager()
-        self.spectroscopyManager = SpectroscopyCalibrationManager()
         self.layoutManager = GraphLayoutManager(descriptor: descriptor, gridView: graphRenderer.gridView, zGridView: graphRenderer.zGridView)
         self.dataManager = GraphDataManager(descriptor: descriptor, timeReference: timeReference)
-        
+
         super.init(frame: .zero)
-        
+
         layoutManager.setupSubviews(renderer: graphRenderer, markerSystem: markerSystem)
         addSubview(layoutManager.graphArea)
-   
-        setupSpectroscopyUI()
+
+        setupPicker()
         setupDelegates()
         setupGestures()
         registerForBufferUpdates()
@@ -94,10 +95,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         fatalError("init(coder:) has not been implemented")
     }
     
-    func getSpectroscopyMode() -> Bool {
-        return isSpectroscopyMode
-    }
-    
     // MARK: - Setup
     private func setupDelegates() {
         dataManager.delegate = self
@@ -105,8 +102,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         zoomManager.delegate = self
         markerSystem.delegate = self
         toolbarManager.delegate = self
-        spectroscopyManager.delegate = self
-        layoutManager.delegate = self
     }
     
     private func setupGestures() {
@@ -134,35 +129,91 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
         }
         
-        if(!descriptor.calibrationMode.isEmpty){
-            if let slope = descriptor.calibrationSlope{
-                registerForUpdatesFromBuffer(slope)
-            }
-            
-            if let intercept = descriptor.calibrationIntercept{
-                registerForUpdatesFromBuffer(intercept)
-            }
-        }
-        
         if let visibilityBuffer = descriptor.visibilityBuffer {
             registerForUpdatesFromBuffer(visibilityBuffer)
         }
-        
+
     }
 
-    
-    private func setupSpectroscopyUI(){
-        if isSpectroscopyMode {
-            
-            toolbarManager.setShouldShowCalibration(true)
-                                    
-            spectroscopyStatusLabel = layoutManager.createSpectroscopyStatusLabel()
-            if let statusLabel = spectroscopyStatusLabel {
-                layoutManager.graphArea.addSubview(statusLabel)
-            }
+    // MARK: - Data picker
+    private func setupPicker() {
+        guard hasPickOutputs else { return }
+
+        toolbarManager.pickTitle = descriptor.localizedPickLabel
+
+        var buttons: [(slot: Int, title: String)] = []
+        for (slot, output) in descriptor.pickOutputs.enumerated() {
+            //Only the plain slots get a button; the cal slot after them is handled through a value prompt.
+            guard let output = output, slot % 2 == 0 else { continue }
+            buttons.append((slot: slot, title: descriptor.translation?.localizeString(output.label) ?? output.label))
+        }
+        layoutManager.pickButtons = buttons
+        layoutManager.onPickButtonTapped = { [weak self] slot in
+            self?.handlePickButton(slot: slot)
         }
     }
-    
+
+    private func handlePickButton(slot: Int) {
+        guard slot < descriptor.pickOutputs.count, let output = descriptor.pickOutputs[slot] else { return }
+        guard let point = markerSystem.selectedPickPoint() else { return }
+
+        let value: Double
+        switch (slot % 6) / 2 {
+        case 0: value = point.x
+        case 1: value = point.y
+        default: value = point.z
+        }
+
+        let calSlot = slot + 1
+        if calSlot < descriptor.pickOutputs.count, let calOutput = descriptor.pickOutputs[calSlot] {
+            let title = descriptor.translation?.localizeString(output.label) ?? output.label
+            let message = descriptor.translation?.localizeString(calOutput.label) ?? calOutput.label
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addTextField { [weak self] textField in
+                textField.keyboardType = .numbersAndPunctuation
+                if let previous = self?.pickData[calSlot] {
+                    textField.text = String(previous)
+                }
+            }
+            alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+            alert.addAction(UIAlertAction(title: localize("ok"), style: .default) { [weak self] _ in
+                guard let text = alert.textFields?.first?.text,
+                      let calValue = Double(text.replacingOccurrences(of: ",", with: ".")) else { return }
+                self?.writePick(slot: slot, value: value)
+                self?.writePick(slot: calSlot, value: calValue)
+                self?.updatePickAnnotations()
+            })
+            layoutDelegate?.presentDialog(alert)
+        } else {
+            writePick(slot: slot, value: value)
+            updatePickAnnotations()
+        }
+    }
+
+    private func writePick(slot: Int, value: Double) {
+        pickData[slot] = value
+        descriptor.pickOutputs[slot]?.buffer.replaceValues([value])
+    }
+
+    private func updatePickAnnotations() {
+        var annotations: [GraphMarkerSystem.PickAnnotation] = []
+        for (slot, output) in descriptor.pickOutputs.enumerated() {
+            guard let output = output, slot % 2 == 0, let value = pickData[slot] else { continue }
+            let axis = (slot % 6) / 2
+            if axis == 2 { continue } //z picks are not drawn, as on Android
+
+            var label = descriptor.translation?.localizeString(output.label) ?? output.label
+            if slot + 1 < pickData.count, descriptor.pickOutputs[slot + 1] != nil, let calValue = pickData[slot + 1] {
+                label += " → \(calValue)"
+            }
+
+            let vertical = axis == 0
+            let logAxis = vertical ? descriptor.logX : descriptor.logY
+            annotations.append(GraphMarkerSystem.PickAnnotation(vertical: vertical, plotValue: logAxis ? log(value) : value, label: label))
+        }
+        markerSystem.setPickAnnotations(annotations)
+    }
+
     // MARK: - DynamicViewModule Protocol
     func setNeedsUpdate() {
         dataManager.setNeedsUpdate()
@@ -183,15 +234,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
                                                   zScaleView: graphRenderer.zScaleView)
         toolbarManager.handleResizableStateChange(newState)
         markerSystem.handleResizableStateChange(newState)
-        
-        if newState == .normal {
-            if(!spectroscopyManager.getCalibrationPoints().isEmpty){
-                toolbarManager.setMode(mode: .calibrate)
-            }
-            if(toolbarManager.currentMode != .calibrate){
-                spectroscopyStatusLabel?.isHidden = true
-            }
-        }
     }
     
     // MARK: - Event Handlers
@@ -275,17 +317,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             zScaleFrame: layoutManager.zScaleFrame
         )
         markerSystem.updateLayout(graphFrame: layoutManager.graphFrame)
-        
-        if let statusLabel = spectroscopyStatusLabel, !statusLabel.isHidden {
-            let statusSize = statusLabel.sizeThatFits(bounds.size)
-                        statusLabel.frame = CGRect(
-                            x: layoutManager.graphFrame.minX + 10,
-                            y: layoutManager.graphFrame.minY + 10,
-                            width: statusSize.width + 50,
-                            height: statusSize.height
-                        )
-        }
-        
     }
     
     // MARK: - Public Interface

@@ -127,28 +127,25 @@ extension ExperimentGraphView: GraphGestureDelegate {
             )
         }
         
+        //In normal (non-exclusive) mode a tap on the plot maximizes the graph, like a
+        //tap anywhere else on the graph area. The plot's own recognizer swallows the
+        //tap before it reaches the graph area's recognizer, so it has to forward it.
+        if resizableState == .normal {
+            layoutDelegate?.presentExclusiveLayout(self)
+            return
+        }
+
         let  nearestPoint = findNearestPoint()
-        
+
         switch toolbarManager.currentMode {
         case .pick:
             markerSystem.handleTap(nearestPoint: nearestPoint)
-        case .calibrate:
-            guard spectroscopyManager.getCalibrationState() != .calibrated else { return }
-            
-            markerSystem.handleCalibrationSelection(nearestPoint: nearestPoint)
-            
-            if let point = nearestPoint {
-                spectroscopyManager.addCalibrationReferencePoint(
-                    pixelIndex: Double(point.index),
-                    calibrationMarkerViewCount: markerSystem.getCalibrationMarkerNumbers())
-            }
         case .panZoom, .none:
             break
         }
     }
-    
+
     func gestureHandler(_ handler: GraphGestureHandler, didPanWithTranslation translation: CGPoint, state: UIGestureRecognizer.State, sender: UIPanGestureRecognizer) {
-        if(spectroscopyManager.isCalibrated) { return }
         if toolbarManager.currentMode == .panZoom {
             zoomManager.applyPanGesture(translation: translation,
                                         bounds: dataManager.currentBounds,
@@ -158,9 +155,8 @@ extension ExperimentGraphView: GraphGestureDelegate {
             markerSystem.handlePanGesture(translation: translation, state: state, at: translation, dataSets: dataManager.currentDataSets, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size, sender: sender)
         }
     }
-    
+
     func gestureHandler(_ handler: GraphGestureHandler, didPinchWithScale scale: CGFloat, state: UIGestureRecognizer.State, center: CGPoint, touches: (CGPoint, CGPoint)) {
-        if(spectroscopyManager.isCalibrated) { return }
         guard toolbarManager.currentMode == .panZoom else { return }
         zoomManager.applyPinchGesture(scale: scale, center: center, touches: touches, bounds: dataManager.currentBounds, frameSize: layoutManager.graphFrame.size, state: state)
     }

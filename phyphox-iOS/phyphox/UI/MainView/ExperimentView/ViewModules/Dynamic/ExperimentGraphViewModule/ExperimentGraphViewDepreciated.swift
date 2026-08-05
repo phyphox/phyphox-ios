@@ -116,8 +116,6 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
         
         showColorScale = descriptor.showColorScale && hasZData
         
-        calibrationMode = descriptor.calibrationMode == "xLinear"
-        
         gridView = GraphGridView(descriptor: descriptor, isZScale: false)
         gridView.gridInset = CGPoint(x: 2.0, y: 2.0)
         gridView.gridOffset = CGPoint(x: 0.0, y: 0)

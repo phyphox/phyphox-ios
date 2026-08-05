@@ -8,9 +8,8 @@
 
 // MARK: - Graph Layout Manager
 class GraphLayoutManager {
-    weak var delegate: GraphLayoutDelegate?
     let graphArea = UIView()
-    
+
     private let descriptor: GraphViewDescriptor
     private let label = UILabel()
     private let xLabel: UILabel
@@ -20,12 +19,16 @@ class GraphLayoutManager {
     private let unfoldLessImageView: UIImageView
     let gridView: GraphGridView
     let zGridView: GraphGridView?
-    
+
     // Marker label for display
     private var markerLabel: UILabel?
     private var markerLabelFrame: UIView?
     var buttonView: UIView?
-    var calibrationHintLabel: UILabel?
+
+    //Data picker: one button per configured pick output, shown with the marker
+    //label while a point is selected in pick mode. Set by the graph view.
+    var pickButtons: [(slot: Int, title: String)] = []
+    var onPickButtonTapped: ((Int) -> Void)?
     
     private let sideMargins: CGFloat = 10.0
     private let zScaleHeight: CGFloat = 40
@@ -154,160 +157,85 @@ class GraphLayoutManager {
         markerLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
     }
     
-    func createCalibrationHintLabel(){
-        calibrationHintLabel = UILabel()
-        calibrationHintLabel?.textColor = UIColor(named: "textColor")
-        calibrationHintLabel?.font = UIFont.preferredFont(forTextStyle: .footnote)
-        calibrationHintLabel?.numberOfLines = 0 // Allow multiple lines
-        calibrationHintLabel?.text = localize("spectroscopy_calibration_message")
-    }
-    
-    func updateMarkerLabel(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode) {
-        
+    func updateMarkerLabel(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode, showPickButtons: Bool = false) {
+
         guard let text = text else {
             if markerLabel != nil {
                 removeMarkerLabelFrame()
             }
             return
         }
-        
+
         if markerLabel == nil {
             createMarkerLabel()
             createMarkerLabelFrame()
             markerLabelFrame?.addSubview(markerLabel!)
             graphArea.addSubview(markerLabelFrame!)
         }
-        
-        if(graphToolBarState == .pick){
-            calibrationHintLabel?.removeFromSuperview()
-            calibrationHintLabel = nil
+
+        if showPickButtons && !pickButtons.isEmpty {
+            if buttonView == nil {
+                buttonView = createPickButtons()
+                markerLabelFrame?.addSubview(buttonView!)
+            }
+            markerLabelFrame?.isUserInteractionEnabled = true
+        } else {
             buttonView?.removeFromSuperview()
             buttonView = nil
-        } else if(graphToolBarState == .calibrate) {
-            createCalibrationHintLabel()
-            buttonView = createCalibrationButtons()
-            markerLabelFrame?.addSubview(calibrationHintLabel!)
-            markerLabelFrame?.addSubview(buttonView!)
-            markerLabelFrame?.isUserInteractionEnabled = true
+            markerLabelFrame?.isUserInteractionEnabled = false
         }
-        
+
         markerLabel?.text = text
-        
+
         let padding = 10.0
         let verticalSpacing = 10.0
         let availableWidth = graphArea.bounds.width * 0.8 // Use 80% of available width
         let contentWidth = availableWidth - (2 * padding)
-        
+
         let markerLabelSize = markerLabel!.sizeThatFits(graphArea.frame.size)
-        
-        // Only calculate these if they exist (calibrate mode)
-        let calibrationHintLabelSize: CGSize
-        if let hintLabel = calibrationHintLabel {
-            calibrationHintLabelSize = hintLabel.sizeThatFits(CGSize(width: contentWidth, height: .greatestFiniteMagnitude))
-        } else {
-            calibrationHintLabelSize = .zero
-        }
-        
+
         let buttonViewSize: CGSize
         if let buttonView = buttonView {
             buttonView.setNeedsLayout()
             buttonView.layoutIfNeeded()
+            //Fitting-size on both axes, so the box hugs its content instead of
+            //stretching to the available width
             buttonViewSize = buttonView.systemLayoutSizeFitting(
                 CGSize(width: contentWidth, height: UIView.layoutFittingCompressedSize.height),
-                withHorizontalFittingPriority: .required,
+                withHorizontalFittingPriority: .fittingSizeLevel,
                 verticalFittingPriority: .fittingSizeLevel
             )
         } else {
             buttonViewSize = .zero
         }
-        
+
         // Calculate the width needed (use the widest element that exists)
         var maxContentWidth = markerLabelSize.width
-        if calibrationHintLabelSize.width > 0 {
-            maxContentWidth = max(maxContentWidth, calibrationHintLabelSize.width)
-        }
         if buttonViewSize.width > 0 {
             maxContentWidth = max(maxContentWidth, buttonViewSize.width)
         }
-        
+
         let frameWidth = min(maxContentWidth + (2 * padding), availableWidth)
-        
+
         // Calculate total height - only include elements that exist
         var totalHeight = padding + markerLabelSize.height + padding
-        
-        if calibrationHintLabelSize.height > 0 {
-            totalHeight += verticalSpacing + calibrationHintLabelSize.height
-        }
-        
+
         if buttonViewSize.height > 0 {
             totalHeight += verticalSpacing + buttonViewSize.height
         }
-        
+
         // Set markerLabelFrame
         markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: frameWidth, height: totalHeight)
-        
+
         var yOffset = padding
         markerLabel?.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: markerLabelSize.height)
-        
-        // Only layout calibration elements if they exist
-        if let hintLabel = calibrationHintLabel, calibrationHintLabelSize.height > 0 {
-            yOffset += markerLabelSize.height + verticalSpacing
-            hintLabel.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: calibrationHintLabelSize.height)
-        }
-        
+
         if let buttons = buttonView, buttonViewSize.height > 0 {
-            yOffset += calibrationHintLabelSize.height + verticalSpacing
+            yOffset += markerLabelSize.height + verticalSpacing
             buttons.frame = CGRect(x: padding, y: yOffset, width: frameWidth - (2 * padding), height: buttonViewSize.height)
         }
     }
-    
-    func updateMarkerLabel_(_ text: String?, graphToolBarState : GraphToolbarManager.GraphMode) {
-        
-        if let text = text {
-            if markerLabel == nil {
-                markerLabel = UILabel()
-                markerLabel?.textColor = UIColor(named: "textColor")
-                markerLabel?.numberOfLines = 0
-                markerLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
-                
-                markerLabelFrame = UIView()
-                markerLabelFrame?.backgroundColor = UIColor(named: "lightBackgroundColor")
-                markerLabelFrame?.layer.cornerRadius = 8.0
-                markerLabelFrame?.layer.masksToBounds = true
-                markerLabelFrame?.layer.borderWidth = 1.0
-                markerLabelFrame?.layer.borderColor = UIColor(named: "separatorColor")?.cgColor
-                markerLabelFrame?.addSubview(markerLabel!)
-                markerLabelFrame?.isUserInteractionEnabled = false
-                
-                if(graphToolBarState == .calibrate){
-                    calibrationHintLabel = UILabel()
-                    calibrationHintLabel?.textColor = UIColor(named: "textColor")
-                    calibrationHintLabel?.font = UIFont.preferredFont(forTextStyle: .footnote)
-                    calibrationHintLabel?.numberOfLines = 2
-                    calibrationHintLabel?.text = "Do you want to continue with this calibration point?"
-                    buttonView = createCalibrationButtons()
-                    markerLabelFrame?.addSubview(calibrationHintLabel!)
-                    markerLabelFrame?.addSubview(buttonView!)
-                    markerLabelFrame?.isUserInteractionEnabled = true
-                }
-                
-                graphArea.addSubview(markerLabelFrame!)
-            }
-            
-            let padding = 10.0
-            
-            markerLabel?.text = text
-            let minSize = markerLabel!.sizeThatFits(graphArea.bounds.size)
-            markerLabelFrame?.frame = CGRect(x: 0.0, y: 0.0, width: minSize.width + 50.0, height: minSize.height + (buttonView != nil ? 100.0 : 20.0))
-            markerLabel?.frame = CGRect(x: padding, y: padding, width: minSize.width, height: minSize.height)
-            calibrationHintLabel?.frame = CGRect(x: padding, y: minSize.height + 20.0, width: minSize.width + 30 , height: 40.0)
-            buttonView?.frame = CGRect(x:padding, y: minSize.height + 70.0, width: minSize.width + 30, height: 20.0)
-            
-        } else if markerLabel != nil {
-            removeMarkerLabelFrame()
-        }
-    }
-    
+
     func removeMarkerLabelFrame(){
         markerLabel?.removeFromSuperview()
         markerLabelFrame?.removeFromSuperview()
@@ -330,57 +258,33 @@ class GraphLayoutManager {
             markerLabelFrame.frame = CGRect(x: x, y: y, width: w, height: h)
     }
     
-    private func createCalibrationButtons() -> UIStackView {
-        
-        func createButton(title: String, action: Selector) -> UIButton {
+    private func createPickButtons() -> UIStackView {
+
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fillEqually
+        stackView.spacing = 4.0
+
+        for (slot, title) in pickButtons {
             let button = UIButton(type: .system)
             button.setTitle(title, for: .normal)
             button.setTitleColor(UIColor(named: "highlightColor"), for: .normal)
             button.titleLabel?.font = .systemFont(ofSize: 15.0)
-            button.addTarget(self, action: action, for: .touchUpInside)
+            button.tag = slot
+            button.addTarget(self, action: #selector(pickButtonTapped(_:)), for: .touchUpInside)
             button.translatesAutoresizingMaskIntoConstraints = false
-            
             button.widthAnchor.constraint(greaterThanOrEqualToConstant: 90.0).isActive = true
-            
-            return button
+            stackView.addArrangedSubview(button)
         }
-        
-        let confirmButton = createButton(title: "Continue", action: #selector(confirmCalibration))
-        let dismissButton = createButton(title: "Dismiss", action: #selector(dismissCalibration))
-        
-        let stackView = UIStackView(arrangedSubviews: [confirmButton, dismissButton])
-        stackView.axis = .horizontal
-        stackView.distribution = .fillEqually
-        stackView.spacing = 10.0
-        
+
         return stackView
     }
-    
-    @objc private func confirmCalibration() {
-        delegate?.confirmCalibrationPoint(self)
+
+    @objc private func pickButtonTapped(_ sender: UIButton) {
+        onPickButtonTapped?(sender.tag)
     }
 
-    @objc private func dismissCalibration() {
-        dismissReferencePoint()
-    }
-    
-    func dismissReferencePoint(){
-        removeMarkerLabelFrame()
-        delegate?.clearMarker(self)
-    }
-    
-    func createSpectroscopyStatusLabel() -> UILabel{
-        let spectroscopyStatusLabel = UILabel()
-        spectroscopyStatusLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
-        spectroscopyStatusLabel.textColor = UIColor(named: "textColor")
-        spectroscopyStatusLabel.numberOfLines = 2
-        spectroscopyStatusLabel.textAlignment = .center
-        spectroscopyStatusLabel.isHidden = true
-        spectroscopyStatusLabel.text = localize("spectroscopy_uncalibrated")
-        return spectroscopyStatusLabel
-    }
-    
-    
+
     func refresh() {
         label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
         xLabel.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.8)
@@ -452,36 +356,4 @@ class GraphLayoutManager {
                              y: yCoord + (graphHeight - s3.height) / 2.0,
                              width: s3.width, height: s3.height)
     }
-}
-
-protocol GraphLayoutDelegate: AnyObject {
-    func clearMarker(_ manager: GraphLayoutManager)
-    func confirmCalibrationPoint(_ manager: GraphLayoutManager)
-}
-
-extension ExperimentGraphView: GraphLayoutDelegate {
-    func confirmCalibrationPoint(_ manager: GraphLayoutManager) {
-        manager.removeMarkerLabelFrame()
-        if(spectroscopyManager.getCalibrationState() == .firstPointSelected) {
-            spectroscopyManager.requestToAddCalibratedPoint(pixelIndex: spectroscopyManager.getCalibrationPoints()[1].pixelPosition)
-        } else {
-            spectroscopyManager.requestToAddCalibratedPoint(pixelIndex: spectroscopyManager.getCalibrationPoints()[0].pixelPosition)
-        }
-        
-    }
-    
-    func clearMarker(_ manager: GraphLayoutManager) {
-        if(spectroscopyManager.getCalibrationState() == .firstPointSelected){
-            if(spectroscopyManager.getCalibrationPoints().count == 2){
-                markerSystem.clearLastMarker()
-            }
-        } else {
-            if(spectroscopyManager.getCalibrationPoints().count == 1){
-                spectroscopyManager.setCalibrationPoints(points: [])
-                markerSystem.clearMarkers()
-            }
-        }
-        
-    }
-    
 }

@@ -14,16 +14,22 @@ class GraphMarkerSystem {
     private let timeReference: ExperimentTimeReference
     private var markers: [(set: Int, index: Int)] = []
     private var showLinearFit = false
-    private var calibrationDone = false
     let markerOverlayView: MarkerOverlayView
     let graphRenderer: GraphRenderer
-    
+
     private var currentDataSets: [GraphDataSet] = []
     private var currentBounds: GraphBounds = GraphBounds(min: GraphPoint3D.zero, max: GraphPoint3D.zero)
     var systemTime: Bool = false
-    
-    private var calibrationMarkerViews: [GraphPauseMarkerView] = []
-    private var isShowingCalibrationMarkers = false
+
+    //Persistent annotations for values assigned through the data picker,
+    //drawn as a line across the graph with the output's label.
+    struct PickAnnotation {
+        let vertical: Bool    //vertical line at plot-space x (x-axis pick), horizontal line otherwise
+        let plotValue: Double //coordinate in plot space (i.e. log-converted on log axes)
+        let label: String
+    }
+    private var pickAnnotations: [PickAnnotation] = []
+    private var pickAnnotationViews: [UIView] = []
     
     init(descriptor: GraphViewDescriptor, timeReference: ExperimentTimeReference, graphRenderer: GraphRenderer) {
             self.descriptor = descriptor
@@ -36,33 +42,37 @@ class GraphMarkerSystem {
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state == .normal {
-            if calibrationMarkerViews.isEmpty { markers = [] }
+            markers = []
             showLinearFit = false
         } else {
-            guard calibrationMarkerViews.isEmpty else { return }
             refreshMarkers()
         }
     }
-    
-    func getCalibrationMarkerNumbers() -> Int {
-        return calibrationMarkerViews.count
+
+    var selectedMarkerCount: Int {
+        return markers.count
     }
-    
-    func handleCalibrationSelection(nearestPoint: (set: Int, index: Int)?) {
-        
-        if let nearestPoint_ = nearestPoint {
-            CalibrationGraphUtility().manageCalibrationPoints(&markers,
-                                                             currentCount: calibrationMarkerViews.count,
-                                                             newItem: nearestPoint_)
-            showLinearFit = false
-            calibrationDone = false
-            refreshMarkers()
-        } else {
-            delegate?.dissmissSelectedCalibrationPoint(self)
-            if calibrationMarkerViews.isEmpty { refreshMarkers() }
-        }
+
+    struct SelectedPoint {
+        let x: Double     //data values (de-logged on log axes)
+        let y: Double
+        let z: Double
+        let plotX: Double //plot-space values for positioning annotations
+        let plotY: Double
     }
-    
+
+    //The point the data picker would write, available while exactly one marker is selected.
+    func selectedPickPoint() -> SelectedPoint? {
+        guard markers.count == 1, let marker = markers.first, marker.set < currentDataSets.count else { return nil }
+        guard let (x, y, z) = extractCoordinates(from: currentDataSets[marker.set], at: marker.index) else { return nil }
+        return SelectedPoint(
+            x: descriptor.logX ? exp(Double(x)) : Double(x),
+            y: descriptor.logY ? exp(Double(y)) : Double(y),
+            z: descriptor.logZ ? exp(Double(z)) : Double(z),
+            plotX: Double(x),
+            plotY: Double(y))
+    }
+
     func handleTap(nearestPoint: (set: Int, index: Int)? ) {
         if let nearestPoint_ = nearestPoint {
             markers = [nearestPoint_]
@@ -257,117 +267,82 @@ class GraphMarkerSystem {
     
     func updateLayout(graphFrame: CGRect) {
         markerOverlayView.frame = graphFrame
-        
-        if isShowingCalibrationMarkers {
-            updateCalibrationMarkerLayout()
-        }
+        layoutPickAnnotations()
     }
-    
+
     func updateDataContext(dataSets: [GraphDataSet], bounds: GraphBounds, systemTime: Bool) {
             self.currentDataSets = dataSets
             self.currentBounds = bounds
             self.systemTime = systemTime
+            layoutPickAnnotations()
     }
-    
-    private func updateCalibrationMarkerLayout() {
-        // Recalculate positions when layout changes
+
+    func setPickAnnotations(_ annotations: [PickAnnotation]) {
+        pickAnnotations = annotations
+        layoutPickAnnotations()
+    }
+
+    private func layoutPickAnnotations() {
+        pickAnnotationViews.forEach { $0.removeFromSuperview() }
+        pickAnnotationViews.removeAll()
+
+        let size = markerOverlayView.frame.size
+        guard size.width > 0, size.height > 0 else { return }
         let min = currentBounds.min
         let max = currentBounds.max
-                
-        for (index, markerView) in calibrationMarkerViews.enumerated() {
-            // You'll need to store the original pixel positions to recalculate
-            // This is a simplified version - you may need to store more state
-            let markerWidth: CGFloat = 2.0
-            var frame = markerView.frame
-            
-            //frame.height = markerOverlayView.frame.height
-            markerView.frame = frame
+        guard max.x > min.x, max.y > min.y else { return }
+
+        let color = namedColors["green"] ?? kHighlightColor
+
+        for annotation in pickAnnotations {
+            let line = UIView()
+            line.backgroundColor = color
+            line.isUserInteractionEnabled = false
+
+            let label = UILabel()
+            label.text = annotation.label
+            label.font = UIFont.preferredFont(forTextStyle: .caption2)
+            label.textColor = color
+            label.isUserInteractionEnabled = false
+            label.sizeToFit()
+
+            if annotation.vertical {
+                let relX = CGFloat((annotation.plotValue - min.x) / (max.x - min.x))
+                guard relX >= 0.0, relX <= 1.0 else { continue }
+                let x = relX * size.width
+                line.frame = CGRect(x: x - 0.5, y: 0.0, width: 1.0, height: size.height)
+                //Rotate the label to run parallel to the vertical line, placed to its
+                //left at the bottom of the graph
+                let labelSize = label.frame.size
+                label.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
+                label.center = CGPoint(x: Swift.max(x - 3.0 - labelSize.height/2.0, labelSize.height/2.0), y: size.height - 2.0 - labelSize.width/2.0)
+            } else {
+                let relY = CGFloat((max.y - annotation.plotValue) / (max.y - min.y))
+                guard relY >= 0.0, relY <= 1.0 else { continue }
+                let y = relY * size.height
+                line.frame = CGRect(x: 0.0, y: y - 0.5, width: size.width, height: 1.0)
+                label.frame = CGRect(x: 2.0, y: Swift.max(y - label.frame.height - 2.0, 0.0), width: label.frame.width, height: label.frame.height)
+            }
+
+            markerOverlayView.addSubview(line)
+            markerOverlayView.addSubview(label)
+            pickAnnotationViews.append(line)
+            pickAnnotationViews.append(label)
         }
     }
-    
-    func addCalibrationPointMarker(at relativePosition: (CGFloat, CGFloat)){
-        let markerView = GraphPauseMarkerView()
-        markerView.backgroundColor = UIColor.clear
-        markerView.isUserInteractionEnabled = false
-                
-        // Position the marker view
-        let markerWidth: CGFloat = 1.0 // Width of the vertical line
-        let markerFrame = CGRect(
-            x: relativePosition.0 * markerOverlayView.frame.width - markerWidth/2,
-            y: 0,
-            width: markerWidth,
-            height: markerOverlayView.frame.height
-        )
-        markerView.frame = markerFrame
-                
-        markerOverlayView.addSubview(markerView)
-        markerOverlayView.showMarkers = false
-        calibrationMarkerViews.append(markerView)
-    }
-    
-    func setCalibrationDone(){
-        calibrationDone = true
-    }
-    
-    func setCalibrationUnDone(){
-        calibrationDone = false
-    }
-    
-    func showCalibrationPointMarkers(for points: [(pixelPosition: Double, wavelength: Double)]) {
-        clearCalibrationMarkers()
-        isShowingCalibrationMarkers = true
-                
-        let minPoint = currentBounds.min
-        let maxPoint = currentBounds.max
-        
-        for marker in markers {
-            guard marker.set < currentDataSets.count else { continue }
-            
-            let dataset = currentDataSets[marker.set]
-            let coordinates = extractCoordinates(from: dataset, at: marker.index)
-            
-            guard let (x, y, _) = coordinates else { continue }
-            
-            let relativeCoordinate = calculateRelativeCoordinate(x: x, y: y, min: minPoint, max: maxPoint)
-            
-            addCalibrationPointMarker(at: (relativeCoordinate.0, relativeCoordinate.1))
-            
-        }
-            
-    }
-    
+
     func toggleLinearFit() {
         showLinearFit = !showLinearFit
         markers = []
         delegate?.markerSystemDidUpdate(self)
     }
-    
-    func clearCalibrationMarkers(){
-        calibrationMarkerViews.forEach { $0.removeFromSuperview() }
-        calibrationMarkerViews.removeAll()
-        isShowingCalibrationMarkers = false
-    }
-    
+
     func clearMarkers() {
         markers = []
         markerOverlayView.markers = []
         delegate?.markerSystem(self, shouldShowLabel: nil)
     }
-    
-    func clearLastMarker(){
-        // Crash is here during 2nd point selection and clicking dismiss or calling clearMark()
-        if(!markers.isEmpty){
-            markers.removeLast()
-        }
-        
-        if(!(markerOverlayView.markers?.isEmpty ?? true)){
-            markerOverlayView.markers?.removeLast()
-        }
-        
-        delegate?.markerSystem(self, shouldShowLabel: nil)
-        
-    }
-    
+
 
     var isShowingLinearFit: Bool { return showLinearFit }
 }
@@ -376,34 +351,24 @@ class GraphMarkerSystem {
 extension GraphMarkerSystem {
     
     func refreshMarkers(){
-        
-        if calibrationDone {
-            clearMarkers()
-            return
-        }
-        
+
         let markerData = collectMarkerData()
         let numberFormatter = createNumberFormatter()
-        
+
         switch markerData.count {
         case 1:
             showSinglePointMarker(markerData: markerData, formatter: numberFormatter)
-            delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX,currentBounds.min.x))
+            delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX, markerData.minimumRelativeY))
         case 2:
-            if(calibrationMarkerViews.count > 0){
-                showSinglePointMarker(markerData: markerData, formatter: numberFormatter)
-            } else {
-                showDifferenceMarker(markerData: markerData, formatter: numberFormatter)
-            }
-            delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX,currentBounds.min.x))
-            
+            showDifferenceMarker(markerData: markerData, formatter: numberFormatter)
+            delegate?.markerSystem(self, shouldPositionLabel: ( markerData.averageRelativeX, markerData.minimumRelativeY))
+
         default:
             if showLinearFit {
                 showLinearFitMarker(formatter: numberFormatter)
-                delegate?.markerSystem(self, shouldPositionLabel: (markerData.averageRelativeX,currentBounds.min.x))
+                delegate?.markerSystem(self, shouldPositionLabel: (markerData.averageRelativeX, 0.0))
             } else {
                 clearMarkers()
-                delegate?.clearCalibrationSelectedPoint(self)
             }
         }
     }
@@ -862,42 +827,27 @@ extension GraphMarkerSystem {
 protocol GraphMarkerDelegate: AnyObject {
     func markerSystemDidUpdate(_ markerSystem: GraphMarkerSystem)
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowLabel text: String?)
-    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowCalibrationConfirmation text: String?)
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldPositionLabel position: (CGFloat, CGFloat))
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldHideMarker hideMarker: Bool)
-    func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem)
-    func dissmissSelectedCalibrationPoint(_ markerSystem: GraphMarkerSystem)
 }
 
 extension ExperimentGraphView: GraphMarkerDelegate {
-    
+
     func markerSystemDidUpdate(_ markerSystem: GraphMarkerSystem) {
         dataManager.setNeedsUpdate()
     }
-    
+
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowLabel text: String?) {
-        layoutManager.updateMarkerLabel(text, graphToolBarState: toolbarManager.currentMode)
+        layoutManager.updateMarkerLabel(text, graphToolBarState: toolbarManager.currentMode, showPickButtons: toolbarManager.currentMode == .pick && markerSystem.selectedMarkerCount == 1 && hasPickOutputs)
     }
-    
-    func markerSystem(_ markerSystem: GraphMarkerSystem, shouldShowCalibrationConfirmation text: String?){
-        //layoutManager.showCalibrationPointConfirmation(text)
-    }
-    
+
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldPositionLabel position: (CGFloat, CGFloat)) {
         // Position marker label based on average marker position
         layoutManager.positionMarkerLabel(averageX: position.0, minY: position.1, viewBounds: bounds.size)
     }
-    
+
     func markerSystem(_ markerSystem: GraphMarkerSystem, shouldHideMarker hideMarker: Bool) {
         markerSystem.markerOverlayView.showMarkers = false
         markerSystem.refreshMarkers()
-    }
-    
-    func clearCalibrationSelectedPoint(_ markerSystem: GraphMarkerSystem) {
-        layoutManager.delegate?.clearMarker(layoutManager)
-    }
-    
-    func dissmissSelectedCalibrationPoint(_ markerSystem: GraphMarkerSystem){
-        layoutManager.dismissReferencePoint()
     }
 }

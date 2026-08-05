@@ -62,6 +62,15 @@
                 <input axis="x">buffer</input>
                 <input axis="y">buffer</input>
             </graph>
+            <graph label="l6b" labelX="l7" labelY="l8" pickLabel="l6c">
+                <input axis="x">buffer</input>
+                <input axis="y">buffer</input>
+                <output axis="x" label="l6d">buffer</output>
+                <output axis="xcal" label="l6e">buffer</output>
+                <output axis="y" label="l6f">buffer</output>
+                <output axis="z" label="l6g">buffer</output>
+                <output axis="x" label="l6h">buffer</output>
+            </graph>
         </view>
     </views>
     <analysis>

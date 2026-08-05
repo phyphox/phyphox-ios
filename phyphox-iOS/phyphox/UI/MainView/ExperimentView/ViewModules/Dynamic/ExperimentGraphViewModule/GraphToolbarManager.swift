@@ -12,28 +12,20 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
     
     private(set) var toolbar: UITabBar?
     private var _currentMode: GraphMode = .none
-    
+
     enum GraphMode: Int {
-        case panZoom = 0, pick, calibrate, none
+        case panZoom = 0, pick, none
     }
-    
-    var isCalibrated: Bool = false
-    
+
     var currentMode: GraphMode { return _currentMode }
-    
-    private var shouldShowCalibration: Bool = false
-    
-    func setShouldShowCalibration(_ show: Bool){
-        shouldShowCalibration = show
-        if toolbar != nil{
-            setupToolbar()
-        }
-    }
-    
+
+    //Custom title for the pick tool, set from the graph's pickLabel attribute.
+    var pickTitle: String? = nil
+
     func setMode(mode: GraphMode){
         self._currentMode = mode
     }
-    
+
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
         if state == .exclusive {
             setupToolbar()
@@ -41,31 +33,19 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
         } else {
             toolbar?.removeFromSuperview()
             toolbar = nil
-            if(_currentMode != .calibrate){
-                _currentMode = .none
-            }
+            _currentMode = .none
         }
     }
-    
+
     private func setupToolbar() {
         let tabBar = UITabBar()
-        
+
         let panZoomButton = UITabBarItem(title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: GraphMode.panZoom.rawValue)
-        let pickButton = UITabBarItem(title: localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: GraphMode.pick.rawValue)
-        
-        
+        let pickButton = UITabBarItem(title: pickTitle ?? localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: GraphMode.pick.rawValue)
+
+
         tabBar.items = [panZoomButton, pickButton]
-        
-        if shouldShowCalibration {
-            var calibrationButton : UITabBarItem
-            if #available(iOS 13.0, *) {
-                calibrationButton = UITabBarItem(title: localize("graph_tools_calibrate"), image: UIImage(systemName: "compass.drawing"), tag: GraphMode.calibrate.rawValue)
-            } else {
-                calibrationButton = UITabBarItem(title: localize("graph_tools_calibrate"), image: UIImage(named: "calibration"), tag: GraphMode.calibrate.rawValue)
-            }
-            tabBar.items?.append(calibrationButton)
-        }
-        
+
         let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: GraphMode.none.rawValue)
         tabBar.items?.append(menuButton)
         
@@ -135,17 +115,7 @@ extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
     
     private func getMenuElements() -> [(String, Bool, () -> ())] {
         var elements: [(String, Bool, () -> ())] = []
-        
-        if(getSpectroscopyMode()){
-            elements.append((localize("spectroscopy_reset_calibration"), false, {
-                self.spectroscopyManager.resetCalibration()
-            }))
-            
-            if spectroscopyManager.isCalibrated {
-                elements.append((localize("spectroscopy_calibration_complete"), true, {}))
-            }
-        }
-                    
+
         // Graph tools items
         if (descriptor.timeOnX || descriptor.timeOnY) && !graphRenderer.hasZData {
             elements.append((localize("graph_tools_system_time"), systemTime, toggleSystemTime))
@@ -219,35 +189,16 @@ class GraphMenuController {
 
 extension ExperimentGraphView: GraphToolbarDelegate {
     func toolbarManagerSelectionMode(_ manager: GraphToolbarManager) {
-        
-        if(!spectroscopyManager.getCalibrationPoints().isEmpty){
-            manager.setMode(mode: .calibrate)
-            manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.calibrate.rawValue]
-        } else {
-            manager.setMode(mode: .panZoom)
-            manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.panZoom.rawValue]
-        }
-        
+        manager.setMode(mode: .panZoom)
+        manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.panZoom.rawValue]
     }
-    
+
     func toolbarManager(_ manager: GraphToolbarManager, didSelectMode mode: GraphToolbarManager.GraphMode) {
         if mode != .pick {
             markerSystem.clearMarkers()
         }
-        
-        // current problem is that, when I confirm first calibration point and reopen the exclusive mode and
-        // then select  and confirm second point, the previous calibration marker is removed but the calibration is done
-        if(!spectroscopyManager.isCalibrated){
-            if mode == .calibrate {
-                spectroscopyManager.startCalibration()
-            } else {
-                spectroscopyManager.resetCalibration()
-                spectroscopyManager.setUncalibrateMode()
-            }
-            
-        }
     }
-    
+
     func toolbarManagerDidRequestMenu(_ manager: GraphToolbarManager) {
         showToolbarMenu()
     }

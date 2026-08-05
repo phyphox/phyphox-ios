@@ -154,6 +154,7 @@
 		6BF82BC82147FF6F00175659 /* SemanticVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF82BC72147FF6F00175659 /* SemanticVersion.swift */; };
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F22B514703008FAFC6 /* GCDWebServer */; };
+		860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F52E42AA0100000002 /* ZIPFoundation */; };
 		86147C122D78EC03008BAAD2 /* CameraGUIShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */; };
 		86147C192D78FB80008BAAD2 /* MovingAverageAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86147C182D78FB80008BAAD2 /* MovingAverageAnalysis.swift */; };
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -208,6 +209,10 @@
 		A1FA9A0229A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0129A5309200E0FDBF /* PhyphoxUIAlertBuilder.swift */; };
 		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
 		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
+		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
+		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
+		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
+		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
 		C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */; };
 		C034B0112716F9E500C0EF00 /* ExperimentDepthGUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034B0102716F9E500C0EF00 /* ExperimentDepthGUIView.swift */; };
@@ -267,7 +272,6 @@
 		C0C529102254F2F3001E5EFD /* MapAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C5290F2254F2F3001E5EFD /* MapAnalysis.swift */; };
 		C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = C0F430C528E5A2DB00BC98DE /* BEMCheckBox */; };
 		C0FC14872707C16300512064 /* libJXLS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0FC14862707C15200512064 /* libJXLS.a */; };
-		860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F52E42AA0100000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -526,6 +530,9 @@
 		A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorConverterHelper.swift; sourceTree = "<group>"; };
 		A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
+		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
+		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
+		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 		C01F80FB226A05C5001B0DF8 /* FormulaAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaAnalysis.swift; sourceTree = "<group>"; };
 		C025FC0623D9D45800AE13B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1233,6 +1240,9 @@
 			isa = PBXGroup;
 			children = (
 				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
+				A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */,
+				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
+				A1FA9A2E2E42BB0100000003 /* incorrect-files */,
 			);
 			path = phyphoxTests;
 			sourceTree = "<group>";
@@ -1479,6 +1489,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */,
+				A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */,
+				A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1752,6 +1765,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
+				A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2254,20 +2268,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.17;
-			};
-		};
 		860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/yene/GCDWebServer";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 3.5.7;
+			};
+		};
+		860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.17;
 			};
 		};
 		867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
@@ -2305,15 +2319,15 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		860E13F52E42AA0100000002 /* ZIPFoundation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
-			productName = ZIPFoundation;
-		};
 		860E13F22B514703008FAFC6 /* GCDWebServer */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */;
 			productName = GCDWebServer;
+		};
+		860E13F52E42AA0100000002 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
 		};
 		867E2BD72AC464D000ABB472 /* CocoaMQTT */ = {
 			isa = XCSwiftPackageProductDependency;

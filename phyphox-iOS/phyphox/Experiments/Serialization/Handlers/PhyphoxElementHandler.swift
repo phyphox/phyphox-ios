@@ -118,7 +118,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 19, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 20, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -487,26 +487,20 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             })
             
             
-            let slope = try descriptor.calibrationSlopeBufferName.map({ name -> DataBuffer in
-                
-                guard let buffer = buffers[name] else {
-                    throw ElementHandlerError.missingElement("data-container \(name) for graph \(descriptor.label)")
+            let pickOutputs = try descriptor.pickOutputs.map({ output -> GraphViewDescriptor.PickOutput? in
+                guard let output = output else {
+                    return nil
                 }
-                return buffer
-            })
-            
-            let intercept = try descriptor.calibrationInterceptBufferName.map({ name -> DataBuffer in
-                
-                guard let buffer = buffers[name] else {
-                    throw ElementHandlerError.missingElement("data-container \(name) for graph \(descriptor.label)")
+                guard let buffer = buffers[output.bufferName] else {
+                    throw ElementHandlerError.missingElement("data-container \(output.bufferName) for graph \(descriptor.label)")
                 }
-                return buffer
+                return GraphViewDescriptor.PickOutput(label: output.label, buffer: buffer)
             })
-            
+
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "graph")
             
 
-            return GraphViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer,  translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale, calibrationMode: descriptor.calibrationMode, calibrationScope: slope, calibrationIntercept: intercept)
+            return GraphViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer,  translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale, pickLabel: descriptor.pickLabel, pickOutputs: pickOutputs)
             
         case .depthGUI(let descriptor):
             

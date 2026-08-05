@@ -62,25 +62,49 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
     }
 }
 
-private enum GraphCalibrationParameter : String, LosslessStringConvertible {
-    case slope
-    case intercept
+enum GraphPickAxis: String, LosslessStringConvertible {
+    case x
+    case xcal
+    case y
+    case ycal
+    case z
+    case zcal
+
+    //Offset within a block of six slots (x, xcal, y, ycal, z, zcal). A repeated
+    //axis starts the next block, matching the layout used by the Android app.
+    var slotOffset: Int {
+        switch self {
+        case .x: return 0
+        case .xcal: return 1
+        case .y: return 2
+        case .ycal: return 3
+        case .z: return 4
+        case .zcal: return 5
+        }
+    }
+}
+
+struct GraphPickOutput {
+    let label: String
+    let bufferName: String
 }
 
 private struct GraphOutputDescriptor {
-    let calibrationParameter: GraphCalibrationParameter
+    let axis: GraphPickAxis
+    let label: String
     let bufferName: String
 }
 
 private final class GraphOutputElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [GraphOutputDescriptor]()
-    
+
     func startElement(attributes: AttributeContainer) throws {}
-    
+
     private enum Attribute: String, AttributeKey {
-        case calibrationParameter
+        case axis
+        case label
     }
-    
+
     func endElement(text: String, attributes: AttributeContainer) throws {
         guard !text.isEmpty else {
             throw ElementHandlerError.missingText
@@ -88,12 +112,13 @@ private final class GraphOutputElementHandler: ResultElementHandler, ChildlessEl
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let calibrationParameter: GraphCalibrationParameter = try attributes.value(for: .calibrationParameter)
-        
-        results.append(GraphOutputDescriptor(calibrationParameter: calibrationParameter, bufferName: text))
+        let axis: GraphPickAxis = try attributes.value(for: .axis)
+        let label = attributes.optionalString(for: .label) ?? ""
+
+        results.append(GraphOutputDescriptor(axis: axis, label: label, bufferName: text))
     }
-    
-    
+
+
 }
 
 struct GraphViewElementDescriptor {
@@ -154,9 +179,8 @@ struct GraphViewElementDescriptor {
     let style: [GraphViewDescriptor.GraphStyle]
     let showColorScale: Bool
     
-    let calibrationMode: String
-    var calibrationSlopeBufferName: String?
-    var calibrationInterceptBufferName: String?
+    let pickLabel: String
+    var pickOutputs: [GraphPickOutput?]
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -225,7 +249,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case mapColor8
         case mapColor9
         case showColorScale
-        case calibrationMode
+        case pickLabel
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -351,25 +375,24 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
         
-        let calibrationMode: String = attributes.optionalString(for: .calibrationMode) ?? ""
-        
-        var calibrationSlopeBufferName: String?
-        var calibrationInterceptBufferName: String?
-        
-        let outputBuffers = outputHandler.results
-        if(calibrationMode == "xLinear"){
-            guard outputBuffers.count > 0 else { throw ElementHandlerError.missingElement("output")}
+        let pickLabel = attributes.optionalString(for: .pickLabel) ?? ""
 
-            for outputBuffer in outputBuffers {
-                switch outputBuffer.calibrationParameter {
-                case .slope : calibrationSlopeBufferName = outputBuffer.bufferName
-                case .intercept : calibrationInterceptBufferName = outputBuffer.bufferName
-                }
+        //Data picker outputs are kept in slots of six (x, xcal, y, ycal, z, zcal).
+        //The n-th occurrence of an axis goes into block n, like on Android.
+        var pickOutputs: [GraphPickOutput?] = []
+        var axisOccurrences: [GraphPickAxis: Int] = [:]
+        for output in outputHandler.results {
+            let block = axisOccurrences[output.axis] ?? 0
+            axisOccurrences[output.axis] = block + 1
+            let slot = block * 6 + output.axis.slotOffset
+            while pickOutputs.count <= slot {
+                pickOutputs.append(nil)
             }
+            pickOutputs[slot] = GraphPickOutput(label: output.label, bufferName: output.bufferName)
         }
-        
-        
-        results.append(.graph(GraphViewElementDescriptor(label: label, visibility: visibility, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, calibrationMode: calibrationMode,calibrationSlopeBufferName: calibrationSlopeBufferName, calibrationInterceptBufferName: calibrationInterceptBufferName)))
+
+
+        results.append(.graph(GraphViewElementDescriptor(label: label, visibility: visibility, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, pickLabel: pickLabel, pickOutputs: pickOutputs)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {
