@@ -815,13 +815,17 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
         )
         
         markerSystem.refreshMarkers()
+
+        syncPickDataFromBuffers()
     }
-    
-    
-    
+
+
+
     func dataManagerDidClearData() {
         graphRenderer.clearGraph()
         markerSystem.clearMarkers()
+
+        syncPickDataFromBuffers()
     }
 }
 

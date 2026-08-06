@@ -133,6 +133,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             registerForUpdatesFromBuffer(visibilityBuffer)
         }
 
+        for output in descriptor.pickOutputs {
+            if let output = output {
+                registerForUpdatesFromBuffer(output.buffer)
+            }
+        }
+
     }
 
     // MARK: - Data picker
@@ -171,7 +177,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alert.addTextField { [weak self] textField in
                 textField.keyboardType = .numbersAndPunctuation
-                if let previous = self?.pickData[calSlot] {
+                if let previous = self?.pickData[calSlot], !previous.isNaN {
                     textField.text = String(previous)
                 }
             }
@@ -195,15 +201,35 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         descriptor.pickOutputs[slot]?.buffer.replaceValues([value])
     }
 
+    //The pick buffers can change externally, for example through the analysis or when the data
+    //is cleared, so their current state is re-read on every graph update, like on Android. An
+    //empty buffer or NaN removes the corresponding annotation.
+    func syncPickDataFromBuffers() {
+        guard hasPickOutputs else { return }
+        var changed = false
+        for (slot, output) in descriptor.pickOutputs.enumerated() {
+            guard let output = output else { continue }
+            let value = output.buffer.last
+            let unchanged = value == pickData[slot] || (value?.isNaN == true && pickData[slot]?.isNaN == true)
+            if !unchanged {
+                pickData[slot] = value
+                changed = true
+            }
+        }
+        if changed {
+            updatePickAnnotations()
+        }
+    }
+
     private func updatePickAnnotations() {
         var annotations: [GraphMarkerSystem.PickAnnotation] = []
         for (slot, output) in descriptor.pickOutputs.enumerated() {
-            guard let output = output, slot % 2 == 0, let value = pickData[slot] else { continue }
+            guard let output = output, slot % 2 == 0, let value = pickData[slot], !value.isNaN else { continue }
             let axis = (slot % 6) / 2
             if axis == 2 { continue } //z picks are not drawn, as on Android
 
             var label = descriptor.translation?.localizeString(output.label) ?? output.label
-            if slot + 1 < pickData.count, descriptor.pickOutputs[slot + 1] != nil, let calValue = pickData[slot + 1] {
+            if slot + 1 < pickData.count, descriptor.pickOutputs[slot + 1] != nil, let calValue = pickData[slot + 1], !calValue.isNaN {
                 label += " → \(calValue)"
             }
 
