@@ -156,10 +156,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     static let controlHeight = 60.0
     static let controlExtraHeight = 30.0
     static let controlZoomHeight = 30.0
+    static let controlSpectrumOrientationHeight = 50.0
     
-    var isHorizontal = true
-    var isRedToBlue = false
-    weak var spectrumOrientationSelectionDelegate: SpectrumDispersionOrientationSelectionDelegate?
+    var spectrumOrientation: SpectrumOrientation {
+        cameraModelOwner?.cameraModel?.spectrumOrientation ?? .landscape
+    }
     
     required init?(descriptor: CameraViewDescriptor) {
         self.descriptor = descriptor
@@ -256,8 +257,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         let controlSize = controlsVisible ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
         let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlExtraHeight)
         let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlZoomHeight)
-        let controlSpectrumOrientationAnalysisSize = controlsVisible ? CGSize(width: frame.width - 2 * sideMargins, height: ExperimentCameraUIView.controlExtraHeight) : .zero
-        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSpectrumOrientationAnalysisSize.height)
+        let controlSpectrumOrientationAnalysisSize = controlsVisible ? CGSize(width: frame.width - 2 * sideMargins, height: ExperimentCameraUIView.controlSpectrumOrientationHeight) : .zero
+        //The button height is reduced by spacing to leave a small gap to the camera controls below
+        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
         cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
         collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: frame.width - 2*sideMargins, height: controlExtraSize.height)
         self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: frame.width - 2*sideMargins, height: controlZoomSize.height)
@@ -473,21 +475,28 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
 
     private func setUpSpectrumAnalysisControlView() {
-       
-        dialogButton.addTarget(self, action: #selector(showCustomDialog), for: .touchUpInside)
-        
-        let initialImageName = getArrowImageName(orientationIndex: lastFirstSelection, directionIndex: lastSecondSelection)
-        let initialImage = UIImage(named: initialImageName)?.withRenderingMode(.alwaysOriginal)
-        
-        dialogButton.setImage(initialImage, for: .normal)
+
+        dialogButton.addTarget(self, action: #selector(showSpectrumOrientationDialog), for: .touchUpInside)
+
+        updateSpectrumOrientationButtonIcon()
+        //Same label as the (untranslated) text of the corresponding Android button
         dialogButton.setTitle("Orientation", for: .normal)
+        dialogButton.setTitleColor(UIColor(named: "textColor") ?? .white, for: .normal)
+        dialogButton.titleLabel?.font = .systemFont(ofSize: 12)
+        dialogButton.titleEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: -8)
+        dialogButton.imageView?.contentMode = .scaleAspectFit
         dialogButton.backgroundColor = .clear
 
         dialogButton.isHidden = !controlsVisible
-        
+
         if cameraModelOwner?.cameraModel?.feature == CameraFeature.SPECTROSCOPY {
             addSubview(dialogButton)
         }
+    }
+
+    private func updateSpectrumOrientationButtonIcon() {
+        let icon = SpectrumOrientationIcon.image(for: spectrumOrientation, height: 36, color: UIColor(named: "textColor") ?? .white)
+        dialogButton.setImage(icon.withRenderingMode(.alwaysOriginal), for: .normal)
     }
     
     // MARK: - SettingType Enum
@@ -703,62 +712,32 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
     }
     
-    var lastFirstSelection = 0
-    var lastSecondSelection = 0
-    
-    @objc func showCustomDialog() {
-        
+    @objc func showSpectrumOrientationDialog() {
+
+        //Like on Android, the user only picks the orientation of the device relative to the
+        //spectrum. A change is applied immediately; OK just dismisses the dialog.
         let dialogView = SpectrumAnalysisConfigurationDialogView(
-            image: UIImage(named: "calibration"),
-            firstDescription: "Choose the orientation of the spectrum dispersion.",
-            firstOptions: ["Horizontal","Verticle"],
-            secondDescription: "Choose which direction should the analysis be done.",
-            secondOptions: ["Left to Right","Right to Left"],
-            initialFirstIndex: lastFirstSelection,
-            initialSecondIndex: lastSecondSelection,
-            completion: { firstIndex, secondIndex in
-            
-                self.lastFirstSelection = firstIndex
-                self.lastSecondSelection = secondIndex
-                
-                let selectedOrientation = self.getOrientationFromIndices(first: firstIndex, second: secondIndex)
-                self.spectrumOrientationSelectionDelegate?.spectrumDidSelectNewOrientation(selectedOrientation)
-                
-                let imageName = self.getArrowImageName(orientationIndex: firstIndex, directionIndex: secondIndex)
-                if let newImage = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
-                    self.dialogButton.setImage(newImage, for: .normal)
-                }
-                
-                self.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: selectedOrientation)
-                
+            description: localize("which_spectrum_orientation"),
+            options: [localize("landscape_orientation"), localize("portrait_orientation")],
+            initialIndex: spectrumOrientation == .landscape ? 0 : 1,
+            imageForIndex: { index in
+                SpectrumOrientationIcon.image(for: index == 0 ? .landscape : .portrait, height: 100, color: UIColor(named: "textColor") ?? .white)
+            },
+            selectionChanged: { index in
+                let orientation: SpectrumOrientation = index == 0 ? .landscape : .portrait
+                self.cameraModelOwner?.cameraModel?.spectrumOrientation = orientation
+                self.cameraModelOwner?.cameraModel?.analyzingRenderer.reinitializeSpectroscopyAnalyzer(orientation: orientation)
+                self.updateSpectrumOrientationButtonIcon()
             })
 
         UIAlertController.PhyphoxUIAlertBuilder()
-            .title(title: "Spectrum Dispersion Configuration")
+            .title(title: localize("spectrum_analysis_setting"))
             .setAccessoryView(accessoryView: dialogView)
-            .addOkAction(handler: {_ in 
-                dialogView.okTapped()
-            })
+            .addOkAction(handler: { _ in })
             .show(in: self.parentViewController(), animated: true)
     }
-    
-    
-    func getOrientationFromIndices(first: Int, second: Int) -> SpectrumOrientation {
-        if first == 0 { // Horizontal
-            return second == 0 ? .horizontalRedRight : .horizontalBlueRight
-        } else { // Vertical
-            return second == 0 ? .verticalBlueUp : .verticalRedUp
-        }
-    }
-    
-    func getArrowImageName(orientationIndex: Int, directionIndex: Int) -> String {
-        if orientationIndex == 0 { // Horizontal
-            return directionIndex == 0 ? "arrow_gradient_right" : "arrow_gradient_left"
-        } else { // Vertical
-            return directionIndex == 0 ? "arrow_gradient_bottom" : "arrow_gradient_top"
-        }
-    }
-    
+
+
     
     // MARK: - camera setting exposure value generator
  

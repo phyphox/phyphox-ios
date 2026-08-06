@@ -237,11 +237,16 @@ class JGAlertAccessoryViewController: UIViewController {
     
     override var preferredContentSize: CGSize {
             get {
+                //An accessory view that declares an intrinsic height is sized to it
+                let intrinsicHeight = self.view.intrinsicContentSize.height
+                if intrinsicHeight > 0 {
+                    return CGSize(width: self.view.frame.width, height: intrinsicHeight)
+                }
                 // adjust the height as per the number of element in export data
                 return CGSize(width:self.view.frame.width,
                               height: 50.0 * Double(exportTypes.count))
             }
-        
+
             set {super.preferredContentSize = newValue}
         }
 }

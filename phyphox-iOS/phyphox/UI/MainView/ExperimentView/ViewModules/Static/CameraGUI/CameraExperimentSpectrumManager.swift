@@ -6,128 +6,102 @@
 //  Copyright © 2026 RWTH Aachen. All rights reserved.
 //
 
-protocol SpectrumOrientationUpdateable: AnyObject {
-    func updateSpectrumState(spectrum: SpectrumOrientation)
+import UIKit
+
+//Orientation of the device relative to the dispersion direction of the spectrum, selected by the
+//user in the camera GUI of a spectroscopy experiment. The direction of the dispersion (i.e.
+//whether blue is on the left or on the right) is deliberately not part of this: the calibration
+//takes care of it. Matches Android's SpectroscopyAnalyzer.SpectrumOrientation.
+enum SpectrumOrientation {
+    case landscape
+    case portrait
 }
 
-protocol SpectrumDispersionOrientationSelectionDelegate: AnyObject {
-    func spectrumDidSelectNewOrientation(_ orientation: SpectrumOrientation)
-}
+//Draws the icons illustrating the two orientations: a spectrum with its dispersion axis marked by
+//a double-headed arrow, next to a device in landscape or portrait orientation. The artwork
+//replicates the Android vector drawables spectrometer_orientation_landscape/portrait, with the
+//monochrome parts drawn in a configurable color instead of white so they work on light and dark
+//backgrounds.
+struct SpectrumOrientationIcon {
 
-enum SpectrumOrientation: Int, CaseIterable {
-    case horizontalRedRight = 0
-    case verticalRedUp = 1
-    case horizontalBlueRight = 2
-    case verticalBlueUp = 3
-    case invalid = 4
-    
+    //Viewport size of the original artwork
+    private static let artSize = CGSize(width: 285.4, height: 221.5)
 
-    private static let rotationCycle: [SpectrumOrientation] = [
-        .horizontalRedRight, .verticalRedUp, .horizontalBlueRight, .verticalBlueUp
+    //x position, top y, bottom y and color of the bars representing the spectrum
+    private static let spectrumBars: [(x: CGFloat, top: CGFloat, bottom: CGFloat, color: UIColor)] = [
+        (10.4, 59.5, 109.5, UIColor(red: 0x7d/255.0, green: 0x3c/255.0, blue: 0xff/255.0, alpha: 0.45)),
+        (28.4, 48.5, 120.5, UIColor(red: 0x51/255.0, green: 0x47/255.0, blue: 0xff/255.0, alpha: 0.6)),
+        (46.4, 37.0, 132.0, UIColor(red: 0x29/255.0, green: 0x7d/255.0, blue: 0xff/255.0, alpha: 0.75)),
+        (64.4, 28.5, 140.5, UIColor(red: 0x00/255.0, green: 0xb9/255.0, blue: 0xff/255.0, alpha: 1.0)),
+        (82.4, 24.5, 144.5, UIColor(red: 0x00/255.0, green: 0xd8/255.0, blue: 0x6b/255.0, alpha: 1.0)),
+        (100.4, 29.5, 139.5, UIColor(red: 0x9b/255.0, green: 0xe0/255.0, blue: 0x00/255.0, alpha: 1.0)),
+        (118.4, 22.0, 147.0, UIColor(red: 0xff/255.0, green: 0xe4/255.0, blue: 0x00/255.0, alpha: 1.0)),
+        (136.4, 30.5, 138.5, UIColor(red: 0xff/255.0, green: 0xb0/255.0, blue: 0x00/255.0, alpha: 1.0)),
+        (154.4, 40.5, 128.5, UIColor(red: 0xff/255.0, green: 0x70/255.0, blue: 0x00/255.0, alpha: 1.0)),
+        (172.4, 50.5, 118.5, UIColor(red: 0xff/255.0, green: 0x2f/255.0, blue: 0x00/255.0, alpha: 1.0)),
     ]
 
-    func rotateClockwise() -> SpectrumOrientation {
-        guard let currentIndex = SpectrumOrientation.rotationCycle.firstIndex(of: self) else { return self }
-        let prevIndex = (currentIndex - 1 + SpectrumOrientation.rotationCycle.count) % SpectrumOrientation.rotationCycle.count
-        return SpectrumOrientation.rotationCycle[prevIndex]
-    }
-
-    func rotateCounterClockwise() -> SpectrumOrientation {
-        guard let currentIndex = SpectrumOrientation.rotationCycle.firstIndex(of: self) else { return self }
-        let nextIndex = (currentIndex + 1) % SpectrumOrientation.rotationCycle.count
-        return SpectrumOrientation.rotationCycle[nextIndex]
-    }
-}
-
-enum DeviceOrientation {
-    case portrait, portraitUpsideDown, landscapeLeft, landscapeRight
-}
-
-
-class SpectrumDispersionManager {
-    var currentDeviceOrientation: DeviceOrientation = .portrait
-    var currentDispersionOrientation: SpectrumOrientation = .horizontalRedRight
-    
-    private var userSelectedDispersionMap: [DeviceOrientation: SpectrumOrientation] = [
-        .portrait: .horizontalRedRight
-    ]
-
-    func onUserDispersionSelected(_ chosen: SpectrumOrientation) {
-        userSelectedDispersionMap[currentDeviceOrientation] = chosen
-        currentDispersionOrientation = chosen
-    }
-
-    func onDeviceRotated(_ newOrientation: DeviceOrientation) {
-        if newOrientation == currentDeviceOrientation { return }
-        
-        let previous = currentDeviceOrientation
-        currentDeviceOrientation = newOrientation
-        let base = currentDispersionOrientation
-
-        switch (previous, newOrientation) {
-        case (.portrait, .landscapeLeft):
-            currentDispersionOrientation = base.rotateClockwise()
-        case (.landscapeLeft, .portrait):
-            currentDispersionOrientation = base.rotateCounterClockwise()
-        case (.portrait, .landscapeRight):
-            currentDispersionOrientation = base.rotateCounterClockwise()
-        case (.landscapeRight, .portrait):
-            currentDispersionOrientation = base.rotateClockwise()
-        case (.landscapeLeft, .landscapeRight), (.landscapeRight, .landscapeLeft):
-            currentDispersionOrientation = base.rotateClockwise().rotateClockwise()
-        default:
-            currentDispersionOrientation = getHardcodedDefaultFor(newOrientation)
+    static func image(for orientation: SpectrumOrientation, height: CGFloat, color: UIColor) -> UIImage {
+        let scale = height / artSize.height
+        let size = CGSize(width: artSize.width * scale, height: height)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            let c = context.cgContext
+            c.scaleBy(x: scale, y: scale)
+            drawSpectrumWithDispersionAxis(in: c, color: color)
+            drawDevice(in: c, orientation: orientation, color: color)
         }
-        
-        userSelectedDispersionMap[newOrientation] = currentDispersionOrientation
     }
 
-    private func getHardcodedDefaultFor(_ orientation: DeviceOrientation) -> SpectrumOrientation {
+    private static func drawSpectrumWithDispersionAxis(in c: CGContext, color: UIColor) {
+        c.setLineCap(.round)
+
+        for bar in spectrumBars {
+            c.setLineWidth(7.0)
+            c.setStrokeColor(bar.color.cgColor)
+            c.move(to: CGPoint(x: bar.x, y: bar.top))
+            c.addLine(to: CGPoint(x: bar.x, y: bar.bottom))
+            c.strokePath()
+        }
+
+        //Double-headed arrow above the spectrum marking the dispersion axis
+        c.setLineWidth(3.0)
+        c.setStrokeColor(color.cgColor)
+        c.move(to: CGPoint(x: 2.4, y: 9.5))
+        c.addLine(to: CGPoint(x: 182.4, y: 9.5))
+        c.move(to: CGPoint(x: 172.4, y: 1.5))
+        c.addLine(to: CGPoint(x: 182.4, y: 9.5))
+        c.addLine(to: CGPoint(x: 172.4, y: 17.5))
+        c.move(to: CGPoint(x: 12.4, y: 1.5))
+        c.addLine(to: CGPoint(x: 2.4, y: 9.5))
+        c.addLine(to: CGPoint(x: 12.4, y: 17.5))
+        c.strokePath()
+    }
+
+    private static func drawDevice(in c: CGContext, orientation: SpectrumOrientation, color: UIColor) {
+        let body: CGRect
+        let speaker: CGRect
+        let buttonCenter: CGPoint
         switch orientation {
-        case .portrait: return .horizontalRedRight
-        case .landscapeLeft: return .verticalBlueUp
-        case .landscapeRight: return .verticalRedUp
-        case .portraitUpsideDown: return .horizontalBlueRight
+        case .landscape:
+            body = CGRect(x: 103.4, y: 121.5, width: 180.0, height: 98.0)
+            speaker = CGRect(x: 109.4, y: 156.5, width: 4.0, height: 28.0)
+            buttonCenter = CGPoint(x: 273.4, y: 170.5)
+        case .portrait:
+            body = CGRect(x: 185.4, y: 39.5, width: 98.0, height: 180.0)
+            speaker = CGRect(x: 220.4, y: 45.5, width: 28.0, height: 4.0)
+            buttonCenter = CGPoint(x: 234.4, y: 209.5)
         }
+
+        c.setLineWidth(4.0)
+        c.setStrokeColor(color.cgColor)
+        c.addPath(UIBezierPath(roundedRect: body, cornerRadius: 18.0).cgPath)
+        c.strokePath()
+
+        c.setFillColor(color.cgColor)
+        c.addPath(UIBezierPath(roundedRect: speaker, cornerRadius: 2.0).cgPath)
+        c.fillPath()
+        c.addEllipse(in: CGRect(x: buttonCenter.x - 3.5, y: buttonCenter.y - 3.5, width: 7.0, height: 7.0))
+        c.fillPath()
     }
 }
-
-@available(iOS 14.0, *)
-extension ExperimentCameraUIView: SpectrumOrientationUpdateable {
-    func updateSpectrumState(spectrum: SpectrumOrientation) {
-        switch spectrum {
-        case .verticalBlueUp:      (isHorizontal, isRedToBlue) = (false, false)
-        case .verticalRedUp:       (isHorizontal, isRedToBlue) = (false, true)
-        case .horizontalBlueRight: (isHorizontal, isRedToBlue) = (true, true)
-        case .horizontalRedRight:  (isHorizontal, isRedToBlue) = (true, false)
-        default: break
-        }
-
-        let imageName = getGradientImageName(spectrum: spectrum)
-        if let image = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal) {
-            self.dialogButton.setImage(image, for: .normal)
-        }
-    }
-    
-    func getGradientImageName(spectrum: SpectrumOrientation) -> String {
-            switch spectrum {
-            case .horizontalRedRight:
-                return "arrow_gradient_right"
-            case .verticalRedUp:
-                return "arrow_gradient_bottom"
-            case .horizontalBlueRight:
-                return "arrow_gradient_left"
-            case .verticalBlueUp:
-                return "arrow_gradient_top"
-            case .invalid:
-                return "arrow_gradient_right"
-            }
-        }
-}
-
-extension ExperimentPageViewController: SpectrumDispersionOrientationSelectionDelegate {
-    func spectrumDidSelectNewOrientation(_ orientation: SpectrumOrientation) {
-        self.orientationManager.onUserDispersionSelected(orientation)
-    }
-}
-

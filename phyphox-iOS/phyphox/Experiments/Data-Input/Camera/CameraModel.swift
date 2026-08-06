@@ -170,7 +170,10 @@ final class CameraModel {
     var locked: [String:Float?] = [:]
     
     var feature: CameraFeature = CameraFeature.PHOTOMETRIC
-    
+
+    //User-selected orientation of the device relative to the spectrum in spectroscopy experiments
+    var spectrumOrientation: SpectrumOrientation = .landscape
+
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel
     

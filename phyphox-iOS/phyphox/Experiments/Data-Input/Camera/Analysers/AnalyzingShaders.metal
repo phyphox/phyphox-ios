@@ -60,113 +60,76 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
     
 }
 
-kernel void readLuminaceValForVerticle(
+//Spectroscopy: one value per pixel along the dispersion axis of the camera image, obtained by
+//averaging the linear luminance of the selected analysis area across the perpendicular axis.
+//The camera texture is in sensor orientation, so computeSpectrumAlongX serves a device held in
+//landscape orientation relative to the spectrum and computeSpectrumAlongY one held in portrait
+//orientation. One thread computes one spectrum pixel; the dispatch is one-dimensional along the
+//dispersion axis.
+kernel void computeSpectrumAlongX(
      texture2d<float, access::read> yTexture [[texture(0)]],
      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
      device float *outBuffer [[buffer(0)]],
      constant SelectionState& selectionState [[buffer(1)]],
-     uint2 gid2D [[thread_position_in_grid]],
-     uint2 tid [[ thread_position_in_threadgroup ]],
-     uint2 groupSize [[ threads_per_threadgroup ]],
-     uint2 groupId [[ threadgroup_position_in_grid ]],
-     uint2 groupsPerGrid [[ threadgroups_per_grid ]]
+     uint gid [[thread_position_in_grid]]
                             )
 {
-    
-    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    uint selectedWidth =  selectionState.x2 - selectionState.x1;
-    uint selectedHeight =  selectionState.y2 - selectionState.y1;
-    
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2 ||
-        globalID.x < selectionState.x1 || globalID.y < selectionState.y1) {
+    uint x1 = uint(selectionState.x1);
+    uint x2 = min(uint(selectionState.x2), yTexture.get_width());
+    uint y1 = uint(selectionState.y1);
+    uint y2 = min(uint(selectionState.y2), yTexture.get_height());
+
+    uint x = x1 + gid;
+    if (x >= x2) {
         return;
     }
-    
-    // Get the column index relative to the selected region
-    uint columnIndex = globalID.x - selectionState.x1;
-    
-    if(columnIndex >= selectedWidth){
-        return;
+
+    float sum = 0.0;
+
+    for (uint y = y1; y < y2; y++) {
+        uint2 pixelCoord = uint2(x, y);
+        float4 rgb = ycbcrToRGBTransform(
+                                         yTexture.read(pixelCoord),
+                                         cameraImageTextureCbCr.read(pixelCoord/2)
+                                         );
+        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
     }
-    
-    float columnSum = 0.0;
-    
-    for(uint row = 0; row < selectedHeight ; row++){
-        uint2 pixelCoord = uint2(selectionState.x1 + columnIndex, selectionState.y1 + row);
-        
-        if (pixelCoord.x < yTexture.get_width() && pixelCoord.y < yTexture.get_height()) {
-            float4 rgb = ycbcrToRGBTransform(
-                                             yTexture.read(pixelCoord),
-                                             cameraImageTextureCbCr.read(pixelCoord/2)
-                                             );
-            
-            float red = rgb.r;
-            float green = rgb.g;
-            float blue = rgb.b;
-                
-            float pixelVaue = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
-            columnSum += pixelVaue;
-        }
-    }
-    
-    float columnAverage = columnSum / float(selectedHeight);
-    
-    outBuffer[columnIndex] = columnAverage;
-    
+
+    outBuffer[gid] = y2 > y1 ? sum / float(y2 - y1) : 0.0;
+
 }
 
-kernel void readLuminaceValForHorizontal(
+kernel void computeSpectrumAlongY(
      texture2d<float, access::read> yTexture [[texture(0)]],
      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
      device float *outBuffer [[buffer(0)]],
      constant SelectionState& selectionState [[buffer(1)]],
-     uint2 gid2D [[thread_position_in_grid]],
-     uint2 tid [[ thread_position_in_threadgroup ]],
-     uint2 groupSize [[ threads_per_threadgroup ]],
-     uint2 groupId [[ threadgroup_position_in_grid ]],
-     uint2 groupsPerGrid [[ threadgroups_per_grid ]]
+     uint gid [[thread_position_in_grid]]
                             )
 {
-    
-    uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    uint selectedWidth =  selectionState.x2 - selectionState.x1;
-    uint selectedHeight =  selectionState.y2 - selectionState.y1;
-    
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2 ||
-        globalID.x < selectionState.x1 || globalID.y < selectionState.y1) {
+    uint x1 = uint(selectionState.x1);
+    uint x2 = min(uint(selectionState.x2), yTexture.get_width());
+    uint y1 = uint(selectionState.y1);
+    uint y2 = min(uint(selectionState.y2), yTexture.get_height());
+
+    uint y = y1 + gid;
+    if (y >= y2) {
         return;
     }
-    
-    uint rowIndex = globalID.y - selectionState.y1;
-    
-    if(rowIndex >= selectedHeight){
-        return;
+
+    float sum = 0.0;
+
+    for (uint x = x1; x < x2; x++) {
+        uint2 pixelCoord = uint2(x, y);
+        float4 rgb = ycbcrToRGBTransform(
+                                         yTexture.read(pixelCoord),
+                                         cameraImageTextureCbCr.read(pixelCoord/2)
+                                         );
+        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
     }
-    
-    float rowSum = 0.0;
-    
-    for(uint column = 0; column < selectedWidth ; column++){
-        uint2 pixelCoord = uint2(selectionState.x1 + column, selectionState.y1 + rowIndex);
-        
-        if (pixelCoord.x < yTexture.get_width() && pixelCoord.y < yTexture.get_height()) {
-            float4 rgb = ycbcrToRGBTransform(
-                                             yTexture.read(pixelCoord),
-                                             cameraImageTextureCbCr.read(pixelCoord/2)
-                                             );
-            
-            float red = rgb.r;
-            float green = rgb.g;
-            float blue = rgb.b;
-                
-            float pixelVaue = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
-            rowSum += pixelVaue;
-        }
-    }
-    
-    float columnAverage = rowSum / float(selectedWidth);
-    
-    outBuffer[rowIndex] = columnAverage;
-    
+
+    outBuffer[gid] = x2 > x1 ? sum / float(x2 - x1) : 0.0;
+
 }
 
 

@@ -273,6 +273,10 @@
 "depthAggregationModeClosest" = "Closest";
 "depthAggregationModeAverage" = "Average";
 "depthAggregationModeWeighted" = "Weighted";
+"spectrum_analysis_setting" = "Spectrum Analysis Settings";
+"which_spectrum_orientation" = "What is your device's orientation in regard to the spectrum?";
+"portrait_orientation" = "Portrait";
+"landscape_orientation" = "Landscape";
 "settings" = "Settings";
 "off" = "Off";
 "on" = "On";

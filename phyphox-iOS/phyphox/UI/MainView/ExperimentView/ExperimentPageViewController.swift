@@ -45,10 +45,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     var numOfConnectedDevices = 0
     
     var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
-    
-    weak var spectrumDispersionOrientation: SpectrumOrientationUpdateable?
-    var orientationManager = SpectrumDispersionManager()
-    
+
     var timerRunning: Bool {
         return experimentRunTimer != nil
     }
@@ -379,37 +376,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             NotificationCenter.default.addObserver(self, selector: #selector(handleCameraError(notification:)), name: .cameraConfigurationFailed, object: nil)
         }
         
-        if(experiment.cameraInput?.feature == CameraFeature.SPECTROSCOPY){
-            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-            
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(handleDeviceRotationToControlSpectrumOrientation),
-                name: UIDevice.orientationDidChangeNotification,
-                object: nil
-            )
-        }
-        
     }
-    
-    @objc func handleDeviceRotationToControlSpectrumOrientation() {
-        let device = UIDevice.current.orientation
-        var newOrient: DeviceOrientation
-        
-        switch device {
-        case .portrait: newOrient = .portrait
-        case .portraitUpsideDown: return
-        case .landscapeLeft: newOrient = .landscapeLeft
-        case .landscapeRight: newOrient = .landscapeRight
-        default: return
-        }
-        
-        orientationManager.onDeviceRotated(newOrient)
-        let spectrum = orientationManager.currentDispersionOrientation
-        spectrumDispersionOrientation?.updateSpectrumState(spectrum: spectrum)
-    }
-    
-    
+
+
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
@@ -542,10 +511,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         }
                         cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
                         cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
-                        
-                        self.spectrumDispersionOrientation = cameraGUI
-                        cameraGUI.spectrumOrientationSelectionDelegate = self
-                        
+
                     }
                     
                 }
