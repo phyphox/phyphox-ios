@@ -325,8 +325,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             do {
                 let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
 
-                //The old camera would keep a locked focus beyond this session otherwise
-                self.releaseFocusDistanceLock()
+                //The old camera would keep its locked configuration beyond this session otherwise
+                self.releaseConfigurationLocks()
 
                 self.session.beginConfiguration()
 
@@ -705,17 +705,34 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
 
-    //The locked focus mode sticks to the shared capture device beyond the lifetime of this
-    //session and would affect every other camera user in the app, including the QR code
-    //scanner. So it has to be released when the camera session ends or switches to another
-    //camera.
-    func releaseFocusDistanceLock() {
+    //Configuration applied to the capture device via lockForConfiguration - a locked focus, a
+    //custom exposure (set by the locked attribute, the manual controls and phyphox's own auto
+    //exposure alike) or a locked white balance - sticks to the shared device beyond the
+    //lifetime of this session and would affect every other camera user in the app, including
+    //the QR code scanner. So everything is returned to its automatic mode when the camera
+    //session ends or switches to another camera.
+    func releaseConfigurationLocks() {
         lockConfig { (_ camera: AVCaptureDevice) -> () in
-            guard camera.focusMode == .locked else { return }
-            if camera.isFocusModeSupported(.continuousAutoFocus) {
-                camera.focusMode = .continuousAutoFocus
-            } else if camera.isFocusModeSupported(.autoFocus) {
-                camera.focusMode = .autoFocus
+            if camera.focusMode == .locked {
+                if camera.isFocusModeSupported(.continuousAutoFocus) {
+                    camera.focusMode = .continuousAutoFocus
+                } else if camera.isFocusModeSupported(.autoFocus) {
+                    camera.focusMode = .autoFocus
+                }
+            }
+            if camera.exposureMode == .custom || camera.exposureMode == .locked {
+                if camera.isExposureModeSupported(.continuousAutoExposure) {
+                    camera.exposureMode = .continuousAutoExposure
+                } else if camera.isExposureModeSupported(.autoExpose) {
+                    camera.exposureMode = .autoExpose
+                }
+            }
+            if camera.whiteBalanceMode == .locked {
+                if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                    camera.whiteBalanceMode = .continuousAutoWhiteBalance
+                } else if camera.isWhiteBalanceModeSupported(.autoWhiteBalance) {
+                    camera.whiteBalanceMode = .autoWhiteBalance
+                }
             }
         }
     }
