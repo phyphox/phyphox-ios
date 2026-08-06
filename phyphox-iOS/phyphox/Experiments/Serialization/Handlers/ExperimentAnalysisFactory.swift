@@ -86,6 +86,8 @@ final class ExperimentAnalysisFactory {
         "count": CountAnalysis.self,
         "average": AverageAnalysis.self,
         "binning": BinningAnalysis.self,
+        "butterworth": ButterworthAnalysis.self,
+        "imagedecode": ImageDecodeAnalysis.self,
         "if": IfAnalysis.self,
         "reduce": ReduceAnalysis.self,
         "map": MapAnalysis.self,

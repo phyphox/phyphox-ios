@@ -98,6 +98,27 @@
             <output>buffer</output>
         </append>
 
+        <butterworth>
+            <input as="y">buffer</input>
+            <input as="x">buffer2</input>
+            <input as="n" type="value">4</input>
+            <input as="cutoff" type="value">10</input>
+            <input as="cutoffLow" type="value">1</input>
+            <output as="filtered">buffer</output>
+        </butterworth>
+
+        <imagedecode>
+            <input>buffer</input>
+            <output as="width">buffer</output>
+            <output as="height">buffer</output>
+            <output as="r">buffer</output>
+            <output as="g">buffer</output>
+            <output as="b">buffer</output>
+            <output as="a">buffer</output>
+            <output as="luma">buffer</output>
+            <output as="luminance">buffer2</output>
+        </imagedecode>
+
         <add>
             <input>buffer</input>
             <output>buffer</output>
