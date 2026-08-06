@@ -307,6 +307,7 @@
 "common_unit_short_degree" = "°";
 "common_unit_short_degree_celsius" = "°C";
 "common_unit_short_meter" = "m";
+"common_unit_short_nano_meter" = "nm";
 "common_unit_short_milli_meter" = "mm";
 "common_unit_short_centi_meter" = "cm";
 "common_unit_short_kilo_meter" = "km";
@@ -334,7 +335,7 @@
 "common_quantity_short_altitude" = "z";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
-"common_quantity_short_wavelength" = "λ [nm]";
+"common_quantity_short_wavelength" = "λ";
 "common_quantity_short_pixel_position" = "pixel position";
 "common_quantity_percentage" = "Percent";
 "common_direction_short_north" = "N";
