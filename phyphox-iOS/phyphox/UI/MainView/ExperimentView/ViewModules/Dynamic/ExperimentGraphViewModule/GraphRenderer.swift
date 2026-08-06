@@ -51,6 +51,8 @@ class GraphRenderer {
         plotView.historyLength = descriptor.history
         plotView.mapWidth = descriptor.mapWidth
         plotView.colorMap = descriptor.colorMap
+        //Only the plot itself honours this - the z scale is a gradient by nature
+        plotView.interpolateMapColors = descriptor.interpolateMapColors
         plotView.timeOnX = descriptor.timeOnX
         plotView.timeOnY = descriptor.timeOnY
         plotView.systemTime = descriptor.systemTime

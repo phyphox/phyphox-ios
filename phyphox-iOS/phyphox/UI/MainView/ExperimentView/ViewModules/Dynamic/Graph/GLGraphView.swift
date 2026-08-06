@@ -57,6 +57,15 @@ final class GLGraphView: GLKView {
             setNeedsDisplay()
         }
     }
+
+    //If false, a color map shows a homogeneously colored cell around each data point instead of
+    //interpolating the colors between the data points, like on Android - i.e. an image
+    //transferred point by point shows its actual pixels.
+    var interpolateMapColors: Bool = true {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
     
     var timeOnX: Bool = false {
         didSet {
@@ -88,6 +97,9 @@ final class GLGraphView: GLKView {
         }
     }
     
+    private var cellIB: GLuint = 0
+    private var cellIBSize: Int = 0
+
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {
@@ -188,6 +200,31 @@ final class GLGraphView: GLKView {
         setNeedsDisplay()
     }
     
+    //Index buffer for the non-interpolated map cells: two triangles per four-vertex cell
+    private func prepareCellIndexBuffer(cells: Int) {
+        if cellIB == 0 {
+            glGenBuffers(GLsizei(1), &cellIB)
+        }
+        if 6 * cells > cellIBSize {
+            var indices = [GLuint]()
+            indices.reserveCapacity(6 * cells)
+            for cell in 0..<cells {
+                let base = GLuint(4 * cell)
+                indices.append(base)
+                indices.append(base + 1)
+                indices.append(base + 2)
+                indices.append(base + 2)
+                indices.append(base + 1)
+                indices.append(base + 3)
+            }
+            cellIBSize = 6 * cells
+
+            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), cellIB)
+            glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(indices.count * MemoryLayout<GLuint>.size), indices, GLenum(GL_DYNAMIC_DRAW))
+            glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), 0)
+        }
+    }
+
     private func prepareIndexBuffer(mapWidth: UInt, requiredIBSize: UInt) {
         if mapIB == 0 {
             glGenBuffers(GLsizei(1), &mapIB)
@@ -257,23 +294,79 @@ final class GLGraphView: GLKView {
             
             let p = points3D[0]
             let length = p.count
-            
-            if length > 0 && mapWidth > 0 {
+
+            if length > 0 && mapWidth > 0 && interpolateMapColors {
                 let lines = (UInt(length)/mapWidth-1)
                 let verticesPerLine = (2*mapWidth+2)
                 let requiredIBSize = lines * verticesPerLine
-                
+
                 prepareIndexBuffer(mapWidth: mapWidth, requiredIBSize: requiredIBSize)
-                
+
                 if requiredIBSize > 0 {
-                
+
                     glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(length * MemoryLayout<GraphPoint3D<GLfloat>>.size), p, GLenum(GL_DYNAMIC_DRAW))
-                
+
                     glActiveTexture(GLenum(GL_TEXTURE0))
                     glBindTexture(GLenum(GL_TEXTURE_2D), mapTexture)
-                    
+
                     glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), mapIB)
                     mapShader.drawElements(mode: GL_TRIANGLE_STRIP, start: 0, count: Int(requiredIBSize))
+                    glBindTexture(GLenum(GL_TEXTURE_2D), 0)
+                    glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), 0)
+                }
+            } else if length > 0 && mapWidth > 0 {
+                //Without interpolation, each data point is drawn as a homogeneously colored
+                //cell centered on the data point, reaching halfway to its neighbors. All four
+                //cell vertices carry the point's z value, so the shading across the cell is
+                //flat, like on Android.
+                let w = Int(mapWidth)
+                let rows = length / w
+                let cells = rows * w
+
+                if cells > 0 {
+                    var cellVertices = [GraphPoint3D<GLfloat>]()
+                    cellVertices.reserveCapacity(4 * cells)
+
+                    for j in 0..<rows {
+                        for i in 0..<w {
+                            let k = j * w + i
+                            let x = p[k].x
+                            let y = p[k].y
+                            let z = p[k].z
+
+                            let dxm: GLfloat, dxp: GLfloat
+                            if w > 1 {
+                                dxm = i > 0 ? 0.5 * (x - p[k-1].x) : 0.5 * (p[k+1].x - x)
+                                dxp = i < w-1 ? 0.5 * (p[k+1].x - x) : 0.5 * (x - p[k-1].x)
+                            } else {
+                                dxm = 0.5
+                                dxp = 0.5
+                            }
+                            let dym: GLfloat, dyp: GLfloat
+                            if rows > 1 {
+                                dym = j > 0 ? 0.5 * (y - p[k-w].y) : 0.5 * (p[k+w].y - y)
+                                dyp = j < rows-1 ? 0.5 * (p[k+w].y - y) : 0.5 * (y - p[k-w].y)
+                            } else {
+                                dym = 0.5
+                                dyp = 0.5
+                            }
+
+                            cellVertices.append(GraphPoint3D(x: x - dxm, y: y - dym, z: z))
+                            cellVertices.append(GraphPoint3D(x: x + dxp, y: y - dym, z: z))
+                            cellVertices.append(GraphPoint3D(x: x - dxm, y: y + dyp, z: z))
+                            cellVertices.append(GraphPoint3D(x: x + dxp, y: y + dyp, z: z))
+                        }
+                    }
+
+                    prepareCellIndexBuffer(cells: cells)
+
+                    glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(cellVertices.count * MemoryLayout<GraphPoint3D<GLfloat>>.size), cellVertices, GLenum(GL_DYNAMIC_DRAW))
+
+                    glActiveTexture(GLenum(GL_TEXTURE0))
+                    glBindTexture(GLenum(GL_TEXTURE_2D), mapTexture)
+
+                    glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), cellIB)
+                    mapShader.drawElements(mode: GL_TRIANGLES, start: 0, count: 6 * cells)
                     glBindTexture(GLenum(GL_TEXTURE_2D), 0)
                     glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), 0)
                 }
