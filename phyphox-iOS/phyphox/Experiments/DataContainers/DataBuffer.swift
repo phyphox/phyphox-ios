@@ -118,6 +118,11 @@ final class DataBuffer {
     }
     
     let staticBuffer: Bool
+
+    //If set, the buffer is exempt from a clear by the user unless the group is explicitly
+    //selected. The reserved name "_" protects the buffer without offering it for selection.
+    let clearGroup: String?
+
     private var written: Bool = false
 
     /**
@@ -143,7 +148,7 @@ final class DataBuffer {
 
     private var contents: [Double]
 
-    init(name: String, size: Int, baseContents: [Double], static staticBuffer: Bool) throws {
+    init(name: String, size: Int, baseContents: [Double], static staticBuffer: Bool, clearGroup: String? = nil) throws {
         self.size = size
         self.name = name
         self.baseContents = baseContents
@@ -151,6 +156,7 @@ final class DataBuffer {
         contents = []
         contents.reserveCapacity(size)
         self.staticBuffer = staticBuffer
+        self.clearGroup = clearGroup
 
         guard baseContents.count <= effectiveMemorySize else {
             throw DataBufferError.baseContentsTooLarge

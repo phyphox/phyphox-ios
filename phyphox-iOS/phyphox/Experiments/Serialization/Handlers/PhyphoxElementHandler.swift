@@ -205,7 +205,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let buffers: [String : DataBuffer]
         if let dataContainersDescriptor = dataContainersDescriptor {
-            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames)
+            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, translations: translations)
         } else {
             buffers = [String : DataBuffer]()
         }
@@ -694,7 +694,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         return ExperimentExport(sets: sets)
     }
 
-    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>) throws -> [String: DataBuffer] {
+    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>, translations: ExperimentTranslationCollection) throws -> [String: DataBuffer] {
         var buffers: [String: DataBuffer] = [:]
 
         for descriptor in descriptors {
@@ -703,7 +703,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
-            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer)
+            //The clearGroup name is translatable and, like on Android, resolved at parse time:
+            //buffers are grouped by the translated name, which is also what the user selects.
+            let clearGroup = descriptor.clearGroup.map { translations.localizeString($0) }
+
+            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer, clearGroup: clearGroup)
 
             buffers[name] = buffer
 

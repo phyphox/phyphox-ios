@@ -516,12 +516,23 @@ final class Experiment {
         }
     }
     
-    func clear(byUser: Bool) {
+    //The translated names of the clear groups defined by this experiment's buffers, offered to
+    //the user for selection when clearing data. The reserved group "_" is never offered.
+    var clearGroups: [String] {
+        return Set(buffers.values.compactMap { $0.clearGroup }).subtracting(["_"]).sorted()
+    }
+
+    func clear(byUser: Bool, clearGroups: [String] = []) {
         stop()
         timeReference.reset()
         hasStarted = false
 
         for buffer in buffers.values {
+            //A user clear spares buffers assigned to a clear group unless the user selected
+            //that group. Any other clear (like closing the experiment) resets everything.
+            if byUser, let clearGroup = buffer.clearGroup, !clearGroups.contains(clearGroup) {
+                continue
+            }
             if !buffer.attachedToTextField {
                 buffer.clear(reset: true)
             }

@@ -6,6 +6,8 @@
     <link label="l0">http://test.test</link>
     <data-containers>
         <container>buffer</container>
+        <container size="2" init="1,2" clearGroup="g1">buffer2</container>
+        <container clearGroup="_">buffer3</container>
     </data-containers>
     <translations>
         <translation locale="de">

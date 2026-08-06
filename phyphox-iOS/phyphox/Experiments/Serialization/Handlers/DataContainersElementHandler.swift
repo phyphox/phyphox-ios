@@ -10,7 +10,7 @@ import Foundation
 
 // This file contains element handlers for the `data-container` child element (and its child elements) of the `phyphox` root element.
 
-typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
+typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool, clearGroup: String?)
 
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [BufferDescriptor]()
@@ -21,6 +21,7 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
         case size
         case staticKey = "static"
         case initKey = "init"
+        case clearGroup
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -33,7 +34,9 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
         let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
         let staticBuffer = try attributes.optionalValue(for: .staticKey) ?? false
 
-        results.append((text, size, baseContents, staticBuffer))
+        let clearGroup = attributes.optionalString(for: .clearGroup)
+
+        results.append((text, size, baseContents, staticBuffer, clearGroup))
     }
 }
 

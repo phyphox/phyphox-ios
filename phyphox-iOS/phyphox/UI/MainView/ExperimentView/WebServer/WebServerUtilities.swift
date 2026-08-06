@@ -175,10 +175,12 @@ final class WebServerUtilities {
         
         viewLayout += "];\n"
 
-        //The web interface expects a clearGroups list to offer keeping some data on clear. iOS
-        //does not implement the clearGroup attribute yet (see the file format 1.20 items), so
-        //this stays empty for now and the interface falls back to the plain clear dialog.
-        viewLayout += "var clearGroups = [];\n"
+        //The clear dialog of the web interface offers these groups for selection; without any,
+        //it falls back to the plain clear-all dialog.
+        let escapedClearGroups = experiment.clearGroups.map {
+            "\"" + $0.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+        }
+        viewLayout += "var clearGroups = [\(escapedClearGroups.joined(separator: ","))];\n"
 
         /*var exportStr = ""
         

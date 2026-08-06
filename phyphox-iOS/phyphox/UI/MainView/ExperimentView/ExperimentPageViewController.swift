@@ -1309,15 +1309,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     @objc func clearDataDialog() {
         hintBubble?.dismiss(animated: true, completion: nil)
-        
-        let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
-        
-        al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
-            self.clearData()
-        }))
-        al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        self.navigationController!.present(al, animated: true, completion: nil)
+
+        let clearGroups = experiment.clearGroups
+
+        if clearGroups.isEmpty {
+            let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
+
+            al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
+                self.clearData(clearGroups: [])
+            }))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+
+            self.navigationController!.present(al, animated: true, completion: nil)
+        } else {
+            //Like on Android, buffers assigned to a clear group are only cleared if the user
+            //explicitly selects that group.
+            let selectionView = ClearGroupSelectionView(groups: clearGroups)
+
+            let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question_select"), preferredStyle: .alert)
+            al.__pt__setAccessoryView(selectionView)
+
+            al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
+                self.clearData(clearGroups: selectionView.selectedGroups())
+            }))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }
     }
     
     @objc func showQr(){
@@ -1415,12 +1433,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     
-    func clearData() {
+    func clearData(clearGroups: [String]) {
         self.experiment.timeReference.registerEvent(event: .CLEAR)
         self.experiment.bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: self.experiment.timeReference.timeMappings.last) }
-        
+
         self.stopExperiment()
-        self.experiment.clear(byUser: true)
+        self.experiment.clear(byUser: true, clearGroups: clearGroups)
         
         self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
         
@@ -1563,5 +1581,64 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
+    }
+}
+
+//Accessory view for the clear-data dialog of an experiment with clear groups: one switch per
+//group, all off by default, so protected buffers are only cleared on explicit selection.
+final class ClearGroupSelectionView: UIView {
+    private let groups: [String]
+    private var switches: [UISwitch] = []
+
+    private let rowHeight: CGFloat = 40.0
+    private let sideMargin: CGFloat = 24.0
+
+    init(groups: [String]) {
+        self.groups = groups
+        super.init(frame: .zero)
+
+        for group in groups {
+            let groupSwitch = UISwitch()
+            groupSwitch.isOn = false
+            groupSwitch.onTintColor = UIColor(named: "highlightColor")
+            switches.append(groupSwitch)
+            addSubview(groupSwitch)
+
+            let label = UILabel()
+            label.text = group
+            label.font = .systemFont(ofSize: 16)
+            label.textColor = UIColor(named: "textColor")
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.5
+            label.tag = 1
+            addSubview(label)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var intrinsicContentSize: CGSize {
+        return CGSize(width: UIView.noIntrinsicMetric, height: CGFloat(groups.count) * rowHeight + 16.0)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let labels = subviews.filter { $0.tag == 1 }
+        for (i, groupSwitch) in switches.enumerated() {
+            let y = 8.0 + CGFloat(i) * rowHeight
+            let switchSize = groupSwitch.sizeThatFits(bounds.size)
+            groupSwitch.frame = CGRect(x: bounds.width - sideMargin - switchSize.width, y: y + (rowHeight - switchSize.height)/2.0, width: switchSize.width, height: switchSize.height)
+            if i < labels.count {
+                labels[i].frame = CGRect(x: sideMargin, y: y, width: bounds.width - 2*sideMargin - switchSize.width - 8.0, height: rowHeight)
+            }
+        }
+    }
+
+    func selectedGroups() -> [String] {
+        return zip(groups, switches).filter { $0.1.isOn }.map { $0.0 }
     }
 }

@@ -15,7 +15,7 @@ protocol ExperimentWebServerDelegate: AnyObject {
     
     func startExperiment()
     func stopExperiment()
-    func clearData()
+    func clearData(clearGroups: [String])
     func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?)
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
 }
@@ -158,8 +158,18 @@ final class ExperimentWebServer {
                 returnSuccessResponse()
             }
             else if cmd == "clear" {
+                //Like on Android, clearGroup1, clearGroup2, ... name the clear groups the user
+                //selected; the first gap ends the list. The web interface sends them
+                //form-encoded, so a "+" stands for a space (the rest of the query arrives
+                //percent-decoded already).
+                var clearGroups: [String] = []
+                var i = 1
+                while let clearGroup = query["clearGroup\(i)"] {
+                    clearGroups.append(clearGroup.replacingOccurrences(of: "+", with: " "))
+                    i += 1
+                }
                 mainThread {
-                    self.delegate!.clearData()
+                    self.delegate!.clearData(clearGroups: clearGroups)
                 }
                 returnSuccessResponse()
             }
