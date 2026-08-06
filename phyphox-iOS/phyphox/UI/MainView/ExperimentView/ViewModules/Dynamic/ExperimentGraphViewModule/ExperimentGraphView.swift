@@ -102,6 +102,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         zoomManager.delegate = self
         markerSystem.delegate = self
         toolbarManager.delegate = self
+        graphRenderer.gridView.delegate = self
+        graphRenderer.zGridView?.delegate = self
     }
     
     private func setupGestures() {
@@ -362,6 +364,23 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
 }
 
+
+extension ExperimentGraphView: GraphGridDelegate {
+    //Called by the grid view when the space needed by its tick labels changed, which shifts the
+    //plot area: the plot and the marker overlay have to follow, or the data no longer lines up
+    //with the grid. The grid recalculates this space in its own layout pass, i.e. after the data
+    //update that set the new grid, so without this callback the plot stays one update behind -
+    //which goes unnoticed while measuring but sticks when the next update never comes, like
+    //after switching to this tab while paused.
+    func updatePlotArea() {
+        let graphFrame = layoutManager.graphFrame
+        if graphRenderer.plotView.frame != graphFrame {
+            graphRenderer.updateFrames(graphFrame: graphFrame, zScaleFrame: layoutManager.zScaleFrame)
+            markerSystem.updateLayout(graphFrame: graphFrame)
+            markerSystem.refreshMarkers()
+        }
+    }
+}
 
 extension ExperimentGraphView: VisibilityControllableViewModule {
     var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }

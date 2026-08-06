@@ -801,10 +801,10 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
         
         // Update renderer with new data
         graphRenderer.updateData(data)
-        
-        // GridView might have new frame, so need to adapt the plotView with it
-        graphRenderer.updateFrames(graphFrame: layoutManager.graphFrame, zScaleFrame: layoutManager.zScaleFrame)
-        
+
+        //The plot frame is not updated here: if the new grid changes the space needed by the
+        //axis labels, the grid view's layout pass reports it via GraphGridDelegate.updatePlotArea
+
         // Update GL graph view
         graphRenderer.plotView.setPoints(
             points2D: data.dataSets.map { $0.points2D },
