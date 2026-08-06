@@ -56,6 +56,11 @@
                 <input parameter="pan">buffer</input>
             </noise>
         </audio>
+        <flashlight>
+            <input parameter="intensity">buffer</input>
+            <input parameter="frequency" type="value">10</input>
+            <input parameter="dutycycle" type="value">0.5</input>
+        </flashlight>
     </output>
     <views>
         <view label="v1">

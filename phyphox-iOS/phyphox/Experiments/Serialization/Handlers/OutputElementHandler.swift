@@ -257,9 +257,34 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     }
 }
 
+struct FlashlightOutputDescriptor {
+    let inputs: [AudioOutputSubInputDescriptor]
+}
+
+private final class FlashlightElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [FlashlightOutputDescriptor]()
+
+    //The input element of the flashlight is identical to the parameter inputs of the audio
+    //output plugins, so their handler is reused
+    private let inputHandler = AudioOutputSubInputElementHandler()
+
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["input": inputHandler]
+    }
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        results.append(FlashlightOutputDescriptor(inputs: inputHandler.results))
+    }
+}
+
 struct OutputDescriptor {
     let audioOutput: AudioOutputDescriptor?
     let bluetooth: [BluetoothOutputBlockDescriptor]
+    let flashlight: FlashlightOutputDescriptor?
 }
 
 final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
@@ -269,14 +294,15 @@ final class OutputElementHandler: ResultElementHandler, LookupElementHandler, At
 
     private let audioHandler = AudioElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
+    private let flashlightHandler = FlashlightElementHandler()
 
     var childHandlers: [String : ElementHandler]
 
     init() {
-        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler, "flashlight": flashlightHandler]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult(), bluetooth: bluetoothHandler.results))
+        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult(), bluetooth: bluetoothHandler.results, flashlight: try flashlightHandler.expectOptionalResult()))
     }
 }

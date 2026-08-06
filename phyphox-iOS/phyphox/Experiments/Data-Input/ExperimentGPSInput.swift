@@ -34,7 +34,11 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     private let timeReference: ExperimentTimeReference
     
     private var queue: DispatchQueue?
-    
+
+    //Reports authorization changes so the permission check can continue its dialog sequence
+    //once the user answered the system's location permission prompt
+    var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
+
     init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?, timeReference: ExperimentTimeReference) {
         
         self.latBuffer = latBuffer
@@ -81,6 +85,16 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         }
     }
     
+    @available(iOS 14.0, *)
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        onAuthorizationChange?(manager.authorizationStatus)
+    }
+
+    // For iOS 13 and older
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        onAuthorizationChange?(status)
+    }
+
     func clear() {
         
     }

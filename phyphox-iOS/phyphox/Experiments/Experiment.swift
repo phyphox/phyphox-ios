@@ -131,6 +131,7 @@ final class Experiment {
     let audioInputs: [ExperimentAudioInput]
     
     let audioOutput: ExperimentAudioOutput?
+    let flashlightOutput: ExperimentFlashlightOutput?
     
     let bluetoothDevices: [ExperimentBluetoothDevice]
     let bluetoothInputs: [ExperimentBluetoothInput]
@@ -152,7 +153,7 @@ final class Experiment {
     
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.analysis", attributes: [])
 
-    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
+    init(title: String, stateTitle: String?, description: String?, links: [ExperimentLink], category: String, icon: ExperimentIcon, color: UIColor?, appleBan: Bool, isLink: Bool, translation: ExperimentTranslationCollection?, buffers: [String: DataBuffer], timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], depthInput: ExperimentDepthInput?, cameraInput: ExperimentCameraInput?, gpsInputs: [ExperimentGPSInput], audioInputs: [ExperimentAudioInput], audioOutput: ExperimentAudioOutput?, flashlightOutput: ExperimentFlashlightOutput?, bluetoothDevices: [ExperimentBluetoothDevice], bluetoothInputs: [ExperimentBluetoothInput], bluetoothOutputs: [ExperimentBluetoothOutput], networkConnections: [NetworkConnection], viewDescriptors: [ExperimentViewCollectionDescriptor]?, analysis: ExperimentAnalysis, export: ExperimentExport?) {
         self.title = title
         self.stateTitle = stateTitle
         
@@ -182,6 +183,7 @@ final class Experiment {
         self.audioInputs = audioInputs
         
         self.audioOutput = audioOutput
+        self.flashlightOutput = flashlightOutput
         
         self.bluetoothDevices = bluetoothDevices
         self.bluetoothInputs = bluetoothInputs
@@ -227,7 +229,7 @@ final class Experiment {
     }
 
     convenience init(file: String, error: String) {
-        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, cameraInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
+        self.init(title: file, stateTitle: nil, description: error, links: [], category: localize("unknown"), icon: ExperimentIcon.string("!"), color: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), appleBan: false, isLink: false, translation: nil, buffers: [:], timeReference: ExperimentTimeReference(), sensorInputs: [], depthInput: nil, cameraInput: nil, gpsInputs: [], audioInputs: [], audioOutput: nil, flashlightOutput: nil, bluetoothDevices: [], bluetoothInputs: [], bluetoothOutputs: [], networkConnections: [], viewDescriptors: nil, analysis: ExperimentAnalysis(modules: [], sleep: 0.0, dynamicSleep: nil, onUserInput: false, requireFill: nil, requireFillThreshold: 1, requireFillDynamic: nil, timedRun: false, timedRunStartDelay: 0.0, timedRunStopDelay: 0.0, timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: []), export: nil)
         invalid = true;
     }
     
@@ -242,9 +244,11 @@ final class Experiment {
     /**
      Called when the experiment view controller will be presented.
      */
-    func willBecomeActive(_ dismiss: @escaping () -> Void) {
+    func willBecomeActive(onSuccess: @escaping () -> Void, _ dismiss: @escaping () -> Void) {
         if requiredPermissions != .none {
-            checkAndAskForPermissions(dismiss, locationManager: gpsInputs.first?.locationManager)
+            checkAndAskForPermissions(onSuccess: onSuccess, dismiss)
+        } else {
+            onSuccess()
         }
         analysis.queue = queue
         analysis.setNeedsUpdate(isPreRun: true)
@@ -322,107 +326,150 @@ final class Experiment {
         }
     }
     
-    private func checkAndAskForPermissions(_ failed: @escaping () -> Void, locationManager: CLLocationManager?) {
-        if requiredPermissions.contains(.microphone) {
+    //Presents an alert from the top-most presented view controller. These alerts appear outside
+    //the sequenced dialog flow of the experiment view (which may show the photosensitivity
+    //warning of a flashlight output at the same time), so they have to stack on whatever is
+    //already presented instead of failing silently.
+    private func presentPermissionAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+        var presenter = UIApplication.shared.keyWindow?.rootViewController
+        while let presented = presenter?.presentedViewController {
+            presenter = presented
+        }
+        presenter?.present(alert, animated: true, completion: nil)
+    }
+
+    //Checks all required permission categories one after the other and reports the overall
+    //outcome: onSuccess once every one of them is granted (which may be after the user answered
+    //system prompts), so the experiment view can continue its dialog sequence, or failed as
+    //soon as one is not, closing the experiment.
+    private func checkAndAskForPermissions(onSuccess: @escaping () -> Void, _ failed: @escaping () -> Void) {
+        let categories: [ExperimentRequiredPermission] = [.microphone, .location, .motionFitness, .camera].filter { requiredPermissions.contains($0) }
+        checkNextPermission(of: categories, onSuccess: onSuccess, failed)
+    }
+
+    private func checkNextPermission(of categories: [ExperimentRequiredPermission], onSuccess: @escaping () -> Void, _ failed: @escaping () -> Void) {
+        guard let requiredPermission = categories.first else {
+            onSuccess()
+            return
+        }
+
+        //Continue with the remaining categories once this one is granted
+        let granted = { self.checkNextPermission(of: Array(categories.dropFirst()), onSuccess: onSuccess, failed) }
+
+        if requiredPermission == .microphone {
             let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
-            
+
             switch status {
+            case .authorized:
+                granted()
             case .denied:
                 failed()
-                let alert = UIAlertController(title: localize("permission_microphone_required"), message: localize("permission_microphone_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                presentPermissionAlert(title: localize("permission_microphone_required"), message: localize("permission_microphone_denied"))
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_microphone_required"), message: "permission_microphone_restricted", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                presentPermissionAlert(title: localize("permission_microphone_required"), message: localize("permission_microphone_restricted"))
             case .notDetermined:
                 AVCaptureDevice.requestAccess(for: AVMediaType.audio, completionHandler: { (allowed) in
-                    if !allowed {
-                        failed()
+                    DispatchQueue.main.async {
+                        if allowed {
+                            granted()
+                        } else {
+                            failed()
+                        }
                     }
                 })
-                
-            default:
+            @unknown default:
                 break
             }
-        } else if requiredPermissions.contains(.location) {
-            
+        } else if requiredPermission == .location {
+
             let status = CLLocationManager.authorizationStatus()
-            
+
             switch status {
+            case .authorizedAlways, .authorizedWhenInUse:
+                granted()
             case .denied:
                 failed()
-                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                presentPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_denied"))
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_location_required"), message: localize("permission_location_restricted"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                presentPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_restricted"))
             case .notDetermined:
-                locationManager?.requestWhenInUseAuthorization()
-                break
-                
-            default:
+                guard let gpsInput = gpsInputs.first else {
+                    granted()
+                    return
+                }
+                //The system prompt for location has no completion handler, so the answer is
+                //picked up through the location manager's delegate
+                gpsInput.onAuthorizationChange = { [weak gpsInput] newStatus in
+                    DispatchQueue.main.async {
+                        switch newStatus {
+                        case .authorizedAlways, .authorizedWhenInUse:
+                            granted()
+                        case .denied, .restricted:
+                            failed()
+                            self.presentPermissionAlert(title: localize("permission_location_required"), message: localize("permission_location_denied"))
+                        case .notDetermined:
+                            //Reported when the prompt appears - keep waiting for the answer
+                            return
+                        @unknown default:
+                            break
+                        }
+                        gpsInput?.onAuthorizationChange = nil
+                    }
+                }
+                gpsInput.locationManager.requestWhenInUseAuthorization()
+            @unknown default:
                 break
             }
-        } else if requiredPermissions.contains(.motionFitness) {
-            print("Motion and Fitness permission required.")
+        } else if requiredPermission == .motionFitness {
             let status = CMAltimeter.authorizationStatus()
             switch status {
+            case .authorized:
+                granted()
             case .denied:
                 failed()
-                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_denied"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+                presentPermissionAlert(title: localize("permission_motion_required"), message: localize("permission_motion_denied"))
             case .restricted:
                 failed()
-                let alert = UIAlertController(title: localize("permission_motion_required"), message: localize("permission_motion_restricted"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-                UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-                
+                presentPermissionAlert(title: localize("permission_motion_required"), message: localize("permission_motion_restricted"))
             case .notDetermined:
                 let recorder = CMSensorRecorder()
                 DispatchQueue.global().async {
                     recorder.recordAccelerometer(forDuration: 0.1)
+                    DispatchQueue.main.async {
+                        granted()
+                    }
                 }
-                break
-                
-            default:
+            @unknown default:
                 break
             }
         }
-        
-        else if requiredPermissions.contains(.camera) {
+
+        else if requiredPermission == .camera {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
            switch status {
+           case .authorized:
+               granted()
            case .denied:
                failed()
-               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_denied"), preferredStyle: .alert)
-               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
+               presentPermissionAlert(title: localize("permission_camera_required"), message: localize("permission_camera_denied"))
            case .restricted:
                failed()
-               let alert = UIAlertController(title: localize("permission_camera_required"), message: localize("permission_camera_restricted"), preferredStyle: .alert)
-               alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
-               UIApplication.shared.keyWindow!.rootViewController!.present(alert, animated: true, completion: nil)
-               
+               presentPermissionAlert(title: localize("permission_camera_required"), message: localize("permission_camera_restricted"))
            case .notDetermined:
                AVCaptureDevice.requestAccess(for: .video, completionHandler: { (allowed) in
-                   if !allowed {
-                       failed()
+                   DispatchQueue.main.async {
+                       if allowed {
+                           granted()
+                       } else {
+                           failed()
+                       }
                    }
                })
-               break
-               
-           default:
+           @unknown default:
                break
            }
        }
@@ -475,6 +522,8 @@ final class Experiment {
         setKeepScreenOn(true)
         
         try startAudio(countdown: false, stopExperimentDelegate: stopExperimentDelegate)
+
+        flashlightOutput?.start()
         
         MotionSession.sharedSession().resetConfig()
         sensorInputs.forEach{ $0.configureMotionSession() }
@@ -505,7 +554,9 @@ final class Experiment {
         networkConnections.forEach { $0.stop() }
         
         stopAudio()
-        
+
+        flashlightOutput?.stop()
+
         setKeepScreenOn(false)
         
         running = false
@@ -568,6 +619,7 @@ extension Experiment: ExperimentAnalysisDelegate {
                 networkConnection.pushDataToBuffers()
                 networkConnection.doExecute()
             }
+            flashlightOutput?.updateState()
         }
     }
     
