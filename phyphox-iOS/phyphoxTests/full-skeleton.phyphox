@@ -67,8 +67,9 @@
                 <input type="value">0</input>
                 <output>buffer</output>
             </button>
-            <separator height="1"/>
-            <info label="l4"/>
+            <separator height="1" visibility="buffer"/>
+            <image src="img.png" scale="0.5" visibility="buffer"/>
+            <info label="l4" visibility="buffer"/>
             <graph label="l6" labelX="l7" labelY="l8">
                 <input axis="x">buffer</input>
                 <input axis="y">buffer</input>

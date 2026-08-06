@@ -16,9 +16,10 @@ struct SeparatorViewDescriptor: ViewDescriptor, Equatable {
     var visibilityBuffer: DataBuffer?
     let translation: ExperimentTranslationCollection? = nil
 
-    init(height: CGFloat, color: UIColor) {
+    init(height: CGFloat, color: UIColor, visibilityBuffer: DataBuffer?) {
         self.color = color
         self.height = height
+        self.visibilityBuffer = visibilityBuffer
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {

@@ -11,6 +11,7 @@ import Foundation
 protocol ViewDescriptor {
     var label: String { get }
     var translation: ExperimentTranslationCollection? { get }
+    var visibilityBuffer: DataBuffer? { get }
 
     func generateViewHTMLWithID(_ id: Int) -> String
     func generateDataCompleteHTMLWithID(_ id: Int) -> String

@@ -12,16 +12,28 @@ import QuartzCore
 
 private let spacing: CGFloat = 10.0
 
+//Like the RangeSlider below, a touch on the slider must never start a scroll or the swipe to the
+//next tab, which would otherwise claim a horizontal drag of the thumb. Unlike the RangeSlider,
+//UISlider may use internal gesture recognizers for its own tracking, so only recognizers of
+//other views are blocked.
+private final class PhyphoxSlider: UISlider {
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer.view === self {
+            return super.gestureRecognizerShouldBegin(gestureRecognizer)
+        }
+        return false
+    }
+}
 
 final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
 
     var descriptor: SliderViewDescriptor
     var analysisRunning: Bool = false
-    
+
     private let displayLink = DisplayLink(refreshRate: 5)
-    
+
     private var wantsUpdate = false
-    
+
     var active = false {
         didSet {
             displayLink.active = active
@@ -30,10 +42,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             }
         }
     }
-    
+
     var dynamicLabelHeight = 0.0
     private var textFieldWidth: CGFloat = 100.0
-    
+
     private let uiSlider: UISlider
     private let rangeSlider = RangeSlider(frame: CGRectZero)
     private let label = UILabel()
@@ -50,7 +62,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     required init(descriptor: SliderViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
-        uiSlider = UISlider()
+        uiSlider = PhyphoxSlider()
         super.init(frame: .zero)
         
         

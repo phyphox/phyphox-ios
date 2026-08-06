@@ -38,3 +38,7 @@ final class ExperimentSeparatorView: UIView, DescriptorBoundViewModule {
         }
     }
 }
+
+extension ExperimentSeparatorView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

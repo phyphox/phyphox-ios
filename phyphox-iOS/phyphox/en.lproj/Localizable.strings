@@ -76,6 +76,7 @@
 "start" = "Start";
 "clear_data" = "Clear data";
 "clear_data_question" = "Clear recorded data?";
+"clear_data_question_select" = "Clear recorded data and the following optional items?";
 "clear" = "Clear";
 "leave_experiment" = "Leave experiment";
 "leave_experiment_question" = "Leave this experiment and discard recorded data?";

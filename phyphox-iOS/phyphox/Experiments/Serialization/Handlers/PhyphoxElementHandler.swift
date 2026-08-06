@@ -387,7 +387,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private func makeViewDescriptor(from descriptor: ViewElementDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
         switch descriptor {
         case .separator(let descriptor):
-            return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
+
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "separator")
+
+            return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color, visibilityBuffer: visibilityBuffer)
         case .image(let descriptor):
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "image")

@@ -18,6 +18,9 @@ final class ExperimentViewCollectionDescriptor: ViewDescriptor {
     let label: String
     let translation: ExperimentTranslationCollection?
 
+    //Visibility only applies to the view elements within - neither platform hides a whole page
+    let visibilityBuffer: DataBuffer? = nil
+
     init(label: String, translation: ExperimentTranslationCollection?, views: [ViewDescriptor]) {
         self.views = views
         

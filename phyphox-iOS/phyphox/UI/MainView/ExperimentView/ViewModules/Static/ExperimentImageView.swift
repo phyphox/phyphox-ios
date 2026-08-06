@@ -107,3 +107,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
         }
     }
 }
+
+extension ExperimentImageView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

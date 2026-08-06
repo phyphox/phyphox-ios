@@ -55,6 +55,9 @@ final class WebServerUtilities {
         
         raw.replaceOccurrences(of: "<!-- [[clearDataTranslation]] -->", with: localize("clear_data"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[clearConfirmTranslation]] -->", with: localize("clear_data_question"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[clearConfirmTranslationSelect]] -->", with: localize("clear_data_question_select"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[translationOK]] -->", with: localize("ok"), options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[translationCancel]] -->", with: localize("cancel"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[exportTranslation]] -->", with: localize("export"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[switchToPhoneLayoutTranslation]] -->", with: localize("switchToPhoneLayout"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[switchColumns1Translation]] -->", with: localize("switchColumns1"), options: [], range: NSMakeRange(0, raw.length))
@@ -95,7 +98,13 @@ final class WebServerUtilities {
                     let escapedHTML = element.generateViewHTMLWithID(idx).replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
                     
                     viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
-                    
+
+                    if let visibilityBuffer = element.visibilityBuffer {
+                        let escapedName = visibilityBuffer.name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+                        viewLayout += ",\"visibilityInput\": \"\(escapedName)\""
+                    }
+
+
                     if let graph = element as? GraphViewDescriptor {
                         var dataInput = ""
                         let updateMode: String
@@ -165,7 +174,12 @@ final class WebServerUtilities {
         }
         
         viewLayout += "];\n"
-        
+
+        //The web interface expects a clearGroups list to offer keeping some data on clear. iOS
+        //does not implement the clearGroup attribute yet (see the file format 1.20 items), so
+        //this stays empty for now and the interface falls back to the plain clear dialog.
+        viewLayout += "var clearGroups = [];\n"
+
         /*var exportStr = ""
         
         if let export = experiment.export {

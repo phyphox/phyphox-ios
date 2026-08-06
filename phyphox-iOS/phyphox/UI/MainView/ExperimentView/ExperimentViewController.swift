@@ -147,7 +147,11 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
 
         tableView.alwaysBounceVertical = false
         tableView.estimatedRowHeight = min(view.frame.width, view.frame.height)
-        
+
+        //Apply the initial state of the visibility buffers, which may already hide elements
+        //before the first write to any of them arrives (base contents, defaults of view elements)
+        updateModuleVisibilities()
+
     }
 
     @available(*, unavailable)
@@ -213,14 +217,24 @@ extension ExperimentViewController: DataBufferObserver {
     func dataBufferUpdated(_ buffer: DataBuffer) {
         // Only update visibilities if not in exclusive mode
         guard exclusiveView == nil else { return }
+        // Visibility buffers may be rewritten with an unchanged value on every analysis cycle.
+        // Only reload the table if a visibility actually changed - a reload cancels running
+        // touch interactions (dragging a slider, scrolling) and is far too heavy to run per
+        // analysis cycle.
+        var visibilityChanged = false
         for (index, module) in modules.enumerated() {
             if let vcm = module.view as? VisibilityControllableViewModule, vcm.visibilityBuffer === buffer {
                 let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
-                modules[index].isVisible = isVisible
-                module.view?.isHidden = !isVisible
+                if modules[index].isVisible != isVisible || (module.view?.isHidden ?? false) == isVisible {
+                    modules[index].isVisible = isVisible
+                    module.view?.isHidden = !isVisible
+                    visibilityChanged = true
+                }
             }
         }
-        tableView.reloadData()
+        if visibilityChanged {
+            tableView.reloadData()
+        }
     }
     func userInputTriggered(_ buffer: DataBuffer) {}
 }
