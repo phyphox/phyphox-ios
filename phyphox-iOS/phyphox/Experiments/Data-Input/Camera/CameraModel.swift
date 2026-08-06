@@ -219,6 +219,7 @@ final class CameraModel {
     }
     
     func endSession(){
+        service.releaseFocusDistanceLock()
         service.session.stopRunning()
     }
 }

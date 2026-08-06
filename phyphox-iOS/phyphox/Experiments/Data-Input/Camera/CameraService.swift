@@ -324,9 +324,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 
             do {
                 let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
-                
+
+                //The old camera would keep a locked focus beyond this session otherwise
+                self.releaseFocusDistanceLock()
+
                 self.session.beginConfiguration()
-                
+
                 self.session.removeInput(self.videoDeviceInput)
                 
                 if self.session.canAddInput(videoDeviceInput) {
@@ -699,6 +702,21 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 lensPosition = 1.0
             }
             camera.setFocusModeLocked(lensPosition: lensPosition, completionHandler: nil)
+        }
+    }
+
+    //The locked focus mode sticks to the shared capture device beyond the lifetime of this
+    //session and would affect every other camera user in the app, including the QR code
+    //scanner. So it has to be released when the camera session ends or switches to another
+    //camera.
+    func releaseFocusDistanceLock() {
+        lockConfig { (_ camera: AVCaptureDevice) -> () in
+            guard camera.focusMode == .locked else { return }
+            if camera.isFocusModeSupported(.continuousAutoFocus) {
+                camera.focusMode = .continuousAutoFocus
+            } else if camera.isFocusModeSupported(.autoFocus) {
+                camera.focusMode = .autoFocus
+            }
         }
     }
 
