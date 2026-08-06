@@ -201,6 +201,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private func writePick(slot: Int, value: Double) {
         pickData[slot] = value
         descriptor.pickOutputs[slot]?.buffer.replaceValues([value])
+        //Like any user input (and like on Android), a pick triggers an analysis run even while
+        //the experiment is paused, so dependent views like a calibrated graph update immediately
+        descriptor.pickOutputs[slot]?.buffer.triggerUserInput()
     }
 
     //The pick buffers can change externally, for example through the analysis or when the data
