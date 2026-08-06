@@ -42,6 +42,17 @@
     <output>
         <audio>
             <input>buffer</input>
+            <tone waveform="square">
+                <input parameter="frequency" type="value">440</input>
+                <input parameter="amplitude" type="value">1</input>
+                <input parameter="duration" type="value">1</input>
+                <input parameter="pan" type="value">-0.5</input>
+            </tone>
+            <noise>
+                <input parameter="amplitude">buffer</input>
+                <input parameter="duration" type="value">1</input>
+                <input parameter="pan">buffer</input>
+            </noise>
         </audio>
     </output>
     <views>

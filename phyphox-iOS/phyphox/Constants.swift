@@ -114,12 +114,6 @@ extension RangeReplaceableCollection {
     }
 }
 
-func monoFloatFormatWithSampleRate(_ sampleRate: Double) -> AudioStreamBasicDescription {
-    let byteSize = UInt32(MemoryLayout<Float>.size)
-    
-    return AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsPacked|kAudioFormatFlagIsFloat, mBytesPerPacket: byteSize, mFramesPerPacket: 1, mBytesPerFrame: byteSize, mChannelsPerFrame: 1, mBitsPerChannel: UInt32(CHAR_BIT)*byteSize, mReserved: 0)
-}
-
 func generateDots(_ height: CGFloat) -> UIImage {
     let d = height/5.0
     let r = d/2.0

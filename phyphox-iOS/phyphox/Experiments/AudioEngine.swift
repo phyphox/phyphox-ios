@@ -107,8 +107,9 @@ final class AudioEngine {
         
         try avSession.setActive(true)
         
-        var audioDescription = monoFloatFormatWithSampleRate(Double(sampleRate))
-        format = AVAudioFormat(streamDescription: &audioDescription)
+        //Stereo output since the introduction of the pan parameter with file format 1.20,
+        //matching the Android implementation
+        format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 2)
         
         self.engine = AVAudioEngine()
         
@@ -184,9 +185,21 @@ final class AudioEngine {
             return
         }
         
-        var data = [Float](repeating: 0, count: Int(bufferFrameCount))
-        
+        var dataLeft = [Float](repeating: 0, count: Int(bufferFrameCount))
+        var dataRight = [Float](repeating: 0, count: Int(bufferFrameCount))
+
         var totalAmplitude: Float = 0.0
+
+        //Stereo factors for a pan parameter, matching the Android implementation: a centred
+        //signal plays at full amplitude on both channels and panning attenuates the opposite
+        //channel rather than boosting the near one.
+        func panFactors(_ parameter: AudioParameter) -> (left: Float, right: Float) {
+            var p = Float(parameter.getValue() ?? 0.0)
+            if !p.isFinite {
+                p = 0.0
+            }
+            return (left: p > 0 ? 1.0 - p : 1.0, right: p < 0 ? 1.0 + p : 1.0)
+        }
 
         //Beeper
         var beeping = false
@@ -208,14 +221,16 @@ final class AudioEngine {
             let phaseStep = beeper.f / (Double)(format.sampleRate)
             for i in 0..<end {
                 let lookupIndex = Int(beep!.phase*Double(sineLookupSize)) % sineLookupSize
-                data[i] += amplitude*sineLookup[lookupIndex]
+                let v = amplitude*sineLookup[lookupIndex]
+                dataLeft[i] += v
+                dataRight[i] += v
                 beep!.phase += phaseStep
             }
             if frameIndex > beep!.startFrame + beeper.duration {
                 beep = nil
             }
         }
-        
+
         if !beepOnly {
             addDirectBuffer: if let inBuffer = playbackOut.directSource {
                 let inArray = inBuffer.toArray()
@@ -226,13 +241,21 @@ final class AudioEngine {
                 let start = playbackOut.loop ? frameIndex % sampleCount : frameIndex
                 let end = min(inArray.count, start+Int(bufferFrameCount))
                 if end > start {
-                    data.replaceSubrange(0..<end-start, with: inArray[start..<end].map { Float($0) })
+                    for i in 0..<end-start {
+                        let v = Float(inArray[start+i])
+                        dataLeft[i] += v
+                        dataRight[i] += v
+                    }
                 }
                 if playbackOut.loop {
                     var offset = end-start
                     while offset < Int(bufferFrameCount) {
                         let subEnd = min(inArray.count, Int(bufferFrameCount)-offset)
-                        data.replaceSubrange(offset..<offset+subEnd, with: inArray[0..<subEnd].map { Float($0) })
+                        for i in 0..<subEnd {
+                            let v = Float(inArray[i])
+                            dataLeft[offset+i] += v
+                            dataRight[offset+i] += v
+                        }
                         offset += subEnd
                     }
                 }
@@ -262,6 +285,7 @@ final class AudioEngine {
                 if end < 1 {
                     continue
                 }
+                let (panLeft, panRight) = panFactors(tone.pan)
                 //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
                 let phaseStep = f / (Double)(format.sampleRate)
                 var phase = phases[i]
@@ -269,19 +293,25 @@ final class AudioEngine {
                 case .sine:
                     for i in 0..<end {
                         let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += Float(a)*sineLookup[lookupIndex]
+                        let v = Float(a)*sineLookup[lookupIndex]
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 case .square:
                     for i in 0..<end {
                         let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                        let v = (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 case .sawtooth:
                     for i in 0..<end {
                         let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        let v = Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 }
@@ -306,8 +336,12 @@ final class AudioEngine {
                 if end < 1 {
                     break addNoise
                 }
+                let (panLeft, panRight) = panFactors(noise.pan)
+                //Like on Android, both channels receive the same random value
                 for i in 0..<end {
-                    data[i] += Float.random(in: -Float(a)...Float(a))
+                    let v = Float.random(in: -Float(a)...Float(a))
+                    dataLeft[i] += panLeft * v
+                    dataRight[i] += panRight * v
                 }
             }
         }
@@ -316,20 +350,22 @@ final class AudioEngine {
             stop()
             return
         }
-        
+
         if playbackOut.normalize {
             for i in 0..<Int(bufferFrameCount) {
-                data[i] = data[i] / totalAmplitude
+                dataLeft[i] = dataLeft[i] / totalAmplitude
+                dataRight[i] = dataRight[i] / totalAmplitude
             }
         }
-        
+
         frameIndex += Int(bufferFrameCount)
-            
+
         guard let buffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: bufferFrameCount) else {
             stop()
             return
         }
-        buffer.floatChannelData?[0].update(from: &data, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[0].update(from: &dataLeft, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[1].update(from: &dataRight, count: Int(bufferFrameCount))
         buffer.frameLength = UInt32(bufferFrameCount)
         
         if !playing {

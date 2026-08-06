@@ -43,11 +43,13 @@ struct ExperimentAudioOutputTone: Equatable {
     let frequency: AudioParameter
     let amplitude: AudioParameter
     let duration: AudioParameter
+    let pan: AudioParameter
 }
 
 struct ExperimentAudioOutputNoise: Equatable {
     let amplitude: AudioParameter
     let duration: AudioParameter
+    let pan: AudioParameter
 }
 
 struct ExperimentAudioOutput: Equatable {

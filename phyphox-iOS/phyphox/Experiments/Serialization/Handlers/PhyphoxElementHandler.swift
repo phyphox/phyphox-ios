@@ -606,7 +606,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 var frequency = AudioParameter.value(value: 440.0)
                 var amplitude = AudioParameter.value(value: 1.0)
                 var duration = AudioParameter.value(value: 1.0)
-                
+                var pan = AudioParameter.value(value: 0.0)
+
                 for input in toneDescriptor.inputs {
                     let target: String
                     let parameter: AudioParameter
@@ -625,17 +626,19 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     case "frequency": frequency = parameter
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
+                    case "pan": pan = parameter
                     default: throw ElementHandlerError.message("Invalid parameter for input of audio output tone.")
                     }
                 }
-                
-                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration)
+
+                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration, pan: pan)
                 tones.append(tone)
             }
-            
+
             var amplitude = AudioParameter.value(value: 1.0)
             var duration = AudioParameter.value(value: 1.0)
-            
+            var pan = AudioParameter.value(value: 0.0)
+
             if let noiseDescriptor = audioOutput.noise {
                 for input in noiseDescriptor.inputs {
                     let target: String
@@ -654,10 +657,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                     switch target {
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
+                    case "pan": pan = parameter
                     default: throw ElementHandlerError.message("Invalid parameter for input of audio output noise.")
                     }
                 }
-                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration)
+                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration, pan: pan)
             } else {
                 noise = nil
             }
