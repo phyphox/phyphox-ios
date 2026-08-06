@@ -91,6 +91,11 @@ final class GLGraphView: GLKView {
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {
+            //The texture must be created in this view's own context. Without this, it ends up
+            //in the context of whichever GLGraphView was created last (like the z scale of the
+            //same graph), and the map renders black.
+            EAGLContext.setCurrent(context)
+
             let textureData = UnsafeMutablePointer<GLubyte>.allocate(capacity: colorMap.count*3)
             for (i, color) in colorMap.enumerated() {
                 (textureData + 3*i).initialize(to: color.redByte)

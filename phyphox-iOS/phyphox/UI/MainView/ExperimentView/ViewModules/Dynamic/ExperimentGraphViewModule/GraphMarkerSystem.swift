@@ -165,7 +165,7 @@ class GraphMarkerSystem {
                 
         for (i, dataSet) in dataSets.enumerated() {
             
-            let n = hasZData ? dataSet.points2D.count : dataSet.points2D.count
+            let n = hasZData ? dataSet.points3D.count : dataSet.points2D.count
             for j in 0..<n {
                 if descriptor.style.count > i && (descriptor.style[i] == .hbars || descriptor.style[i] == .vbars) {
                     if j % 6 != 2 && j % 6 != 3 {
