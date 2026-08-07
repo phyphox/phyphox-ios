@@ -26,6 +26,9 @@ class SpectroscopyAnalyzer: AnalyzingModule {
 
     var dispersionWidth: Int = 0
     var spectrumStartIndex: Int = 0
+    //Number of spectrum pixels the kernel actually computed; smaller than dispersionWidth when
+    //the selection exceeds the camera frame
+    var computedWidth: Int = 0
     var analysisOrientation: SpectrumOrientation = .landscape
 
     init(result: DataBuffer?, xAxis: DataBuffer?) {
@@ -80,9 +83,15 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         if analysisOrientation == .landscape {
             dispersionWidth = selectedWidthForAnalysis
             spectrumStartIndex = Int(selectionState.x1)
+            //The kernel clamps the selection to the texture, so columns beyond it are never
+            //written. Restrict the read-back to the computed range - like Android, which crops
+            //its output to the range that received contributions - so a selection exceeding the
+            //camera frame cannot leak stale values from the reused output buffer.
+            computedWidth = min(dispersionWidth, max(0, min(Int(selectionState.x2), cameraImageTextureY.width) - Int(selectionState.x1)))
         } else {
             dispersionWidth = selectedHeightForAnalysis
             spectrumStartIndex = Int(selectionState.y1)
+            computedWidth = min(dispersionWidth, max(0, min(Int(selectionState.y2), cameraImageTextureY.height) - Int(selectionState.y1)))
         }
 
         // Ensure dimensions are valid to prevent crashes
@@ -114,7 +123,8 @@ class SpectroscopyAnalyzer: AnalyzingModule {
 
     override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
 
-        guard let buffer = metalOutputBuffer, dispersionWidth > 0 else {
+        //Like on Android, a spectrum without any contributing pixels yields empty output arrays
+        guard let buffer = metalOutputBuffer, dispersionWidth > 0, computedWidth > 0 else {
             latestResults = []
             latestxAxis = []
             return
@@ -124,14 +134,14 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         //SpectroscopyAnalyzer, so spectra stay comparable across exposure settings.
         let exposureFactor = pow(2.0, Double(cameraSettings.currentApertureValue))/2.0 * 100.0/Double(cameraSettings.currentIso) * (1.0/60.0)/(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
 
-        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: dispersionWidth)
+        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: computedWidth)
 
         //Built as fresh arrays and assigned in one go: writeToBuffers may still read the previous
         //frame's arrays on the data queue, and an in-place update would hand it a torn spectrum.
-        var results = [Double](repeating: 0.0, count: dispersionWidth)
-        var xValues = [Double](repeating: 0.0, count: dispersionWidth)
+        var results = [Double](repeating: 0.0, count: computedWidth)
+        var xValues = [Double](repeating: 0.0, count: computedWidth)
 
-        for i in 0..<dispersionWidth {
+        for i in 0..<computedWidth {
             results[i] = Double(luminancePointer[i]) * exposureFactor
             //Absolute pixel position along the dispersion axis of the camera image, like on
             //Android, so a calibration stays valid when the analysis area is moved.
