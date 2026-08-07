@@ -224,6 +224,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if !cameraModel.autoExposureEnabled {
             return
         }
+        //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
+        //excluded from its strategy. If both are locked, there is nothing left to adjust.
+        let isoLocked = cameraModel.locked.keys.contains("iso")
+        let shutterLocked = cameraModel.locked.keys.contains("shutter_speed")
+        if isoLocked && shutterLocked {
+            return
+        }
         var adjust = 1.0
         var targetExposure = Double(0.5 * pow(2.0, cameraModel.cameraSettingsModel.currentExposureValue))
         if targetExposure > 0.95 {
@@ -268,17 +275,52 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             maxExposureTime = CMTime(value: 1, timescale: 15)
         }
         
-        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel, maxExposureTime: maxExposureTime)
-        
+        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel, maxExposureTime: maxExposureTime, isoLocked: isoLocked, shutterLocked: shutterLocked)
+
         setExposureDurationIso(duration: shutter, iso: iso)
     }
-    
-    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel, maxExposureTime: CMTime) -> (shutter: CMTime, iso: Int) {
+
+    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel, maxExposureTime: CMTime, isoLocked: Bool = false, shutterLocked: Bool = false) -> (shutter: CMTime, iso: Int) {
         let shutterTarget = state.maxFrameDuration
-        
+
         var iso = state.currentIso
         var shutter = state.currentShutterSpeed
-        
+
+        if isoLocked && shutterLocked { //Nothing we are allowed to adjust
+            return (shutter, iso)
+        }
+
+        if shutterLocked {
+            //Only the ISO may be changed, so pick the available ISO that gets closest to the required adjustment
+            let targetIso = Double(iso) * adjust
+            var isoOption = iso
+            var optionRating = Double.greatestFiniteMagnitude
+            for isoCandidate in state.isoValues {
+                let thisIso = Int(isoCandidate)
+                let rating = abs(log(Double(thisIso)/targetIso)/log(2.0))
+                if rating < optionRating {
+                    isoOption = thisIso
+                    optionRating = rating
+                }
+            }
+            return (shutter, isoOption)
+        }
+
+        if isoLocked {
+            //Only the shutter speed may be changed
+            var newShutter = shutter.seconds * adjust
+            if newShutter > state.maxShutterSpeed.seconds {
+                newShutter = state.maxShutterSpeed.seconds
+            }
+            if newShutter > maxExposureTime.seconds {
+                newShutter = maxExposureTime.seconds
+            }
+            if newShutter < state.minShutterSpeed.seconds {
+                newShutter = state.minShutterSpeed.seconds
+            }
+            return (CMTime(value: Int64(newShutter*1_000_000_000), timescale: 1_000_000_000), iso)
+        }
+
         func isoShutterRating(iso: Int, shutter: CMTime) -> Double {
             let isoPenalty = abs(log(Double(iso)/50.0)/log(2.0)) //Prefer ISO 100
             let shutterPenalty = 10*abs(log(shutter.seconds/shutterTarget)/log(2.0)) //Strongly prefer shutter time of maxFrameDuration

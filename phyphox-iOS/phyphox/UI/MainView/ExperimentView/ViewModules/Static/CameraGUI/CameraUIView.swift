@@ -548,6 +548,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             let autoExposureState = !(self.cameraModelOwner?.cameraModel?.autoExposureEnabled ?? false)
             self.autoExposureText?.text = autoExposureState ? localize("on") : localize("off")
             self.cameraModelOwner?.cameraModel?.cameraSettingsModel.service?.setExposureTo(auto: autoExposureState)
+            self.manageLockedButtons()
         })
     }
 
@@ -863,13 +864,17 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private func manageLockedButtons(){
         apertureText.setLocked(true)
         apertureButton.setLocked(true)
-        
-        guard let lockedControls = cameraModelOwner?.cameraModel?.locked.keys else { return }
-        
-        shutterSpeedButton.setLocked(lockedControls.contains("shutter_speed"))
-        shutterSpeedText.setLocked(lockedControls.contains("shutter_speed"))
-        isoButton.setLocked(lockedControls.contains("iso"))
-        isoText.setLocked(lockedControls.contains("iso"))
+
+        guard let cameraModel = cameraModelOwner?.cameraModel else { return }
+        let lockedControls = cameraModel.locked.keys
+        //While auto exposure is enabled, it controls shutter speed and ISO itself, so these
+        //cannot be set by the user
+        let autoExposure = cameraModel.autoExposureEnabled
+
+        shutterSpeedButton.setLocked(autoExposure || lockedControls.contains("shutter_speed"))
+        shutterSpeedText.setLocked(autoExposure || lockedControls.contains("shutter_speed"))
+        isoButton.setLocked(autoExposure || lockedControls.contains("iso"))
+        isoText.setLocked(autoExposure || lockedControls.contains("iso"))
         exposureButton.setLocked(lockedControls.contains("exposure"))
         exposureText.setLocked(lockedControls.contains("exposure"))
     }
