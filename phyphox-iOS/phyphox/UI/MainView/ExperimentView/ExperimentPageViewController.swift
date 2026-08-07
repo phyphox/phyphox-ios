@@ -423,6 +423,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     callbackHandedOver = true
                 }
             }
+            for bluetoothOutput in experiment.bluetoothOutputs {
+                bluetoothOutput.requestSend(triggerId: trigger)
+            }
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {

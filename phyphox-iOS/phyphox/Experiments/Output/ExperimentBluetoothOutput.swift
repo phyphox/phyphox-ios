@@ -21,16 +21,26 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
         let offset: UInt16
         let buffer: DataBuffer
         let keep: Bool
-        
+        let triggerId: String?
+
         static func ==(lhs: BluetoothInput, rhs: BluetoothInput) -> Bool {
             return lhs.char == rhs.char &&
                 lhs.buffer == rhs.buffer &&
                 lhs.offset == rhs.offset &&
-                lhs.keep == rhs.keep
+                lhs.keep == rhs.keep &&
+                lhs.triggerId == rhs.triggerId
         }
     }
-    
+
     private var inputList: [BluetoothInput] = []
+
+    //Trigger ids requested by button presses since the last send. Inputs carrying a triggerId are
+    // only sent when their id has been requested; all others are sent on every analysis cycle.
+    private var requestedTriggers = Set<String>()
+
+    func requestSend(triggerId: String) {
+        requestedTriggers.insert(triggerId)
+    }
     
     init(device: ExperimentBluetoothDevice, inputList: [BluetoothInput], configList: [BluetoothConfigDescriptor]) {
         
@@ -67,6 +77,9 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
         do {
             var out: [CBUUID:Data] = [:]
             for input in inputList {
+                if let triggerId = input.triggerId, !triggerId.isEmpty, !requestedTriggers.contains(triggerId) {
+                    continue
+                }
                 if let dataConverted = input.conversion?.convert(data: input.buffer) {
                     if !out.keys.contains(input.char) {
                         out[input.char] = Data()
@@ -87,6 +100,7 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
                     try device.writeCharacteristic(uuid: uuid, data: outBuffer)
                 }
             }
+            requestedTriggers.removeAll()
         } catch BluetoothDeviceError.generic(let msg) {
             device.disconnect()
             device.showError(msg: msg)
@@ -110,6 +124,7 @@ extension BluetoothInputDescriptor: Equatable {
     static func ==(lhs: BluetoothInputDescriptor, rhs: BluetoothInputDescriptor) -> Bool {
         return lhs.bufferName == rhs.bufferName &&
             lhs.char == rhs.char &&
-            lhs.offset == rhs.offset
+            lhs.offset == rhs.offset &&
+            lhs.triggerId == rhs.triggerId
     }
 }

@@ -113,7 +113,11 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
     
     var pendingWrites = 0
-    
+    //Newest value per characteristic waiting for the transmit queue to accept writes without
+    //response. Coalescing: a newer value replaces an unsent one, so the device always receives
+    //the latest data and a triggered write cannot get lost to a busy radio.
+    var pendingWithoutResponseWrites: [String: Data] = [:]
+
     init(delegate: UpdateConnectedDeviceDelegate) {
         ExperimentBluetoothDevice.updateDelegate = delegate
         
@@ -318,6 +322,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     override func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected: \(peripheral.name ?? "No Name")")
         pendingWrites = 0
+        pendingWithoutResponseWrites.removeAll()
         peripheral.readRSSI()
         peripheral.discoverServices(nil)
         after(10) {
@@ -397,9 +402,16 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     public func writeCharacteristic(uuid: CBUUID, data: Data) throws {
         if let char = characteristics_map[uuid.uuid128String] {
-            if pendingWrites < 10 {
+            if char.properties.contains(.writeWithoutResponse) {
+                //didWriteValueFor is never called for writes without response, so the
+                //pendingWrites accounting must not be used here (it would fill up and block all
+                //further writes). Instead the newest value per characteristic is kept until the
+                //transmit queue accepts it (flushed again from peripheralIsReady).
+                pendingWithoutResponseWrites[uuid.uuid128String] = data
+                flushWithoutResponseWrites()
+            } else if pendingWrites < 10 {
                 pendingWrites += 1
-                peripheral?.writeValue(data, for: char, type: char.properties.contains(.writeWithoutResponse) ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse)
+                peripheral?.writeValue(data, for: char, type: .withResponse)
             }
         } else {
             throw BluetoothDeviceError.generic(localize("bt_error_writing") + " \(uuid)")
@@ -408,6 +420,22 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: (any Error)?) {
         pendingWrites -= 1
+    }
+
+    private func flushWithoutResponseWrites() {
+        while !pendingWithoutResponseWrites.isEmpty, let peripheral = peripheral, peripheral.canSendWriteWithoutResponse {
+            guard let (key, data) = pendingWithoutResponseWrites.first else {
+                return
+            }
+            pendingWithoutResponseWrites.removeValue(forKey: key)
+            if let char = characteristics_map[key] {
+                peripheral.writeValue(data, for: char, type: .withoutResponse)
+            }
+        }
+    }
+
+    func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        flushWithoutResponseWrites()
     }
     
     override func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
