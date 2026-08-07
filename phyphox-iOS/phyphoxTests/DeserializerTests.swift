@@ -267,3 +267,52 @@ final class ForeignNamespaceTests: XCTestCase {
         XCTAssertEqual(experiment.buffers.count, 1)
     }
 }
+
+//Pins the bundled-asset fallback: an externally loaded experiment that references an image
+//shipped with phyphox (hue.png) without delivering it alongside the file must resolve it from
+//the app bundle, matching the Android implementation.
+final class ResourceFallbackTests: XCTestCase {
+    func testBundledImageFallback() throws {
+        let xml = """
+        <phyphox version="1.14">
+            <title>restest</title>
+            <category>test</category>
+            <description>d</description>
+            <views>
+                <view label="v">
+                    <image src="hue.png"/>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+        XCTAssertEqual(experiment.resources, ["hue.png"])
+        //No source is set, so there is no res folder next to the file - the bundled image must be found
+        let resolved = try experiment.resolveResource("hue.png").unwrap()
+        XCTAssertTrue(resolved.path.hasSuffix("phyphox-experiments/res/hue.png"))
+        XCTAssertNil(experiment.resolveResource("doesnotexist.png"))
+    }
+
+    func testPathTraversalIsRefused() throws {
+        let xml = """
+        <phyphox version="1.14">
+            <title>restest</title>
+            <category>test</category>
+            <description>d</description>
+            <views>
+                <view label="v">
+                    <image src="../../hue.png"/>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+        //Even though the file declares it as a resource, traversal must not resolve - the
+        //target of the traversal (phyphox-experiments/hue.png relative to the bundled res
+        //folder... anything at all) must stay unreachable
+        XCTAssertNil(experiment.resolveResource("../../hue.png"))
+        XCTAssertNil(experiment.resolveResource("res/../../hue.png"))
+    }
+}

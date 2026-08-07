@@ -130,13 +130,11 @@ final class ExperimentWebServer {
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
             let query = queryDictionary(components?.query ?? "")
             if let src = query["src"] {
-                if self.experiment.resources.contains(src) {
-                    if let file = self.experiment.resourceFolder?.appendingPathComponent(src) {
-                        if FileManager.default.fileExists(atPath: file.path) {
-                            completionBlock(GCDWebServerFileResponse(file: file.path))
-                            return
-                        }
-                    }
+                //Resolves against the experiment's res folder with a fallback to the images
+                //bundled with phyphox, matching the fallback of the image view element
+                if self.experiment.resources.contains(src), let file = self.experiment.resolveResource(src), let response = GCDWebServerFileResponse(file: file.path) {
+                    completionBlock(response)
+                    return
                 }
                 returnErrorResponse(["error": "Unknown file."] as AnyObject)
             } else {

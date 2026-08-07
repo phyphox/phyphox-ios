@@ -20,11 +20,19 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     required init?(descriptor: ImageViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
-        if let resourceFolder = resourceFolder {
+        //The src attribute comes from the experiment file, which is not trustworthy: refuse any
+        //path traversal so it cannot reach outside the resource folder
+        let srcIsSafe = !descriptor.src.components(separatedBy: "/").contains("..")
+        if srcIsSafe, let resourceFolder = resourceFolder {
             let src = resourceFolder.appendingPathComponent(descriptor.src).path
             image = UIImage(contentsOfFile: src)
         }
-        
+        if srcIsSafe, image == nil {
+            //Fall back to the internal images bundled with phyphox (at the moment only
+            //hue.png), which allows external experiment files to reuse the bundled images
+            image = UIImage(contentsOfFile: experimentsBaseURL.appendingPathComponent("res").appendingPathComponent(descriptor.src).path)
+        }
+
         if let image = image {
             let iv = UIImageView(image: image)
             imageView = iv

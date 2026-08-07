@@ -114,6 +114,27 @@ final class Experiment {
         }
         return Array(res)
     }
+
+    //Resolves a resource named by a view element: externally loaded experiments deliver their
+    //resources in a res folder alongside the XML file, so this one is tried first, with a
+    //fallback to the internal images bundled with phyphox (at the moment only hue.png). The
+    //fallback allows external experiment files to reuse the bundled images.
+    func resolveResource(_ src: String) -> URL? {
+        //A resource name comes from the experiment file, which is not trustworthy: refuse any
+        //path traversal so a malicious file cannot reach outside its resource folder (relevant
+        //especially for the /res endpoint, which serves the resolved file over the network)
+        guard !src.components(separatedBy: "/").contains("..") else {
+            return nil
+        }
+        if let file = resourceFolder?.appendingPathComponent(src), FileManager.default.fileExists(atPath: file.path) {
+            return file
+        }
+        let bundled = experimentsBaseURL.appendingPathComponent("res").appendingPathComponent(src)
+        if FileManager.default.fileExists(atPath: bundled.path) {
+            return bundled
+        }
+        return nil
+    }
     
     var appleBan: Bool
     var invalid = false
@@ -297,6 +318,10 @@ final class Experiment {
             if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
                 try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: false)
                 for resource in self.resources {
+                    guard !resource.components(separatedBy: "/").contains("..") else {
+                        print("Refusing to save resource with path traversal: \(resource)")
+                        continue
+                    }
                     do {
                         try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: localResourceFolder.appendingPathComponent(resource))
                     } catch {
