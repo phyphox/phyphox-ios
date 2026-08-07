@@ -236,3 +236,34 @@ final class RemoteGraphFollowXTests: XCTestCase {
         XCTAssertTrue(js.contains("\"min\":0.0, \"max\":10.0"), "followX must keep the initial range from the attributes")
     }
 }
+
+//Foreign XML namespaces (i.e. editor metadata embedded in an experiment file) must be skipped
+//with their entire subtree instead of failing the whole file, matching the Android parser.
+final class ForeignNamespaceTests: XCTestCase {
+    func testForeignNamespaceElementsAreSkipped() throws {
+        let xml = """
+        <phyphox version="1.6" xmlns:editor="http://example.org/editor-metadata">
+            <editor:meta created="today"><editor:block id="4">nested content</editor:block></editor:meta>
+            <title>nstest</title>
+            <category>test</category>
+            <description>foreign namespace test<editor:note>not part of the description</editor:note></description>
+            <data-containers>
+                <container>buffer</container>
+                <editor:layout x="1" y="2"/>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <editor:hint>irrelevant</editor:hint>
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+        XCTAssertEqual(experiment.title, "nstest")
+        XCTAssertEqual(experiment.localizedDescription, "foreign namespace test", "foreign element text must not leak into surrounding text content")
+        XCTAssertNotNil(experiment.buffers["buffer"])
+        XCTAssertEqual(experiment.buffers.count, 1)
+    }
+}

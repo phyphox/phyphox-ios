@@ -140,6 +140,13 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     /// Used internally to store errors thrown by element handlers
     private var parsingError: Error?
 
+    /// Namespace of the root element (usually none or a default xmlns). Elements from any other
+    /// namespace (i.e. editor metadata) are skipped with their entire subtree instead of being
+    /// treated as unknown elements, matching the Android implementation.
+    private var rootNamespaceURI: String? = nil
+    /// Depth within a skipped foreign-namespace subtree; 0 when not skipping
+    private var skipDepth = 0
+
     /// Initializer for a reusable document parser. The document handler is a result element handler responsible for the entire document. Its `startElement` method is called when parsing the document begins and is provided with empty attributes. The `childHandler` method is called when the root element is encountered. The document handler needs to return the element handler for the root element, if the root element name is known, or throw an error. The `endElement` method is called when parsing the document has finished. This methid is called with empty attributes and empty text content. The implementaiton of `endElement` of the document handler needs to produce its resulting object and append it to its `results` array. The document parser subsequently returns the produced result from the `parse(stream)` method.
     init(documentHandler: DocumentHandler) {
         self.documentHandler = documentHandler
@@ -163,10 +170,14 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
         textStack = [""]
         attributesStack = [.empty]
 
+        rootNamespaceURI = nil
+        skipDepth = 0
+
         documentHandler.clear()
         documentHandler.clearChildHandlers()
 
         let parser = XMLParser(stream: stream)
+        parser.shouldProcessNamespaces = true
         parser.delegate = self
         parser.parse()
 
@@ -200,6 +211,21 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes: [String: String]) {
+        if skipDepth > 0 {
+            skipDepth += 1
+            return
+        }
+        if let rootNamespaceURI = rootNamespaceURI {
+            if (namespaceURI ?? "") != rootNamespaceURI {
+                //This element belongs to a foreign namespace (i.e. from an editor). Ignore it
+                //and its children.
+                skipDepth = 1
+                return
+            }
+        } else {
+            rootNamespaceURI = namespaceURI ?? ""
+        }
+
         guard let (_, currentHandler) = handlerStack.last else {
             parser.abortParsing()
             return
@@ -223,6 +249,9 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
+        if skipDepth > 0 {
+            return
+        }
         guard let currentText = textStack.popLast() else {
             parser.abortParsing()
             return
@@ -232,6 +261,10 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if skipDepth > 0 {
+            skipDepth -= 1
+            return
+        }
         guard let currentText = textStack.popLast(),
             let (currentTagName, elementHandler) = handlerStack.popLast(),
             let attributes = attributesStack.popLast(),
