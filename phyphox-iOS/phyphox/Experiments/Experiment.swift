@@ -226,6 +226,11 @@ final class Experiment {
         
         
         analysis.delegate = self
+        //The queue must be assigned before anything can trigger an analysis run. Input view
+        //modules write their initial values (with a user-input trigger) already while the view
+        //is being built, i.e. before willBecomeActive - without a queue that run would never
+        //execute and its busy flag would block the analysis permanently.
+        analysis.queue = queue
     }
 
     convenience init(file: String, error: String) {

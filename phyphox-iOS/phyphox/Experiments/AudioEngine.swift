@@ -144,6 +144,32 @@ final class AudioEngine {
         try self.engine!.start()
     }
     
+    //Audio parameters are handled like on Android, which processes them as float and replaces
+    //non-finite values (including doubles beyond float range) with zero, so an invalid buffer
+    //value cannot permanently disable the tone generator.
+    private func sanitizedParameter(_ value: Double?) -> Double {
+        guard let value = value else {
+            return 0.0
+        }
+        let f = Float(value)
+        return f.isFinite ? Double(f) : 0.0
+    }
+
+    //Double to Int like a Java (int) cast: NaN becomes 0, out-of-range values saturate instead
+    //of trapping.
+    private func javaInt(_ value: Double) -> Int {
+        if value.isNaN {
+            return 0
+        }
+        if value >= Double(Int32.max) {
+            return Int(Int32.max)
+        }
+        if value <= Double(Int32.min) {
+            return Int(Int32.min)
+        }
+        return Int(value)
+    }
+
     func play() {
         guard let playbackOut = playbackOut else {
             return
@@ -162,10 +188,10 @@ final class AudioEngine {
                 endIndex = max(endIndex, inBuffer.count);
             }
             for tone in playbackOut.tones {
-                endIndex = max(endIndex, Int((tone.duration.getValue() ?? 0.0) * format.sampleRate))
+                endIndex = max(endIndex, javaInt(sanitizedParameter(tone.duration.getValue()) * format.sampleRate))
             }
             if let noise = playbackOut.noise {
-                endIndex = max(endIndex, Int((noise.duration.getValue() ?? 0.0) * format.sampleRate))
+                endIndex = max(endIndex, javaInt(sanitizedParameter(noise.duration.getValue()) * format.sampleRate))
             }
             
             appendBufferToPlayback()
@@ -263,14 +289,17 @@ final class AudioEngine {
             }
 
             for (i, tone) in playbackOut.tones.enumerated() {
-                guard let f = tone.frequency.getValue(), f > 0 else {
+                let f = sanitizedParameter(tone.frequency.getValue())
+                guard f > 0 else {
                     continue
                 }
-                guard let a = tone.amplitude.getValue(), a > 0 else {
+                let a = sanitizedParameter(tone.amplitude.getValue())
+                guard a > 0 else {
                     continue
                 }
                 totalAmplitude += Float(a)
-                guard let d = tone.duration.getValue(), d > 0 else {
+                let d = sanitizedParameter(tone.duration.getValue())
+                guard d > 0 else {
                     continue
                 }
                 guard let sineLookup = sineLookup else {
@@ -280,7 +309,7 @@ final class AudioEngine {
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     continue
@@ -292,7 +321,7 @@ final class AudioEngine {
                 switch tone.waveform {
                 case .sine:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
                         let v = Float(a)*sineLookup[lookupIndex]
                         dataLeft[i] += panLeft * v
                         dataRight[i] += panRight * v
@@ -300,7 +329,7 @@ final class AudioEngine {
                     }
                 case .square:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
                         let v = (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
                         dataLeft[i] += panLeft * v
                         dataRight[i] += panRight * v
@@ -308,7 +337,7 @@ final class AudioEngine {
                     }
                 case .sawtooth:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
                         let v = Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
                         dataLeft[i] += panLeft * v
                         dataRight[i] += panRight * v
@@ -320,18 +349,20 @@ final class AudioEngine {
             }
 
             addNoise: if let noise = playbackOut.noise {
-                guard let a = noise.amplitude.getValue(), a > 0 else {
+                let a = sanitizedParameter(noise.amplitude.getValue())
+                guard a > 0 else {
                     break addNoise
                 }
                 totalAmplitude += Float(a)
-                guard let d = noise.duration.getValue(), d > 0 else {
+                let d = sanitizedParameter(noise.duration.getValue())
+                guard d > 0 else {
                     break addNoise
                 }
                 let end: Int
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     break addNoise

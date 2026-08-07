@@ -176,7 +176,15 @@ final class ExperimentAnalysis {
         let linearOffset1970 = timeReference.getSystemTimeReferenceByIndex(i: 0).timeIntervalSince1970
         
         if (c >= 0) {
-            queue?.async(execute: {
+            guard let queue = queue else {
+                //Without a queue the modules cannot run. Complete as skipped instead of
+                //returning silently, which would leave the busy flag set forever.
+                mainThread {
+                    completion(false)
+                }
+                return
+            }
+            queue.async(execute: {
                 for (i, analysis) in modulesInCycle.enumerated() {
                     analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
                     if i == c {

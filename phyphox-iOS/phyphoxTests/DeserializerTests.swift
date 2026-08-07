@@ -148,3 +148,31 @@ final class DeserializerTests: XCTestCase {
         }
     }
 }
+
+//Regression test for the analysis deadlock that broke the tone generator: input view
+//modules (sliders, edit fields) write their initial values with a user-input trigger while the
+//view is being built, i.e. before the experiment assigned the analysis queue. The triggered run
+//could then never execute and its busy flag blocked all analysis permanently.
+final class AnalysisTriggerTests: XCTestCase {
+    func testEarlyUserInputTriggerDoesNotDeadlockAnalysis() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("tone_generator.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        let signal = try experiment.buffers["signal"].unwrap()
+
+        //Simulate an input view module writing its initial value during view construction
+        let sliderBuffer = try experiment.buffers["a1in"].unwrap()
+        sliderBuffer.replaceValues([1.0])
+        sliderBuffer.triggerUserInput()
+
+        //The pre-run as done by willBecomeActive must still fill the preview graph buffers
+        experiment.analysis.setNeedsUpdate(isPreRun: true)
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline && signal.count == 0 {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        XCTAssertGreaterThan(signal.count, 0, "analysis deadlocked: pre-run produced no data")
+
+        let a1_wf1A = try experiment.buffers["a1_wf1A"].unwrap()
+        XCTAssertEqual(a1_wf1A.last, 0.5, "unexpected sine amplitude for default settings")
+    }
+}

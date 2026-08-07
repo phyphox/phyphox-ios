@@ -54,7 +54,6 @@ class GraphDataManager {
     }
     
     func performUpdate() {
-
         guard !busy, wantsUpdate else { return }
         
         busy = true
