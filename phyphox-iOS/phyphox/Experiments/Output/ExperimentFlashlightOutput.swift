@@ -81,9 +81,13 @@ final class ExperimentFlashlightOutput {
 
     func updateState() {
         guard !isOverheated else { return }
-        engine.setState(intensity: intensity.getValue() ?? 1.0,
-                        frequency: frequency.getValue() ?? 0.0,
-                        dutycycle: dutycycle.getValue() ?? 0.5)
+        //Missing inputs carry their defaults as literal values, so getValue() only returns nil
+        //for an empty buffer. Android reads an empty buffer as NaN, which its state update
+        //zeroes - so an empty intensity buffer means "off", not the missing-input default.
+        //setState applies the same zeroing to non-finite values here.
+        engine.setState(intensity: intensity.getValue() ?? Double.nan,
+                        frequency: frequency.getValue() ?? Double.nan,
+                        dutycycle: dutycycle.getValue() ?? Double.nan)
     }
 
     func stop() {
