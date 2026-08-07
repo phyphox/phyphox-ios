@@ -28,6 +28,15 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
     private var edited = false
 
+    //Background colors indicating the edit state, like on Android: yellow while the value has
+    //been changed but not yet committed, a green flash fading out when the value is committed.
+    //The colors match Android's phyphox_yellow and phyphox_green.
+    private static let changedColor = UIColor(red: 0xed/255.0, green: 0xf6/255.0, blue: 0x68/255.0, alpha: 1.0)
+    private static let committedColor = UIColor(red: 0x2b/255.0, green: 0xfb/255.0, blue: 0x4c/255.0, alpha: 1.0)
+    private var normalBackgroundColor: UIColor? {
+        return UIColor(named: "lightBackgroundColor")
+    }
+
     private let textField: UITextField
     private let unitLabel: UILabel?
     private let label = UILabel()
@@ -128,6 +137,17 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     
     @objc func textFieldChanged() {
         edited = true
+        if textField.isFirstResponder {
+            //Same mix as Android's yellow overlay at alpha 100/255 over the field's background
+            textField.layer.removeAllAnimations()
+            textField.backgroundColor = normalBackgroundColor?.interpolating(to: ExperimentEditView.changedColor, byFraction: 100.0/255.0) ?? ExperimentEditView.changedColor
+        }
+    }
+
+    func textFieldDidBeginEditing(_: UITextField) {
+        //Cancel a leftover commit flash; the changed color only appears once the text changes
+        textField.layer.removeAllAnimations()
+        textField.backgroundColor = normalBackgroundColor
     }
     
     @objc func changeSign() {
@@ -175,8 +195,19 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             textField.text = formattedValue(rawValue)
 
             descriptor.buffer.replaceValues([value])
-            
+
             descriptor.buffer.triggerUserInput()
+
+            //Indicate the commit with a green flash fading back to the normal background,
+            //matching Android's 500 ms commit animation
+            textField.layer.removeAllAnimations()
+            textField.backgroundColor = ExperimentEditView.committedColor
+            UIView.animate(withDuration: 0.5) {
+                self.textField.backgroundColor = self.normalBackgroundColor
+            }
+        }
+        else {
+            textField.backgroundColor = normalBackgroundColor
         }
     }
 
