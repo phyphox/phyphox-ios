@@ -86,7 +86,7 @@
             <separator height="1" visibility="buffer"/>
             <image src="img.png" scale="0.5" visibility="buffer"/>
             <info label="l4" visibility="buffer"/>
-            <graph label="l6" labelX="l7" labelY="l8" interpolateMapColors="false">
+            <graph label="l6" labelX="l7" labelY="l8" interpolateMapColors="false" followX="true" minX="0" maxX="10">
                 <input axis="x">buffer</input>
                 <input axis="y">buffer</input>
             </graph>

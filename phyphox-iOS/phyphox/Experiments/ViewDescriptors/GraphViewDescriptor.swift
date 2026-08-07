@@ -299,15 +299,27 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         var rescale = ""
         var scaleX = ""
-        if scaleMinX == .fixed && minX.isFinite {
-            scaleX += "\"min\":\(minX), "
-        } else {
-            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = minX;"
-        }
-        if scaleMaxX == .fixed && maxX.isFinite {
-            scaleX += "\"max\":\(maxX), "
-        } else {
+        if followX && minX.isFinite && maxX.isFinite {
+            //The graph follows the data: Keep the window width given by the minX and maxX
+            //attributes, but anchor its end at the newest x value of the data, mirroring the
+            //behavior of the graph view in the app. Before any data arrives (or after the data
+            //has been cleared) the initial range from the attributes is used.
+            scaleX += "\"min\":\(minX), \"max\":\(maxX), "
+            rescale += "if (elementData[\(id)][\"datasets\"][0][\"data\"].length > 0) {"
             rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"
+            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = maxX - \(maxX - minX);"
+            rescale += "}"
+        } else {
+            if scaleMinX == .fixed && minX.isFinite {
+                scaleX += "\"min\":\(minX), "
+            } else {
+                rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = minX;"
+            }
+            if scaleMaxX == .fixed && maxX.isFinite {
+                scaleX += "\"max\":\(maxX), "
+            } else {
+                rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"
+            }
         }
         var scaleY = ""
         if scaleMinY == .fixed && minY.isFinite {

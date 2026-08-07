@@ -221,3 +221,18 @@ final class WebServerCORSTests: XCTestCase {
         }
     }
 }
+
+//Pins the followX support of the remote interface: a graph with followX generates JS that
+//anchors the window end at the newest x value while keeping the width from minX/maxX,
+//mirroring the Android implementation (ExpView.dataCompleteHTML).
+final class RemoteGraphFollowXTests: XCTestCase {
+    func testFollowXGeneratesAnchoredRescale() throws {
+        let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
+        let experiment = try ExperimentSerialization.readExperimentFromURL(URL(fileURLWithPath: skeleton))
+        let graphs = (experiment.viewDescriptors ?? []).flatMap { $0.views }.compactMap { $0 as? GraphViewDescriptor }
+        let followGraph = try graphs.first(where: { $0.followX }).unwrap()
+        let js = followGraph.generateDataCompleteHTMLWithID(1)
+        XCTAssertTrue(js.contains("ticks.min = maxX - 10.0;"), "followX rescale must anchor the window end at the newest x")
+        XCTAssertTrue(js.contains("\"min\":0.0, \"max\":10.0"), "followX must keep the initial range from the attributes")
+    }
+}
