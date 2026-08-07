@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import BEMCheckBox
 
 class ExperimentCell: UICollectionViewCell {
     private let titleLabel = UILabel()
@@ -45,7 +46,44 @@ class ExperimentCell: UICollectionViewCell {
     }
     
     var optionsButtonCallback: ((_ button: UIButton) -> ())?
-    
+
+    //Multi-select deletion: while the experiment list is in selection mode, deletable
+    //experiments show a checkbox instead of the options button. The checkbox only displays the
+    //state, toggling happens by tapping the cell.
+    private var selectionCheckbox: BEMCheckBox?
+
+    var showsSelectionCheckbox = false {
+        didSet {
+            if showsSelectionCheckbox {
+                if selectionCheckbox == nil {
+                    let checkbox = BEMCheckBox()
+                    checkbox.boxType = .square
+                    checkbox.offAnimationType = .bounce
+                    checkbox.onAnimationType = .bounce
+                    checkbox.lineWidth = 1.0
+                    checkbox.onTintColor = kHighlightColor
+                    checkbox.onCheckColor = kHighlightColor
+                    checkbox.isUserInteractionEnabled = false
+                    selectionCheckbox = checkbox
+                    contentView.addSubview(checkbox)
+                }
+            } else {
+                selectionCheckbox?.removeFromSuperview()
+                selectionCheckbox = nil
+            }
+            //The checkbox shifts the whole content, so the layout must be recomputed even when
+            //the reused cell shows the same experiment as before (whose setter skips the layout
+            //invalidation when the metadata is unchanged)
+            setNeedsLayout()
+        }
+    }
+
+    var selectionChecked = false {
+        didSet {
+            selectionCheckbox?.on = selectionChecked
+        }
+    }
+
     var showSeparator = true {
         didSet {
             separator.isHidden = !showSeparator
@@ -62,20 +100,31 @@ class ExperimentCell: UICollectionViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
+
+        //In selection mode the checkbox is inserted at the leading edge, pushing icon and labels
+        //to the right - the indentation makes the deletable experiments easy to spot, like on
+        //Android
+        var leadingInset: CGFloat = 0.0
+        if let checkbox = selectionCheckbox {
+            let boxSize: CGFloat = 24.0
+            let slot: CGFloat = 40.0
+            checkbox.frame = CGRect(x: (slot-boxSize)/2.0, y: (contentView.bounds.height-boxSize)/2.0, width: boxSize, height: boxSize)
+            leadingInset = slot
+        }
+
         let s1 = CGSize(width: bounds.size.height-4.0, height: bounds.size.height-4.0)
-        
-        iconView?.frame = CGRect(x: 8.0, y: 2.0, width: s1.width, height: s1.height)
-        
-        let x = (iconView != nil ? iconView!.frame.maxX : 0.0)
+
+        iconView?.frame = CGRect(x: 8.0 + leadingInset, y: 2.0, width: s1.width, height: s1.height)
+
+        let x = (iconView != nil ? iconView!.frame.maxX : leadingInset)
         
         var maxLabelSize = CGSize(width: contentView.bounds.size.width-x-16.0, height: contentView.bounds.height)
         
         if let op = optionsButton {
             let size = CGSize(width: contentView.bounds.height, height: contentView.bounds.height)
-            
+
             op.frame = CGRect(origin: CGPoint(x: self.contentView.bounds.width-size.width, y: (contentView.bounds.height-size.height)/2.0), size: size)
-            
+
             maxLabelSize.width -= size.width+5.0
         }
         

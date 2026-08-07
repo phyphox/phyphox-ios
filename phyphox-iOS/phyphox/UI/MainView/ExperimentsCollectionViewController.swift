@@ -151,7 +151,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
         navigationItem.rightBarButtonItem = addButton!
-        
+
+        //Long press on a deletable experiment starts the multi-select deletion mode, like on
+        //Android
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        selfView.collectionView.addGestureRecognizer(longPress)
+
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
         if (willBeFirstViewForUser && !defaults.bool(forKey: key)) {
@@ -278,8 +283,76 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     @objc func reload() {
+        //A changing experiment list invalidates any running selection
+        exitSelectionMode()
         collections = ExperimentManager.shared.experimentCollections
         selfView.collectionView.reloadData()
+    }
+
+    //MARK: - Multi-select deletion
+
+    private var selectionModeActive = false
+    private var selectedSources: Set<URL> = []
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began, !selectionModeActive else { return }
+        let point = gesture.location(in: selfView.collectionView)
+        guard let indexPath = selfView.collectionView.indexPathForItem(at: point) else { return }
+        let experiment = collections[indexPath.section].experiments[indexPath.row]
+        guard experiment.custom, let source = experiment.experiment.source else { return }
+
+        selectionModeActive = true
+        selectedSources = [source]
+        let trashButton = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteSelectedExperiments))
+        trashButton.tintColor = .systemRed
+        navigationItem.rightBarButtonItem = trashButton
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancelSelectionMode))
+        selfView.collectionView.reloadData()
+    }
+
+    @objc private func cancelSelectionMode() {
+        exitSelectionMode()
+    }
+
+    private func exitSelectionMode() {
+        guard selectionModeActive else { return }
+        selectionModeActive = false
+        selectedSources.removeAll()
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
+        navigationItem.rightBarButtonItem = addButton
+        selfView.collectionView.reloadData()
+    }
+
+    @objc private func deleteSelectedExperiments() {
+        let toDelete = collections.flatMap { $0.experiments }.filter { entry in
+            entry.custom && entry.experiment.source.map { selectedSources.contains($0) } ?? false
+        }.map { $0.experiment }
+        guard !toDelete.isEmpty else { return }
+
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("confirmDeleteTitle"))
+            .message(message: localize("confirmDelete"))
+            .preferredStyle(style: .alert)
+            .addActionWithTitle(localize("delete"), style: .destructive, handler: { [unowned self] action in
+                self.exitSelectionMode()
+                for experiment in toDelete {
+                    do {
+                        try ExperimentManager.shared.deleteExperiment(experiment)
+                    }
+                    catch let error as NSError {
+                        let hud = JGProgressHUD(style: .dark)
+                        hud.interactionType = .blockTouchesOnHUDView
+                        hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                        hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+
+                        hud.show(in: self.view)
+
+                        hud.dismiss(afterDelay: 3.0)
+                    }
+                }
+            })
+            .addCancelAction()
+            .show(in: self, animated: true)
     }
     
     init(willBeFirstViewForUser: Bool) {
@@ -485,8 +558,16 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let experiment = collection.experiments[indexPath.row]
         
         cell.experiment = experiment.experiment
-        
-        if experiment.custom {
+
+        if selectionModeActive {
+            cell.showsOptionsButton = false
+            cell.optionsButtonCallback = nil
+            let selectable = experiment.custom && experiment.experiment.source != nil
+            cell.showsSelectionCheckbox = selectable
+            cell.selectionChecked = selectable && experiment.experiment.source.map { selectedSources.contains($0) } ?? false
+        }
+        else if experiment.custom {
+            cell.showsSelectionCheckbox = false
             cell.showsOptionsButton = true
             let exp = experiment.experiment
             cell.optionsButtonCallback = { [unowned exp, unowned self] button in
@@ -494,10 +575,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
         }
         else {
+            cell.showsSelectionCheckbox = false
             cell.showsOptionsButton = false
             cell.optionsButtonCallback = nil
         }
-        
+
         return cell
     }
 
@@ -550,6 +632,24 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = collections[indexPath.section].experiments[indexPath.row]
+
+        if selectionModeActive {
+            //Tapping toggles the selection of deletable experiments; the last deselection ends
+            //the selection mode, like on Android
+            if experiment.custom, let source = experiment.experiment.source {
+                if selectedSources.contains(source) {
+                    selectedSources.remove(source)
+                } else {
+                    selectedSources.insert(source)
+                }
+                if selectedSources.isEmpty {
+                    exitSelectionMode()
+                } else {
+                    selfView.collectionView.reloadData()
+                }
+            }
+            return
+        }
 
         if experiment.experiment.invalid {
             UIAlertController.PhyphoxUIAlertBuilder()
@@ -1023,7 +1123,20 @@ print("\(url)")
     }
     
     func addExperimentsToCollection(_ list: [Experiment]) {
+        //Skip experiments that are already in the collection (matched by the CRC32 of their
+        //file), like on Android - including within this batch, so a zip containing identical
+        //files does not create duplicates either
+        var addedCRC32s: Set<UInt> = []
         for experiment in list {
+            if ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+                continue
+            }
+            if let crc32 = experiment.crc32 {
+                if addedCRC32s.contains(crc32) {
+                    continue
+                }
+                addedCRC32s.insert(crc32)
+            }
             print("Copying \(experiment.localizedTitle)")
             do {
                 try experiment.saveLocally(quiet: true, presenter: nil)
