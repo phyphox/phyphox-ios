@@ -47,15 +47,18 @@ class SimpleInputConversion: InputConversion {
     }
     
     func convert(data: Data) -> [Double] {
-        var length = self.length ?? data.count - offset
-        if length < 1 || data.count < offset + length {
+        if offset < 0 {
             return []
         }
         var index = offset
         var out: [Double] = []
         while index < data.count {
-            length = self.length ?? data.count - index
-            let subdata = data.subdata(in: (index..<index+length))
+            //Clamp to the remaining bytes so a fixed length cannot overrun on the last repetition
+            var actualLength = data.count - index
+            if let length = self.length, length > 0, length < actualLength {
+                actualLength = length
+            }
+            let subdata = data.subdata(in: (index..<index+actualLength))
             switch function {
             case .uInt8:
                 if subdata.count >= 1 {
@@ -90,7 +93,7 @@ class SimpleInputConversion: InputConversion {
             case .uInt24LittleEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
-                    extendedData.append(subdata)
+                    extendedData.append(subdata.subdata(in: subdata.startIndex..<subdata.startIndex+3))
                     extendedData.append(0x00)
                     let result: UInt32 = UInt32(littleEndian: extendedData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     out.append(Double(result))
@@ -98,33 +101,33 @@ class SimpleInputConversion: InputConversion {
             case .int24LittleEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
-                    extendedData.append(subdata)
-                    if subdata[2] & 0x80 > 0 {
+                    extendedData.append(subdata.subdata(in: subdata.startIndex..<subdata.startIndex+3))
+                    if subdata[subdata.startIndex+2] & 0x80 > 0 {
                         extendedData.append(0xff)
                     } else {
                         extendedData.append(0x00)
                     }
-                    let result: UInt32 = extendedData.withUnsafeBytes{$0.load(as: UInt32.self)}
+                    let result: Int32 = extendedData.withUnsafeBytes{$0.load(as: Int32.self)}
                     out.append(Double(result))
                 }
             case .uInt24BigEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
                     extendedData.append(0x00)
-                    extendedData.append(subdata)
+                    extendedData.append(subdata.subdata(in: subdata.startIndex..<subdata.startIndex+3))
                     let result: UInt32 = UInt32(bigEndian: extendedData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     out.append(Double(result))
                 }
             case .int24BigEndian:
                 if subdata.count >= 3 {
                     var extendedData = Data()
-                    if subdata[0] & 0x80 > 0 {
+                    if subdata[subdata.startIndex] & 0x80 > 0 {
                         extendedData.append(0xff)
                     } else {
                         extendedData.append(0x00)
                     }
-                    extendedData.append(subdata)
-                    let result: Int32 = Int32(bigEndian: subdata.withUnsafeBytes{$0.load(as: Int32.self)})
+                    extendedData.append(subdata.subdata(in: subdata.startIndex..<subdata.startIndex+3))
+                    let result: Int32 = Int32(bigEndian: extendedData.withUnsafeBytes{$0.load(as: Int32.self)})
                     out.append(Double(result))
                 }
             case .uInt32LittleEndian:
@@ -192,24 +195,29 @@ class StringInputConversion: InputConversion {
     }
     
     func convert(data: Data) -> [Double] {
-        var length = self.length ?? data.count - offset
-        if length < 1 || data.count < offset + length {
+        if offset < 0 {
             return []
         }
         var index = offset
         var out: [Double] = []
         while index < data.count {
-            length = self.length ?? data.count - index
-            let subdata = data.subdata(in: (index..<index+length))
+            //Clamp to the remaining bytes so a fixed length cannot overrun on the last repetition
+            var actualLength = data.count - index
+            if let length = self.length, length > 0, length < actualLength {
+                actualLength = length
+            }
+            let subdata = data.subdata(in: (index..<index+actualLength))
             guard var str: String = String(data: subdata, encoding: .utf8) else {
-                return []
+                return out
             }
 
             if let decimalPoint = decimalPoint {
                str = str.replacingOccurrences(of: decimalPoint, with: ".")
             }
-            if let v = Double(str) {
+            if let v = Double(str.trimmingCharacters(in: .whitespacesAndNewlines)) {
                 out.append(v)
+            } else {
+                return out
             }
             if repeating > 0 {
                 index += repeating
@@ -237,22 +245,23 @@ class FormattedStringInputConversion: InputConversion {
             return []
         }
 
-        var parts: [Substring]
-        if let separator = separator?.first {
-            parts = str.split(separator: separator)
+        var parts: [String]
+        if let separator = separator, !separator.isEmpty {
+            //The separator is a literal string that may be longer than one character
+            parts = str.components(separatedBy: separator)
         } else {
-            parts = [Substring(str)]
+            parts = [str]
         }
-                
+
         if parts.count <= index {
             return []
         }
-        
+
         if let label = label, label != "" {
             //Use label to find relevant part
             for part in parts {
                 if part.starts(with: label) {
-                    if let v = Double(part[part.index(part.startIndex, offsetBy: label.count)...]) {
+                    if let v = Double(part[part.index(part.startIndex, offsetBy: label.count)...].trimmingCharacters(in: .whitespacesAndNewlines)) {
                         return [v]
                     }
                     return []
