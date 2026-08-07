@@ -166,6 +166,7 @@ final class CameraModel {
         
     var autoExposureEnabled: Bool = true
     var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
+    var aeFPSTarget: Double = 0.0
     
     var locked: [String:Float?] = [:]
     

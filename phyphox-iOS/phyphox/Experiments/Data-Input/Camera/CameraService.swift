@@ -240,7 +240,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             maxExposureTime = CMTime(value: 1, timescale: 15)
         case .prioritizeFramerate:
             adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
-            maxExposureTime = CMTime(value: Int64(1_000_000_000*cameraModel.cameraSettingsModel.maxFrameDuration), timescale: 1_000_000_000)
+            //With aeFPSTarget set, its inverse acts as the maximum exposure time to at least
+            //achieve the target frame rate; otherwise the shortest supported frame duration
+            //is used, like on Android
+            if cameraModel.aeFPSTarget > 0.0 {
+                maxExposureTime = CMTime(value: Int64(1_000_000_000/cameraModel.aeFPSTarget), timescale: 1_000_000_000)
+            } else {
+                maxExposureTime = CMTime(value: Int64(1_000_000_000*cameraModel.cameraSettingsModel.maxFrameDuration), timescale: 1_000_000_000)
+            }
         case .avoidUnderexposure:
             if minRGB > 0.2 {
                 adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)

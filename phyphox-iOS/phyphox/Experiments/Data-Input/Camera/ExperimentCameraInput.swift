@@ -28,6 +28,7 @@ final class ExperimentCameraInput {
     var experimentCameraBuffers: ExperimentCameraBuffers?
     let autoExposure: Bool
     let aeStrategy: AutoExposureStrategy
+    let aeFPSTarget: Double
 
     let locked: [String:Float?]
     let feature: CameraFeature
@@ -35,7 +36,7 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?,  wavelength: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: CameraFeature) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?,  wavelength: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -60,7 +61,8 @@ final class ExperimentCameraInput {
         self.timeReference = timeReference
         self.autoExposure = autoExposure
         self.aeStrategy = aeStrategy
-       
+        self.aeFPSTarget = aeFPSTarget
+
         self.locked = locked
         self.feature = feature
         
@@ -97,7 +99,8 @@ final class ExperimentCameraInput {
         
         session.autoExposure = autoExposure
         session.aeStrategy = aeStrategy
-      
+        session.aeFPSTarget = aeFPSTarget
+
         session.locked = locked
         session.feature = feature
     }

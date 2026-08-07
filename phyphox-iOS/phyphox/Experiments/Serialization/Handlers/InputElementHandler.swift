@@ -125,6 +125,7 @@ struct CameraInputDescriptor: SensorDescriptor {
     let y2: Float
     let autoExposure: Bool
     let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
+    let aeFPSTarget: Double
     let locked: [String:Float?]
     let feature: CameraFeature
     let outputs: [SensorOutputDescriptor]
@@ -151,6 +152,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         case y2
         case auto_exposure
         case aeStrategy
+        case aeFPSTarget
         case locked
         case feature
     }
@@ -199,8 +201,10 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         let feature_: CameraFeature = CameraFeature(rawValue: featureString) ?? CameraFeature.PHOTOMETRIC
         
         let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
-                
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature_, outputs: outputHandler.results))
+
+        let aeFPSTarget: Double = try attributes.optionalValue(for: .aeFPSTarget) ?? 0.0
+
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, aeFPSTarget: aeFPSTarget, locked: locked, feature: feature_, outputs: outputHandler.results))
     }
 }
 
