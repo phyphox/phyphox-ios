@@ -307,51 +307,61 @@ class GraphLayoutManager {
         }
     }
     
-    func layoutSubviews(bounds: CGRect, resizableState: ResizableViewModuleState, toolbar: UITabBar?) {
-        
+    func layoutSubviews(bounds: CGRect, resizableState: ResizableViewModuleState, toolbar: GraphToolbar?) {
+
         guard resizableState != .hidden else { return }
-        
+
         let spacing: CGFloat = 1.0
         var bottom: CGFloat = 0.0
-        
+        var contentWidth = bounds.width
+
         // Layout toolbar if in exclusive mode
         if resizableState == .exclusive, let toolbar = toolbar {
+            //In landscape the toolbar becomes a vertical strip at the right edge so the graph
+            //keeps the full (scarce) height, like on Android
+            let isLandscape = bounds.width > bounds.height
+            toolbar.vertical = isLandscape
             let toolbarSize = toolbar.sizeThatFits(bounds.size)
-            toolbar.frame = CGRect(x: 0, y: bounds.height - toolbarSize.height, width: bounds.width, height: toolbarSize.height)
-            bottom += toolbarSize.height
+            if isLandscape {
+                toolbar.frame = CGRect(x: bounds.width - toolbarSize.width, y: 0, width: toolbarSize.width, height: bounds.height)
+                contentWidth -= toolbarSize.width
+            } else {
+                toolbar.frame = CGRect(x: 0, y: bounds.height - toolbarSize.height, width: bounds.width, height: toolbarSize.height)
+                bottom += toolbarSize.height
+            }
         }
-        
-        graphArea.frame = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height - bottom)
-        
+
+        graphArea.frame = CGRect(x: 0, y: 0, width: contentWidth, height: bounds.height - bottom)
+
         // Layout labels
         let s1 = label.sizeThatFits(bounds.size)
-        label.frame = CGRect(x: (bounds.width - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
-        
+        label.frame = CGRect(x: (contentWidth - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
+
         let s2 = xLabel.sizeThatFits(bounds.size)
         let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
-        
-        xLabel.frame = CGRect(x: (bounds.width + s3.width - s2.width) / 2.0,
+
+        xLabel.frame = CGRect(x: (contentWidth + s3.width - s2.width) / 2.0,
                              y: bounds.height - s2.height - spacing - bottom,
                              width: s2.width, height: s2.height)
-        
+
         bottom += s2.height + spacing
-        
+
         if let zLabel = zLabel {
             let s4 = zLabel.sizeThatFits(bounds.size)
-            zLabel.frame = CGRect(x: (bounds.width + s3.width - s4.width) / 2.0,
+            zLabel.frame = CGRect(x: (contentWidth + s3.width - s4.width) / 2.0,
                                  y: s1.height + spacing + zScaleHeight,
                                  width: s4.width, height: s4.height)
         }
-        
+
         let yCoord = s1.height + spacing + (showColorScale ? zScaleHeight + (zLabel?.frame.height ?? 0) + spacing : 0)
         let graphHeight = bounds.height - s1.height - spacing - bottom - (showColorScale ? zScaleHeight + spacing + (zLabel?.frame.height ?? 0) : 0)
-        
-        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: yCoord, width: bounds.width - s3.width - spacing - 2*sideMargins, height:  graphHeight)
-        
+
+        gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: yCoord, width: contentWidth - s3.width - spacing - 2*sideMargins, height:  graphHeight)
+
         if(showColorScale){
-            zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: bounds.width - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
+            zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: contentWidth - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
         }
-        
+
         yLabel.frame = CGRect(x: sideMargins,
                              y: yCoord + (graphHeight - s3.height) / 2.0,
                              width: s3.width, height: s3.height)

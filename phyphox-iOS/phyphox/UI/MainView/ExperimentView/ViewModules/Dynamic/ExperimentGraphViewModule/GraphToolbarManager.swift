@@ -6,11 +6,144 @@
 //  Copyright © 2025 RWTH Aachen. All rights reserved.
 //
 
+// MARK: - Graph Toolbar
+
+//Toolbar of the fullscreen graph. A custom view rather than a UITabBar so its items can also be
+//stacked vertically along the right edge in landscape orientation, where the vertical space is
+//too precious for a bottom bar - like on Android.
+class GraphToolbar: UIView {
+
+    class ItemView: UIControl {
+        private let iconView = UIImageView()
+        private let titleLabel = UILabel()
+
+        var selectedItem = false {
+            didSet {
+                applyColors()
+            }
+        }
+
+        init(title: String, image: UIImage?, tag: Int) {
+            super.init(frame: .zero)
+            self.tag = tag
+
+            iconView.image = image?.withRenderingMode(.alwaysTemplate)
+            iconView.contentMode = .scaleAspectFit
+            iconView.isUserInteractionEnabled = false
+            titleLabel.text = title
+            titleLabel.font = UIFont.systemFont(ofSize: 10)
+            titleLabel.textAlignment = .center
+            titleLabel.lineBreakMode = .byTruncatingTail
+            titleLabel.isUserInteractionEnabled = false
+            addSubview(iconView)
+            addSubview(titleLabel)
+            applyColors()
+        }
+
+        @available(*, unavailable)
+        required init?(coder aDecoder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        private func applyColors() {
+            let color = selectedItem ? kHighlightColor : UIColor(named: "textColor")
+            iconView.tintColor = color
+            titleLabel.textColor = color
+        }
+
+        override var isHighlighted: Bool {
+            didSet {
+                alpha = isHighlighted ? 0.5 : 1.0
+            }
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            let iconSize: CGFloat = 24.0
+            let labelHeight = titleLabel.font.lineHeight
+            let contentHeight = iconSize + 2.0 + labelHeight
+            let top = max(0.0, (bounds.height - contentHeight) / 2.0)
+            iconView.frame = CGRect(x: (bounds.width - iconSize) / 2.0, y: top, width: iconSize, height: iconSize)
+            titleLabel.frame = CGRect(x: 2.0, y: top + iconSize + 2.0, width: bounds.width - 4.0, height: labelHeight)
+        }
+    }
+
+    private(set) var itemViews: [ItemView] = []
+    var onSelect: ((Int) -> Void)?
+
+    //Layout axis: false = horizontal bar at the bottom, true = vertical strip at the right edge
+    var vertical = false {
+        didSet {
+            if vertical != oldValue {
+                setNeedsLayout()
+            }
+        }
+    }
+
+    var selectedTag: Int = -1 {
+        didSet {
+            for itemView in itemViews {
+                itemView.selectedItem = (itemView.tag == selectedTag)
+            }
+        }
+    }
+
+    private let horizontalHeight: CGFloat = 49.0
+    private let verticalWidth: CGFloat = 76.0
+    private let verticalItemHeight: CGFloat = 64.0
+
+    init(items: [(title: String, image: UIImage?, tag: Int)]) {
+        super.init(frame: .zero)
+        backgroundColor = UIColor(named: "mainBackground")
+        for item in items {
+            let itemView = ItemView(title: item.title, image: item.image, tag: item.tag)
+            itemView.addTarget(self, action: #selector(itemTapped(_:)), for: .touchUpInside)
+            itemViews.append(itemView)
+            addSubview(itemView)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func itemTapped(_ sender: UIControl) {
+        onSelect?(sender.tag)
+    }
+
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        if vertical {
+            return CGSize(width: verticalWidth, height: size.height)
+        } else {
+            return CGSize(width: size.width, height: horizontalHeight)
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard !itemViews.isEmpty else { return }
+        if vertical {
+            //Center the item block vertically, aligned with the middle of the graph
+            let totalHeight = CGFloat(itemViews.count) * verticalItemHeight
+            let top = max(0.0, (bounds.height - totalHeight) / 2.0)
+            for (i, itemView) in itemViews.enumerated() {
+                itemView.frame = CGRect(x: 0, y: top + CGFloat(i) * verticalItemHeight, width: bounds.width, height: verticalItemHeight)
+            }
+        } else {
+            let itemWidth = bounds.width / CGFloat(itemViews.count)
+            for (i, itemView) in itemViews.enumerated() {
+                itemView.frame = CGRect(x: CGFloat(i) * itemWidth, y: 0, width: itemWidth, height: bounds.height)
+            }
+        }
+    }
+}
+
 // MARK: - Graph Toolbar Manager
-class GraphToolbarManager: NSObject, UITabBarDelegate {
+class GraphToolbarManager: NSObject {
     weak var delegate: GraphToolbarDelegate?
-    
-    private(set) var toolbar: UITabBar?
+
+    private(set) var toolbar: GraphToolbar?
     private var _currentMode: GraphMode = .none
 
     enum GraphMode: Int {
@@ -38,42 +171,29 @@ class GraphToolbarManager: NSObject, UITabBarDelegate {
     }
 
     private func setupToolbar() {
-        let tabBar = UITabBar()
+        let toolbar = GraphToolbar(items: [
+            (title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: GraphMode.panZoom.rawValue),
+            (title: pickTitle ?? localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: GraphMode.pick.rawValue),
+            (title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: GraphMode.none.rawValue)
+        ])
 
-        let panZoomButton = UITabBarItem(title: localize("graph_tools_pan_and_zoom"), image: UIImage(named: "pan_zoom"), tag: GraphMode.panZoom.rawValue)
-        let pickButton = UITabBarItem(title: pickTitle ?? localize("graph_tools_pick"), image: UIImage(named: "pick"), tag: GraphMode.pick.rawValue)
-
-
-        tabBar.items = [panZoomButton, pickButton]
-
-        let menuButton = UITabBarItem(title: localize("graph_tools_more"), image: UIImage(named: "more"), tag: GraphMode.none.rawValue)
-        tabBar.items?.append(menuButton)
-        
-        tabBar.delegate = self
-        
-        // Styling
-        tabBar.shadowImage = UIImage()
-        tabBar.backgroundImage = UIImage()
-        tabBar.backgroundColor = UIColor(named: "mainBackground")
-        tabBar.tintColor = kHighlightColor
-        if #available(iOS 10, *) {
-            tabBar.unselectedItemTintColor = UIColor(named: "textColor")
+        toolbar.onSelect = { [weak self] tag in
+            self?.handleSelection(tag)
         }
-        
-        self.toolbar = tabBar
+
+        self.toolbar = toolbar
     }
-    
-    // MARK: - UITabBarDelegate
-    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        guard let mode = GraphMode(rawValue: item.tag) else { return }
-        
+
+    private func handleSelection(_ tag: Int) {
+        guard let mode = GraphMode(rawValue: tag) else { return }
+
         if mode == .none {
             delegate?.toolbarManagerDidRequestMenu(self)
-            tabBar.selectedItem = tabBar.items?[_currentMode.rawValue]
+            toolbar?.selectedTag = _currentMode.rawValue
         } else {
             _currentMode = mode
+            toolbar?.selectedTag = mode.rawValue
             delegate?.toolbarManager(self, didSelectMode: mode)
-            
         }
     }
 }
@@ -158,29 +278,26 @@ class GraphMenuController {
         self.graph = graph
     }
     
-    func show(from sourceView: UIView, sourceView toolbar: UITabBar?) {
+    func show(from sourceView: UIView, sourceView toolbar: GraphToolbar?) {
         menuAlertController = UIAlertController(title: localize("graph_tools_more"), message: nil, preferredStyle: .actionSheet)
-        
+
         let tableView = FixedTableView()
         tableView.dataSource = graph
         tableView.delegate = graph
         tableView.isUserInteractionEnabled = true
-        
+
         let tableViewController = UITableViewController()
         tableViewController.tableView = tableView
         menuAlertController?.setValue(tableViewController, forKey: "contentViewController")
         menuAlertController?.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        let index = GraphToolbarManager.GraphMode.none.rawValue
+
         if let popover = menuAlertController?.popoverPresentationController, let toolbar = toolbar {
-            let interactionViews = toolbar.subviews.filter { $0.isUserInteractionEnabled }
-            if(interactionViews.count > index) {
-                let view = interactionViews.sorted(by: { $0.frame.minX < $1.frame.minX })[index]
+            if let menuItem = toolbar.itemViews.first(where: { $0.tag == GraphToolbarManager.GraphMode.none.rawValue }) {
                 popover.sourceView = toolbar
-                popover.sourceRect = view.frame
+                popover.sourceRect = menuItem.frame
             }
         }
-        
+
         if let controller = menuAlertController {
             graph?.layoutDelegate?.presentDialog(controller)
         }
@@ -190,7 +307,7 @@ class GraphMenuController {
 extension ExperimentGraphView: GraphToolbarDelegate {
     func toolbarManagerSelectionMode(_ manager: GraphToolbarManager) {
         manager.setMode(mode: .panZoom)
-        manager.toolbar?.selectedItem = manager.toolbar?.items?[GraphToolbarManager.GraphMode.panZoom.rawValue]
+        manager.toolbar?.selectedTag = GraphToolbarManager.GraphMode.panZoom.rawValue
     }
 
     func toolbarManager(_ manager: GraphToolbarManager, didSelectMode mode: GraphToolbarManager.GraphMode) {

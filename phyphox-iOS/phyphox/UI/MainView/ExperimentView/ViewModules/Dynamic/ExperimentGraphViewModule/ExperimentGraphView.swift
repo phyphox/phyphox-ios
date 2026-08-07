@@ -321,23 +321,12 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     override func layoutSubviews() {
         super.layoutSubviews()
-            if resizableState == .exclusive {
-                if let toolbar = toolbarManager.toolbar {
-                    // Ensure toolbar is added to the view hierarchy
-                    if toolbar.superview != self {
-                        addSubview(toolbar)
-                    }
-                    
-                    let toolbarSize = toolbar.sizeThatFits(bounds.size)
-                    toolbar.frame = CGRect(
-                        x: 0,
-                        y: bounds.height - toolbarSize.height,
-                        width: bounds.width,
-                        height: toolbarSize.height
-                    )
-                }
+        if resizableState == .exclusive {
+            if let toolbar = toolbarManager.toolbar, toolbar.superview != self {
+                addSubview(toolbar)
             }
-        
+        }
+
         layoutManager.layoutSubviews(
             bounds: bounds,
             resizableState: resizableState,

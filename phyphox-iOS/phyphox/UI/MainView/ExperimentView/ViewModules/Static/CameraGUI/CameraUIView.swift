@@ -104,6 +104,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     // Camera Setting Views and its flags
     private var cameraSettingUIView: UIStackView?
+    //Fixed button widths for the landscape control column, activated per orientation
+    private var controlButtonWidthConstraints: [UIView: NSLayoutConstraint] = [:]
     var cameraSettingMode: CameraSettingMode = .NONE {
         didSet {
             self.collectionView.reloadData()
@@ -254,33 +256,102 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         headerView.frame = CGRect(x: sideMargins, y: spacing, width: frame.width-2*sideMargins, height: headSize.height)
         
         //Controls
-        let controlSize = controlsVisible ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
-        let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlExtraHeight)
-        let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlZoomHeight)
-        let controlSpectrumOrientationAnalysisSize = controlsVisible ? CGSize(width: frame.width - 2 * sideMargins, height: ExperimentCameraUIView.controlSpectrumOrientationHeight) : .zero
+        //In fullscreen landscape the main camera controls become a vertical column at the right
+        //edge, using the full height with the labels moving next to the icons, like on Android,
+        //so the preview keeps the full (scarce) height
+        let isFullscreenLandscape = resizableState == .exclusive && frame.width > frame.height
+        cameraSettingUIView?.axis = isFullscreenLandscape ? .vertical : .horizontal
+        let controlButtonWidth: CGFloat = 44.0
+        //Each control is itself a stack of button and label: below each other (label centered)
+        //in the horizontal bar, next to each other (label left-aligned right beside the icon)
+        //in the vertical column. The buttons get a fixed width in the column, because their
+        //intrinsic image sizes differ wildly (some icons are scaled by insets or transforms),
+        //which would otherwise make the icon/label split inconsistent between the controls.
+        if let settings = cameraSettingUIView {
+            for item in settings.arrangedSubviews {
+                guard let itemStack = item as? UIStackView else { continue }
+                itemStack.axis = isFullscreenLandscape ? .horizontal : .vertical
+                itemStack.distribution = isFullscreenLandscape ? .fill : .fillEqually
+                if let button = itemStack.arrangedSubviews.first {
+                    let widthConstraint: NSLayoutConstraint
+                    if let existing = controlButtonWidthConstraints[button] {
+                        widthConstraint = existing
+                    } else {
+                        widthConstraint = button.widthAnchor.constraint(equalToConstant: controlButtonWidth)
+                        controlButtonWidthConstraints[button] = widthConstraint
+                    }
+                    widthConstraint.isActive = isFullscreenLandscape
+                }
+                if let label = itemStack.arrangedSubviews.last as? UILabel {
+                    label.textAlignment = isFullscreenLandscape ? .left : .center
+                }
+            }
+        }
+        //The column is exactly as wide as its content: the fixed icon block plus the widest of
+        //the current labels (measured with their actual font, so a system-wide text size change
+        //adapts the layout instead of breaking it)
+        var controlColumnWidth: CGFloat = 0.0
+        if isFullscreenLandscape, controlsVisible, let settings = cameraSettingUIView {
+            var maxLabelWidth: CGFloat = 0.0
+            for item in settings.arrangedSubviews {
+                guard let itemStack = item as? UIStackView, let label = itemStack.arrangedSubviews.last as? UILabel else { continue }
+                maxLabelWidth = max(maxLabelWidth, label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: ExperimentCameraUIView.controlHeight)).width)
+            }
+            controlColumnWidth = controlButtonWidth + maxLabelWidth + 6.0
+        }
+        let bottomWidth = frame.width - 2*sideMargins - (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0)
+
+        //The spectrum orientation button only exists for spectroscopy experiments, so its row
+        //is only reserved when it is actually shown
+        let spectrumButtonShown = dialogButton.superview != nil && !dialogButton.isHidden
+
+        let controlSize = controlsVisible && !isFullscreenLandscape ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
+        let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlExtraHeight)
+        let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlZoomHeight)
+        let controlSpectrumOrientationAnalysisSize = spectrumButtonShown ? CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlSpectrumOrientationHeight) : .zero
         //The button height is reduced by spacing to leave a small gap to the camera controls below
-        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
-        cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
-        collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: frame.width - 2*sideMargins, height: controlExtraSize.height)
-        self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: frame.width - 2*sideMargins, height: controlZoomSize.height)
-        
+        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: bottomWidth, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
+        if isFullscreenLandscape, controlsVisible, let settings = cameraSettingUIView {
+            //Top-aligned with the headline, risking a collision to buy some space, and pushed
+            //to the right edge - like on Android
+            settings.frame = CGRect(x: frame.width - controlColumnWidth,
+                                    y: spacing,
+                                    width: controlColumnWidth, height: frame.height - 2*spacing)
+        } else {
+            cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
+        }
+        collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: bottomWidth, height: controlExtraSize.height)
+        self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: bottomWidth, height: controlZoomSize.height)
+
         //Metal view
         let h, w: CGFloat
-        let metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height - controlSpectrumOrientationAnalysisSize.height
-        let actualAspect = (frame.width - 2*sideMargins) / metalAvailableHeight
+        let metalTop: CGFloat
+        let metalAvailableHeight: CGFloat
+        if isFullscreenLandscape {
+            //Landscape height is scarce: no decorative margins, the preview reaches from right
+            //below the header to the bottom edge (or the value picker rows when they are open)
+            let bottomRows = controlExtraSize.height + controlZoomSize.height + controlSpectrumOrientationAnalysisSize.height
+            metalTop = headSize.height + spacing
+            metalAvailableHeight = frame.height - metalTop - bottomRows - (bottomRows > 0 ? spacing : 0)
+        } else {
+            metalTop = headSize.height + 2*spacing
+            metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height - controlSpectrumOrientationAnalysisSize.height
+        }
+        let metalAvailableWidth = frame.width - 2*sideMargins - (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0)
+        let actualAspect = metalAvailableWidth / metalAvailableHeight
         let aspect = if orientation == .landscapeRight || orientation == .landscapeLeft {
             imageResolution.width / imageResolution.height
         } else {
             imageResolution.height / imageResolution.width
         }
         if aspect > actualAspect {
-            w = frame.width - 2*sideMargins
+            w = metalAvailableWidth
             h = w / aspect
         } else {
             h = metalAvailableHeight
             w = h * aspect
         }
-        self.metalView.frame = CGRect(x: (frame.width - w) / 2, y: headSize.height + 2*spacing + (metalAvailableHeight - h) / 2, width: w, height: h)
+        self.metalView.frame = CGRect(x: sideMargins + (metalAvailableWidth - w) / 2, y: metalTop + (metalAvailableHeight - h) / 2, width: w, height: h)
       
         updateCameraSettingsCurrentValues()
     }
