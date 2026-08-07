@@ -16,16 +16,15 @@ struct ExperimentExport: Equatable {
         self.sets = sets
     }
     
+    //filename is expected to be a complete file name base (without extension), typically generated
+    // from the user's template by FileNameFormat
     func runExport(_ format: ExportFileFormat, singleSet: Bool, filename: String, timeReference: ExperimentTimeReference?, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             autoreleasepool {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-                
                 switch format {
                 case .csv(let separator, let decimalPoint):
                     if singleSet {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).csv")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename).csv")
                         
                         do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
@@ -51,7 +50,7 @@ struct ExperimentExport: Equatable {
                         }
                     }
                     else {
-                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).zip")
+                        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename).zip")
                         
                         do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                         
@@ -119,7 +118,7 @@ struct ExperimentExport: Equatable {
                         }
                     }
                 case .excel:
-                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename) \(dateFormatter.string(from: Date())).xls")
+                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename).xls")
                     
                     do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
                     

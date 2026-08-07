@@ -195,6 +195,7 @@
 		A1984D2E2E3BE65D00C21D16 /* GraphCalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1984D252E3BE65A00C21D16 /* GraphCalibrationView.swift */; };
 		A1A6A72F297685DF00090309 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A6A72E297685DF00090309 /* Utility.swift */; };
 		A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */; };
+		F1E2D3C4B5A6978800000001 /* FileNameFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978800000002 /* FileNameFormat.swift */; };
 		A1AD56E92BC8463800FD3255 /* CameraUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AD56E82BC8463800FD3255 /* CameraUIView.swift */; };
 		A1AD56EB2BC917A900FD3255 /* ExperimentCameraInputSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AD56EA2BC917A900FD3255 /* ExperimentCameraInputSession.swift */; };
 		A1AD56ED2BC9189500FD3255 /* ExperimentCameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AD56EC2BC9189500FD3255 /* ExperimentCameraInput.swift */; };
@@ -518,6 +519,7 @@
 		A1984D252E3BE65A00C21D16 /* GraphCalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphCalibrationView.swift; sourceTree = "<group>"; };
 		A1A6A72E297685DF00090309 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBundleHelper.swift; sourceTree = "<group>"; };
+		F1E2D3C4B5A6978800000002 /* FileNameFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileNameFormat.swift; sourceTree = "<group>"; };
 		A1AD56E82BC8463800FD3255 /* CameraUIView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraUIView.swift; sourceTree = "<group>"; };
 		A1AD56EA2BC917A900FD3255 /* ExperimentCameraInputSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInputSession.swift; sourceTree = "<group>"; };
 		A1AD56EC2BC9189500FD3255 /* ExperimentCameraInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentCameraInput.swift; sourceTree = "<group>"; };
@@ -1239,6 +1241,7 @@
 				A1A6A72E297685DF00090309 /* Utility.swift */,
 				A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */,
 				A1A80D3C29AE049E00AD756D /* SettingsBundleHelper.swift */,
+				F1E2D3C4B5A6978800000002 /* FileNameFormat.swift */,
 				C034B02527172BC400C0EF00 /* ShaderTypes.h */,
 				C034B02627172BF500C0EF00 /* Shaders.metal */,
 			);
@@ -1601,6 +1604,7 @@
 				6B612FE6207E5A8B001DA8D9 /* PhyphoxDocumentHandler.swift in Sources */,
 				A16D80082CC671F300485DDB /* ExperimentSwitchView.swift in Sources */,
 				A1A80D3D29AE049E00AD756D /* SettingsBundleHelper.swift in Sources */,
+				F1E2D3C4B5A6978800000001 /* FileNameFormat.swift in Sources */,
 				4BE7CAE01E4CD20F00C31090 /* SeparatorViewDescriptor.swift in Sources */,
 				6B00F0B01C4684F100971941 /* ThresholdAnalysis.swift in Sources */,
 				6B2E0FC4205AC5E1008FAA91 /* UIColor+Expanded.m in Sources */,

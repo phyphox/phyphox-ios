@@ -887,7 +887,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
+        let filename = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference)
+        export.runExport(format, singleSet: singleSet, filename: filename, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -937,13 +938,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alertBuilder.title(title: localize("save_state"))
             .message(message: localize("save_state_message"))
             .preferredStyle(style: .alert)
-            .addTextField(configHandler: { (textField) in
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .short
-                dateFormatter.timeStyle = .short
-                
-                let fileNameDefault = localize("save_state_default_title")
-                textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
+            .addTextField(configHandler: { [unowned self] (textField) in
+                textField.text = FileNameFormat.format(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference)
             })
             .addActionWithTitle(localize("save_state_save"), style: .default, handler: { [unowned self] action in
                 if let title = alertBuilder.getTextFieldValue().text {
@@ -968,13 +964,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return HUD
     }
     
-    private func createTimeStampedFileNameWith(fileNameDefault: String) -> String
-    {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-        return "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
-    }
-    
     private func saveTheState(title: String){
         do {
             if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
@@ -986,7 +975,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
             
             //Instead use the legacy state serializer for now:
-            let fileName = createTimeStampedFileNameWith(fileNameDefault: self.experiment.cleanedFilenameTitle)
+            let fileName = FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference) + ".phyphox"
             let target = savedExperimentStatesURL.appendingPathComponent(fileName)
             
             let HUD = showHUDProgressWidget()
@@ -1016,7 +1005,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func shareTheState(title: String){
-        let fileName = createTimeStampedFileNameWith(fileNameDefault: localize("save_state_default_title"))
+        let fileName = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference) + ".phyphox"
         let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
         
         let HUD = showHUDProgressWidget()
@@ -1151,9 +1140,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             HUD.show(in: self.navigationController!.view)
             
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(self.experiment.cleanedFilenameTitle) \(dateFormatter.string(from: Date())).png")
+            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference)).png")
             
             do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             do { try png.write(to: URL(fileURLWithPath: tmpFile), options: .noFileProtection) } catch {}

@@ -80,6 +80,22 @@
 			<key>DefaultValue</key>
 			<false/>
 		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>FooterText</key>
+			<string>settingsFileNameFormatDetail</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>settingsFileNameFormat</string>
+			<key>Key</key>
+			<string>fileNameFormat</string>
+			<key>DefaultValue</key>
+			<string>{title} {date} {time}</string>
+		</dict>
 	</array>
 </dict>
 </plist>
