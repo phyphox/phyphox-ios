@@ -480,7 +480,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 
         updateSpectrumOrientationButtonIcon()
         //Same label as the (untranslated) text of the corresponding Android button
-        dialogButton.setTitle("Orientation", for: .normal)
+        dialogButton.setTitle(localize("spectrum_orientation"), for: .normal)
         dialogButton.setTitleColor(UIColor(named: "textColor") ?? .white, for: .normal)
         dialogButton.titleLabel?.font = .systemFont(ofSize: 12)
         dialogButton.titleEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: -8)

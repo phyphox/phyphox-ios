@@ -278,6 +278,7 @@
 "warning_photosensitivity_message" = "This experiment may produces high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.";
 "device_overheating" = "Device Overheating";
 "device_heating_serious" = "The device is getting very warm. The flashlight has been turned off to cool down.";
+"spectrum_orientation" = "Orientation";
 "spectrum_analysis_setting" = "Spectrum Analysis Settings";
 "which_spectrum_orientation" = "What is your device's orientation in regard to the spectrum?";
 "portrait_orientation" = "Portrait";
@@ -317,6 +318,7 @@
 "common_unit_short_degree_celsius" = "°C";
 "common_unit_short_meter" = "m";
 "common_unit_short_nano_meter" = "nm";
+"common_unit_short_micro_meter" = "μm";
 "common_unit_short_milli_meter" = "mm";
 "common_unit_short_centi_meter" = "cm";
 "common_unit_short_kilo_meter" = "km";
@@ -345,7 +347,6 @@
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "common_quantity_short_wavelength" = "λ";
-"common_quantity_short_pixel_position" = "pixel position";
 "common_quantity_percentage" = "Percent";
 "common_direction_short_north" = "N";
 "common_direction_short_south" = "S";
