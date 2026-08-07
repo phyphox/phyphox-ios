@@ -176,3 +176,48 @@ final class AnalysisTriggerTests: XCTestCase {
         XCTAssertEqual(a1_wf1A.last, 0.5, "unexpected sine amplitude for default settings")
     }
 }
+
+//Verifies that every remote-access response carries the CORS header, matching the Android
+//implementation and the canonical decision in phyphox-docs (cors-header): the header must be
+//present without exception, including on error responses and the static web interface files.
+final class WebServerCORSTests: XCTestCase {
+    private class StubDelegate: ExperimentWebServerDelegate {
+        var timerRunning: Bool { return false }
+        var remainingTimerTime: Double { return 0.0 }
+        func startExperiment() {}
+        func stopExperiment() {}
+        func clearData(clearGroups: [String]) {}
+        func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
+        func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {}
+    }
+
+    func testCORSHeaderOnEveryResponse() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+
+        UserDefaults.standard.set("8967", forKey: "remoteAccessPort")
+        defer { UserDefaults.standard.removeObject(forKey: "remoteAccessPort") }
+
+        let delegate = StubDelegate()
+        let webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        XCTAssertTrue(webServer.start(), "web server did not start")
+        defer { webServer.stop() }
+
+        //Success paths (API, static file) and error paths (missing parameters, unknown path)
+        for path in ["/", "/time", "/config", "/meta", "/get", "/res", "/doesnotexist"] {
+            let requestURL = URL(string: "http://127.0.0.1:\(webServer.port)\(path)")!
+            let expectation = self.expectation(description: path)
+            var corsValue: String? = nil
+            var status = 0
+            URLSession.shared.dataTask(with: requestURL) { _, response, _ in
+                if let http = response as? HTTPURLResponse {
+                    status = http.statusCode
+                    corsValue = http.allHeaderFields["Access-Control-Allow-Origin"] as? String
+                }
+                expectation.fulfill()
+            }.resume()
+            waitForExpectations(timeout: 5)
+            XCTAssertEqual(corsValue, "*", "missing CORS header on \(path) (status \(status))")
+        }
+    }
+}

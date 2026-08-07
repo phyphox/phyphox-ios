@@ -45,6 +45,34 @@ final class ExperimentWebServer {
     init(experiment: Experiment) {
         self.experiment = experiment
     }
+
+    //CORS: allow cross-origin browser pages to read remote-access responses, matching the
+    //Android implementation (RemoteServer.respond()). Wraps a handler's completion block so
+    //every response, including error responses, carries the header.
+    private static func cors(_ completionBlock: @escaping GCDWebServerCompletionBlock) -> GCDWebServerCompletionBlock {
+        return { response in
+            response?.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
+            completionBlock(response)
+        }
+    }
+
+    //Relative path resolved against the served directory without ever escaping it
+    private static func sanitizedRelativePath(_ urlPath: String) -> String {
+        var components: [String] = []
+        for component in urlPath.components(separatedBy: "/") {
+            switch component {
+            case "", ".":
+                continue
+            case "..":
+                if !components.isEmpty {
+                    components.removeLast()
+                }
+            default:
+                components.append(component)
+            }
+        }
+        return components.joined(separator: "/")
+    }
     
     convenience init(experiment: Experiment, delegate: ExperimentWebServerDelegate) {
         self.init(experiment: experiment)
@@ -64,9 +92,25 @@ final class ExperimentWebServer {
         
         server = GCDWebServer()
         
-        server!.addGETHandler(forBasePath: "/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+        //Serves the prepared web interface files. Replaces GCDWebServer's addGETHandler so the
+        //CORS header is present on the static files as well.
+        let staticPath = path
+        server!.addHandler(forMethod: "GET", pathRegex: "/.*", request: GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            var filePath = (staticPath as NSString).appendingPathComponent(ExperimentWebServer.sanitizedRelativePath(request.path))
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: filePath, isDirectory: &isDirectory), isDirectory.boolValue {
+                filePath = (filePath as NSString).appendingPathComponent("index.html")
+            }
+            if FileManager.default.fileExists(atPath: filePath, isDirectory: &isDirectory), !isDirectory.boolValue, let response = GCDWebServerFileResponse(file: filePath) {
+                completionBlock(response)
+            } else {
+                completionBlock(GCDWebServerResponse(statusCode: 404))
+            }
+        })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/logo", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             let file = Bundle.main.path(forResource: "phyphox-webinterface/phyphox_orange", ofType: "png")
             let image = UIImage.init(contentsOfFile: file!)
             let response = GCDWebServerDataResponse(data: image!.pngData()!, contentType: "image/png")
@@ -75,6 +119,7 @@ final class ExperimentWebServer {
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/res", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)
@@ -100,6 +145,7 @@ final class ExperimentWebServer {
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/export", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)
                 
@@ -127,6 +173,7 @@ final class ExperimentWebServer {
             })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/control", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerDataResponse(jsonObject: ["result": false])
                 
@@ -207,6 +254,7 @@ final class ExperimentWebServer {
             })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/get", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerResponse(statusCode: 400)
                 
@@ -311,6 +359,7 @@ final class ExperimentWebServer {
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/config", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerResponse(statusCode: 400)
                 
@@ -422,6 +471,7 @@ final class ExperimentWebServer {
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/meta", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerResponse(statusCode: 400)
                 
@@ -445,6 +495,7 @@ final class ExperimentWebServer {
         })
         
         server!.addHandler(forMethod: "GET", pathRegex: "/time", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerResponse(statusCode: 400)
                 
