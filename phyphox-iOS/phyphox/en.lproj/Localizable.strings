@@ -260,7 +260,7 @@
 "depthAggregationModeAverage" = "Average";
 "depthAggregationModeWeighted" = "Weighted";
 "warning_photosensitivity" = "Photosensitivity Warning";
-"warning_photosensitivity_message" = "This experiment may produces high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.";
+"warning_photosensitivity_message" = "This experiment may produce high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.";
 "device_overheating" = "Device Overheating";
 "device_heating_serious" = "The device is getting very warm. The flashlight has been turned off to cool down.";
 "spectrum_orientation" = "Orientation";
