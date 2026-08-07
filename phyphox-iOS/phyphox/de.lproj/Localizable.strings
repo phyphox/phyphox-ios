@@ -390,3 +390,16 @@
 "permission_camera_required" = "Kamera benötigt";
 "permission_camera_denied" = "Dieses Experiment benötigt Zugriff auf die Kamera, aber dieser wurde verweigert. Bitte erlaube den Zugriff unter Einstellungen->Datenschutz->Kamera";
 "permission_camera_restricted" = "Dieses Experiment benötigt Zugriff auf die Kamera, aber dieser wurde eingeschränkt. Bitte erlaube den Zugriff unter Einstellungen->Bildschirmzeit->Beschränkungen->Kamera";
+"clear_data_question_select" = "Aufgezeichnete Daten sowie die folgenden optionalen Elemente löschen?";
+"common_quantity_percentage" = "Percent";
+"common_quantity_short_wavelength" = "λ";
+"common_unit_short_micro_meter" = "μm";
+"common_unit_short_nano_meter" = "nm";
+"device_heating_serious" = "Das Gerät wird sehr warm. Die Taschenlampe wurde ausgeschaltet um abzukühlen.";
+"device_overheating" = "Gerät überhitzt";
+"landscape_orientation" = "Horizontal";
+"portrait_orientation" = "Vertikal";
+"spectrum_analysis_setting" = "Spektrum Analyse-Einstellungen";
+"warning_photosensitivity" = "Warnung vor Anfällen bei Lichtempfindlichkeit";
+"warning_photosensitivity_message" = "Dieses Experiment kann hochfrequente Lichtimpulse erzeugen. Dies kann bei Personen mit fotosensibler Epilepsie zu Beschwerden oder Anfällen führen. \n \nVermeiden Sie es, direkt in die Lichtquelle zu blicken.";
+"which_spectrum_orientation" = "Wie ist die Ausrichtung deines Geräts in Bezug auf das Spektrum?";

@@ -382,3 +382,16 @@
 "permission_camera_required" = "Potrebna je kamera";
 "permission_camera_denied" = "Ovaj pokus zahtijeva pristup kameri, ali je pristup odbijen. Molimo Vas omogućite pristup kameri u Postavke->Privatnost->Kamera";
 "permission_camera_restricted" = "Ovaj pokus zahtijeva pristup kameri, ali je pristup ograničen. Molimo Vas omogućite pristup kameri u Postavke->Vrijeme korištenja ekrana->Restrikcije->Dopuštene značajke->Kamera";
+"clear_data_question_select" = "Počistiti snimljene podatke i sljedeće opcionalne stavke?";
+"common_quantity_percentage" = "Postotak";
+"common_quantity_short_wavelength" = "λ";
+"common_unit_short_micro_meter" = "μm";
+"common_unit_short_nano_meter" = "nm";
+"device_heating_serious" = "Uređaj postaje topao. Bljeskalica je ugašena radi hlađenja uređaja.";
+"device_overheating" = "Pregrijavanje uređaja";
+"landscape_orientation" = "Pejzaž";
+"portrait_orientation" = "Portret";
+"spectrum_analysis_setting" = "Postavke analize spektra";
+"warning_photosensitivity" = "Upozorenje za fotoosijetljive osobe";
+"warning_photosensitivity_message" = "Ovaj pokus može proizvesti visoko-frekventne pulseve svijetla. Pkus može izazvati nelagodu ili napadaje kod osoba s fotoosjetljivom epilepsijom. \n \nIzbjegavajte izravno gledanje u izvor svijetla.";
+"which_spectrum_orientation" = "Koja je orijentacija Vašeg uređaja u odnosu na spektar?";

@@ -380,3 +380,4 @@
 "permission_camera_required" = "Kamera wymagana";
 "permission_camera_denied" = "Ta aktywność wymaga dostępu do kamery, jednak dostęp nie został przyznany. Proszę włączyć dostęp do kamery w Ustawienia → Prywatność → Aparat";
 "permission_camera_restricted" = "Ta aktywność wymaga dostępu do kamery, jednak dostęp ten został ograniczony. Proszę włączyć dostęp do kamery w Ustawienia → Czas przed ekranem → Ograniczenia → Dozwolone funkcje → Aparat";
+"common_quantity_percentage" = "Procent";

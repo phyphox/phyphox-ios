@@ -380,3 +380,15 @@
 "permission_camera_required" = "需要相机权限";
 "permission_camera_denied" = "此实验需要访问相机，但访问权限已被拒绝。请在“设置”->“隐私”->“相机”中启用相机访问权限";
 "permission_camera_restricted" = "此实验需要访问相机，但该权限已被限制。请在“设置”>“屏幕使用时间”>“内容和隐私访问限制”>“允许的应用”>“相机”中启用相机访问权限";
+"clear_data_question_select" = "清除已记录数据以及以下可选项目？";
+"common_quantity_percentage" = "百分比";
+"common_quantity_short_wavelength" = "λ";
+"common_unit_short_micro_meter" = "μm";
+"common_unit_short_nano_meter" = "nm";
+"device_heating_serious" = "设备发热严重，已关闭闪光灯以冷却。";
+"device_overheating" = "设备过热";
+"landscape_orientation" = "横屏";
+"portrait_orientation" = "竖屏";
+"spectrum_analysis_setting" = "频谱分析设置";
+"warning_photosensitivity" = "光敏性警告";
+"warning_photosensitivity_message" = "这项实验可能会产生高频光脉冲，可能会引发光敏性癫痫患者的不适或癫痫发作。 \n \n请避免直视光源。";

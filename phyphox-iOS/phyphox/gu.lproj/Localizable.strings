@@ -382,3 +382,16 @@
 "common_musical_note_gb7" = "F#7 / Gb7";
 "common_musical_note_g7" = "G7";
 "common_musical_note_ab7" = "G#7 / Ab7";
+"clear_data_question_select" = "રેકોર્ડ કરેલ ડેટા અને નીચેની વૈકલ્પિક વસ્તુઓ સાફ કરીએ?";
+"common_quantity_percentage" = "ટકા";
+"common_quantity_short_wavelength" = "λ";
+"common_unit_short_micro_meter" = "μm";
+"common_unit_short_nano_meter" = "nm";
+"device_heating_serious" = "ડિવાઇસ ખૂબ ગરમ થઈ રહ્યું છે. ઠંડુ થવા માટે ફ્લેશલાઇટ બંધ કરવામાં આવી છે.";
+"device_overheating" = "ડિવાઇસ ઓવરહિટીંગ";
+"landscape_orientation" = "લેન્ડસ્કેપ";
+"portrait_orientation" = "પોટ્રેટ";
+"spectrum_analysis_setting" = "સ્પેક્ટ્રમ વિશ્લેષણ સેટિંગ્સ";
+"warning_photosensitivity" = "પ્રકાશસંવેદનશીલતા ચેતવણી";
+"warning_photosensitivity_message" = "આ પ્રયોગ ઉચ્ચ-આવર્તન પ્રકાશના પલ્સ ઉત્પન્ન કરી શકે છે. તે પ્રકાશસંવેદનશીલ વાઈ ધરાવતા વ્યક્તિઓમાં અસ્વસ્થતા અથવા હુમલાનું કારણ બની શકે છે. \n \nપ્રકાશ સ્ત્રોત તરફ સીધા જોવાનું ટાળો.";
+"which_spectrum_orientation" = "સ્પેક્ટ્રમના સંદર્ભમાં તમારા ડિવાઇસનું દિશાનિર્દેશ શું છે?";

@@ -152,7 +152,6 @@
 "deviceInfoCopied" = "The device info has been copied to your clipboard.";
 "graph_tools_pan_and_zoom" = "Pan and zoom";
 "graph_tools_pick" = "Pick data";
-"graph_tools_calibrate" = "Calibrate";
 "graph_tools_more" = "More tools";
 "graph_tools_system_time" = "Convert to system time";
 "graph_tools_reset" = "Reset zoom";
@@ -166,20 +165,6 @@
 "graph_difference_label" = "Difference";
 "graph_fit_label" = "Linear fit: y = a x + b";
 
-"spectroscopy_reset_calibration" = "Reset calibration";
-"spectroscopy_calibration_complete" = "Calibration complete";
-"spectroscopy_uncalibrated" = "Tap to calibrate spectrum";
-"spectroscopy_tap_first_point" = "Tap first calibration point";
-"spectroscopy_tap_second_point" = "Tap second calibration point";
-"spectroscopy_calculating" = "Calculating calibration...";
-"spectroscopy_calibration_failed" = "Calibration failed";
-"spectroscopy_first_wavelength_title" = "First Calibration Point";
-"spectroscopy_second_wavelength_title" = "Second Calibration Point";
-"spectroscopy_wavelength_message" = "Enter the wavelength (nm) for pixel intensity %.1f:";
-"spectroscopy_wavelength_placeholder" = "Wavelength (nm)";
-"spectroscopy_calibration_points" = "Calibration Points:";
-"spectroscopy_calibration_info" = "Calibrated: λ = %.4f×pixel + %.2f";
-"spectroscopy_calibration_message" = "Do you want to continue with this calibration point?";
 
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
 "remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
