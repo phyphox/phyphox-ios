@@ -345,3 +345,15 @@
 "url_invalid" = "अमान्य URL";
 "url_invalid_msg" = "यह प्रयोग सिर्फ एक लिंक है, लेकिन कोई वैध URL नहीं मिला।";
 "showQRCodeForRemoteURL" = "URL तक पहुंचने के लिए QR कोड";
+"off" = "ऑफ";
+"on" = "ऑन";
+"cameraBack" = "पश्चभाग";
+"cameraFront" = "अग्रभाग";
+"cameraZoom" = "ज़ूम";
+"wb_auto" = "स्वतः चालित";
+"wb_incandescent" = "दीप्त";
+"wb_fluorescent" = "स्फुरदीप्त";
+"wb_daylight" = "दिन का प्रकाश";
+"wb_cloudy" = "बादलों वाला";
+"common_quantity_short_luminance" = "Lv";
+"common_quantity_short_luma" = "Y'";
