@@ -23,7 +23,6 @@ final class AudioOutputSubInputElementHandler: ResultElementHandler, ChildlessEl
 
     private enum Attribute: String, AttributeKey {
         case type
-        case clear
         case usedAs = "parameter"
     }
 
