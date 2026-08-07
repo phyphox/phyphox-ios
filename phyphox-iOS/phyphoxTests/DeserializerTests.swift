@@ -316,3 +316,63 @@ final class ResourceFallbackTests: XCTestCase {
         XCTAssertNil(experiment.resolveResource("res/../../hue.png"))
     }
 }
+
+//Validates the xlsx export (which replaced the JXLS xls export): the file must be a valid zip
+//with the expected OOXML parts, all parts must be well-formed XML, and cell content must match
+//the Android implementation, including string escaping, the NaN filler for short columns and
+//sheet name sanitization.
+import ZIPFoundation
+
+final class XlsxExportTests: XCTestCase {
+    private func entryString(_ archive: Archive, _ path: String) throws -> String {
+        let entry = try XCTUnwrap(archive[path], "missing entry \(path)")
+        var data = Data()
+        _ = try archive.extract(entry) { data.append($0) }
+        //Every part must be well-formed XML
+        let parser = XMLParser(data: data)
+        XCTAssertTrue(parser.parse(), "entry \(path) is not well-formed XML: \(String(describing: parser.parserError))")
+        return try XCTUnwrap(String(data: data, encoding: .utf8))
+    }
+
+    func testXlsxExport() throws {
+        let b1 = try DataBuffer(name: "x", size: 5, baseContents: [1.0, 2.5, Double.nan], static: false)
+        let b2 = try DataBuffer(name: "y", size: 5, baseContents: [4.0], static: false)
+        let set1 = ExperimentExportSet(name: "Data <&> [test]", data: [(name: "=danger", buffer: b1), (name: "y \"quoted\"", buffer: b2)])
+        let set2 = ExperimentExportSet(name: "Data <&> [test]", data: [(name: "x", buffer: b1)]) //Same name: must be deduplicated
+        let export = ExperimentExport(sets: [set1, set2])
+
+        let expectation = self.expectation(description: "export")
+        var exportURL: URL? = nil
+        export.runExport(.excel, singleSet: false, filename: "xlsxtest", timeReference: nil) { errorMessage, fileURL in
+            XCTAssertNil(errorMessage)
+            exportURL = fileURL
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 10)
+
+        let url = try XCTUnwrap(exportURL)
+        XCTAssertEqual(url.pathExtension, "xlsx")
+        let archive = try Archive(url: url, accessMode: .read)
+
+        for path in ["_rels/.rels", "[Content_Types].xml", "xl/workbook.xml", "xl/_rels/workbook.xml.rels", "xl/styles.xml", "xl/worksheets/sheet1.xml", "xl/worksheets/sheet2.xml", "xl/worksheets/sheet3.xml"] {
+            _ = try entryString(archive, path)
+        }
+
+        let workbook = try entryString(archive, "xl/workbook.xml")
+        //Sheet name: forbidden characters replaced, xml escaping applied, duplicate deduplicated
+        XCTAssertTrue(workbook.contains("name=\"Data &lt;&amp;&gt;  test\""), "unexpected sheet names: \(workbook)")
+        XCTAssertTrue(workbook.contains("name=\"Data &lt;&amp;&gt;  test (2)\""), "duplicate sheet name not deduplicated: \(workbook)")
+        XCTAssertTrue(workbook.contains("name=\"Metadata Device\""))
+
+        let sheet1 = try entryString(archive, "xl/worksheets/sheet1.xml")
+        //Formula injection guard and bold header
+        XCTAssertTrue(sheet1.contains("<c t=\"inlineStr\" s=\"1\"><is><t xml:space=\"preserve\">'=danger</t></is></c>"))
+        XCTAssertTrue(sheet1.contains("y &quot;quoted&quot;"))
+        //Numbers as number cells, NaN (both as value and as missing cell of the short column) as text
+        XCTAssertTrue(sheet1.contains("<c><v>1.0</v></c>"))
+        XCTAssertTrue(sheet1.contains("<c><v>2.5</v></c>"))
+        XCTAssertTrue(sheet1.contains("<c t=\"inlineStr\"><is><t xml:space=\"preserve\">NaN</t></is></c>"))
+        //Three data rows: the row count follows the first column
+        XCTAssertEqual(sheet1.components(separatedBy: "<row>").count - 1, 4)
+    }
+}

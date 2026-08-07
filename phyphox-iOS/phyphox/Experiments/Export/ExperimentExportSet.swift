@@ -45,16 +45,7 @@ struct ExperimentExportSet {
         self.data = data
     }
     
-    func serialize(_ format: ExportFileFormat, additionalInfo: AnyObject?) -> AnyObject? {
-        switch format {
-        case .csv(let separator, let decimalPoint):
-            return serializeToCSVWithSeparator(separator, decimalPoint: decimalPoint) as AnyObject
-        case .excel:
-            return serializeToExcel(additionalInfo as! JXLSWorkBook)
-        }
-    }
-    
-    private func serializeToCSVWithSeparator(_ separator: String, decimalPoint: String) -> Data? {
+    func serializeToCSV(separator: String, decimalPoint: String) -> Data? {
         var string = ""
         
         var index = 0
@@ -119,39 +110,33 @@ struct ExperimentExportSet {
         return string.count > 0 ? string.data(using: .utf8) : nil
     }
     
-    private func serializeToExcel(_ workbook: JXLSWorkBook) -> JXLSWorkSheet {
-        let sheet = workbook.workSheet(withName: name)
-        
-        var i = 0
-        
-        while true {
-            var addedValue = false
-            
-            if i == 0 {
-                addedValue = true
-                for (j, entry) in data.enumerated() {
-                    _ = sheet?.setCellAtRow(0, column: UInt32(j), to: getSecureName(entry.name))
-                }
-            }
-            else {
-                for (j, entry) in data.enumerated() {
-                    let value = entry.buffer.objectAtIndex(i-1)
-                    
-                    if value != nil {
-                        addedValue = true
-                        _ = sheet?.setCellAtRow(UInt32(i), column: UInt32(j), toDoubleValue: value!)
-                    }
-                }
-            }
-            
-            if !addedValue {
-                break
-            }
-            
-            i += 1
+    //Writes this set as one sheet into an xlsx file, laid out like the Android implementation
+    //(DataExport.ExcelFormat): a bold header row, then one row per value of the first column,
+    //with cells of shorter columns filled with the text "NaN"
+    func serializeToXlsx(_ xlsx: XlsxWriter) throws {
+        try xlsx.startSheet(name)
+
+        xlsx.startRow()
+        for entry in data {
+            xlsx.stringCell(getSecureName(entry.name), bold: true)
         }
-        
-        return sheet!
+        xlsx.endRow()
+
+        //Snapshot the buffers so the row count and cell values are consistent even if the
+        //experiment keeps writing during the export
+        let columns = data.map { $0.buffer.toArray() }
+        for i in 0..<(columns.first?.count ?? 0) {
+            xlsx.startRow()
+            for column in columns {
+                if i < column.count {
+                    xlsx.numberCell(column[i])
+                } else {
+                    xlsx.stringCell("NaN")
+                }
+            }
+            xlsx.endRow()
+        }
+        try xlsx.endSheet()
     }
 }
 

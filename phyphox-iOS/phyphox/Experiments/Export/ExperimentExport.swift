@@ -32,8 +32,8 @@ struct ExperimentExport: Equatable {
                         
                         
                         let set = self.sets.first!
-                        
-                        let data = set.serialize(format, additionalInfo: nil) as! Data?
+
+                        let data = set.serializeToCSV(separator: separator, decimalPoint: decimalPoint)
                         
                         do {
                             try data!.write(to: URL(fileURLWithPath: tmpFile), options: [])
@@ -70,7 +70,7 @@ struct ExperimentExport: Equatable {
                             }
 
                             for set in self.sets {
-                                let data = set.serialize(format, additionalInfo: nil) as! Data?
+                                let data = set.serializeToCSV(separator: separator, decimalPoint: decimalPoint)
 
                                 try addEntry(fileName: set.name + ".csv", data: data)
                             }
@@ -118,70 +118,72 @@ struct ExperimentExport: Equatable {
                         }
                     }
                 case .excel:
-                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename).xls")
-                    
+                    let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(filename).xlsx")
+
                     do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
-                    
+
                     let tmpFileURL = URL(fileURLWithPath: tmpFile)
-                    
-                    let workbook = JXLSWorkBook()
-                    
-                    for set in self.sets {
-                        _ = set.serialize(format, additionalInfo: workbook)
-                    }
-                    
-                    if !singleSet {
-                        //Metadata
-                        let metaSheet = workbook.workSheet(withName: "Metadata Device")
-                        metaSheet?.setCellAtRow(0, column: 0, to: "property")
-                        metaSheet?.setCellAtRow(0, column: 1, to: "value")
-                        var i: UInt32 = 1;
-                        for metadata in Metadata.allNonSensorCases {
-                            switch metadata {
-                            case .uniqueId:
-                                continue
-                            default:
-                                metaSheet?.setCellAtRow(i, column: 0, to: metadata.identifier)
-                                metaSheet?.setCellAtRow(i, column: 1, to: metadata.get(hash: "") ?? "")
-                                i += 1
+
+                    do {
+                        let xlsx = try XlsxWriter(url: tmpFileURL)
+
+                        for set in self.sets {
+                            try set.serializeToXlsx(xlsx)
+                        }
+
+                        if !singleSet {
+                            //Metadata
+                            try xlsx.startSheet("Metadata Device")
+                            xlsx.startRow()
+                            xlsx.stringCell("property", bold: true)
+                            xlsx.stringCell("value", bold: true)
+                            xlsx.endRow()
+                            for metadata in Metadata.allNonSensorCases {
+                                switch metadata {
+                                case .uniqueId:
+                                    continue
+                                default:
+                                    xlsx.startRow()
+                                    xlsx.stringCell(metadata.identifier)
+                                    xlsx.stringCell(metadata.get(hash: "") ?? "")
+                                    xlsx.endRow()
+                                }
+                            }
+
+                            //Time references
+                            if let reference = timeReference {
+                                let dateFormatter = DateFormatter()
+                                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX"
+
+                                try xlsx.startSheet("Metadata Time")
+                                xlsx.startRow()
+                                xlsx.stringCell("event", bold: true)
+                                xlsx.stringCell("experiment time", bold: true)
+                                xlsx.stringCell("system time", bold: true)
+                                xlsx.stringCell("system time text", bold: true)
+                                xlsx.endRow()
+
+                                for mapping in reference.timeMappings {
+                                    xlsx.startRow()
+                                    xlsx.stringCell(mapping.event.rawValue)
+                                    xlsx.numberCell(mapping.experimentTime)
+                                    xlsx.numberCell(mapping.systemTime.timeIntervalSince1970)
+                                    xlsx.stringCell(dateFormatter.string(from: mapping.systemTime))
+                                    xlsx.endRow()
+                                }
                             }
                         }
 
-                        //Time references
-                        if let reference = timeReference {
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX"
-                            
-                            let timeSheet = workbook.workSheet(withName: "Metadata Time")
-                            timeSheet?.setCellAtRow(0, column: 0, to: "event")
-                            timeSheet?.setCellAtRow(0, column: 1, to: "experiment time")
-                            timeSheet?.setCellAtRow(0, column: 2, to: "system time")
-                            timeSheet?.setCellAtRow(0, column: 3, to: "system time text")
-                            
-                            i = 1
-                            for mapping in reference.timeMappings {
-                                let dateString = dateFormatter.string(from: mapping.systemTime)
-                                
-                                timeSheet?.setCellAtRow(i, column: 0, to: mapping.event.rawValue)
-                                timeSheet?.setCellAtRow(i, column: 1, toDoubleValue: mapping.experimentTime)
-                                timeSheet?.setCellAtRow(i, column: 2, toDoubleValue: mapping.systemTime.timeIntervalSince1970)
-                                timeSheet?.setCellAtRow(i, column: 3, to: dateString)
-                                i += 1
-                            }
-                        }
-                    }
-                    
-                    let err = workbook.write(toFile: tmpFile)
-                    
-                    if err == 0 {
+                        try xlsx.close()
+
                         mainThread {
                             callback(nil, tmpFileURL)
                         }
                     }
-                    else {
-                        print("Excel error: \(err)")
+                    catch let error {
+                        print("Excel error: \(error)")
                         mainThread {
-                            callback("Could not create xls file", nil)
+                            callback("Could not create xlsx file", nil)
                         }
                     }
                 }
