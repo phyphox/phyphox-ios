@@ -376,3 +376,13 @@ final class XlsxExportTests: XCTestCase {
         XCTAssertEqual(sheet1.components(separatedBy: "<row>").count - 1, 4)
     }
 }
+
+//Pins the fix for sinh/cosh/tanh being mapped to the trigonometric modules: the classMap must
+//resolve the hyperbolic module names to the hyperbolic implementations.
+final class HyperbolicModuleTests: XCTestCase {
+    func testHyperbolicNamesResolveToHyperbolicModules() {
+        XCTAssertTrue(ExperimentAnalysisFactory.classMap["sinh"] == SinhAnalysis.self)
+        XCTAssertTrue(ExperimentAnalysisFactory.classMap["cosh"] == CoshAnalysis.self)
+        XCTAssertTrue(ExperimentAnalysisFactory.classMap["tanh"] == TanhAnalysis.self)
+    }
+}

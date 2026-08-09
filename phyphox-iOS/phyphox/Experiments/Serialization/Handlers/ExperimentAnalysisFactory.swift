@@ -41,7 +41,7 @@ private extension ExperimentAnalysisDataOutput {
 }
 
 final class ExperimentAnalysisFactory {
-    private static let classMap = [
+    static let classMap = [
         "add": AdditionAnalysis.self,
         "subtract": SubtractionAnalysis.self,
         "multiply": MultiplicationAnalysis.self,
@@ -55,9 +55,9 @@ final class ExperimentAnalysisFactory {
         "sin": SinAnalysis.self,
         "cos": CosAnalysis.self,
         "tan": TanAnalysis.self,
-        "sinh": SinAnalysis.self,
-        "cosh": CosAnalysis.self,
-        "tanh": TanAnalysis.self,
+        "sinh": SinhAnalysis.self,
+        "cosh": CoshAnalysis.self,
+        "tanh": TanhAnalysis.self,
         "asin": AsinAnalysis.self,
         "acos": AcosAnalysis.self,
         "atan": AtanAnalysis.self,

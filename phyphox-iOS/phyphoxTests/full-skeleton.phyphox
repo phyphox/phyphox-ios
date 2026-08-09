@@ -107,6 +107,19 @@
             <output>buffer</output>
         </append>
 
+        <sinh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </sinh>
+        <cosh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </cosh>
+        <tanh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </tanh>
+
         <butterworth>
             <input as="y">buffer</input>
             <input as="x">buffer2</input>
