@@ -153,20 +153,27 @@ final class ExperimentWebServer {
             let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
             let query = queryDictionary(components?.query ?? "")
             
-            if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
-                self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
-                    if error == nil {
-                        self.temporaryFiles.append(URL!.path)
-                        let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
-                        completionBlock(response)
+            //Error messages match the Android implementation: a missing or non-numeric format
+            //is "Invalid format.", a numeric one outside the format list "Format out of range."
+            if let formatStr = query["format"], Int(formatStr) != nil {
+                if let format = WebServerUtilities.mapFormatString(formatStr) {
+                    self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
+                        if error == nil {
+                            self.temporaryFiles.append(URL!.path)
+                            let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
+                            completionBlock(response)
+                        }
+                        else {
+                            returnErrorResponse(["error": error!.localizedDescription] as AnyObject)
+                        }
                     }
-                    else {
-                        returnErrorResponse(["error": error!.localizedDescription] as AnyObject)
-                    }
+                }
+                else {
+                    returnErrorResponse(["error": "Format out of range."] as AnyObject)
                 }
             }
             else {
-                returnErrorResponse(["error": "Format out of range"] as AnyObject)
+                returnErrorResponse(["error": "Invalid format."] as AnyObject)
             }
             })
         

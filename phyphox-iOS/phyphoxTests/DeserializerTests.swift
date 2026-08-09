@@ -386,3 +386,43 @@ final class HyperbolicModuleTests: XCTestCase {
         XCTAssertTrue(ExperimentAnalysisFactory.classMap["tanh"] == TanhAnalysis.self)
     }
 }
+
+//Pins the /export error handling: an out-of-range format index used to trap the app, a missing
+//or non-numeric format silently became Excel. Both must answer the documented error object with
+//the same messages as Android (export-invalid-format).
+final class WebServerExportFormatTests: XCTestCase {
+    private class StubDelegate: ExperimentWebServerDelegate {
+        var timerRunning: Bool { return false }
+        var remainingTimerTime: Double { return 0.0 }
+        func startExperiment() {}
+        func stopExperiment() {}
+        func clearData(clearGroups: [String]) {}
+        func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
+        func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {}
+    }
+
+    func testInvalidExportFormatAnswersError() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+
+        UserDefaults.standard.set("8968", forKey: "remoteAccessPort")
+        defer { UserDefaults.standard.removeObject(forKey: "remoteAccessPort") }
+
+        let delegate = StubDelegate()
+        let webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        XCTAssertTrue(webServer.start(), "web server did not start")
+        defer { webServer.stop() }
+
+        for (queryString, expectedError) in [("format=99", "Format out of range."), ("format=abc", "Invalid format."), ("", "Invalid format.")] {
+            let requestURL = URL(string: "http://127.0.0.1:\(webServer.port)/export" + (queryString.isEmpty ? "" : "?" + queryString))!
+            let expectation = self.expectation(description: queryString)
+            var body: [String: Any]? = nil
+            URLSession.shared.dataTask(with: requestURL) { data, _, _ in
+                body = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+                expectation.fulfill()
+            }.resume()
+            waitForExpectations(timeout: 5)
+            XCTAssertEqual(body?["error"] as? String, expectedError, "for query \(queryString)")
+        }
+    }
+}
