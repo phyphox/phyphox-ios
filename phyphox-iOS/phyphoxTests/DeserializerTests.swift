@@ -425,4 +425,172 @@ final class WebServerExportFormatTests: XCTestCase {
             XCTAssertEqual(body?["error"] as? String, expectedError, "for query \(queryString)")
         }
     }
+
+    //Pins the POST support (control-post): every endpoint accepts POST, the body may be JSON or
+    //form-encoded, values are coerced to strings, body parameters win over query parameters and
+    //a malformed JSON body answers 400. Uses the /export error surface to observe which
+    //parameter reached the handler.
+    func testPostBodies() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+
+        UserDefaults.standard.set("8969", forKey: "remoteAccessPort")
+        defer { UserDefaults.standard.removeObject(forKey: "remoteAccessPort") }
+
+        let delegate = StubDelegate()
+        let webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        XCTAssertTrue(webServer.start(), "web server did not start")
+        defer { webServer.stop() }
+
+        func post(_ path: String, body: String, contentType: String) -> (status: Int, json: [String: Any]?) {
+            var request = URLRequest(url: URL(string: "http://127.0.0.1:\(webServer.port)\(path)")!)
+            request.httpMethod = "POST"
+            request.httpBody = body.data(using: .utf8)
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            let expectation = self.expectation(description: path + body)
+            var status = 0
+            var json: [String: Any]? = nil
+            URLSession.shared.dataTask(with: request) { data, response, _ in
+                status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+                expectation.fulfill()
+            }.resume()
+            waitForExpectations(timeout: 5)
+            return (status, json)
+        }
+
+        //JSON body reaches the handler, numeric scalar coerced to its string form
+        var result = post("/export", body: "{\"format\": 99}", contentType: "application/json")
+        XCTAssertEqual(result.json?["error"] as? String, "Format out of range.")
+
+        //Form body reaches the handler
+        result = post("/export", body: "format=abc", contentType: "application/x-www-form-urlencoded")
+        XCTAssertEqual(result.json?["error"] as? String, "Invalid format.")
+
+        //Body parameters win over query parameters of the same name
+        result = post("/export?format=abc", body: "{\"format\": \"99\"}", contentType: "application/json")
+        XCTAssertEqual(result.json?["error"] as? String, "Format out of range.")
+
+        //A malformed JSON body answers 400
+        result = post("/export", body: "{format: 99", contentType: "application/json")
+        XCTAssertEqual(result.status, 400)
+
+        //An endpoint without parameters ignores the body, even a malformed one
+        result = post("/config", body: "{not json at all", contentType: "application/json")
+        XCTAssertEqual(result.status, 200)
+        XCTAssertNotNil(result.json?["title"])
+    }
+}
+
+//Conformance of the /get, /control, /meta and /res endpoints with the canonical behaviour from
+//phyphox-docs: get-no-parameters, get-invalid-threshold, get-negative-threshold,
+//get-nonfinite-single-value, get-force-full-update, control-trigger-out-of-range,
+//meta-missing-value-representation, res-content-type and res-fallback.
+final class WebServerConformanceTests: XCTestCase {
+    private class StubDelegate: ExperimentWebServerDelegate {
+        var timerRunning: Bool { return false }
+        var remainingTimerTime: Double { return 0.0 }
+        func startExperiment() {}
+        func stopExperiment() {}
+        func clearData(clearGroups: [String]) {}
+        func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
+        func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {}
+    }
+
+    private var webServer: ExperimentWebServer!
+    private var experiment: Experiment!
+    private var delegate: StubDelegate!
+
+    override func setUpWithError() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        UserDefaults.standard.set("8970", forKey: "remoteAccessPort")
+        delegate = StubDelegate()
+        webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        guard webServer.start() else { throw DeserializerTestError.nilOptional }
+    }
+
+    override func tearDown() {
+        webServer.stop()
+        UserDefaults.standard.removeObject(forKey: "remoteAccessPort")
+    }
+
+    private func get(_ path: String) -> (status: Int, contentType: String?, json: Any?) {
+        let requestURL = URL(string: "http://127.0.0.1:\(webServer.port)\(path)")!
+        let expectation = self.expectation(description: path)
+        var status = 0
+        var contentType: String? = nil
+        var json: Any? = nil
+        URLSession.shared.dataTask(with: requestURL) { data, response, _ in
+            if let http = response as? HTTPURLResponse {
+                status = http.statusCode
+                contentType = http.allHeaderFields["Content-Type"] as? String
+            }
+            json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) }
+            expectation.fulfill()
+        }.resume()
+        waitForExpectations(timeout: 5)
+        return (status, contentType, json)
+    }
+
+    func testGetConformance() throws {
+        //No parameters: 200 with an empty buffer object and a normal status object
+        var result = get("/get")
+        XCTAssertEqual(result.status, 200)
+        var root = try XCTUnwrap(result.json as? [String: Any])
+        XCTAssertEqual((root["buffer"] as? [String: Any])?.count, 0)
+        XCTAssertNotNil((root["status"] as? [String: Any])?["session"])
+
+        //Unparseable threshold: 400
+        XCTAssertEqual(get("/get?accX=abc").status, 400)
+
+        //Negative threshold: an ordinary partial answer, not an empty one caused by a NaN nudge
+        experiment.buffers["accX"]?.append(1.0)
+        result = get("/get?accX=-5")
+        root = try XCTUnwrap(result.json as? [String: Any])
+        var buf = try XCTUnwrap((root["buffer"] as? [String: Any])?["accX"] as? [String: Any])
+        XCTAssertEqual(buf["updateMode"] as? String, "partial")
+        XCTAssertEqual(buf["buffer"] as? [Double], [1.0])
+
+        //Non-finite single value: null
+        experiment.buffers["accY"]?.append(Double.nan)
+        result = get("/get?accY=")
+        root = try XCTUnwrap(result.json as? [String: Any])
+        buf = try XCTUnwrap((root["buffer"] as? [String: Any])?["accY"] as? [String: Any])
+        XCTAssertEqual(buf["updateMode"] as? String, "single")
+        XCTAssertTrue((buf["buffer"] as? [Any])?.first is NSNull)
+
+        //After a clear, every requested buffer is upgraded to full, whatever it asked for
+        webServer.forceFullUpdate = true
+        result = get("/get?accX=12.5")
+        root = try XCTUnwrap(result.json as? [String: Any])
+        buf = try XCTUnwrap((root["buffer"] as? [String: Any])?["accX"] as? [String: Any])
+        XCTAssertEqual(buf["updateMode"] as? String, "full")
+    }
+
+    func testControlTriggerOutOfRange() throws {
+        var result = get("/control?cmd=trigger&element=999")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, false)
+        result = get("/control?cmd=trigger&element=abc")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, false)
+    }
+
+    func testMetaOmitsUnavailableValues() throws {
+        let result = get("/meta")
+        XCTAssertEqual(result.status, 200)
+        let root = try XCTUnwrap(result.json as? [String: Any])
+        XCTAssertFalse(root.isEmpty)
+        for (key, value) in root {
+            XCTAssertFalse(value is NSNull, "null value for \(key) must be omitted instead")
+        }
+        XCTAssertNil(root["sensors"], "the sensors object is absent on iOS, not empty")
+    }
+
+    func testResErrorWordingAndContentType() throws {
+        //A missing src answers the same error as an unknown one
+        var result = get("/res")
+        XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
+        result = get("/res?src=doesnotexist.png")
+        XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
+    }
 }
