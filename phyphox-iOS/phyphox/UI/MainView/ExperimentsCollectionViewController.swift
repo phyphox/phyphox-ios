@@ -1029,13 +1029,22 @@ print("\(url)")
             }
             
             
-            UIAlertController.PhyphoxUIAlertBuilder()
+            let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
                 .title(title: localize("exp_error"))
                 .message(message: "Could not load experiment: \(message)")
                 .preferredStyle(style: .alert)
-                .addOkAction()
+            if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {
+                //A load from the network may have failed only because it was the app's first
+                //local network access: iOS shows its permission prompt asynchronously and fails
+                //that first request while the prompt is still on screen. Offer a retry so the
+                //user can simply try again after granting.
+                _ = alertBuilder.addActionWithTitle(localize("tryagain"), style: .default, handler: { [weak self] _ in
+                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral)
+                })
+            }
+            alertBuilder.addOkAction()
                 .show(in: (navigationController)!, animated: true)
-            
+
             return false
         }
         

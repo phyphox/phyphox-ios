@@ -303,8 +303,19 @@ class MqttService: CocoaMQTTDelegate {
         return result
     }
     
+    private var lastReconnectAttempt: TimeInterval = 0.0
+
     func getState() -> NetworkServiceResult {
         if !connected {
+            //A failed connection would otherwise stay dead forever - in particular the very
+            //first one, which typically fails while iOS still displays its local network
+            //permission prompt. Retry on the next interval, at most every five seconds, so the
+            //connection recovers once the user has granted (or the broker is reachable again).
+            let now = CFAbsoluteTimeGetCurrent()
+            if mqtt != nil && now - lastReconnectAttempt > 5.0 {
+                lastReconnectAttempt = now
+                _ = mqtt?.connect()
+            }
             return NetworkServiceResult.noConnection
         }
         if !subscribed && receiveTopic != nil {
