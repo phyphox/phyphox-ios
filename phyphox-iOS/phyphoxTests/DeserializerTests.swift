@@ -1745,3 +1745,52 @@ final class FileVersionValidationTests: XCTestCase {
         XCTAssertThrowsError(try parse(version: ""))
     }
 }
+
+//Confirms iOS is not affected by two dropdown bugs fixed on Android: a <map> before the <output>
+//being dropped, and the default attribute not taking effect. iOS collects maps and the output in
+//independent child handlers (order-independent) and applies the default by seeding the output
+//buffer, so both work.
+final class DropdownViewTests: XCTestCase {
+    private func parse(_ dropdown: String) throws -> Experiment {
+        let xml = """
+        <phyphox version="1.20">
+            <title>t</title><category>c</category><description>d</description>
+            <data-containers><container>buffer</container></data-containers>
+            <views><view label="v">\(dropdown)</view></views>
+        </phyphox>
+        """
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: xml.data(using: .utf8)!))
+    }
+
+    private func dropdownDescriptor(_ experiment: Experiment) throws -> DropdownViewDescriptor {
+        return try (experiment.viewDescriptors?.first?.views.compactMap { $0 as? DropdownViewDescriptor }.first).unwrap()
+    }
+
+    func testMapBeforeOutputIsNotDropped() throws {
+        //The first <map> comes before <output>; it must still be collected (Android dropped it)
+        let experiment = try parse("""
+        <dropdown label="d">
+            <map value="1">One</map>
+            <output>buffer</output>
+            <map value="2">Two</map>
+        </dropdown>
+        """)
+        let descriptor = try dropdownDescriptor(experiment)
+        XCTAssertEqual(descriptor.mappings.count, 2, "a map before the output must not be dropped")
+        XCTAssertEqual(Set(descriptor.mappings.map { $0.value }), [1, 2])
+    }
+
+    func testDefaultValueIsApplied() throws {
+        let experiment = try parse("""
+        <dropdown label="d" default="2">
+            <output>buffer</output>
+            <map value="1">One</map>
+            <map value="2">Two</map>
+        </dropdown>
+        """)
+        let descriptor = try dropdownDescriptor(experiment)
+        XCTAssertEqual(descriptor.defaultValue, 2)
+        XCTAssertEqual(descriptor.buffer.last, 2, "the default is written to the empty output buffer so the matching option is selected")
+        XCTAssertEqual(descriptor.value, 2)
+    }
+}
