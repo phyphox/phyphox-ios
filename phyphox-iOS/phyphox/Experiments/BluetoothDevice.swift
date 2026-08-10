@@ -90,6 +90,16 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     let deviceName: String?
     var deviceAddress: UUID? = nil
     let advertiseUUID: CBUUID?
+
+    ///Compares the configuration from the experiment file. NSObject's == stays identity-based,
+    ///which runtime code may rely on; this is for comparing two parses of the same file (used by
+    ///Experiment's Equatable, like ExperimentSensorInput.valueEqual).
+    static func valueEqual(lhs: ExperimentBluetoothDevice, rhs: ExperimentBluetoothDevice) -> Bool {
+        return lhs.id == rhs.id &&
+            lhs.deviceName == rhs.deviceName &&
+            lhs.advertiseUUID == rhs.advertiseUUID &&
+            lhs.autoConnect == rhs.autoConnect
+    }
     
     var stopExperimentDelegate: StopExperimentDelegate? = nil
     

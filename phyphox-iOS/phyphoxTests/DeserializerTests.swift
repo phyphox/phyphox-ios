@@ -84,14 +84,7 @@ final class DeserializerTests: XCTestCase {
             let reuse = try expectParserResult(expectedResult: .success, inputStream: stream1, parser: reusableParser, file: file)
             let oneTime = try expectParserResult(expectedResult: .success, inputStream: stream2, parser: oneTimeUseParser, file: file)
 
-            //Camera, depth and Bluetooth experiments currently fail this comparison: the
-            //Equatable conformances involved do not produce stable results across two parses
-            //of the same file. Recorded as an expected failure until those are repaired.
-            let options = XCTExpectedFailure.Options()
-            options.isStrict = false
-            XCTExpectFailure("Experiment equality is not reliable for camera, depth and Bluetooth experiments", options: options) {
-                XCTAssertEqual(reuse, oneTime, "Parses of \(file) with a reused and a fresh parser differ")
-            }
+            XCTAssertEqual(reuse, oneTime, "Parses of \(file) with a reused and a fresh parser differ")
         }
     }
 
@@ -1628,5 +1621,41 @@ final class StrictnessFixesTests: XCTestCase {
         _ = try parse(gauss("sigma=\"2.5\""))
         XCTAssertThrowsError(try parse(gauss("sigma=\"0\"")), "sigma 0 would divide the kernel normalisation by zero")
         XCTAssertThrowsError(try parse(gauss("sigma=\"-1\"")))
+    }
+}
+
+//Guard rail for the case folding of enumerated attribute values: no allowed set may contain two
+//values differing only in case, or the folding scan would silently pick the first
+//(enum-case-insensitive in phyphox-docs). Walks every CaseInsensitiveAttributeDecodable enum
+//reachable from tests; the two file-private ones (icon Format, GraphAxis) hold trivially distinct
+//values. The analysis slot tables get the same check in AnalysisIOMappingCoverageTests.
+final class CaseFoldingGuardRailTests: XCTestCase {
+    func testNoEnumHasCaseFoldedRawValueCollisions() {
+        func check<T: CaseIterable & RawRepresentable>(_ type: T.Type) where T.RawValue == String {
+            let folded = type.allCases.map { $0.rawValue.lowercased() }
+            XCTAssertEqual(folded.count, Set(folded).count, "\(type) has raw values that collide after case folding")
+        }
+        check(SensorType.self)
+        check(SensorMetadata.self)
+        check(ExperimentSensorInput.RateStrategy.self)
+        check(ExperimentDepthInput.DepthExtractionMode.self)
+        check(ExperimentDepthInput.CameraOrientation.self)
+        check(ExperimentCameraInput.AutoExposureStrategy.self)
+        check(CameraFeature.self)
+        check(SimpleInputConversion.ConversionFunction.self)
+        check(SimpleOutputConversion.ConversionFunction.self)
+        check(SimpleConfigConversion.ConversionFunction.self)
+        check(BluetoothMode.self)
+        check(BluetoothOutputExtra.self)
+        check(AudioWaveform.self)
+        check(DataInputTypeAttribute.self)
+        check(NetworkConnectionSendDescriptor.SendableType.self)
+        check(EventStreamAnalysis.TriggerMode.self)
+        check(InterpolateAnalysis.InterpolationMethod.self)
+        check(GraphPickAxis.self)
+        check(GraphViewDescriptor.ScaleMode.self)
+        check(GraphViewDescriptor.GraphStyle.self)
+        check(ImageViewElementDescriptor.Filter.self)
+        check(InfoViewElementDescriptor.TextAlignment.self)
     }
 }

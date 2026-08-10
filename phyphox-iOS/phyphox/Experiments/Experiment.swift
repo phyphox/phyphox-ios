@@ -707,7 +707,9 @@ extension Experiment: Equatable {
             lhs.gpsInputs == rhs.gpsInputs &&
             lhs.audioInputs == rhs.audioInputs &&
             lhs.audioOutput == rhs.audioOutput &&
-            lhs.bluetoothDevices == rhs.bluetoothDevices &&
+            lhs.bluetoothDevices.elementsEqual(rhs.bluetoothDevices, by: { (l, r) -> Bool in
+                ExperimentBluetoothDevice.valueEqual(lhs: l, rhs: r)
+            }) &&
             lhs.bluetoothInputs == rhs.bluetoothInputs &&
             lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
             lhs.networkConnections == rhs.networkConnections &&

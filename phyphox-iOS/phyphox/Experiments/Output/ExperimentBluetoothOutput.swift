@@ -114,8 +114,10 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
 
 extension ExperimentBluetoothOutput: Equatable {
     static func ==(lhs: ExperimentBluetoothOutput, rhs: ExperimentBluetoothOutput) -> Bool {
+        //The device is compared by its configuration - NSObject's identity == made two parses of
+        //the same file unequal
         return lhs.configList == rhs.configList &&
-            lhs.device == rhs.device &&
+            ExperimentBluetoothDevice.valueEqual(lhs: lhs.device, rhs: rhs.device) &&
             lhs.inputList == rhs.inputList
     }
 }

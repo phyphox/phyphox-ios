@@ -1,0 +1,11 @@
+<phyphox version="1.20">
+    <title>t</title>
+    <category>c</category>
+    <description>d</description>
+    <data-containers><container>buffer</container></data-containers>
+    <input><bluetooth name="d" mode="notification" address="00:11:22:33:44:55"><output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output></bluetooth></input>
+    <analysis></analysis>
+    <views>
+        <view label="v"><value label="l"><input>buffer</input></value></view>
+    </views>
+</phyphox>
