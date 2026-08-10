@@ -58,7 +58,14 @@ final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Input must be a buffer")
         }
 
+        //A present sigma must be a positive width; omitting the attribute keeps the default of 3.
+        //Zero or less is rejected rather than used, which would divide the kernel normalisation
+        //by zero and produce NaN for every value
+        //(gausssmooth-nonpositive-sigma in phyphox-docs, matching Android)
         let sigmaValue = try attributes.optionalValue(for: "sigma") ?? 3.0
+        guard sigmaValue > 0 else {
+            throw SerializationError.genericError(message: "Attribute \"sigma\" of gausssmooth must be greater than zero.")
+        }
 
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
 

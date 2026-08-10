@@ -256,6 +256,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
+        //The numbered mapColor attributes are read via dynamic keys, so their count is unbounded
+        let numberedAttributes = attributes.attributes(keyedBy: String.self)
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let label = attributes.optionalString(for: .label) ?? ""
@@ -283,14 +285,15 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
         let color = mapColorString(attributes.optionalString(for: .color))
         
+        //The colour scale has as many stops as the file provides, numbered from 1 and ending at
+        //the first gap - without the former cap of nine (views-map-color-limit in phyphox-docs).
+        //An unparseable colour still ends the scale; that behaviour is deliberately not settled
+        //by the entry.
         var colorMap: [UIColor] = []
-        let mapColorCases = [Attribute.mapColor1, Attribute.mapColor2, Attribute.mapColor3, Attribute.mapColor4, Attribute.mapColor5, Attribute.mapColor6, Attribute.mapColor7, Attribute.mapColor8, Attribute.mapColor9]
-        for attribute in mapColorCases {
-            if let mapColor = mapColorString(attributes.optionalString(for: attribute)) {
-                colorMap.append(mapColor)
-            } else {
-                break
-            }
+        var mapColorIndex = 1
+        while let mapColor = mapColorString(numberedAttributes.optionalString(for: "mapColor\(mapColorIndex)")) {
+            colorMap.append(mapColor)
+            mapColorIndex += 1
         }
         let mapWidth: UInt = try attributes.optionalValue(for: .mapWidth) ?? 0
         let showColorScale: Bool = try attributes.optionalValue(for: .showColorScale) ?? true

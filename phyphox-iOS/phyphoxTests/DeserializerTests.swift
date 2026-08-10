@@ -1557,3 +1557,76 @@ final class AnalysisIOMappingCoverageTests: XCTestCase {
         }
     }
 }
+
+//The four small strictness fixes: unbounded map colour scales, rejection of the Android-only
+//bluetooth address attribute, container type validation and gausssmooth's sigma check
+//(views-map-color-limit, ble-address-ios-must-reject, container-type-unvalidated and
+//gausssmooth-nonpositive-sigma in phyphox-docs).
+final class StrictnessFixesTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(containers: String = "<container>buffer</container>", input: String = "", analysis: String = "", view: String = "<value label=\"l\"><input>buffer</input></value>") -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>\(containers)</data-containers>
+            <input>\(input)</input>
+            <analysis>\(analysis)</analysis>
+            <views>
+                <view label="v">\(view)</view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMapColorScaleIsUnbounded() throws {
+        let colors = ["red", "green", "blue", "yellow", "orange", "magenta", "white", "weakred", "weakgreen", "weakblue", "weakyellow", "weakorange"]
+        let mapColors = colors.enumerated().map { "mapColor\($0.offset + 1)=\"\($0.element)\"" }.joined(separator: " ")
+        let experiment = try parse(xml(view: """
+            <graph label="g" style="map" mapWidth="10" \(mapColors)>
+                <input axis="x">buffer</input>
+                <input axis="y">buffer</input>
+                <input axis="z">buffer</input>
+            </graph>
+        """))
+        let graph = try ((experiment.viewDescriptors?.first?.views.first) as? GraphViewDescriptor).unwrap()
+        XCTAssertEqual(graph.colorMap.count, 12, "a tenth stop and beyond must no longer be dropped")
+    }
+
+    func testBluetoothAddressIsRejected() {
+        //An experiment pinned to a hardware address cannot be honoured on iOS and must not
+        //silently connect to whatever matches the remaining criteria
+        XCTAssertThrowsError(try parse(xml(input: """
+            <bluetooth name="d" mode="notification" address="00:11:22:33:44:55">
+                <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
+            </bluetooth>
+        """)))
+        //Without the attribute the same block parses
+        XCTAssertNoThrow(try parse(xml(input: """
+            <bluetooth name="d" mode="notification">
+                <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
+            </bluetooth>
+        """)))
+    }
+
+    func testContainerTypeIsValidated() throws {
+        _ = try parse(xml(containers: "<container type=\"buffer\">buffer</container>"))
+        _ = try parse(xml(containers: "<container type=\"BUFFER\">buffer</container>")) //folds
+        XCTAssertThrowsError(try parse(xml(containers: "<container type=\"bogus\">buffer</container>")))
+    }
+
+    func testGaussSmoothSigmaIsValidated() throws {
+        func gauss(_ attributes: String) -> String {
+            return xml(analysis: "<gausssmooth \(attributes)><input>buffer</input><output>buffer</output></gausssmooth>")
+        }
+        _ = try parse(gauss(""))                //absent keeps the default of 3
+        _ = try parse(gauss("sigma=\"2.5\""))
+        XCTAssertThrowsError(try parse(gauss("sigma=\"0\"")), "sigma 0 would divide the kernel normalisation by zero")
+        XCTAssertThrowsError(try parse(gauss("sigma=\"-1\"")))
+    }
+}

@@ -241,11 +241,17 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case name
         case uuid
         case autoConnect
+        case address
     }
-    
+
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
-        
+
+        //address is an Android-only scan criterion (ble-address-ios-must-reject in phyphox-docs)
+        if attributes.optionalString(for: .address) != nil {
+            throw ElementHandlerError.message("The bluetooth address attribute is not supported on iOS, which does not expose hardware addresses. Experiments using it are Android-only.")
+        }
+
         let id: String? = attributes.optionalString(for: .id)
         let name: String? = attributes.optionalString(for: .name)
         let uuidString: String? = attributes.optionalString(for: .uuid)
