@@ -996,3 +996,141 @@ final class MqttClientLoopbackTests: XCTestCase {
         XCTAssertFalse(client.connected)
     }
 }
+
+//On-device hardware test of the mqtts services against a real broker (mosquitto with a
+//self-signed certificate and password authentication). These tests are skipped unless the
+//broker is provided via TEST_RUNNER_ environment variables:
+//  PHYPHOX_MQTT_TEST_BROKER - broker host/IP, listening on the default mqtts port 8883
+//  PHYPHOX_MQTT_TEST_CA     - the broker certificate, PEM, base64-encoded
+//The expected broker credentials are phyphox/testpass. Run against a device to exercise the
+//real network stack; the same test on the simulator is a dry run on the host.
+final class MqttHardwareTests: XCTestCase {
+    private struct BrokerEnv {
+        let host: String
+        let ca: Data
+    }
+
+    //The service holds its experiment weakly (in the app the experiment owns the connection), so
+    //the tests must keep the parsed experiments alive for certificate resolution to work
+    private var retainedExperiments: [Experiment] = []
+
+    override func tearDown() {
+        retainedExperiments = []
+        super.tearDown()
+    }
+
+    private func brokerEnv() throws -> BrokerEnv {
+        guard let host = ProcessInfo.processInfo.environment["PHYPHOX_MQTT_TEST_BROKER"],
+              let caBase64 = ProcessInfo.processInfo.environment["PHYPHOX_MQTT_TEST_CA"],
+              let ca = Data(base64Encoded: caBase64) else {
+            throw XCTSkip("No test broker configured (PHYPHOX_MQTT_TEST_BROKER / PHYPHOX_MQTT_TEST_CA).")
+        }
+        return BrokerEnv(host: host, ca: ca)
+    }
+
+    private func makeExperiment(password: String, certificate: String, ca: Data) throws -> (Experiment, MqttTlsJsonService) {
+        let xml = """
+        <phyphox version="1.20">
+            <title>mqtts hardware test</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>tx</container>
+                <container>rx</container>
+            </data-containers>
+            <views>
+                <view label="v"><value label="l"><input>rx</input></value></view>
+            </views>
+            <network>
+                <connection address="placeholder" service="mqtts/json" conversion="json" sendTopic="phyphox/hwtest" receiveTopic="phyphox/hwtest" username="phyphox" password="\(password)" certificate="\(certificate)" persistence="true">
+                    <send id="value" datatype="number">tx</send>
+                    <receive id="value" append="true">rx</receive>
+                </connection>
+            </network>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+
+        //Deliver the certificate the way a zip container does: a res directory next to the
+        //experiment file, which is where resolveResource looks
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("mqtts-hw-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir.appendingPathComponent("res"), withIntermediateDirectories: true)
+        try ca.write(to: dir.appendingPathComponent("res").appendingPathComponent("broker.pem"))
+        experiment.source = dir.appendingPathComponent("test.phyphox")
+        retainedExperiments.append(experiment)
+
+        let service = try (experiment.networkConnections.first?.service as? MqttTlsJsonService).unwrap()
+        return (experiment, service)
+    }
+
+    private func waitUntil(_ description: String, timeout: TimeInterval = 20, condition: @escaping () -> Bool) {
+        let e = expectation(for: NSPredicate(block: { _, _ in condition() }), evaluatedWith: nil)
+        wait(for: [e], timeout: timeout)
+    }
+
+    func testTlsRoundTripAgainstRealBroker() throws {
+        let env = try brokerEnv()
+        let (experiment, service) = try makeExperiment(password: "testpass", certificate: "broker.pem", ca: env.ca)
+        service.connect(address: env.host) //no port: also exercises the 8883 default
+        defer { service.disconnect() }
+        waitUntil("connected and subscribed over TLS") { service.getState() == .success }
+
+        //Write a value and execute: the JSON publish (QoS 1, persistence is set) goes to the
+        //broker, which routes it straight back via our subscription on the same topic
+        let connection = try (experiment.networkConnections.first).unwrap()
+        if case .Buffer(let buffer, _) = try (connection.send["value"]?.source).unwrap() {
+            buffer.append(42.25)
+        } else {
+            XCTFail("send entry must be a buffer")
+        }
+
+        class Callback: NetworkServiceRequestCallback {
+            var results: [NetworkServiceResult] = []
+            func requestFinished(result: NetworkServiceResult) { results.append(result) }
+        }
+        let callback = Callback()
+        service.execute(send: connection.send, requestCallbacks: [callback])
+        waitUntil("publish executed") { !callback.results.isEmpty }
+        XCTAssertEqual(callback.results.first, .success)
+
+        var received: [Data] = []
+        waitUntil("message routed back by the broker") {
+            received += service.getResults() ?? []
+            return !received.isEmpty
+        }
+        let json = try (try JSONSerialization.jsonObject(with: received.first ?? Data()) as? [String: Any]).unwrap()
+        XCTAssertEqual(json["value"] as? Double, 42.25)
+    }
+
+    func testWrongCredentialsReportDescriptiveError() throws {
+        let env = try brokerEnv()
+        let (_, service) = try makeExperiment(password: "wrongpass", certificate: "broker.pem", ca: env.ca)
+        service.connect(address: env.host)
+        defer { service.disconnect() }
+
+        var reported: String? = nil
+        waitUntil("CONNACK refusal surfaces in getState") {
+            if case .genericError(let message) = service.getState(), message.contains("connection refused") {
+                reported = message
+                return true
+            }
+            return false
+        }
+        //mosquitto answers a wrong password with return code 5 (not authorized); accept 4 too,
+        //which brokers may use instead
+        XCTAssertTrue(reported?.contains("not authorized") == true || reported?.contains("bad username or password") == true, reported ?? "nil")
+    }
+
+    func testUnloadableCertificateRefusesConnection() throws {
+        let env = try brokerEnv()
+        let (_, service) = try makeExperiment(password: "testpass", certificate: "missing.pem", ca: env.ca)
+        service.connect(address: env.host)
+        guard case .genericError(let message) = service.getState() else {
+            XCTFail("expected an error state, got \(service.getState())")
+            return
+        }
+        XCTAssertTrue(message.contains("could not be loaded"), message)
+        XCTAssertNil(service.client, "no connection may be attempted after a failed trust setup")
+    }
+}
