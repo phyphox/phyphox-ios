@@ -609,17 +609,20 @@ class GraphDataManager {
                 }
                 var pauseRanges: [PauseRange] = []
                 var rangeStart: CGFloat? = nil
-                
-                for i in 0..<timeReference.timeMappings.count {
+
+                //One consistent snapshot: timeMappings is written on other threads, so re-reading it
+                //per iteration could index into a copy that changed length
+                let mappings = timeReference.timeMappings
+                for i in 0..<mappings.count {
                     let t = timeReference.getExperimentTimeReferenceByIndex(i: i) +
                            (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
                     let relativeT = CGFloat((t - minX) / xRange)
-                    
+
                     if t < minX || t > maxX {
                         continue
                     }
-                    
-                    if timeReference.timeMappings[i].event == .PAUSE {
+
+                    if mappings[i].event == .PAUSE {
                         rangeStart = relativeT
                     } else {
                         pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))
@@ -639,17 +642,19 @@ class GraphDataManager {
                 }
                 var pauseRanges: [PauseRange] = []
                 var rangeStart: CGFloat? = nil
-                
-                for i in 0..<timeReference.timeMappings.count {
+
+                //One consistent snapshot, see above
+                let mappings = timeReference.timeMappings
+                for i in 0..<mappings.count {
                     let t = timeReference.getExperimentTimeReferenceByIndex(i: i) +
                            (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
                     let relativeT = CGFloat((t - minY) / yRange)
-                    
+
                     if t < minY || t > maxY {
                         continue
                     }
-                    
-                    if timeReference.timeMappings[i].event == .START {
+
+                    if mappings[i].event == .START {
                         rangeStart = relativeT
                     } else {
                         pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))

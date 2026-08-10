@@ -215,7 +215,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let timeReference = ExperimentTimeReference()
         if let eventsDescriptor = try eventsHandler.expectOptionalResult() {
             for (type, event) in zip(eventsDescriptor.types, eventsDescriptor.events) {
-                timeReference.timeMappings.append(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
+                timeReference.appendMapping(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
             }
         }
 

@@ -1230,13 +1230,14 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
             }
             var pauseRanges: [PauseRange] = []
             var rangeStart: CGFloat? = nil
-            for i in 0..<timeReference.timeMappings.count {
+            let mappingsX = timeReference.timeMappings //one consistent snapshot; the array is written on other threads
+            for i in 0..<mappingsX.count {
                 let t = timeReference.getExperimentTimeReferenceByIndex(i: i) + (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
                 let relativeT = CGFloat((t - minX) / xRange)
                 if t < minX || t > maxX {
                     continue
                 }
-                if timeReference.timeMappings[i].event == .PAUSE {
+                if mappingsX[i].event == .PAUSE {
                     rangeStart = relativeT
                 } else {
                     pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))
@@ -1253,13 +1254,14 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
             }
             var pauseRanges: [PauseRange] = []
             var rangeStart: CGFloat? = nil
-            for i in 0..<timeReference.timeMappings.count {
+            let mappingsY = timeReference.timeMappings //one consistent snapshot; the array is written on other threads
+            for i in 0..<mappingsY.count {
                 let t = timeReference.getExperimentTimeReferenceByIndex(i: i) + (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
                 let relativeT = CGFloat((t - minY) / yRange)
                 if t < minY || t > maxY {
                     continue
                 }
-                if timeReference.timeMappings[i].event == .START {
+                if mappingsY[i].event == .START {
                     rangeStart = relativeT
                 } else {
                     pauseRanges.append(PauseRange(relativeBegin: rangeStart ?? 0.0, relativeEnd: relativeT))
