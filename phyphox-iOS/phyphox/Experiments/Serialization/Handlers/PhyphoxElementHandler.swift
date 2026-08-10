@@ -171,7 +171,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let isLink = try attributes.optionalValue(for: .isLink) ?? false
 
-        guard let version = SemanticVersion(string: versionString) else {
+        //The file format version is strictly "major.minor". Reject any other shape - in particular
+        //a three-part app version like "1.2.0" mistakenly used here, which SemanticVersion would
+        //otherwise reinterpret as 1.2.0 and load, even on an app that a genuine newer file version
+        //would have refused. This matches the Android parser, which requires a plain integer after
+        //the dot and rejects "1.2.0" ("Unable to interpret the file version").
+        guard versionString.components(separatedBy: ".").count == 2, let version = SemanticVersion(string: versionString) else {
             throw ElementHandlerError.unexpectedAttributeValue("version")
         }
 

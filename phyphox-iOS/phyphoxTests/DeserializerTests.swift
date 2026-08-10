@@ -1702,3 +1702,46 @@ final class BufferSnapshotConsistencyTests: XCTestCase {
         }
     }
 }
+
+//The file format version attribute is strictly major.minor. A newer version is refused, and a
+//string that is not major.minor is rejected rather than silently reinterpreted - in particular a
+//three-part app version like "1.2.0" used by mistake, which used to load (matching Android, which
+//requires a plain integer after the dot).
+final class FileVersionValidationTests: XCTestCase {
+    private func parse(version: String) throws -> Experiment {
+        let xml = """
+        <phyphox version="\(version)">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers><container>buffer</container></data-containers>
+            <views><view label="v"><value label="l"><input>buffer</input></value></view></views>
+        </phyphox>
+        """
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: xml.data(using: .utf8)!))
+    }
+
+    func testSupportedVersionsLoad() throws {
+        _ = try parse(version: "1.20")     //the latest supported version
+        _ = try parse(version: "1.7")      //an older version
+        _ = try parse(version: "1.0")
+    }
+
+    func testNewerVersionIsRejected() {
+        XCTAssertThrowsError(try parse(version: "1.21"))
+        XCTAssertThrowsError(try parse(version: "2.0"))
+        XCTAssertThrowsError(try parse(version: "1.100"), "the minor version must compare numerically, not lexically")
+    }
+
+    func testMalformedVersionFormatIsRejected() {
+        //A three-part app version mistakenly put in the file version attribute - the reported case
+        XCTAssertThrowsError(try parse(version: "1.2.0"))
+        //Other shapes that are not major.minor
+        XCTAssertThrowsError(try parse(version: "1.20.0"))
+        XCTAssertThrowsError(try parse(version: "1"))
+        XCTAssertThrowsError(try parse(version: "1.20-beta"))
+        XCTAssertThrowsError(try parse(version: "v1.20"))
+        XCTAssertThrowsError(try parse(version: "1."))
+        XCTAssertThrowsError(try parse(version: ""))
+    }
+}
