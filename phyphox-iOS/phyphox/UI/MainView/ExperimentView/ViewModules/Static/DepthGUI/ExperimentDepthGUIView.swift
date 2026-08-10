@@ -12,7 +12,6 @@ import Foundation
 import ARKit
 import Metal
 import MetalKit
-import CocoaMQTT
 
 @available(iOS 14.0, *)
 protocol DepthGUIDelegate {

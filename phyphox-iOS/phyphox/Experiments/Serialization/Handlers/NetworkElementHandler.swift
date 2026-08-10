@@ -130,6 +130,10 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         case interval
         case sendTopic
         case receiveTopic
+        case username
+        case password
+        case persistence
+        case certificate
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -151,16 +155,47 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
         let serviceStr = try attributes.nonEmptyString(for: .service)
         let service: NetworkService
-        
+
+        //username and password are optional for the plain mqtt services (brokers may require
+        //authentication without TLS), but mandatory for the mqtts (TLS) services
+        let username = attributes.optionalString(for: .username)
+        let password = attributes.optionalString(for: .password)
+        let persistence: Bool = try attributes.optionalValue(for: .persistence) ?? false
+        let certificate = attributes.optionalString(for: .certificate)
+        if let certificate = certificate, !certificate.isEmpty {
+            guard !certificate.components(separatedBy: "/").contains("..") else {
+                throw ElementHandlerError.message("Invalid certificate file name.")
+            }
+        }
+
         switch serviceStr {
         case "http/get":  service = HttpGetService()
         case "http/post": service = HttpPostService()
-        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic)
+        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic ?? "", username: username, password: password)
         case "mqtt/json":
-            guard let sendTopic = sendTopic else {
+            guard let sendTopic = sendTopic, !sendTopic.isEmpty else {
                 throw ElementHandlerError.message("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.")
             }
-            service = MqttJsonService(receiveTopic: receiveTopic, sendTopic: sendTopic)
+            service = MqttJsonService(receiveTopic: receiveTopic ?? "", sendTopic: sendTopic, username: username, password: password, persistence: persistence)
+        case "mqtts/json":
+            guard let sendTopic = sendTopic, !sendTopic.isEmpty else {
+                throw ElementHandlerError.message("sendTopic must be set for the mqtts/json service. Use mqtt/csv if you do not intent to send anything.")
+            }
+            guard let password = password, !password.isEmpty else {
+                throw ElementHandlerError.message("password must be set for the mqtts/json service.")
+            }
+            guard let username = username, !username.isEmpty else {
+                throw ElementHandlerError.message("username must be set for the mqtts/json service.")
+            }
+            service = MqttTlsJsonService(receiveTopic: receiveTopic ?? "", sendTopic: sendTopic, username: username, password: password, certificateFileName: certificate, persistence: persistence)
+        case "mqtts/csv":
+            guard let password = password, !password.isEmpty else {
+                throw ElementHandlerError.message("password must be set for the mqtts/csv service.")
+            }
+            guard let username = username, !username.isEmpty else {
+                throw ElementHandlerError.message("username must be set for the mqtts/csv service.")
+            }
+            service = MqttTlsCsvService(receiveTopic: receiveTopic ?? "", username: username, password: password, certificateFileName: certificate)
         default: throw ElementHandlerError.message("Unkown network service: \(serviceStr)")
         }
         

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Network
 import XCTest
 @testable import phyphox
 
@@ -592,5 +593,406 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
         result = get("/res?src=doesnotexist.png")
         XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
+    }
+}
+
+//The MQTT network services: the four service variants, their attributes and their validation,
+//matching the Android parser (see network-mqtts-unofficial in phyphox-docs).
+final class MqttNetworkServiceTests: XCTestCase {
+    private func parse(connectionAttributes: String) throws -> Experiment {
+        let xml = """
+        <phyphox version="1.20">
+            <title>mqtt test</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+            <network>
+                <connection address="broker.example.org" \(connectionAttributes) interval="1">
+                    <receive id="rx">buffer</receive>
+                </connection>
+            </network>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testMqttCsvDefaults() throws {
+        let experiment = try parse(connectionAttributes: "service=\"mqtt/csv\" conversion=\"csv\" receiveTopic=\"t\"")
+        let service = try (experiment.networkConnections.first?.service as? MqttCsvService).unwrap()
+        XCTAssertFalse(service is MqttTlsCsvService)
+        XCTAssertFalse(service.tls)
+        XCTAssertEqual(service.qos, 0)
+        XCTAssertNil(service.username, "username stays nil when not given - the client must not send an empty string")
+        XCTAssertNil(service.password)
+        XCTAssertTrue(service.clientID.hasPrefix("phyphox_"))
+        XCTAssertEqual(service.clientID.count, "phyphox_".count + 6)
+        XCTAssertEqual(service.receiveTopic, "t")
+        XCTAssertTrue(experiment.resources.isEmpty)
+    }
+
+    func testMqttJsonCredentialsAndPersistence() throws {
+        let experiment = try parse(connectionAttributes: "service=\"mqtt/json\" conversion=\"json\" sendTopic=\"s\" username=\"u\" password=\"p\" persistence=\"true\"")
+        let service = try (experiment.networkConnections.first?.service as? MqttJsonService).unwrap()
+        XCTAssertFalse(service.tls)
+        XCTAssertEqual(service.sendTopic, "s")
+        XCTAssertEqual(service.username, "u", "username and password are optional but accepted on the plain mqtt services")
+        XCTAssertEqual(service.password, "p")
+        XCTAssertEqual(service.qos, 1, "persistence must select QoS 1 (at-least-once)")
+        XCTAssertEqual(service.receiveTopic, "", "no receiveTopic means publish-only, not a nil crash")
+    }
+
+    func testMqttsUsesUsernameAsClientIdAndRegistersCertificate() throws {
+        let experiment = try parse(connectionAttributes: "service=\"mqtts/csv\" conversion=\"csv\" username=\"u\" password=\"p\" certificate=\"ca.pem\"")
+        let service = try (experiment.networkConnections.first?.service as? MqttTlsCsvService).unwrap()
+        XCTAssertTrue(service.tls)
+        XCTAssertEqual(service.clientID, "u")
+        XCTAssertEqual(service.certificateFileName, "ca.pem")
+        XCTAssertEqual(experiment.resources, ["ca.pem"], "the certificate is an experiment resource, so it is copied along when the experiment is saved")
+    }
+
+    func testMqttsJsonWithoutCertificateUsesSystemTrust() throws {
+        let experiment = try parse(connectionAttributes: "service=\"mqtts/json\" conversion=\"json\" sendTopic=\"s\" username=\"u\" password=\"p\"")
+        let service = try (experiment.networkConnections.first?.service as? MqttTlsJsonService).unwrap()
+        XCTAssertTrue(service.tls)
+        XCTAssertNil(service.certificateFileName)
+        XCTAssertEqual(service.qos, 0)
+        XCTAssertTrue(experiment.resources.isEmpty)
+    }
+
+    func testMqttValidation() {
+        //sendTopic is mandatory for the json services
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtt/json\" conversion=\"json\""))
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/json\" conversion=\"json\" username=\"u\" password=\"p\""))
+        //username and password are mandatory for the mqtts services
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/csv\" conversion=\"csv\" password=\"p\""))
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/csv\" conversion=\"csv\" username=\"u\""))
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/json\" conversion=\"json\" sendTopic=\"s\" username=\"u\""))
+        //a certificate name must not traverse out of the resource folder
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/csv\" conversion=\"csv\" username=\"u\" password=\"p\" certificate=\"../../ca.pem\""))
+        //unknown services are still rejected
+        XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtt/xml\" conversion=\"csv\""))
+    }
+}
+
+//The wire format of the from-scratch MQTT 3.1.1 client.
+final class MqttClientWireFormatTests: XCTestCase {
+    func testRemainingLengthEncoding() {
+        //Boundary examples from the MQTT 3.1.1 specification (section 2.2.3)
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(0)), [0x00])
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(127)), [0x7f])
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(128)), [0x80, 0x01])
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(16383)), [0xff, 0x7f])
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(16384)), [0x80, 0x80, 0x01])
+        XCTAssertEqual(Array(MqttClient.encodeRemainingLength(268435455)), [0xff, 0xff, 0xff, 0x7f])
+        for value in [0, 1, 127, 128, 16383, 16384, 2097151, 2097152, 268435455] {
+            let encoded = MqttClient.encodeRemainingLength(value)
+            let decoded = MqttClient.decodeRemainingLength(encoded)
+            XCTAssertEqual(decoded?.value, value)
+            XCTAssertEqual(decoded?.bytesUsed, encoded.count)
+        }
+        XCTAssertNil(MqttClient.decodeRemainingLength(Data([0x80])), "incomplete length must not decode")
+        XCTAssertNil(MqttClient.decodeRemainingLength(Data([0x80, 0x80, 0x80, 0x80, 0x01])), "more than four length bytes are malformed")
+    }
+
+    func testConnectPacket() {
+        let packet = Array(MqttClient.buildConnectPacket(clientId: "abc", username: "u", password: "p", cleanSession: true, keepAliveSeconds: 60))
+        let expected: [UInt8] = [
+            0x10, 21,                           //CONNECT, remaining length
+            0x00, 0x04, 0x4d, 0x51, 0x54, 0x54, //protocol name "MQTT"
+            0x04,                               //protocol level 4 = MQTT 3.1.1
+            0xc2,                               //flags: username, password, clean session
+            0x00, 0x3c,                         //keep alive 60 s
+            0x00, 0x03, 0x61, 0x62, 0x63,       //client id "abc"
+            0x00, 0x01, 0x75,                   //username "u"
+            0x00, 0x01, 0x70                    //password "p"
+        ]
+        XCTAssertEqual(packet, expected)
+
+        let anonymous = Array(MqttClient.buildConnectPacket(clientId: "abc", username: nil, password: nil, cleanSession: true, keepAliveSeconds: 60))
+        XCTAssertEqual(anonymous[9], 0x02, "without credentials only the clean session flag is set")
+        XCTAssertEqual(anonymous.count, 2 + 15, "without credentials the payload is just the client id")
+    }
+
+    func testPublishPacket() {
+        let qos0 = Array(MqttClient.buildPublishPacket(topic: "t", payload: Data([0x68, 0x69]), qos: 0, packetId: 0))
+        XCTAssertEqual(qos0, [0x30, 5, 0x00, 0x01, 0x74, 0x68, 0x69])
+        let qos1 = Array(MqttClient.buildPublishPacket(topic: "t", payload: Data([0x68, 0x69]), qos: 1, packetId: 0x1234))
+        XCTAssertEqual(qos1, [0x32, 7, 0x00, 0x01, 0x74, 0x12, 0x34, 0x68, 0x69])
+    }
+
+    func testSubscribePacket() {
+        let packet = Array(MqttClient.buildSubscribePacket(topic: "t", qos: 0, packetId: 1))
+        XCTAssertEqual(packet, [0x82, 6, 0x00, 0x01, 0x00, 0x01, 0x74, 0x00])
+    }
+
+    func testParsePublishBody() {
+        let qos0 = MqttClient.parsePublishBody(Data([0x00, 0x01, 0x74, 0x68, 0x69]), qos: 0)
+        XCTAssertEqual(qos0?.topic, "t")
+        XCTAssertEqual(qos0?.payload, Data([0x68, 0x69]))
+        let qos1 = MqttClient.parsePublishBody(Data([0x00, 0x01, 0x74, 0x12, 0x34, 0x68, 0x69]), qos: 1)
+        XCTAssertEqual(qos1?.topic, "t")
+        XCTAssertEqual(qos1?.packetId, 0x1234)
+        XCTAssertEqual(qos1?.payload, Data([0x68, 0x69]))
+        XCTAssertNil(MqttClient.parsePublishBody(Data([0x00, 0x05, 0x74]), qos: 0), "a topic length beyond the body must be rejected")
+    }
+
+    func testConnackMessages() {
+        XCTAssertEqual(MqttClient.connackMessage(4), "connection refused: bad username or password")
+        XCTAssertEqual(MqttClient.connackMessage(5), "connection refused: not authorized")
+        XCTAssertEqual(MqttClient.connackMessage(42), "connection refused: code 42")
+    }
+}
+
+//The custom CA certificate loader must accept both PEM and DER (Android's
+//CertificateFactory.generateCertificate does the same).
+final class MqttCertificateLoadingTests: XCTestCase {
+    private let pem = """
+    -----BEGIN CERTIFICATE-----
+    MIIBizCCATGgAwIBAgIUWXXFLCB2LhsIhzOk4+y3Q2uFNXMwCgYIKoZIzj0EAwIw
+    GjEYMBYGA1UEAwwPcGh5cGhveCB0ZXN0IENBMCAXDTI2MDgxMDA3NTQyNFoYDzIx
+    MjYwNzE3MDc1NDI0WjAaMRgwFgYDVQQDDA9waHlwaG94IHRlc3QgQ0EwWTATBgcq
+    hkjOPQIBBggqhkjOPQMBBwNCAARPyjajIOkcN8cymwVtKwAMSkT6wnzXBCfCbr0f
+    1kT4i6GcY8Oo39OnccYsYhbnFMxblLGQVEByOCH+gKg9tg+to1MwUTAdBgNVHQ4E
+    FgQUSrscLQR9Xjkv9KaNidXj2F9YXpMwHwYDVR0jBBgwFoAUSrscLQR9Xjkv9KaN
+    idXj2F9YXpMwDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNIADBFAiB1hkrv
+    yC1vT4sTn3N8uda63G+3KSg2df3QLrB4S7FcCQIhAKt1qF7AHgMPlTEX29sxWcRB
+    AZwi+JT2OKe3VZ3oU8wI
+    -----END CERTIFICATE-----
+    """
+
+    private func write(_ data: Data, as name: String) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        try data.write(to: url)
+        return url
+    }
+
+    func testLoadsPem() throws {
+        let url = try write(Data(pem.utf8), as: "phyphox-test-ca.pem")
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertNotNil(MqttService.loadCertificate(from: url))
+    }
+
+    func testLoadsDer() throws {
+        let base64 = pem.components(separatedBy: .newlines).filter({ !$0.contains("CERTIFICATE") }).joined().trimmingCharacters(in: .whitespaces)
+        let der = try (Data(base64Encoded: base64)).unwrap()
+        let url = try write(der, as: "phyphox-test-ca.der")
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertNotNil(MqttService.loadCertificate(from: url))
+    }
+
+    func testRejectsGarbage() throws {
+        let url = try write(Data("not a certificate".utf8), as: "phyphox-test-ca.txt")
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertNil(MqttService.loadCertificate(from: url))
+        XCTAssertNil(MqttService.loadCertificate(from: URL(fileURLWithPath: "/nonexistent/ca.pem")))
+    }
+}
+
+//Runs the from-scratch client against a minimal in-process broker on the loopback interface,
+//covering a full session: CONNECT/CONNACK, SUBSCRIBE/SUBACK, an incoming QoS 1 PUBLISH (which
+//the client must answer with PUBACK), and an outgoing QoS 1 publish.
+final class MqttClientLoopbackTests: XCTestCase {
+    private class Delegate: MqttClientDelegate {
+        var onMessage: ((String, Data) -> Void)? = nil
+        var onConnected: (() -> Void)? = nil
+        func mqttMessage(topic: String, payload: Data) { onMessage?(topic, payload) }
+        func mqttConnected() { onConnected?() }
+        func mqttConnectionLost(reason: String) { }
+    }
+
+    private class FakeBroker {
+        let listener: NWListener
+        let queue = DispatchQueue(label: "phyphox test broker")
+        private var connection: NWConnection? = nil
+        private var buffer = Data()
+        private var publishes: [(topic: String, payload: Data, qos: Int)] = []
+        private var pubAcks: [Int] = []
+
+        init() throws {
+            listener = try NWListener(using: .tcp)
+            listener.newConnectionHandler = { [weak self] connection in
+                guard let self = self else { return }
+                self.connection = connection
+                connection.start(queue: self.queue)
+                self.read(from: connection)
+            }
+        }
+
+        func start(onReady: @escaping () -> Void) {
+            listener.stateUpdateHandler = { state in
+                if case .ready = state {
+                    onReady()
+                }
+            }
+            listener.start(queue: queue)
+        }
+
+        var port: UInt16 { listener.port?.rawValue ?? 0 }
+        func receivedPublishes() -> [(topic: String, payload: Data, qos: Int)] { queue.sync { publishes } }
+        func receivedPubAcks() -> [Int] { queue.sync { pubAcks } }
+
+        func publish(topic: String, payload: Data, qos: Int, packetId: Int) {
+            queue.async {
+                self.send(MqttClient.buildPublishPacket(topic: topic, payload: payload, qos: qos, packetId: packetId))
+            }
+        }
+
+        func stop() {
+            connection?.cancel()
+            listener.cancel()
+        }
+
+        private func read(from connection: NWConnection) {
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, error in
+                guard let self = self, let data = data else { return }
+                self.buffer.append(data)
+                self.processBuffer()
+                if error == nil && !isComplete {
+                    self.read(from: connection)
+                }
+            }
+        }
+
+        private func processBuffer() {
+            while buffer.count >= 2 {
+                let header = buffer[buffer.startIndex]
+                guard let (length, lengthBytes) = MqttClient.decodeRemainingLength(buffer.dropFirst()) else { return }
+                let total = 1 + lengthBytes + length
+                guard buffer.count >= total else { return }
+                let body = Data(buffer.dropFirst(1 + lengthBytes).prefix(length))
+                buffer = Data(buffer.dropFirst(total))
+                handle(type: Int(header >> 4), flags: Int(header) & 0x0f, body: body)
+            }
+        }
+
+        private func handle(type: Int, flags: Int, body: Data) {
+            switch type {
+            case MqttClient.CONNECT:
+                send(Data([0x20, 0x02, 0x00, 0x00])) //CONNACK, accepted
+            case MqttClient.SUBSCRIBE:
+                send(MqttClient.buildPacket(type: MqttClient.SUBACK, flags: 0, body: body.prefix(2) + Data([0x00])))
+            case MqttClient.PUBLISH:
+                let qos = (flags >> 1) & 0x03
+                if let publish = MqttClient.parsePublishBody(body, qos: qos) {
+                    publishes.append((publish.topic, publish.payload, qos))
+                    if qos == 1 {
+                        send(MqttClient.buildPacket(type: MqttClient.PUBACK, flags: 0, body: Data([UInt8((publish.packetId >> 8) & 0xff), UInt8(publish.packetId & 0xff)])))
+                    }
+                }
+            case MqttClient.PUBACK:
+                pubAcks.append((Int(body[body.startIndex]) << 8) | Int(body[body.startIndex + 1]))
+            case MqttClient.PINGREQ:
+                send(Data([0xd0, 0x00])) //PINGRESP
+            default:
+                break
+            }
+        }
+
+        private func send(_ data: Data) {
+            connection?.send(content: data, completion: .contentProcessed({ _ in }))
+        }
+    }
+
+    private func waitUntil(_ description: String, timeout: TimeInterval = 5, condition: @escaping () -> Bool) {
+        let e = expectation(for: NSPredicate(block: { _, _ in condition() }), evaluatedWith: nil)
+        wait(for: [e], timeout: timeout)
+    }
+
+    func testFullSession() throws {
+        let broker = try FakeBroker()
+        defer { broker.stop() }
+        let brokerReady = expectation(description: "broker ready")
+        broker.start(onReady: { brokerReady.fulfill() })
+        wait(for: [brokerReady], timeout: 5)
+
+        let delegate = Delegate()
+        let connected = expectation(description: "connected")
+        delegate.onConnected = { connected.fulfill() }
+
+        let client = MqttClient(host: "127.0.0.1", port: broker.port, clientId: "test", username: "u", password: "p", cleanSession: true, keepAliveSeconds: 60, tls: nil, subscribeTopic: "rx", delegate: delegate)
+        client.connect()
+        defer { client.disconnect() }
+        wait(for: [connected], timeout: 5)
+        XCTAssertTrue(client.connected)
+
+        waitUntil("subscribed after SUBACK") { client.subscribed }
+
+        //Broker to client, QoS 1: the message must arrive and be acknowledged
+        let messageReceived = expectation(description: "message received")
+        delegate.onMessage = { topic, payload in
+            XCTAssertEqual(topic, "rx")
+            XCTAssertEqual(payload, Data("hello".utf8))
+            messageReceived.fulfill()
+        }
+        broker.publish(topic: "rx", payload: Data("hello".utf8), qos: 1, packetId: 42)
+        wait(for: [messageReceived], timeout: 5)
+        waitUntil("incoming QoS 1 publish acknowledged") { broker.receivedPubAcks().contains(42) }
+
+        //Client to broker, QoS 0 and QoS 1
+        client.publish(topic: "tx", payload: Data("world".utf8), qos: 0)
+        client.publish(topic: "tx1", payload: Data("world1".utf8), qos: 1)
+        waitUntil("both publishes arrived") {
+            let publishes = broker.receivedPublishes()
+            return publishes.contains(where: { $0.topic == "tx" && $0.payload == Data("world".utf8) && $0.qos == 0 })
+                && publishes.contains(where: { $0.topic == "tx1" && $0.payload == Data("world1".utf8) && $0.qos == 1 })
+        }
+    }
+
+    func testConnackRejectionIsReported() throws {
+        //A broker refusing the credentials must yield the descriptive CONNACK message
+        let listener = try NWListener(using: .tcp)
+        let queue = DispatchQueue(label: "phyphox test broker reject")
+        var brokerConnection: NWConnection? = nil
+        listener.newConnectionHandler = { connection in
+            brokerConnection = connection
+            connection.start(queue: queue)
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                connection.send(content: Data([0x20, 0x02, 0x00, 0x04]), completion: .contentProcessed({ _ in })) //CONNACK, bad username or password
+            }
+        }
+        let brokerReady = expectation(description: "broker ready")
+        listener.stateUpdateHandler = { state in
+            if case .ready = state { brokerReady.fulfill() }
+        }
+        listener.start(queue: queue)
+        wait(for: [brokerReady], timeout: 5)
+        defer {
+            brokerConnection?.cancel()
+            listener.cancel()
+        }
+
+        var reportedReason: String? = nil
+        let rejected = expectation(description: "rejected")
+
+        class RejectDelegate: MqttClientDelegate {
+            let onLost: (String) -> Void
+            init(onLost: @escaping (String) -> Void) { self.onLost = onLost }
+            func mqttMessage(topic: String, payload: Data) { }
+            func mqttConnected() { }
+            func mqttConnectionLost(reason: String) { onLost(reason) }
+        }
+        var fulfilled = false
+        let rejectDelegate = RejectDelegate(onLost: { reason in
+            if !fulfilled {
+                fulfilled = true
+                reportedReason = reason
+                rejected.fulfill()
+            }
+        })
+
+        let client = MqttClient(host: "127.0.0.1", port: listener.port?.rawValue ?? 0, clientId: "test", username: "u", password: "wrong", cleanSession: true, keepAliveSeconds: 60, tls: nil, subscribeTopic: "", delegate: rejectDelegate)
+        client.connect()
+        defer { client.disconnect() }
+        wait(for: [rejected], timeout: 5)
+        XCTAssertEqual(reportedReason, "connection refused: bad username or password")
+        XCTAssertFalse(client.connected)
     }
 }

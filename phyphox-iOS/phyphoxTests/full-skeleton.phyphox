@@ -165,6 +165,17 @@
         </if>
 
     </analysis>
+    <network>
+        <connection id="net1" privacy="https://example.org/privacy" address="tcp://broker.example.org:1883" service="mqtt/json" conversion="json" sendTopic="phyphox/send" receiveTopic="phyphox/receive" username="user" password="secret" persistence="true" interval="1">
+            <send id="acc" datatype="number" keep="false">buffer</send>
+            <send id="ver" type="meta">version</send>
+            <send id="clock" type="time"></send>
+            <receive id="rx" append="true">buffer</receive>
+        </connection>
+        <connection address="broker.example.org" service="mqtts/csv" conversion="csv" receiveTopic="phyphox/receive" username="user" password="secret" certificate="ca.pem" interval="1">
+            <receive id="rx2">buffer2</receive>
+        </connection>
+    </network>
     <export>
         <set name="n1">
             <data name="n2">buffer</data>

@@ -163,7 +163,6 @@
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		864F0BAC2D86287400FAE5E2 /* CameraButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864F0BA32D86286700FAE5E2 /* CameraButtons.swift */; };
 		866632E92A29E1D90068762D /* UIColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866632E82A29E1D90068762D /* UIColorExtensions.swift */; };
-		867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = 867E2BD72AC464D000ABB472 /* CocoaMQTT */; };
 		86BEF3412D7F2BF6000283DF /* ExposureAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86BEF3382D7F2BEF000283DF /* ExposureAnalyzer.swift */; };
 		86E0978C2D64D012005C7378 /* AnalyzingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */; };
 		86E0978E2D64D3E7005C7378 /* Shaders.h in Sources */ = {isa = PBXBuildFile; fileRef = 86E0978D2D64D3E5005C7378 /* Shaders.h */; };
@@ -239,6 +238,7 @@
 		C063C660238ECBC500327AE7 /* NetworkConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C65F238ECBC500327AE7 /* NetworkConnection.swift */; };
 		C063C662238ECCD000327AE7 /* NetworkDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C661238ECCD000327AE7 /* NetworkDiscovery.swift */; };
 		C063C664238ECCE700327AE7 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C663238ECCE700327AE7 /* NetworkService.swift */; };
+		C063C6702900A1B200327AE7 /* MqttClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C6712900A1B200327AE7 /* MqttClient.swift */; };
 		C063C666238ECF7A00327AE7 /* NetworkConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C665238ECF7A00327AE7 /* NetworkConversion.swift */; };
 		C063C668238F27D900327AE7 /* Metadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063C667238F27D900327AE7 /* Metadata.swift */; };
 		C063DA8B228C52D000367384 /* MarkerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C063DA8A228C52D000367384 /* MarkerOverlayView.swift */; };
@@ -575,6 +575,7 @@
 		C063C65F238ECBC500327AE7 /* NetworkConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConnection.swift; sourceTree = "<group>"; };
 		C063C661238ECCD000327AE7 /* NetworkDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiscovery.swift; sourceTree = "<group>"; };
 		C063C663238ECCE700327AE7 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		C063C6712900A1B200327AE7 /* MqttClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MqttClient.swift; sourceTree = "<group>"; };
 		C063C665238ECF7A00327AE7 /* NetworkConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConversion.swift; sourceTree = "<group>"; };
 		C063C667238F27D900327AE7 /* Metadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metadata.swift; sourceTree = "<group>"; };
 		C063DA8A228C52D000367384 /* MarkerOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerOverlayView.swift; sourceTree = "<group>"; };
@@ -635,7 +636,6 @@
 				860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */,
 				6B0815441CABF61B00EE2791 /* libc++.tbd in Frameworks */,
 				C06BCD372707AAFE00B29595 /* libz.tbd in Frameworks */,
-				867E2BD82AC464D000ABB472 /* CocoaMQTT in Frameworks */,
 				C06BCD4D2707B09700B29595 /* ImageIO.framework in Frameworks */,
 				860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */,
 				C0F430C628E5A2DB00BC98DE /* BEMCheckBox in Frameworks */,
@@ -1275,6 +1275,7 @@
 			isa = PBXGroup;
 			children = (
 				C063C65F238ECBC500327AE7 /* NetworkConnection.swift */,
+				C063C6712900A1B200327AE7 /* MqttClient.swift */,
 				C063C661238ECCD000327AE7 /* NetworkDiscovery.swift */,
 				C063C663238ECCE700327AE7 /* NetworkService.swift */,
 				C063C665238ECF7A00327AE7 /* NetworkConversion.swift */,
@@ -1318,7 +1319,6 @@
 			packageProductDependencies = (
 				C0BD4DF527079C600020A5AF /* JGProgressHUD */,
 				C0F430C528E5A2DB00BC98DE /* BEMCheckBox */,
-				867E2BD72AC464D000ABB472 /* CocoaMQTT */,
 				860E13F22B514703008FAFC6 /* GCDWebServer */,
 				860E13F52E42AA0100000002 /* ZIPFoundation */,
 			);
@@ -1426,7 +1426,6 @@
 			packageReferences = (
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
-				867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */,
 				860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
@@ -1634,6 +1633,7 @@
 				6B7BF7BD1C130471007408FB /* ExperimentSerialization.swift in Sources */,
 				6B7BF8191C147C94007408FB /* RangefilterAnalysis.swift in Sources */,
 				C063C664238ECCE700327AE7 /* NetworkService.swift in Sources */,
+				C063C6702900A1B200327AE7 /* MqttClient.swift in Sources */,
 				6B0C71551C1C706A00500FEE /* Constants.swift in Sources */,
 				6B612FEE207E5EA8001DA8D9 /* DataContainersElementHandler.swift in Sources */,
 				6B7BF7F41C132563007408FB /* MotionSession.swift in Sources */,
@@ -2270,14 +2270,6 @@
 				minimumVersion = 0.9.17;
 			};
 		};
-		867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/emqx/CocoaMQTT";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
 		A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-collections.git";
@@ -2314,11 +2306,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
-		};
-		867E2BD72AC464D000ABB472 /* CocoaMQTT */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 867E2BD62AC464D000ABB472 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
-			productName = CocoaMQTT;
 		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;

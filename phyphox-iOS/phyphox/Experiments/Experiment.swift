@@ -112,6 +112,15 @@ final class Experiment {
                 }
             }
         }
+        //An mqtts service may name a custom CA certificate, which is an experiment resource
+        //like the images named by view elements
+        for networkConnection in networkConnections {
+            if let mqttService = networkConnection.service as? MqttService {
+                for resource in mqttService.resources {
+                    res.insert(resource)
+                }
+            }
+        }
         return Array(res)
     }
 
@@ -252,6 +261,13 @@ final class Experiment {
         //is being built, i.e. before willBecomeActive - without a queue that run would never
         //execute and its busy flag would block the analysis permanently.
         analysis.queue = queue
+
+        //An MQTT service with a custom CA certificate resolves it as an experiment resource at
+        //connect time, which needs a reference back to this experiment (source and thereby the
+        //resource folder are only assigned after init)
+        for networkConnection in networkConnections {
+            (networkConnection.service as? MqttService)?.experiment = self
+        }
     }
 
     convenience init(file: String, error: String) {
