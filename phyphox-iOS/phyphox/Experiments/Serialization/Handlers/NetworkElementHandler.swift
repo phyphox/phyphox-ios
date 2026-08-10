@@ -10,7 +10,7 @@ import Foundation
 
 struct NetworkConnectionSendDescriptor {
     let id: String
-    enum SendableType: String, AttributeKey, LosslessStringConvertible {
+    enum SendableType: String, AttributeKey, CaseInsensitiveAttributeDecodable, CaseIterable {
         case meta
         case buffer
         case time
@@ -43,7 +43,14 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
         var additionalAttributes = [String:String]()
         if let datatype = attributes.optionalString(for: .datatype) {
-            additionalAttributes[Attribute.datatype.rawValue] = datatype
+            //Matched case-insensitively and normalized here, so the send-time comparisons work
+            //on the canonical form; an unknown datatype is an error (enum-case-insensitive and
+            //enum-invalid-value in phyphox-docs)
+            let folded = datatype.lowercased()
+            guard folded == "number" || folded == "array" else {
+                throw ElementHandlerError.unexpectedAttributeValue(Attribute.datatype.rawValue)
+            }
+            additionalAttributes[Attribute.datatype.rawValue] = folded
         }
         
         guard !(text.isEmpty && type != .time) else { throw ElementHandlerError.missingText }
@@ -147,9 +154,13 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let sendTopic = attributes.optionalString(for: .sendTopic)
         let receiveTopic = attributes.optionalString(for: .receiveTopic)
         
-        switch discoveryStr {
-        case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
-        default: discovery = nil
+        if let discoveryStr = discoveryStr {
+            switch discoveryStr.lowercased() { //Enumerated values are matched case-insensitively
+            case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
+            default: throw ElementHandlerError.message("Unknown discovery: \(discoveryStr)")
+            }
+        } else {
+            discovery = nil
         }
         
         let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
@@ -168,7 +179,7 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
             }
         }
 
-        switch serviceStr {
+        switch serviceStr.lowercased() { //Enumerated values are matched case-insensitively
         case "http/get":  service = HttpGetService()
         case "http/post": service = HttpPostService()
         case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic ?? "", username: username, password: password)
@@ -202,7 +213,7 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let conversionStr = attributes.optionalString(for: .conversion) ?? "none"
         let conversion: NetworkConversion
         
-        switch conversionStr {
+        switch conversionStr.lowercased() { //Enumerated values are matched case-insensitively
         case "none": conversion = NoneNetworkConversion()
         case "csv":  conversion = CSVNetworkConversion()
         case "json": conversion = JSONNetworkConversion()

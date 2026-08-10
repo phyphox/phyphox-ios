@@ -22,7 +22,7 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
         dropIncomplete = try attributes.optionalValue(for: "dropIncomplete") ?? false
         
         for input in inputs {
-            if input.asString == "data" {
+            if input.used(as: "data") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     dataIn = data
@@ -30,7 +30,7 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "width" {
+            else if input.used(as: "width") {
                 widthIn = input
             }
             else {

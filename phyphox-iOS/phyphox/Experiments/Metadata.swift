@@ -9,7 +9,7 @@
 import Foundation
 import CommonCrypto
 
-enum SensorMetadata: String, LosslessStringConvertible, CaseIterable {
+enum SensorMetadata: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case name
     case vendor
     case range

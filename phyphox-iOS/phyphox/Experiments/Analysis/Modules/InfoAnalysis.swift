@@ -23,10 +23,10 @@ final class InfoAnalysis: AutoClearingExperimentAnalysisModule {
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
       
         for output in outputs {
-            if output.asString == "batteryLevel" {
+            if output.used(as: "batteryLevel") {
                 batteryLevelOutput = output
                 
-            }  else if output.asString == "systemVolume" {
+            }  else if output.used(as: "systemVolume") {
                 systemVolumeOutput = output
             }
         }

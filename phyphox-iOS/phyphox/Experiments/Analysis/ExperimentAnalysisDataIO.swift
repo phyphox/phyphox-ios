@@ -54,6 +54,12 @@ enum ExperimentAnalysisDataInput: Equatable {
         }
     }
 
+    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
+    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    func used(as name: String) -> Bool {
+        return asString.lowercased() == name.lowercased()
+    }
+
     var isBuffer: Bool {
         switch self {
         case .buffer(buffer: _, data: _, usedAs: _, keep: _):
@@ -113,6 +119,12 @@ enum ExperimentAnalysisDataOutput: Equatable {
         case .buffer(buffer: _, data: _, usedAs: let usedAs, append: _):
             return usedAs
         }
+    }
+
+    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
+    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    func used(as name: String) -> Bool {
+        return asString.lowercased() == name.lowercased()
     }
 
     var isBuffer: Bool {

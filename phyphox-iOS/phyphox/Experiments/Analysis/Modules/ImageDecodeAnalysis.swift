@@ -46,7 +46,7 @@ final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
         var tLuminance: ExperimentAnalysisDataOutput?
 
         for output in outputs {
-            switch output.asString {
+            switch output.asString.lowercased() { //Slot names are matched case-insensitively
             case "width": tWidth = output
             case "height": tHeight = output
             case "r": tR = output

@@ -27,16 +27,16 @@ final class IfAnalysis: ExperimentAnalysisModule {
         greater = try attributes.optionalValue(for: "greater") ?? false
 
         for input in inputs {
-            if input.asString == "a" {
+            if input.used(as: "a") {
                 in1 = input
             }
-            else if input.asString == "b" {
+            else if input.used(as: "b") {
                 in2 = input
             }
-            else if input.asString == "true" {
+            else if input.used(as: "true") {
                 inTrue = input
             }
-            else if input.asString == "false" {
+            else if input.used(as: "false") {
                 inFalse = input
             }
             else {

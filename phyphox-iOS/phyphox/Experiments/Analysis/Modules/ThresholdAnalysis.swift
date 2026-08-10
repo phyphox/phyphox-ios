@@ -21,10 +21,10 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
         falling = try attributes.optionalValue(for: "falling") ?? false
 
         for input in inputs {
-            if input.asString == "threshold" {
+            if input.used(as: "threshold") {
                 thresholdIn = input
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
@@ -32,7 +32,7 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "x" {
+            else if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data

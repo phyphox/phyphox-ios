@@ -789,9 +789,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             //Look for data descriptor of a partial ZIP file
             return .partialZip
         }
-        if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
-            //Naive method to roughly check if this is a phyphox file without actually parsing it.
-            //A false positive will be caught be the parser, but we do not want to parse anything that is obviously not a phyphox file.
+        //Naive method to roughly check if this is a phyphox file without actually parsing it.
+        //A false positive will be caught be the parser, but we do not want to parse anything that
+        //is obviously not a phyphox file. Like the element names in the parser, the root element
+        //is matched case-insensitively (enum-case-insensitive in phyphox-docs); isoLatin1 as the
+        //fallback decoding cannot fail, so an unusual encoding does not bypass the check.
+        if let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1),
+           text.range(of: "<phyphox", options: .caseInsensitive) != nil {
             return .phyphox
         }
         return .unknown

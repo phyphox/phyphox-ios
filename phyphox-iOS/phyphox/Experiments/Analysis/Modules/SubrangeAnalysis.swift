@@ -19,13 +19,13 @@ final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         for input in inputs {
-            if input.asString == "from" {
+            if input.used(as: "from") {
                 from = input
             }
-            else if input.asString == "to" {
+            else if input.used(as: "to") {
                 to = input
             }
-            else if input.asString == "length" {
+            else if input.used(as: "length") {
                 length = input
             }
             else {

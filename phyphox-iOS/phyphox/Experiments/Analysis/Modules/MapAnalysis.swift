@@ -34,7 +34,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         if let mode: String = try attributes.optionalValue(for: "zMode") {
-            switch mode {
+            switch mode.lowercased() { //Enumerated values are matched case-insensitively
             case "count":
                 zMode = .count
             case "average":
@@ -56,25 +56,25 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         var y: MutableDoubleArray? = nil
         
         for input in inputs {
-            if input.asString == "mapWidth" {
+            if input.used(as: "mapWidth") {
                 mapWidth = input
             }
-            else if input.asString == "minX" {
+            else if input.used(as: "minX") {
                 minX = input
             }
-            else if input.asString == "maxX" {
+            else if input.used(as: "maxX") {
                 maxX = input
             }
-            else if input.asString == "mapHeight" {
+            else if input.used(as: "mapHeight") {
                 mapHeight = input
             }
-            else if input.asString == "minY" {
+            else if input.used(as: "minY") {
                 minY = input
             }
-            else if input.asString == "maxY" {
+            else if input.used(as: "maxY") {
                 maxY = input
             }
-            else if input.asString == "x" {
+            else if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     x = data
@@ -82,7 +82,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
                     throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     y = data
@@ -90,7 +90,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
                     throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
                 }
             }
-            else if input.asString == "z" {
+            else if input.used(as: "z") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     z = data
@@ -144,11 +144,11 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         self.y = y!
         
         for output in outputs {
-            if output.asString == "x" {
+            if output.used(as: "x") {
                 outX = output
-            } else if output.asString == "y" {
+            } else if output.used(as: "y") {
                 outY = output
-            } else if output.asString == "z" {
+            } else if output.used(as: "z") {
                 outZ = output
             } else {
                 throw SerializationError.genericError(message: "Error: Unknown output for reduce module: \(output.asString).")

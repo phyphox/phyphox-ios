@@ -100,7 +100,14 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         
         let positiveUnit = attributes.optionalString(for: .positiveUnit)
         let negativeUnit = attributes.optionalString(for: .negativeUnit)
-        let valueFormat = attributes.optionalString(for: .format)
+        //Matched case-insensitively and normalized here; an unknown format is an error rather
+        //than silently falling back (enum-case-insensitive and enum-invalid-value in phyphox-docs)
+        let valueFormat = attributes.optionalString(for: .format)?.lowercased()
+        if let valueFormat = valueFormat {
+            guard ["float", "degree-minutes", "degree-minutes-seconds", "ascii"].contains(valueFormat) else {
+                throw ElementHandlerError.unexpectedAttributeValue("format")
+            }
+        }
 
         results.append(.value(ValueViewElementDescriptor(label: label, visibility: visibility, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings, positiveUnit: positiveUnit, negativeUnit: negativeUnit, valueFormat: valueFormat)))
     }

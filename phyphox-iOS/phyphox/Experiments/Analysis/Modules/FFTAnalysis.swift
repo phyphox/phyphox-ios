@@ -79,7 +79,7 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
-            if input.asString == "im" {
+            if input.used(as: "im") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     imagInput = data
@@ -100,7 +100,7 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
         hasImagInBuffer = imagInput != nil
         
         for output in outputs {
-            if output.asString == "im" {
+            if output.used(as: "im") {
                 imagOutput = output
             }
             else {

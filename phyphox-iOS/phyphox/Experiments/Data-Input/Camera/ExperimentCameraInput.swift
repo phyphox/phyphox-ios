@@ -14,7 +14,7 @@ enum CameraInputError : Error {
 
 final class ExperimentCameraInput {
 
-    enum AutoExposureStrategy: String, LosslessStringConvertible {
+    enum AutoExposureStrategy: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case mean, avoidOverexposure, avoidUnderexposure, prioritizeFramerate
     }
     

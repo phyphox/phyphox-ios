@@ -26,7 +26,7 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
         multiple = try attributes.optionalValue(for: "multiple") ?? false
         
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
@@ -34,7 +34,7 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
@@ -42,7 +42,7 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "threshold" {
+            else if input.used(as: "threshold") {
                 thresholdIn = input
             }
             else {
@@ -51,10 +51,10 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "max" {
+            if output.used(as: "max") {
                 maxOut = output
             }
-            else if output.asString == "position" {
+            else if output.used(as: "position") {
                 positionOut = output
             }
             else {

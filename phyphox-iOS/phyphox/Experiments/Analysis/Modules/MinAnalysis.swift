@@ -26,7 +26,7 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
         multiple = try attributes.optionalValue(for: "multiple") ?? false
         
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
@@ -34,7 +34,7 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
@@ -42,7 +42,7 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "threshold" {
+            else if input.used(as: "threshold") {
                 thresholdIn = input
             }
             else {
@@ -51,10 +51,10 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "min" {
+            if output.used(as: "min") {
                 minOut = output
             }
-            else if output.asString == "position" {
+            else if output.used(as: "position") {
                 positionOut = output
             }
             else {

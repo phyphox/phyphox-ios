@@ -37,12 +37,12 @@ final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
         var currentMin: Double = -Double.infinity
         
         for input in inputs {
-            if input.asString == "min" {
+            if input.used(as: "min") {
                 if let v = input.getSingleValue() {
                     currentMin = v
                 }
             }
-            else if input.asString == "max" {
+            else if input.used(as: "max") {
                 if let v = input.getSingleValue() {
                     currentMax = v
                 }

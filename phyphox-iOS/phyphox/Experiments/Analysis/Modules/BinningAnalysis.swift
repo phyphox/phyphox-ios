@@ -28,10 +28,10 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
         var tBinCounts: ExperimentAnalysisDataOutput?
         
         for input in inputs {
-            if input.asString == "x0" {
+            if input.used(as: "x0") {
                 tX0 = input
             }
-            else if input.asString == "dx" {
+            else if input.used(as: "dx") {
                 tDx = input
             }
             else if tIn == nil {
@@ -40,7 +40,7 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "binCounts" || tBinStarts != nil {
+            if output.used(as: "binCounts") || tBinStarts != nil {
                 tBinCounts = output
             }
             else {

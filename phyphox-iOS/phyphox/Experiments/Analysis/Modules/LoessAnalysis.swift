@@ -18,28 +18,28 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
-            } else if input.asString == "y" {
+            } else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
-            } else if input.asString == "xi" {
+            } else if input.used(as: "xi") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xLocIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
-            } else if input.asString == "d" {
+            } else if input.used(as: "d") {
                 dIn = input
             } else {
                 throw SerializationError.genericError(message: "Error: Invalid analysis input for loess module: \(String(describing: input.asString))")

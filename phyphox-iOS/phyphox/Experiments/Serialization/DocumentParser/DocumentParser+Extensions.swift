@@ -81,7 +81,10 @@ extension LookupElementHandler {
     }
 
     func childHandler(for elementName: String) throws -> ElementHandler {
-        guard let handler = childHandlers[elementName] else {
+        //Element names are matched case-insensitively, like the enumerated values
+        //(enum-case-insensitive in phyphox-docs; the Android block parsers lowercase their tags).
+        //All registered handler names are lowercase.
+        guard let handler = childHandlers[elementName.lowercased()] else {
             throw ElementHandlerError.unexpectedChildElement(elementName)
         }
 
@@ -141,10 +144,34 @@ extension AttributelessElementHandler {
     func startElement(attributes: AttributeContainer) throws {}
 }
 
-/// Allows types conforming to the `RawRepresentable` protocol with a `RawValue` of type `String` to conform to `LosslessStringConvertible` without implementing any methods. Example: Enumerations with `String` raw values.
-extension LosslessStringConvertible where Self: RawRepresentable, Self.RawValue == String {
-    init?(_ description: String) {
-        self.init(rawValue: description)
+/// An enumerated value decoded from an experiment file attribute. Decoding folds case: an exact
+/// match of the raw value is tried first, then the cases are scanned with case folded on both
+/// sides, so camelCase raw values like prioritizeFramerate are found too (enum-case-insensitive
+/// rule in phyphox-docs, matching the Android parser). Folding happens before rejection - a value
+/// that matches no case at all fails the init, which the attribute readers report as an error.
+///
+/// This is deliberately its own protocol rather than a `LosslessStringConvertible` conformance:
+/// the folding init accepts several spellings of the same value, which would stretch that
+/// protocol's contract. The description (used wherever such an enum is printed or written out) is
+/// the canonical raw value.
+///
+/// A String enum conforms by declaring this protocol together with `CaseIterable`. No allowed set
+/// may contain two values differing only in case - the folding scan would silently pick the first.
+protocol CaseInsensitiveAttributeDecodable: CustomStringConvertible {
+    init?(attributeValue: String)
+}
+
+extension CaseInsensitiveAttributeDecodable where Self: RawRepresentable & CaseIterable, Self.RawValue == String {
+    init?(attributeValue: String) {
+        if let value = Self.init(rawValue: attributeValue) {
+            self = value
+            return
+        }
+        let folded = attributeValue.lowercased()
+        guard let match = Self.allCases.first(where: { $0.rawValue.lowercased() == folded }) else {
+            return nil
+        }
+        self = match
     }
 
     var description: String {

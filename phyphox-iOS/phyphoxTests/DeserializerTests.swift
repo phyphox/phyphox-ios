@@ -1134,3 +1134,309 @@ final class MqttHardwareTests: XCTestCase {
         XCTAssertNil(service.client, "no connection may be attempted after a failed trust setup")
     }
 }
+
+//Enumerated values from an experiment file are matched case-insensitively across the whole
+//format, and an invalid value is an error rather than silently selecting the default
+//(enum-case-insensitive and enum-invalid-value in phyphox-docs, matching the Android parser).
+final class EnumCaseFoldingTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    ///The full skeleton exercises the accepted surface of the format in one document; upper-casing
+    ///every enumerated attribute value in it must not change that.
+    func testCaseMangledSkeletonParses() throws {
+        let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
+        var xml = try String(contentsOfFile: skeleton, encoding: .utf8)
+        //Only attributes with enumerated values - buffer names, labels and numbers must stay untouched
+        for attribute in ["type", "component", "conversion", "waveform", "parameter", "axis", "as", "feature", "aeStrategy", "service", "discovery", "format", "style", "value"] {
+            let regex = try NSRegularExpression(pattern: "\(attribute)=\"([^\"]*)\"")
+            let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml)).reversed()
+            for match in matches {
+                let valueRange = Range(match.range(at: 1), in: xml)!
+                xml.replaceSubrange(valueRange, with: xml[valueRange].uppercased())
+            }
+        }
+        XCTAssertTrue(xml.contains("type=\"LINEAR_ACCELERATION\""), "the mangling itself must have worked")
+        XCTAssertTrue(xml.contains("conversion=\"UINT16LITTLEENDIAN\""))
+        _ = try parse(xml)
+    }
+
+    ///Folded values must map to the right case, not merely stop the parser from throwing
+    func testFoldedValuesMapCorrectly() throws {
+        let experiment = try parse("""
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <input>
+                <sensor type="ACCELEROMETER" rateStrategy="Limit" rate="10">
+                    <output component="ABS">buffer</output>
+                </sensor>
+            </input>
+            <views>
+                <view label="v">
+                    <graph label="g" style="DOTS" scaleMinX="FIXED">
+                        <input axis="Y">buffer</input>
+                    </graph>
+                </view>
+            </views>
+        </phyphox>
+        """)
+        let sensor = try experiment.sensorInputs.first.unwrap()
+        XCTAssertEqual(sensor.sensorType, .accelerometer)
+        XCTAssertEqual(sensor.rateStrategy, .limit)
+        XCTAssertNotNil(sensor.absBuffer, "component=\"ABS\" must map to the abs component")
+        let graph = try ((experiment.viewDescriptors?.first?.views.first) as? GraphViewDescriptor).unwrap()
+        XCTAssertEqual(graph.style.first, .dots)
+        XCTAssertEqual(graph.scaleMinX, .fixed)
+    }
+
+    ///An invalid enumerated value must reject the file instead of silently selecting the default
+    func testInvalidEnumValuesReject() {
+        func sensorXML(_ sensorAttributes: String, camera: String? = nil, network: String? = nil) -> String {
+            return """
+            <phyphox version="1.20">
+                <title>t</title>
+                <category>c</category>
+                <description>d</description>
+                <data-containers>
+                    <container>buffer</container>
+                </data-containers>
+                <input>
+                    <sensor \(sensorAttributes) rate="10">
+                        <output component="x">buffer</output>
+                    </sensor>
+                    \(camera ?? "")
+                </input>
+                \(network ?? "")
+                <views>
+                    <view label="v">
+                        <value label="l"><input>buffer</input></value>
+                    </view>
+                </views>
+            </phyphox>
+            """
+        }
+        //The three offenders named by enum-invalid-value, which used to substitute their defaults:
+        XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\" rateStrategy=\"bogus\"")))
+        XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", camera: "<camera feature=\"bogus\"><output component=\"luminance\">buffer</output></camera>")))
+        XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", camera: "<camera aeStrategy=\"bogus\"><output component=\"luminance\">buffer</output></camera>")))
+        //An unknown discovery method used to be silently ignored:
+        XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", network: "<network><connection address=\"a\" discovery=\"bogus\" discoveryAddress=\"b\" service=\"http/get\" conversion=\"none\"/></network>")))
+        //Folding must not have broken rejection in the long-standing throwing paths:
+        XCTAssertThrowsError(try parse(sensorXML("type=\"bogus\"")))
+
+        //View and output elements whose invalid enumerated values used to be silently swallowed:
+        func viewXML(_ viewBody: String, output: String = "") -> String {
+            return """
+            <phyphox version="1.20">
+                <title>t</title>
+                <category>c</category>
+                <description>d</description>
+                <data-containers>
+                    <container>buffer</container>
+                </data-containers>
+                \(output)
+                <views>
+                    <view label="v">
+                        \(viewBody)
+                    </view>
+                </views>
+            </phyphox>
+            """
+        }
+        //slider type used to silently produce a RANGE slider for anything but exactly "normal"
+        XCTAssertThrowsError(try parse(viewXML("<slider label=\"s\" type=\"bogus\"><output>buffer</output></slider>")))
+        //value format used to silently fall back to the plain number display
+        XCTAssertThrowsError(try parse(viewXML("<value label=\"l\" format=\"bogus\"><input>buffer</input></value>")))
+        //a per-set graph style used to be silently ignored (Android rejects it)
+        XCTAssertThrowsError(try parse(viewXML("<graph label=\"g\"><input axis=\"y\" style=\"bogus\">buffer</input></graph>")))
+        //the audio waveform used to silently fall back to sine
+        XCTAssertThrowsError(try parse(viewXML("<value label=\"l\"><input>buffer</input></value>", output: "<output><audio><tone waveform=\"bogus\"><input parameter=\"frequency\" type=\"value\">440</input></tone></audio></output>")))
+    }
+}
+
+//Metadata identifiers of network send elements and the camera locked setting names fold case
+//as well (maintainer decision 2026-08-10, extending enum-case-insensitive; Android still
+//matches both case-sensitively - see ANDROID-TODO).
+final class MetadataAndLockedFoldingTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(meta: String, locked: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <input>
+                <camera locked="\(locked)">
+                    <output component="luminance">buffer</output>
+                </camera>
+            </input>
+            <network>
+                <connection address="a" service="http/post" conversion="none" interval="1">
+                    \(meta)
+                </connection>
+            </network>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMetadataNamesAndLockedSettingsFold() throws {
+        let experiment = try parse(xml(meta: """
+            <send id="m1" type="meta">UNIQUEID</send>
+            <send id="m2" type="meta">ACCELEROMETERNAME</send>
+            <send id="m3" type="meta">FileFormat</send>
+        """, locked: "Shutter_Speed=1/50, ISO=100"))
+
+        //locked setting names are normalized to lowercase at parse time
+        let locked = try (experiment.cameraInput?.locked).unwrap()
+        XCTAssertEqual(Set(locked.keys), ["shutter_speed", "iso"])
+        XCTAssertEqual(locked["iso"] ?? nil, 100)
+        XCTAssertEqual(locked["shutter_speed"] ?? nil, 1.0/50.0, "the shutter speed fraction syntax must survive the folded name")
+
+        //metadata identifiers resolve regardless of case
+        let connection = try experiment.networkConnections.first.unwrap()
+        guard case .Metadata(.uniqueId) = try (connection.send["m1"]?.source).unwrap() else {
+            return XCTFail("UNIQUEID must fold to the unique id metadata")
+        }
+        guard case .Metadata(.sensor(.accelerometer, .name)) = try (connection.send["m2"]?.source).unwrap() else {
+            return XCTFail("ACCELEROMETERNAME must fold to the accelerometer name metadata")
+        }
+        guard case .Metadata(.fileFormat) = try (connection.send["m3"]?.source).unwrap() else {
+            return XCTFail("FileFormat must fold to the file format metadata")
+        }
+    }
+
+    func testUnknownMetadataNameStillRejects() {
+        XCTAssertThrowsError(try parse(xml(meta: "<send id=\"m\" type=\"meta\">bogusMeta</send>", locked: "iso=100")))
+    }
+}
+
+//Format-wide case folding beyond the enumerated attribute values (maintainer decisions
+//2026-08-10): the datatype attribute, boolean attribute values and element names all fold,
+//and invalid values are rejected rather than silently defaulted.
+final class FormatWideCaseFoldingTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testElementNamesFold() throws {
+        //Element names fold without exception, including the root
+        let experiment = try parse("""
+        <PHYPHOX version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <Data-Containers>
+                <CONTAINER>buffer</CONTAINER>
+            </Data-Containers>
+            <Input>
+                <SENSOR type="accelerometer" rate="10">
+                    <Output component="x">buffer</Output>
+                </SENSOR>
+            </Input>
+            <Analysis>
+                <Append>
+                    <Input>buffer</Input>
+                    <OUTPUT>buffer</OUTPUT>
+                </Append>
+            </Analysis>
+            <VIEWS>
+                <View label="v">
+                    <Value label="l"><Input>buffer</Input></Value>
+                </View>
+            </VIEWS>
+        </PHYPHOX>
+        """)
+        //Successful parsing is the assertion that matters: <Append> only parses if the folded
+        //module name reached the classMap, and <SENSOR>/<CONTAINER> only via the folded lookup
+        XCTAssertEqual(experiment.sensorInputs.count, 1)
+        XCTAssertNotNil(experiment.buffers["buffer"])
+    }
+
+    private func boolXML(sensor: String, graph: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <input>
+                <sensor type="accelerometer" rate="10" \(sensor)>
+                    <output component="x">buffer</output>
+                </sensor>
+            </input>
+            <views>
+                <view label="v">
+                    <graph label="g" \(graph)>
+                        <input axis="y">buffer</input>
+                    </graph>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testBooleansFoldAndReject() throws {
+        let experiment = try parse(boolXML(sensor: "average=\"True\"", graph: "partialUpdate=\"TRUE\" followX=\"False\""))
+        let graph = try ((experiment.viewDescriptors?.first?.views.first) as? GraphViewDescriptor).unwrap()
+        XCTAssertTrue(graph.partialUpdate)
+        XCTAssertFalse(graph.followX)
+        //Anything that is not true or false is an error - Android's silent false and the XSD-style
+        //"1"/"0" are not part of the format
+        XCTAssertThrowsError(try parse(boolXML(sensor: "average=\"yes\"", graph: "")))
+        XCTAssertThrowsError(try parse(boolXML(sensor: "", graph: "partialUpdate=\"1\"")))
+    }
+
+    private func datatypeXML(_ datatype: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <network>
+                <connection address="a" service="http/post" conversion="none" interval="1">
+                    <send id="x" datatype="\(datatype)">buffer</send>
+                </connection>
+            </network>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testDatatypeFoldsAndRejects() throws {
+        //The folded value is normalized to lowercase, which the send-time comparisons rely on
+        let experiment = try parse(datatypeXML("NUMBER"))
+        let send = try (experiment.networkConnections.first?.send["x"]).unwrap()
+        XCTAssertEqual(send.additionalAttributes["datatype"], "number")
+        _ = try parse(datatypeXML("Array"))
+        XCTAssertThrowsError(try parse(datatypeXML("bogus")))
+    }
+}

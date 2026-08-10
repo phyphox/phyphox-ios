@@ -28,12 +28,12 @@ final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
         var tCutoffLow: ExperimentAnalysisDataInput?
 
         for input in inputs {
-            switch input.asString {
+            switch input.asString.lowercased() { //Slot names are matched case-insensitively
             case "y": tY = input
             case "x": tX = input
             case "n": tN = input
             case "cutoff": tCutoff = input
-            case "cutoffLow": tCutoffLow = input
+            case "cutofflow": tCutoffLow = input
             default: throw SerializationError.genericError(message: "Error: Invalid analysis input for butterworth module: \(String(describing: input.asString))")
             }
         }

@@ -19,7 +19,7 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
         for input in inputs {
-            if input.asString == "data" {
+            if input.used(as: "data") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     dataIn = data
@@ -27,10 +27,10 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "index" {
+            else if input.used(as: "index") {
                 indexIn = input
             }
-            else if input.asString == "overlap" {
+            else if input.used(as: "overlap") {
                 overlapIn = input
             }
             else {
@@ -39,10 +39,10 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "out1" {
+            if output.used(as: "out1") {
                 out1Out = output
             }
-            else if output.asString == "out2" {
+            else if output.used(as: "out2") {
                 out2Out = output
             }
             else {

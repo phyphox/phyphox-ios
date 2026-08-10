@@ -105,8 +105,15 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let precision = try attributes.optionalValue(for: .precision) ?? 2
         let type = attributes.optionalString(for: .type) ?? "normal"
         let showValue = try attributes.optionalValue(for: .showValue) ?? true
-        
-        let sliderType = (type == "normal") ? SliderType.Normal : SliderType.Range
+
+        //Matched case-insensitively; an unknown type is an error, not a range slider
+        //(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+        let sliderType: SliderType
+        switch type.lowercased() {
+        case "normal": sliderType = SliderType.Normal
+        case "range": sliderType = SliderType.Range
+        default: throw ElementHandlerError.unexpectedAttributeValue("type")
+        }
         
         let outputBufferName = (sliderType == .Normal) ? rangeSliderOutputHandler.results.first?.bufferName : nil
         
@@ -122,15 +129,16 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
             
             for outputBuffer in outputBuffers {
                 let value = outputBuffer.value
-                if(value == "lowerValue"){
+                //Mapping names are matched case-insensitively (enum-case-insensitive in phyphox-docs)
+                if(value.lowercased() == "lowervalue"){
                     lowerBufferName = outputBuffer.bufferName
                 }
-                
-                if(value == "upperValue"){
+
+                if(value.lowercased() == "uppervalue"){
                     upperBufferName = outputBuffer.bufferName
                 }
                 outputBufferNames_.append(value)
-                
+
             }
         }
         

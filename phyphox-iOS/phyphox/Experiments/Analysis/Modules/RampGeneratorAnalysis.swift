@@ -16,13 +16,13 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
-            if input.asString == "start" {
+            if input.used(as: "start") {
                 startInput = input
             }
-            else if input.asString == "stop" {
+            else if input.used(as: "stop") {
                 stopInput = input
             }
-            else if input.asString == "length" {
+            else if input.used(as: "length") {
                 lengthInput = input
             }
             else {

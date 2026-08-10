@@ -9,7 +9,7 @@
 import Foundation
 import CoreMotion
 
-enum SensorType: String, LosslessStringConvertible, Equatable, CaseIterable {
+enum SensorType: String, CaseInsensitiveAttributeDecodable, Equatable, CaseIterable {
     case accelerometer
     case gyroscope
     case linearAcceleration = "linear_acceleration"
@@ -70,7 +70,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     let sqrt12 = sqrt(0.5)
 
-    enum RateStrategy: String, LosslessStringConvertible {
+    enum RateStrategy: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case auto
         case request
         case generate

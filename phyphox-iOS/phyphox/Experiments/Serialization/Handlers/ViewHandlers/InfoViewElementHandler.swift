@@ -19,7 +19,7 @@ struct InfoViewElementDescriptor {
     let bold: Bool
     let italic: Bool
     
-    enum TextAlignment: String, LosslessStringConvertible {
+    enum TextAlignment: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case left, right, center
     }
 }

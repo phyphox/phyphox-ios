@@ -14,10 +14,10 @@ final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
-            if input.asString == "value" {
+            if input.used(as: "value") {
                 valueInput = input
             }
-            else if input.asString == "length" {
+            else if input.used(as: "length") {
                 lengthInput = input
             }
             else {

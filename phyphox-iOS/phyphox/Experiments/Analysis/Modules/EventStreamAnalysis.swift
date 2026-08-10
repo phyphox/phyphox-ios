@@ -21,7 +21,7 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
     private var skipOut: ExperimentAnalysisDataOutput?
     private var lastOut: ExperimentAnalysisDataOutput?
     
-    enum TriggerMode: String, LosslessStringConvertible, Equatable, CaseIterable {
+    enum TriggerMode: String, CaseInsensitiveAttributeDecodable, Equatable, CaseIterable {
         case above
         case below
         case aboveAbsolute
@@ -40,7 +40,7 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         triggerMode = try attributes.optionalValue(for: "mode") ?? TriggerMode.above
         
         for input in inputs {
-            if input.asString == "data" {
+            if input.used(as: "data") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     dataIn = data
@@ -48,19 +48,19 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "threshold" {
+            else if input.used(as: "threshold") {
                 thresholdIn = input
             }
-            else if input.asString == "distance" {
+            else if input.used(as: "distance") {
                 distanceIn = input
             }
-            else if input.asString == "index" {
+            else if input.used(as: "index") {
                 indexIn = input
             }
-            else if input.asString == "skip" {
+            else if input.used(as: "skip") {
                 skipIn = input
             }
-            else if input.asString == "last" {
+            else if input.used(as: "last") {
                 lastIn = input
             }
             else {
@@ -69,16 +69,16 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "events" {
+            if output.used(as: "events") {
                 eventsOut = output
             }
-            else if output.asString == "index" {
+            else if output.used(as: "index") {
                 indexOut = output
             }
-            else if output.asString == "skip" {
+            else if output.used(as: "skip") {
                 skipOut = output
             }
-            else if output.asString == "last" {
+            else if output.used(as: "last") {
                 lastOut = output
             }
             else {

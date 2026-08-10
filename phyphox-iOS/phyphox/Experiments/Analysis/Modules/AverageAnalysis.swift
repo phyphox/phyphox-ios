@@ -18,7 +18,7 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
         var avg: ExperimentAnalysisDataOutput? = nil
         var std: ExperimentAnalysisDataOutput? = nil
         for output in outputs {
-            if output.asString == "std" || avg != nil {
+            if output.used(as: "std") || avg != nil {
                 std = output
             }
             else {

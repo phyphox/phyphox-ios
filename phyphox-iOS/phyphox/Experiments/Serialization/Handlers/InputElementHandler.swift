@@ -178,7 +178,9 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         for lockedSetting in lockedStr.split(separator: ",") {
             if lockedSetting.contains("=") {
                 let parts = lockedSetting.split(separator: "=", maxSplits: 1)
-                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                //Setting names are matched case-insensitively; storing them lowercased normalizes
+                //them for every later lookup (enum-case-insensitive in phyphox-docs)
+                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces).lowercased()
                 var value: Float? = nil
                 if setting == "shutter_speed" && parts[1].contains("/") {
                     let fraction = parts[1].split(separator: "/")
@@ -192,15 +194,15 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
                 }
                 locked[setting] = value
             } else {
-                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces))] = nil
+                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces)).lowercased()] = nil
             }
         }
         
-        let featureString = attributes.optionalString(for: .feature) ?? "photometric"
-        
-        let feature_: CameraFeature = CameraFeature(rawValue: featureString) ?? CameraFeature.PHOTOMETRIC
-        
-        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
+        //An invalid enumerated value is an error, only an absent attribute selects the default
+        //(enum-invalid-value in phyphox-docs, matching Android)
+        let feature_: CameraFeature = try attributes.optionalValue(for: .feature) ?? .PHOTOMETRIC
+
+        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = try attributes.optionalValue(for: .aeStrategy) ?? .mean
 
         let aeFPSTarget: Double = try attributes.optionalValue(for: .aeFPSTarget) ?? 0.0
 
@@ -208,20 +210,9 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
     }
 }
 
-enum CameraFeature: String {
+enum CameraFeature: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case PHOTOMETRIC = "photometric"
     case SPECTROSCOPY = "spectroscopy"
-    
-    public init?(rawValue: String) {
-        switch(rawValue){
-        case "photometric":
-            self = .PHOTOMETRIC
-        case "spectroscopy":
-            self = .SPECTROSCOPY
-        default:
-            self = .PHOTOMETRIC
-        }
-    }
 }
 
 struct SensorInputDescriptor: SensorDescriptor {
@@ -279,7 +270,9 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let sensor: SensorType = try attributes.value(for: .type)
 
         let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
-        let rateStrategy: ExperimentSensorInput.RateStrategy? = try? attributes.value(for: .rateStrategy)
+        //An invalid rate strategy is an error; only an absent attribute selects the
+        //version-dependent default (enum-invalid-value in phyphox-docs, matching Android)
+        let rateStrategy: ExperimentSensorInput.RateStrategy? = try attributes.optionalValue(for: .rateStrategy)
         let average = try attributes.optionalValue(for: .average) ?? false
         let stride = try attributes.optionalValue(for: .stride) ?? 1
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
@@ -325,7 +318,7 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
     }
 }
 
-enum BluetoothOutputExtra: String, LosslessStringConvertible {
+enum BluetoothOutputExtra: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case time
     case none
 }
@@ -371,19 +364,19 @@ private final class BluetoothOutputElementHandler: ResultElementHandler, Childle
         if extra == .none {
             let conversionName = try attributes.nonEmptyString(for: .conversion)
             
-            switch conversionName {
+            switch conversionName.lowercased() { //Conversion function names are matched case-insensitively
             case "string":
                 let decimalPoint: String? = attributes.optionalString(for: .decimalPoint)
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
                 let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
                 conversion = StringInputConversion(decimalPoint: decimalPoint, offset: offset, repeating: repeating, length: length)
-            case "formattedString":
+            case "formattedstring":
                 let separator: String? = attributes.optionalString(for: .separator)
                 let label: String? = attributes.optionalString(for: .label)
                 let index: Int = try attributes.optionalValue(for: .index) ?? 0
                 conversion = FormattedStringInputConversion(separator: separator, label: label, index: index)
-            case "singleByte":
+            case "singlebyte":
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
                 let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
@@ -432,8 +425,8 @@ final class BluetoothConfigElementHandler: ResultElementHandler, ChildlessElemen
         
         let conversionName = try attributes.nonEmptyString(for: .conversion)
         let conversion: ConfigConversion
-        switch conversionName {
-        case "singleByte":
+        switch conversionName.lowercased() { //Conversion function names are matched case-insensitively
+        case "singlebyte":
             conversion = SimpleConfigConversion(function: .uInt8)
         default:
             let conversionFunction: SimpleConfigConversion.ConversionFunction = try attributes.value(for: .conversion)
@@ -448,7 +441,7 @@ final class BluetoothConfigElementHandler: ResultElementHandler, ChildlessElemen
     }
 }
 
-enum BluetoothMode: String, LosslessStringConvertible {
+enum BluetoothMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case notification
     case indication
     case poll

@@ -23,7 +23,7 @@ final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
         var out: ExperimentAnalysisDataOutput? = nil
         var offset1970: ExperimentAnalysisDataOutput? = nil
         for output in outputs {
-            if output.asString == "offset1970" || out != nil {
+            if output.used(as: "offset1970") || out != nil {
                 offset1970 = output
             }
             else {

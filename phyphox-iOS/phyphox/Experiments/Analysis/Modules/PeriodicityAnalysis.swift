@@ -31,7 +31,7 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xInput = data
@@ -39,7 +39,7 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
                     throw SerializationError.genericError(message: "x input can only be a buffer")
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yInput = data
@@ -47,16 +47,16 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
                     throw SerializationError.genericError(message: "y input can only be a buffer")
                 }
             }
-            else if input.asString == "dx" {
+            else if input.used(as: "dx") {
                 dxInput = input
             }
-            else if input.asString == "overlap" {
+            else if input.used(as: "overlap") {
                 overlapInput = input
             }
-            else if input.asString == "min" {
+            else if input.used(as: "min") {
                 minInput = input
             }
-            else if input.asString == "max" {
+            else if input.used(as: "max") {
                 maxInput = input
             }
             else {
@@ -65,10 +65,10 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "time" {
+            if output.used(as: "time") {
                 timeOutput = output
             }
-            else if output.asString == "period" {
+            else if output.used(as: "period") {
                 periodOutput = output
             }
             else {

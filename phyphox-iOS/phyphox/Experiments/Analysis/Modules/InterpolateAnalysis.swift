@@ -9,7 +9,7 @@
 import Foundation
 
 final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
-    enum InterpolationMethod: String, LosslessStringConvertible {
+    enum InterpolationMethod: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case previous
         case next
         case nearest
@@ -29,21 +29,21 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         method = try attributes.optionalValue(for: "method") ?? .linear
         
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
-            } else if input.asString == "y" {
+            } else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
                 case .value(value: _, usedAs: _):
                     break
                 }
-            } else if input.asString == "xi" {
+            } else if input.used(as: "xi") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xLocIn = data

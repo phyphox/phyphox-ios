@@ -21,7 +21,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     xIn = data
@@ -29,7 +29,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                 case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                     yIn = data
@@ -37,10 +37,10 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                     break
                 }
             }
-            else if input.asString == "minX" {
+            else if input.used(as: "minX") {
                 minXIn = input
             }
-            else if input.asString == "maxX" {
+            else if input.used(as: "maxX") {
                 maxXIn = input
             }
             else {
@@ -49,10 +49,10 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "x" {
+            if output.used(as: "x") {
                 xOut = output
             }
-            else if output.asString == "y" {
+            else if output.used(as: "y") {
                 yOut = output
             }
             else {

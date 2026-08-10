@@ -28,7 +28,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         sumY = try attributes.optionalValue(for: "sumY") ?? false
         
         for input in inputs {
-            if input.asString == "x" {
+            if input.used(as: "x") {
                 switch input {
                     case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                         inX = data
@@ -36,7 +36,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
                         throw SerializationError.genericError(message: "Error: Input x for reduce module has to be a buffer.")
                 }
             }
-            else if input.asString == "y" {
+            else if input.used(as: "y") {
                 switch input {
                     case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                         inY = data
@@ -44,7 +44,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
                         throw SerializationError.genericError(message: "Error: Input y for reduce module has to be a buffer.")
                 }
             }
-            else if input.asString == "factor" {
+            else if input.used(as: "factor") {
                 factor = input
             }
             else {
@@ -57,9 +57,9 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         }
         
         for output in outputs {
-            if output.asString == "x" {
+            if output.used(as: "x") {
                 outX = output
-            } else if output.asString == "y" {
+            } else if output.used(as: "y") {
                 outY = output
             } else {
                 throw SerializationError.genericError(message: "Error: Unknown output for reduce module: \(output.asString).")

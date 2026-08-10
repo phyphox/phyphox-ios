@@ -12,7 +12,9 @@ import CoreBluetooth
 // MARK: - Extensions required for the initialization of an Experiment instance.
 private extension SensorDescriptor {
     func buffer(for component: String, from buffers: [String: DataBuffer]) -> DataBuffer? {
-        return (outputs.first(where: { $0.component == component })?.bufferName).map { buffers[$0] } ?? nil
+        //Component names from the experiment file are matched case-insensitively
+        //(enum-case-insensitive rule in phyphox-docs, matching Android)
+        return (outputs.first(where: { $0.component?.lowercased() == component.lowercased() })?.bufferName).map { buffers[$0] } ?? nil
     }
 }
 
@@ -291,32 +293,35 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         send[item.id] = NetworkSendableData(source: .Buffer(buffer, keep: item.keep), additionalAttributes: item.additionalAttributes)
                     case .meta:
                         let metadata: NetworkSendableData.Source
-                        switch (item.name) {
-                        case "uniqueID": metadata = .Metadata(.uniqueId)
+                        //Metadata identifiers are matched case-insensitively, like the enumerated
+                        //attribute values (enum-case-insensitive in phyphox-docs)
+                        switch (item.name.lowercased()) {
+                        case "uniqueid": metadata = .Metadata(.uniqueId)
                         case "version": metadata = .Metadata(.version)
                         case "build": metadata = .Metadata(.build)
-                        case "fileFormat": metadata = .Metadata(.fileFormat)
-                        case "deviceModel": metadata = .Metadata(.deviceModel)
-                        case "deviceBrand": metadata = .Metadata(.deviceBrand)
-                        case "deviceBoard": metadata = .Metadata(.deviceBoard)
-                        case "deviceManufacturer": metadata = .Metadata(.deviceManufacturer)
-                        case "deviceBaseOS": metadata = .Metadata(.deviceBaseOS)
-                        case "deviceCodename": metadata = .Metadata(.deviceCodename)
-                        case "deviceRelease": metadata = .Metadata(.deviceRelease)
-                        case "depthFrontSensor": metadata = .Metadata(.depthFrontSensor)
-                        case "depthFrontResolution": metadata = .Metadata(.depthFrontResolution)
-                        case "depthFrontRate": metadata = .Metadata(.depthFrontRate)
-                        case "depthBackSensor": metadata = .Metadata(.depthBackSensor)
-                        case "depthBackResolution": metadata = .Metadata(.depthBackResolution)
-                        case "depthBackRate": metadata = .Metadata(.depthBackRate)
+                        case "fileformat": metadata = .Metadata(.fileFormat)
+                        case "devicemodel": metadata = .Metadata(.deviceModel)
+                        case "devicebrand": metadata = .Metadata(.deviceBrand)
+                        case "deviceboard": metadata = .Metadata(.deviceBoard)
+                        case "devicemanufacturer": metadata = .Metadata(.deviceManufacturer)
+                        case "devicebaseos": metadata = .Metadata(.deviceBaseOS)
+                        case "devicecodename": metadata = .Metadata(.deviceCodename)
+                        case "devicerelease": metadata = .Metadata(.deviceRelease)
+                        case "depthfrontsensor": metadata = .Metadata(.depthFrontSensor)
+                        case "depthfrontresolution": metadata = .Metadata(.depthFrontResolution)
+                        case "depthfrontrate": metadata = .Metadata(.depthFrontRate)
+                        case "depthbacksensor": metadata = .Metadata(.depthBackSensor)
+                        case "depthbackresolution": metadata = .Metadata(.depthBackResolution)
+                        case "depthbackrate": metadata = .Metadata(.depthBackRate)
                         case "camera2api": metadata = .Metadata(.camera2api)
-                        case "camera2apiFull": metadata = .Metadata(.camera2apiFull)
+                        case "camera2apifull": metadata = .Metadata(.camera2apiFull)
                         default:
                             func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
-                                if name.starts(with: sensor.description) {
-                                    let sensorMetadata = name.dropFirst(sensor.description.count)
-                                    let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
-                                    guard let sensorMeta = SensorMetadata(rawValue: String(sensorMetadataMatch)) else {
+                                if name.lowercased().starts(with: sensor.description.lowercased()) {
+                                    let sensorMetadata = String(name.dropFirst(sensor.description.count))
+                                    //The folding attribute decode replaces the former ad-hoc
+                                    //lowercasing of just the first letter
+                                    guard let sensorMeta = SensorMetadata(attributeValue: sensorMetadata) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
                                     return .Metadata(.sensor(sensor, sensorMeta))
@@ -612,7 +617,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 target = usedAs
                 parameter = FlashlightParameter.value(value: value)
             }
-            switch target {
+            switch target.lowercased() { //Enumerated values are matched case-insensitively
             case "intensity": intensity = parameter
             case "frequency": frequency = parameter
             case "dutycycle": dutycycle = parameter
@@ -659,7 +664,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         target = usedAs
                         parameter = AudioParameter.value(value: value)
                     }
-                    switch target {
+                    switch target.lowercased() { //Enumerated values are matched case-insensitively
                     case "frequency": frequency = parameter
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
@@ -691,7 +696,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         target = usedAs
                         parameter = AudioParameter.value(value: value)
                     }
-                    switch target {
+                    switch target.lowercased() { //Enumerated values are matched case-insensitively
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
                     case "pan": pan = parameter

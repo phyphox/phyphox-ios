@@ -10,7 +10,7 @@ import Foundation
 
 // This file contains element handlers for the `graph` view element (and its child elements).
 
-private enum GraphAxis: String, LosslessStringConvertible {
+private enum GraphAxis: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case x
     case y
     case z
@@ -55,14 +55,15 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
         let axis: GraphAxis = try attributes.value(for: .axis)
         let lineWidth: CGFloat? = try attributes.optionalValue(for: .lineWidth)
         let color: UIColor? = mapColorString(attributes.optionalString(for: .color))
-        let styleString = attributes.optionalString(for: .style)
-        let style = styleString != nil ? GraphViewDescriptor.GraphStyle(styleString!) : nil
+        //An invalid style is an error rather than being silently ignored (enum-invalid-value
+        //in phyphox-docs; Android throws "Unknown value for style of input tag." here)
+        let style: GraphViewDescriptor.GraphStyle? = try attributes.optionalValue(for: .style)
 
         results.append(GraphInputDescriptor(axis: axis, color: color, lineWidth: lineWidth, style: style, bufferName: text))
     }
 }
 
-enum GraphPickAxis: String, LosslessStringConvertible {
+enum GraphPickAxis: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case x
     case xcal
     case y
@@ -274,7 +275,9 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let hideTimeMarkers = try attributes.optionalValue(for: .hideTimeMarkers) ?? false
 
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
-        let style = GraphViewDescriptor.GraphStyle(attributes.optionalString(for: .style) ?? "") ?? .lines
+        //An invalid style is an error, only an absent attribute selects the default
+        //(enum-invalid-value in phyphox-docs)
+        let style: GraphViewDescriptor.GraphStyle = try attributes.optionalValue(for: .style) ?? .lines
         var partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0

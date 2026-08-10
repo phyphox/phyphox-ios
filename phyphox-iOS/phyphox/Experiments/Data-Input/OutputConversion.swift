@@ -27,7 +27,7 @@ class ByteArrayOutputConversion: OutputConversion {
 }
 
 class SimpleOutputConversion: OutputConversion {
-    enum ConversionFunction: String, LosslessStringConvertible {
+    enum ConversionFunction: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case string
         case uInt8
         case int8
