@@ -154,14 +154,18 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     }
    
     private func writeToBuffers(_ values: [Double],dataBufferIn: DataBuffer) {
-        
+
         func tryAppend(myValues: [Double], to buffer: DataBuffer?) {
             guard let buffer = buffer else { return }
-            
+
             buffer.appendFromArray(myValues)
         }
-        
-        tryAppend(myValues: values, to: dataBufferIn)
+
+        //Coordinate with remote reads so a /get read snapshot is taken either fully before or fully
+        //after this write, not partway through (see BufferLock)
+        synchronizedBufferWrite([dataBufferIn]) {
+            tryAppend(myValues: values, to: dataBufferIn)
+        }
     }
    
     private func dataIn(_ values: [Double], dataBufferIn: DataBuffer) {

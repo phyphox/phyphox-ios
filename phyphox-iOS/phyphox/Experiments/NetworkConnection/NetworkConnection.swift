@@ -257,12 +257,16 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         if !dataReady {
             return
         }
-        for item in receive {
-            if let data = try? conversion.get(item.key) {
-                if !item.value.append {
-                    item.value.buffer.replaceValues(data)
-                } else {
-                    item.value.buffer.appendFromArray(data)
+        //A network response updates all its receive buffers as one atomic group so a remote /get
+        //read never catches the set half-updated (see BufferLock)
+        synchronizedBufferWrite(receive.values.map { $0.buffer }) {
+            for item in receive {
+                if let data = try? conversion.get(item.key) {
+                    if !item.value.append {
+                        item.value.buffer.replaceValues(data)
+                    } else {
+                        item.value.buffer.appendFromArray(data)
+                    }
                 }
             }
         }

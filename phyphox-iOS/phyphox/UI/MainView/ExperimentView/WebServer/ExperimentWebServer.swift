@@ -353,23 +353,53 @@ final class ExperimentWebServer {
             //the status object, the natural way to poll only the status (get-no-parameters)
             
             var mainDict = [String: AnyObject]()
-            
+
             var bufferDict = [String: AnyObject]()
-            
-            for (bufferName, value) in query {
-                guard let b = self.experiment.buffers[bufferName] else {
-                    continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
+
+            //Read the force-full flag once, so it is consistent with the snapshot below and with
+            //the reset at the end of the request
+            let forceFullUpdate = self.forceFullUpdate
+
+            //Snapshot all requested buffers (and any referenced threshold buffers) in one read on
+            //the experiment's data lock, so their lengths are mutually consistent even though inputs
+            //and analysis keep writing during the measurement. Without this, a buffer written to
+            //after another was already read comes back one sample longer (GitHub issue 22). The JSON
+            //is built afterwards, outside the lock, to keep the writers blocked as briefly as
+            //possible.
+            var snapshots: [String: (raw: [Double], size: Int)] = [:]
+            var extraSnapshots: [String: [Double]] = [:]
+            self.experiment.dataLock.read {
+                for (bufferName, value) in query {
+                    guard let b = self.experiment.buffers[bufferName] else {
+                        continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
+                    }
+                    snapshots[bufferName] = (raw: b.toArray(), size: b.size)
+
+                    //A partial request may reference a second buffer (t) as the threshold axis;
+                    //capture it in the same snapshot so it aligns with the data buffer
+                    if value.count > 0 && value != "full" && !forceFullUpdate {
+                        let extraComponents = value.components(separatedBy: "|")
+                        if extraComponents.count > 1, let extra = extraComponents.last, let extraBuffer = self.experiment.buffers[extra] {
+                            extraSnapshots[extra] = extraBuffer.toArray()
+                        }
+                    }
                 }
-                
+            }
+
+            for (bufferName, value) in query {
+                guard let snapshot = snapshots[bufferName] else {
+                    continue //Buffer does not exist, see above
+                }
+
                 var dict = [String: AnyObject]()
-                dict["size"] = b.size as AnyObject
-                
+                dict["size"] = snapshot.size as AnyObject
+
                 if value.count > 0 {
-                    let raw = b.toArray()
-                    
+                    let raw = snapshot.raw
+
                     //After a clear, every requested buffer is upgraded to a full update,
                     //whatever its request asked for (get-force-full-update)
-                    if value == "full" || self.forceFullUpdate {
+                    if value == "full" || forceFullUpdate {
                         dict["updateMode"] = "full" as AnyObject
                         dict["buffer"] = raw.map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
                         //Detailed thoughts on this problem:
@@ -396,15 +426,13 @@ final class ExperimentWebServer {
                         if extraComponents.count > 1 {
                             let extra = extraComponents.last!
 
-                            guard let extraBuffer = self.experiment.buffers[extra] else {
+                            guard let extraArray = extraSnapshots[extra] else {
                                 let response = GCDWebServerResponse(statusCode: 400)
-                                
+
                                 completionBlock(response)
                                 return
                             }
-                            
-                            let extraArray = extraBuffer.toArray()
-                            
+
                             for (i, v) in extraArray.enumerated() {
                                 if i >= raw.count {
                                     break
@@ -429,7 +457,7 @@ final class ExperimentWebServer {
                     dict["updateMode"] = "single" as AnyObject
                     //JSON has no representation for NaN or infinity, so a non-finite value is
                     //null in every update mode (get-nonfinite-single-value)
-                    if let v = b.last, v.isFinite {
+                    if let v = snapshot.raw.last, v.isFinite {
                         dict["buffer"] = [v] as AnyObject
                     } else {
                         dict["buffer"] = [NSNull()] as AnyObject

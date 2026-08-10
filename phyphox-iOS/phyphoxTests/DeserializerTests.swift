@@ -1659,3 +1659,46 @@ final class CaseFoldingGuardRailTests: XCTestCase {
         check(InfoViewElementDescriptor.TextAlignment.self)
     }
 }
+
+//Regression test for GitHub issue 22: a remote /get read must see a consistent length across
+//buffers that are written together, even while a measurement keeps writing. The shared BufferLock
+//makes a multi-buffer write group atomic with respect to a read snapshot.
+final class BufferSnapshotConsistencyTests: XCTestCase {
+    func testGroupedWritesAreAtomicAgainstReads() throws {
+        let lock = BufferLock()
+        let a = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
+        let b = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)
+        a.dataLock = lock
+        b.dataLock = lock
+
+        let sampleCount = 5000
+        let writerDone = expectation(description: "writer finished")
+
+        //Writer: append to both buffers as one atomic group, like an input's writeToBuffers
+        DispatchQueue.global(qos: .userInitiated).async {
+            for i in 0..<sampleCount {
+                synchronizedBufferWrite([a, b]) {
+                    a.append(Double(i))
+                    b.append(Double(i))
+                }
+            }
+            writerDone.fulfill()
+        }
+
+        //Reader: snapshot both buffers under the same lock, as /get does. Their lengths must always
+        //match; without the lock the writer could land between the two reads and they would differ.
+        var reads = 0
+        while reads < 20000 {
+            lock.read {
+                XCTAssertEqual(a.toArray().count, b.toArray().count, "grouped buffers must always have equal length under a snapshot read")
+            }
+            reads += 1
+        }
+
+        wait(for: [writerDone], timeout: 10)
+        lock.read {
+            XCTAssertEqual(a.toArray().count, sampleCount)
+            XCTAssertEqual(b.toArray().count, sampleCount)
+        }
+    }
+}

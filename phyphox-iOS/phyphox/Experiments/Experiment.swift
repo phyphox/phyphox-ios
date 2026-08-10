@@ -174,6 +174,10 @@ final class Experiment {
     
     let buffers: [String: DataBuffer]
 
+    //The lock giving remote /get reads a consistent snapshot across buffers, shared by all buffers
+    //and the writers (inputs and analysis). See BufferLock.
+    let dataLock = BufferLock()
+
     private var requiredPermissions: ExperimentRequiredPermission = .none
     
     private(set) var running = false
@@ -268,6 +272,13 @@ final class Experiment {
         for networkConnection in networkConnections {
             (networkConnection.service as? MqttService)?.experiment = self
         }
+
+        //Wire the shared data lock into every buffer (so writers reach it through the buffers they
+        //hold) and into the analysis stage, so multi-buffer writes and remote reads stay coherent.
+        for buffer in buffers.values {
+            buffer.dataLock = dataLock
+        }
+        analysis.dataLock = dataLock
     }
 
     convenience init(file: String, error: String) {
