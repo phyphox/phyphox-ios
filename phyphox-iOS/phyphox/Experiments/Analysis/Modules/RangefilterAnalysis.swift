@@ -9,6 +9,14 @@
 import Foundation
 
 final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let inInSlot = AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+    private static let minInSlot = AnalysisIOSlot(name: "min", asRequired: true, repeatOffset: 1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 0)
+    private static let maxInSlot = AnalysisIOSlot(name: "max", asRequired: true, repeatOffset: 2, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 0)
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.inInSlot, Self.minInSlot, Self.maxInSlot], outputs: [Self.outOutSlot])
+    }
     private final class Range: CustomStringConvertible {
         let min: Double
         let max: Double

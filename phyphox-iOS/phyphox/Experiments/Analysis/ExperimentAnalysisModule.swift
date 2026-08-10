@@ -8,10 +8,90 @@
 
 import Foundation
 
+///The inputs and outputs of a module, assigned to the slots of its ioMapping by the same
+///algorithm that validated them (IOMappingValidation, mirroring Android's ioBlockParser). A
+///module's init retrieves its slots from this instead of re-matching the slot names by hand, so
+///each name is defined once, in the slot constant that also builds the ioMapping.
+struct MappedAnalysisIO {
+    fileprivate var inputsBySlot: [String: [ExperimentAnalysisDataInput]] = [:]
+    fileprivate var outputsBySlot: [String: [ExperimentAnalysisDataOutput]] = [:]
+
+    ///All inputs assigned to the slot, in fill order (several for a repeating group)
+    func inputs(_ slot: AnalysisIOSlot) -> [ExperimentAnalysisDataInput] {
+        return inputsBySlot[slot.name.lowercased()] ?? []
+    }
+
+    func input(_ slot: AnalysisIOSlot) -> ExperimentAnalysisDataInput? {
+        return inputs(slot).first
+    }
+
+    ///The buffer data of the input assigned to the slot, nil if the slot is unfilled or holds a value
+    func data(_ slot: AnalysisIOSlot) -> MutableDoubleArray? {
+        guard case .buffer(buffer: _, data: let data, usedAs: _, keep: _)? = input(slot) else {
+            return nil
+        }
+        return data
+    }
+
+    ///All outputs assigned to the slot, in fill order (several for a repeating group)
+    func outputs(_ slot: AnalysisIOSlot) -> [ExperimentAnalysisDataOutput] {
+        return outputsBySlot[slot.name.lowercased()] ?? []
+    }
+
+    func output(_ slot: AnalysisIOSlot) -> ExperimentAnalysisDataOutput? {
+        return outputs(slot).first
+    }
+
+    ///The buffer of the output assigned to the slot, nil if the slot is unfilled
+    func buffer(_ slot: AnalysisIOSlot) -> DataBuffer? {
+        guard case .buffer(buffer: let buffer, data: _, usedAs: _, append: _)? = output(slot) else {
+            return nil
+        }
+        return buffer
+    }
+}
+
 /**
  Abstract class providing an Analysis module for Experiments
  */
 class ExperimentAnalysisModule {
+    ///The slot table this module's inputs and outputs are validated against before it is built
+    ///(see IOMappingValidation). Every module overrides this next to the init that consumes the
+    ///same slot names - by referencing the same slot constants - so the vocabulary is defined in
+    ///one place only; a unit test walks the classMap to make sure no module forgets it.
+    class var ioMapping: AnalysisIOMapping? { return nil }
+
+    ///Assigns the inputs and outputs to the slots of this module's ioMapping. The file was
+    ///already validated against the same table in ExperimentAnalysisFactory, so this only
+    ///retrieves the assignment; modules with named slots call it at the start of their init.
+    static func mapIO(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput]) throws -> MappedAnalysisIO {
+        guard let mapping = ioMapping else {
+            throw SerializationError.genericError(message: "Module declares no io mapping.")
+        }
+        var mapped = MappedAnalysisIO()
+        let inputIndices = try IOMappingValidation.validate(kind: "input", slots: mapping.inputs, items: inputs.map { input in
+            switch input {
+            case .buffer(buffer: let buffer, data: _, usedAs: let usedAs, keep: _):
+                return IOMappingValidation.Item(usedAs: usedAs, text: buffer.name, isValue: false, isEmpty: false)
+            case .value(value: let value, usedAs: let usedAs):
+                return IOMappingValidation.Item(usedAs: usedAs, text: String(value), isValue: true, isEmpty: false)
+            }
+        })
+        for (input, index) in zip(inputs, inputIndices) {
+            mapped.inputsBySlot[mapping.inputs[index].name.lowercased(), default: []].append(input)
+        }
+        let outputIndices = try IOMappingValidation.validate(kind: "output", slots: mapping.outputs, items: outputs.map { output in
+            switch output {
+            case .buffer(buffer: let buffer, data: _, usedAs: let usedAs, append: _):
+                return IOMappingValidation.Item(usedAs: usedAs, text: buffer.name, isValue: false, isEmpty: false)
+            }
+        })
+        for (output, index) in zip(outputs, outputIndices) {
+            mapped.outputsBySlot[mapping.outputs[index].name.lowercased(), default: []].append(output)
+        }
+        return mapped
+    }
+
     let inputs: [ExperimentAnalysisDataInput]
     let outputs: [ExperimentAnalysisDataOutput]
     

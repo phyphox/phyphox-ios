@@ -10,6 +10,15 @@ import Foundation
 import Accelerate
 
 final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let thresholdInSlot = AnalysisIOSlot(name: "threshold", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let maxOutSlot = AnalysisIOSlot(name: "max", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let positionOutSlot = AnalysisIOSlot(name: "position", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.thresholdInSlot], outputs: [Self.maxOutSlot, Self.positionOutSlot])
+    }
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray!
     private var thresholdIn: ExperimentAnalysisDataInput?
@@ -24,44 +33,14 @@ final class MaxAnalysis: AutoClearingExperimentAnalysisModule {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         multiple = try attributes.optionalValue(for: "multiple") ?? false
-        
-        for input in inputs {
-            if input.used(as: "x") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.used(as: "y") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.used(as: "threshold") {
-                thresholdIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.used(as: "max") {
-                maxOut = output
-            }
-            else if output.used(as: "position") {
-                positionOut = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
-        
+
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        thresholdIn = io.input(Self.thresholdInSlot)
+        maxOut = io.output(Self.maxOutSlot)
+        positionOut = io.output(Self.positionOutSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

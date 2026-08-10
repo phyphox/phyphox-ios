@@ -9,21 +9,20 @@
 import Foundation
 
 final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let valueInSlot = AnalysisIOSlot(name: "value", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lengthInSlot = AnalysisIOSlot(name: "length", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.valueInSlot, Self.lengthInSlot], outputs: [Self.outOutSlot])
+    }
     private var lengthInput: ExperimentAnalysisDataInput?
     private var valueInput: ExperimentAnalysisDataInput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.used(as: "value") {
-                valueInput = input
-            }
-            else if input.used(as: "length") {
-                lengthInput = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        valueInput = io.input(Self.valueInSlot)
+        lengthInput = io.input(Self.lengthInSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

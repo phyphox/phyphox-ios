@@ -1440,3 +1440,120 @@ final class FormatWideCaseFoldingTests: XCTestCase {
         XCTAssertThrowsError(try parse(datatypeXML("bogus")))
     }
 }
+
+//The input/output mapping mechanism is validated against slot tables, mirroring Android's
+//ioBlockParser: components of input elements, and the as attribute of analysis inputs and
+//outputs, must name an allowed slot with its count and type restrictions respected
+//(input-output-component-validation, analysis-slot-constraints-unenforced and
+//analysis-outputs-assigned-by-position in phyphox-docs).
+final class SlotMappingValidationTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(input: String = "", analysis: String = "") -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+                <container>buffer2</container>
+            </data-containers>
+            <input>\(input)</input>
+            <analysis>\(analysis)</analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    private func assertRejects(_ document: String, message expected: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertThrowsError(try parse(document), file: file, line: line) { error in
+            //The debug description escapes the quotes inside the message
+            let rendered = "\(error)".replacingOccurrences(of: "\\\"", with: "\"")
+            XCTAssertTrue(rendered.contains(expected), "expected \"\(expected)\" in \(error)", file: file, line: line)
+        }
+    }
+
+    func testInputComponentValidation() throws {
+        //Unknown, duplicate and unnamed components of a sensor are errors, with Android's wording
+        assertRejects(xml(input: "<sensor type=\"accelerometer\" rate=\"10\"><output component=\"acc\">buffer</output></sensor>"),
+                      message: "Could not find mapping for output \"acc\".")
+        assertRejects(xml(input: "<sensor type=\"accelerometer\" rate=\"10\"><output component=\"x\">buffer</output><output component=\"x\">buffer2</output></sensor>"),
+                      message: "The output \"x\" has already been defined.")
+        assertRejects(xml(input: "<sensor type=\"accelerometer\" rate=\"10\"><output>buffer</output></sensor>"),
+                      message: "The non-mapped output could not be matched.")
+        //The audio recording output is required...
+        assertRejects(xml(input: "<audio><output component=\"rate\">buffer</output></audio>"),
+                      message: "A minimum of 1 outputs was expected for out but 0 were found.")
+        //...and an unnamed output fills it
+        let experiment = try parse(xml(input: "<audio><output>buffer</output></audio>"))
+        XCTAssertEqual(experiment.audioInputs.count, 1)
+    }
+
+    func testAnalysisSlotValidation() throws {
+        //A subtraction without a subtrahend is an error (matches Android's mapping table)
+        assertRejects(xml(analysis: "<subtract><input>buffer</input><output>buffer2</output></subtract>"),
+                      message: "A minimum of 1 inputs was expected for subtrahend but 0 were found.")
+        //An as name the module does not know is an error instead of positional assignment
+        assertRejects(xml(analysis: "<add><input as=\"bogus\">buffer</input><output>buffer2</output></add>"),
+                      message: "Could not find mapping for input \"bogus\".")
+        //A slot that takes a single tag refuses a second one
+        assertRejects(xml(analysis: "<butterworth><input as=\"y\">buffer</input><input as=\"y\">buffer2</input><input as=\"n\" type=\"value\">4</input><input as=\"cutoff\" type=\"value\">10</input><output as=\"filtered\">buffer2</output></butterworth>"),
+                      message: "The input \"y\" has already been defined.")
+        //A slot that requires a data container refuses a literal value
+        assertRejects(xml(analysis: "<average><input type=\"value\">5</input><output>buffer2</output></average>"),
+                      message: "Value-type not allowed for input \"buffer\".")
+        //The stddev output slot requires its as attribute, so a second unnamed output cannot match
+        assertRejects(xml(analysis: "<average><input>buffer</input><output>buffer2</output><output>buffer2</output></average>"),
+                      message: "The non-mapped output could not be matched.")
+        //Valid repeat groups still parse: three summands, two of them named
+        _ = try parse(xml(analysis: "<add><input>buffer</input><input as=\"summand\">buffer2</input><input as=\"summand\" type=\"value\">5</input><output>buffer2</output></add>"))
+    }
+
+    func testAverageMapsOutputsByName() throws {
+        //Writing stddev before average must not swap the two values: outputs map by the
+        //documented names, not by document order (analysis-outputs-assigned-by-position)
+        let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
+        let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1.0, 2.0, 3.0, 4.0])
+        let inputBuffer = try DataBuffer(name: "in", size: 10, baseContents: [], static: false)
+
+        let module = try AverageAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "buffer", keep: true)],
+            outputs: [
+                .buffer(buffer: stddevBuffer, data: MutableDoubleArray(data: []), usedAs: "stddev", append: false),
+                .buffer(buffer: avgBuffer, data: MutableDoubleArray(data: []), usedAs: "average", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        XCTAssertEqual(avgBuffer.last, 2.5, "the mean must land in the output named average")
+        XCTAssertEqual(stddevBuffer.last ?? .nan, 1.2909944487358056, accuracy: 1e-12, "the standard deviation must land in the output named stddev")
+    }
+}
+
+//Every analysis module must declare the slot table its inputs and outputs are validated
+//against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
+//validation. Also guards the folding rule: no table may hold two slot names differing only
+//in case, or the case-insensitive match would silently pick the first.
+final class AnalysisIOMappingCoverageTests: XCTestCase {
+    func testEveryModuleDeclaresItsIOMapping() {
+        for (key, moduleClass) in ExperimentAnalysisFactory.classMap {
+            guard let mapping = moduleClass.ioMapping else {
+                XCTFail("\(key) does not declare its io mapping")
+                continue
+            }
+            for slots in [mapping.inputs, mapping.outputs] {
+                let folded = slots.map { $0.name.lowercased() }
+                XCTAssertEqual(folded.count, Set(folded).count, "\(key) has slot names that collide after case folding")
+            }
+        }
+    }
+}

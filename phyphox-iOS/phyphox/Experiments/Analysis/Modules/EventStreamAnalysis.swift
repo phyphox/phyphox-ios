@@ -9,6 +9,20 @@
 import Foundation
 
 final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "data", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let thresholdInSlot = AnalysisIOSlot(name: "threshold", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let distanceInSlot = AnalysisIOSlot(name: "distance", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let indexInSlot = AnalysisIOSlot(name: "index", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let skipInSlot = AnalysisIOSlot(name: "skip", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lastInSlot = AnalysisIOSlot(name: "last", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let eventsOutSlot = AnalysisIOSlot(name: "events", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let indexOutSlot = AnalysisIOSlot(name: "index", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let skipOutSlot = AnalysisIOSlot(name: "skip", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lastOutSlot = AnalysisIOSlot(name: "last", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.thresholdInSlot, Self.distanceInSlot, Self.indexInSlot, Self.skipInSlot, Self.lastInSlot], outputs: [Self.eventsOutSlot, Self.indexOutSlot, Self.skipOutSlot, Self.lastOutSlot])
+    }
     private var dataIn: MutableDoubleArray!
     private var thresholdIn: ExperimentAnalysisDataInput?
     private var distanceIn: ExperimentAnalysisDataInput?
@@ -39,52 +53,18 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         triggerMode = try attributes.optionalValue(for: "mode") ?? TriggerMode.above
         
-        for input in inputs {
-            if input.used(as: "data") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    dataIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.used(as: "threshold") {
-                thresholdIn = input
-            }
-            else if input.used(as: "distance") {
-                distanceIn = input
-            }
-            else if input.used(as: "index") {
-                indexIn = input
-            }
-            else if input.used(as: "skip") {
-                skipIn = input
-            }
-            else if input.used(as: "last") {
-                lastIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.used(as: "events") {
-                eventsOut = output
-            }
-            else if output.used(as: "index") {
-                indexOut = output
-            }
-            else if output.used(as: "skip") {
-                skipOut = output
-            }
-            else if output.used(as: "last") {
-                lastOut = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        dataIn = io.data(Self.dataInSlot)
+        thresholdIn = io.input(Self.thresholdInSlot)
+        distanceIn = io.input(Self.distanceInSlot)
+        indexIn = io.input(Self.indexInSlot)
+        skipIn = io.input(Self.skipInSlot)
+        lastIn = io.input(Self.lastInSlot)
+
+        eventsOut = io.output(Self.eventsOutSlot)
+        indexOut = io.output(Self.indexOutSlot)
+        skipOut = io.output(Self.skipOutSlot)
+        lastOut = io.output(Self.lastOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

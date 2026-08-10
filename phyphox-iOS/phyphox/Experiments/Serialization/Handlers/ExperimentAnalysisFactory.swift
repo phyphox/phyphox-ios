@@ -103,6 +103,15 @@ final class ExperimentAnalysisFactory {
             throw ElementHandlerError.unexpectedChildElement(key)
         }
 
+        //Enforce the module's slot table before building it: whether the as attribute is required
+        //per slot, how many tags may fill it, and whether a value or empty input is allowed
+        //(analysis-slot-constraints-unenforced in phyphox-docs, mirroring Android's ioBlockParser).
+        //Every module declares its own table next to the code consuming the slot names; a unit
+        //test walks this classMap to make sure none is missing.
+        if let mapping = analysisClass.ioMapping {
+            try IOMappingValidation.validate(mapping: mapping, inputs: descriptor.inputs, outputs: descriptor.outputs)
+        }
+
         let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataInput(descriptor: $0, buffers: buffers) }
         let outputs = try descriptor.outputs.map { try ExperimentAnalysisDataOutput(descriptor: $0, buffers: buffers) }
         let attributes = descriptor.attributes

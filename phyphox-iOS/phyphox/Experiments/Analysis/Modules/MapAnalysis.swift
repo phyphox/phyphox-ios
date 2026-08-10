@@ -9,6 +9,22 @@
 import Foundation
 
 final class MapAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let mapWidthInSlot = AnalysisIOSlot(name: "mapWidth", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let minXInSlot = AnalysisIOSlot(name: "minX", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let maxXInSlot = AnalysisIOSlot(name: "maxX", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let mapHeightInSlot = AnalysisIOSlot(name: "mapHeight", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let minYInSlot = AnalysisIOSlot(name: "minY", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let maxYInSlot = AnalysisIOSlot(name: "maxY", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let zInSlot = AnalysisIOSlot(name: "z", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let xOutSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yOutSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let zOutSlot = AnalysisIOSlot(name: "z", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.mapWidthInSlot, Self.minXInSlot, Self.maxXInSlot, Self.mapHeightInSlot, Self.minYInSlot, Self.maxYInSlot, Self.xInSlot, Self.yInSlot, Self.zInSlot], outputs: [Self.xOutSlot, Self.yOutSlot, Self.zOutSlot])
+    }
     enum ZMode {
         case count
         case sum
@@ -46,114 +62,71 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
         
-        var mapWidth: ExperimentAnalysisDataInput? = nil
-        var minX: ExperimentAnalysisDataInput? = nil
-        var maxX: ExperimentAnalysisDataInput? = nil
-        var mapHeight: ExperimentAnalysisDataInput? = nil
-        var minY: ExperimentAnalysisDataInput? = nil
-        var maxY: ExperimentAnalysisDataInput? = nil
-        var x: MutableDoubleArray? = nil
-        var y: MutableDoubleArray? = nil
-        
-        for input in inputs {
-            if input.used(as: "mapWidth") {
-                mapWidth = input
-            }
-            else if input.used(as: "minX") {
-                minX = input
-            }
-            else if input.used(as: "maxX") {
-                maxX = input
-            }
-            else if input.used(as: "mapHeight") {
-                mapHeight = input
-            }
-            else if input.used(as: "minY") {
-                minY = input
-            }
-            else if input.used(as: "maxY") {
-                maxY = input
-            }
-            else if input.used(as: "x") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    x = data
-                default:
-                    throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
-                }
-            }
-            else if input.used(as: "y") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    y = data
-                default:
-                    throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
-                }
-            }
-            else if input.used(as: "z") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    z = data
-                default:
-                    throw SerializationError.genericError(message: "Error: Input z for map module has to be a buffer.")
-                }
-            }
-            else {
-                throw SerializationError.genericError(message: "Error: Unknown input for map module: \(input.asString).")
-            }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+
+        let mapWidth = io.input(Self.mapWidthInSlot)
+        let minX = io.input(Self.minXInSlot)
+        let maxX = io.input(Self.maxXInSlot)
+        let mapHeight = io.input(Self.mapHeightInSlot)
+        let minY = io.input(Self.minYInSlot)
+        let maxY = io.input(Self.maxYInSlot)
+
+        if io.input(Self.xInSlot) != nil && io.data(Self.xInSlot) == nil {
+            throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
         }
-        
+        if io.input(Self.yInSlot) != nil && io.data(Self.yInSlot) == nil {
+            throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
+        }
+        if io.input(Self.zInSlot) != nil && io.data(Self.zInSlot) == nil {
+            throw SerializationError.genericError(message: "Error: Input z for map module has to be a buffer.")
+        }
+        let x = io.data(Self.xInSlot)
+        let y = io.data(Self.yInSlot)
+        z = io.data(Self.zInSlot)
+
         guard mapWidth != nil else {
             throw SerializationError.genericError(message: "Error: Input mapWidth required for map module.")
         }
         self.mapWidth = mapWidth!
-        
+
         guard minX != nil else {
             throw SerializationError.genericError(message: "Error: Input minX required for map module.")
         }
         self.minX = minX!
-        
+
         guard maxX != nil else {
             throw SerializationError.genericError(message: "Error: Input maxX required for map module.")
         }
         self.maxX = maxX!
-        
+
         guard mapHeight != nil else {
             throw SerializationError.genericError(message: "Error: Input mapHeight required for map module.")
         }
         self.mapHeight = mapHeight!
-        
+
         guard minY != nil else {
             throw SerializationError.genericError(message: "Error: Input minY required for map module.")
         }
         self.minY = minY!
-        
+
         guard maxY != nil else {
             throw SerializationError.genericError(message: "Error: Input maxY required for map module.")
         }
         self.maxY = maxY!
-        
+
         guard x != nil else {
             throw SerializationError.genericError(message: "Error: Input x required for map module.")
         }
         self.x = x!
-        
+
         guard y != nil else {
             throw SerializationError.genericError(message: "Error: Input y required for map module.")
         }
         self.y = y!
-        
-        for output in outputs {
-            if output.used(as: "x") {
-                outX = output
-            } else if output.used(as: "y") {
-                outY = output
-            } else if output.used(as: "z") {
-                outZ = output
-            } else {
-                throw SerializationError.genericError(message: "Error: Unknown output for reduce module: \(output.asString).")
-            }
-        }
+
+        outX = io.output(Self.xOutSlot)
+        outY = io.output(Self.yOutSlot)
+        outZ = io.output(Self.zOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

@@ -69,6 +69,14 @@ func nextFFTSize(_ c: Int, minN: Int = 3) -> Int {
 }
 
 final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let reInSlot = AnalysisIOSlot(name: "re", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let imInSlot = AnalysisIOSlot(name: "im", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let reOutSlot = AnalysisIOSlot(name: "re", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let imOutSlot = AnalysisIOSlot(name: "im", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.reInSlot, Self.imInSlot], outputs: [Self.reOutSlot, Self.imOutSlot])
+    }
     private var realInput: MutableDoubleArray!
     private var imagInput: MutableDoubleArray?
     
@@ -78,36 +86,15 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
     private var imagOutput: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.used(as: "im") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    imagInput = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    realInput = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        realInput = io.data(Self.reInSlot)
+        imagInput = io.data(Self.imInSlot)
+
         hasImagInBuffer = imagInput != nil
-        
-        for output in outputs {
-            if output.used(as: "im") {
-                imagOutput = output
-            }
-            else {
-                realOutput = output
-            }
-        }
-        
+
+        realOutput = io.output(Self.reOutSlot)
+        imagOutput = io.output(Self.imOutSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

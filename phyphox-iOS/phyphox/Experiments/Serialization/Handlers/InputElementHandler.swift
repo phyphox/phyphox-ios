@@ -16,6 +16,30 @@ struct SensorOutputDescriptor {
     let bufferName: String
 }
 
+//The component tables of the input elements, mirroring the ioMapping arrays in Android's
+//PhyphoxFile.java. They live here, next to the handlers that enforce them, so the component
+//vocabulary is defined in one file only (the buffer wiring in PhyphoxElementHandler receives
+//components already normalized to these names).
+private let sensorComponents = ["x", "y", "z", "t", "abs", "accuracy"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+private let locationComponents = ["lat", "lon", "z", "zwgs84", "v", "dir", "t", "accuracy", "zAccuracy", "status", "satellites"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+private let audioComponents = [
+    AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
+    AnalysisIOSlot(name: "rate", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+]
+private let depthComponents = [
+    AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
+    AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+]
+//wavelength is accepted on iOS only: part of the superseded calibration draft, never filled
+//(see the camera element in spec/input.yml)
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "threshold", "shutterSpeed", "iso", "aperture", "pixelPosition", "wavelength"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+
 protocol SensorDescriptor {
     var outputs: [SensorOutputDescriptor] { get }
 }
@@ -34,7 +58,9 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let component = attributes.optionalString(for: .component) ?? "output"
+        //An absent component attribute stays nil: whether an unnamed output is allowed - and
+        //which component it then fills - is decided by the element's component table
+        let component = attributes.optionalString(for: .component)
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
 
@@ -61,7 +87,8 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
     func startElement(attributes: AttributeContainer) throws {}
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        results.append(LocationInputDescriptor(outputs: outputHandler.results))
+        let outputs = try IOMappingValidation.validateComponents(element: "location", slots: locationComponents, outputs: outputHandler.results)
+        results.append(LocationInputDescriptor(outputs: outputs))
     }
 }
 
@@ -113,8 +140,11 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
         let y2 = 1.0-x2user
         
         let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
-        
-        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
+
+        //The depth output is required; an unnamed output fills it ("z")
+        let outputs = try IOMappingValidation.validateComponents(element: "depth", slots: depthComponents, outputs: outputHandler.results)
+
+        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputs))
     }
 }
 
@@ -206,7 +236,9 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
 
         let aeFPSTarget: Double = try attributes.optionalValue(for: .aeFPSTarget) ?? 0.0
 
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, aeFPSTarget: aeFPSTarget, locked: locked, feature: feature_, outputs: outputHandler.results))
+        let outputs = try IOMappingValidation.validateComponents(element: "camera", slots: cameraComponents, outputs: outputHandler.results)
+
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, aeFPSTarget: aeFPSTarget, locked: locked, feature: feature_, outputs: outputs))
     }
 }
 
@@ -279,7 +311,11 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
+        //Each output's component must be in the element's component list, once at most
+        //(input-output-component-validation in phyphox-docs, matching Android)
+        let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
+
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))
     }
 }
 
@@ -313,8 +349,10 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
         let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
         let appendData: Bool = try attributes.optionalValue(for: .append) ?? false
 
+        //The recording output is required; an unnamed output fills it ("out")
+        let outputs = try IOMappingValidation.validateComponents(element: "audio", slots: audioComponents, outputs: outputHandler.results)
 
-        results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results, appendData: appendData))
+        results.append(AudioInputDescriptor(rate: rate, outputs: outputs, appendData: appendData))
     }
 }
 

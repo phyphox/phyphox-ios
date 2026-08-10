@@ -10,6 +10,15 @@ import Foundation
 
 
 final class IfAnalysis: ExperimentAnalysisModule {
+    private static let aInSlot = AnalysisIOSlot(name: "a", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let bInSlot = AnalysisIOSlot(name: "b", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let trueInSlot = AnalysisIOSlot(name: "true", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: true, minCount: 0, maxCount: 1)
+    private static let falseInSlot = AnalysisIOSlot(name: "false", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: true, minCount: 0, maxCount: 1)
+    private static let resultOutSlot = AnalysisIOSlot(name: "result", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.aInSlot, Self.bInSlot, Self.trueInSlot, Self.falseInSlot], outputs: [Self.resultOutSlot])
+    }
     private let less: Bool
     private let equal: Bool
     private let greater: Bool
@@ -26,40 +35,12 @@ final class IfAnalysis: ExperimentAnalysisModule {
         equal = try attributes.optionalValue(for: "equal") ?? false
         greater = try attributes.optionalValue(for: "greater") ?? false
 
-        for input in inputs {
-            if input.used(as: "a") {
-                in1 = input
-            }
-            else if input.used(as: "b") {
-                in2 = input
-            }
-            else if input.used(as: "true") {
-                inTrue = input
-            }
-            else if input.used(as: "false") {
-                inFalse = input
-            }
-            else {
-                if (in1 == nil) {
-                    in1 = input
-                    continue
-                }
-                if (in2 == nil) {
-                    in2 = input
-                    continue
-                }
-                if (inTrue == nil) {
-                    inTrue = input
-                    continue
-                }
-                if (inFalse == nil) {
-                    inFalse = input
-                    continue
-                }
-                throw SerializationError.genericError(message: "Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        in1 = io.input(Self.aInSlot)
+        in2 = io.input(Self.bInSlot)
+        inTrue = io.input(Self.trueInSlot)
+        inFalse = io.input(Self.falseInSlot)
+
         if (in1 == nil) {
             throw SerializationError.genericError(message: "Error: Missing input for in1.")
         }

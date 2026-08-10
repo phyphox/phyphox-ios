@@ -9,63 +9,62 @@
 import Foundation
 
 final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let dInSlot = AnalysisIOSlot(name: "d", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xiInSlot = AnalysisIOSlot(name: "xi", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yi0OutSlot = AnalysisIOSlot(name: "yi0", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+    private static let yi1OutSlot = AnalysisIOSlot(name: "yi1", asRequired: true, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 0)
+    private static let yi2OutSlot = AnalysisIOSlot(name: "yi2", asRequired: true, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 0)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.dInSlot, Self.xiInSlot], outputs: [Self.yi0OutSlot, Self.yi1OutSlot, Self.yi2OutSlot])
+    }
     
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray?
     private var dIn: ExperimentAnalysisDataInput?
     private var xLocIn: MutableDoubleArray?
+
+    private var yi0Output: ExperimentAnalysisDataOutput?
+    private var yi1Output: ExperimentAnalysisDataOutput?
+    private var yi2Output: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
-        for input in inputs {
-            if input.used(as: "x") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else if input.used(as: "y") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else if input.used(as: "xi") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xLocIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else if input.used(as: "d") {
-                dIn = input
-            } else {
-                throw SerializationError.genericError(message: "Error: Invalid analysis input for loess module: \(String(describing: input.asString))")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        xLocIn = io.data(Self.xiInSlot)
+        dIn = io.input(Self.dInSlot)
+
         if (xIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for x provided to loess module.")
         }
-        
+
         if (yIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for y provided to loess module.")
         }
-        
+
         if (xLocIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for xi provided to loess module.")
         }
-        
+
         if (dIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for d provided to loess module.")
         }
-            
-        if (outputs.count < 1) {
+
+        //Outputs map by name; an unnamed output fills yi0 - formerly they were read in
+        //document order, ignoring the as attribute
+        //(analysis-outputs-assigned-by-position in phyphox-docs)
+        yi0Output = io.output(Self.yi0OutSlot)
+        yi1Output = io.output(Self.yi1OutSlot)
+        yi2Output = io.output(Self.yi2OutSlot)
+
+        if (yi0Output == nil) {
             throw SerializationError.genericError(message: "Error: No output for loess module specified.")
         }
-        
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
@@ -158,37 +157,30 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
 
             result_yi0.append(yi)
             
-            if outputs.count > 1 {
+            if yi1Output != nil || yi2Output != nil {
                 let d = sw*swxxxx-swxx*swxx;
                 let e = swx*swxx-sw*swxxx;
                 let f = sw*swxx-swx*swx;
 
                 let yi1 = (b * swy + d * swxy + e * swxxy) / det;
                 result_yi1.append(yi1);
-            
+
                 let yi2 = (c * swy + e * swxy + f * swxxy) / det;
                 result_yi2.append(yi2);
             }
             
         }
         
-        switch outputs[0] {
-        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+        if case .buffer(buffer: let buffer, data: _, usedAs: _, append: _)? = yi0Output {
             buffer.appendFromArray(result_yi0)
         }
-        
-        if outputs.count > 1 {
-            switch outputs[1] {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                buffer.appendFromArray(result_yi1)
-            }
+
+        if case .buffer(buffer: let buffer, data: _, usedAs: _, append: _)? = yi1Output {
+            buffer.appendFromArray(result_yi1)
         }
-        
-        if outputs.count > 2 {
-            switch outputs[2] {
-            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                buffer.appendFromArray(result_yi2)
-            }
+
+        if case .buffer(buffer: let buffer, data: _, usedAs: _, append: _)? = yi2Output {
+            buffer.appendFromArray(result_yi2)
         }
     }
 }

@@ -153,6 +153,7 @@
 
         <subtract>
             <input>buffer</input>
+            <input>buffer2</input>
             <output>buffer</output>
         </subtract>
 

@@ -9,6 +9,13 @@
 import Foundation
 
 final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "data", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let widthInSlot = AnalysisIOSlot(name: "width", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let dataOutSlot = AnalysisIOSlot(name: "data", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.widthInSlot], outputs: [Self.dataOutSlot])
+    }
     private var dataIn: MutableDoubleArray!
     private var widthIn: ExperimentAnalysisDataInput?
     
@@ -20,33 +27,12 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
         
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         dropIncomplete = try attributes.optionalValue(for: "dropIncomplete") ?? false
-        
-        for input in inputs {
-            if input.used(as: "data") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    dataIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.used(as: "width") {
-                widthIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if dataOut == nil {
-                dataOut = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
-        
+
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        dataIn = io.data(Self.dataInSlot)
+        widthIn = io.input(Self.widthInSlot)
+        dataOut = io.output(Self.dataOutSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

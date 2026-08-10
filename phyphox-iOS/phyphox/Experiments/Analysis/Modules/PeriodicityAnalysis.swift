@@ -9,6 +9,18 @@
 import Foundation
 
 final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let dxInSlot = AnalysisIOSlot(name: "dx", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let overlapInSlot = AnalysisIOSlot(name: "overlap", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let minInSlot = AnalysisIOSlot(name: "min", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let maxInSlot = AnalysisIOSlot(name: "max", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let timeOutSlot = AnalysisIOSlot(name: "time", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let periodOutSlot = AnalysisIOSlot(name: "period", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.dxInSlot, Self.overlapInSlot, Self.minInSlot, Self.maxInSlot], outputs: [Self.timeOutSlot, Self.periodOutSlot])
+    }
     //Calculate the periodicity over time by doing autocorrelations on a series of subsets of the input data
     //input1 is x values
     //input2 is y values
@@ -30,51 +42,15 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
     private var periodOutput: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.used(as: "x") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xInput = data
-                case .value(value: _, usedAs: _):
-                    throw SerializationError.genericError(message: "x input can only be a buffer")
-                }
-            }
-            else if input.used(as: "y") {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yInput = data
-                case .value(value: _, usedAs: _):
-                    throw SerializationError.genericError(message: "y input can only be a buffer")
-                }
-            }
-            else if input.used(as: "dx") {
-                dxInput = input
-            }
-            else if input.used(as: "overlap") {
-                overlapInput = input
-            }
-            else if input.used(as: "min") {
-                minInput = input
-            }
-            else if input.used(as: "max") {
-                maxInput = input
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.used(as: "time") {
-                timeOutput = output
-            }
-            else if output.used(as: "period") {
-                periodOutput = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xInput = io.data(Self.xInSlot)
+        yInput = io.data(Self.yInSlot)
+        dxInput = io.input(Self.dxInSlot)
+        overlapInput = io.input(Self.overlapInSlot)
+        minInput = io.input(Self.minInSlot)
+        maxInput = io.input(Self.maxInSlot)
+        timeOutput = io.output(Self.timeOutSlot)
+        periodOutput = io.output(Self.periodOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
