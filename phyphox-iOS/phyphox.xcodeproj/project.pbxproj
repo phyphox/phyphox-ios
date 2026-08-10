@@ -1430,7 +1430,6 @@
 				C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */,
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
-				A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */,
 				860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
@@ -2272,14 +2271,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.9.17;
-			};
-		};
-		A1100D4C2BD805E000C3470C /* XCRemoteSwiftPackageReference "swift-collections" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-collections.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.0;
 			};
 		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
