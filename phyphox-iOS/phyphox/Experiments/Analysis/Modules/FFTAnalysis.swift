@@ -146,11 +146,12 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
             let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, .FORWARD)
             vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
             vDSP_DFT_DestroySetupD(dftSetup)
-            
-            if !hasImagInBuffer {
-                realOutputArray = Array(realOutputArray[0..<countI/2])
-                imagOutputArray = Array(imagOutputArray[0..<countI/2])
-            }
+
+            //A real input is treated as a complex input with a zero imaginary part and the full
+            //complex spectrum is returned, matching Android. The output is deliberately not halved
+            //to the unique first half: for a real signal the second half is the mirrored complex
+            //conjugate, but both platforms return it in full so a real and a complex FFT of the
+            //same length behave identically (fft-real-input-output-length in phyphox-docs).
         }
 
         if let realOutput = realOutput {

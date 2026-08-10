@@ -1794,3 +1794,30 @@ final class DropdownViewTests: XCTestCase {
         XCTAssertEqual(descriptor.value, 2)
     }
 }
+
+//An FFT with a real input only (no imaginary input) treats the imaginary part as zero and returns
+//the full complex spectrum, not the unique first half - matching Android
+//(fft-real-input-output-length in phyphox-docs).
+final class FFTRealInputTests: XCTestCase {
+    func testRealOnlyFFTReturnsFullLength() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2, 3, 4, 5, 6, 7, 8])
+        let reOut = try DataBuffer(name: "re", size: 0, baseContents: [], static: false)
+        let imOut = try DataBuffer(name: "im", size: 0, baseContents: [], static: false)
+
+        let module = try FFTAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "re", keep: true)],
+            outputs: [
+                .buffer(buffer: reOut, data: MutableDoubleArray(data: []), usedAs: "re", append: false),
+                .buffer(buffer: imOut, data: MutableDoubleArray(data: []), usedAs: "im", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        let expected = nextFFTSize(8) //8 is already a power of two, so the FFT length is 8
+        XCTAssertEqual(reOut.toArray().count, expected, "a real-only FFT must return the full complex spectrum, not half")
+        XCTAssertEqual(imOut.toArray().count, expected)
+        //The DC bin equals the sum of the input (1..8 = 36); a sanity check that it is a real FFT
+        XCTAssertEqual(reOut.toArray().first ?? 0, 36, accuracy: 1e-6)
+    }
+}
