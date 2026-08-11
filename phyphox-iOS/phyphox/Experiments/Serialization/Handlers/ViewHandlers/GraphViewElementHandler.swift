@@ -54,7 +54,17 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
 
         let axis: GraphAxis = try attributes.value(for: .axis)
         let lineWidth: CGFloat? = try attributes.optionalValue(for: .lineWidth)
-        let color: UIColor? = mapColorString(attributes.optionalString(for: .color))
+        //A present but unparseable per-set colour is an error (color-invalid-value in
+        //phyphox-docs); Android's message for the input tag differs from the attribute one
+        let color: UIColor?
+        if let colorString = attributes.optionalString(for: .color) {
+            guard let parsedColor = mapColorString(colorString) else {
+                throw ElementHandlerError.message("Could not parse color of input tag.")
+            }
+            color = parsedColor
+        } else {
+            color = nil
+        }
         //An invalid style is an error rather than being silently ignored (enum-invalid-value
         //in phyphox-docs; Android throws "Unknown value for style of input tag." here)
         let style: GraphViewDescriptor.GraphStyle? = try attributes.optionalValue(for: .style)
@@ -283,15 +293,15 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         var partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
-        let color = mapColorString(attributes.optionalString(for: .color))
-        
+        let color = try attributes.optionalColor(for: .color)
+
         //The colour scale has as many stops as the file provides, numbered from 1 and ending at
-        //the first gap - without the former cap of nine (views-map-color-limit in phyphox-docs).
-        //An unparseable colour still ends the scale; that behaviour is deliberately not settled
-        //by the entry.
+        //the first ABSENT stop - without the former cap of nine (views-map-color-limit in
+        //phyphox-docs). A stop that is present but unparseable is an error, not the end of the
+        //scale (color-invalid-value in phyphox-docs).
         var colorMap: [UIColor] = []
         var mapColorIndex = 1
-        while let mapColor = mapColorString(numberedAttributes.optionalString(for: "mapColor\(mapColorIndex)")) {
+        while let mapColor = try numberedAttributes.optionalColor(for: "mapColor\(mapColorIndex)") {
             colorMap.append(mapColor)
             mapColorIndex += 1
         }

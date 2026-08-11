@@ -1577,6 +1577,61 @@ final class StrictnessFixesTests: XCTestCase {
         """
     }
 
+    private func assertRejects(_ document: String, message expected: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertThrowsError(try parse(document), file: file, line: line) { error in
+            //The debug description escapes the quotes inside the message
+            let rendered = "\(error)".replacingOccurrences(of: "\\\"", with: "\"")
+            XCTAssertTrue(rendered.contains(expected), "expected \"\(expected)\" in \(error)", file: file, line: line)
+        }
+    }
+
+    func testColorAttributesAreStrict() throws {
+        //A colour is a named phyphox colour (case-insensitive) or exactly six hex digits with
+        //an optional "#"; anything else rejects the file instead of silently falling back to
+        //the element's default (color-invalid-value in phyphox-docs)
+        func value(color: String) -> String {
+            return xml(view: "<value label=\"l\" color=\"\(color)\"><input>buffer</input></value>")
+        }
+        _ = try parse(value(color: "orange"))
+        _ = try parse(value(color: "WeakGreen"))
+        _ = try parse(value(color: "fF00Aa"))
+        _ = try parse(value(color: "#ff00aa"))
+
+        //"abc" and "12zz34" would pass the old NSScanner hex path (any digit count, trailing
+        //garbage ignored); Android accepts exactly six digits, nothing else
+        for bad in ["bogus", "abc", "#abc", "12zz34", "ff00aab", "#ff00aabb"] {
+            assertRejects(value(color: bad), message: "Could not parse color \"\(bad)\" of attribute \"color\".")
+        }
+    }
+
+    func testMapColorStopsAreStrict() throws {
+        //A present but unparseable stop is an error, not the end of the scale
+        assertRejects(xml(view: """
+            <graph label="g" style="map" mapWidth="10" mapColor1="red" mapColor2="bogus" mapColor3="blue">
+                <input axis="x">buffer</input>
+                <input axis="y">buffer</input>
+                <input axis="z">buffer</input>
+            </graph>
+        """), message: "Could not parse color \"bogus\" of attribute \"mapColor2\".")
+    }
+
+    func testPerSetGraphColorIsStrict() throws {
+        //The per-set colour on a graph input tag carries Android's distinct message
+        assertRejects(xml(view: """
+            <graph label="g">
+                <input axis="x">buffer</input>
+                <input axis="y" color="bogus">buffer</input>
+            </graph>
+        """), message: "Could not parse color of input tag.")
+        //A valid per-set colour still parses
+        _ = try parse(xml(view: """
+            <graph label="g">
+                <input axis="x">buffer</input>
+                <input axis="y" color="#ff00aa">buffer</input>
+            </graph>
+        """))
+    }
+
     func testMapColorScaleIsUnbounded() throws {
         let colors = ["red", "green", "blue", "yellow", "orange", "magenta", "white", "weakred", "weakgreen", "weakblue", "weakyellow", "weakorange"]
         let mapColors = colors.enumerated().map { "mapColor\($0.offset + 1)=\"\($0.element)\"" }.joined(separator: " ")

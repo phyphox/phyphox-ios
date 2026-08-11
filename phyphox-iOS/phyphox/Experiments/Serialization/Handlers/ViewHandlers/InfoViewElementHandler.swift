@@ -44,7 +44,7 @@ final class InfoViewElementHandler: ResultElementHandler, ChildlessElementHandle
 
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? kFullWhiteColor
+        let color = try attributes.optionalColor(for: .color) ?? kFullWhiteColor
         let fontSize = CGFloat(try attributes.optionalValue(for: .size) ?? 1.0)
         let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
         let bold = try attributes.optionalValue(for: .bold) ?? false

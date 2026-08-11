@@ -87,7 +87,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
 
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? kFullWhiteColor
+        let color = try attributes.optionalColor(for: .color) ?? kFullWhiteColor
 
         let mappings = mapHandler.results
         let inputBufferName = try inputHandler.expectSingleResult()

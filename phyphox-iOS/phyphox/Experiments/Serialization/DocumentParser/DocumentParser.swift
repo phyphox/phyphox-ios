@@ -79,6 +79,19 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return try parseBool(stringValue, key: key.rawValue)
     }
 
+    ///Colour attributes accept a named phyphox colour or exactly six hex digits with an optional
+    ///"#" prefix. A present but unparseable value is an error with Android's exact message rather
+    ///than a silent fall-back to the caller's default (color-invalid-value in phyphox-docs).
+    func optionalColor(for key: Key) throws -> UIColor? {
+        return try attributes[key.rawValue].map({
+            guard let color = mapColorString($0) else {
+                throw ElementHandlerError.message("Could not parse color \"\($0)\" of attribute \"\(key.rawValue)\".")
+            }
+
+            return color
+        })
+    }
+
     /// Variant of `optionalValue(for:)` for enumerated attribute values, matched case-insensitively.
     func optionalValue<T: CaseInsensitiveAttributeDecodable>(for key: Key) throws -> T? {
         return try attributes[key.rawValue].map({

@@ -49,9 +49,9 @@ final class CameraViewElementHandler: ResultElementHandler, ChildlessElementHand
                 
         let grayScale = try attributes.optionalValue(for: .grayscale) ?? false
         
-        let markOverexposure = mapColorString(attributes.optionalString(for: .markOverexposure))
-        
-        let markUnderexposure = mapColorString(attributes.optionalString(for: .markUnderexposure))
+        let markOverexposure = try attributes.optionalColor(for: .markOverexposure)
+
+        let markUnderexposure = try attributes.optionalColor(for: .markUnderexposure)
         
         let showControlsStr = attributes.optionalString(for: .show_controls)
         let showControls: CameraShowControlsState = switch showControlsStr?.lowercased() {

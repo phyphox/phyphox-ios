@@ -75,18 +75,26 @@ let shutterSpeeds : [CMTime] = [
 
 let iso = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
 
+//A colour from an experiment file is either a named phyphox colour (case-insensitive) or exactly
+//six hex digits, optionally prefixed with "#" - anything else is nil, which the serialization
+//handlers treat as an error rather than falling back to a default (color-invalid-value in
+//phyphox-docs, matching Android's RGB.fromPhyphoxStringStrict). The explicit hex check keeps the
+//lenient NSScanner in UIColor+Expanded (any digit count, trailing garbage ignored) out of the
+//file format.
 func mapColorString(_ string: String?) -> UIColor? {
     guard let colorString = string else {
         return nil
     }
-    
+
     if let color = namedColors[colorString.lowercased()] {
         return  color
-    } else if let color = UIColor(hexString: colorString) {
-        return color
-    } else {
+    }
+
+    let hex = colorString.hasPrefix("#") ? String(colorString.dropFirst()) : colorString
+    guard hex.count == 6, hex.allSatisfy({ $0.isASCII && $0.isHexDigit }) else {
         return nil
     }
+    return UIColor(hexString: hex)
 }
 
 /**
