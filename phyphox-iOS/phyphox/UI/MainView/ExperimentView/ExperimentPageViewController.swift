@@ -820,14 +820,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
         if !webServer.start() {
-            let hud = JGProgressHUD(style: .dark)
-            hud.interactionType = .blockTouchesOnHUDView
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
-            hud.textLabel.text = "Failed to initialize HTTP server"
-            
-            hud.show(in: self.view)
-            
-            hud.dismiss(afterDelay: 3.0)
+            //The translated message must not contain a format placeholder (non-professional
+            //translators tend to break template strings), so the port is appended in code.
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("remoteServerPortInUseTitle"))
+                .message(message: localize("remoteServerPortInUse") + " (Port \(webServer.port))")
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self.navigationController!, animated: true)
+            if !experiment.running {
+                experiment.setKeepScreenOn(false)
+            }
         }
         else {
             remoteUrl = webServer.server!.serverURL?.absoluteString ?? ""

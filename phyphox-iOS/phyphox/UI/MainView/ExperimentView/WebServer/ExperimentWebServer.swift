@@ -641,20 +641,29 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        port = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
-        
-        if server!.start(withPort: port, bonjourName: nil){
-            print("Webserver running on \(String(describing: server!.serverURL))")
-            return true
-        } else if server!.start(withPort: 8080, bonjourName: nil) {
-            port = 8080
-            print("Webserver running on \(String(describing: server!.serverURL))")
-            return true
+        let configuredPort = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
+
+        //If the port setting is at its default, we assume that the user does not care (or might
+        //not even know) which port is used, so if the default port is taken, we try 8080 and then
+        //count upwards from there until we find a free one. A custom port, however, is used
+        //exactly as configured.
+        var candidates: [UInt] = [configuredPort]
+        if configuredPort == 80 {
+            candidates.append(contentsOf: (8080...8180).map { UInt($0) })
         }
-        else {
-            server = nil
-            return false
+
+        for candidate in candidates {
+            if server!.start(withPort: candidate, bonjourName: nil) {
+                port = candidate
+                print("Webserver running on \(String(describing: server!.serverURL))")
+                return true
+            }
         }
+
+        //No free port found. Clean up and report the configured port as blocked.
+        port = configuredPort
+        server = nil
+        return false
     }
     
     func stop() {
