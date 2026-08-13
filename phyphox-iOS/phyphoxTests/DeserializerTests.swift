@@ -465,9 +465,10 @@ final class WebServerExportFormatTests: XCTestCase {
         result = post("/export?format=abc", body: "{\"format\": \"99\"}", contentType: "application/json")
         XCTAssertEqual(result.json?["error"] as? String, "Format out of range.")
 
-        //A malformed JSON body answers 400
+        //A malformed JSON body answers 400 with a JSON error object (error-response-content-type)
         result = post("/export", body: "{format: 99", contentType: "application/json")
         XCTAssertEqual(result.status, 400)
+        XCTAssertNotNil(result.json?["error"] as? String)
 
         //An endpoint without parameters ignores the body, even a malformed one
         result = post("/config", body: "{not json at all", contentType: "application/json")
@@ -535,8 +536,11 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual((root["buffer"] as? [String: Any])?.count, 0)
         XCTAssertNotNil((root["status"] as? [String: Any])?["session"])
 
-        //Unparseable threshold: 400
-        XCTAssertEqual(get("/get?accX=abc").status, 400)
+        //Unparseable threshold: 400 with a JSON error object (error-response-content-type)
+        result = get("/get?accX=abc")
+        XCTAssertEqual(result.status, 400)
+        XCTAssertEqual(result.contentType, "application/json")
+        XCTAssertNotNil((result.json as? [String: Any])?["error"] as? String)
 
         //Negative threshold: an ordinary partial answer, not an empty one caused by a NaN nudge
         experiment.buffers["accX"]?.append(1.0)

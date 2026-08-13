@@ -56,6 +56,16 @@ final class ExperimentWebServer {
         }
     }
 
+    //An error response is never empty: it carries {"error": "<reason>"} as application/json
+    //whatever the status code, the pattern /export and /res already use
+    //(error-response-content-type in phyphox-docs; must stay in step with Android). The reason
+    //is human-readable and not part of the contract - clients must not match on it.
+    private static func errorResponse(statusCode: Int, reason: String) -> GCDWebServerResponse? {
+        let response = GCDWebServerDataResponse(jsonObject: ["error": reason])
+        response?.statusCode = statusCode
+        return response
+    }
+
     //Registers a handler for both GET and POST: every endpoint accepts POST as well as GET with
     //the same parameters (see control-post in phyphox-docs). POST is registered with
     //GCDWebServerDataRequest so the request body is available to requestParams.
@@ -100,7 +110,7 @@ final class ExperimentWebServer {
         var params: [String: String] = [:]
 
         func malformed() -> [String: String]? {
-            cors(completionBlock)(GCDWebServerResponse(statusCode: 400))
+            cors(completionBlock)(errorResponse(statusCode: 400, reason: "Malformed request body."))
             return nil
         }
 
@@ -342,10 +352,8 @@ final class ExperimentWebServer {
         
         addGETPOSTHandler(pathRegex: "/get", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
-            func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+            func returnErrorResponse(_ reason: String) {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: reason))
             }
             
             guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
@@ -410,7 +418,7 @@ final class ExperimentWebServer {
                         //A threshold that does not parse as a number is a malformed request
                         //(get-invalid-threshold)
                         guard let thresholdGiven = Double(extraComponents.first!) else {
-                            returnErrorResponse()
+                            returnErrorResponse("Invalid threshold.")
                             return
                         }
                         
@@ -427,9 +435,7 @@ final class ExperimentWebServer {
                             let extra = extraComponents.last!
 
                             guard let extraArray = extraSnapshots[extra] else {
-                                let response = GCDWebServerResponse(statusCode: 400)
-
-                                completionBlock(response)
+                                returnErrorResponse("Unknown reference buffer.")
                                 return
                             }
 
@@ -481,9 +487,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/config", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -593,9 +597,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/meta", asyncProcessBlock: { (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -621,9 +623,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/time", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [AnyObject]()
