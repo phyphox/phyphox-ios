@@ -9,35 +9,31 @@
 import Foundation
 
 final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let bufferInSlot = AnalysisIOSlot(name: "buffer", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let averageOutSlot = AnalysisIOSlot(name: "average", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let stddevOutSlot = AnalysisIOSlot(name: "stddev", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.bufferInSlot], outputs: [Self.averageOutSlot, Self.stddevOutSlot])
+    }
     private var avgOutput: ExperimentAnalysisDataOutput?
     private var stdOutput: ExperimentAnalysisDataOutput?
     
     private let input: MutableDoubleArray
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        var avg: ExperimentAnalysisDataOutput? = nil
-        var std: ExperimentAnalysisDataOutput? = nil
-        for output in outputs {
-            if output.asString == "std" || avg != nil {
-                std = output
-            }
-            else {
-                avg = output
-            }
-        }
-        avgOutput = avg
-        stdOutput = std
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        //Outputs map by name: the documented slots are "average", which an unnamed output
+        //fills, and "stddev" - formerly this looked for "std", which appears in neither
+        //Android nor the documentation, and otherwise assigned by document order, silently
+        //swapping the two values (analysis-outputs-assigned-by-position in phyphox-docs)
+        avgOutput = io.output(Self.averageOutSlot)
+        stdOutput = io.output(Self.stddevOutSlot)
 
-        guard let firstInput = inputs.first else {
+        guard let data = io.data(Self.bufferInSlot) else {
             throw SerializationError.genericError(message: "Average needs a buffer as input.")
         }
-
-        switch firstInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-            input = data
-        case .value(value: _, usedAs: _):
-            throw SerializationError.genericError(message: "Average needs a buffer as input.")
-        }
+        input = data
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

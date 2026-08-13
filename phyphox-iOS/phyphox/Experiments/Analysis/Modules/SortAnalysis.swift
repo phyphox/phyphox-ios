@@ -9,6 +9,13 @@
 import Foundation
 
 final class SortAnalysis: AutoClearingExperimentAnalysisModule {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ])
+    }
     
     private var ins: [ExperimentAnalysisDataInput] = []
     let descending: Bool;

@@ -95,7 +95,11 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
         if let image = image {
             let aspect = image.size.width / image.size.height
             let w = descriptor.scale * size.width - 2*sideMargins
-            return CGSize(width: w, height:  w / aspect + 2*verticalMargins)
+            //A degenerate image (zero width or height, e.g. a corrupt resource) makes aspect NaN
+            //or infinite; w/aspect would then be NaN and returning it as a row height aborts the
+            //table view. Collapse the image to no content height in that case instead.
+            let h = (aspect.isFinite && aspect > 0) ? w / aspect : 0
+            return CGSize(width: w, height: h + 2*verticalMargins)
         } else {
             return (imageView as! UITextView).sizeThatFits(CGSize(width: size.width - 2*sideMargins, height: size.height))
         }

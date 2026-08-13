@@ -105,32 +105,47 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let precision = try attributes.optionalValue(for: .precision) ?? 2
         let type = attributes.optionalString(for: .type) ?? "normal"
         let showValue = try attributes.optionalValue(for: .showValue) ?? true
+
+        //Matched case-insensitively; an unknown type is an error, not a range slider
+        //(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+        let sliderType: SliderType
+        switch type.lowercased() {
+        case "normal": sliderType = SliderType.Normal
+        case "range": sliderType = SliderType.Range
+        default: throw ElementHandlerError.unexpectedAttributeValue("type")
+        }
         
-        let sliderType = (type == "normal") ? SliderType.Normal : SliderType.Range
-        
+        //The outputs are validated against the slot tables Android uses: a normal slider takes
+        //exactly one output (its value attribute is not consulted), a range slider fills
+        //lowerValue and upperValue, each exactly once, with unnamed outputs taking the next free
+        //one (input-output-component-validation in phyphox-docs)
         let outputBufferName = (sliderType == .Normal) ? rangeSliderOutputHandler.results.first?.bufferName : nil
-        
+
         var outputBufferNames_: [String] = []
         var lowerBufferName = ""
         var upperBufferName = ""
-        
-        if(sliderType == .Range) {
+
+        if(sliderType == .Normal) {
+            let slots = [AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)]
+            try IOMappingValidation.validate(kind: "output", slots: slots, items: rangeSliderOutputHandler.results.map {
+                IOMappingValidation.Item(usedAs: "", text: $0.bufferName, isValue: false, isEmpty: false)
+            })
+        } else {
             let outputBuffers = rangeSliderOutputHandler.results
-            guard outputBuffers.count > 0 else {
-                throw ElementHandlerError.missingElement("output")
-            }
-            
-            for outputBuffer in outputBuffers {
-                let value = outputBuffer.value
-                if(value == "lowerValue"){
+            let slots = [
+                AnalysisIOSlot(name: "lowerValue", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
+                AnalysisIOSlot(name: "upperValue", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+            ]
+            let mappingIndices = try IOMappingValidation.validate(kind: "output", slots: slots, items: outputBuffers.map {
+                IOMappingValidation.Item(usedAs: $0.value, text: $0.bufferName, isValue: false, isEmpty: false)
+            })
+            for (outputBuffer, index) in zip(outputBuffers, mappingIndices) {
+                if slots[index].name == "lowerValue" {
                     lowerBufferName = outputBuffer.bufferName
-                }
-                
-                if(value == "upperValue"){
+                } else {
                     upperBufferName = outputBuffer.bufferName
                 }
-                outputBufferNames_.append(value)
-                
+                outputBufferNames_.append(slots[index].name)
             }
         }
         

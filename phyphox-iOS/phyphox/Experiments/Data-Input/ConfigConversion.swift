@@ -55,7 +55,7 @@ enum JavaByteConversion {
 }
 
 class SimpleConfigConversion: ConfigConversion {
-    enum ConversionFunction: String, LosslessStringConvertible {
+    enum ConversionFunction: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case string
         case hexadecimal
         case uInt8

@@ -9,6 +9,14 @@
 import Foundation
 
 final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let thresholdInSlot = AnalysisIOSlot(name: "threshold", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let positionOutSlot = AnalysisIOSlot(name: "position", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.thresholdInSlot], outputs: [Self.positionOutSlot])
+    }
     private let falling: Bool
     
     private var xIn: MutableDoubleArray?
@@ -20,31 +28,11 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
 
         falling = try attributes.optionalValue(for: "falling") ?? false
 
-        for input in inputs {
-            if input.asString == "threshold" {
-                thresholdIn = input
-            }
-            else if input.asString == "y" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "x" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        thresholdIn = io.input(Self.thresholdInSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

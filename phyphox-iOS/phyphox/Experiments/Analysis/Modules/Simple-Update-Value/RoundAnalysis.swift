@@ -13,6 +13,13 @@ import Foundation
 import Accelerate
 
 final class RoundAnalysis: UpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "value", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ], outputs: [
+            AnalysisIOSlot(name: "round", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     private let floor: Bool
     private let ceil: Bool
     

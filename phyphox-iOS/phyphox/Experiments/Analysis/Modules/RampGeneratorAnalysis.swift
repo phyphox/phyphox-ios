@@ -10,25 +10,23 @@ import Foundation
 import Accelerate
 
 final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let startInSlot = AnalysisIOSlot(name: "start", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let stopInSlot = AnalysisIOSlot(name: "stop", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let lengthInSlot = AnalysisIOSlot(name: "length", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.startInSlot, Self.stopInSlot, Self.lengthInSlot], outputs: [Self.outOutSlot])
+    }
     private var startInput: ExperimentAnalysisDataInput!
     private var stopInput: ExperimentAnalysisDataInput!
     private var lengthInput: ExperimentAnalysisDataInput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.asString == "start" {
-                startInput = input
-            }
-            else if input.asString == "stop" {
-                stopInput = input
-            }
-            else if input.asString == "length" {
-                lengthInput = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        startInput = io.input(Self.startInSlot)
+        stopInput = io.input(Self.stopInSlot)
+        lengthInput = io.input(Self.lengthInSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

@@ -22,12 +22,20 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
         case staticKey = "static"
         case initKey = "init"
         case clearGroup
+        case type
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         guard !text.isEmpty else { throw ElementHandlerError.missingText }
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
+
+        //Only "buffer" exists; the attribute is reserved for future container types, so an
+        //unknown value must not silently load as an ordinary buffer
+        //(container-type-unvalidated in phyphox-docs, matching Android)
+        if let type = attributes.optionalString(for: .type), type.lowercased() != "buffer" {
+            throw ElementHandlerError.message("Unknown container type \"\(type)\".")
+        }
 
         let size = try attributes.optionalValue(for: .size) ?? 1
 

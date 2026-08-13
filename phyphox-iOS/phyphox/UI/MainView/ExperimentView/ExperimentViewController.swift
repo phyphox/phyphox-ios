@@ -83,12 +83,13 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         let size = moduleView.sizeThatFits(CGSize(width: availableSize.width, height: max(availableSize.height-20, 0)))
         //TODO: The source for the value -20 is not clear. It seems like the scroll features adds a padding, but I could not find how to control it or read the correct value programmatically
 
-        if indexPath.row > 0 {
-            return size.height + (((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0)
-        }
-        else {
-            return size.height + (((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0)
-        }
+        let spacing = ((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? (indexPath.row > 0 ? intercellSpacing : insetTop) : 0
+        let height = size.height + spacing
+        //A non-finite or negative height from a misbehaving module's sizeThatFits (a corrupt image
+        //resource, a graph with a zero aspect ratio, ...) would make UITableView raise an exception
+        //and abort the app during reloadData. Clamp to a valid height so a bad view element degrades
+        //gracefully instead of crashing the whole experiment.
+        return height.isFinite ? Swift.max(height, 0) : 0
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

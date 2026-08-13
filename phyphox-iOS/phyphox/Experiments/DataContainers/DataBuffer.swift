@@ -28,6 +28,48 @@ enum DataBufferError: Error {
     case baseContentsTooLarge
 }
 
+/**
+ A single reader/writer lock shared by all data buffers of one experiment, giving remote reads a
+ consistent snapshot across buffers.
+
+ Each `DataBuffer` is individually thread-safe, but a group of buffers written together for one
+ event (a sensor sample's x/y/z/t, a camera frame's h/s/v/t, an analysis cycle's outputs) is not
+ atomic across buffers on its own: a `/get` request reading the group one buffer at a time can
+ catch some buffers already advanced by a concurrent write and others not, so their lengths differ
+ by a sample or two (GitHub issue 22). Android avoids this with a single `experiment.dataLock` held
+ across each write batch and across the remote read; this is the equivalent.
+
+ A writer wraps its multi-buffer group in `write`; the remote `/get` handler snapshots all requested
+ buffers in one `read`. Because the lock is always taken *around* buffer access and never from
+ inside a `DataBuffer` (whose own lock stays the inner leaf), and is never held across a queue or
+ main-thread hop, it cannot deadlock: the acquisition order is always this lock, then a buffer lock,
+ never the reverse, and write groups never nest.
+ */
+final class BufferLock {
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.dataaccess", attributes: .concurrent)
+
+    func read<T>(_ body: () throws -> T) rethrows -> T {
+        return try queue.sync(execute: body)
+    }
+
+    func write(_ body: () -> Void) {
+        queue.sync(flags: .barrier, execute: body)
+    }
+}
+
+/**
+ Runs a multi-buffer write as one atomic group with respect to remote reads. The lock is taken from
+ whichever of the buffers is non-nil (they all share the experiment's lock); before the experiment
+ wires up the lock, or in unit tests, it is nil and the writes run directly, exactly as before.
+ */
+func synchronizedBufferWrite(_ buffers: [DataBuffer?], _ body: () -> Void) {
+    if let lock = buffers.lazy.compactMap({ $0?.dataLock }).first {
+        lock.write(body)
+    } else {
+        body()
+    }
+}
+
 extension DataBufferError: LocalizedError {
     var localizedDescription: String {
         switch self {
@@ -41,6 +83,10 @@ extension DataBufferError: LocalizedError {
  Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
 final class DataBuffer {
+
+    //The experiment-wide lock shared by all of an experiment's buffers, wired up in Experiment.init.
+    //nil for a standalone buffer (e.g. in unit tests), where no cross-buffer coordination is needed.
+    weak var dataLock: BufferLock?
 
     let name: String
     let size: Int

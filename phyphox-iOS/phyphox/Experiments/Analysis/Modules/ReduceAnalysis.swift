@@ -9,6 +9,15 @@
 import Foundation
 
 final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let factorInSlot = AnalysisIOSlot(name: "factor", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let xOutSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yOutSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.factorInSlot, Self.xInSlot, Self.yInSlot], outputs: [Self.xOutSlot, Self.yOutSlot])
+    }
     private var averageX = false
     private var averageY = false
     private var sumY = false
@@ -27,44 +36,17 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         averageY = try attributes.optionalValue(for: "averageY") ?? false
         sumY = try attributes.optionalValue(for: "sumY") ?? false
         
-        for input in inputs {
-            if input.asString == "x" {
-                switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                        inX = data
-                    default:
-                        throw SerializationError.genericError(message: "Error: Input x for reduce module has to be a buffer.")
-                }
-            }
-            else if input.asString == "y" {
-                switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                        inY = data
-                    default:
-                        throw SerializationError.genericError(message: "Error: Input y for reduce module has to be a buffer.")
-                }
-            }
-            else if input.asString == "factor" {
-                factor = input
-            }
-            else {
-                throw SerializationError.genericError(message: "Error: Unknown input for reduce module: \(input.asString).")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        factor = io.input(Self.factorInSlot)
+        inX = io.data(Self.xInSlot)
+        inY = io.data(Self.yInSlot)
+
         if (outputs.count < 1) {
             throw SerializationError.genericError(message: "Error: No output for reduce-module specified.")
         }
-        
-        for output in outputs {
-            if output.asString == "x" {
-                outX = output
-            } else if output.asString == "y" {
-                outY = output
-            } else {
-                throw SerializationError.genericError(message: "Error: Unknown output for reduce module: \(output.asString).")
-            }
-        }
+
+        outX = io.output(Self.xOutSlot)
+        outY = io.output(Self.yOutSlot)
         
         if factor == nil {
             throw SerializationError.genericError(message: "Error: Reduce module requires input \"factor\".")

@@ -206,7 +206,10 @@ final class WebServerUtilities {
     }
     
     class func mapFormatString(_ str: String) -> ExportFileFormat? {
-        return exportTypes[Int(str) ?? 0].1
+        guard let index = Int(str), exportTypes.indices.contains(index) else {
+            return nil
+        }
+        return exportTypes[index].1
     }
     
     class func prepareWebServerFilesForExperiment(_ experiment: Experiment) -> (String, [ViewDescriptor]) {

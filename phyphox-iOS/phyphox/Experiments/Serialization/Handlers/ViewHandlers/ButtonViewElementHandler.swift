@@ -27,7 +27,7 @@ struct ButtonViewElementDescriptor {
     let mappings: [ValueViewMap]
 }
 
-enum DataInputTypeAttribute: String, LosslessStringConvertible {
+enum DataInputTypeAttribute: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case buffer
     case value
     case empty

@@ -55,6 +55,65 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return stringValue
     }
 
+    ///Booleans from the experiment file fold case like enumerated values ("True" is true), and
+    ///any other value is an error rather than silently false
+    ///(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+    private func parseBool(_ stringValue: String, key: String) throws -> Bool {
+        switch stringValue.lowercased() {
+        case "true": return true
+        case "false": return false
+        default: throw ElementHandlerError.unexpectedAttributeValue(key)
+        }
+    }
+
+    /// Bool-specific variant of `optionalValue(for:)`, folding case and rejecting non-boolean values.
+    func optionalValue(for key: Key) throws -> Bool? {
+        return try attributes[key.rawValue].map({ try parseBool($0, key: key.rawValue) })
+    }
+
+    /// Bool-specific variant of `value(for:)`, folding case and rejecting non-boolean values.
+    func value(for key: Key) throws -> Bool {
+        guard let stringValue = attributes[key.rawValue] else {
+            throw ElementHandlerError.missingAttribute(key.rawValue)
+        }
+        return try parseBool(stringValue, key: key.rawValue)
+    }
+
+    ///Colour attributes accept a named phyphox colour or exactly six hex digits with an optional
+    ///"#" prefix. A present but unparseable value is an error with Android's exact message rather
+    ///than a silent fall-back to the caller's default (color-invalid-value in phyphox-docs).
+    func optionalColor(for key: Key) throws -> UIColor? {
+        return try attributes[key.rawValue].map({
+            guard let color = mapColorString($0) else {
+                throw ElementHandlerError.message("Could not parse color \"\($0)\" of attribute \"\(key.rawValue)\".")
+            }
+
+            return color
+        })
+    }
+
+    /// Variant of `optionalValue(for:)` for enumerated attribute values, matched case-insensitively.
+    func optionalValue<T: CaseInsensitiveAttributeDecodable>(for key: Key) throws -> T? {
+        return try attributes[key.rawValue].map({
+            guard let value = T.init(attributeValue: $0) else {
+                throw ElementHandlerError.unexpectedAttributeValue(key.rawValue)
+            }
+
+            return value
+        })
+    }
+
+    /// Variant of `value(for:)` for enumerated attribute values, matched case-insensitively.
+    func value<T: CaseInsensitiveAttributeDecodable>(for key: Key) throws -> T {
+        guard let stringValue = attributes[key.rawValue] else {
+            throw ElementHandlerError.missingAttribute(key.rawValue)
+        }
+        guard let value = T.init(attributeValue: stringValue) else {
+            throw ElementHandlerError.unexpectedAttributeValue(key.rawValue)
+        }
+        return value
+    }
+
     /// Returns an optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error decoding to `T` fails.
     func optionalValue<T: LosslessStringConvertible>(for key: Key) throws -> T? {
         let keyString = key.rawValue

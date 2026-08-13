@@ -12,6 +12,16 @@ import Foundation
 //domain (the FFT itself is done separately with the fft module). With only "cutoff" set this is
 //a lowpass; with a non-zero "cutoffLow" it becomes a bandpass with -3dB at both cutoffs.
 final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let nInSlot = AnalysisIOSlot(name: "n", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let cutoffInSlot = AnalysisIOSlot(name: "cutoff", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let cutoffLowInSlot = AnalysisIOSlot(name: "cutoffLow", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let filteredOutSlot = AnalysisIOSlot(name: "filtered", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.yInSlot, Self.xInSlot, Self.nInSlot, Self.cutoffInSlot, Self.cutoffLowInSlot], outputs: [Self.filteredOutSlot])
+    }
     private let yInput: MutableDoubleArray
     private let xInput: MutableDoubleArray
     private let nInput: ExperimentAnalysisDataInput
@@ -21,33 +31,18 @@ final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
     private let filteredOutput: ExperimentAnalysisDataOutput?
 
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        var tY: ExperimentAnalysisDataInput?
-        var tX: ExperimentAnalysisDataInput?
-        var tN: ExperimentAnalysisDataInput?
-        var tCutoff: ExperimentAnalysisDataInput?
-        var tCutoffLow: ExperimentAnalysisDataInput?
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
 
-        for input in inputs {
-            switch input.asString {
-            case "y": tY = input
-            case "x": tX = input
-            case "n": tN = input
-            case "cutoff": tCutoff = input
-            case "cutoffLow": tCutoffLow = input
-            default: throw SerializationError.genericError(message: "Error: Invalid analysis input for butterworth module: \(String(describing: input.asString))")
-            }
-        }
-
-        guard case .buffer(buffer: _, data: let yData, usedAs: _, keep: _)? = tY else {
+        guard let yData = io.data(Self.yInSlot) else {
             throw SerializationError.genericError(message: "Butterworth analysis needs a buffer input designated as \"y\".")
         }
-        guard case .buffer(buffer: _, data: let xData, usedAs: _, keep: _)? = tX else {
+        guard let xData = io.data(Self.xInSlot) else {
             throw SerializationError.genericError(message: "Butterworth analysis needs a buffer input designated as \"x\".")
         }
-        guard let tNInput = tN else {
+        guard let tNInput = io.input(Self.nInSlot) else {
             throw SerializationError.genericError(message: "Butterworth analysis needs an input designated as \"n\".")
         }
-        guard let tCutoffInput = tCutoff else {
+        guard let tCutoffInput = io.input(Self.cutoffInSlot) else {
             throw SerializationError.genericError(message: "Butterworth analysis needs an input designated as \"cutoff\".")
         }
 
@@ -55,9 +50,9 @@ final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
         xInput = xData
         nInput = tNInput
         cutoffInput = tCutoffInput
-        cutoffLowInput = tCutoffLow
+        cutoffLowInput = io.input(Self.cutoffLowInSlot)
 
-        filteredOutput = outputs.first
+        filteredOutput = io.output(Self.filteredOutSlot)
 
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

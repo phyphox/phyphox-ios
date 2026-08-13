@@ -10,6 +10,13 @@ import Foundation
 import Accelerate
 
 final class MultiplicationAnalysis: ExperimentComplexUpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "factor", asRequired: false, repeatOffset: 0, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "product", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     
     override func update() {
         updateAllWithMethod({ (inputs) -> ValueSource in

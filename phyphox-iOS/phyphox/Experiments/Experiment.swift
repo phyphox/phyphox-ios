@@ -112,6 +112,15 @@ final class Experiment {
                 }
             }
         }
+        //An mqtts service may name a custom CA certificate, which is an experiment resource
+        //like the images named by view elements
+        for networkConnection in networkConnections {
+            if let mqttService = networkConnection.service as? MqttService {
+                for resource in mqttService.resources {
+                    res.insert(resource)
+                }
+            }
+        }
         return Array(res)
     }
 
@@ -164,6 +173,10 @@ final class Experiment {
     let export: ExperimentExport?
     
     let buffers: [String: DataBuffer]
+
+    //The lock giving remote /get reads a consistent snapshot across buffers, shared by all buffers
+    //and the writers (inputs and analysis). See BufferLock.
+    let dataLock = BufferLock()
 
     private var requiredPermissions: ExperimentRequiredPermission = .none
     
@@ -252,6 +265,20 @@ final class Experiment {
         //is being built, i.e. before willBecomeActive - without a queue that run would never
         //execute and its busy flag would block the analysis permanently.
         analysis.queue = queue
+
+        //An MQTT service with a custom CA certificate resolves it as an experiment resource at
+        //connect time, which needs a reference back to this experiment (source and thereby the
+        //resource folder are only assigned after init)
+        for networkConnection in networkConnections {
+            (networkConnection.service as? MqttService)?.experiment = self
+        }
+
+        //Wire the shared data lock into every buffer (so writers reach it through the buffers they
+        //hold) and into the analysis stage, so multi-buffer writes and remote reads stay coherent.
+        for buffer in buffers.values {
+            buffer.dataLock = dataLock
+        }
+        analysis.dataLock = dataLock
     }
 
     convenience init(file: String, error: String) {
@@ -691,7 +718,9 @@ extension Experiment: Equatable {
             lhs.gpsInputs == rhs.gpsInputs &&
             lhs.audioInputs == rhs.audioInputs &&
             lhs.audioOutput == rhs.audioOutput &&
-            lhs.bluetoothDevices == rhs.bluetoothDevices &&
+            lhs.bluetoothDevices.elementsEqual(rhs.bluetoothDevices, by: { (l, r) -> Bool in
+                ExperimentBluetoothDevice.valueEqual(lhs: l, rhs: r)
+            }) &&
             lhs.bluetoothInputs == rhs.bluetoothInputs &&
             lhs.bluetoothOutputs == rhs.bluetoothOutputs &&
             lhs.networkConnections == rhs.networkConnections &&

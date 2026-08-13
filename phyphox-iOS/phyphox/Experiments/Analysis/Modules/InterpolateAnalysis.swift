@@ -9,7 +9,15 @@
 import Foundation
 
 final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
-    enum InterpolationMethod: String, LosslessStringConvertible {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xiInSlot = AnalysisIOSlot(name: "xi", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.xiInSlot], outputs: [Self.outOutSlot])
+    }
+    enum InterpolationMethod: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case previous
         case next
         case nearest
@@ -27,34 +35,12 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         method = try attributes.optionalValue(for: "method") ?? .linear
-        
-        for input in inputs {
-            if input.asString == "x" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else if input.asString == "y" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else if input.asString == "xi" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xLocIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            } else {
-                throw SerializationError.genericError(message: "Error: Invalid analysis input for interpolate module: \(String(describing: input.asString))")
-            }
-        }
-        
+
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        xLocIn = io.data(Self.xiInSlot)
+
         if (xIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for x provided to interpolate module.")
         }

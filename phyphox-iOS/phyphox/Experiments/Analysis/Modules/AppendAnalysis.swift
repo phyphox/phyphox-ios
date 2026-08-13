@@ -9,6 +9,13 @@
 import Foundation
 
 final class AppendAnalysis: AutoClearingExperimentAnalysisModule {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: true, emptyAllowed: true, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     private let inputElements: [ExperimentAnalysisDataInput]
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {

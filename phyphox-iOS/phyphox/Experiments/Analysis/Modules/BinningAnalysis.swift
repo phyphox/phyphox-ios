@@ -9,6 +9,15 @@
 import Foundation
 
 final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let x0InSlot = AnalysisIOSlot(name: "x0", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let dxInSlot = AnalysisIOSlot(name: "dx", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let binStartsOutSlot = AnalysisIOSlot(name: "binStarts", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let binCountsOutSlot = AnalysisIOSlot(name: "binCounts", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.x0InSlot, Self.dxInSlot], outputs: [Self.binStartsOutSlot, Self.binCountsOutSlot])
+    }
     private let inputBuffer: MutableDoubleArray
     private let x0Input: ExperimentAnalysisDataInput?
     private let dxInput: ExperimentAnalysisDataInput?
@@ -21,48 +30,17 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
 
-        var tIn: ExperimentAnalysisDataInput?
-        var tX0: ExperimentAnalysisDataInput?
-        var tDx: ExperimentAnalysisDataInput?
-        var tBinStarts: ExperimentAnalysisDataOutput?
-        var tBinCounts: ExperimentAnalysisDataOutput?
-        
-        for input in inputs {
-            if input.asString == "x0" {
-                tX0 = input
-            }
-            else if input.asString == "dx" {
-                tDx = input
-            }
-            else if tIn == nil {
-                tIn = input
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "binCounts" || tBinStarts != nil {
-                tBinCounts = output
-            }
-            else {
-                tBinStarts = output
-            }
-        }
-        
-        guard let tInput = tIn else {
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+
+        guard let inputData = io.data(Self.dataInSlot) else {
             throw SerializationError.genericError(message: "Binning analysis needs a valid input designated as \"in\".")
         }
+        inputBuffer = inputData
 
-        switch tInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-            inputBuffer = data
-        case .value(value: _, usedAs: _):
-            throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
-        }
-
-        x0Input = tX0
-        dxInput = tDx
-        binStartsOutput = tBinStarts
-        binCountsOutput = tBinCounts
+        x0Input = io.input(Self.x0InSlot)
+        dxInput = io.input(Self.dxInSlot)
+        binStartsOutput = io.output(Self.binStartsOutSlot)
+        binCountsOutput = io.output(Self.binCountsOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

@@ -128,11 +128,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     
     let suppressScientificNotation: Bool
     
-    enum ScaleMode: String, LosslessStringConvertible {
+    enum ScaleMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case auto, extend, fixed
     }
     
-    enum GraphStyle: String, LosslessStringConvertible {
+    enum GraphStyle: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case lines
         case dots
         case hbars

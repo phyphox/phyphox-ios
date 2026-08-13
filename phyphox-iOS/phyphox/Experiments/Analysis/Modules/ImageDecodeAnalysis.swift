@@ -15,6 +15,19 @@ import ImageIO
 //and per-pixel channel data (0..1, line-wise from the top), like the Android implementation
 //does via BitmapFactory.
 final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let inInSlot = AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let widthOutSlot = AnalysisIOSlot(name: "width", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let heightOutSlot = AnalysisIOSlot(name: "height", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let rOutSlot = AnalysisIOSlot(name: "r", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let gOutSlot = AnalysisIOSlot(name: "g", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let bOutSlot = AnalysisIOSlot(name: "b", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let aOutSlot = AnalysisIOSlot(name: "a", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lumaOutSlot = AnalysisIOSlot(name: "luma", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let luminanceOutSlot = AnalysisIOSlot(name: "luminance", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.inInSlot], outputs: [Self.widthOutSlot, Self.heightOutSlot, Self.rOutSlot, Self.gOutSlot, Self.bOutSlot, Self.aOutSlot, Self.lumaOutSlot, Self.luminanceOutSlot])
+    }
     private let input: MutableDoubleArray
 
     private let widthOutput: ExperimentAnalysisDataOutput?
@@ -27,46 +40,25 @@ final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
     private let luminanceOutput: ExperimentAnalysisDataOutput?
 
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        guard let firstInput = inputs.first, inputs.count == 1 else {
+        guard inputs.count == 1 else {
             throw SerializationError.genericError(message: "Imagedecode analysis needs exactly one input.")
         }
 
-        guard case .buffer(buffer: _, data: let data, usedAs: _, keep: _) = firstInput else {
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+
+        guard let data = io.data(Self.inInSlot) else {
             throw SerializationError.genericError(message: "Imagedecode analysis needs a buffer input.")
         }
         input = data
 
-        var tWidth: ExperimentAnalysisDataOutput?
-        var tHeight: ExperimentAnalysisDataOutput?
-        var tR: ExperimentAnalysisDataOutput?
-        var tG: ExperimentAnalysisDataOutput?
-        var tB: ExperimentAnalysisDataOutput?
-        var tA: ExperimentAnalysisDataOutput?
-        var tLuma: ExperimentAnalysisDataOutput?
-        var tLuminance: ExperimentAnalysisDataOutput?
-
-        for output in outputs {
-            switch output.asString {
-            case "width": tWidth = output
-            case "height": tHeight = output
-            case "r": tR = output
-            case "g": tG = output
-            case "b": tB = output
-            case "a": tA = output
-            case "luma": tLuma = output
-            case "luminance": tLuminance = output
-            default: throw SerializationError.genericError(message: "Error: Invalid analysis output for imagedecode module: \(String(describing: output.asString))")
-            }
-        }
-
-        widthOutput = tWidth
-        heightOutput = tHeight
-        rOutput = tR
-        gOutput = tG
-        bOutput = tB
-        aOutput = tA
-        lumaOutput = tLuma
-        luminanceOutput = tLuminance
+        widthOutput = io.output(Self.widthOutSlot)
+        heightOutput = io.output(Self.heightOutSlot)
+        rOutput = io.output(Self.rOutSlot)
+        gOutput = io.output(Self.gOutSlot)
+        bOutput = io.output(Self.bOutSlot)
+        aOutput = io.output(Self.aOutSlot)
+        lumaOutput = io.output(Self.lumaOutSlot)
+        luminanceOutput = io.output(Self.luminanceOutSlot)
 
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

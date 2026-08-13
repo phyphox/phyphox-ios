@@ -151,8 +151,15 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
             return false
         }
         
-        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor),
-              let cameraModel = cameraModelOwner?.cameraModel else {
+        //Resolve the (weakly held) camera model before creating the encoder. If both were checked
+        //in one guard and only the model were nil - which happens while leaving the experiment, as
+        //the model is torn down but the MTKView fires one last draw - the encoder would already be
+        //created and then released without endEncoding(), which aborts with a Metal assertion.
+        guard let cameraModel = cameraModelOwner?.cameraModel else {
+            return false
+        }
+
+        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
             return false
         }
         // Set a label to identify this render pass in a captured Metal frame.

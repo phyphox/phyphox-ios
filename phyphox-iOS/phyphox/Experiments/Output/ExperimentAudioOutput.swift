@@ -32,7 +32,7 @@ enum AudioParameter: Equatable {
     }
 }
 
-enum AudioWaveform: String, LosslessStringConvertible {
+enum AudioWaveform: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case sine
     case square
     case sawtooth

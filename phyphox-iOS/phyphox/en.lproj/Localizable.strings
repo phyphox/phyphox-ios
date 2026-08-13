@@ -106,6 +106,8 @@
 "remoteServerWarningTitle" = "Security warning!";
 "remoteServerNoNetwork" = "You need to set up a Wifi connection to the remote device first. Please enable Wifi or create a mobile hotspot.";
 "remoteServerActive" = "Remote access enabled. Access this experiment from the following URL:";
+"remoteServerPortInUseTitle" = "Could not enable remote access";
+"remoteServerPortInUse" = "Remote access could not be enabled because the port is already in use by another app on this device. Stop the app that is using the port or set a different port in the phyphox settings.";
 "hotspotSettings" = "Hotspot Settings";
 "switchToPhoneLayout" = "View: Narrow";
 "switchColumns1" = "View: 1 column";

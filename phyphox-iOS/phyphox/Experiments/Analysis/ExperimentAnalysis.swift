@@ -47,7 +47,21 @@ final class ExperimentAnalysis {
 
 
     public var queue: DispatchQueue?
-    
+
+    //The experiment-wide data lock, wired up in Experiment.init. A cycle's writes go through it so
+    //remote /get reads see coherent analysis output (see BufferLock).
+    weak var dataLock: BufferLock?
+
+    //Runs an analysis cycle's writes as one atomic group; before the lock is wired up, or when
+    //there is none, the writes run directly.
+    private func writeLocked(_ body: () -> Void) {
+        if let dataLock = dataLock {
+            dataLock.write(body)
+        } else {
+            body()
+        }
+    }
+
     init(modules: [ExperimentAnalysisModule], sleep: Double, dynamicSleep: DataBuffer?, onUserInput: Bool, requireFill: DataBuffer?, requireFillThreshold: Int, requireFillDynamic: DataBuffer?, timedRun: Bool, timedRunStartDelay: Double, timedRunStopDelay: Double, timeReference: ExperimentTimeReference, sensorInputs: [ExperimentSensorInput], audioInputs: [ExperimentAudioInput]) {
         self.modules = modules
         self.sleep = sleep
@@ -131,8 +145,10 @@ final class ExperimentAnalysis {
             sensorInput.updateGeneratedRate()
         }
         
-        for audioInput in audioInputs {
-            audioInput.outBuffer.appendFromArray(audioInput.backBuffer.readAndClear(reset: false))
+        writeLocked {
+            for audioInput in audioInputs {
+                audioInput.outBuffer.appendFromArray(audioInput.backBuffer.readAndClear(reset: false))
+            }
         }
         
         if let requireFill = requireFill {
@@ -185,19 +201,24 @@ final class ExperimentAnalysis {
                 return
             }
             queue.async(execute: {
-                for (i, analysis) in modulesInCycle.enumerated() {
-                    analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
-                    if i == c {
-                        for audioInput in self.audioInputs {
-                            if !audioInput.appendData {
-                                audioInput.outBuffer.clear(reset: false)
-                            }
-                        }
-                        mainThread {
-                            self.cycle += 1
-                            completion(true)
+                //A whole analysis cycle's buffer writes are one atomic group, so a remote /get read
+                //sees a coherent snapshot across every module's outputs rather than a state where
+                //some modules have run and others have not (see BufferLock). The completion is
+                //dispatched to the main thread *outside* the lock - holding a barrier across a main
+                //hop would deadlock.
+                self.writeLocked {
+                    for analysis in modulesInCycle {
+                        analysis.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentOffset1970, linearReference1970: linearOffset1970)
+                    }
+                    for audioInput in self.audioInputs {
+                        if !audioInput.appendData {
+                            audioInput.outBuffer.clear(reset: false)
                         }
                     }
+                }
+                mainThread {
+                    self.cycle += 1
+                    completion(true)
                 }
             })
         } else {

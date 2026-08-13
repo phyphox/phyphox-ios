@@ -11,7 +11,7 @@ import CoreBluetooth
 import ZIPFoundation
 
 private let minCellWidth: CGFloat = 320.0
-private let phyphoxCatHintRelease = "1.1.12" //If this is updated to the current version, the hint bubble for the support menu is shown again
+private let phyphoxCatHintRelease = "1.2.1" //If this is updated to the current version, the hint bubble for the support menu is shown again
 private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
@@ -28,7 +28,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
     
-    private var hintBubble: HintBubbleViewController? = nil
+    private var hintTooltip: HintTooltipView? = nil
     
     private var collections: [ExperimentCollection] = []
 
@@ -49,12 +49,24 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             return
         }
         if #available(iOS 13, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = kBackgroundColor
-            appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.standardAppearance = appearance;
-            navBar.scrollEdgeAppearance = navBar.standardAppearance
+            //Native iOS look: no bar background at rest, just the floating (Liquid Glass) buttons
+            //over the list, with a large "phyphox" title that is part of the scrollable content and
+            //collapses into a blurred bar as the list scrolls. Colours are left to the system so the
+            //whole bar follows light/dark together with the content — including the glass buttons,
+            //which always track the window appearance and previously clashed with the forced-dark
+            //bar in light mode.
+            //Per-item appearance (not on the shared bar): the experiment page defines its own
+            //opaque branded appearance the same way, and UIKit cross-fades between the two during
+            //the push/pop transition instead of flashing one onto the other's bar metrics.
+            let standard = UINavigationBarAppearance()
+            standard.configureWithDefaultBackground()
+            let scrollEdge = UINavigationBarAppearance()
+            scrollEdge.configureWithTransparentBackground()
+            navigationItem.standardAppearance = standard
+            navigationItem.scrollEdgeAppearance = scrollEdge
+            navBar.prefersLargeTitles = true
+            navBar.tintColor = .label
+            navigationItem.largeTitleDisplayMode = .always
         } else {
             navBar.barTintColor = kBackgroundColor
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
@@ -70,22 +82,30 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setupNavbar()
-        
+
         let defaults = UserDefaults.standard
         if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
-            hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.8), onDismiss: {() -> Void in
+            //A solid tooltip near the bottom of the list, pointing down at the support options at its
+            //end. Replaces the former popover, whose iOS 26 glass background rendered chaotically over
+            //the list text and left the hint text off-centre inside it. Tapping it marks the hint seen
+            //(as does scrolling to the support options at the end of the list) so it does not return.
+            let tooltip = HintTooltipView(text: localize("categoryPhyphoxOrgHint"), pointsDown: true, onDismiss: {
+                UserDefaults.standard.set(phyphoxCatHintRelease, forKey: hintReleaseKey)
             })
-            guard let hintBubble = hintBubble else {
-                return
-            }
-            hintBubble.popoverPresentationController?.delegate = self
-            hintBubble.popoverPresentationController?.sourceView = self.navigationController!.view
-            hintBubble.popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: self.navigationController!.view.frame.midX, y: self.navigationController!.view.frame.maxY), size: CGSize(width: 1, height: 1))
-            
-            navigationController!.present(hintBubble, animated: true, completion: nil)
+            let size = tooltip.fittingSize(maxWidth: view.bounds.width * 0.8)
+            tooltip.pointerX = size.width / 2
+            tooltip.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(tooltip)
+            NSLayoutConstraint.activate([
+                tooltip.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                tooltip.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+                tooltip.widthAnchor.constraint(equalToConstant: size.width),
+                tooltip.heightAnchor.constraint(equalToConstant: size.height)
+            ])
+            hintTooltip = tooltip
         }
     }
-    
+
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
     
         UIAlertController.PhyphoxUIAlertBuilder()
@@ -140,7 +160,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         reload()
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
-      
+
         ExperimentManager.shared.reloadUserExperiments()
 
         infoButton = UIButton(type: .infoDark)
@@ -173,13 +193,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     override func viewDidDisappear(_ animated: Bool) {
-        hintBubble?.closeHint()
-        hintBubble = nil
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        hintBubble?.closeHint()
-        hintBubble = nil
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
     }
     
     //Force iPad-style popups (for the hint to the menu)
@@ -190,6 +210,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if (indexPath.section == collections.count - 1 ) {
             UserDefaults.standard.set(phyphoxCatHintRelease, forKey: hintReleaseKey)
+            //The user has scrolled to the support options the hint points at, so fade the hint out.
+            if let tooltip = hintTooltip {
+                hintTooltip = nil
+                UIView.animate(withDuration: 0.25, animations: { tooltip.alpha = 0 }, completion: { _ in
+                    tooltip.removeFromSuperview()
+                })
+            }
         }
     }
     
@@ -746,6 +773,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
+        //Fold the large-title collapse into the push transition: pushed with the bar still
+        //expanded, the whole large-title area shows as a block of the experiment page's opaque
+        //bar background for the entire animation. setupNavbar restores .always on return.
+        navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -789,9 +820,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             //Look for data descriptor of a partial ZIP file
             return .partialZip
         }
-        if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
-            //Naive method to roughly check if this is a phyphox file without actually parsing it.
-            //A false positive will be caught be the parser, but we do not want to parse anything that is obviously not a phyphox file.
+        //Naive method to roughly check if this is a phyphox file without actually parsing it.
+        //A false positive will be caught be the parser, but we do not want to parse anything that
+        //is obviously not a phyphox file. Like the element names in the parser, the root element
+        //is matched case-insensitively (enum-case-insensitive in phyphox-docs); isoLatin1 as the
+        //fallback decoding cannot fail, so an unusual encoding does not bypass the check.
+        if let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1),
+           text.range(of: "<phyphox", options: .caseInsensitive) != nil {
             return .phyphox
         }
         return .unknown
@@ -1126,6 +1161,8 @@ print("\(url)")
         }
         
         let controller = ExperimentPageViewController(experiment: loadedExperiment)
+        //See the other push site: collapse the large title together with the push
+        navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(controller, animated: true)
         
         return true

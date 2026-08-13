@@ -13,7 +13,7 @@ protocol InputConversion {
 }
 
 class SimpleInputConversion: InputConversion {
-    enum ConversionFunction: String, LosslessStringConvertible {
+    enum ConversionFunction: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case uInt8
         case int8
         case uInt16LittleEndian

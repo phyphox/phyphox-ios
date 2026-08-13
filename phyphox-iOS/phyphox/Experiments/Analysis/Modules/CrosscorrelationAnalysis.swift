@@ -10,6 +10,13 @@ import Foundation
 import Accelerate
 
 final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 2, maxCount: 2)
+        ], outputs: [
+            AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     override func update() {
         var a: [Double]
         var b: [Double]

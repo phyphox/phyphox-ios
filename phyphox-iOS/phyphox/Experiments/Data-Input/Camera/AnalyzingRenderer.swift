@@ -128,24 +128,30 @@ class AnalyzingRenderer {
             
             queue?.async {
                 autoreleasepool(invoking: {
-                    if let tBuffer = self.cameraBuffers?.tBuffer {
-                        tBuffer.append(t)
-                    }
-                    
-                    if let shutterSpeedBuffer = self.cameraBuffers?.shutterSpeedBuffer {
-                        shutterSpeedBuffer.append(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
-                    }
-                    
-                    if let isoBuffer = self.cameraBuffers?.isoBuffer {
-                        isoBuffer.append(Double(cameraSettings.currentIso))
-                    }
-                    
-                    if let apertureBuffer = self.cameraBuffers?.apertureBuffer {
-                        apertureBuffer.append(Double(cameraSettings.currentApertureValue))
-                    }
-                    
-                    for analysingModule in self.analysingModules {
-                        analysingModule.writeToBuffers()
+                    let b = self.cameraBuffers
+                    //One camera frame's outputs (t, exposure settings and the analyzer results such
+                    //as hue/saturation/value) are written as one atomic group so a remote /get read
+                    //never sees some of them advanced and others not (GitHub issue 22, see BufferLock)
+                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.thresholdBuffer, b?.pixelPosition, b?.wavelength]) {
+                        if let tBuffer = b?.tBuffer {
+                            tBuffer.append(t)
+                        }
+
+                        if let shutterSpeedBuffer = b?.shutterSpeedBuffer {
+                            shutterSpeedBuffer.append(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
+                        }
+
+                        if let isoBuffer = b?.isoBuffer {
+                            isoBuffer.append(Double(cameraSettings.currentIso))
+                        }
+
+                        if let apertureBuffer = b?.apertureBuffer {
+                            apertureBuffer.append(Double(cameraSettings.currentApertureValue))
+                        }
+
+                        for analysingModule in self.analysingModules {
+                            analysingModule.writeToBuffers()
+                        }
                     }
                 })
             }

@@ -122,22 +122,26 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             buffer.append(value)
         }
 
-        tryAppend(value: lat, to: latBuffer)
-        tryAppend(value: lon, to: lonBuffer)
-        tryAppend(value: z, to: zBuffer)
-        tryAppend(value: zWgs84, to: zWgs84Buffer)
-        tryAppend(value: v, to: vBuffer)
-        tryAppend(value: dir, to: dirBuffer)
-        tryAppend(value: accuracy, to: accuracyBuffer)
-        tryAppend(value: zAccuracy, to: zAccuracyBuffer)
+        //One location fix is written as one atomic group so a remote /get read never sees a partial
+        //fix across the components (see BufferLock)
+        synchronizedBufferWrite([latBuffer, lonBuffer, zBuffer, zWgs84Buffer, vBuffer, dirBuffer, accuracyBuffer, zAccuracyBuffer, tBuffer, statusBuffer, satellitesBuffer]) {
+            tryAppend(value: lat, to: latBuffer)
+            tryAppend(value: lon, to: lonBuffer)
+            tryAppend(value: z, to: zBuffer)
+            tryAppend(value: zWgs84, to: zWgs84Buffer)
+            tryAppend(value: v, to: vBuffer)
+            tryAppend(value: dir, to: dirBuffer)
+            tryAppend(value: accuracy, to: accuracyBuffer)
+            tryAppend(value: zAccuracy, to: zAccuracyBuffer)
 
-        if let t = t, let tBuffer = tBuffer {
-            let relativeT = timeReference.getExperimentTimeFromSystem(systemTime: t)
-            tBuffer.append(relativeT)
+            if let t = t, let tBuffer = tBuffer {
+                let relativeT = timeReference.getExperimentTimeFromSystem(systemTime: t)
+                tBuffer.append(relativeT)
+            }
+
+            tryAppend(value: status, to: statusBuffer)
+            tryAppend(value: satellites, to: satellitesBuffer)
         }
-
-        tryAppend(value: status, to: statusBuffer)
-        tryAppend(value: satellites, to: satellitesBuffer)
     }
     
     private func dataIn(_ lat: Double?, lon: Double?, z: Double?, zWgs84: Double?, v: Double?, dir: Double?, accuracy: Double?, zAccuracy: Double?, t: Date?, status: Double?, satellites: Double?) {

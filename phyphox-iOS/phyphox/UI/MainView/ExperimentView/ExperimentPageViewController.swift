@@ -25,9 +25,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
-    let tabBarHeight : CGFloat = 30
+    var tabBarHeight : CGFloat = 30 //Adjusted to the native segmented control's height at creation
     
-    var hintBubble: HintBubbleViewController? = nil
+    var hintTooltip: HintTooltipView? = nil
+
+    //Floating countdown display for timed runs, shown at the top right of the content area. It used
+    //to be a UIBarButtonItem label, but the iOS 26 glass bar buttons left the already tight
+    //navigation bar without any room for the experiment title once the timer appeared.
+    private var timerDisplay: UIView? = nil
+    private var timerDisplayBackdrop: UIVisualEffectView? = nil
+    private var timerLabel: UILabel? = nil
     private var photosensitivityWarningShown = false
     private var hasCompletedInitialPermissionCheck = false
     private var startHintShown = false
@@ -160,8 +167,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentBluetoothDevice.updateDelegate = self
         
         
-        self.navigationItem.title = experiment.displayTitle
-        
+        self.navigationItem.title = experiment.displayTitle //Keeps the accessibility name and back label
+
+        //With the iOS 26 glass bar buttons there is little width left for the title, and the
+        //default bar title only truncates. This label shrinks the font to fit and, for very long
+        //titles, wraps onto a second line — the title is what identifies an experiment on student
+        //screenshots, so it should stay readable.
+        installFittingTitle()
+
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
         backButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
         navigationItem.leftBarButtonItem = backButton
@@ -215,12 +228,19 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             return
         }
         if #available(iOS 13, *) {
+            //Per-item appearance: UIKit cross-fades between the collection's transparent
+            //large-title bar and this opaque branded bar during the push/pop transition. Mutating
+            //the shared bar's appearance here instead paints the orange background onto the bar
+            //while it still has the collection's large-title height — a tall orange flash on push.
             let appearance = UINavigationBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = kHighlightColor
             appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.standardAppearance = appearance;
-            navBar.scrollEdgeAppearance = navBar.standardAppearance
+            navigationItem.standardAppearance = appearance
+            navigationItem.scrollEdgeAppearance = appearance
+            navigationItem.compactAppearance = appearance
+            navBar.tintColor = kTextColor
+            navigationItem.largeTitleDisplayMode = .never
         } else {
             navBar.barTintColor = kHighlightColor
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
@@ -229,45 +249,44 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func updateSegControlDesign() {
+        //Native segmented control (rendered by iOS 26 as liquid glass). The custom background and
+        //divider images that used to fake Android-style underline tabs are no longer applied cleanly
+        //by iOS 26 and left hard white lines between the items, so let the system draw the control
+        //and only brand the selected segment with the phyphox highlight color.
         let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+        let selectedFont: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
         segControl!.setTitleTextAttributes(font, for: .normal)
-        segControl!.setTitleTextAttributes(font, for: .selected)
-        
-        segControl!.tintColor = UIColor(named: "textColor")
-        segControl!.backgroundColor = UIColor(named: "textColor")
-        
-        //Generate new background and divider images for the segControl
-        let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
-        UIGraphicsBeginImageContext(rect.size)
-        let ctx = UIGraphicsGetCurrentContext()
-        
-        //Background
-        ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
-        ctx!.fill(rect)
-        let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-        
-        //Higlighted image, bg with underline
-        ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
-        ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
-        let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-        
-        UIGraphicsEndImageContext()
-        
-        segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
-        segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
-        if #available(iOS 11.0, *) {
-            segControl!.layer.maskedCorners = []
+        segControl!.setTitleTextAttributes(selectedFont, for: .selected)
+        if #available(iOS 13.0, *) {
+            segControl!.selectedSegmentTintColor = UIColor(named: "highlightColor") ?? kHighlightColor
         }
     }
     
     func updateLayout() {
-        var offsetTop : CGFloat = self.topLayoutGuide.length
-        if (experiment.viewDescriptors!.count > 1) {
-            offsetTop += tabBarHeight
+        let offsetTop : CGFloat = self.topLayoutGuide.length
+        //The tab strip floats over the content (iOS 26 style, content scrolling behind the glass
+        //control), so the pages start right below the navigation bar and get a top content inset
+        //instead, keeping their initial content below the tabs. The floating countdown display
+        //shares that band; without tabs it needs the inset itself.
+        layoutTimerDisplay()
+        //Keep the floating tab strip below the bar — the top offset differs per orientation, so the
+        //frame set at creation goes stale (in landscape the tabs ended up slightly under the bar)
+        tabBar?.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
+        let timerInset: CGFloat = timerDisplay.map { $0.frame.height + 8 } ?? 0
+        let tabInset: CGFloat = (experiment.viewDescriptors!.count > 1) ? tabBarHeight : timerInset
+        for vc in experimentViewControllers {
+            let oldInset = vc.tableView.contentInset.top
+            if oldInset != tabInset {
+                let wasAtTop = vc.tableView.contentOffset.y <= -oldInset + 0.5
+                vc.tableView.contentInset.top = tabInset
+                vc.tableView.verticalScrollIndicatorInsets.top = tabInset
+                //Changing the inset does not move the content: a table resting at the old top would
+                //keep its top rows behind the tabs (seen on the iPhone 8), so scroll it to the new
+                //natural top — but only if the user has not scrolled away
+                if wasAtTop {
+                    vc.tableView.contentOffset.y = -tabInset
+                }
+            }
         }
         var offsetBottom: CGFloat = self.bottomLayoutGuide.length
         let offsetFrame: CGRect
@@ -312,10 +331,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         self.automaticallyAdjustsScrollViewInsets = false
-        self.edgesForExtendedLayout = UIRectEdge()
-        
+        //Extend under the (opaque) navigation bar and lay out from the top guide instead — with a
+        //view that does not underlap the bar, UIKit cannot animate the large-title collapse when
+        //this page is pushed from the collection: the still-expanded bar was painted with this
+        //page's opaque background for the whole transition and snapped at the end. All own layout
+        //already offsets by topLayoutGuide.length on every pass (updateLayout), so the content
+        //keeps its position below the bar.
+        self.edgesForExtendedLayout = .top
+        self.extendedLayoutIncludesOpaqueBars = true
+        //The region under the bar is covered by the opaque bar at rest, but shows through during
+        //the pop transition while the bar crossfades to the collection's transparent appearance —
+        //without a background it appeared black instead of the app background.
+        self.view.backgroundColor = UIColor(named: "mainBackground")
+
         refreshAppTheme()
         
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
@@ -329,7 +359,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             playItem!
         ]
         
-        updateTimerInBar()
+        updateTimerDisplay()
         
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
@@ -352,13 +382,36 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             updateSegControlDesign()
             segControl!.sizeToFit()
-            
+
+            //Give the native control a little air within the strip and size the strip to it.
+            segControl!.frame = CGRect(x: 8, y: 4, width: segControl!.frame.width, height: segControl!.frame.height)
+            tabBarHeight = segControl!.frame.height + 8
+
             tabBar = UIScrollView()
             tabBar!.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
-            tabBar!.contentSize = segControl!.frame.size
+            tabBar!.contentSize = CGSize(width: segControl!.frame.width + 16, height: tabBarHeight)
             tabBar!.showsHorizontalScrollIndicator = false
             tabBar!.autoresizingMask = .flexibleWidth
-            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+            //No strip background: the glass control floats directly over the content
+            tabBar!.backgroundColor = .clear
+
+            //The segmented control's own track is translucent but applies no blur, so its labels mix
+            //illegibly with content scrolling behind it. Back it with a capsule of real material —
+            //liquid glass on iOS 26, a blur material on earlier versions — like the bar buttons have.
+            let backdrop: UIVisualEffectView
+            if #available(iOS 26.0, *) {
+                backdrop = UIVisualEffectView(effect: UIGlassEffect())
+            } else if #available(iOS 13.0, *) {
+                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+            } else {
+                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+            }
+            backdrop.frame = segControl!.frame
+            backdrop.layer.cornerRadius = segControl!.frame.height / 2
+            backdrop.clipsToBounds = true
+            backdrop.isUserInteractionEnabled = false
+            tabBar!.addSubview(backdrop)
+
             tabBar!.addSubview(segControl!)
             
             self.view.addSubview(tabBar!)
@@ -374,8 +427,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         self.addChild(pageViewControler)
         self.view.addSubview(pageViewControler.view)
-        
+
         pageViewControler.didMove(toParent: self)
+
+        //The pages now extend under the floating tab strip and countdown display, so both have to
+        //stay above them
+        if let tabBar = tabBar {
+            self.view.bringSubviewToFront(tabBar)
+        }
+        if let timerDisplay = timerDisplay {
+            self.view.bringSubviewToFront(timerDisplay)
+        }
         
         updateSelectedViewCollection()
         
@@ -392,7 +454,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         refreshAppTheme()
         if (experiment.viewDescriptors!.count > 1) {
             updateSegControlDesign()
-            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
         }
         
     }
@@ -563,7 +624,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func presentNextHint() {
         let defaults = UserDefaults.standard
 
-        if let playItem = playItem, hintBubble == nil, !startHintShown {
+        if let playItem = playItem, hintTooltip == nil, !startHintShown {
             startHintShown = true
             let key = "experiment_start_hint_dismiss_count"
             if (defaults.integer(forKey: key) < 3) {
@@ -572,7 +633,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
 
-        if let actionItem = actionItem, hintBubble == nil, !infoHintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+        if let actionItem = actionItem, hintTooltip == nil, !infoHintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
             infoHintShown = true
             let key = "experiment_info_hint_dismiss_count"
             if (defaults.integer(forKey: key) < 3) {
@@ -583,19 +644,45 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     private func showHintBubble(text: String, item: UIBarButtonItem, defaultsKey: String) {
-        hintBubble = HintBubbleViewController(text: text, onDismiss: { [weak self] in
+        let tooltip = HintTooltipView(text: text, onDismiss: { [weak self] in
             let defaults = UserDefaults.standard
             defaults.set(defaults.integer(forKey: defaultsKey) + 1, forKey: defaultsKey)
-            self?.hintBubble = nil
+            self?.hintTooltip = nil
             self?.presentNextHint()
         })
-        guard let hintBubble = hintBubble else {
-            return
-        }
-        hintBubble.popoverPresentationController?.delegate = self
-        hintBubble.popoverPresentationController?.barButtonItem = item
 
-        self.present(hintBubble, animated: true, completion: nil)
+        let maxWidth = min(CGFloat(280), view.bounds.width - 24)
+        let size = tooltip.fittingSize(maxWidth: maxWidth)
+
+        //Aim the pointer at the real on-screen button. UIBarButtonItem does not expose its view
+        //publicly; reading the "view" key via KVC works (and is not flagged as private-API use, as
+        //"view" is a common public key). Button positions differ per device, so an estimate can't be
+        //right on every phone — fall back to one only if the actual view is unavailable.
+        let targetX: CGFloat
+        if let itemView = item.value(forKey: "view") as? UIView, itemView.window != nil {
+            targetX = view.convert(itemView.bounds, from: itemView).midX
+        } else {
+            let items = navigationItem.rightBarButtonItems ?? []
+            let indexFromRight = CGFloat(items.firstIndex(of: item) ?? 0)
+            targetX = view.bounds.maxX - (view.safeAreaInsets.right + 8) - (indexFromRight + 0.5) * 44
+        }
+
+        //self.view starts right below the navigation bar (edgesForExtendedLayout is empty), so place
+        //the bubble just under the bar pointing up at the buttons. The buttons never move — a tab
+        //strip or the countdown label appear below/beside them — so this stays fixed either way, even
+        //if the bubble briefly overlays the top of the tab strip.
+        var originX = targetX - size.width / 2
+        originX = max(12, min(originX, view.bounds.width - 12 - size.width))
+        let originY: CGFloat = 8
+
+        tooltip.frame = CGRect(x: originX, y: originY, width: size.width, height: size.height)
+        tooltip.pointerX = targetX - originX
+        view.addSubview(tooltip)
+        hintTooltip = tooltip
+    }
+
+    private func dismissHintTooltip() {
+        hintTooltip?.dismissTooltip()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -635,10 +722,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        if let hintBubble = hintBubble {
-            hintBubble.dismiss(animated: false, completion: nil)
-            self.hintBubble = nil
-        }
+        //Tear the hint down without advancing the sequence; the view is going away.
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
+    }
+
+    private func installFittingTitle() {
+        let titleLabel = FittingTitleLabel()
+        titleLabel.text = experiment.displayTitle
+        titleLabel.textColor = kTextColor
+        titleLabel.textAlignment = .center
+        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.numberOfLines = 2 //Second line always available, see intrinsicContentSize
+        //Sizing via Auto Layout with an explicit height: with the default autoresizing-mask
+        //constraints the bar assigns the title view a single-line-high frame after rotation
+        //(regardless of the intrinsic size), which truncates the wrapped two-line case.
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.heightAnchor.constraint(equalToConstant: FittingTitleLabel.twoLineHeight).isActive = true
+        self.navigationItem.titleView = titleLabel
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -718,14 +820,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
         if !webServer.start() {
-            let hud = JGProgressHUD(style: .dark)
-            hud.interactionType = .blockTouchesOnHUDView
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
-            hud.textLabel.text = "Failed to initialize HTTP server"
-            
-            hud.show(in: self.view)
-            
-            hud.dismiss(afterDelay: 3.0)
+            //The translated message must not contain a format placeholder (non-professional
+            //translators tend to break template strings), so the port is appended in code.
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("remoteServerPortInUseTitle"))
+                .message(message: localize("remoteServerPortInUse") + " (Port \(webServer.port))")
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self.navigationController!, animated: true)
+            if !experiment.running {
+                experiment.setKeepScreenOn(false)
+            }
         }
         else {
             remoteUrl = webServer.server!.serverURL?.absoluteString ?? ""
@@ -1034,36 +1139,75 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         })
     }
     
-    private func updateTimerInBar() {
-        guard var items = self.navigationItem.rightBarButtonItems else {
-            return
-        }
-        
-        if let label = items.last?.customView as? UILabel {
-            //The timer label is visible
-            if !timerEnabled {
-                //...but it should not be
-                items.removeLast()
-                self.navigationItem.rightBarButtonItems = items
-            } else {
-                //...and that is correct. Let's make sure it is up to date
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
+    private func updateTimerDisplay() {
+        if timerEnabled {
+            if timerDisplay == nil {
+                createTimerDisplay()
             }
+            setTimerLabel(timerDelay)
+        } else if let timerDisplay = timerDisplay {
+            timerDisplay.removeFromSuperview()
+            self.timerDisplay = nil
+            self.timerDisplayBackdrop = nil
+            self.timerLabel = nil
+            tabBar?.contentInset.right = 0
+            updateLayout()
+        }
+    }
+
+    private func createTimerDisplay() {
+        let label = UILabel()
+        //Monospaced digits keep the capsule from wobbling while the countdown ticks
+        label.font = UIFont.monospacedDigitSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .headline).pointSize, weight: .semibold)
+        label.textColor = UIColor(named: "textColor")
+        label.textAlignment = .center
+
+        //Same material as the floating tab strip: liquid glass on iOS 26, blur before
+        let backdrop: UIVisualEffectView
+        if #available(iOS 26.0, *) {
+            backdrop = UIVisualEffectView(effect: UIGlassEffect())
+        } else if #available(iOS 13.0, *) {
+            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         } else {
-            //The timer label is not visible
-            if timerEnabled {
-                //...but it should be
-                let label = UILabel()
-                label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
-                label.textColor = kTextColor
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
-                
-                items.append(UIBarButtonItem(customView: label))
-                self.navigationItem.rightBarButtonItems = items
-            }
+            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
         }
+        backdrop.clipsToBounds = true
+        backdrop.isUserInteractionEnabled = false
+
+        let container = UIView()
+        container.addSubview(backdrop)
+        container.addSubview(label)
+        self.view.addSubview(container)
+        self.view.bringSubviewToFront(container)
+
+        timerDisplay = container
+        timerDisplayBackdrop = backdrop
+        timerLabel = label
+        updateLayout()
+    }
+
+    private func layoutTimerDisplay() {
+        guard let container = timerDisplay, let label = timerLabel else { return }
+        let textSize = label.sizeThatFits(CGSize(width: 200, height: 100))
+        let h = textSize.height + 12
+        let w = textSize.width + 24
+        var safeRight: CGFloat = 0
+        if #available(iOS 11, *) {
+            safeRight = view.safeAreaInsets.right
+        }
+        container.frame = CGRect(x: view.bounds.width - safeRight - 8 - w, y: self.topLayoutGuide.length + 4, width: w, height: h)
+        timerDisplayBackdrop?.frame = container.bounds
+        timerDisplayBackdrop?.layer.cornerRadius = h / 2
+        label.frame = container.bounds
+
+        //Pad the tab strip's scrollable range by the capsule overlap, so the last tabs can be
+        //scrolled out from under the countdown display and remain reachable
+        tabBar?.contentInset.right = view.bounds.width - container.frame.minX + 8
+    }
+
+    private func setTimerLabel(_ value: Double) {
+        timerLabel?.text = countdownFormatter.string(from: value as NSNumber)
+        layoutTimerDisplay()
     }
     
     private func showTimerOptions() {
@@ -1085,7 +1229,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
-            self.updateTimerInBar()
+            self.updateTimerDisplay()
         }))
         
         alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self] action in
@@ -1098,14 +1242,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
-            self.updateTimerInBar()
+            self.updateTimerDisplay()
         }))
         
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
     @objc func action(_ item: UIBarButtonItem) {
-        hintBubble?.dismiss(animated: true, completion: nil)
+        dismissHintTooltip()
         let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
@@ -1235,7 +1379,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
-                updateTimerInBar()
+                updateTimerDisplay()
                 return
             }
             
@@ -1252,22 +1396,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
-                
-                var items = navigationItem.rightBarButtonItems
-                
-                guard let label = items?.last?.customView as? UILabel else { return }
-                
-                label.text = countdownFormatter.string(from: d as NSNumber)
-                label.sizeToFit()
-                
-                items?.removeLast()
-                items?.append(UIBarButtonItem(customView: label))
-                
-                navigationItem.rightBarButtonItems = items
-                
+
+                guard timerLabel != nil else { return }
+
+                setTimerLabel(d)
+
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
-                    
+
                     let dt = experimentStartTimer.fireDate.timeIntervalSinceNow
                     if dt <= nextBeep && nextBeep > 0 {
                         nextBeep -= 1
@@ -1275,13 +1411,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                             experiment.audioEngine?.beep(frequency: 800, duration: 0.1)
                         }
                     }
-                    
+
                     after(0.02) {
                         updateT()
                     }
-                    
-                    label.text = countdownFormatter.string(from: dt as NSNumber)
-                    label.sizeToFit()
+
+                    setTimerLabel(dt)
                 }
                 
                 after(0.02) {
@@ -1329,21 +1464,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             var items = navigationItem.rightBarButtonItems!
-            
+
             if experimentRunTimer != nil {
                 experimentRunTimer!.invalidate()
                 experimentRunTimer = nil
-                
-                let label = items.last!.customView! as! UILabel
-                
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
-                
-                items.removeLast()
-                items.append(UIBarButtonItem(customView: label))
-                
+
+                setTimerLabel(self.timerDelay)
             }
-            
+
             experiment.stop()
             
             items[2] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
@@ -1368,7 +1496,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func toggleExperiment() {
-        hintBubble?.dismiss(animated: true, completion: nil)
+        dismissHintTooltip()
         if experiment.running {
             stopExperiment()
         }
@@ -1408,7 +1536,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func clearDataDialog() {
-        hintBubble?.dismiss(animated: true, completion: nil)
+        dismissHintTooltip()
 
         let clearGroups = experiment.clearGroups
 
@@ -1493,22 +1621,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let d = timerDuration
         var nextBeep = floor(d-0.6)
-        
-        var items = navigationItem.rightBarButtonItems
-        
-        guard let label = items?.last?.customView as? UILabel else { return }
-        
-        label.text = countdownFormatter.string(from: d as NSNumber)
-        label.sizeToFit()
-        
-        items?.removeLast()
-        items?.append(UIBarButtonItem(customView: label))
-        
-        navigationItem.rightBarButtonItems = items
-        
+
+        guard timerLabel != nil else { return }
+
+        setTimerLabel(d)
+
         func updateT() {
             guard let experimentRunTimer = experimentRunTimer else { return }
-            
+
             let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
             if dt <= nextBeep && nextBeep > 0 {
                 nextBeep -= 1
@@ -1516,13 +1636,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
                 }
             }
-            
+
             after(0.02) {
                 updateT()
             }
-            
-            label.text = countdownFormatter.string(from: dt as NSNumber)
-            label.sizeToFit()
+
+            setTimerLabel(dt)
         }
         
         after(0.02) {
@@ -1730,5 +1849,72 @@ final class ClearGroupSelectionView: UIView {
 
     func selectedGroups() -> [String] {
         return zip(groups, switches).filter { $0.1.isOn }.map { $0.0 }
+    }
+}
+
+///Navigation bar title label that adapts to the space the bar items leave: full headline size when
+///the title fits, shrunk down to 70% to stay on one line, and wrapped onto a second line for
+///titles too long even at that size.
+class FittingTitleLabel: UILabel {
+    ///Room for two lines at the minimum size — the label's height at all times: a height that
+    ///changes with the fitting result does not work, since the bar re-queries the intrinsic size
+    ///only unreliably after rotation (verified by logging), leaving a wrapped title in a
+    ///single-line-high frame, shown truncated. With the constant height a single-line title is
+    ///simply centered vertically — visually identical — and the wrapped case has its second line
+    ///available from the start.
+    static var twoLineHeight: CGFloat {
+        let base = UIFont.preferredFont(forTextStyle: .headline)
+        return ceil(2 * base.withSize(base.pointSize * 0.7).lineHeight) + 2
+    }
+
+    //Width: ask for all the width the navigation bar has left between its items
+    override var intrinsicContentSize: CGSize {
+        return CGSize(width: UIView.layoutFittingExpandedSize.width, height: FittingTitleLabel.twoLineHeight)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fitText()
+    }
+
+    //Inputs of the last fitting run: layoutSubviews fires on every bar layout pass (per frame
+    //during interactive transitions), so skip the measuring when nothing changed
+    private var lastFittedText: String? = nil
+    private var lastFittedWidth: CGFloat = 0
+    private var lastFittedBaseSize: CGFloat = 0
+
+    private func fitText() {
+        guard let text = text, !text.isEmpty, bounds.width > 0 else { return }
+        let base = UIFont.preferredFont(forTextStyle: .headline)
+        if text == lastFittedText && bounds.width == lastFittedWidth && base.pointSize == lastFittedBaseSize {
+            return
+        }
+        lastFittedText = text
+        lastFittedWidth = bounds.width
+        lastFittedBaseSize = base.pointSize
+        let minSize = base.pointSize * 0.7
+        let ns = text as NSString
+
+        //Find the largest size (in 0.5pt steps) at which the whole title measures within a single
+        //line. Measured per candidate size rather than scaled linearly: glyph advances do not scale
+        //exactly linearly with the point size, and a size estimated slightly too large leaves the
+        //title truncated with an ellipsis instead of shown in full.
+        var singleLineSize: CGFloat? = nil
+        var size = base.pointSize
+        while size >= minSize {
+            if ns.size(withAttributes: [NSAttributedString.Key.font: base.withSize(size)]).width <= bounds.width {
+                singleLineSize = size
+                break
+            }
+            size -= 0.5
+        }
+
+        //If no size fits a single line, stay at the minimum size — the text then wraps into the
+        //second line, which the constant intrinsic height keeps available at all times
+        let targetFont = base.withSize(singleLineSize ?? minSize)
+        //Only touch the label when something actually changes to avoid a layout feedback loop
+        if font.pointSize != targetFont.pointSize {
+            font = targetFont
+        }
     }
 }

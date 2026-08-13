@@ -9,6 +9,12 @@
 import Foundation
 
 final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let offset1970OutSlot = AnalysisIOSlot(name: "offset1970", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [], outputs: [Self.outOutSlot, Self.offset1970OutSlot])
+    }
     let linearTime: Bool;
     
     private var outOutput: ExperimentAnalysisDataOutput?
@@ -20,18 +26,9 @@ final class TimerAnalysis: AutoClearingExperimentAnalysisModule {
 
         linearTime = try attributes.optionalValue(for: "linearTime") ?? false
         
-        var out: ExperimentAnalysisDataOutput? = nil
-        var offset1970: ExperimentAnalysisDataOutput? = nil
-        for output in outputs {
-            if output.asString == "offset1970" || out != nil {
-                offset1970 = output
-            }
-            else {
-                out = output
-            }
-        }
-        outOutput = out
-        offset1970Output = offset1970
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        outOutput = io.output(Self.outOutSlot)
+        offset1970Output = io.output(Self.offset1970OutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }

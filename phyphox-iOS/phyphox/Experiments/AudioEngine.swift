@@ -87,15 +87,19 @@ final class AudioEngine {
         }
         
         let avSession = AVAudioSession.sharedInstance()
+        //mixWithOthers so phyphox coexists with audio from other apps rather than interrupting it -
+        //in particular so a playback experiment (a tone generator, say) works while music is
+        //playing. This matches Android, which uses an AudioTrack without requesting audio focus and
+        //therefore never takes exclusive audio in any mode.
         if playbackOut != nil && recordIn != nil {
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers])
         } else if playbackOut != nil {
-            try avSession.setCategory(AVAudioSession.Category.playback)
+            try avSession.setCategory(AVAudioSession.Category.playback, options: [.mixWithOthers])
         } else if recordIn != nil {
             if !avSession.isInputAvailable {
                 throw AudioEngineError.NoInput
             }
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers]) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSession.Mode.measurement)
         if (avSession.isInputGainSettable) {

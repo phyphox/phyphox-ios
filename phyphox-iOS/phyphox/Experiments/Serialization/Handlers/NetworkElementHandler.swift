@@ -10,7 +10,7 @@ import Foundation
 
 struct NetworkConnectionSendDescriptor {
     let id: String
-    enum SendableType: String, AttributeKey, LosslessStringConvertible {
+    enum SendableType: String, AttributeKey, CaseInsensitiveAttributeDecodable, CaseIterable {
         case meta
         case buffer
         case time
@@ -43,7 +43,14 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
         var additionalAttributes = [String:String]()
         if let datatype = attributes.optionalString(for: .datatype) {
-            additionalAttributes[Attribute.datatype.rawValue] = datatype
+            //Matched case-insensitively and normalized here, so the send-time comparisons work
+            //on the canonical form; an unknown datatype is an error (enum-case-insensitive and
+            //enum-invalid-value in phyphox-docs)
+            let folded = datatype.lowercased()
+            guard folded == "number" || folded == "array" else {
+                throw ElementHandlerError.unexpectedAttributeValue(Attribute.datatype.rawValue)
+            }
+            additionalAttributes[Attribute.datatype.rawValue] = folded
         }
         
         guard !(text.isEmpty && type != .time) else { throw ElementHandlerError.missingText }
@@ -130,6 +137,10 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         case interval
         case sendTopic
         case receiveTopic
+        case username
+        case password
+        case persistence
+        case certificate
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -143,31 +154,66 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let sendTopic = attributes.optionalString(for: .sendTopic)
         let receiveTopic = attributes.optionalString(for: .receiveTopic)
         
-        switch discoveryStr {
-        case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
-        default: discovery = nil
+        if let discoveryStr = discoveryStr {
+            switch discoveryStr.lowercased() { //Enumerated values are matched case-insensitively
+            case "http": discovery = HttpNetworkDiscovery(address: try attributes.nonEmptyString(for: .discoveryAddress))
+            default: throw ElementHandlerError.message("Unknown discovery: \(discoveryStr)")
+            }
+        } else {
+            discovery = nil
         }
         
         let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
         let serviceStr = try attributes.nonEmptyString(for: .service)
         let service: NetworkService
-        
-        switch serviceStr {
+
+        //username and password are optional for the plain mqtt services (brokers may require
+        //authentication without TLS), but mandatory for the mqtts (TLS) services
+        let username = attributes.optionalString(for: .username)
+        let password = attributes.optionalString(for: .password)
+        let persistence: Bool = try attributes.optionalValue(for: .persistence) ?? false
+        let certificate = attributes.optionalString(for: .certificate)
+        if let certificate = certificate, !certificate.isEmpty {
+            guard !certificate.components(separatedBy: "/").contains("..") else {
+                throw ElementHandlerError.message("Invalid certificate file name.")
+            }
+        }
+
+        switch serviceStr.lowercased() { //Enumerated values are matched case-insensitively
         case "http/get":  service = HttpGetService()
         case "http/post": service = HttpPostService()
-        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic)
+        case "mqtt/csv":  service = MqttCsvService(receiveTopic: receiveTopic ?? "", username: username, password: password)
         case "mqtt/json":
-            guard let sendTopic = sendTopic else {
+            guard let sendTopic = sendTopic, !sendTopic.isEmpty else {
                 throw ElementHandlerError.message("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.")
             }
-            service = MqttJsonService(receiveTopic: receiveTopic, sendTopic: sendTopic)
+            service = MqttJsonService(receiveTopic: receiveTopic ?? "", sendTopic: sendTopic, username: username, password: password, persistence: persistence)
+        case "mqtts/json":
+            guard let sendTopic = sendTopic, !sendTopic.isEmpty else {
+                throw ElementHandlerError.message("sendTopic must be set for the mqtts/json service. Use mqtt/csv if you do not intent to send anything.")
+            }
+            guard let password = password, !password.isEmpty else {
+                throw ElementHandlerError.message("password must be set for the mqtts/json service.")
+            }
+            guard let username = username, !username.isEmpty else {
+                throw ElementHandlerError.message("username must be set for the mqtts/json service.")
+            }
+            service = MqttTlsJsonService(receiveTopic: receiveTopic ?? "", sendTopic: sendTopic, username: username, password: password, certificateFileName: certificate, persistence: persistence)
+        case "mqtts/csv":
+            guard let password = password, !password.isEmpty else {
+                throw ElementHandlerError.message("password must be set for the mqtts/csv service.")
+            }
+            guard let username = username, !username.isEmpty else {
+                throw ElementHandlerError.message("username must be set for the mqtts/csv service.")
+            }
+            service = MqttTlsCsvService(receiveTopic: receiveTopic ?? "", username: username, password: password, certificateFileName: certificate)
         default: throw ElementHandlerError.message("Unkown network service: \(serviceStr)")
         }
         
         let conversionStr = attributes.optionalString(for: .conversion) ?? "none"
         let conversion: NetworkConversion
         
-        switch conversionStr {
+        switch conversionStr.lowercased() { //Enumerated values are matched case-insensitively
         case "none": conversion = NoneNetworkConversion()
         case "csv":  conversion = CSVNetworkConversion()
         case "json": conversion = JSONNetworkConversion()

@@ -86,7 +86,19 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                     return false
                 }
             }
+            else if let ll = l as? CameraViewDescriptor {
+                guard let rr = r as? CameraViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
+            else if let ll = l as? DepthGUIViewDescriptor {
+                guard let rr = r as? DepthGUIViewDescriptor, ll == rr else {
+                    return false
+                }
+            }
             else {
+                //A view type missing from this list makes every experiment containing it unequal
+                //even to itself - exactly what happened to the camera and depth views for years
                 return false
             }
             return true

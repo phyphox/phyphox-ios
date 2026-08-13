@@ -16,7 +16,7 @@ struct ImageViewElementDescriptor {
     let darkFilter: Filter
     let lightFilter: Filter
     
-    enum Filter: String, LosslessStringConvertible {
+    enum Filter: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case none, invert
     }
 }
