@@ -14,6 +14,8 @@
             <title>titlede</title>
             <category>categoryde</category>
             <description>descriptionde</description>
+            <link label="l0" translation="l0de" highlight="true">http://test.test/de</link>
+            <link label="l1">http://test.test/added</link>
         </translation>
    </translations>
     <input>

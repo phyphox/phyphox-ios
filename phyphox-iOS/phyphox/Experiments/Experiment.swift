@@ -25,6 +25,34 @@ struct ExperimentLink: Equatable {
     let label: String
     let url: URL
     let highlighted: Bool
+
+    /// Applies the link elements of the selected translation block to the base links, per the
+    /// canonical behaviour (translation-link-matching in phyphox-docs): a translated link
+    /// matching a base label replaces it in its original position (inheriting URL and highlight
+    /// where not given), a label-only link with no URL removes the base link, and an unmatched
+    /// label is an additional link appended after the base links in declaration order. The
+    /// displayed text is the translation attribute if present, otherwise the label as written -
+    /// labels never pass through the string-translation mechanism.
+    static func localizedLinks(base links: [ExperimentLink], translatedLinks: [ExperimentTranslatedLink]) -> [ExperimentLink] {
+        var localized = [ExperimentLink]()
+        for link in links {
+            if let translated = translatedLinks.first(where: { $0.label == link.label }) {
+                if translated.removesBaseLink {
+                    continue
+                }
+                localized.append(ExperimentLink(label: translated.translation ?? translated.label, url: translated.url ?? link.url, highlighted: translated.highlighted ?? link.highlighted))
+            } else {
+                localized.append(link)
+            }
+        }
+        let baseLabels = Set(links.map { $0.label })
+        for translated in translatedLinks where !baseLabels.contains(translated.label) {
+            //An unmatched label without a URL is rejected at parse time (PhyphoxElementHandler)
+            guard let url = translated.url else { continue }
+            localized.append(ExperimentLink(label: translated.translation ?? translated.label, url: url, highlighted: translated.highlighted ?? false))
+        }
+        return localized
+    }
 }
 
 final class Experiment {
@@ -198,7 +226,7 @@ final class Experiment {
         self.description = description
         self.links = links
 
-        self.localizedLinks = links.map { ExperimentLink(label: translation?.localizeString($0.label) ?? $0.label, url: translation?.localizeLink($0.label, fallback: $0.url) ?? $0.url, highlighted: $0.highlighted) }
+        self.localizedLinks = ExperimentLink.localizedLinks(base: links, translatedLinks: translation?.selectedTranslation?.translatedLinks ?? [])
 
         self.category = category
         

@@ -143,6 +143,69 @@ final class DeserializerTests: XCTestCase {
     }
 }
 
+//The decided translated-link semantics (translation-link-matching in phyphox-docs): the label is
+//a required key, a matching translated link replaces the base link in place, an unmatched label
+//is appended, a label-only link removes the base link, the translation attribute holds the
+//displayed text and highlight is inherited where not explicitly set. The invalid forms (missing
+//label, duplicate labels, unmatched label without URL, translation attribute or empty URL at the
+//root) are covered by the incorrect-files fixtures.
+final class TranslatedLinkTests: XCTestCase {
+    //The conformance fixture from phyphox-docs (corpus/generated/translated-links.phyphox)
+    //exercises every form of a translated link in one document
+    private func parseFixture() throws -> Experiment {
+        let path = try testBundle.path(forResource: "translated-links", ofType: "phyphox").unwrap()
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(fileAtPath: path).unwrap())
+    }
+
+    func testFixtureParsesIntoTranslatedLinks() throws {
+        let experiment = try parseFixture()
+        let de = try (experiment.translation?.translations["de"]).unwrap()
+        XCTAssertEqual(de.translatedLinks, [
+            ExperimentTranslatedLink(label: "Wiki", translation: "Wiki (deutsch)", url: URL(string: "https://phyphox.org/de/wiki"), highlighted: true),
+            ExperimentTranslatedLink(label: "Contact", translation: "Kontakt", url: nil, highlighted: nil),
+            ExperimentTranslatedLink(label: "Survey", translation: nil, url: nil, highlighted: nil),
+            ExperimentTranslatedLink(label: "Impressum", translation: nil, url: URL(string: "https://example.org/impressum"), highlighted: nil)
+        ])
+    }
+
+    func testLinkLocalization() throws {
+        //Applying the fixture's de block to its base links (done manually here because the block
+        //selected at runtime depends on the test host's locale): full replacement in place,
+        //text-only change with inherited URL and highlight, removal, appended addition
+        let experiment = try parseFixture()
+        let de = try (experiment.translation?.translations["de"]).unwrap()
+        let base = [
+            ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: true),
+            ExperimentLink(label: "Contact", url: URL(string: "https://example.org/contact")!, highlighted: false),
+            ExperimentLink(label: "Survey", url: URL(string: "https://example.org/survey")!, highlighted: false)
+        ]
+        XCTAssertEqual(ExperimentLink.localizedLinks(base: base, translatedLinks: de.translatedLinks), [
+            ExperimentLink(label: "Wiki (deutsch)", url: URL(string: "https://phyphox.org/de/wiki")!, highlighted: true),
+            ExperimentLink(label: "Kontakt", url: URL(string: "https://example.org/contact")!, highlighted: false),
+            ExperimentLink(label: "Impressum", url: URL(string: "https://example.org/impressum")!, highlighted: false)
+        ])
+
+        //Without a translation the base links pass through unchanged - in particular the label
+        //is displayed as written, with no string-translation or [[...]] common-string expansion
+        XCTAssertEqual(ExperimentLink.localizedLinks(base: base, translatedLinks: []), base)
+    }
+
+    func testHighlightExplicitValuesWinOverInheritance() {
+        let base = [ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: true)]
+        //An explicit highlight="false" on a replacement overrides the base link's true...
+        var localized = ExperimentLink.localizedLinks(base: base, translatedLinks: [
+            ExperimentTranslatedLink(label: "Wiki", translation: nil, url: nil, highlighted: false)
+        ])
+        XCTAssertEqual(localized, [ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: false)])
+
+        //...and an added link may set it explicitly instead of the false default
+        localized = ExperimentLink.localizedLinks(base: base, translatedLinks: [
+            ExperimentTranslatedLink(label: "Hilfe", translation: nil, url: URL(string: "https://example.org/hilfe"), highlighted: true)
+        ])
+        XCTAssertEqual(localized.last, ExperimentLink(label: "Hilfe", url: URL(string: "https://example.org/hilfe")!, highlighted: true))
+    }
+}
+
 //Regression test for the analysis deadlock that broke the tone generator: input view
 //modules (sliders, edit fields) write their initial values with a user-input trigger while the
 //view is being built, i.e. before the experiment assigned the analysis queue. The triggered run

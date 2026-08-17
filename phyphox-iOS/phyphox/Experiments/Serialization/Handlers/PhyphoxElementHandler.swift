@@ -184,7 +184,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("File version \(versionString) is not supported")
         }
 
-        let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
+        let translationBlocks = try translationsHandler.expectOptionalResult()
+        let translations = translationBlocks.map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
         guard let title = try titleHandler.expectOptionalResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
@@ -204,6 +205,26 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let color = try colorHandler.expectOptionalResult()
         
         let links = linkHandler.results
+
+        //The label identifies a link, so it must be unique among the root links, and a link in a
+        //translation block that matches no base label is an addition, which needs a URL of its
+        //own. Both are checked for every translation block, not just the applied one, so an
+        //invalid file fails to load regardless of the user's locale
+        //(translation-link-matching in phyphox-docs).
+        var seenLinkLabels = Set<String>()
+        for link in links {
+            guard seenLinkLabels.insert(link.label).inserted else {
+                throw ElementHandlerError.message("Duplicate link label \"\(link.label)\"")
+            }
+        }
+
+        if let translationBlocks = translationBlocks {
+            for (blockLocale, translation) in translationBlocks {
+                for translatedLink in translation.translatedLinks where translatedLink.url == nil && !seenLinkLabels.contains(translatedLink.label) {
+                    throw ElementHandlerError.message("Link \"\(translatedLink.label)\" in translation block \"\(blockLocale)\" matches no link and has no URL")
+                }
+            }
+        }
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, requireFillName: nil, requireFillThreshold: 1, requireFillDynamicName: nil, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
