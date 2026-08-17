@@ -1,0 +1,7 @@
+<phyphox version="1.20">
+    <title>t</title>
+    <category>c</category>
+    <description>d</description>
+    <link label="Wiki">https://example.org/a</link>
+    <link label="Wiki">https://example.org/b</link>
+</phyphox>
