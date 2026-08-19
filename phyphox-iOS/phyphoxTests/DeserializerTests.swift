@@ -1825,6 +1825,79 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//binning: invalid dx (zero, negative, non-finite) and non-finite x0 yield empty outputs (no
+//silent dx=1 substitution); absent inputs or empty parameter buffers keep the defaults x0=0,
+//dx=1. Bins are lower-edge inclusive with floor semantics - truncation toward zero would give
+//bin 0 double width.
+final class BinningEdgeCaseTests: XCTestCase {
+    private func runBinning(data: [Double], x0: Double? = nil, dx: Double? = nil, dxBuffer: [Double]? = nil) throws -> (starts: [Double], counts: [Double]) {
+        let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)]
+        if let x0 = x0 {
+            inputs.append(.value(value: x0, usedAs: "x0"))
+        }
+        if let dx = dx {
+            inputs.append(.value(value: dx, usedAs: "dx"))
+        }
+        if let dxBuffer = dxBuffer {
+            let buffer = try DataBuffer(name: "dx", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: buffer, data: MutableDoubleArray(data: dxBuffer), usedAs: "dx", keep: true))
+        }
+        let startsOut = try DataBuffer(name: "binStarts", size: 0, baseContents: [], static: false)
+        let countsOut = try DataBuffer(name: "binCounts", size: 0, baseContents: [], static: false)
+
+        let module = try BinningAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: startsOut, data: MutableDoubleArray(data: []), usedAs: "binStarts", append: false),
+                .buffer(buffer: countsOut, data: MutableDoubleArray(data: []), usedAs: "binCounts", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (startsOut.toArray(), countsOut.toArray())
+    }
+
+    func testInvalidDxAndX0YieldEmptyOutputs() throws {
+        for (x0, dx) in [(0.0, 0.0), (0.0, -1.0), (0.0, Double.nan), (0.0, .infinity), (Double.nan, 1.0), (.infinity, 1.0)] {
+            let result = try runBinning(data: [1, 2, 3], x0: x0, dx: dx)
+            XCTAssertEqual(result.starts, [], "x0=\(x0) dx=\(dx) must yield empty outputs")
+            XCTAssertEqual(result.counts, [])
+        }
+    }
+
+    func testEmptyDxBufferKeepsDefault() throws {
+        let result = try runBinning(data: [0.5, 1.5], dxBuffer: [])
+        XCTAssertEqual(result.starts, [0, 1], "an empty dx buffer keeps the default dx = 1")
+        XCTAssertEqual(result.counts, [1, 1])
+    }
+
+    func testBinZeroIsNotDoubleWidth() throws {
+        //floor semantics: -0.5 belongs to bin -1, 0.5 to bin 0. Truncation put both in bin 0.
+        let result = try runBinning(data: [-0.5, 0.5], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [-1, 0])
+        XCTAssertEqual(result.counts, [1, 1])
+    }
+
+    func testLowerEdgeInclusive() throws {
+        let result = try runBinning(data: [1.0], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [1], "a value exactly on a bin edge belongs to the bin starting there")
+        XCTAssertEqual(result.counts, [1])
+    }
+
+    func testBasicBinningAndNonFiniteValuesSkipped() throws {
+        let result = try runBinning(data: [0.1, .nan, 0.2, 1.5, .infinity], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [0, 1])
+        XCTAssertEqual(result.counts, [2, 1])
+    }
+
+    func testHugeRatioDoesNotTrap() throws {
+        //finite parameters, but the bin index of 1e300 exceeds Int - that value is skipped, no trap
+        let result = try runBinning(data: [1e300, 0.5], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [0])
+        XCTAssertEqual(result.counts, [1])
+    }
+}
+
 //max/min: one comparison loop like Android - NaN values never win a comparison, an x buffer
 //shorter than y truncates to the common length, the final open set in multiple mode is flushed,
 //and an empty/all-invalid input yields NaN per connected output (single mode) or empty outputs
