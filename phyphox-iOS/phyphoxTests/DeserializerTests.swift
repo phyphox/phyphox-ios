@@ -1825,6 +1825,70 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//reduce: processing truncates to the shortest present buffer (only an absent y keeps
+//processing all of x with 0 contributions); the incomplete final chunk is averaged over the
+//values actually summed, not the nominal factor; a non-finite factor yields empty outputs.
+final class ReduceEdgeCaseTests: XCTestCase {
+    private func runReduce(factor: Double, x: [Double], y: [Double]? = nil, averageX: Bool = false, averageY: Bool = false, sumY: Bool = false) throws -> (x: [Double], y: [Double]) {
+        var inputs: [ExperimentAnalysisDataInput] = [.value(value: factor, usedAs: "factor")]
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        if let y = y {
+            let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        }
+        let xOut = try DataBuffer(name: "xOut", size: 0, baseContents: [], static: false)
+        let yOut = try DataBuffer(name: "yOut", size: 0, baseContents: [], static: false)
+
+        let module = try ReduceAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: xOut, data: MutableDoubleArray(data: []), usedAs: "x", append: false),
+                .buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.averageX = averageX
+        module.averageY = averageY
+        module.sumY = sumY
+        module.update()
+        return (xOut.toArray(), yOut.toArray())
+    }
+
+    func testBasicDownsampleAndUpsample() throws {
+        let down = try runReduce(factor: 2, x: [1, 2, 3, 4], y: [10, 20, 30, 40])
+        XCTAssertEqual(down.x, [1, 3], "without averaging, each chunk keeps its first value")
+        XCTAssertEqual(down.y, [10, 30])
+
+        let up = try runReduce(factor: 0.5, x: [1, 2], y: [10, 20])
+        XCTAssertEqual(up.x, [1, 1, 2, 2])
+        XCTAssertEqual(up.y, [10, 10, 20, 20])
+    }
+
+    func testYShorterThanXTruncates() throws {
+        let down = try runReduce(factor: 2, x: [1, 2, 3, 4], y: [10, 20, 30])
+        XCTAssertEqual(down.x, [1, 3], "processing truncates to the shortest present buffer instead of trapping")
+        XCTAssertEqual(down.y, [10, 30])
+
+        let up = try runReduce(factor: 0.5, x: [1, 2], y: [10])
+        XCTAssertEqual(up.x, [1, 1], "the upsample branch truncates too, instead of substituting 0")
+        XCTAssertEqual(up.y, [10, 10])
+    }
+
+    func testIncompleteFinalChunkAveragesOverActualCount() throws {
+        let result = try runReduce(factor: 2, x: [0, 2, 5], y: [10, 20, 40], averageX: true, averageY: true)
+        XCTAssertEqual(result.x, [1, 5], "the final single-value chunk must be divided by 1, not by the factor")
+        XCTAssertEqual(result.y, [15, 40])
+    }
+
+    func testNonFiniteFactorYieldsEmptyOutputs() throws {
+        for factor in [Double.nan, .infinity, 1e-300] {
+            let result = try runReduce(factor: factor, x: [1, 2], y: [10, 20])
+            XCTAssertEqual(result.x, [], "factor=\(factor) must yield empty outputs, not a trap")
+            XCTAssertEqual(result.y, [])
+        }
+    }
+}
+
 //const/ramp: an explicit length of 0, an empty length buffer and a non-finite or negative
 //length yield empty output; only an absent length input falls back to the output buffer's
 //size. Empty value/start/stop buffers and non-finite ramp start/stop yield empty output. A
