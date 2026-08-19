@@ -1823,6 +1823,57 @@ final class GCDLCMDomainTests: XCTestCase {
         XCTAssertTrue(try runLCM(1e10, 1e10 + 1)[0].isNaN, "an lcm overflowing UInt yields NaN, not a trap")
     }
 
+}
+
+//subrange error states: a present but non-finite from/to/length yields empty outputs (matching
+//Android); only an absent input or an empty parameter buffer keeps the defaults (from 0, to the
+//full input range).
+final class SubrangeNonfiniteParameterTests: XCTestCase {
+    private func runSubrange(data: [Double], parameters: [ExperimentAnalysisDataInput]) throws -> [Double] {
+        let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try SubrangeAnalysis(
+            inputs: parameters + [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testNaNToYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .nan, usedAs: "to")])
+        XCTAssertEqual(result, [], "a NaN to must yield an empty output, not the full range")
+    }
+
+    func testInfiniteLengthYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .infinity, usedAs: "length")])
+        XCTAssertEqual(result, [])
+    }
+
+    func testNaNFromYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .nan, usedAs: "from")])
+        XCTAssertEqual(result, [])
+    }
+
+    func testFiniteParametersUnchanged() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [
+            .value(value: 1, usedAs: "from"),
+            .value(value: 3, usedAs: "to")
+        ])
+        XCTAssertEqual(result, [20, 30])
+    }
+
+    func testEmptyParameterBufferKeepsDefault() throws {
+        let toBuffer = try DataBuffer(name: "to", size: 0, baseContents: [], static: false)
+        let result = try runSubrange(data: [10, 20, 30], parameters: [
+            .buffer(buffer: toBuffer, data: MutableDoubleArray(data: []), usedAs: "to", keep: true)
+        ])
+        XCTAssertEqual(result, [10, 20, 30], "an empty to buffer keeps the full-range default, unlike a non-finite value")
+    }
+}
+
+final class GCDVectorTests: XCTestCase {
     func testGCDVectorInputs() throws {
         let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
         let bufferB = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)

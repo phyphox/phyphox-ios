@@ -41,17 +41,26 @@ final class SubrangeAnalysis: AutoClearingExperimentAnalysisModule {
     }
     
     override func update() {
+        //A present but non-finite from/to/length value is an error state yielding empty
+        //outputs (matching Android). Only an absent input or an empty buffer keeps the
+        //defaults below.
+        for parameter in [from, to, length] {
+            if let v = parameter?.getSingleValue(), !v.isFinite {
+                return
+            }
+        }
+
         var start = 0
         var end = -1
-        
+
         if let v = from?.getSingleValueAsInt() {
             start = v
         }
-        
+
         if let v = to?.getSingleValueAsInt() {
             end = v
         }
-        
+
         if let v = length?.getSingleValueAsInt() {
             end = start + v
         }
