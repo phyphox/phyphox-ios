@@ -1780,6 +1780,70 @@ final class MatchExtraOutputsTests: XCTestCase {
     }
 }
 
+//gcd/lcm operate on non-negative integers: fractional values are rounded half away from zero
+//(C rounding, not truncation), negative and non-finite inputs yield NaN, values or results
+//beyond UInt yield NaN instead of trapping, and lcm(0,x) = 0 including lcm(0,0).
+final class GCDLCMDomainTests: XCTestCase {
+    private func runGCD(_ a: Double, _ b: Double) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try GCDAnalysis(
+            inputs: [.value(value: a, usedAs: "value"), .value(value: b, usedAs: "value")],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "gcd", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runLCM(_ a: Double, _ b: Double) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try LCMAnalysis(
+            inputs: [.value(value: a, usedAs: "value"), .value(value: b, usedAs: "value")],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "lcm", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testGCDDomain() throws {
+        XCTAssertEqual(try runGCD(12, 18), [6])
+        XCTAssertEqual(try runGCD(4.5, 10), [5], "4.5 rounds half away from zero to 5 (truncation to 4 would give gcd 2)")
+        XCTAssertTrue(try runGCD(-4, 6)[0].isNaN, "a negative input yields NaN, not a trap")
+        XCTAssertTrue(try runGCD(.nan, 6)[0].isNaN)
+        XCTAssertTrue(try runGCD(1e20, 6)[0].isNaN, "a value beyond UInt.max yields NaN, not a conversion trap")
+        XCTAssertEqual(try runGCD(0, 0), [0])
+    }
+
+    func testLCMDomain() throws {
+        XCTAssertEqual(try runLCM(4, 6), [12])
+        XCTAssertEqual(try runLCM(2.5, 5), [15], "2.5 rounds half away from zero to 3 (lcm 15), not to even (lcm 10)")
+        XCTAssertEqual(try runLCM(0, 5), [0], "lcm(0,x) = 0 by convention")
+        XCTAssertEqual(try runLCM(0, 0), [0], "lcm(0,0) = 0, formerly a division-by-zero trap")
+        XCTAssertTrue(try runLCM(-2, 4)[0].isNaN, "a negative input yields NaN, not a trap")
+        XCTAssertTrue(try runLCM(.infinity, 4)[0].isNaN)
+        XCTAssertTrue(try runLCM(1e10, 1e10 + 1)[0].isNaN, "an lcm overflowing UInt yields NaN, not a trap")
+    }
+
+    func testGCDVectorInputs() throws {
+        let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
+        let bufferB = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try GCDAnalysis(
+            inputs: [
+                .buffer(buffer: bufferA, data: MutableDoubleArray(data: [12, 4.5, -4]), usedAs: "value", keep: true),
+                .buffer(buffer: bufferB, data: MutableDoubleArray(data: [18, 10, 6]), usedAs: "value", keep: true)
+            ],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "gcd", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = out.toArray()
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0], 6)
+        XCTAssertEqual(result[1], 5)
+        XCTAssertTrue(result[2].isNaN)
+    }
+}
+
 //Every analysis module must declare the slot table its inputs and outputs are validated
 //against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
 //validation. Also guards the folding rule: no table may hold two slot names differing only

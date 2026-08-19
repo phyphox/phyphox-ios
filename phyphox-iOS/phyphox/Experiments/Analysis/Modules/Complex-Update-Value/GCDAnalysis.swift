@@ -40,8 +40,19 @@ func gcd(_ u: UInt, _ v: UInt) -> UInt {
     if (u > v) {
         return gcd((u - v) >> 1, v)
     }
-    
+
     return gcd((v - u) >> 1, u)
+}
+
+//The domain of gcd is non-negative integers: fractional values are rounded half away from zero
+//like the formula language's round, while negative inputs, non-finite inputs and values beyond
+//UInt.max yield NaN instead of trapping in the UInt conversion.
+func gcdOfDoubles(_ a: Double, _ b: Double) -> Double {
+    guard a.isFinite && b.isFinite && a >= 0 && b >= 0 else { return Double.nan }
+    let ra = a.rounded(.toNearestOrAwayFromZero)
+    let rb = b.rounded(.toNearestOrAwayFromZero)
+    guard ra < 0x1p64 && rb < 0x1p64 else { return Double.nan }
+    return Double(gcd(UInt(ra), UInt(rb)))
 }
 
 final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
@@ -70,63 +81,18 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
     
     func gcdValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // gcd(scalar,scalar)
-            if !scalarA.isFinite || !scalarB.isFinite {
-                return ValueSource(scalar: Double.nan)
-            }
-            
-            let result = Double(gcd(UInt(scalarA), UInt(scalarB)))
-            
-            return ValueSource(scalar: result)
+            return ValueSource(scalar: gcdOfDoubles(scalarA, scalarB))
         }
         else if let scalar = a.scalar, let vector = b.vector { // gcd(scalar,vector)
-            var out = [Double]()
-            out.reserveCapacity(vector.count)
-            
-            for val in vector {
-                if !val.isFinite || !scalar.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                    out.append(Double(gcd(UInt(scalar), UInt(val))))
-                }
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vector.map { gcdOfDoubles(scalar, $0) })
         }
         else if let vector = a.vector, let scalar = b.scalar { // gcd(vector,scalar)
-            var out = [Double]()
-            out.reserveCapacity(vector.count)
-            
-            for val in vector {
-                if !val.isFinite || !scalar.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                    out.append(Double(gcd(UInt(scalar), UInt(val))))
-                }
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vector.map { gcdOfDoubles(scalar, $0) })
         }
         else if let vectorA = a.vector, let vectorB = b.vector { // gcd(vector,vector)
-            var out = [Double]()
-            out.reserveCapacity(vectorA.count)
-            
-            for (i, val) in vectorA.enumerated() {
-                let valB = vectorB[i]
-                
-                if !val.isFinite || !valB.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                    out.append(Double(gcd(UInt(valB), UInt(val))))
-                }
-                
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vectorA.enumerated().map { gcdOfDoubles(vectorB[$0.offset], $0.element) })
         }
-        
+
         fatalError("Invalid value sources")
     }
 
