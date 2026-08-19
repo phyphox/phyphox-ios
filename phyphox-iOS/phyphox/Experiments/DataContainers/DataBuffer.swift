@@ -103,8 +103,6 @@ final class DataBuffer {
         }
     }
 
-    var attachedToTextField = false
-
     private let baseContents: [Double]
     
     private var lazyStateToken: UUID?

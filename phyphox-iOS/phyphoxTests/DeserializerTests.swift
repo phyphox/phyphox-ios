@@ -1825,6 +1825,78 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//Buffers bound to interactive view elements (edit, switch, dropdown, slider) are no longer
+//exempt from clearing; instead each element re-initializes an empty buffer to its default
+//value while it is not being edited, matching Android's re-init (ExpView.java setValue's NaN
+//branch).
+final class InteractiveElementReInitTests: XCTestCase {
+    private func makeBuffer(_ name: String) throws -> DataBuffer {
+        return try DataBuffer(name: name, size: 10, baseContents: [], static: false)
+    }
+
+    func testAnalysisInputClearNoLongerExemptsEditBuffers() throws {
+        //the attachedToTextField exemption is gone: keep=false clears any non-static buffer
+        let buffer = try makeBuffer("edit")
+        buffer.append(7)
+        let input = ExperimentAnalysisDataInput.buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "in", keep: false)
+        input.clear()
+        XCTAssertNil(buffer.last, "a keep=false analysis input must clear the buffer, edit-bound or not")
+    }
+
+    func testEditViewReInitializesClearedBuffer() throws {
+        let buffer = try makeBuffer("edit")
+        let descriptor = EditViewDescriptor(label: "l", visibilityBuffer: nil, translation: nil, signed: true, decimal: true, unit: nil, factor: 1, min: -Double.infinity, max: Double.infinity, defaultValue: 5, buffer: buffer)
+        let view = ExperimentEditView(descriptor: descriptor, resourceFolder: nil)!
+
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+        XCTAssertEqual(buffer.last, 5, "an empty buffer is re-initialized to the default value")
+
+        buffer.replaceValues([9])
+        buffer.clear(reset: false)
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+        XCTAssertEqual(buffer.last, 5, "a cleared buffer is re-initialized to the default value")
+    }
+
+    func testSwitchViewReInitializesClearedBuffer() throws {
+        let buffer = try makeBuffer("switch")
+        let descriptor = SwitchViewDescriptor(label: "l", visibilityBuffer: nil, translation: nil, defaultValue: 1, buffer: buffer)
+        let view = ExperimentSwitchView(descriptor: descriptor, resourceFolder: nil)!
+
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+        XCTAssertEqual(buffer.last, 1)
+    }
+
+    func testDropdownViewReInitializesClearedBuffer() throws {
+        let buffer = try makeBuffer("dropdown")
+        let descriptor = DropdownViewDescriptor(label: "l", visibilityBuffer: nil, defaultValue: 2, buffer: buffer, mappings: [DropdownViewMap(value: 1, replacement: "one"), DropdownViewMap(value: 2, replacement: "two")], translation: nil)
+        let view = ExperimentDropdownView(descriptor: descriptor, resourceFolder: nil)
+
+        view.update()
+        XCTAssertEqual(buffer.last, 2)
+    }
+
+    func testSliderViewReInitializesClearedBuffers() throws {
+        let buffer = try makeBuffer("slider")
+        let descriptor = SliderViewDescriptor(label: "l", visibilityBuffer: nil, minValue: 0, maxValue: 10, stepSize: 1, defaultValue: 3, precision: 1, outputBuffers: [.Empty: buffer], translation: nil, type: .Normal, showValue: true)
+        let view = ExperimentSliderView(descriptor: descriptor, resourceFolder: nil)
+
+        view.update()
+        XCTAssertEqual(buffer.last, 3)
+
+        let lower = try makeBuffer("lower")
+        let upper = try makeBuffer("upper")
+        let rangeDescriptor = SliderViewDescriptor(label: "l", visibilityBuffer: nil, minValue: 0, maxValue: 10, stepSize: 1, defaultValue: 0, precision: 1, outputBuffers: [.LowerValue: lower, .UpperValue: upper], translation: nil, type: .Range, showValue: true)
+        let rangeView = ExperimentSliderView(descriptor: rangeDescriptor, resourceFolder: nil)
+
+        rangeView.update()
+        XCTAssertEqual(lower.last, 0, "the range slider re-initializes its lower buffer to the minimum")
+        XCTAssertEqual(upper.last, 10, "the range slider re-initializes its upper buffer to the maximum")
+    }
+}
+
 //The formula language uses conventional precedence: ^ is right-associative and binds tighter
 //than unary minus (-2^2 = -4, 2^3^2 = 512); unary minus applies to the immediately following
 //operand only (-2+3 = 1); then * / %, then + -, left-associative at each level. A missing or

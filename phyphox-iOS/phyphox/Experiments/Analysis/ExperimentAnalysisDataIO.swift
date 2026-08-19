@@ -92,7 +92,9 @@ enum ExperimentAnalysisDataInput: Equatable {
     func clear() {
         switch self {
         case .buffer(buffer: let buffer, data: _, usedAs: _, keep: let keep):
-            if !keep && !buffer.staticBuffer && !buffer.attachedToTextField {
+            //Buffers bound to interactive view elements are NOT exempt from clearing: the
+            //element re-initializes its buffer to the default value instead (matching Android)
+            if !keep && !buffer.staticBuffer {
                 buffer.clear(reset: false)
             }
             return
@@ -155,7 +157,7 @@ enum ExperimentAnalysisDataOutput: Equatable {
     func clear() {
         switch self {
         case .buffer(buffer: let buffer, data: _, usedAs: _, append: let append):
-            if !append && !buffer.staticBuffer && !buffer.attachedToTextField {
+            if !append && !buffer.staticBuffer {
                 buffer.clear(reset: false)
             }
             return

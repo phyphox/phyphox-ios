@@ -32,6 +32,12 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     private func update(){
+        //If the buffer was cleared, write the default value back so the setting is not lost
+        //for subsequent analysis cycles (matching Android's re-init)
+        if descriptor.buffer.last == nil {
+            descriptor.buffer.replaceValues([descriptor.defaultValue])
+        }
+
         let value = descriptor.value
         var state = false
         

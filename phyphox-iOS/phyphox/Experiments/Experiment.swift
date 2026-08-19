@@ -669,9 +669,7 @@ final class Experiment {
             if byUser, let clearGroup = buffer.clearGroup, !clearGroups.contains(clearGroup) {
                 continue
             }
-            if !buffer.attachedToTextField {
-                buffer.clear(reset: true)
-            }
+            buffer.clear(reset: true)
         }
 
         sensorInputs.forEach { $0.clear() }

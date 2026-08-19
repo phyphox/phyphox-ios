@@ -145,7 +145,12 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     }
     
     func update(){
-        
+        //If the buffer was cleared, write the default value back so the selection is not lost
+        //for subsequent analysis cycles (matching Android's re-init)
+        if descriptor.buffer.last == nil {
+            descriptor.buffer.replaceValues([descriptor.defaultValue])
+        }
+
         if(setDropdownTitleAsDefaultValue){
             let firstElement = descriptor.localizedMappings.first
             let defaultTitle = firstElement?.replacement

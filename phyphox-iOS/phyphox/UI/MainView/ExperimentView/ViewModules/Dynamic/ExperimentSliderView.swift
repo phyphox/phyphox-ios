@@ -242,14 +242,27 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     func update(){
-       
+        //If a buffer was cleared, write the default back while the slider is not being
+        //dragged, so the setting is not lost for subsequent analysis cycles (matching
+        //Android's re-init)
         if(SliderType.Normal == descriptor.type){
+            if let buffer = sliderBuffer, buffer.last == nil, !uiSlider.isTracking {
+                buffer.replaceValues([descriptor.defaultValue])
+            }
             uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
             sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? descriptor.defaultValue)
         }
-        
+
         if(SliderType.Range == descriptor.type){
-            
+            if !rangeSlider.isTracking {
+                if let buffer = rangeSliderLowerBuffer, buffer.last == nil {
+                    buffer.replaceValues([descriptor.minValue])
+                }
+                if let buffer = rangeSliderUpperBuffer, buffer.last == nil {
+                    buffer.replaceValues([descriptor.maxValue])
+                }
+            }
+
             let lowerValue = rangeSliderLowerBuffer?.last ?? descriptor.minValue
             let upperValue = rangeSliderUpperBuffer?.last ?? descriptor.maxValue
             

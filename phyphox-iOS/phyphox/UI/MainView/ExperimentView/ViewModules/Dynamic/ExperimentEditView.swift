@@ -103,7 +103,6 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
 
         registerForUpdatesFromBuffer(descriptor.buffer)
-        descriptor.buffer.attachedToTextField = true
 
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
 
@@ -218,6 +217,13 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     }
 
     private func update() {
+        //If the buffer was cleared (e.g. by an analysis input without keep="true"), write the
+        //default value back while the field is not being edited, so the setting is not lost
+        //for subsequent analysis cycles (matching Android's re-init)
+        if descriptor.buffer.last == nil && !textField.isFirstResponder {
+            descriptor.buffer.replaceValues([descriptor.defaultValue])
+        }
+
         let value = descriptor.value
         let rawValue = value * descriptor.factor
 
