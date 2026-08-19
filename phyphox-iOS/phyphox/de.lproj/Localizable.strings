@@ -404,3 +404,5 @@
 "warning_photosensitivity_message" = "Dieses Experiment kann hochfrequente Lichtimpulse erzeugen. Dies kann bei Personen mit fotosensibler Epilepsie zu Beschwerden oder Anfällen führen. \n \nVermeiden Sie es, direkt in die Lichtquelle zu blicken.";
 "which_spectrum_orientation" = "Wie ist die Ausrichtung deines Geräts in Bezug auf das Spektrum?";
 "spectrum_orientation" = "Ausrichtung";
+"remoteServerPortInUseTitle" = "Konnte Fernzugriff nicht aktivieren";
+"remoteServerPortInUse" = "Der Fernzugriff konnte nicht aktiviert werden, da der Port bereits von einer anderen App auf diesem Gerät verwendet wird. Beende die App, die den Port verwendet, oder lege in den phyphox-Einstellungen einen anderen Port fest.";
