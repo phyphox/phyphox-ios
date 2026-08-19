@@ -1825,6 +1825,59 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//sort: all buffers are truncated to the shortest input before sorting (matching Android, no
+//NaN substitution for shorter co-buffers), and NaN sorts deterministically as the largest
+//value like Java's Double.compareTo.
+final class SortUnequalLengthTests: XCTestCase {
+    private func runSort(_ inputData: [[Double]], descending: Bool = false) throws -> [[Double]] {
+        let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
+            let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+            return .buffer(buffer: buffer, data: MutableDoubleArray(data: $0), usedAs: "in", keep: true)
+        }
+        let outBuffers = try (0..<inputData.count).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try SortAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.descending = descending
+        module.update()
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testCoBufferSorting() throws {
+        let result = try runSort([[3, 1, 2], [30, 10, 20]])
+        XCTAssertEqual(result[0], [1, 2, 3])
+        XCTAssertEqual(result[1], [10, 20, 30], "the co-buffer is reordered along with the sorted buffer")
+    }
+
+    func testShorterCoBufferTruncatesAll() throws {
+        let result = try runSort([[3, 1, 2], [30, 10]])
+        XCTAssertEqual(result[0], [1, 3], "all buffers truncate to the shortest input; no NaN substitution")
+        XCTAssertEqual(result[1], [10, 30])
+    }
+
+    func testNaNSortsAsLargest() throws {
+        let ascending = try runSort([[2, .nan, 1]])
+        XCTAssertEqual(ascending[0][0], 1)
+        XCTAssertEqual(ascending[0][1], 2)
+        XCTAssertTrue(ascending[0][2].isNaN, "NaN must sort as the largest value")
+
+        let descending = try runSort([[2, .nan, 1]], descending: true)
+        XCTAssertTrue(descending[0][0].isNaN)
+        XCTAssertEqual(descending[0][1], 2)
+        XCTAssertEqual(descending[0][2], 1)
+    }
+
+    func testMultipleNaNsAreDeterministic() throws {
+        let result = try runSort([[.nan, 1, .nan, 0]])
+        XCTAssertEqual(result[0][0], 0)
+        XCTAssertEqual(result[0][1], 1)
+        XCTAssertTrue(result[0][2].isNaN)
+        XCTAssertTrue(result[0][3].isNaN)
+    }
+}
+
 //reduce: processing truncates to the shortest present buffer (only an absent y keeps
 //processing all of x with 0 contributions); the incomplete final chunk is averaged over the
 //values actually summed, not the nominal factor; a non-finite factor yields empty outputs.
