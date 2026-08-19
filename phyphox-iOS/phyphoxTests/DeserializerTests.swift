@@ -1825,6 +1825,57 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//crosscorrelation: raw correlation sums without normalization (matching numpy/scipy/MATLAB
+//defaults), and an empty input yields an empty output instead of zeros. The reference test
+//compares the vDSP result against plain sums computed independently.
+final class CrosscorrelationTests: XCTestCase {
+    private func runCrosscorrelation(_ a: [Double], _ b: [Double]) throws -> [Double] {
+        let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
+        let bufferB = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try CrosscorrelationAnalysis(
+            inputs: [
+                .buffer(buffer: bufferA, data: MutableDoubleArray(data: a), usedAs: "in", keep: true),
+                .buffer(buffer: bufferB, data: MutableDoubleArray(data: b), usedAs: "in", keep: true)
+            ],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testRawSumsWithoutNormalization() throws {
+        //m=4, n=2 -> 2 raw sums; the old normalization would have divided them by 2
+        let result = try runCrosscorrelation([1, 2, 3, 4], [1, 1])
+        XCTAssertEqual(result, [3, 5])
+    }
+
+    func testEmptyInputYieldsEmptyOutput() throws {
+        XCTAssertEqual(try runCrosscorrelation([1, 2, 3], []), [], "an empty input must yield an empty output, not zeros")
+        XCTAssertEqual(try runCrosscorrelation([], [1, 2, 3]), [])
+        //equal lengths yield abs(m-n) = 0 values
+        XCTAssertEqual(try runCrosscorrelation([1, 2], [3, 4]), [])
+    }
+
+    func testAgainstPlainSumReference() throws {
+        //the offline plain-sum reference: the vDSP result must match sums computed naively
+        let a = (0..<200).map { sin(Double($0) * 0.37) + 0.5 * cos(Double($0) * 0.11) }
+        let b = (0..<50).map { sin(Double($0) * 0.29) - 0.3 * cos(Double($0) * 0.53) }
+
+        let result = try runCrosscorrelation(a, b)
+        XCTAssertEqual(result.count, 150)
+
+        for n in 0..<150 {
+            var reference = 0.0
+            for p in 0..<50 {
+                reference += a[n + p] * b[p]
+            }
+            XCTAssertEqual(result[n], reference, accuracy: 1e-9, "raw sum mismatch at offset \(n)")
+        }
+    }
+}
+
 //periodicity: an invalid dx (non-positive, non-finite, empty buffer) yields empty outputs
 //instead of running at dx=1; min is floored and max is ceiled (a fractional max includes the
 //boundary period); NaN bounds yield empty outputs; x shorter than y processes the common
