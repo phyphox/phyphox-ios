@@ -1825,6 +1825,101 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//max/min: one comparison loop like Android - NaN values never win a comparison, an x buffer
+//shorter than y truncates to the common length, the final open set in multiple mode is flushed,
+//and an empty/all-invalid input yields NaN per connected output (single mode) or empty outputs
+//(multiple mode).
+final class MaxMinAnalysisTests: XCTestCase {
+    private func run(_ isMax: Bool, x: [Double]? = nil, y: [Double], threshold: Double? = nil, multiple: Bool = false) throws -> (values: [Double], positions: [Double]) {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let x = x {
+            let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        }
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        if let threshold = threshold {
+            inputs.append(.value(value: threshold, usedAs: "threshold"))
+        }
+
+        let valueOut = try DataBuffer(name: "value", size: 0, baseContents: [], static: false)
+        let positionOut = try DataBuffer(name: "position", size: 0, baseContents: [], static: false)
+        let outputs: [ExperimentAnalysisDataOutput] = [
+            .buffer(buffer: valueOut, data: MutableDoubleArray(data: []), usedAs: isMax ? "max" : "min", append: false),
+            .buffer(buffer: positionOut, data: MutableDoubleArray(data: []), usedAs: "position", append: false)
+        ]
+
+        if isMax {
+            let module = try MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: .empty)
+            module.multiple = multiple
+            module.update()
+        } else {
+            let module = try MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: .empty)
+            module.multiple = multiple
+            module.update()
+        }
+        return (valueOut.toArray(), positionOut.toArray())
+    }
+
+    func testSingleModeBasics() throws {
+        let maxResult = try run(true, x: [10, 20, 30], y: [1, 5, 3])
+        XCTAssertEqual(maxResult.values, [5])
+        XCTAssertEqual(maxResult.positions, [20])
+
+        let minResult = try run(false, y: [3, 1, 2])
+        XCTAssertEqual(minResult.values, [1])
+        XCTAssertEqual(minResult.positions, [1], "an omitted x input auto-generates indices")
+    }
+
+    func testNaNValuesAreSkipped() throws {
+        //the audio_scope fallback shape: min over [2400, NaN] must be 2400
+        let minResult = try run(false, y: [2400, .nan])
+        XCTAssertEqual(minResult.values, [2400], "NaN must not leak into the result like vDSP_minvD would")
+
+        let maxResult = try run(true, y: [.nan, 5, .nan])
+        XCTAssertEqual(maxResult.values, [5])
+        XCTAssertEqual(maxResult.positions, [1])
+    }
+
+    func testEmptyAndAllInvalidInputYieldNaNInSingleMode() throws {
+        for y in [[Double](), [Double.nan, Double.nan]] {
+            let result = try run(true, y: y)
+            XCTAssertEqual(result.values.count, 1)
+            XCTAssertTrue(result.values[0].isNaN, "empty/all-invalid input must yield NaN, not a vDSP artifact")
+            XCTAssertEqual(result.positions.count, 1)
+            XCTAssertTrue(result.positions[0].isNaN)
+        }
+    }
+
+    func testXShorterThanYTruncates() throws {
+        let result = try run(true, x: [10], y: [1, 5])
+        XCTAssertEqual(result.values, [1], "processing truncates to the common length instead of trapping")
+        XCTAssertEqual(result.positions, [10])
+    }
+
+    func testMultipleModeFlushesTrailingSet() throws {
+        let maxResult = try run(true, y: [1, 2, -1, 3, 4], threshold: 0, multiple: true)
+        XCTAssertEqual(maxResult.values, [2, 4], "the set still open at the end of the data must be emitted")
+        XCTAssertEqual(maxResult.positions, [1, 4])
+
+        let minResult = try run(false, y: [-1, -2, 1, -3], threshold: 0, multiple: true)
+        XCTAssertEqual(minResult.values, [-2, -3])
+        XCTAssertEqual(minResult.positions, [1, 3])
+    }
+
+    func testMultipleModeEmptyInputYieldsEmptyOutputs() throws {
+        let result = try run(true, y: [], threshold: 0, multiple: true)
+        XCTAssertEqual(result.values, [])
+        XCTAssertEqual(result.positions, [])
+    }
+
+    func testMultipleModeNaNThresholdFormsOneSet() throws {
+        let result = try run(true, y: [1, -2, 3], threshold: .nan, multiple: true)
+        XCTAssertEqual(result.values, [3], "no comparison with a NaN threshold is true, so the whole input is one set")
+        XCTAssertEqual(result.positions, [2])
+    }
+}
+
 //round in default mode: ties round half away from zero (C rounding, like the formula
 //language's round) and non-finite values pass through unchanged. vvnint was replaced because
 //it rounds ties to even.

@@ -28,7 +28,7 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
     private var minOut: ExperimentAnalysisDataOutput?
     private var positionOut: ExperimentAnalysisDataOutput?
 
-    private var multiple: Bool
+    var multiple: Bool //internal for the unit tests, which cannot construct attributes
 
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
@@ -62,91 +62,68 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
         #endif
         
         let inArray = yIn.data
-        
-        if positionOut == nil && !multiple {
-            var min = 0.0
-            
-            vDSP_minvD(inArray, 1, &min, vDSP_Length(inArray.count))
-                        
-            if let minOut = minOut {
-                switch minOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                    buffer.append(min)
-                }
-            }
-            #if DEBUG_ANALYSIS
-                debug_noteOutputs(min)
-            #endif
-            
-        }
-        else if multiple {
-            var min = [Double]()
-            var x = [Double]()
-            let threshold = thresholdIn?.getSingleValue() ?? 0.0
-            
-            var thisMin = Double.infinity
-            var thisX = -Double.infinity
-            for (i, v) in inArray.enumerated() {
-                if v > threshold {
-                    if (thisX.isFinite) {
-                        min.append(thisMin)
-                        x.append(thisX)
-                        thisMin = Double.infinity
-                        thisX = -Double.infinity
-                    }
-                } else if v < thisMin {
-                    thisMin = v
-                    thisX = xIn?.data[i] ?? Double(i)
-                }
-            }
-                        
-            if let minOut = minOut {
-                switch minOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                    buffer.appendFromArray(min)
-                }
-            }
 
-            if let positionOut = positionOut {
-                switch positionOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                    buffer.appendFromArray(x)
-                }
-            }
-        }
-        else {
-            var min = -Double.infinity
-            var index: vDSP_Length = 0
-            
-            vDSP_minviD(inArray, 1, &min, &index, vDSP_Length(inArray.count))
-            
-            let x: Double
-            
-            if xIn != nil {
-                x = xIn!.data[Int(index)]
-            }
-            else {
-                x = Double(index)
-            }
-                        
-            if let minOut = minOut {
-                switch minOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                    buffer.append(min)
-                }
-            }
-            
-            if let positionOut = positionOut {
-                switch positionOut {
-                case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
-                    buffer.append(x)
-                }
-            }
+        //One comparison loop for both modes, matching Android: NaN never wins a comparison, so
+        //non-finite values cannot leak into the result (vDSP_minvD would propagate them). An x
+        //buffer shorter than y truncates processing to the common length; only an omitted x
+        //input auto-generates indices.
+        let count = xIn.map { Swift.min($0.data.count, inArray.count) } ?? inArray.count
+        let threshold = thresholdIn?.getSingleValue() ?? 0.0
 
-            #if DEBUG_ANALYSIS
-                debug_noteOutputs(["min" : min, "pos" : x])
-            #endif
-            
+        var minValues = [Double]()
+        var xValues = [Double]()
+
+        var thisMin = Double.infinity
+        var thisX = 0.0
+        var found = false
+
+        for i in 0..<count {
+            let v = inArray[i]
+
+            if multiple && v > threshold {
+                if found {
+                    minValues.append(thisMin)
+                    xValues.append(thisX)
+                    thisMin = Double.infinity
+                    found = false
+                }
+            } else if v < thisMin {
+                thisMin = v
+                thisX = xIn?.data[i] ?? Double(i)
+                found = true
+            }
         }
+
+        //Flush the final open set: the minimum is emitted even when the data ends inside a set
+        //(matching Android). In single mode this emits the one global minimum.
+        if found {
+            minValues.append(thisMin)
+            xValues.append(thisX)
+        }
+
+        //An empty or all-invalid input is an intermediate error state: NaN on each connected
+        //output in single mode (min delivers single values there), empty outputs in multiple mode
+        if !multiple && minValues.isEmpty {
+            minValues = [Double.nan]
+            xValues = [Double.nan]
+        }
+
+        if let minOut = minOut {
+            switch minOut {
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+                buffer.appendFromArray(minValues)
+            }
+        }
+
+        if let positionOut = positionOut {
+            switch positionOut {
+            case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+                buffer.appendFromArray(xValues)
+            }
+        }
+
+        #if DEBUG_ANALYSIS
+            debug_noteOutputs(["min" : minValues, "pos" : xValues])
+        #endif
     }
 }
