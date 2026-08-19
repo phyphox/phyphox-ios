@@ -1825,6 +1825,80 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//periodicity: an invalid dx (non-positive, non-finite, empty buffer) yields empty outputs
+//instead of running at dx=1; min is floored and max is ceiled (a fractional max includes the
+//boundary period); NaN bounds yield empty outputs; x shorter than y processes the common
+//length instead of trapping.
+final class PeriodicityEdgeCaseTests: XCTestCase {
+    private func runPeriodicity(x: [Double], y: [Double], dx: ExperimentAnalysisDataInput, extra: [ExperimentAnalysisDataInput] = []) throws -> (time: [Double], period: [Double]) {
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        let timeOut = try DataBuffer(name: "time", size: 0, baseContents: [], static: false)
+        let periodOut = try DataBuffer(name: "period", size: 0, baseContents: [], static: false)
+
+        let module = try PeriodicityAnalysis(
+            inputs: [
+                .buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true),
+                .buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true),
+                dx
+            ] + extra,
+            outputs: [
+                .buffer(buffer: timeOut, data: MutableDoubleArray(data: []), usedAs: "time", append: false),
+                .buffer(buffer: periodOut, data: MutableDoubleArray(data: []), usedAs: "period", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (timeOut.toArray(), periodOut.toArray())
+    }
+
+    private var cosineSignal: [Double] {
+        return (0..<64).map { cos(2.0 * Double.pi * Double($0) / 8.0) }
+    }
+
+    func testInvalidDxYieldsEmptyOutputs() throws {
+        let x = (0..<64).map(Double.init)
+        for dx in [ExperimentAnalysisDataInput.value(value: 0, usedAs: "dx"),
+                   .value(value: -2, usedAs: "dx"),
+                   .value(value: .nan, usedAs: "dx")] {
+            let result = try runPeriodicity(x: x, y: cosineSignal, dx: dx)
+            XCTAssertEqual(result.time, [], "an invalid dx must yield empty outputs, not run at dx = 1")
+            XCTAssertEqual(result.period, [])
+        }
+        let emptyDx = try DataBuffer(name: "dx", size: 0, baseContents: [], static: false)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .buffer(buffer: emptyDx, data: MutableDoubleArray(data: []), usedAs: "dx", keep: true))
+        XCTAssertEqual(result.time, [], "an empty dx buffer must yield empty outputs")
+    }
+
+    func testFractionalMaxIsCeiled() throws {
+        //Period-8 cosine, search range min=6, max=9.5: the peak at 8 needs its right neighbour
+        //at 9 evaluated for the parabolic fit, so a ceiled max (10) finds the period while a
+        //truncated max (9) would report NaN.
+        let x = (0..<64).map(Double.init)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 64, usedAs: "dx"), extra: [
+            .value(value: 6, usedAs: "min"),
+            .value(value: 9.5, usedAs: "max")
+        ])
+        XCTAssertEqual(result.period.count, 1)
+        XCTAssertEqual(result.period[0], 8, accuracy: 0.5, "a fractional max must be ceiled so the boundary period is found")
+    }
+
+    func testNaNBoundsYieldEmptyOutputs() throws {
+        let x = (0..<64).map(Double.init)
+        for bound in [ExperimentAnalysisDataInput.value(value: .nan, usedAs: "min"),
+                      .value(value: .nan, usedAs: "max")] {
+            let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 64, usedAs: "dx"), extra: [bound])
+            XCTAssertEqual(result.time, [])
+        }
+    }
+
+    func testXShorterThanYProcessesCommonLength() throws {
+        let x = (0..<16).map(Double.init)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 16, usedAs: "dx"))
+        XCTAssertEqual(result.time, [0], "x shorter than y truncates to the common length instead of trapping")
+        XCTAssertEqual(result.period.count, 1)
+    }
+}
+
 //sort: all buffers are truncated to the shortest input before sorting (matching Android, no
 //NaN substitution for shorter co-buffers), and NaN sorts deterministically as the largest
 //value like Java's Double.compareTo.
