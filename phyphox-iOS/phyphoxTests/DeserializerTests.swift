@@ -1825,6 +1825,59 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//An empty sigma attribute on gausssmooth is treated like an absent one and selects the default
+//of 3, consistent with the format-wide empty-equals-omitted convention (matching Android). A
+//present non-positive or unparseable sigma still rejects the file.
+final class GaussSmoothEmptySigmaTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(sigma: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+                <container>buffer2</container>
+            </data-containers>
+            <analysis>
+                <gausssmooth\(sigma)><input>buffer</input><output>buffer2</output></gausssmooth>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer2</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testEmptySigmaLoadsWithDefault() throws {
+        _ = try parse(xml(sigma: " sigma=\"\""))
+    }
+
+    func testAbsentSigmaLoads() throws {
+        _ = try parse(xml(sigma: ""))
+    }
+
+    func testExplicitSigmaLoads() throws {
+        _ = try parse(xml(sigma: " sigma=\"2.5\""))
+    }
+
+    func testNonPositiveSigmaStillRejected() throws {
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"0\"")))
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"-1\"")))
+    }
+
+    func testUnparseableSigmaStillRejected() throws {
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"abc\"")))
+    }
+}
+
 //subrange error states: a present but non-finite from/to/length yields empty outputs (matching
 //Android); only an absent input or an empty parameter buffer keeps the defaults (from 0, to the
 //full input range).
