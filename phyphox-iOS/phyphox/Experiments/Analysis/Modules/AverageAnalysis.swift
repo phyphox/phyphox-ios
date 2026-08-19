@@ -23,10 +23,9 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
-        //Outputs map by name: the documented slots are "average", which an unnamed output
-        //fills, and "stddev" - formerly this looked for "std", which appears in neither
-        //Android nor the documentation, and otherwise assigned by document order, silently
-        //swapping the two values (analysis-outputs-assigned-by-position in phyphox-docs)
+        //Outputs map by the documented slot names "average" and "stddev"; an unnamed output
+        //fills "average". The as attribute decides the slot, never document order - assigning
+        //by position would silently swap the two values when they are written in reverse order.
         avgOutput = io.output(Self.averageOutSlot)
         stdOutput = io.output(Self.stddevOutSlot)
 

@@ -105,7 +105,7 @@ final class ExperimentAnalysisFactory {
 
         //Enforce the module's slot table before building it: whether the as attribute is required
         //per slot, how many tags may fill it, and whether a value or empty input is allowed
-        //(analysis-slot-constraints-unenforced in phyphox-docs, mirroring Android's ioBlockParser).
+        //(mirroring Android's ioBlockParser).
         //Every module declares its own table next to the code consuming the slot names; a unit
         //test walks this classMap to make sure none is missing.
         if let mapping = analysisClass.ioMapping {

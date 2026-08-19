@@ -151,7 +151,7 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
             //complex spectrum is returned, matching Android. The output is deliberately not halved
             //to the unique first half: for a real signal the second half is the mirrored complex
             //conjugate, but both platforms return it in full so a real and a complex FFT of the
-            //same length behave identically (fft-real-input-output-length in phyphox-docs).
+            //same length behave identically.
         }
 
         if let realOutput = realOutput {

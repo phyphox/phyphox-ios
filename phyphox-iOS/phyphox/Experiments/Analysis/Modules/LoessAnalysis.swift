@@ -54,9 +54,8 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Error: No input for d provided to loess module.")
         }
 
-        //Outputs map by name; an unnamed output fills yi0 - formerly they were read in
-        //document order, ignoring the as attribute
-        //(analysis-outputs-assigned-by-position in phyphox-docs)
+        //Outputs map by name; an unnamed output fills yi0. The as attribute decides the
+        //slot, never document order.
         yi0Output = io.output(Self.yi0OutSlot)
         yi1Output = io.output(Self.yi1OutSlot)
         yi2Output = io.output(Self.yi2OutSlot)

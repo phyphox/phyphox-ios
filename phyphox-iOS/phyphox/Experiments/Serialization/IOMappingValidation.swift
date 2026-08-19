@@ -13,8 +13,8 @@ import Foundation
 //of an input element - is checked against a slot table stating whether the mapping attribute
 //(as/component) is required for that slot, how many tags may fill it, and whether a literal value
 //or the empty type is permitted. A file breaking any of these is refused with the same messages
-//Android uses, instead of silently assigning positionally (see input-output-component-validation,
-//analysis-slot-constraints-unenforced and rules.yml, output-component-validation, in phyphox-docs).
+//Android uses, instead of silently assigning positionally (see output-component-validation in
+//spec/rules.yml of phyphox-docs).
 //
 //This file holds only the algorithm. The slot tables live where their names are consumed, so the
 //vocabulary is not defined in two places: each analysis module declares its table by overriding

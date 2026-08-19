@@ -1503,9 +1503,7 @@ final class FormatWideCaseFoldingTests: XCTestCase {
 
 //The input/output mapping mechanism is validated against slot tables, mirroring Android's
 //ioBlockParser: components of input elements, and the as attribute of analysis inputs and
-//outputs, must name an allowed slot with its count and type restrictions respected
-//(input-output-component-validation, analysis-slot-constraints-unenforced and
-//analysis-outputs-assigned-by-position in phyphox-docs).
+//outputs, must name an allowed slot with its count and type restrictions respected.
 final class SlotMappingValidationTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -1579,7 +1577,7 @@ final class SlotMappingValidationTests: XCTestCase {
 
     func testAverageMapsOutputsByName() throws {
         //Writing stddev before average must not swap the two values: outputs map by the
-        //documented names, not by document order (analysis-outputs-assigned-by-position)
+        //documented names, not by document order
         let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
         let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
         let inputData = MutableDoubleArray(data: [1.0, 2.0, 3.0, 4.0])
@@ -1918,8 +1916,7 @@ final class DropdownViewTests: XCTestCase {
 }
 
 //An FFT with a real input only (no imaginary input) treats the imaginary part as zero and returns
-//the full complex spectrum, not the unique first half - matching Android
-//(fft-real-input-output-length in phyphox-docs).
+//the full complex spectrum, not the unique first half - matching Android.
 final class FFTRealInputTests: XCTestCase {
     func testRealOnlyFFTReturnsFullLength() throws {
         let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)

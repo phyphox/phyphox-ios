@@ -310,7 +310,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
         //Each output's component must be in the element's component list, once at most
-        //(input-output-component-validation in phyphox-docs, matching Android)
+        //(matching Android)
         let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
 
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))
