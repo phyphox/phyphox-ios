@@ -53,9 +53,8 @@ private extension ExperimentCameraInput {
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
         let pixelPosition = descriptor.buffer(for: "pixelPosition", from: buffers)
-        let wavelength = descriptor.buffer(for: "wavelength", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, wavelength: wavelength, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 

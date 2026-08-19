@@ -36,7 +36,7 @@ final class ExperimentCameraInput {
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?,  wavelength: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -49,8 +49,7 @@ final class ExperimentCameraInput {
             isoBuffer: isoBuffer,
             apertureBuffer: apertureBuffer,
             tBuffer: tBuffer,
-            pixelPosition: pixelPosition,
-            wavelength: wavelength
+            pixelPosition: pixelPosition
         )
         
         self.initx1 = x1
@@ -139,9 +138,9 @@ final class ExperimentCameraInput {
 }
 
 class ExperimentCameraBuffers {
-    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, pixelPosition, wavelength, tBuffer: DataBuffer?
-    
-    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil, wavelength: DataBuffer? = nil) {
+    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, pixelPosition, tBuffer: DataBuffer?
+
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil) {
         self.luminanceBuffer = luminanceBuffer
         self.lumaBuffer = lumaBuffer
         self.hueBuffer = hueBuffer
@@ -153,7 +152,6 @@ class ExperimentCameraBuffers {
         self.apertureBuffer = apertureBuffer
         self.tBuffer = tBuffer
         self.pixelPosition = pixelPosition
-        self.wavelength = wavelength
     }
 }
 
@@ -174,6 +172,5 @@ extension ExperimentCameraInput: Equatable {
                 lhs.experimentCameraBuffers?.apertureBuffer == rhs.experimentCameraBuffers?.apertureBuffer &&
                 lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer &&
                 lhs.experimentCameraBuffers?.pixelPosition == rhs.experimentCameraBuffers?.pixelPosition
-                lhs.experimentCameraBuffers?.wavelength == rhs.experimentCameraBuffers?.wavelength
     }
 }

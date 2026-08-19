@@ -34,9 +34,7 @@ private let depthComponents = [
     AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
     AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 ]
-//wavelength is accepted on iOS only: part of the superseded calibration draft, never filled
-//(see the camera element in spec/input.yml)
-private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "threshold", "shutterSpeed", "iso", "aperture", "pixelPosition", "wavelength"].map {
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "threshold", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
     AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 }
 

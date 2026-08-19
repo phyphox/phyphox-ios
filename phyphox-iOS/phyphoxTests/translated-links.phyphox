@@ -1,11 +1,11 @@
 <phyphox xmlns="http://phyphox.org/xml" version="1.20" locale="en">
-    <!-- Generated fixture: the decided translated-link semantics (see
-         inconsistency translation-link-matching). Covers every form: a full
-         replacement with translated button text and an explicit highlight, a
-         text-only change that inherits the base URL, a removal (label only,
-         empty URL), and an added link that exists only in the translation.
-         No app implements the translation attribute yet; this file pins the
-         decided parser surface. -->
+    <!-- Generated fixture: the decided translated-link semantics. Covers
+         every form: a full replacement with translated button text and an
+         explicit highlight, a text-only change that inherits the base URL, a
+         removal (label only, empty URL), and an added link that exists only
+         in the translation. Both apps implement this on their development
+         branches (iOS 2026-08-18, Android 2026-08-18); this file pins the
+         parser surface. -->
     <title>Corpus: translated links</title>
     <category>Corpus</category>
     <description>Generated coverage fixture for the link elements of a translation block.</description>

@@ -143,7 +143,7 @@ final class DeserializerTests: XCTestCase {
     }
 }
 
-//The decided translated-link semantics (translation-link-matching in phyphox-docs): the label is
+//The decided translated-link semantics (specified in phyphox-docs): the label is
 //a required key, a matching translated link replaces the base link in place, an unmatched label
 //is appended, a label-only link removes the base link, the translation attribute holds the
 //displayed text and highlight is inherited where not explicitly set. The invalid forms (missing

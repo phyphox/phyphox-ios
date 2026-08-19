@@ -132,7 +132,7 @@ class AnalyzingRenderer {
                     //One camera frame's outputs (t, exposure settings and the analyzer results such
                     //as hue/saturation/value) are written as one atomic group so a remote /get read
                     //never sees some of them advanced and others not (GitHub issue 22, see BufferLock)
-                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.thresholdBuffer, b?.pixelPosition, b?.wavelength]) {
+                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.thresholdBuffer, b?.pixelPosition]) {
                         if let tBuffer = b?.tBuffer {
                             tBuffer.append(t)
                         }
