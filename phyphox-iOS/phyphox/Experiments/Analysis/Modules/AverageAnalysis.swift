@@ -50,11 +50,10 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
                 count += 1
             }
         }
-        if count == 0 {
-            return
-        }
-
-        let avg = sum/Double(count)
+        //An empty or all-non-finite input is an intermediate error state: average delivers
+        //single values, so each connected output receives NaN instead of nothing (the stddev
+        //branch below yields NaN through its count < 2 case).
+        let avg = count == 0 ? Double.nan : sum/Double(count)
         
         if let avgOutput = avgOutput {
             switch avgOutput {

@@ -1597,6 +1597,51 @@ final class SlotMappingValidationTests: XCTestCase {
     }
 }
 
+//average delivers single values, so its error states are intermediate NaN values: an empty or
+//all-non-finite input writes exactly one NaN to each connected output instead of nothing. A
+//single finite value yields its own value as the average and exactly one NaN as the stddev.
+final class AverageDegenerateInputTests: XCTestCase {
+    private func runAverage(input: [Double]) throws -> (average: [Double], stddev: [Double]) {
+        let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
+        let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
+        let inputBuffer = try DataBuffer(name: "in", size: 10, baseContents: [], static: false)
+
+        let module = try AverageAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: MutableDoubleArray(data: input), usedAs: "buffer", keep: true)],
+            outputs: [
+                .buffer(buffer: avgBuffer, data: MutableDoubleArray(data: []), usedAs: "average", append: false),
+                .buffer(buffer: stddevBuffer, data: MutableDoubleArray(data: []), usedAs: "stddev", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        return (avgBuffer.toArray(), stddevBuffer.toArray())
+    }
+
+    func testEmptyInputWritesNaNToEachOutput() throws {
+        let result = try runAverage(input: [])
+        XCTAssertEqual(result.average.count, 1, "an empty input must write exactly one NaN, not nothing")
+        XCTAssertTrue(result.average[0].isNaN)
+        XCTAssertEqual(result.stddev.count, 1)
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+
+    func testAllNonFiniteInputWritesNaNToEachOutput() throws {
+        let result = try runAverage(input: [.nan, .infinity, -.infinity])
+        XCTAssertEqual(result.average.count, 1, "an all-non-finite input must write exactly one NaN, not nothing")
+        XCTAssertTrue(result.average[0].isNaN)
+        XCTAssertEqual(result.stddev.count, 1)
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+
+    func testSingleValueYieldsValueAndSingleNaNStddev() throws {
+        let result = try runAverage(input: [3.5])
+        XCTAssertEqual(result.average, [3.5])
+        XCTAssertEqual(result.stddev.count, 1, "a single input value must yield exactly one stddev value")
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+}
+
 //Every analysis module must declare the slot table its inputs and outputs are validated
 //against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
 //validation. Also guards the folding rule: no table may hold two slot names differing only
