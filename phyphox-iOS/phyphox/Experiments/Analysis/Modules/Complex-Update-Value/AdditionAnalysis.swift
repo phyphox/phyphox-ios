@@ -29,7 +29,7 @@ final class AdditionAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: nil)
+            })
     }
     
     func addValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

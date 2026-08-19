@@ -76,7 +76,7 @@ final class GCDAnalysis: ExperimentComplexUpdateValueAnalysis {
             
             
             return main
-            }, priorityInputKey: nil)
+            })
     }
     
     func gcdValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

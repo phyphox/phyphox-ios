@@ -50,7 +50,7 @@ final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
             
             
             return main
-            }, priorityInputKey: nil)
+            })
     }
     
     func lcmValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

@@ -38,7 +38,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "y")
+            })
     }
     
     func Atan2ValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

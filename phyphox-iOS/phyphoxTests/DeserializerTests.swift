@@ -1825,6 +1825,66 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//subtract/divide/power/atan2 consume the validated slot mapping: operands follow the as
+//attributes matched case-insensitively, and unnamed inputs fill the remaining slots in
+//declaration order - never document order (which silently swapped operands when only the
+//second operand was named or the first slot's name was written in different case).
+final class ComplexModuleOperandOrderTests: XCTestCase {
+    private func run<T: ExperimentComplexUpdateValueAnalysis>(_ type: T.Type, inputs: [ExperimentAnalysisDataInput], outputName: String) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try T(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: outputName, append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testOnlySecondOperandNamed() throws {
+        //<input as="subtrahend">5</input><input>8</input> - the unnamed input fills minuend
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 5, usedAs: "subtrahend"), .value(value: 8, usedAs: "")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [3], "the unnamed input must fill the minuend slot: 8 - 5")
+
+        let quotient = try run(DivisionAnalysis.self, inputs: [
+            .value(value: 2, usedAs: "divisor"), .value(value: 10, usedAs: "")
+        ], outputName: "quotient")
+        XCTAssertEqual(quotient, [5], "the unnamed input must fill the dividend slot: 10 / 2")
+
+        let angle = try run(Atan2Analysis.self, inputs: [
+            .value(value: 0, usedAs: "x"), .value(value: 1, usedAs: "")
+        ], outputName: "atan2")
+        XCTAssertEqual(angle.count, 1)
+        XCTAssertEqual(angle[0], Double.pi/2, accuracy: 1e-12, "the unnamed input must fill the y slot: atan2(1, 0)")
+    }
+
+    func testCaseInsensitiveAsAttributes() throws {
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 2, usedAs: "Subtrahend"), .value(value: 10, usedAs: "MINUEND")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [8], "as attributes match case-insensitively: 10 - 2")
+
+        let power = try run(PowerAnalysis.self, inputs: [
+            .value(value: 3, usedAs: "Exponent"), .value(value: 2, usedAs: "BASE")
+        ], outputName: "power")
+        XCTAssertEqual(power, [8], "base and exponent follow the slots, not document order: 2^3")
+    }
+
+    func testDocumentOrderStillWorksWhenItMatchesTheSlots() throws {
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 10, usedAs: "minuend"), .value(value: 4, usedAs: "subtrahend")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [6])
+
+        //multiple subtrahends chain in declaration order
+        let chained = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 10, usedAs: ""), .value(value: 1, usedAs: "subtrahend"), .value(value: 2, usedAs: "subtrahend")
+        ], outputName: "difference")
+        XCTAssertEqual(chained, [7])
+    }
+}
+
 //rangefilter: strictly row-wise filtering like Android - a row is dropped for all outputs when
 //any input's value falls outside its range, keeping outputs aligned; non-finite values are
 //compared like any number (infinities can be filtered, NaN never triggers); extra outputs are
