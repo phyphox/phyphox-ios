@@ -1748,6 +1748,38 @@ final class FirstPairingTests: XCTestCase {
     }
 }
 
+//match with more outputs than inputs must leave the extra outputs empty (matching Android)
+//instead of trapping on an index out of range.
+final class MatchExtraOutputsTests: XCTestCase {
+    private func runMatch(inputs inputData: [[Double]], outputCount: Int) throws -> [[Double]] {
+        let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
+            let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+            return .buffer(buffer: buffer, data: MutableDoubleArray(data: $0), usedAs: "in", keep: true)
+        }
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try MatchAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testExtraOutputsAreLeftEmpty() throws {
+        let result = try runMatch(inputs: [[1, .nan, 3]], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 3], "rows with a non-finite value are dropped")
+        XCTAssertEqual(result[1], [], "an output beyond the input count must stay empty, not trap")
+    }
+
+    func testNormalMatchingUnchanged() throws {
+        let result = try runMatch(inputs: [[1, 2, 3], [4, .nan, 6]], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 3], "a non-finite value in any input drops the whole row")
+        XCTAssertEqual(result[1], [4, 6])
+    }
+}
+
 //Every analysis module must declare the slot table its inputs and outputs are validated
 //against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
 //validation. Also guards the folding rule: no table may hold two slot names differing only
