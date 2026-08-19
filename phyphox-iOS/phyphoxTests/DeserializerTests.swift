@@ -1825,6 +1825,29 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//round in default mode: ties round half away from zero (C rounding, like the formula
+//language's round) and non-finite values pass through unchanged. vvnint was replaced because
+//it rounds ties to even.
+final class RoundTiesTests: XCTestCase {
+    func testTiesRoundHalfAwayFromZeroAndNonFinitePassesThrough() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [0.5, 1.5, 2.5, -0.5, -1.5, -2.5, 2.4, -2.4, .nan, .infinity, -.infinity])
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try RoundAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "value", keep: true)],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "round", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = out.toArray()
+        XCTAssertEqual(Array(result[0..<8]), [1, 2, 3, -1, -2, -3, 2, -2], "ties must round half away from zero, not to even")
+        XCTAssertTrue(result[8].isNaN, "NaN passes through unchanged")
+        XCTAssertEqual(result[9], .infinity)
+        XCTAssertEqual(result[10], -.infinity)
+    }
+}
+
 //An empty sigma attribute on gausssmooth is treated like an absent one and selects the default
 //of 3, consistent with the format-wide empty-equals-omitted convention (matching Android). A
 //present non-positive or unparseable sigma still rejects the file.
