@@ -2313,6 +2313,33 @@ final class FFTRealInputTests: XCTestCase {
         //The DC bin equals the sum of the input (1..8 = 36); a sanity check that it is a real FFT
         XCTAssertEqual(reOut.toArray().first ?? 0, 36, accuracy: 1e-6)
     }
+
+    func testTinyInputDoesNotCrash() throws {
+        //vDSP_DFT documents a minimum length of 8 but handles N = 1, 2 and 4; this pins that
+        //inputs below 8 samples produce a correct transform (and never a crash)
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2])
+        let reOut = try DataBuffer(name: "re", size: 0, baseContents: [], static: false)
+        let imOut = try DataBuffer(name: "im", size: 0, baseContents: [], static: false)
+
+        let module = try FFTAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "re", keep: true)],
+            outputs: [
+                .buffer(buffer: reOut, data: MutableDoubleArray(data: []), usedAs: "re", append: false),
+                .buffer(buffer: imOut, data: MutableDoubleArray(data: []), usedAs: "im", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        //DFT of [1, 2]: X0 = 3, X1 = -1, imaginary parts zero
+        let re = reOut.toArray()
+        let im = imOut.toArray()
+        XCTAssertEqual(re.count, 2)
+        XCTAssertEqual(re[0], 3, accuracy: 1e-9)
+        XCTAssertEqual(re[1], -1, accuracy: 1e-9)
+        XCTAssertEqual(im[0], 0, accuracy: 1e-9)
+        XCTAssertEqual(im[1], 0, accuracy: 1e-9)
+    }
 }
 
 //The x output of autocorrelation is optional and omitting it must simply skip it, like on
