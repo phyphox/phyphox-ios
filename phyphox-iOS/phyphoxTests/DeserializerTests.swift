@@ -1825,6 +1825,71 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//interpolate/loess: xi accepts a value-type input as a one-element buffer (matching Android);
+//a non-positive or non-finite loess d yields empty outputs instead of NaN fills; the out slots
+//no longer accept repeats (max 1).
+final class InterpolateLoessTests: XCTestCase {
+    private func makeBuffer(_ name: String, _ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: name, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: name, keep: true)
+    }
+
+    private func runInterpolate(x: [Double], y: [Double], xi: ExperimentAnalysisDataInput) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try InterpolateAnalysis(
+            inputs: [try makeBuffer("x", x), try makeBuffer("y", y), xi],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runLoess(x: [Double], y: [Double], d: ExperimentAnalysisDataInput, xi: ExperimentAnalysisDataInput) throws -> [Double] {
+        let out = try DataBuffer(name: "yi0", size: 0, baseContents: [], static: false)
+        let module = try LoessAnalysis(
+            inputs: [try makeBuffer("x", x), try makeBuffer("y", y), d, xi],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "yi0", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testInterpolateAcceptsValueTypeXi() throws {
+        let result = try runInterpolate(x: [0, 10], y: [0, 100], xi: .value(value: 5, usedAs: "xi"))
+        XCTAssertEqual(result, [50], "a value-type xi must act as a one-element buffer, not be rejected")
+    }
+
+    func testInterpolateBufferXiUnchanged() throws {
+        let result = try runInterpolate(x: [0, 10], y: [0, 100], xi: try makeBuffer("xi", [2.5, 7.5]))
+        XCTAssertEqual(result, [25, 75])
+    }
+
+    func testLoessAcceptsValueTypeXi() throws {
+        let result = try runLoess(x: [0, 1, 2, 3, 4], y: [0, 1, 2, 3, 4], d: .value(value: 2, usedAs: "d"), xi: .value(value: 2, usedAs: "xi"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0], 2, accuracy: 1e-9, "loess of linear data returns the linear value")
+    }
+
+    func testLoessInvalidDYieldsEmptyOutputs() throws {
+        for d in [0.0, -1.0, Double.nan, .infinity] {
+            let result = try runLoess(x: [0, 1, 2], y: [0, 1, 2], d: .value(value: d, usedAs: "d"), xi: try makeBuffer("xi", [1]))
+            XCTAssertEqual(result, [], "d=\(d) must yield empty outputs, not NaN fills")
+        }
+    }
+
+    func testRepeatedOutputsAreRejected() throws {
+        let out1 = try DataBuffer(name: "o1", size: 0, baseContents: [], static: false)
+        let out2 = try DataBuffer(name: "o2", size: 0, baseContents: [], static: false)
+        XCTAssertThrowsError(try InterpolateAnalysis(
+            inputs: [try makeBuffer("x", [0, 1]), try makeBuffer("y", [0, 1]), try makeBuffer("xi", [0.5])],
+            outputs: [
+                .buffer(buffer: out1, data: MutableDoubleArray(data: []), usedAs: "out", append: false),
+                .buffer(buffer: out2, data: MutableDoubleArray(data: []), usedAs: "out", append: false)
+            ],
+            additionalAttributes: .empty), "a second out output must be rejected")
+    }
+}
+
 //crosscorrelation: raw correlation sums without normalization (matching numpy/scipy/MATLAB
 //defaults), and an empty input yields an empty output instead of zeros. The reference test
 //compares the vDSP result against plain sums computed independently.

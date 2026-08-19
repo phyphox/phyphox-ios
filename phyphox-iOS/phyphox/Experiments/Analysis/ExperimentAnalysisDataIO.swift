@@ -32,6 +32,16 @@ enum ExperimentAnalysisDataInput: Equatable {
             return value
         }
     }
+
+    //A value input acts as a one-element buffer, matching Android's DataInput.getArray()
+    func getArray() -> [Double] {
+        switch self {
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
+            return data.data
+        case .value(value: let value, usedAs: _):
+            return [value]
+        }
+    }
     
     func getSingleValueAsInt() -> Int? {
         if let d = getSingleValue() {
