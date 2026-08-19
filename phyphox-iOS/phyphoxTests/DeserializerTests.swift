@@ -1706,7 +1706,46 @@ final class ThresholdNaNHandlingTests: XCTestCase {
         let result = try runThreshold(x: [10, 20, 30], y: [5, 1, 6], threshold: .value(value: 3.0, usedAs: "threshold"))
         XCTAssertEqual(result, [30])
     }
+}
 
+//first pairs input i with output i, like Android: each output receives exactly the first value
+//of its own input; an empty input skips only its own pair, and outputs beyond the input count
+//stay empty. The first values must never be collected and broadcast to every output.
+final class FirstPairingTests: XCTestCase {
+    private func makeInput(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: "value", keep: true)
+    }
+
+    private func runFirst(inputs inputData: [[Double]], outputCount: Int) throws -> [[Double]] {
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try FirstAnalysis(
+            inputs: inputData.map { try makeInput($0) },
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "first", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testPairsInputWithOutput() throws {
+        let result = try runFirst(inputs: [[1, 2, 3], [4, 5, 6]], outputCount: 2)
+        XCTAssertEqual(result[0], [1], "output 0 must receive only the first value of input 0")
+        XCTAssertEqual(result[1], [4], "output 1 must receive only the first value of input 1")
+    }
+
+    func testEmptyInputSkipsOnlyItsOwnPair() throws {
+        let result = try runFirst(inputs: [[], [4, 5]], outputCount: 2)
+        XCTAssertEqual(result[0], [], "an empty input must leave its own output untouched")
+        XCTAssertEqual(result[1], [4])
+    }
+
+    func testExtraOutputsStayEmpty() throws {
+        let result = try runFirst(inputs: [[7]], outputCount: 2)
+        XCTAssertEqual(result[0], [7])
+        XCTAssertEqual(result[1], [], "an output without a paired input must stay empty")
+    }
 }
 
 //Every analysis module must declare the slot table its inputs and outputs are validated
