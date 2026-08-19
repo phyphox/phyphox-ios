@@ -1825,6 +1825,91 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//const/ramp: an explicit length of 0, an empty length buffer and a non-finite or negative
+//length yield empty output; only an absent length input falls back to the output buffer's
+//size. Empty value/start/stop buffers and non-finite ramp start/stop yield empty output. A
+//present NaN const value is a permitted deliberate NaN fill. A single-point ramp outputs its
+//start value.
+final class ConstRampEdgeCaseTests: XCTestCase {
+    private func runConst(value: ExperimentAnalysisDataInput? = nil, length: ExperimentAnalysisDataInput? = nil, bufferSize: Int = 0) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let value = value { inputs.append(value) }
+        if let length = length { inputs.append(length) }
+        let out = try DataBuffer(name: "out", size: bufferSize, baseContents: [], static: false)
+
+        let module = try ConstGeneratorAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runRamp(start: ExperimentAnalysisDataInput, stop: ExperimentAnalysisDataInput, length: ExperimentAnalysisDataInput? = nil, bufferSize: Int = 0) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = [start, stop]
+        if let length = length { inputs.append(length) }
+        let out = try DataBuffer(name: "out", size: bufferSize, baseContents: [], static: false)
+
+        let module = try RampGeneratorAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func emptyBuffer(_ usedAs: String) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: usedAs, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, keep: true)
+    }
+
+    func testConstBasicsAndDefaults() throws {
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: 3, usedAs: "length")), [5, 5, 5])
+        XCTAssertEqual(try runConst(value: .value(value: 7, usedAs: "value"), bufferSize: 4), [7, 7, 7, 7], "an absent length falls back to the output buffer's size")
+        XCTAssertEqual(try runConst(length: .value(value: 2, usedAs: "length")), [0, 0], "an absent value keeps the default 0")
+    }
+
+    func testConstLengthErrorStates() throws {
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: 0, usedAs: "length"), bufferSize: 4), [], "an explicit length of 0 yields empty output, not the buffer size")
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: try emptyBuffer("length"), bufferSize: 4), [], "an empty length buffer yields empty output")
+        for l in [Double.nan, .infinity, -2] {
+            XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: l, usedAs: "length"), bufferSize: 4), [], "length=\(l) must yield empty output, not a trap")
+        }
+    }
+
+    func testConstNaNValueIsPermittedFill() throws {
+        let result = try runConst(value: .value(value: .nan, usedAs: "value"), length: .value(value: 2, usedAs: "length"))
+        XCTAssertEqual(result.count, 2)
+        XCTAssertTrue(result.allSatisfy { $0.isNaN }, "a present NaN value is a deliberate NaN initialization")
+    }
+
+    func testConstEmptyValueBufferYieldsEmptyOutput() throws {
+        XCTAssertEqual(try runConst(value: try emptyBuffer("value"), length: .value(value: 2, usedAs: "length")), [])
+    }
+
+    func testRampBasics() throws {
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 10, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [0, 5, 10])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 2, usedAs: "stop"), bufferSize: 3), [0, 1, 2], "an absent length falls back to the output buffer's size")
+    }
+
+    func testRampLengthOneOutputsStart() throws {
+        XCTAssertEqual(try runRamp(start: .value(value: 5, usedAs: "start"), stop: .value(value: 10, usedAs: "stop"), length: .value(value: 1, usedAs: "length")), [5], "a single-point ramp outputs its start, not NaN")
+    }
+
+    func testRampErrorStates() throws {
+        //length 0, empty length buffer, non-finite and negative lengths
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 0, usedAs: "length"), bufferSize: 4), [])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: try emptyBuffer("length"), bufferSize: 4), [])
+        for l in [Double.nan, -3] {
+            XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: l, usedAs: "length")), [])
+        }
+        //empty and non-finite start/stop
+        XCTAssertEqual(try runRamp(start: try emptyBuffer("start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+        XCTAssertEqual(try runRamp(start: .value(value: .nan, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: .infinity, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+    }
+}
+
 //split: a present but non-finite index/overlap yields empty outputs; finite indices are
 //clamped into range (negative index: out1 empty, out2 receives everything; huge index: no
 //trap). Absent inputs keep the defaults (index = input length, overlap = 0).

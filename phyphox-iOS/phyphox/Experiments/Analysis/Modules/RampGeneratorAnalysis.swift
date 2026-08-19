@@ -34,38 +34,45 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         guard let firstOutput = outputs.first else { return }
 
-        var start = 0.0
-        var stop = 0.0
-        var length = 0
-        
-        if let s = startInput.getSingleValue() {
-            start = s
-        }
-        
-        if let s = stopInput.getSingleValue() {
-            stop = s
-        }
-        
-        if let l = lengthInput?.getSingleValueAsInt() {
-            length = l
+        //An empty start/stop buffer and a non-finite start/stop value are errors yielding
+        //empty output (a value-type input is never empty)
+        guard let start = startInput.getSingleValue(), start.isFinite,
+              let stop = stopInput.getSingleValue(), stop.isFinite else {
+            return
         }
 
-        if length == 0 {
+        //An explicit length of 0, an empty length buffer and a non-finite or negative length
+        //all yield an empty output; only an absent length input falls back to the output
+        //buffer's size.
+        var length = 0
+        if let lengthInput = lengthInput {
+            guard let l = lengthInput.getSingleValue(), l.isFinite, l >= 0, l < 9e18 else {
+                return
+            }
+            length = Int(l)
+        } else {
             switch firstOutput {
             case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 length = buffer.size
             }
         }
-        
-        var result = [Double](repeating: 0.0, count: length)
-        
+
         #if DEBUG_ANALYSIS
             debug_noteInputs(["start" : start, "stop" : stop, "length" : length])
         #endif
-        
-        var step = (stop-start)/Double(length-1)
-        
-        vDSP_vrampD(&start, &step, &result, 1, vDSP_Length(length))
+
+        var result: [Double]
+
+        if length == 1 {
+            //A single-point ramp outputs its start value: the step is undefined for one point
+            //and used to produce NaN through the division by length-1
+            result = [start]
+        } else {
+            result = [Double](repeating: 0.0, count: length)
+            var startValue = start
+            var step = (stop-start)/Double(length-1)
+            vDSP_vrampD(&startValue, &step, &result, 1, vDSP_Length(length))
+        }
         
         #if DEBUG_ANALYSIS
             debug_noteOutputs(result)
