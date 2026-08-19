@@ -1825,6 +1825,119 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//map: x/y/z accept value-type inputs as one-element buffers; a degenerate range (minX equal to
+//maxX) clamps the bin index instead of trapping (NaN ratio -> bin 0, infinite ratios fall
+//outside the bounds check); a missing z input with zMode sum/average rejects the file at load.
+final class MapAnalysisTests: XCTestCase {
+    private func runMap(x: ExperimentAnalysisDataInput, y: ExperimentAnalysisDataInput, z: ExperimentAnalysisDataInput,
+                        minX: Double = 0, maxX: Double = 1, minY: Double = 0, maxY: Double = 1) throws -> (x: [Double], y: [Double], z: [Double]) {
+        let xOut = try DataBuffer(name: "xOut", size: 0, baseContents: [], static: false)
+        let yOut = try DataBuffer(name: "yOut", size: 0, baseContents: [], static: false)
+        let zOut = try DataBuffer(name: "zOut", size: 0, baseContents: [], static: false)
+
+        let module = try MapAnalysis(
+            inputs: [
+                .value(value: 2, usedAs: "mapWidth"), .value(value: minX, usedAs: "minX"), .value(value: maxX, usedAs: "maxX"),
+                .value(value: 2, usedAs: "mapHeight"), .value(value: minY, usedAs: "minY"), .value(value: maxY, usedAs: "maxY"),
+                x, y, z
+            ],
+            outputs: [
+                .buffer(buffer: xOut, data: MutableDoubleArray(data: []), usedAs: "x", append: false),
+                .buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false),
+                .buffer(buffer: zOut, data: MutableDoubleArray(data: []), usedAs: "z", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (xOut.toArray(), yOut.toArray(), zOut.toArray())
+    }
+
+    func testValueTypeInputsAccepted() throws {
+        //a single point at (0,0) with z=5 on a 2x2 grid, all given as value-type inputs
+        let result = try runMap(x: .value(value: 0, usedAs: "x"), y: .value(value: 0, usedAs: "y"), z: .value(value: 5, usedAs: "z"))
+        XCTAssertEqual(result.x, [0, 1, 0, 1])
+        XCTAssertEqual(result.y, [0, 0, 1, 1])
+        XCTAssertEqual(result.z.count, 4)
+        XCTAssertEqual(result.z[0], 5, "the point must land in bin (0,0) with its average value")
+        XCTAssertTrue(result.z[1].isNaN, "empty bins average to NaN")
+    }
+
+    func testDegenerateRangeDoesNotTrap() throws {
+        //minX == maxX: the point at exactly that value gets bin 0 (NaN ratio), others fall out
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        let zBuffer = try DataBuffer(name: "z", size: 0, baseContents: [], static: false)
+        let result = try runMap(
+            x: .buffer(buffer: xBuffer, data: MutableDoubleArray(data: [0, 1]), usedAs: "x", keep: true),
+            y: .buffer(buffer: yBuffer, data: MutableDoubleArray(data: [0, 0]), usedAs: "y", keep: true),
+            z: .buffer(buffer: zBuffer, data: MutableDoubleArray(data: [5, 7]), usedAs: "z", keep: true),
+            minX: 0, maxX: 0)
+        XCTAssertEqual(result.z.count, 4, "a degenerate range must be clamped, not trap")
+        XCTAssertEqual(result.z[0], 5, "the point at the degenerate value lands in bin 0; the other point falls outside")
+    }
+}
+
+//The z input of map is required at load when zMode is sum or average (the default) - running
+//without it would silently produce a zero grid. Only zMode="count" works without z.
+final class MapMissingZTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(zMode: String, zInput: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>bx</container>
+                <container>by</container>
+                <container>bz</container>
+                <container>ox</container>
+                <container>oy</container>
+                <container>oz</container>
+            </data-containers>
+            <analysis>
+                <map\(zMode)>
+                    <input as="mapWidth" type="value">2</input>
+                    <input as="minX" type="value">0</input>
+                    <input as="maxX" type="value">1</input>
+                    <input as="mapHeight" type="value">2</input>
+                    <input as="minY" type="value">0</input>
+                    <input as="maxY" type="value">1</input>
+                    <input as="x">bx</input>
+                    <input as="y">by</input>
+                    \(zInput)
+                    <output as="x">ox</output>
+                    <output as="y">oy</output>
+                    <output as="z">oz</output>
+                </map>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>oz</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMissingZRejectedForDefaultAndSum() throws {
+        XCTAssertThrowsError(try parse(xml(zMode: "", zInput: "")), "the default zMode is average, which requires z")
+        XCTAssertThrowsError(try parse(xml(zMode: " zMode=\"sum\"", zInput: "")))
+        XCTAssertThrowsError(try parse(xml(zMode: " zMode=\"average\"", zInput: "")))
+    }
+
+    func testCountModeLoadsWithoutZ() throws {
+        _ = try parse(xml(zMode: " zMode=\"count\"", zInput: ""))
+    }
+
+    func testZPresentLoads() throws {
+        _ = try parse(xml(zMode: "", zInput: "<input as=\"z\">bz</input>"))
+    }
+}
+
 //interpolate/loess: xi accepts a value-type input as a one-element buffer (matching Android);
 //a non-positive or non-finite loess d yields empty outputs instead of NaN fills; the out slots
 //no longer accept repeats (max 1).
