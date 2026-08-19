@@ -38,14 +38,18 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
     
     override func update() {
         var threshold = 0.0
-        
+
         if let v = thresholdIn?.getSingleValue() {
-            threshold = v.isNaN ? 0.0 : v
+            //A NaN threshold value participates like any number: no comparison with it is ever
+            //true, so no crossing is found and NaN is output. Only an absent threshold input or
+            //an empty threshold buffer (getSingleValue() == nil) selects the default of 0.
+            threshold = v
         }
-        
+
         var x: Double = -1.0
+        var found = false
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
-        
+
         for (i, value) in yIn.data.enumerated() {
             if let xIn = xIn, i < xIn.data.count {
                 x = xIn.data[i]
@@ -55,11 +59,17 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
+                    found = true
                     break
                 }
             } else {
                 onOppositeSide = true
             }
+        }
+
+        //No crossing found is an intermediate error state: output NaN, not the last sample's x
+        if !found {
+            x = Double.nan
         }
         
         for output in outputs {

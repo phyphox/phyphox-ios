@@ -1642,6 +1642,73 @@ final class AverageDegenerateInputTests: XCTestCase {
     }
 }
 
+//threshold error states: when no crossing is found the output is NaN (not the last sample's x
+//or -1), and a NaN threshold value participates like any number - no comparison with it is ever
+//true, so no crossing is found. Only an absent threshold input or an empty threshold buffer
+//selects the documented default of 0. The sticky-side triggering (any value not on the trigger
+//side arms, NaN included; the next value on the trigger side fires) is the canonical behaviour.
+final class ThresholdNaNHandlingTests: XCTestCase {
+    private func runThreshold(x: [Double]? = nil, y: [Double], threshold: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let x = x {
+            let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        }
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        if let threshold = threshold {
+            inputs.append(threshold)
+        }
+        let out = try DataBuffer(name: "position", size: 0, baseContents: [], static: false)
+
+        let module = try ThresholdAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "position", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testNoCrossingOutputsNaN() throws {
+        let result = try runThreshold(y: [1, 2, 1], threshold: .value(value: 5.0, usedAs: "threshold"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "no crossing found must output NaN, not the last sample's x")
+    }
+
+    func testEmptyInputOutputsNaN() throws {
+        let result = try runThreshold(y: [])
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "an empty input must output NaN, not -1")
+    }
+
+    func testNaNThresholdParticipatesAndYieldsNaN() throws {
+        let result = try runThreshold(y: [-1, 1, -1, 1], threshold: .value(value: .nan, usedAs: "threshold"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "a NaN threshold makes every comparison false, so no crossing is found")
+    }
+
+    func testEmptyThresholdBufferSelectsDefaultZero() throws {
+        let thresholdBuffer = try DataBuffer(name: "threshold", size: 0, baseContents: [], static: false)
+        let result = try runThreshold(
+            y: [-1, 1],
+            threshold: .buffer(buffer: thresholdBuffer, data: MutableDoubleArray(data: []), usedAs: "threshold", keep: true))
+        XCTAssertEqual(result, [1], "an empty threshold buffer selects the default 0; the crossing fires at index 1")
+    }
+
+    func testStickySideSkipsNaNValues() throws {
+        //[2, NaN, 5] rising with threshold 3: 2 arms (below), NaN also counts as armed, 5 fires
+        let result = try runThreshold(x: [10, 20, 30], y: [2, .nan, 5], threshold: .value(value: 3.0, usedAs: "threshold"))
+        XCTAssertEqual(result, [30])
+    }
+
+    func testNormalCrossingStillFires() throws {
+        //5 is already on the trigger side but not armed; 1 arms; 6 fires
+        let result = try runThreshold(x: [10, 20, 30], y: [5, 1, 6], threshold: .value(value: 3.0, usedAs: "threshold"))
+        XCTAssertEqual(result, [30])
+    }
+
+}
+
 //Every analysis module must declare the slot table its inputs and outputs are validated
 //against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
 //validation. Also guards the folding rule: no table may hold two slot names differing only
