@@ -68,9 +68,12 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 count = min(xIn.data.count, count);
             }
             
-            var x: [Double]!
-            
-            if xOut != nil {
+            //x is needed for the x output, but also for min/max filtering when no x output is
+            //connected. An omitted x output must simply be skipped, like on Android - building
+            //x only in that case trapped on the forced unwrap below.
+            var x: [Double] = []
+
+            if xOut != nil || needsFiltering {
                 if xIn != nil {
                     x = [Double](repeating: 0.0, count: count)
                     
@@ -86,7 +89,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                         x = xRaw
                     }
                     else {
-                        x!.withUnsafeMutableBufferPointer { buffer in
+                        x.withUnsafeMutableBufferPointer { buffer in
                             guard let pointer = buffer.baseAddress else { return }
 
                             vDSP_vsaddD(xRaw, 1, [-first!], pointer, 1, vDSP_Length(count))
@@ -96,7 +99,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 else {
                     x = [Double](repeating: 0.0, count: count)
 
-                    x!.withUnsafeMutableBufferPointer { buffer in
+                    x.withUnsafeMutableBufferPointer { buffer in
                         guard let pointer = buffer.baseAddress else { return }
 
                         vDSP_vrampD([0.0], [1.0], pointer, 1, vDSP_Length(count))

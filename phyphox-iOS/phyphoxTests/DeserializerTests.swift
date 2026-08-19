@@ -1940,3 +1940,51 @@ final class FFTRealInputTests: XCTestCase {
         XCTAssertEqual(reOut.toArray().first ?? 0, 36, accuracy: 1e-6)
     }
 }
+
+//The x output of autocorrelation is optional and omitting it must simply skip it, like on
+//Android - it used to trap on a forced unwrap as soon as data arrived. min/max filtering has
+//to keep working without an x output, applied to the implicit 0,1,2,... displacement ramp.
+final class AutocorrelationOmittedXOutputTests: XCTestCase {
+    //Autocorrelation of [1,2,3,4]: displacement i yields sum(y[j]*y[j+i])/(count-i)
+    private let expectedY = [7.5, 20.0/3.0, 5.5, 4.0]
+
+    func testOmittedXOutput() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2, 3, 4])
+        let yOut = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+
+        let module = try AutocorrelationAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "y", keep: true)],
+            outputs: [.buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = yOut.toArray()
+        XCTAssertEqual(result.count, expectedY.count)
+        for (value, expected) in zip(result, expectedY) {
+            XCTAssertEqual(value, expected, accuracy: 1e-12)
+        }
+    }
+
+    func testOmittedXOutputWithFiltering() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2, 3, 4])
+        let yOut = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+
+        let module = try AutocorrelationAnalysis(
+            inputs: [
+                .buffer(buffer: inputBuffer, data: inputData, usedAs: "y", keep: true),
+                .value(value: 1.0, usedAs: "minX"),
+                .value(value: 2.0, usedAs: "maxX")
+            ],
+            outputs: [.buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = yOut.toArray()
+        XCTAssertEqual(result.count, 2, "only the displacements 1 and 2 pass the minX/maxX filter")
+        for (value, expected) in zip(result, [expectedY[1], expectedY[2]]) {
+            XCTAssertEqual(value, expected, accuracy: 1e-12)
+        }
+    }
+}
