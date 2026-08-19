@@ -1825,6 +1825,140 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//split: a present but non-finite index/overlap yields empty outputs; finite indices are
+//clamped into range (negative index: out1 empty, out2 receives everything; huge index: no
+//trap). Absent inputs keep the defaults (index = input length, overlap = 0).
+final class SplitEdgeCaseTests: XCTestCase {
+    private func runSplit(data: [Double], index: Double? = nil, overlap: Double? = nil) throws -> (out1: [Double], out2: [Double]) {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)]
+        if let index = index {
+            inputs.append(.value(value: index, usedAs: "index"))
+        }
+        if let overlap = overlap {
+            inputs.append(.value(value: overlap, usedAs: "overlap"))
+        }
+        let out1 = try DataBuffer(name: "out1", size: 0, baseContents: [], static: false)
+        let out2 = try DataBuffer(name: "out2", size: 0, baseContents: [], static: false)
+
+        let module = try SplitAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: out1, data: MutableDoubleArray(data: []), usedAs: "out1", append: false),
+                .buffer(buffer: out2, data: MutableDoubleArray(data: []), usedAs: "out2", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (out1.toArray(), out2.toArray())
+    }
+
+    func testBasicSplitAndDefaults() throws {
+        let split = try runSplit(data: [1, 2, 3], index: 2)
+        XCTAssertEqual(split.out1, [1, 2])
+        XCTAssertEqual(split.out2, [3])
+
+        let defaulted = try runSplit(data: [1, 2, 3])
+        XCTAssertEqual(defaulted.out1, [1, 2, 3], "the index defaults to the input length")
+        XCTAssertEqual(defaulted.out2, [])
+
+        let overlapping = try runSplit(data: [1, 2, 3], index: 2, overlap: 1)
+        XCTAssertEqual(overlapping.out1, [1, 2])
+        XCTAssertEqual(overlapping.out2, [2, 3])
+    }
+
+    func testOutOfRangeIndicesAreClamped() throws {
+        let negative = try runSplit(data: [1, 2, 3], index: -5)
+        XCTAssertEqual(negative.out1, [])
+        XCTAssertEqual(negative.out2, [1, 2, 3])
+
+        let huge = try runSplit(data: [1, 2, 3], index: 1e300)
+        XCTAssertEqual(huge.out1, [1, 2, 3], "an out-of-range index is clamped, not a trap")
+        XCTAssertEqual(huge.out2, [])
+    }
+
+    func testNonFiniteParametersYieldEmptyOutputs() throws {
+        for parameters in [(index: Double.nan, overlap: 0.0), (index: 2.0, overlap: .infinity), (index: -.infinity, overlap: 0.0)] {
+            let result = try runSplit(data: [1, 2, 3], index: parameters.index, overlap: parameters.overlap)
+            XCTAssertEqual(result.out1, [], "index=\(parameters.index) overlap=\(parameters.overlap) must yield empty outputs")
+            XCTAssertEqual(result.out2, [])
+        }
+    }
+}
+
+//eventstream: a NaN threshold participates in the comparisons (nothing triggers); index/skip/
+//last keep their documented start defaults (0/0/NaN) when absent or empty; a non-finite value
+//reaching the distance/index/skip conversions yields empty outputs instead of trapping, which
+//resets the state loop on the next run.
+final class EventStreamEdgeCaseTests: XCTestCase {
+    private func runEventStream(data: [Double], parameters: [ExperimentAnalysisDataInput] = []) throws -> (events: [Double], index: [Double], skip: [Double], last: [Double]) {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        let events = try DataBuffer(name: "events", size: 0, baseContents: [], static: false)
+        let indexOut = try DataBuffer(name: "indexOut", size: 0, baseContents: [], static: false)
+        let skipOut = try DataBuffer(name: "skipOut", size: 0, baseContents: [], static: false)
+        let lastOut = try DataBuffer(name: "lastOut", size: 0, baseContents: [], static: false)
+
+        let module = try EventStreamAnalysis(
+            inputs: [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)] + parameters,
+            outputs: [
+                .buffer(buffer: events, data: MutableDoubleArray(data: []), usedAs: "events", append: false),
+                .buffer(buffer: indexOut, data: MutableDoubleArray(data: []), usedAs: "index", append: false),
+                .buffer(buffer: skipOut, data: MutableDoubleArray(data: []), usedAs: "skip", append: false),
+                .buffer(buffer: lastOut, data: MutableDoubleArray(data: []), usedAs: "last", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (events.toArray(), indexOut.toArray(), skipOut.toArray(), lastOut.toArray())
+    }
+
+    func testBasicTriggering() throws {
+        let result = try runEventStream(data: [0, 5, 0, 6], parameters: [.value(value: 3, usedAs: "threshold")])
+        XCTAssertEqual(result.events, [1, 3])
+        XCTAssertEqual(result.index, [4])
+        XCTAssertEqual(result.skip, [0])
+        XCTAssertEqual(result.last, [6])
+    }
+
+    func testDistanceSkipsSamples() throws {
+        let result = try runEventStream(data: [0, 5, 5, 5], parameters: [
+            .value(value: 3, usedAs: "threshold"),
+            .value(value: 2, usedAs: "distance")
+        ])
+        XCTAssertEqual(result.events, [1], "the two samples after the trigger are skipped")
+        XCTAssertEqual(result.index, [4])
+        XCTAssertEqual(result.skip, [0])
+        XCTAssertEqual(result.last, [5])
+    }
+
+    func testNaNThresholdParticipates() throws {
+        let result = try runEventStream(data: [1, 2], parameters: [.value(value: .nan, usedAs: "threshold")])
+        XCTAssertEqual(result.events, [], "no comparison with a NaN threshold is true")
+        XCTAssertEqual(result.index, [2])
+        XCTAssertEqual(result.last, [2])
+    }
+
+    func testNonFiniteStateYieldsEmptyOutputs() throws {
+        for parameter in [ExperimentAnalysisDataInput.value(value: .nan, usedAs: "index"),
+                          .value(value: .infinity, usedAs: "skip"),
+                          .value(value: .nan, usedAs: "distance")] {
+            let result = try runEventStream(data: [0, 5], parameters: [.value(value: 3, usedAs: "threshold"), parameter])
+            XCTAssertEqual(result.events, [])
+            XCTAssertEqual(result.index, [], "a non-finite state value must yield empty outputs, not a trap")
+            XCTAssertEqual(result.skip, [])
+            XCTAssertEqual(result.last, [])
+        }
+    }
+
+    func testEmptyStateBuffersSelectStartDefaults() throws {
+        let indexBuffer = try DataBuffer(name: "index", size: 0, baseContents: [], static: false)
+        let result = try runEventStream(data: [0, 5], parameters: [
+            .value(value: 3, usedAs: "threshold"),
+            .buffer(buffer: indexBuffer, data: MutableDoubleArray(data: []), usedAs: "index", keep: true)
+        ])
+        XCTAssertEqual(result.events, [1], "an empty index buffer selects the start default 0")
+        XCTAssertEqual(result.index, [2])
+    }
+}
+
 //movingaverage: non-finite values inside the window are skipped (aligning with average and
 //binning; a window without any finite value yields NaN). A present but invalid width
 //(non-finite or negative) yields empty output; an absent width input or an empty width buffer

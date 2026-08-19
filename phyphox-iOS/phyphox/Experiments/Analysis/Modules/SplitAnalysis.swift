@@ -38,12 +38,24 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
     }
     
     override func update() {
-        
+
         let inArray = dataIn.data
-        
-        let index = Int(indexIn?.getSingleValue() ?? Double(inArray.count))
-        let overlap = Int(overlapIn?.getSingleValue() ?? 0.0)
-        
+
+        //A present but non-finite index or overlap is an error state yielding empty outputs.
+        //Finite values are clamped: negative and out-of-range positive indices are clamped into
+        //range, and the overlap is clamped to the span that still affects the result - which
+        //also keeps huge values out of the trapping Int conversion. Absent inputs keep the
+        //defaults (index = input length, overlap = 0).
+        let indexValue = indexIn?.getSingleValue() ?? Double(inArray.count)
+        let overlapValue = overlapIn?.getSingleValue() ?? 0.0
+        guard indexValue.isFinite && overlapValue.isFinite else {
+            return
+        }
+
+        let count = Double(inArray.count)
+        let index = Int(min(max(indexValue, 0), count))
+        let overlap = Int(min(max(overlapValue, -(count + 1)), count + 1))
+
         var limit = min(index, inArray.count)
         if let out1Out = out1Out, limit > 0 {
             switch out1Out {
