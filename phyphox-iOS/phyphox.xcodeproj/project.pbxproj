@@ -212,8 +212,8 @@
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
-		A1FA9A2E2E42BB0200000005 /* translated-links.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
+		A1FA9A2E2E42BB0200000005 /* translated-links.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */; };
 		A1FL19H72E44AA0100000001 /* ExperimentFlashlightOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FL19H72E44AA0100000002 /* ExperimentFlashlightOutput.swift */; };
 		A1ID19H72E45AA0100000003 /* ImageDecodeAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1ID19H72E45AA0100000004 /* ImageDecodeAnalysis.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
@@ -481,6 +481,10 @@
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000001 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000002 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000003 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000004 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AnalyzingShaders.metal; sourceTree = "<group>"; };
 		86E0978D2D64D3E5005C7378 /* Shaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shaders.h; sourceTree = "<group>"; };
 		86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewDescriptor.swift; sourceTree = "<group>"; };
@@ -1427,6 +1431,8 @@
 				tr,
 				hi,
 				ka,
+				ta,
+				ko,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
@@ -1809,6 +1815,8 @@
 				C0D47C182408741600F84F74 /* tr */,
 				86C183CF29F131BC0089E396 /* hi */,
 				86C183D129F132020089E396 /* ka */,
+				A1C0DE192E47BB0100000001 /* ko */,
+				A1C0DE192E47BB0100000003 /* ta */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1836,6 +1844,8 @@
 				C0D47C172408741600F84F74 /* tr */,
 				86C183D029F131BC0089E396 /* hi */,
 				86C183D229F132020089E396 /* ka */,
+				A1C0DE192E47BB0100000002 /* ko */,
+				A1C0DE192E47BB0100000004 /* ta */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
