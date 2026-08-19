@@ -1825,6 +1825,104 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//The formula language uses conventional precedence: ^ is right-associative and binds tighter
+//than unary minus (-2^2 = -4, 2^3^2 = 512); unary minus applies to the immediately following
+//operand only (-2+3 = 1); then * / %, then + -, left-associative at each level. A missing or
+//empty formula and structurally broken formulas (wrong arity, dangling operands) reject the
+//file at load; 1e+5 parses as 100000.
+final class FormulaParserTests: XCTestCase {
+    private func eval(_ formula: String, buffers: [[Double]] = [[0]]) throws -> [Double] {
+        return try FormulaParser(formula: formula).execute(buffers: buffers)
+    }
+
+    func testConventionalPrecedence() throws {
+        let cases: [(String, Double)] = [
+            ("2^3^2", 512),        //^ is right-associative
+            ("-2^2", -4),          //^ binds tighter than unary minus
+            ("-2+3", 1),           //unary minus applies to the following operand only
+            ("-2*3", -6),
+            ("2^-2", 0.25),        //unary minus in the exponent
+            ("-2^-2", -0.25),
+            ("1-2-3", -4),         //left-associative subtraction
+            ("8/4/2", 1),          //left-associative division
+            ("2+3*4", 14),
+            ("2^3*2", 16),         //^ binds tighter than *
+            ("2*3^2", 18),
+            ("-(2+3)", -5),
+            ("5--3", 8),
+            ("-sin(0)+1", 1),      //unary minus before a function call
+            ("7%4", 3),
+            ("1e+5", 100000),      //scientific notation with explicit positive exponent
+            ("-1e+5", -100000)
+        ]
+        for (formula, expected) in cases {
+            let result = try eval(formula)
+            XCTAssertEqual(result.count, 1, formula)
+            XCTAssertEqual(result[0], expected, accuracy: 1e-12, formula)
+        }
+    }
+
+    func testBrokenFormulasRejectAtLoad() {
+        for formula in ["", "5+", "+5", "*5", "-", "min(5)", "sin(1,2)", "5//3", "2^"] {
+            XCTAssertThrowsError(try FormulaParser(formula: formula), "\"\(formula)\" must be rejected at load, not produce NaN at runtime")
+        }
+    }
+
+    func testValidFormulasStillLoad() throws {
+        XCTAssertEqual(try eval("min(2,5)"), [2])
+        XCTAssertEqual(try eval("max(2,5)"), [5])
+        XCTAssertEqual(try eval("atan2(0,1)"), [0])
+        XCTAssertEqual(try eval("sqrt(9)"), [3])
+    }
+
+    func testBufferReferences() throws {
+        XCTAssertEqual(try eval("[1]+1", buffers: [[41]]), [42])
+        XCTAssertEqual(try eval("[1_]*2", buffers: [[1, 2, 3]]), [2, 4, 6], "[n_] iterates the buffer element-wise")
+        XCTAssertEqual(try eval("[1]*2", buffers: [[1, 2, 3]]), [6, 6, 6], "[n] reads the last value for every element")
+        XCTAssertEqual(try eval("-[1]", buffers: [[5]]), [-5])
+    }
+}
+
+//A formula module without a formula attribute is rejected at load (matching Android) instead
+//of silently outputting nothing.
+final class FormulaMissingAttributeTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(_ formulaAttribute: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+                <container>buffer2</container>
+            </data-containers>
+            <analysis>
+                <formula\(formulaAttribute)><input>buffer</input><output>buffer2</output></formula>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer2</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMissingFormulaAttributeRejected() {
+        XCTAssertThrowsError(try parse(xml("")))
+        XCTAssertThrowsError(try parse(xml(" formula=\"\"")), "an empty formula is rejected like a missing one")
+    }
+
+    func testValidFormulaLoads() throws {
+        _ = try parse(xml(" formula=\"[1]*2\""))
+    }
+}
+
 //subtract/divide/power/atan2 consume the validated slot mapping: operands follow the as
 //attributes matched case-insensitively, and unnamed inputs fill the remaining slots in
 //declaration order - never document order (which silently swapped operands when only the
