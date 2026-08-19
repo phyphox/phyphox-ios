@@ -1825,6 +1825,78 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//rangefilter: strictly row-wise filtering like Android - a row is dropped for all outputs when
+//any input's value falls outside its range, keeping outputs aligned; non-finite values are
+//compared like any number (infinities can be filtered, NaN never triggers); extra outputs are
+//ignored; a min/max before the first in binds to the first group.
+final class RangefilterRowAlignmentTests: XCTestCase {
+    private func makeIn(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)
+    }
+
+    private func run(inputs: [ExperimentAnalysisDataInput], outputCount: Int) throws -> [[Double]] {
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+        let module = try RangefilterAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testRowAlignmentWithMultipleFilteredInputs() throws {
+        //row 0 is filtered by input 2, row 1 by input 1, row 2 passes - the old global
+        //deleteCount misaligned exactly this pattern
+        let result = try run(inputs: [
+            try makeIn([1, 100, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max"),
+            try makeIn([100, 2, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 2)
+        XCTAssertEqual(result[0], [3], "outputs must stay row-aligned")
+        XCTAssertEqual(result[1], [3])
+    }
+
+    func testInfinitiesAreFiltered() throws {
+        let result = try run(inputs: [
+            try makeIn([1, .infinity, -.infinity, 2]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 1)
+        XCTAssertEqual(result[0], [1, 2], "infinities are compared like any number and filtered")
+    }
+
+    func testNaNNeverTriggersTheFilter() throws {
+        let result = try run(inputs: [
+            try makeIn([1, .nan, 2]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 1)
+        XCTAssertEqual(result[0].count, 3)
+        XCTAssertTrue(result[0][1].isNaN)
+    }
+
+    func testShorterInputContributesNaN() throws {
+        let result = try run(inputs: [
+            try makeIn([1, 2, 3]),
+            try makeIn([5]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 2, 3])
+        XCTAssertEqual(result[1].count, 3)
+        XCTAssertEqual(result[1][0], 5)
+        XCTAssertTrue(result[1][1].isNaN, "an exhausted input contributes NaN and does not trigger the filter")
+        XCTAssertTrue(result[1][2].isNaN)
+    }
+
+    func testExtraOutputsAreIgnored() throws {
+        let result = try run(inputs: [try makeIn([1, 2])], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 2], "an extra output must be ignored, not trap")
+        XCTAssertEqual(result[1], [])
+    }
+
+    func testLeadingMinBindsToFirstGroup() throws {
+        let result = try run(inputs: [
+            .value(value: 2, usedAs: "min"), try makeIn([1, 2, 3])
+        ], outputCount: 1)
+        XCTAssertEqual(result[0], [2, 3], "a min before the first in must bind to the first group, not be discarded")
+    }
+}
+
 //map: x/y/z accept value-type inputs as one-element buffers; a degenerate range (minX equal to
 //maxX) clamps the bin index instead of trapping (NaN ratio -> bin 0, infinite ratios fall
 //outside the bounds check); a missing z input with zMode sum/average rejects the file at load.
