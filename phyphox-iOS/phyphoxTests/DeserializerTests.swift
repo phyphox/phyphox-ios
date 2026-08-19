@@ -1825,6 +1825,57 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
+//movingaverage: non-finite values inside the window are skipped (aligning with average and
+//binning; a window without any finite value yields NaN). A present but invalid width
+//(non-finite or negative) yields empty output; an absent width input or an empty width buffer
+//selects the documented default of 10.
+final class MovingAverageEdgeCaseTests: XCTestCase {
+    private func runMovingAverage(data: [Double], width: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)]
+        if let width = width {
+            inputs.append(width)
+        }
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try MovingAverageAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "data", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testBasicMovingAverage() throws {
+        let result = try runMovingAverage(data: [1, 2, 3, 4], width: .value(value: 1, usedAs: "width"))
+        XCTAssertEqual(result, [1, 1.5, 2.5, 3.5])
+    }
+
+    func testNonFiniteValuesInWindowAreSkipped() throws {
+        let result = try runMovingAverage(data: [1, .nan, 3], width: .value(value: 2, usedAs: "width"))
+        XCTAssertEqual(result, [1, 1, 2], "NaN in the window must be skipped, not propagate into every average")
+    }
+
+    func testAllNonFiniteWindowYieldsNaN() throws {
+        let result = try runMovingAverage(data: [.nan], width: .value(value: 0, usedAs: "width"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN)
+    }
+
+    func testInvalidWidthYieldsEmptyOutput() throws {
+        for width in [Double.nan, .infinity, -.infinity, -1] {
+            let result = try runMovingAverage(data: [1, 2, 3], width: .value(value: width, usedAs: "width"))
+            XCTAssertEqual(result, [], "width=\(width) must yield an empty output, not a trap or substitute width")
+        }
+    }
+
+    func testEmptyWidthBufferSelectsDefault() throws {
+        let widthBuffer = try DataBuffer(name: "width", size: 0, baseContents: [], static: false)
+        let result = try runMovingAverage(data: [1, 2], width: .buffer(buffer: widthBuffer, data: MutableDoubleArray(data: []), usedAs: "width", keep: true))
+        XCTAssertEqual(result, [1, 1.5], "an empty width buffer selects the default of 10")
+    }
+}
+
 //binning: invalid dx (zero, negative, non-finite) and non-finite x0 yield empty outputs (no
 //silent dx=1 substitution); absent inputs or empty parameter buffers keep the defaults x0=0,
 //dx=1. Bins are lower-edge inclusive with floor semantics - truncation toward zero would give
