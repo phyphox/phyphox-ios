@@ -206,6 +206,35 @@ final class TranslatedLinkTests: XCTestCase {
     }
 }
 
+//The decided graph dataset pairing (graph-multiset-omitted-x and graph-multiset-input-order in
+//phyphox-docs, amended 2026-08-20): equal x and y input counts pair 1-on-1 in order of appearance
+//regardless of interleaving; with fewer x than y inputs each y uses the most recent preceding x,
+//or an index axis if none preceded it. The invalid forms (a trailing or shadowed x that no y
+//uses) are covered by the incorrect-files fixtures.
+final class GraphInputPairingTests: XCTestCase {
+    func testFixturePairings() throws {
+        //The conformance fixture from phyphox-docs (corpus/valid/view-tests/graph-input-orders.phyphox)
+        let path = try testBundle.path(forResource: "graph-input-orders", ofType: "phyphox").unwrap()
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(fileAtPath: path).unwrap())
+
+        let graphs = try (experiment.viewDescriptors?.first?.views.compactMap { $0 as? GraphViewDescriptor }).unwrap()
+        XCTAssertEqual(graphs.count, 4)
+
+        let pairings = graphs.map { graph in
+            zip(graph.xInputBuffers, graph.yInputBuffers).map { ($0?.name, $1.name) }
+        }
+
+        //y then x, one pair
+        XCTAssertTrue(pairings[0].elementsEqual([("t", "a")], by: ==))
+        //y then x, two pairs, 1-on-1 in order of appearance
+        XCTAssertTrue(pairings[1].elementsEqual([("t", "a"), ("t", "b")], by: ==))
+        //shared x, fewer x than y: both y inputs inherit the preceding x
+        XCTAssertTrue(pairings[2].elementsEqual([("t", "a"), ("t", "b")], by: ==))
+        //no x at all: index axis
+        XCTAssertTrue(pairings[3].elementsEqual([(nil, "c")], by: ==))
+    }
+}
+
 //Regression test for the analysis deadlock that broke the tone generator: input view
 //modules (sliders, edit fields) write their initial values with a user-input trigger while the
 //view is being built, i.e. before the experiment assigned the analysis queue. The triggered run
