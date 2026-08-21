@@ -113,7 +113,7 @@
 "pick_exportFormat" = "데이터 형식을 선택하세요.";
 "noDrawableData" = "표시할 데이터가 없습니다.";
 "categoryNewExperiment" = "간단한 사용자 지정 실험";
-"categoryRawSensor" = "기본 센서";
+"categoryRawSensor" = "기본 센서(raw sensors)";
 "categoryPhyphoxOrg" = "Phyphox에 기여하기";
 "categoryPhyphoxOrgHint" = "목록 하단에 phyphox를 후원할 수 있는 새로운 옵션이 있습니다.";
 "experimentinfo_hint" = "이 실험의 사용 방법을 알아보려면 실험 정보를 확인하세요.";
@@ -398,3 +398,5 @@
 "common_unit_short_micro_meter" = "μm";
 "common_quantity_short_wavelength" = "λ";
 "common_quantity_percentage" = "Percent";
+"remoteServerPortInUseTitle" = "원격 접속을 활성화할 수 없습니다";
+"remoteServerPortInUse" = "이 기기의 다른 앱에서 포트를 이미 사용 중이므로 원격 접속을 활성화할 수 없습니다. 해당 포트를 사용 중인 앱을 종료하거나 phyphox 설정에서 다른 포트를 지정하세요.";
