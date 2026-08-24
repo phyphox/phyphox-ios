@@ -3749,16 +3749,47 @@ final class CorpusConformanceTests: XCTestCase {
         return expectations
     }
 
+    //A valid/generated file exercising a construct with a recorded platform difference
+    //carries an entry in an expected.yml next to it, mapping each platform to accepts or
+    //rejects (nested shape, unlike the flat one of invalid/expected.yml). Returns what iOS
+    //must do with each annotated file; files without an entry must simply load.
+    private func platformExpectations(in directory: URL) throws -> [String: String] {
+        guard let text = try? String(contentsOf: directory.appendingPathComponent("expected.yml"), encoding: .utf8) else { return [:] }
+        var expectations: [String: String] = [:]
+        var currentFile: String? = nil
+        for line in text.components(separatedBy: .newlines) {
+            let withoutComment = line.components(separatedBy: "#")[0]
+            let trimmed = withoutComment.trimmingCharacters(in: .whitespaces)
+            if !line.hasPrefix(" ") && trimmed.hasSuffix(":") && trimmed.contains(".phyphox") {
+                currentFile = String(trimmed.dropLast())
+            }
+            else if line.hasPrefix(" ") && trimmed.hasPrefix("ios:"), let file = currentFile {
+                expectations[file] = trimmed.dropFirst("ios:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return expectations
+    }
+
     //Every corpus file of a supported format version loads through the app's real
     //experiment-loading path; files declaring a newer version exist for future format
-    //versions and are skipped, not failed.
+    //versions and are skipped, not failed. A file whose platform annotation maps ios to
+    //rejects must instead be REFUSED - the deliberate platform difference is itself contract.
     // phyphox-test: corpus-valid-load
     func testValidAndGeneratedCorpusFilesLoad() throws {
         let corpus = try corpus()
         var loaded = 0
         for directory in ["valid", "generated"] {
-            for url in try phyphoxFiles(in: corpus.appendingPathComponent(directory, isDirectory: true)) {
+            let directoryURL = corpus.appendingPathComponent(directory, isDirectory: true)
+            let platformExpectations = try platformExpectations(in: directoryURL)
+            for url in try phyphoxFiles(in: directoryURL) {
                 let name = url.path.replacingOccurrences(of: corpus.path + "/", with: "")
+                if let expectation = platformExpectations[url.lastPathComponent] {
+                    XCTAssertTrue(expectation == "rejects" || expectation == "accepts", "unexpected platform expectation \"\(expectation)\" for \(name)")
+                    if expectation == "rejects" {
+                        XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url), "\(name) exercises a construct that is Android-only by design and must be refused on iOS")
+                        continue
+                    }
+                }
                 guard let version = declaredVersion(of: url) else {
                     XCTFail("could not read the declared format version of \(name)")
                     continue
