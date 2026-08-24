@@ -12,12 +12,6 @@ import Foundation
 
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool, clearGroup: String?)
 
-//Lexical space of one init entry, matching the docs validators (FLOAT_LEX in phyphox-docs):
-//decimal notation plus NaN and [+-]Infinity with case folded. Deliberately narrower than what
-//Double(String) accepts - "inf" or hex floats like "0x1p3" are not portable, as Java cannot
-//parse them.
-private let initEntryPattern = "^(?:[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY])$"
-
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [BufferDescriptor]()
 
@@ -52,8 +46,7 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
         let baseContents: [Double]
         if let initValues = attributes.optionalString(for: .initKey), !initValues.isEmpty {
             baseContents = try initValues.components(separatedBy: ",").map {
-                let entry = $0.trimmingCharacters(in: .whitespaces)
-                guard entry.range(of: initEntryPattern, options: .regularExpression) != nil, let value = Double(entry) else {
+                guard let value = parseExperimentNumber($0.trimmingCharacters(in: .whitespaces)) else {
                     throw ElementHandlerError.unexpectedAttributeValue("init")
                 }
                 return value

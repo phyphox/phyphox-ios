@@ -289,6 +289,55 @@ final class ContainerInitValueTests: XCTestCase {
     }
 }
 
+//Numeric attributes share the same lexical space as the init entries (number-invalid-value rule
+//in phyphox-docs): the central readers must reject spellings Swift's Double(String) accepts but
+//the format does not define, on the Double, CGFloat and Float decode paths alike (the Float path
+//- the camera crop attributes - goes through the same guard). Integer decodes were already
+//sign-and-digits only.
+final class NumericAttributeLexicalSpaceTests: XCTestCase {
+    //factor is a Double decode, the graph's lineWidth a CGFloat decode
+    private func parse(factor: String, lineWidth: String = "1") throws -> Experiment {
+        let xml = """
+        <phyphox version="1.20">
+            <title>numtest</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l" factor="\(factor)"><input>buffer</input></value>
+                    <graph label="g" lineWidth="\(lineWidth)"><input axis="y">buffer</input></graph>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func factor(of experiment: Experiment) throws -> Double {
+        return try ((experiment.viewDescriptors?.first?.views.compactMap { $0 as? ValueViewDescriptor })?.first).unwrap().factor
+    }
+
+    func testAcceptedForms() throws {
+        XCTAssertEqual(try factor(of: parse(factor: "1e-3")), 0.001)
+        //The special values fold case like everywhere else in the format
+        XCTAssertTrue(try factor(of: parse(factor: "nan")).isNaN)
+        XCTAssertEqual(try factor(of: parse(factor: "-INFINITY")), -Double.infinity)
+    }
+
+    func testSwiftOnlyFormsAreRejected() {
+        XCTAssertThrowsError(try parse(factor: "inf"))
+        XCTAssertThrowsError(try parse(factor: "+inf"))
+        XCTAssertThrowsError(try parse(factor: "0x1p3"))
+        //The CGFloat decode path applies the same check
+        XCTAssertThrowsError(try parse(factor: "1", lineWidth: "inf"))
+        XCTAssertThrowsError(try parse(factor: "1", lineWidth: "0x1p3"))
+    }
+}
+
 //Regression test for the analysis deadlock that broke the tone generator: input view
 //modules (sliders, edit fields) write their initial values with a user-input trigger while the
 //view is being built, i.e. before the experiment assigned the analysis queue. The triggered run
