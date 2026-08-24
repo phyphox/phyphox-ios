@@ -2353,6 +2353,53 @@ final class ComplexModuleOperandOrderTests: XCTestCase {
     }
 }
 
+//atan2 with a fixed value as one operand is element-wise like every other multi-input module:
+//the value repeats for every element of the other operand and the result has the length of the
+//longest input. It used to collapse to a single value computed from the buffer's first element.
+final class Atan2FixedValueOperandTests: XCTestCase {
+    private func run(y: ExperimentAnalysisDataInput, x: ExperimentAnalysisDataInput, deg: Bool = false) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try Atan2Analysis(
+            inputs: [y, x],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "atan2", append: false)],
+            additionalAttributes: .empty)
+        module.deg = deg
+        module.update()
+        return out.toArray()
+    }
+
+    private func makeBuffer(_ name: String, _ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: name, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: name, keep: true)
+    }
+
+    func testValueXWithBufferY() throws {
+        let result = try run(y: try makeBuffer("y", [1, 0, -1]), x: .value(value: 0, usedAs: "x"))
+        XCTAssertEqual(result.count, 3, "the result has the length of the longest input")
+        XCTAssertEqual(result[0], Double.pi/2, accuracy: 1e-12)
+        XCTAssertEqual(result[1], 0, accuracy: 1e-12)
+        XCTAssertEqual(result[2], -Double.pi/2, accuracy: 1e-12)
+    }
+
+    func testValueYWithBufferX() throws {
+        let result = try run(y: .value(value: 1, usedAs: "y"), x: try makeBuffer("x", [1, 0, -1]))
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0], Double.pi/4, accuracy: 1e-12)
+        XCTAssertEqual(result[1], Double.pi/2, accuracy: 1e-12)
+        XCTAssertEqual(result[2], 3*Double.pi/4, accuracy: 1e-12)
+    }
+
+    func testDegreesApplyToEveryElement() throws {
+        let result = try run(y: try makeBuffer("y", [1, 0, -1]), x: .value(value: 0, usedAs: "x"), deg: true)
+        XCTAssertEqual(result, [90, 0, -90])
+    }
+
+    func testEmptyBufferWithValueGivesEmptyResult() throws {
+        let result = try run(y: try makeBuffer("y", []), x: .value(value: 1, usedAs: "x"))
+        XCTAssertEqual(result, [], "a scalar and an empty buffer give an empty result")
+    }
+}
+
 //rangefilter: strictly row-wise filtering like Android - a row is dropped for all outputs when
 //any input's value falls outside its range, keeping outputs aligned; non-finite values are
 //compared like any number (infinities can be filtered, NaN never triggers); extra outputs are
