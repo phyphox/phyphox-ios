@@ -48,13 +48,12 @@ private extension ExperimentCameraInput {
         let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
         let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
         let valueBuffer = descriptor.buffer(for: "value", from: buffers)
-        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
         let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
         let pixelPosition = descriptor.buffer(for: "pixelPosition", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 
