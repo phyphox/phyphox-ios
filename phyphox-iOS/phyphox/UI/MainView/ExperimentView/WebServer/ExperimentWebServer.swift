@@ -734,7 +734,9 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        let configuredPort = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
+        //-phyphoxRemotePort pins the port for unattended automation (see AutomationLaunchOptions
+        //in AppDelegate); otherwise the user's setting applies
+        let configuredPort = AutomationLaunchOptions.remotePort ?? UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
 
         //If the port setting is at its default, we assume that the user does not care (or might
         //not even know) which port is used, so if the default port is taken, we try 8080 and then

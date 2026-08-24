@@ -9,6 +9,43 @@
 import UIKit
 
 
+//Launch-argument seam for unattended automation (the lab driver of the cross-platform test
+//strategy). Launch arguments can only be set through simctl, devicectl or Xcode - never by
+//another app or by a user of an installed build - so these switches ship ungated in release
+//builds:
+//
+//  -phyphoxUrl <url>          opens the URL exactly as if it had been opened from outside the
+//                             app, but without the system's open-in confirmation dialog, which
+//                             cannot be suppressed and would block every scripted
+//                             phyphox://asset= launch. The URL goes through the same handler as
+//                             a real open, so the semantics cannot drift. Android needs no
+//                             counterpart - "adb shell am start" opens URLs without a dialog.
+//  -phyphoxRemote             enables remote access for the launched experiment session, exactly
+//                             as the menu toggle would but without its confirmation dialog.
+//                             Android mirrors this with the shell-only system property
+//                             "debug.phyphox.remote" - one host-controlled switch, two platform
+//                             idioms.
+//  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one,
+//                             so a host script does not have to discover the port the fallback
+//                             ladder picked.
+//
+//Example:
+//xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox" -phyphoxRemote
+enum AutomationLaunchOptions {
+    private static let arguments = ProcessInfo.processInfo.arguments
+
+    private static func value(after flag: String) -> String? {
+        guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
+
+    static let url: URL? = value(after: "-phyphoxUrl").flatMap { URL(string: $0) }
+
+    static let remoteEnabled = arguments.contains("-phyphoxRemote")
+
+    static let remotePort: UInt? = value(after: "-phyphoxRemotePort").flatMap { UInt($0) }
+}
+
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
@@ -25,19 +62,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         UILabel.appearance().adjustsFontForContentSizeCategory = true
 
-        //Launch-argument seam for unattended automation (the lab driver of the cross-platform
-        //test strategy): "-phyphoxUrl <url>" behaves exactly as if the URL had been opened
-        //from outside the app, but without the system's open-in confirmation dialog, which
-        //cannot be suppressed and would block every scripted phyphox://asset= launch. The URL
-        //goes through the same handler as a real open, so the semantics cannot drift. Android
-        //needs no counterpart - "adb shell am start" opens URLs without a confirmation.
-        //Example:
-        //xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox"
+        //The automation launch arguments are documented at AutomationLaunchOptions above
         let arguments = ProcessInfo.processInfo.arguments
-        var automationURL: URL? = nil
-        if let index = arguments.firstIndex(of: "-phyphoxUrl"), index + 1 < arguments.count {
-            automationURL = URL(string: arguments[index + 1])
-        }
+        let automationURL = AutomationLaunchOptions.url
 
         experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: (url == nil && automationURL == nil) || arguments.contains("screenshot"))
 

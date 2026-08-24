@@ -717,6 +717,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //viewDidDisappear tore down and let the sequence pass through the remaining steps
             executeSequence(from: .dataPolicy)
         }
+
+        //Launch-argument seam for unattended automation (see AutomationLaunchOptions in
+        //AppDelegate): -phyphoxRemote brings the remote server up for this session, exactly as
+        //the menu toggle's confirmed action does, so a host script can drive the REST API.
+        //Only once - a later manual toggle stays the user's decision.
+        if AutomationLaunchOptions.remoteEnabled && !didLaunchWebServerForAutomation {
+            didLaunchWebServerForAutomation = true
+            launchWebServer()
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -816,6 +825,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private var remoteUrl: String = ""
+
+    private var didLaunchWebServerForAutomation = false
     
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
