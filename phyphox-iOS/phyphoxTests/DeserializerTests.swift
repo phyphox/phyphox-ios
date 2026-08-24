@@ -788,6 +788,40 @@ final class WebServerConformanceTests: XCTestCase {
     }
 }
 
+//The phyphox://asset= deep link (transferring-experiments.md in phyphox-docs): the url-encoded
+//path after asset= identifies an experiment within the bundled collection - the same
+//identifier as Android's assets/experiments/<path> - and must survive url-decoding with its
+//case and subfolders intact. Empty and absolute paths and any traversal are refused; the rest
+//of the pipeline is the app's normal experiment loading.
+final class AssetDeepLinkTests: XCTestCase {
+    func testResolvesWithinBundledCollection() throws {
+        let url = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "accelerometer.phyphox").unwrap()
+        XCTAssertTrue(url.path.hasSuffix("phyphox-experiments/accelerometer.phyphox"))
+        //The resolved file must load through the app's real loading path
+        XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(url).localizedTitle, "Acceleration with g")
+
+        //Subfolder (encoded /) and case-sensitive, space-carrying names decode unharmed
+        let sub = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2Fphyphox_m_bmp581.phyphox").unwrap()
+        XCTAssertTrue(sub.path.hasSuffix("phyphox-experiments/bluetooth/phyphox_m_bmp581.phyphox"))
+        _ = try ExperimentSerialization.readExperimentFromURL(sub)
+        let mixedCase = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2FHID%20Mouse%20Light.phyphox").unwrap()
+        XCTAssertTrue(mixedCase.path.hasSuffix("phyphox-experiments/bluetooth/HID Mouse Light.phyphox"))
+        _ = try ExperimentSerialization.readExperimentFromURL(mixedCase)
+    }
+
+    func testInvalidPathsAreRefused() {
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: ""))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "/etc/passwd"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "%2Fetc%2Fpasswd"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "../secret.phyphox"))
+        //Traversal hidden behind percent-encoding is caught after decoding
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "%2E%2E%2Fsecret.phyphox"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2F..%2F..%2Fsecret.phyphox"))
+        //An invalid percent-encoding cannot be decoded at all
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "abc%2"))
+    }
+}
+
 //The /set endpoint: bulk buffer writes from a JSON body, per the phyphox-docs specification
 //(openapi.yaml path /set, API 1.1.0) - JSON-body-only, the format's number lexical space for
 //string entries, null as NaN, atomic validation, replace/append modes. Behavior and error

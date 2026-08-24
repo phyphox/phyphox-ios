@@ -936,6 +936,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
     }
     
+    //Resolves the url-encoded path of a phyphox://asset= link within the bundled experiment
+    //collection. The identifier is the file path within the collection, identical to Android's
+    //assets/experiments/<path>. An empty path, a leading / and any path containing .. are
+    //refused - the link is deliberately limited to the bundled collection.
+    static func bundledExperimentAssetURL(encodedPath: String) -> URL? {
+        guard let path = encodedPath.removingPercentEncoding, !path.isEmpty, !path.hasPrefix("/"), !path.contains("..") else {
+            return nil
+        }
+        return experimentsBaseURL.appendingPathComponent(path)
+    }
+
     func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
 print("\(url)")
         var fileType = FileType.unknown
@@ -949,7 +960,25 @@ print("\(url)")
         _ = url.startAccessingSecurityScopedResource()
         
         //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
-        if url.scheme == "phyphox" {
+        if url.scheme == "phyphox", url.absoluteString.hasPrefix("phyphox://asset=") {
+            //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
+            //transferring-experiments.md in phyphox-docs) - no server involved. The path is
+            //taken from the raw URL string: URLComponents' host/authority accessors normalize
+            //their case, which would corrupt the case-sensitive asset path. Any other
+            //phyphox:// URL keeps the https-rewrite behavior below. Mirrored on Android
+            //(ExperimentListActivity.handleIntent) - the two must stay in step.
+            let encodedPath = String(url.absoluteString.dropFirst("phyphox://asset=".count))
+            if let assetURL = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: encodedPath) {
+                //An unknown path fails the load below like any other unreadable file, showing
+                //the app's normal could-not-load message
+                fileType = .phyphox
+                finalURL = assetURL
+            }
+            else {
+                experimentLoadingError = SerializationError.genericError(message: "Invalid experiment asset path.")
+            }
+        }
+        else if url.scheme == "phyphox" {
             //phyphox:// allow to retreive the experiment via https or http. Try both.
             if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 components.scheme = "https"
