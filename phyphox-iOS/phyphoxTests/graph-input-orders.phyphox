@@ -1,0 +1,47 @@
+<phyphox xmlns="http://phyphox.org/xml" version="1.20" locale="en">
+    <!-- Pins the decided graph dataset pairing (ruled and amended
+         2026-08-20): equal x and y counts pair 1-on-1 in
+         order of appearance whatever the interleaving - including the
+         y-then-x form of the shipped Bluetooth experiments - while fewer x
+         than y inputs use most-recent-preceding-x sharing or an index
+         axis. -->
+    <title>Corpus: graph input orders</title>
+    <category>Corpus</category>
+    <description>Accepted dataset pairings of the graph element.</description>
+    <data-containers>
+        <container size="100">t</container>
+        <container size="100">a</container>
+        <container size="100">b</container>
+        <container size="100">c</container>
+    </data-containers>
+    <input>
+        <sensor type="accelerometer">
+            <output component="x">a</output>
+            <output component="y">b</output>
+            <output component="z">c</output>
+            <output component="t">t</output>
+        </sensor>
+    </input>
+    <views>
+        <view label="Orders">
+            <graph label="y then x, one pair">
+                <input axis="y">a</input>
+                <input axis="x">t</input>
+            </graph>
+            <graph label="y then x, two pairs, 1-on-1">
+                <input axis="y">a</input>
+                <input axis="x">t</input>
+                <input axis="y">b</input>
+                <input axis="x">t</input>
+            </graph>
+            <graph label="shared x, fewer x than y">
+                <input axis="x">t</input>
+                <input axis="y">a</input>
+                <input axis="y">b</input>
+            </graph>
+            <graph label="index axis, no x">
+                <input axis="y">c</input>
+            </graph>
+        </view>
+    </views>
+</phyphox>
