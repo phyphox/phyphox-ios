@@ -37,7 +37,19 @@ final class ExperimentAnalysis {
     public let timedRunStartDelay: Double
     public let timedRunStopDelay: Double
     
-    var running = false
+    var running = false {
+        didSet {
+            if !running {
+                //Stopping re-exempts the next run from the requireFill gate, like Android
+                //resetting lastAnalysis in stopAllIO
+                didRunSinceStart = false
+            }
+        }
+    }
+
+    //Whether an analysis run has been carried out since the experiment was opened or started
+    //(Android: lastAnalysis != 0)
+    private var didRunSinceStart = false
     
     let timeReference: ExperimentTimeReference
     weak var delegate: ExperimentAnalysisDelegate?
@@ -159,7 +171,10 @@ final class ExperimentAnalysis {
             }
         }
         
-        if let requireFill = requireFill {
+        //The first run after opening or starting is exempt from the requireFill gate: it is the
+        //pass that initializes buffers, and it has to run while the required container is still
+        //empty (Android: the lastAnalysis != 0 condition in processAnalysis)
+        if let requireFill = requireFill, didRunSinceStart {
             let threshold: Int
             if let dynamic = requireFillDynamic?.last {
                 threshold = Int(dynamic)
@@ -226,12 +241,14 @@ final class ExperimentAnalysis {
                 }
                 mainThread {
                     self.cycle += 1
+                    self.didRunSinceStart = true
                     completion(true)
                 }
             })
         } else {
             mainThread {
                 self.cycle += 1
+                self.didRunSinceStart = true
                 completion(true)
             }
         }

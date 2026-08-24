@@ -2353,6 +2353,75 @@ final class ComplexModuleOperandOrderTests: XCTestCase {
     }
 }
 
+//requireFill: the first analysis run after opening or starting is exempt from the gate, so the
+//initialization pass runs while the required container is still empty (Android's model, decided
+//2026-08-24).
+final class RequireFillFirstRunTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        var onUpdate: (() -> Void)?
+        var onSkip: (() -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {}
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) { onUpdate?() }
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { onSkip?() }
+    }
+
+    private let delegate = Delegate()
+
+    private func makeAnalysis(output: DataBuffer, requireFill: DataBuffer) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.value(value: 1, usedAs: ""), .value(value: 2, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: false,
+                                          requireFill: requireFill, requireFillThreshold: 5, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    private func runOnce(_ analysis: ExperimentAnalysis, expectingExecution: Bool) {
+        let done = expectation(description: expectingExecution ? "analysis executes" : "analysis is skipped")
+        delegate.onUpdate = {
+            if expectingExecution { done.fulfill() } else { XCTFail("the requireFill gate should have skipped this run") }
+        }
+        delegate.onSkip = {
+            if expectingExecution { XCTFail("this run should not have been gated") } else { done.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true) //a pre-run does not reschedule itself
+        wait(for: [done], timeout: 5)
+    }
+
+    func testFirstRunIsExemptAndLaterRunsAreGated() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        runOnce(analysis, expectingExecution: true)
+        XCTAssertEqual(output.toArray(), [3], "the initialization pass runs although the required container is empty")
+
+        runOnce(analysis, expectingExecution: false)
+
+        requireFill.appendFromArray([1, 2, 3, 4, 5])
+        runOnce(analysis, expectingExecution: true)
+    }
+
+    func testStoppingExemptsTheNextRunAgain() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        analysis.running = true
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+
+        analysis.running = false //what Experiment.stop() does
+        runOnce(analysis, expectingExecution: true)
+    }
+}
+
 //static data containers follow Android's model (decided 2026-08-24): the module writing them
 //executes a single time and is skipped from then on - so it also stops clearing its keep=false
 //input buffers - a static output locks once the module has run even if it wrote nothing, and the
