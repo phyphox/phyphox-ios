@@ -1094,7 +1094,7 @@ print("\(url)")
             
             
             let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("exp_error"))
+                .title(title: localize("warning"))
                 .message(message: "Could not load experiment: \(message)")
                 .preferredStyle(style: .alert)
             if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {
