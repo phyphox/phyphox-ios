@@ -1,0 +1,124 @@
+# T1 test tier: the host-driven tests of the phyphox test strategy. They need a running app,
+# so they build for the simulator, install, and drive the app through the remote-access API -
+# which the -phyphoxRemote launch argument (AppDelegate, AutomationLaunchOptions) enables
+# headlessly. The tools live in phyphox-docs, checked out as a sibling like the T0 corpus.
+#
+# Deliberately NOT scheduled: T1 runs on pushes to the development and release branches and on
+# demand. It costs macOS runner minutes and needs no nightly cadence.
+#
+# What the simulator can and cannot do: it has no motion sensors, no barometer, no proximity
+# and no ambient light, so roughly half the shipped collection refuses to open there (the app
+# reports the missing sensor and returns to the collection) - which is why the end-to-end job
+# names the experiments it runs instead of walking the whole collection. Audio *input* is
+# unreliable in a simulator (AVAudioEngine's inputNode can abort with an AudioToolbox RPC
+# timeout), so no microphone experiment is used. Real coverage of the sensor experiments is a
+# T2 lab-phone job, not this one.
+name: t1
+on:
+  push:
+    branches:
+      - development
+      - 'release/**'
+  workflow_dispatch:
+
+jobs:
+  t1:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      BUNDLE: de.rwth-aachen.physics.phyphox
+      # The app serves remote access on its configured port (80 by default); -phyphoxRemotePort
+      # pins it where the launch is ours. The experiments driver launches the app itself and
+      # does not pass that argument, so its port must be the app's default instead.
+      CONTRACT_PORT: '8080'
+      DRIVER_PORT: '80'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-ios
+          submodules: recursive
+
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+
+      - name: Python dependencies
+        run: pip3 install --break-system-packages pyyaml jsonschema
+
+      - name: Build for the simulator
+        run: >
+          cd phyphox-ios/phyphox-iOS && xcodebuild build -project phyphox.xcodeproj
+          -scheme phyphox -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$GITHUB_WORKSPACE/dd" CODE_SIGNING_ALLOWED=NO
+
+      - name: Boot a simulator and install the app
+        run: |
+          set -euo pipefail
+          # The newest iPhone simulator the runner image ships
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')][-1])")
+          test -n "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
+          # No permission dialog may block a headless run
+          xcrun simctl privacy "$UDID" grant all "$BUNDLE"
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+
+      # phyphox-test: remote-contract-t1
+      - name: Remote interface contract test
+        run: |
+          set -euo pipefail
+          BASE="http://127.0.0.1:$CONTRACT_PORT"
+          # The tone generator needs no sensor, no camera and no microphone - the least the
+          # simulator can get wrong. Swap it for camera-luminance.phyphox if a runner ever
+          # lacks an audio output device.
+          xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" \
+            -phyphoxUrl "phyphox://asset=tone_generator.phyphox" \
+            -phyphoxRemote -phyphoxRemotePort "$CONTRACT_PORT"
+          for i in $(seq 30); do
+            curl -fs -m 2 "$BASE/config" >/dev/null && break
+            sleep 1
+          done
+          curl -fs -m 5 "$BASE/config" >/dev/null
+          # Probes are uninformative on an experiment that has never measured
+          curl -fs -m 5 "$BASE/control?cmd=start" >/dev/null
+          sleep 3
+          curl -fs -m 5 "$BASE/control?cmd=stop" >/dev/null
+          python3 phyphox-docs/tools/contract_test.py --ios "$BASE" --allow-control
+          xcrun simctl terminate "$UDID" "$BUNDLE" || true
+
+      # phyphox-test: experiments-e2e-t1
+      - name: Experiments end to end
+        run: |
+          set -euo pipefail
+          # The experiments a simulator can host: no motion sensors, no barometer, no
+          # microphone (see the header). The driver is invoked once per experiment with the
+          # app terminated in between, because a second `simctl launch` onto a running app
+          # does not deliver new launch arguments - it would silently re-measure the previous
+          # experiment. One invocation over the whole list is the goal once the driver
+          # terminates the app itself.
+          COLLECTION="$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments"
+          status=0
+          for experiment in \
+            tone_generator.phyphox \
+            camera-luminance.phyphox \
+            camera-hsv.phyphox \
+            camera_stopwatch_luma.phyphox \
+            camera_stopwatch_hue.phyphox \
+            camera_spectrum_luma.phyphox
+          do
+            xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+            python3 phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
+              --port "$DRIVER_PORT" --collection "$COLLECTION" --subset "$experiment" \
+              --out "t1-${experiment%.phyphox}.json" || status=1
+          done
+          exit $status
+
+      - name: Collect the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-results
+          path: t1-*.json
+          if-no-files-found: ignore
