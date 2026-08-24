@@ -8,11 +8,11 @@ jobs:
   t0:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: phyphox-ios
           submodules: recursive
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: phyphox/phyphox-docs
           path: phyphox-docs
