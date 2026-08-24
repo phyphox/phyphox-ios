@@ -1,0 +1,22 @@
+# T0 test tier: the XCTest suite (phyphoxTests), including the conformance-corpus runner,
+# which reads the corpus from a phyphox-docs checkout sitting NEXT TO the app repository -
+# hence the two sibling checkouts. Without the sibling the corpus tests would skip; checking
+# it out explicitly means CI always runs them.
+name: tests
+on: [push, pull_request]
+jobs:
+  t0:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: phyphox-ios
+          submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - run: >
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj
+          -scheme phyphox -destination 'platform=iOS Simulator,name=iPhone 17'
+          -only-testing phyphoxTests CODE_SIGNING_ALLOWED=NO
