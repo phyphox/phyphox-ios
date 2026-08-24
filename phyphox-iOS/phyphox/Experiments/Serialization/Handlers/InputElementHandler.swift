@@ -34,7 +34,7 @@ private let depthComponents = [
     AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
     AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 ]
-private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "threshold", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
     AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 }
 
