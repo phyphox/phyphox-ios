@@ -3681,3 +3681,178 @@ final class AutocorrelationOmittedXOutputTests: XCTestCase {
         }
     }
 }
+
+//The conformance-corpus runner, implementing the contract in phyphox-docs corpus/README.md
+//("The app test suites") and the corpus-* rows of test-matrix.yml. The corpus is read from a
+//phyphox-docs checkout NEXT TO this repository - the same sibling convention the docs build
+//uses for the shipped collection, in reverse - never copied into the test bundle, where it
+//would drift. Without the sibling the corpus tests skip with a notice (a plain clone must
+//still build and test); CI checks the sibling out explicitly, so there they always run.
+final class CorpusConformanceTests: XCTestCase {
+    //#filePath is resolvable at test time because the suite builds and runs on the same
+    //machine, locally as well as on CI
+    private static let corpusURL: URL? = {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()  // phyphoxTests
+            .deletingLastPathComponent()  // phyphox-iOS
+            .deletingLastPathComponent()
+        let corpus = repositoryRoot.deletingLastPathComponent().appendingPathComponent("phyphox-docs/corpus", isDirectory: true)
+        return FileManager.default.fileExists(atPath: corpus.path) ? corpus : nil
+    }()
+
+    private func corpus() throws -> URL {
+        guard let corpus = CorpusConformanceTests.corpusURL else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - conformance corpus not tested")
+        }
+        return corpus
+    }
+
+    //Reads the version attribute of the root element without parsing the whole file
+    private final class RootVersionReader: NSObject, XMLParserDelegate {
+        var version: String? = nil
+        func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String]) {
+            version = attributeDict["version"]
+            parser.abortParsing()
+        }
+    }
+
+    private func declaredVersion(of url: URL) -> SemanticVersion? {
+        guard let parser = XMLParser(contentsOf: url) else { return nil }
+        let reader = RootVersionReader()
+        parser.delegate = reader
+        parser.parse()
+        return reader.version.flatMap { SemanticVersion(string: $0) }
+    }
+
+    private func phyphoxFiles(in directory: URL) throws -> [URL] {
+        let enumerator = try FileManager.default.enumerator(at: directory, includingPropertiesForKeys: nil).unwrap()
+        return enumerator.compactMap({ $0 as? URL }).filter({ $0.pathExtension == "phyphox" })
+    }
+
+    //The parser classification of the invalid corpus files, from expected.yml: file name to
+    //"rejects" or "accepts". Read with a minimal line-based reader instead of a YAML
+    //dependency; the file's shape is pinned by its header and by the Android runner.
+    private func invalidFileExpectations(corpus: URL) throws -> [String: String] {
+        let text = try String(contentsOf: corpus.appendingPathComponent("invalid/expected.yml"), encoding: .utf8)
+        var expectations: [String: String] = [:]
+        var currentFile: String? = nil
+        for line in text.components(separatedBy: .newlines) {
+            let withoutComment = line.components(separatedBy: "#")[0]
+            let trimmed = withoutComment.trimmingCharacters(in: .whitespaces)
+            if !line.hasPrefix(" ") && trimmed.hasSuffix(":") && trimmed.contains(".phyphox") {
+                currentFile = String(trimmed.dropLast())
+            }
+            else if line.hasPrefix(" ") && trimmed.hasPrefix("parser:"), let file = currentFile {
+                expectations[file] = trimmed.dropFirst("parser:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return expectations
+    }
+
+    //Every corpus file of a supported format version loads through the app's real
+    //experiment-loading path; files declaring a newer version exist for future format
+    //versions and are skipped, not failed.
+    // phyphox-test: corpus-valid-load
+    func testValidAndGeneratedCorpusFilesLoad() throws {
+        let corpus = try corpus()
+        var loaded = 0
+        for directory in ["valid", "generated"] {
+            for url in try phyphoxFiles(in: corpus.appendingPathComponent(directory, isDirectory: true)) {
+                let name = url.path.replacingOccurrences(of: corpus.path + "/", with: "")
+                guard let version = declaredVersion(of: url) else {
+                    XCTFail("could not read the declared format version of \(name)")
+                    continue
+                }
+                guard version <= latestSupportedFileVersion else { continue }
+                do {
+                    _ = try ExperimentSerialization.readExperimentFromURL(url)
+                    loaded += 1
+                }
+                catch {
+                    XCTFail("\(name) (version \(version.major).\(version.minor)) failed to load: \(error)")
+                }
+            }
+        }
+        XCTAssertGreaterThan(loaded, 0, "no supported corpus file was found - corpus layout changed?")
+    }
+
+    //Structural defects, invalid enum values and the other parser: rejects files must fail on
+    //the real loading path. Any error counts; error messages are platform wording and are
+    //never asserted.
+    // phyphox-test: corpus-invalid-reject
+    func testInvalidCorpusFilesReject() throws {
+        let corpus = try corpus()
+        for (file, expectation) in try invalidFileExpectations(corpus: corpus).sorted(by: { $0.key < $1.key }) where expectation == "rejects" {
+            let url = corpus.appendingPathComponent("invalid", isDirectory: true).appendingPathComponent(file)
+            XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url), "invalid/\(file) must be rejected (classification measured on Android - a disagreement here is a finding to report, not to paper over)")
+        }
+    }
+
+    //The parser: accepts files carry only unknown or misapplied attributes, which the parsers
+    //ignore per the unknown-attribute-ignored rule (phyphox-docs spec/rules.yml). Their
+    //loading pins that compatibility guarantee.
+    // phyphox-test: corpus-tolerated-attributes-load
+    func testToleratedAttributeFilesLoad() throws {
+        let corpus = try corpus()
+        for (file, expectation) in try invalidFileExpectations(corpus: corpus).sorted(by: { $0.key < $1.key }) where expectation == "accepts" {
+            let url = corpus.appendingPathComponent("invalid", isDirectory: true).appendingPathComponent(file)
+            do {
+                _ = try ExperimentSerialization.readExperimentFromURL(url)
+            }
+            catch {
+                XCTFail("invalid/\(file) must load, its defects are tolerated attributes (classification measured on Android - a disagreement here is a finding to report, not to paper over), but it threw: \(error)")
+            }
+        }
+    }
+
+    //Guards the runner itself: the classification and the directory must not drift apart, and
+    //the minimal expected.yml reader must keep understanding the file.
+    func testExpectationsMatchInvalidDirectory() throws {
+        let corpus = try corpus()
+        let expectations = try invalidFileExpectations(corpus: corpus)
+        let files = try phyphoxFiles(in: corpus.appendingPathComponent("invalid", isDirectory: true)).map { $0.lastPathComponent }
+        XCTAssertEqual(Set(expectations.keys), Set(files), "corpus/invalid and expected.yml list different files")
+        for (file, expectation) in expectations {
+            XCTAssertTrue(expectation == "rejects" || expectation == "accepts", "unexpected parser classification \"\(expectation)\" for \(file)")
+        }
+    }
+
+    //The version gate all feature rollout relies on: a file declaring a newer format version
+    //than the app supports is refused, the exact supported version loads. Built from a
+    //supported file at test time, not a corpus fixture, so it stays correct as the supported
+    //version moves - and independent of the corpus checkout, so it never skips.
+    // phyphox-test: corpus-version-gate
+    func testVersionGate() throws {
+        func minimalExperiment(version: String) -> String {
+            return """
+            <phyphox version="\(version)">
+                <title>version gate</title>
+                <category>test</category>
+                <description>d</description>
+                <data-containers>
+                    <container>buffer</container>
+                </data-containers>
+                <views>
+                    <view label="v">
+                        <value label="l"><input>buffer</input></value>
+                    </view>
+                </views>
+            </phyphox>
+            """
+        }
+
+        func load(version: String) throws -> Experiment {
+            //Through a file and the real loading path, like everything a device receives
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("version-gate-\(UUID().uuidString).phyphox")
+            try minimalExperiment(version: version).write(to: url, atomically: true, encoding: .utf8)
+            defer { try? FileManager.default.removeItem(at: url) }
+            return try ExperimentSerialization.readExperimentFromURL(url)
+        }
+
+        let supported = "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)"
+        let newer = "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor + 1)"
+
+        XCTAssertThrowsError(try load(version: newer), "a file declaring version \(newer) must be refused by an app supporting \(supported)")
+        XCTAssertNoThrow(try load(version: supported), "a file declaring the exact supported version \(supported) must load")
+    }
+}
