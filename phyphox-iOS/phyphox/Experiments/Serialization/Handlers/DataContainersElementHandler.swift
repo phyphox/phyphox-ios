@@ -12,6 +12,12 @@ import Foundation
 
 typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool, clearGroup: String?)
 
+//Lexical space of one init entry, matching the docs validators (FLOAT_LEX in phyphox-docs):
+//decimal notation plus NaN and [+-]Infinity with case folded. Deliberately narrower than what
+//Double(String) accepts - "inf" or hex floats like "0x1p3" are not portable, as Java cannot
+//parse them.
+private let initEntryPattern = "^(?:[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY])$"
+
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [BufferDescriptor]()
 
@@ -39,7 +45,22 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
         let size = try attributes.optionalValue(for: .size) ?? 1
 
-        let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
+        //A malformed init entry rejects the file instead of being silently dropped, which would
+        //also shift every later entry one position forward (number-invalid-value rule in
+        //phyphox-docs). An empty attribute still just starts the buffer empty, but an empty
+        //entry ("1,,2", a trailing comma) is an error.
+        let baseContents: [Double]
+        if let initValues = attributes.optionalString(for: .initKey), !initValues.isEmpty {
+            baseContents = try initValues.components(separatedBy: ",").map {
+                let entry = $0.trimmingCharacters(in: .whitespaces)
+                guard entry.range(of: initEntryPattern, options: .regularExpression) != nil, let value = Double(entry) else {
+                    throw ElementHandlerError.unexpectedAttributeValue("init")
+                }
+                return value
+            }
+        } else {
+            baseContents = []
+        }
         let staticBuffer = try attributes.optionalValue(for: .staticKey) ?? false
 
         let clearGroup = attributes.optionalString(for: .clearGroup)

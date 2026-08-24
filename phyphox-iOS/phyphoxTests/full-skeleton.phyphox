@@ -8,6 +8,7 @@
         <container>buffer</container>
         <container size="2" init="1,2" clearGroup="g1">buffer2</container>
         <container clearGroup="_">buffer3</container>
+        <container size="10" init="NaN, nan, Infinity, +infinity, -INFINITY, .5, 5., 1e-3, -0.5">buffer4</container>
     </data-containers>
     <translations>
         <translation locale="de">

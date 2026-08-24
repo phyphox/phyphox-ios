@@ -345,8 +345,8 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             throw ElementHandlerError.missingElement("input")
         }
         
-        //Dataset pairing follows the decided model (graph-multiset-omitted-x and
-        //graph-multiset-input-order in phyphox-docs, amended 2026-08-20): every y input is one
+        //Dataset pairing follows the decided model ("How the input tags form datasets" on the
+        //graph page of phyphox-docs, docs/file-format/views/graph.md): every y input is one
         //dataset. With exactly as many x inputs as y inputs (z inputs do not count), they are
         //matched 1-on-1 in order of appearance regardless of interleaving. With fewer x than y
         //inputs, each y is plotted against the most recent preceding x input, or against its

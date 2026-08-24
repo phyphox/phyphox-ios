@@ -206,8 +206,8 @@ final class TranslatedLinkTests: XCTestCase {
     }
 }
 
-//The decided graph dataset pairing (graph-multiset-omitted-x and graph-multiset-input-order in
-//phyphox-docs, amended 2026-08-20): equal x and y input counts pair 1-on-1 in order of appearance
+//The decided graph dataset pairing ("How the input tags form datasets" on the graph page of
+//phyphox-docs, docs/file-format/views/graph.md): equal x and y input counts pair 1-on-1 in order of appearance
 //regardless of interleaving; with fewer x than y inputs each y uses the most recent preceding x,
 //or an index axis if none preceded it. The invalid forms (a trailing or shadowed x that no y
 //uses) are covered by the incorrect-files fixtures.
@@ -232,6 +232,60 @@ final class GraphInputPairingTests: XCTestCase {
         XCTAssertTrue(pairings[2].elementsEqual([("t", "a"), ("t", "b")], by: ==))
         //no x at all: index axis
         XCTAssertTrue(pairings[3].elementsEqual([(nil, "c")], by: ==))
+    }
+}
+
+//The container init list follows the number-invalid-value rule from phyphox-docs: the special
+//values NaN and [+-]Infinity fold case (NaN entries are the documented gap markers for graphs),
+//while an entry that does not parse as a number - including an empty entry and spellings like
+//"inf" that the format does not define - rejects the whole file instead of being silently
+//dropped, which would also shift every later entry one position forward. The invalid forms are
+//also covered by the incorrect-files fixtures.
+final class ContainerInitValueTests: XCTestCase {
+    private func parse(initAttribute: String) throws -> Experiment {
+        let xml = """
+        <phyphox version="1.6">
+            <title>inittest</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container size="20" init="\(initAttribute)">buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testAcceptedLexicalSpace() throws {
+        let experiment = try parse(initAttribute: "1, -0.5, .5, 5., 1e-3, +2E1, NaN, nan, Infinity, +infinity, -INFINITY")
+        let values = try (experiment.buffers["buffer"]).unwrap().toArray()
+        XCTAssertEqual(values.count, 11)
+        XCTAssertEqual(Array(values[0..<6]), [1.0, -0.5, 0.5, 5.0, 0.001, 20.0])
+        XCTAssertTrue(values[6].isNaN && values[7].isNaN)
+        XCTAssertEqual(Array(values[8...]), [Double.infinity, Double.infinity, -Double.infinity])
+    }
+
+    func testEmptyInitAttributeStartsEmpty() throws {
+        let experiment = try parse(initAttribute: "")
+        XCTAssertEqual(try (experiment.buffers["buffer"]).unwrap().count, 0)
+    }
+
+    func testMalformedEntriesRejectTheFile() {
+        XCTAssertThrowsError(try parse(initAttribute: "1, two, 3"))
+        //An empty entry (also as a trailing comma) is an error, unlike an empty attribute
+        XCTAssertThrowsError(try parse(initAttribute: "1,,2"))
+        XCTAssertThrowsError(try parse(initAttribute: "1, 2,"))
+        //Spellings Double(String) would accept but the format does not
+        XCTAssertThrowsError(try parse(initAttribute: "inf"))
+        XCTAssertThrowsError(try parse(initAttribute: "+inf"))
+        XCTAssertThrowsError(try parse(initAttribute: "0x1p3"))
+        XCTAssertThrowsError(try parse(initAttribute: "1f"))
     }
 }
 
