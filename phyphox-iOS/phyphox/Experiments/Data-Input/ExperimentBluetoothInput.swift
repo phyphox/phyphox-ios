@@ -159,6 +159,8 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             guard let buffer = buffer else { return }
 
             buffer.appendFromArray(myValues)
+            //Completes the write, locking a static input buffer (Android: markSet)
+            buffer.markSet()
         }
 
         //Coordinate with remote reads so a /get read snapshot is taken either fully before or fully

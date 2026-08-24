@@ -78,6 +78,15 @@ enum ExperimentAnalysisDataInput: Equatable {
             return false
         }
     }
+
+    var dataBuffer: DataBuffer? {
+        switch self {
+        case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
+            return buffer
+        case .value(value: _, usedAs: _):
+            return nil
+        }
+    }
     
     func retainData() {
         switch self {
@@ -144,6 +153,23 @@ enum ExperimentAnalysisDataOutput: Equatable {
         case .buffer(buffer: _, data: _, usedAs: _, append: _):
             return true
         }
+    }
+
+    var dataBuffer: DataBuffer {
+        switch self {
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+            return buffer
+        }
+    }
+
+    var isStatic: Bool {
+        return dataBuffer.staticBuffer
+    }
+
+    //Declares the module's write into this output complete, which locks a static buffer even if
+    //the module wrote nothing (Android: DataOutput.markSet)
+    func markSet() {
+        dataBuffer.markSet()
     }
     
     func retainData() {

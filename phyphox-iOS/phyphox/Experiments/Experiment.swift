@@ -663,6 +663,8 @@ final class Experiment {
         timeReference.reset()
         hasStarted = false
 
+        var resetBuffers = Set<ObjectIdentifier>()
+
         for buffer in buffers.values {
             //A user clear spares buffers assigned to a clear group unless the user selected
             //that group. Any other clear (like closing the experiment) resets everything.
@@ -670,7 +672,12 @@ final class Experiment {
                 continue
             }
             buffer.clear(reset: true)
+            resetBuffers.insert(ObjectIdentifier(buffer))
         }
+
+        //A reset also re-arms static modules, which have been skipped since their single
+        //execution - static data does not survive a clear
+        analysis.notifyBuffersReset(resetBuffers)
 
         sensorInputs.forEach { $0.clear() }
         depthInput?.clear()

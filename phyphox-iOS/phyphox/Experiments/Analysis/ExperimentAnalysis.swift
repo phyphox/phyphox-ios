@@ -93,6 +93,14 @@ final class ExperimentAnalysis {
         }
     }
     
+    ///Passes a clear-data reset on to the modules, re-arming static modules whose buffers were
+    ///reset (Android does this through the buffer notification, see AnalysisModule.notifyUpdate).
+    func notifyBuffersReset(_ resetBuffers: Set<ObjectIdentifier>) {
+        for module in modules {
+            module.notifyBuffersReset(resetBuffers)
+        }
+    }
+
     private var busy = false
     private var requestedUpdateWhileBusy = false
 

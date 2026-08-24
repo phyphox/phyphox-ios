@@ -2353,6 +2353,137 @@ final class ComplexModuleOperandOrderTests: XCTestCase {
     }
 }
 
+//static data containers follow Android's model (decided 2026-08-24): the module writing them
+//executes a single time and is skipped from then on - so it also stops clearing its keep=false
+//input buffers - a static output locks once the module has run even if it wrote nothing, and the
+//user's clear-data action resets the buffer and re-arms the module: static data does not survive
+//a clear.
+final class StaticBufferLifecycleTests: XCTestCase {
+    private func makeModule(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysisModule {
+        return try AdditionAnalysis(
+            inputs: [.buffer(buffer: input, data: MutableDoubleArray(data: []), usedAs: "", keep: false),
+                     .value(value: 1, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+    }
+
+    private func run(_ module: ExperimentAnalysisModule) {
+        module.setNeedsUpdate(experimentTime: 0, linearTime: 0, experimentReference1970: 0, linearReference1970: 0)
+    }
+
+    func testStaticOutputLocksOnlyWhenTheWriteIsComplete() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [], static: true)
+
+        buffer.append(1)
+        buffer.append(2)
+        XCTAssertEqual(buffer.toArray(), [1, 2], "a static buffer can be filled value by value until the write is declared complete")
+
+        buffer.markSet()
+        buffer.append(3)
+        XCTAssertEqual(buffer.toArray(), [1, 2], "markSet locks the static buffer")
+    }
+
+    func testStaticBufferWithInitValuesIsLockedFromTheStart() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [7], static: true)
+
+        buffer.append(1)
+        XCTAssertEqual(buffer.toArray(), [7])
+    }
+
+    func testOnlyAResetClearsAStaticBuffer() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [7], static: true)
+
+        buffer.clear(reset: false)
+        XCTAssertEqual(buffer.toArray(), [7], "an ordinary clear leaves a static buffer alone")
+
+        buffer.clear(reset: true)
+        XCTAssertEqual(buffer.toArray(), [7], "a reset restores the init values")
+
+        buffer.append(1)
+        XCTAssertEqual(buffer.toArray(), [7, 1], "the reset unlocked the buffer again")
+    }
+
+    func testStaticModuleExecutesOnceAndStopsClearingItsInputs() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+        XCTAssertTrue(module.isStatic, "a module whose outputs are all static is static")
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2])
+        XCTAssertEqual(input.toArray(), [], "the first execution consumes its keep=false input")
+
+        input.append(5)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2], "the module is skipped from its second execution on")
+        XCTAssertEqual(input.toArray(), [5], "a skipped module no longer clears its keep=false input")
+    }
+
+    func testNonStaticModuleKeepsRunning() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try makeModule(input: input, output: output)
+        XCTAssertFalse(module.isStatic)
+
+        input.append(1)
+        run(module)
+        input.append(5)
+        run(module)
+        XCTAssertEqual(output.toArray(), [6])
+        XCTAssertEqual(input.toArray(), [])
+    }
+
+    func testAModuleThatWroteNothingIsStillDoneAfterOneRun() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+
+        run(module) //the empty input yields an empty result
+        XCTAssertEqual(output.toArray(), [])
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [], "the static output is locked by the completed run, not by the values written")
+    }
+
+    func testClearReArmsTheModule() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2])
+
+        //what Experiment.clear does for a user clear
+        output.clear(reset: true)
+        input.clear(reset: true)
+        module.notifyBuffersReset([ObjectIdentifier(output), ObjectIdentifier(input)])
+
+        XCTAssertEqual(output.toArray(), [], "static data does not survive a user clear")
+
+        input.append(4)
+        run(module)
+        XCTAssertEqual(output.toArray(), [5], "the module is re-armed for one new execution")
+    }
+
+    func testResetOfAnUnrelatedBufferDoesNotReArmTheModule() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let other = try DataBuffer(name: "other", size: 0, baseContents: [], static: false)
+        let module = try makeModule(input: input, output: output)
+
+        input.append(1)
+        run(module)
+        module.notifyBuffersReset([ObjectIdentifier(other)])
+
+        input.append(4)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2], "only a reset of a buffer the module uses re-arms it")
+    }
+}
+
 //atan2 with a fixed value as one operand is element-wise like every other multi-input module:
 //the value repeats for every element of the other operand and the result has the length of the
 //longest input. It used to collapse to a single value computed from the buffer's first element.

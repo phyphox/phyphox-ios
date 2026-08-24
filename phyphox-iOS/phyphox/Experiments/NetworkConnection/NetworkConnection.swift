@@ -269,6 +269,8 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
                     } else {
                         item.value.buffer.appendFromArray(data)
                     }
+                    //Completes the write, locking a static receive buffer (Android: markSet)
+                    item.value.buffer.markSet()
                 }
             }
         }
