@@ -19,26 +19,44 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func initApp(url: URL?) -> Bool {
         KeyboardTracker.startTracking()
-        
+
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor(named: "textColor")
 
         UILabel.appearance().adjustsFontForContentSizeCategory = true
-        
-        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: url == nil || ProcessInfo.processInfo.arguments.contains("screenshot"))
-        
+
+        //Launch-argument seam for unattended automation (the lab driver of the cross-platform
+        //test strategy): "-phyphoxUrl <url>" behaves exactly as if the URL had been opened
+        //from outside the app, but without the system's open-in confirmation dialog, which
+        //cannot be suppressed and would block every scripted phyphox://asset= launch. The URL
+        //goes through the same handler as a real open, so the semantics cannot drift. Android
+        //needs no counterpart - "adb shell am start" opens URLs without a confirmation.
+        //Example:
+        //xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox"
+        let arguments = ProcessInfo.processInfo.arguments
+        var automationURL: URL? = nil
+        if let index = arguments.firstIndex(of: "-phyphoxUrl"), index + 1 < arguments.count {
+            automationURL = URL(string: arguments[index + 1])
+        }
+
+        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: (url == nil && automationURL == nil) || arguments.contains("screenshot"))
+
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(experimentsCollectionViewController, animated: false)
-        
+
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         window!.makeKeyAndVisible()
 
         //The following is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and the app will launch a pre-recorded experiment to allow for screenshots with data.
-        if ProcessInfo.processInfo.arguments.contains("screenshot") {
+        if arguments.contains("screenshot") {
             return experimentsCollectionViewController.launchExperimentByURL(URL(string: "https://rwth-aachen.sciebo.de/s/5MzNo8IIe8bJuoD/download")!, chosenPeripheral: nil)
         }
-        
+
+        if let automationURL = automationURL {
+            return experimentsCollectionViewController.launchExperimentByURL(automationURL, chosenPeripheral: nil)
+        }
+
         return true
     }
 
