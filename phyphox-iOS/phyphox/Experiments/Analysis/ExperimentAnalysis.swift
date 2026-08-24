@@ -180,14 +180,38 @@ final class ExperimentAnalysis {
         return modules.filter { inCycleList(thisCycle: cycle, cycles: $0.cycles) }
     }
 
+    ///Whether the requireFill gate holds this run back. The first run after opening or starting
+    ///is exempt: it is the pass that initializes buffers, and it has to run while the required
+    ///container is still empty (Android: the lastAnalysis != 0 condition in processAnalysis).
+    private func requireFillGateBlocks() -> Bool {
+        guard let requireFill = requireFill, didRunSinceStart else { return false }
+
+        let threshold: Int
+        if let dynamic = requireFillDynamic?.last {
+            threshold = Int(dynamic)
+        } else {
+            threshold = requireFillThreshold
+        }
+
+        return requireFill.count < threshold
+    }
+
     ///One analysis pass over the modules of the given cycle, in document order - the kernel
-    ///itself, without the scheduling layer (sleep, onUserInput, requireFill) that update() puts
-    ///around it. Runs synchronously on the calling thread; the analysis golden-vector runner in
-    ///the test suite drives the modules through this.
-    func runCycle(_ cycle: Int, experimentTime: TimeInterval, linearTime: TimeInterval, experimentReference1970: TimeInterval, linearReference1970: TimeInterval) {
+    ///itself, with the requireFill gate but without the rest of the scheduling layer (sleep,
+    ///dynamicSleep, onUserInput) that update() puts around it. Runs synchronously on the calling
+    ///thread and reports whether the modules ran; the analysis golden-vector runner in the test
+    ///suite drives the kernel through this.
+    @discardableResult
+    func runCycle(_ cycle: Int, experimentTime: TimeInterval, linearTime: TimeInterval, experimentReference1970: TimeInterval, linearReference1970: TimeInterval) -> Bool {
+        guard !requireFillGateBlocks() else { return false }
+
         for module in modulesInCycle(cycle) {
             module.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentReference1970, linearReference1970: linearReference1970)
         }
+
+        didRunSinceStart = true
+
+        return true
     }
 
     private func update(_ completion: @escaping (_ didExecute: Bool) -> Void) {
@@ -202,22 +226,11 @@ final class ExperimentAnalysis {
             }
         }
         
-        //The first run after opening or starting is exempt from the requireFill gate: it is the
-        //pass that initializes buffers, and it has to run while the required container is still
-        //empty (Android: the lastAnalysis != 0 condition in processAnalysis)
-        if let requireFill = requireFill, didRunSinceStart {
-            let threshold: Int
-            if let dynamic = requireFillDynamic?.last {
-                threshold = Int(dynamic)
-            } else {
-                threshold = requireFillThreshold
+        if requireFillGateBlocks() {
+            mainThread {
+                completion(false)
             }
-            if requireFill.count < threshold {
-                mainThread {
-                    completion(false)
-                }
-                return
-            }
+            return
         }
         
         let modulesInCycle = self.modulesInCycle(cycle)
