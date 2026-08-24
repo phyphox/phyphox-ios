@@ -349,7 +349,100 @@ final class ExperimentWebServer {
                 returnErrorResponse()
             }
             })
-        
+
+        //Bulk write of buffer values from a JSON body: the array-valued counterpart of
+        //control?cmd=set, specified in phyphox-docs (openapi.yaml, path /set). GET is
+        //registered so it can be answered with a clean result:false instead of a 405. Must
+        //stay in step with Android (RemoteServer.handleSet), error messages included.
+        addGETPOSTHandler(pathRegex: "/set", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            func returnSetError(_ error: String) {
+                completionBlock(GCDWebServerDataResponse(jsonObject: ["result": false, "error": error]))
+            }
+
+            //A GET or a form-encoded body is a well-formed request that cannot carry the
+            //documented shape - rejected with result:false, while a body that is not
+            //parseable JSON at all (or not a JSON object) is a 400 like everywhere else
+            guard let dataRequest = request as? GCDWebServerDataRequest, (request.contentType ?? "").lowercased().hasPrefix("application/json") else {
+                returnSetError("A JSON body of the form {\"buffers\": {...}} is required.")
+                return
+            }
+            guard dataRequest.data.count <= 2097152, //2 MB, matching the Android limit
+                  let obj = try? JSONSerialization.jsonObject(with: dataRequest.data),
+                  let json = obj as? [String: Any] else {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Malformed request body."))
+                return
+            }
+
+            //Validate everything first: the mode, every buffer name and every entry...
+            var append = false
+            if let mode = json["mode"] {
+                if (mode as? String) == "append" {
+                    append = true
+                }
+                else if (mode as? String) != "replace" { //Anything but the two enum strings, including null
+                    returnSetError("Unknown mode \"\(mode is NSNull ? "null" : mode)\".")
+                    return
+                }
+            }
+
+            guard let buffersObject = json["buffers"] as? [String: Any] else {
+                returnSetError("A \"buffers\" object is required.")
+                return
+            }
+
+            var writes: [(DataBuffer, [Double])] = []
+            for (name, entriesAny) in buffersObject {
+                guard let buffer = self.experiment.buffers[name] else {
+                    returnSetError("Unknown buffer \"\(name)\".")
+                    return
+                }
+                guard let entries = entriesAny as? [Any] else {
+                    returnSetError("The values for buffer \"\(name)\" must be an array.")
+                    return
+                }
+                var values: [Double] = []
+                values.reserveCapacity(entries.count)
+                for entry in entries {
+                    if entry is NSNull {
+                        //null is exactly the representation /get uses for every non-finite
+                        //value, so /get output can be fed back unchanged
+                        values.append(.nan)
+                    }
+                    else if let number = entry as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() {
+                        values.append(number.doubleValue)
+                    }
+                    else if let string = entry as? String {
+                        //The file format's number lexical space, with the same helper the
+                        //experiment parser uses: "nan"/"Infinity"/"-infinity" work, "inf"
+                        //does not
+                        guard let value = parseExperimentNumber(string) else {
+                            returnSetError("Invalid value \"\(string)\" for buffer \"\(name)\".")
+                            return
+                        }
+                        values.append(value)
+                    }
+                    else {
+                        //Booleans, nested arrays/objects
+                        returnSetError("Invalid entry for buffer \"\(name)\": must be a number, null or a number string.")
+                        return
+                    }
+                }
+                writes.append((buffer, values))
+            }
+
+            //...then write: on any error above nothing was written. The buffer writes mark
+            //the analysis as having new data through the observer mechanism, exactly like
+            //cmd=set. An empty buffers object is a valid no-op.
+            for (buffer, values) in writes {
+                if !append {
+                    buffer.clear(reset: false) //Normal buffer semantics apply, so this cannot clear a written static buffer
+                }
+                buffer.appendFromArray(values)
+            }
+            completionBlock(GCDWebServerDataResponse(jsonObject: ["result": true]))
+            })
+
         addGETPOSTHandler(pathRegex: "/get", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse(_ reason: String) {

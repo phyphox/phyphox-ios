@@ -788,6 +788,130 @@ final class WebServerConformanceTests: XCTestCase {
     }
 }
 
+//The /set endpoint: bulk buffer writes from a JSON body, per the phyphox-docs specification
+//(openapi.yaml path /set, API 1.1.0) - JSON-body-only, the format's number lexical space for
+//string entries, null as NaN, atomic validation, replace/append modes. Behavior and error
+//messages mirror Android's RemoteServer.handleSet.
+final class WebServerSetEndpointTests: XCTestCase {
+    private class StubDelegate: ExperimentWebServerDelegate {
+        var timerRunning: Bool { return false }
+        var remainingTimerTime: Double { return 0.0 }
+        func startExperiment() {}
+        func stopExperiment() {}
+        func clearData(clearGroups: [String]) {}
+        func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
+        func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {}
+    }
+
+    private var webServer: ExperimentWebServer!
+    private var experiment: Experiment!
+    private var delegate: StubDelegate!
+
+    override func setUpWithError() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        UserDefaults.standard.set("8971", forKey: "remoteAccessPort")
+        delegate = StubDelegate()
+        webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        guard webServer.start() else { throw DeserializerTestError.nilOptional }
+    }
+
+    override func tearDown() {
+        webServer.stop()
+        UserDefaults.standard.removeObject(forKey: "remoteAccessPort")
+    }
+
+    private func request(method: String, body: String? = nil, contentType: String = "application/json") -> (status: Int, json: [String: Any]?) {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:\(webServer.port)/set")!)
+        request.httpMethod = method
+        if let body = body {
+            request.httpBody = body.data(using: .utf8)
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        }
+        let expectation = self.expectation(description: method + (body ?? ""))
+        var status = 0
+        var json: [String: Any]? = nil
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+            expectation.fulfill()
+        }.resume()
+        waitForExpectations(timeout: 5)
+        return (status, json)
+    }
+
+    private func expectRejected(_ result: (status: Int, json: [String: Any]?)) {
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, false)
+        XCTAssertNotNil(result.json?["error"] as? String)
+    }
+
+    func testWriteReplaceAndAppend() throws {
+        let accX = try (experiment.buffers["accX"]).unwrap()
+        accX.append(99.0) //replace mode must clear this out
+
+        //Numbers, null (the /get representation of non-finite values) and the format's number
+        //lexical space, several buffers in one atomic request
+        var result = request(method: "POST", body: "{\"buffers\": {\"accX\": [1, 2.5, null, \"nan\", \"Infinity\", \"-infinity\"], \"accY\": [4]}}")
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        let written = accX.toArray()
+        XCTAssertEqual(written.count, 6)
+        XCTAssertEqual(Array(written[0..<2]), [1.0, 2.5])
+        XCTAssertTrue(written[2].isNaN && written[3].isNaN)
+        XCTAssertEqual(Array(written[4...]), [Double.infinity, -Double.infinity])
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [4.0])
+
+        //append keeps the existing contents
+        result = request(method: "POST", body: "{\"buffers\": {\"accY\": [5]}, \"mode\": \"append\"}")
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [4.0, 5.0])
+
+        //replace is the explicit default
+        result = request(method: "POST", body: "{\"buffers\": {\"accY\": [6]}, \"mode\": \"replace\"}")
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [6.0])
+    }
+
+    func testEmptyBuffersObjectIsANoOp() {
+        let result = request(method: "POST", body: "{\"buffers\": {}}")
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+    }
+
+    func testRequestsWithoutSuitableJSONBodyAreRejected() {
+        //GET carries no body of the documented shape...
+        expectRejected(request(method: "GET"))
+        //...and neither does a form-encoded body
+        expectRejected(request(method: "POST", body: "buffers=accX", contentType: "application/x-www-form-urlencoded"))
+        //A JSON body without a buffers object is well-formed but not the documented shape
+        expectRejected(request(method: "POST", body: "{\"mode\": \"replace\"}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": [1]}"))
+        //A body that is not parseable JSON at all (or not a JSON object) answers 400
+        XCTAssertEqual(request(method: "POST", body: "{not json").status, 400)
+        XCTAssertEqual(request(method: "POST", body: "[1, 2]").status, 400)
+    }
+
+    func testInvalidEntriesRejectAtomically() throws {
+        let accX = try (experiment.buffers["accX"]).unwrap()
+
+        //The valid accX write must NOT be applied when the accY entry is invalid - everything
+        //is validated before anything is written. Two-key JSON objects arrive in arbitrary
+        //dictionary order, so this also covers validation order independence.
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1], \"accY\": [\"inf\"]}}"))
+        XCTAssertEqual(accX.toArray(), [], "an atomic request must write nothing on any error")
+
+        //Unknown buffer, boolean entry, nested entry, non-array values, unknown mode
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"doesnotexist\": [1]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [true]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [[1]]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": 1}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1]}, \"mode\": \"prepend\"}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1]}, \"mode\": null}"))
+        XCTAssertEqual(accX.toArray(), [], "no rejected request may write anything")
+    }
+}
+
 //The MQTT network services: the four service variants, their attributes and their validation,
 //matching the Android parser (see network-mqtts-unofficial in phyphox-docs).
 final class MqttNetworkServiceTests: XCTestCase {
