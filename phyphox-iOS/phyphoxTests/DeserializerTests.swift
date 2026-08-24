@@ -4187,10 +4187,14 @@ final class DuplicateRootMetadataTests: XCTestCase {
 //uses for the shipped collection, in reverse - never copied into the test bundle, where it
 //would drift. Without the sibling the corpus tests skip with a notice (a plain clone must
 //still build and test); CI checks the sibling out explicitly, so there they always run.
-final class CorpusConformanceTests: XCTestCase {
+//The phyphox-docs checkout NEXT TO this repository, shared by the runners fed from it (the
+//conformance corpus and the analysis golden vectors). Nothing is copied into the test bundle,
+//where it would drift; without the sibling those tests skip with a notice (a plain clone must
+//still build and test) and CI checks it out explicitly.
+enum DocsCorpus {
     //#filePath is resolvable at test time because the suite builds and runs on the same
     //machine, locally as well as on CI
-    private static let corpusURL: URL? = {
+    static let url: URL? = {
         let repositoryRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()  // phyphoxTests
             .deletingLastPathComponent()  // phyphox-iOS
@@ -4199,11 +4203,15 @@ final class CorpusConformanceTests: XCTestCase {
         return FileManager.default.fileExists(atPath: corpus.path) ? corpus : nil
     }()
 
-    private func corpus() throws -> URL {
-        guard let corpus = CorpusConformanceTests.corpusURL else {
-            throw XCTSkip("phyphox-docs is not checked out next to this repository - conformance corpus not tested")
+    static func directory(_ subpath: String, notTestedNotice: String) throws -> URL {
+        guard let url = url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - \(notTestedNotice) not tested")
         }
-        return corpus
+        let directory = url.appendingPathComponent(subpath, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no corpus/\(subpath) - \(notTestedNotice) not tested")
+        }
+        return directory
     }
 
     //Reads the version attribute of the root element without parsing the whole file
@@ -4215,7 +4223,7 @@ final class CorpusConformanceTests: XCTestCase {
         }
     }
 
-    private func declaredVersion(of url: URL) -> SemanticVersion? {
+    static func declaredVersion(of url: URL) -> SemanticVersion? {
         guard let parser = XMLParser(contentsOf: url) else { return nil }
         let reader = RootVersionReader()
         parser.delegate = reader
@@ -4223,9 +4231,26 @@ final class CorpusConformanceTests: XCTestCase {
         return reader.version.flatMap { SemanticVersion(string: $0) }
     }
 
-    private func phyphoxFiles(in directory: URL) throws -> [URL] {
+    static func phyphoxFiles(in directory: URL) throws -> [URL] {
         let enumerator = try FileManager.default.enumerator(at: directory, includingPropertiesForKeys: nil).unwrap()
-        return enumerator.compactMap({ $0 as? URL }).filter({ $0.pathExtension == "phyphox" })
+        return enumerator.compactMap({ $0 as? URL }).filter({ $0.pathExtension == "phyphox" }).sorted { $0.path < $1.path }
+    }
+}
+
+final class CorpusConformanceTests: XCTestCase {
+    private func corpus() throws -> URL {
+        guard let corpus = DocsCorpus.url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - conformance corpus not tested")
+        }
+        return corpus
+    }
+
+    private func declaredVersion(of url: URL) -> SemanticVersion? {
+        return DocsCorpus.declaredVersion(of: url)
+    }
+
+    private func phyphoxFiles(in directory: URL) throws -> [URL] {
+        return try DocsCorpus.phyphoxFiles(in: directory)
     }
 
     //The parser classification of the invalid corpus files, from expected.yml: file name to
@@ -4384,5 +4409,142 @@ final class CorpusConformanceTests: XCTestCase {
 
         XCTAssertThrowsError(try load(version: newer), "a file declaring version \(newer) must be refused by an app supporting \(supported)")
         XCTAssertNoThrow(try load(version: supported), "a file declaring the exact supported version \(supported) must load")
+    }
+}
+
+//The analysis golden-vector runner, implementing the contract in phyphox-docs
+//corpus/analysis/README.md ("The runner contract") and the analysis-golden-vectors row of
+//test-matrix.yml. Every case is a miniature experiment carrying its input data in container init
+//values plus an expected.json stating what the buffers must hold after a given number of analysis
+//cycles. The files are loaded through the real parser and the analysis kernel is driven directly,
+//cycle by cycle; the experiment is NEVER started (the timer case pins the experiment time before
+//the first start, which is exactly 0).
+//
+//A mismatch is a finding to report to the docs session, not something to code around: the
+//expectations come from a plain-Python restatement of the semantics, so either it or both apps
+//are wrong, and which one is a documentation decision.
+final class AnalysisGoldenVectorTests: XCTestCase {
+    private struct Tolerance {
+        let abs: Double
+        let rel: Double
+
+        //A tolerance may be written as a number or, coming from the YAML source, as a string
+        static func read(from dictionary: [String: Any], or fallback: Tolerance) -> Tolerance {
+            func number(_ key: String, _ fallbackValue: Double) -> Double {
+                if let value = dictionary[key] as? NSNumber { return value.doubleValue }
+                if let text = dictionary[key] as? String, let value = Double(text) { return value }
+                return fallbackValue
+            }
+            return Tolerance(abs: number("abs", fallback.abs), rel: number("rel", fallback.rel))
+        }
+    }
+
+    //"nan", "inf" and "-inf" are how the JSON carries the non-finite expected values
+    private func expectedValue(_ value: Any) -> Double? {
+        if let number = value as? NSNumber { return number.doubleValue }
+        switch value as? String {
+        case "nan": return Double.nan
+        case "inf": return Double.infinity
+        case "-inf": return -Double.infinity
+        default: return nil
+        }
+    }
+
+    private func matches(actual: Double, expected: Double, tolerance: Tolerance) -> Bool {
+        if expected.isNaN { return actual.isNaN }
+        if expected.isInfinite { return actual == expected }
+        guard actual.isFinite else { return false }
+        return Swift.abs(actual - expected) <= tolerance.abs + tolerance.rel * Swift.abs(expected)
+    }
+
+    // phyphox-test: analysis-golden-vectors
+    func testAnalysisGoldenVectors() throws {
+        let vectors = try DocsCorpus.directory("analysis/vectors", notTestedNotice: "analysis golden vectors")
+        let files = try DocsCorpus.phyphoxFiles(in: vectors)
+        XCTAssertGreaterThan(files.count, 0, "no golden vector was found - corpus layout changed?")
+
+        //The kernel expects to run off the main thread, as it does in the app
+        let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors")
+        var ran = 0
+        var comparedBuffers = 0
+
+        for url in files {
+            let name = "\(url.deletingLastPathComponent().lastPathComponent)/\(url.deletingPathExtension().lastPathComponent)"
+
+            guard let version = DocsCorpus.declaredVersion(of: url) else {
+                XCTFail("could not read the declared format version of \(name)")
+                continue
+            }
+            guard version <= latestSupportedFileVersion else { continue }
+
+            let expectedURL = url.deletingPathExtension().appendingPathExtension("expected.json")
+            guard let expectation = try JSONSerialization.jsonObject(with: Data(contentsOf: expectedURL)) as? [String: Any],
+                  let cycles = (expectation["cycles"] as? NSNumber)?.intValue,
+                  let expect = expectation["expect"] as? [[String: Any]] else {
+                XCTFail("\(name): could not read \(expectedURL.lastPathComponent)")
+                continue
+            }
+            let defaultTolerance = Tolerance.read(from: expectation["default_tolerance"] as? [String: Any] ?? [:],
+                                                  or: Tolerance(abs: 0, rel: 0))
+
+            let experiment: Experiment
+            do {
+                experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            }
+            catch {
+                XCTFail("\(name) failed to load: \(error)")
+                continue
+            }
+
+            //One kernel run per cycle, cycle numbers 0..<cycles, with the experiment time of a
+            //never-started experiment. The scheduling layer around the kernel does not run: the
+            //runner controls the cycle count.
+            for cycle in 0..<cycles {
+                queue.sync {
+                    experiment.analysis.runCycle(cycle, experimentTime: 0, linearTime: 0, experimentReference1970: 0, linearReference1970: 0)
+                }
+
+                let executedCycles = cycle + 1
+                for entry in expect where (entry["after_cycle"] as? NSNumber)?.intValue == executedCycles {
+                    guard let buffers = entry["buffers"] as? [String: [String: Any]] else {
+                        XCTFail("\(name): malformed expect entry for cycle \(executedCycles)")
+                        continue
+                    }
+                    for (bufferName, expectedBuffer) in buffers.sorted(by: { $0.key < $1.key }) {
+                        let label = "\(name) after cycle \(executedCycles), buffer \(bufferName)"
+                        guard let buffer = experiment.buffers[bufferName] else {
+                            XCTFail("\(label): the experiment has no such buffer")
+                            continue
+                        }
+                        guard let expectedValues = expectedBuffer["values"] as? [Any] else {
+                            XCTFail("\(label): malformed expectation")
+                            continue
+                        }
+                        comparedBuffers += 1
+                        let tolerance = Tolerance.read(from: expectedBuffer, or: defaultTolerance)
+                        let actual = buffer.toArray()
+
+                        guard actual.count == expectedValues.count else {
+                            XCTFail("\(label): expected \(expectedValues.count) values \(expectedValues), got \(actual.count): \(actual)")
+                            continue
+                        }
+                        for (index, value) in expectedValues.enumerated() {
+                            guard let expected = expectedValue(value) else {
+                                XCTFail("\(label): unreadable expected value \(value) at index \(index)")
+                                continue
+                            }
+                            if !matches(actual: actual[index], expected: expected, tolerance: tolerance) {
+                                XCTFail("\(label): value \(index) is \(actual[index]), expected \(expected) (abs \(tolerance.abs), rel \(tolerance.rel))")
+                            }
+                        }
+                    }
+                }
+            }
+            ran += 1
+        }
+
+        XCTAssertGreaterThan(ran, 0, "no golden vector of a supported format version was run")
+        //Guards the runner itself: an expectation that never matched a cycle would pass silently
+        XCTAssertGreaterThan(comparedBuffers, 0, "no buffer was compared - do the after_cycle counts still match the cycles run?")
     }
 }

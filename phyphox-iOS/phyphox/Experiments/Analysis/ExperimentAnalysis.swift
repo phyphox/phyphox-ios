@@ -159,6 +159,37 @@ final class ExperimentAnalysis {
         }
     }
     
+    private func inCycleList(thisCycle: Int, cycles: [(Int, Int)]) -> Bool {
+        if cycles.count == 0 {
+            return true
+        }
+        for cycle in cycles {
+            if thisCycle < cycle.0 && cycle.0 >= 0 {
+                continue
+            }
+            if thisCycle > cycle.1 && cycle.1 >= 0 {
+                continue
+            }
+            return true
+        }
+        return false
+    }
+
+    ///The modules that run in the given cycle, honoring their cycles attribute
+    private func modulesInCycle(_ cycle: Int) -> [ExperimentAnalysisModule] {
+        return modules.filter { inCycleList(thisCycle: cycle, cycles: $0.cycles) }
+    }
+
+    ///One analysis pass over the modules of the given cycle, in document order - the kernel
+    ///itself, without the scheduling layer (sleep, onUserInput, requireFill) that update() puts
+    ///around it. Runs synchronously on the calling thread; the analysis golden-vector runner in
+    ///the test suite drives the modules through this.
+    func runCycle(_ cycle: Int, experimentTime: TimeInterval, linearTime: TimeInterval, experimentReference1970: TimeInterval, linearReference1970: TimeInterval) {
+        for module in modulesInCycle(cycle) {
+            module.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentReference1970, linearReference1970: linearReference1970)
+        }
+    }
+
     private func update(_ completion: @escaping (_ didExecute: Bool) -> Void) {
 
         for sensorInput in sensorInputs {
@@ -189,23 +220,7 @@ final class ExperimentAnalysis {
             }
         }
         
-        func inCycleList(thisCycle: Int, cycles: [(Int, Int)]) -> Bool {
-            if cycles.count == 0 {
-                return true
-            }
-            for cycle in cycles {
-                if thisCycle < cycle.0 && cycle.0 >= 0 {
-                    continue
-                }
-                if thisCycle > cycle.1 && cycle.1 >= 0 {
-                    continue
-                }
-                return true
-            }
-            return false
-        }
-        
-        let modulesInCycle = modules.filter{inCycleList(thisCycle: cycle, cycles: $0.cycles)}
+        let modulesInCycle = self.modulesInCycle(cycle)
         
         let c = modulesInCycle.count - 1
         
