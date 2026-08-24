@@ -185,22 +185,24 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let translationBlocks = try translationsHandler.expectOptionalResult()
         let translations = translationBlocks.map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
-        guard let title = try titleHandler.expectOptionalResult() ?? translations.selectedTranslation?.titleString else {
+        //The metadata children tolerate repetition, last occurrence wins (lastResult above) -
+        //unlike every other child of the root element, where a duplicate stays an error
+        guard let title = titleHandler.lastResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
-        
-        let stateTitle = try stateTitleHandler.expectOptionalResult()
 
-        guard let category = try categoryHandler.expectOptionalResult() ?? translations.selectedTranslation?.categoryString else {
+        let stateTitle = stateTitleHandler.lastResult()
+
+        guard let category = categoryHandler.lastResult() ?? translations.selectedTranslation?.categoryString else {
             throw ElementHandlerError.missingElement("category")
         }
 
-        let description = try descriptionHandler.expectOptionalResult() ?? translations.selectedTranslation?.descriptionString ?? ""
-        
+        let description = descriptionHandler.lastResult() ?? translations.selectedTranslation?.descriptionString ?? ""
+
         let maxIndex = title.index(title.startIndex, offsetBy: min(2, title.count))
-        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<maxIndex]).uppercased())
-        
-        let color = try colorHandler.expectOptionalResult()
+        let icon = iconHandler.lastResult() ?? .string(String(title[..<maxIndex]).uppercased())
+
+        let color = colorHandler.lastResult()
         
         let links = linkHandler.results
 

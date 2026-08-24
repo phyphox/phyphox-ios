@@ -3682,6 +3682,92 @@ final class AutocorrelationOmittedXOutputTests: XCTestCase {
     }
 }
 
+//The duplicate-metadata-last-wins rule from phyphox-docs (ruled 2026-08-24, matching Android):
+//a repeated metadata child of the ROOT element - title, state-title, category, icon, color,
+//description - does not reject the file; the parser uses the last occurrence. Files with such
+//duplicates exist in the wild: old Android versions appended a fresh state-title on every
+//re-save of a saved state. The tolerance is for readers and for these six elements only -
+//elsewhere a duplicate element stays an error.
+final class DuplicateRootMetadataTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testLastOccurrenceWins() throws {
+        let experiment = try parse("""
+        <phyphox version="1.6">
+            <title>first title</title>
+            <category>first category</category>
+            <icon format="string">A</icon>
+            <description>first description</description>
+            <state-title>Measurement 1/23/18 21:13</state-title>
+            <title>second title</title>
+            <category>second category</category>
+            <icon format="string">B</icon>
+            <color>red</color>
+            <description>second description</description>
+            <state-title>Taipei 101 down</state-title>
+            <color>blue</color>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """)
+        XCTAssertEqual(experiment.localizedTitle, "second title")
+        XCTAssertEqual(experiment.localizedCategory, "second category")
+        XCTAssertEqual(experiment.stateTitle, "Taipei 101 down")
+        XCTAssertEqual(experiment.localizedDescription, "second description")
+        XCTAssertEqual(experiment.icon, ExperimentIcon.string("B"))
+        XCTAssertEqual(experiment.color, namedColors["blue"])
+    }
+
+    func testDuplicatesElsewhereStillReject() {
+        //The tolerance is scoped to the root's metadata children: a duplicated structural
+        //child of the root...
+        XCTAssertThrowsError(try parse("""
+        <phyphox version="1.6">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <data-containers>
+                <container>buffer2</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """), "a second data-containers element must still be a duplicate-element error")
+
+        //...and a duplicated single-slot element below the root both stay errors
+        XCTAssertThrowsError(try parse("""
+        <phyphox version="1.6">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """), "a second input of a value element must still be a duplicate-element error")
+    }
+}
+
 //The conformance-corpus runner, implementing the contract in phyphox-docs corpus/README.md
 //("The app test suites") and the corpus-* rows of test-matrix.yml. The corpus is read from a
 //phyphox-docs checkout NEXT TO this repository - the same sibling convention the docs build
