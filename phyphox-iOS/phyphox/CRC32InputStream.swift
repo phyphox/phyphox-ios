@@ -38,7 +38,11 @@ final class CRC32InputStream: InputStream {
     
     override func read(_ buffer: UnsafeMutablePointer<UInt8>, maxLength len: Int) -> Int {
         let count = inputStream.read(buffer, maxLength: len)
-        crcValue = crc32(crcValue, buffer, uInt(count))
+        //A failed read returns -1, which must be passed through as the error it is - handing
+        //it to crc32 as an unsigned count trapped instead (a crash on any unreadable file)
+        if count > 0 {
+            crcValue = crc32(crcValue, buffer, uInt(count))
+        }
         return count
     }
     

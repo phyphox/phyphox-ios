@@ -809,6 +809,14 @@ final class AssetDeepLinkTests: XCTestCase {
         _ = try ExperimentSerialization.readExperimentFromURL(mixedCase)
     }
 
+    func testUnknownPathFailsTheLoadInsteadOfCrashing() {
+        //An unknown asset path reaches readExperimentFromURL as a nonexistent file. Its failed
+        //stream read returns -1, which CRC32InputStream once handed to crc32() as an unsigned
+        //count - a trap on any unreadable file. It must surface as an ordinary error.
+        let url = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "doesnotexist.phyphox")!
+        XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url))
+    }
+
     func testInvalidPathsAreRefused() {
         XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: ""))
         XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "/etc/passwd"))
