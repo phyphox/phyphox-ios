@@ -33,11 +33,18 @@ final class ViewSnapshotTests: XCTestCase {
         let style: UIUserInterfaceStyle
         let contentSize: UIContentSizeCategory
         let rightToLeft: Bool
+        //nil for the two explicit themes; set for the follow-system spot checks, which only run
+        //when the simulator's system appearance is the one they pin
+        let followsSystem: Bool
 
         //The app picks its colours from its OWN light/dark setting (SettingBundleHelper), not
-        //from the trait collection - a user can force either mode independently of the system.
-        //The goldens therefore drive that setting, which is what the elements actually read.
-        var appMode: String { style == .dark ? Utility.DARK_MODE : Utility.LIGHT_MODE }
+        //from the trait collection - it defaults to dark whatever the system does, and can be
+        //set to light, dark or follow-system. The goldens drive that setting, which is what the
+        //elements actually read.
+        var appMode: String {
+            if followsSystem { return Utility.SYSTEM_MODE }
+            return style == .dark ? Utility.DARK_MODE : Utility.LIGHT_MODE
+        }
 
         var traits: UITraitCollection {
             UITraitCollection(traitsFrom: [
@@ -61,14 +68,29 @@ final class ViewSnapshotTests: XCTestCase {
                                            ("-xxxl", .extraExtraExtraLarge)] {
                     configurations.append(Configuration(name: "\(styleName)-\(widthName)\(scaleName)",
                                                         width: width, style: style,
-                                                        contentSize: scale, rightToLeft: false))
+                                                        contentSize: scale, rightToLeft: false,
+                                                        followsSystem: false))
                 }
             }
         }
         configurations.append(Configuration(name: "rtl-phone", width: 390, style: .light,
-                                            contentSize: .large, rightToLeft: true))
+                                            contentSize: .large, rightToLeft: true,
+                                            followsSystem: false))
         return configurations
     }()
+
+    //The follow-system setting resolves against the SCREEN's appearance (UIColor.autoLightColor
+    //reads UIScreen.main), which no API changes from inside the process - so these two are spot
+    //checks on one fixture rather than a doubling of the matrix, and each runs only when the
+    //simulator is in the appearance it pins. The T0 workflow runs the suite once per appearance.
+    private static let systemSpotChecks: [Configuration] = [
+        Configuration(name: "system-light-phone", width: 390, style: .light, contentSize: .large,
+                      rightToLeft: false, followsSystem: true),
+        Configuration(name: "system-dark-phone", width: 390, style: .dark, contentSize: .large,
+                      rightToLeft: false, followsSystem: true)
+    ]
+
+    private static let spotCheckFixture = "values"
 
     private func fixturesDirectory() throws -> URL {
         return try DocsCorpus.docsDirectory("fixtures/views", notTestedNotice: "view snapshots")
@@ -161,6 +183,7 @@ final class ViewSnapshotTests: XCTestCase {
     func testViewElementSnapshots() throws {
         let directory = try fixturesDirectory()
         var rendered = 0
+        var skippedSystemChecks = 0
 
         for fixture in ViewSnapshotTests.fixtures {
             let url = directory.appendingPathComponent("\(fixture).phyphox")
@@ -169,7 +192,20 @@ final class ViewSnapshotTests: XCTestCase {
                 continue
             }
 
-            for configuration in ViewSnapshotTests.configurations {
+            var configurations = ViewSnapshotTests.configurations
+            if fixture == ViewSnapshotTests.spotCheckFixture {
+                configurations += ViewSnapshotTests.systemSpotChecks
+            }
+
+            for configuration in configurations {
+                //A follow-system golden can only be produced while the simulator is in that
+                //appearance; the other one is left to the run that is
+                if configuration.followsSystem,
+                   UIScreen.main.traitCollection.userInterfaceStyle != configuration.style {
+                    skippedSystemChecks += 1
+                    continue
+                }
+
                 //Set before the elements are built: they read the colours in their initialiser
                 UserDefaults.standard.set(configuration.appMode,
                                           forKey: SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue)
@@ -227,5 +263,11 @@ final class ViewSnapshotTests: XCTestCase {
         }
 
         XCTAssertGreaterThan(rendered, 0, "no view element was rendered - fixture layout changed?")
+        if skippedSystemChecks > 0 {
+            //Not a failure: the run simply cannot flip the simulator's system appearance
+            print("view-snapshots: \(skippedSystemChecks) follow-system golden(s) skipped, the "
+                  + "simulator is in \(UIScreen.main.traitCollection.userInterfaceStyle == .dark ? "dark" : "light") "
+                  + "appearance - the other appearance is covered by the second run")
+        }
     }
 }

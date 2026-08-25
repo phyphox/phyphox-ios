@@ -1,7 +1,7 @@
-# T0 test tier: the XCTest suite (phyphoxTests), including the conformance-corpus runner,
-# which reads the corpus from a phyphox-docs checkout sitting NEXT TO the app repository -
-# hence the two sibling checkouts. Without the sibling the corpus tests would skip; checking
-# it out explicitly means CI always runs them.
+# T0 test tier: the XCTest suite (phyphoxTests), including the conformance-corpus runner and
+# the view-element goldens, both of which read their fixtures from a phyphox-docs checkout
+# sitting NEXT TO the app repository - hence the two sibling checkouts. Without the sibling
+# those tests would skip; checking it out explicitly means CI always runs them.
 name: tests
 on: [push, pull_request]
 jobs:
@@ -16,7 +16,33 @@ jobs:
         with:
           repository: phyphox/phyphox-docs
           path: phyphox-docs
-      - run: >
-          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj
-          -scheme phyphox -destination 'platform=iOS Simulator,name=iPhone 17'
-          -only-testing phyphoxTests CODE_SIGNING_ALLOWED=NO
+
+      # A named destination would let xcodebuild pick the simulator; the goldens need a known
+      # one, because the app's follow-system theme resolves against the SYSTEM appearance and
+      # only simctl can set that.
+      - name: Boot a simulator
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')][-1])")
+          test -n "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+
+      - name: Tests, system appearance light
+        run: |
+          set -euo pipefail
+          xcrun simctl ui "$UDID" appearance light
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" -only-testing phyphoxTests \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Only the goldens care about the system appearance, and only their two follow-system spot
+      # checks: each of the pair can be verified only while the simulator is in that appearance.
+      - name: View goldens, system appearance dark
+        run: |
+          set -euo pipefail
+          xcrun simctl ui "$UDID" appearance dark
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" \
+            -only-testing phyphoxTests/ViewSnapshotTests CODE_SIGNING_ALLOWED=NO
