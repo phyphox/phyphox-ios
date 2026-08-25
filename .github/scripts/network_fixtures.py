@@ -126,17 +126,18 @@ def run_fixture(args, base, experiment_url, names):
     return data, problems
 
 
-def consecutive_from_one(values):
-    return values == list(range(1, len(values) + 1))
-
-
 def check_http_get_receive(data):
     seq, value = data["seq"], data["value"]
     problems = []
     if not seq:
         return ["seq is empty - no poll produced data"]
-    if not consecutive_from_one(seq):
-        problems.append(f"seq must be the consecutive integers 1..k, got {seq}")
+    # Strictly increasing positive integers, but NOT gap-free: a completed request parks its
+    # result until the next analysis pass copies it into the buffers, so a busy device
+    # legitimately drops values at the fixture's 0.2 s interval (see the fixtures README).
+    if any(n is None or n <= 0 or n != int(n) for n in seq):
+        problems.append(f"seq must hold positive integers, got {seq}")
+    elif any(b <= a for a, b in zip(seq, seq[1:])):
+        problems.append(f"seq must be strictly increasing and free of duplicates, got {seq}")
     for n, v in zip(seq, value):
         if v is None or abs(v - n / 2) > 1e-9:
             problems.append(f"value must be seq/2, got {v} for seq {n}")
