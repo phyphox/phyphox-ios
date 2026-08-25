@@ -7,12 +7,11 @@
 # demand. It costs macOS runner minutes and needs no nightly cadence.
 #
 # What the simulator can and cannot do: it has no motion sensors, no barometer, no proximity
-# and no ambient light, so roughly half the shipped collection refuses to open there (the app
-# reports the missing sensor and returns to the collection) - which is why the end-to-end job
-# names the experiments it runs instead of walking the whole collection. Audio *input* is
-# unreliable in a simulator (AVAudioEngine's inputNode can abort with an AudioToolbox RPC
-# timeout), so no microphone experiment is used. Real coverage of the sensor experiments is a
-# T2 lab-phone job, not this one.
+# and no ambient light, so about half the shipped collection cannot open there - the app
+# reports the missing sensor and returns to the collection. The experiments driver classifies
+# those as not loadable on this target rather than failed, and skips microphone experiments
+# (AVAudioEngine's input can abort the app in a simulator), so the end-to-end job covers the
+# loadable subset. Real coverage of the sensor experiments is a T2 lab-phone job, not this one.
 name: t1
 on:
   push:
@@ -27,11 +26,9 @@ jobs:
     timeout-minutes: 90
     env:
       BUNDLE: de.rwth-aachen.physics.phyphox
-      # The app serves remote access on its configured port (80 by default); -phyphoxRemotePort
-      # pins it where the launch is ours. The experiments driver launches the app itself and
-      # does not pass that argument, so its port must be the app's default instead.
-      CONTRACT_PORT: '8080'
-      DRIVER_PORT: '80'
+      # The port the app is told to serve remote access on (-phyphoxRemotePort); the tools use
+      # the same one, the driver passes it to every launch itself.
+      PORT: '8080'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -43,8 +40,12 @@ jobs:
           repository: phyphox/phyphox-docs
           path: phyphox-docs
 
-      - name: Python dependencies
-        run: pip3 install --break-system-packages pyyaml jsonschema
+      - name: Test dependencies
+        run: |
+          set -euo pipefail
+          pip3 install --break-system-packages pyyaml jsonschema
+          # the broker the mqtt network fixture talks to
+          brew install mosquitto
 
       - name: Build for the simulator
         run: >
@@ -61,21 +62,26 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
-          # No permission dialog may block a headless run
+          # No permission dialog may block a headless run - and no launch argument can dismiss a
+          # system one. "all" does not cover the camera (it is not even in simctl's service list,
+          # though it is accepted), which left the first camera experiment sitting on the camera
+          # prompt until it was killed, so grant that one by name as well - loudly, so a future
+          # Xcode dropping the service name fails here instead of hanging a test.
           xcrun simctl privacy "$UDID" grant all "$BUNDLE"
+          xcrun simctl privacy "$UDID" grant camera "$BUNDLE"
           echo "UDID=$UDID" >> "$GITHUB_ENV"
 
       # phyphox-test: remote-contract-t1
       - name: Remote interface contract test
         run: |
           set -euo pipefail
-          BASE="http://127.0.0.1:$CONTRACT_PORT"
+          BASE="http://127.0.0.1:$PORT"
           # The tone generator needs no sensor, no camera and no microphone - the least the
           # simulator can get wrong. Swap it for camera-luminance.phyphox if a runner ever
           # lacks an audio output device.
           xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" \
             -phyphoxUrl "phyphox://asset=tone_generator.phyphox" \
-            -phyphoxRemote -phyphoxRemotePort "$CONTRACT_PORT"
+            -phyphoxRemote -phyphoxRemotePort "$PORT"
           for i in $(seq 30); do
             curl -fs -m 2 "$BASE/config" >/dev/null && break
             sleep 1
@@ -92,46 +98,26 @@ jobs:
       - name: Experiments end to end
         run: |
           set -euo pipefail
-          # The experiments a simulator can host: no motion sensors, no barometer, no
-          # microphone (see the header). The driver is invoked once per experiment with the
-          # app terminated in between, because a second `simctl launch` onto a running app
-          # does not deliver new launch arguments - it would silently re-measure the previous
-          # experiment. One invocation over the whole list is the goal once the driver
-          # terminates the app itself.
-          COLLECTION="$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments"
-          status=0
-          for experiment in \
-            tone_generator.phyphox \
-            camera-luminance.phyphox \
-            camera-hsv.phyphox \
-            camera_stopwatch_luma.phyphox \
-            camera_stopwatch_hue.phyphox \
-            camera_spectrum_luma.phyphox
-          do
-            xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-            python3 phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
-              --port "$DRIVER_PORT" --collection "$COLLECTION" --subset "$experiment" \
-              --out "t1-${experiment%.phyphox}.json" || status=1
-          done
-          exit $status
+          # The driver opens, starts, stops and exports every experiment - it never presses a
+          # button, which matters for sensordb.phyphox: its connection has no interval and only
+          # fires on the Submit button, so nothing is posted to phyphox.org from here. Do not
+          # point a trigger probe (contract_test --allow-control) at that experiment.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+          python3 phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
+            --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
+            --out t1-experiments.json
 
       # phyphox-test: network-http
-      # The network-mqtt row is implemented in the same runner script but is not tagged here
-      # while its fixture cannot work (see below) - a tag would claim a test this workflow does
-      # not run. The tags have to live in this file: the matrix checker scans workflow YAML and
-      # app sources, not the .py the runner is written in.
+      # phyphox-test: network-mqtt
       - name: Network fixtures
         run: |
           set -euo pipefail
-          # The runner starts phyphox-docs' fixture server itself, substitutes the placeholders
-          # and serves the experiments over http, which is how they reach the app.
-          # Only the http row for now: the mqtt fixture is missing conversion="json", so its
-          # receive path cannot produce values on either platform (reported to the docs
-          # session). Once the fixture carries the attribute, drop --only http and install the
-          # broker with `brew install mosquitto`.
+          # The runner starts phyphox-docs' fixture server and the broker itself, substitutes
+          # the placeholders and serves the experiments over http, which is how they reach the
+          # app.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
           python3 phyphox-ios/.github/scripts/network_fixtures.py --udid "$UDID" \
-            --fixtures phyphox-docs/fixtures/network --port "$CONTRACT_PORT" \
-            --only http --keep-going
+            --fixtures phyphox-docs/fixtures/network --port "$PORT" --keep-going
 
       - name: Collect the results
         if: always()
