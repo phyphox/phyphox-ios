@@ -63,12 +63,18 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
           # No permission dialog may block a headless run - and no launch argument can dismiss a
-          # system one. "all" does not cover the camera (it is not even in simctl's service list,
-          # though it is accepted), which left the first camera experiment sitting on the camera
-          # prompt until it was killed, so grant that one by name as well - loudly, so a future
-          # Xcode dropping the service name fails here instead of hanging a test.
+          # system one: a TCC prompt deactivates the app's scene, and phyphox tears its remote
+          # server down when it resigns active, so the run is over with the app still alive.
+          # "all" covers neither the camera nor motion & fitness (the camera is not even in
+          # simctl's service list, though it is accepted), and those two are exactly what the
+          # sweep needs: the camera experiments, and sensordb, whose sensors are declared
+          # ignoreUnavailable and are therefore started even on a simulator that has none.
+          # Granted by name, and loudly, so a future Xcode dropping a service name fails here
+          # instead of hanging a test.
           xcrun simctl privacy "$UDID" grant all "$BUNDLE"
-          xcrun simctl privacy "$UDID" grant camera "$BUNDLE"
+          for service in camera motion microphone location; do
+            xcrun simctl privacy "$UDID" grant "$service" "$BUNDLE"
+          done
           echo "UDID=$UDID" >> "$GITHUB_ENV"
 
       # phyphox-test: remote-contract-t1
