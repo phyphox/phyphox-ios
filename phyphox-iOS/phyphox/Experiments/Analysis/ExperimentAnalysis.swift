@@ -196,22 +196,33 @@ final class ExperimentAnalysis {
         return requireFill.count < threshold
     }
 
-    ///One analysis pass over the modules of the given cycle, in document order - the kernel
-    ///itself, with the requireFill gate but without the rest of the scheduling layer (sleep,
-    ///dynamicSleep, onUserInput) that update() puts around it. Runs synchronously on the calling
-    ///thread and reports whether the modules ran; the analysis golden-vector runner in the test
-    ///suite drives the kernel through this.
+    ///Runs one analysis pass as the given cycle number and reports whether it executed, waiting
+    ///for it to finish. This is update() itself - the requireFill gate, the module selection,
+    ///the experiment time and the bookkeeping are all the production path; only the explicit
+    ///cycle number and the waiting are test-specific, so that the analysis golden-vector runner
+    ///pins the real path rather than a second implementation of it.
+    ///
+    ///Not for the main thread and not for the analysis queue: update() delivers its completion
+    ///on the main thread and runs the modules on the analysis queue, both of which this waits
+    ///for. The sleep, dynamicSleep and onUserInput scheduling around update() lives in
+    ///setNeedsUpdate and is deliberately not involved - the caller decides when a cycle runs.
     @discardableResult
-    func runCycle(_ cycle: Int, experimentTime: TimeInterval, linearTime: TimeInterval, experimentReference1970: TimeInterval, linearReference1970: TimeInterval) -> Bool {
-        guard !requireFillGateBlocks() else { return false }
+    func runCycle(_ cycle: Int) -> Bool {
+        precondition(!Thread.isMainThread, "runCycle waits for a completion delivered on the main thread")
 
-        for module in modulesInCycle(cycle) {
-            module.setNeedsUpdate(experimentTime: experimentTime, linearTime: linearTime, experimentReference1970: experimentReference1970, linearReference1970: linearReference1970)
+        self.cycle = cycle
+
+        let finished = DispatchSemaphore(value: 0)
+        var didExecute = false
+
+        update { executed in
+            didExecute = executed
+            finished.signal()
         }
 
-        didRunSinceStart = true
+        finished.wait()
 
-        return true
+        return didExecute
     }
 
     private func update(_ completion: @escaping (_ didExecute: Bool) -> Void) {

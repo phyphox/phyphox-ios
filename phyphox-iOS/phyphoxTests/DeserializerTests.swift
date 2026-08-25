@@ -4463,8 +4463,12 @@ final class AnalysisGoldenVectorTests: XCTestCase {
         let files = try DocsCorpus.phyphoxFiles(in: vectors)
         XCTAssertGreaterThan(files.count, 0, "no golden vector was found - corpus layout changed?")
 
-        //The kernel expects to run off the main thread, as it does in the app
-        let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors")
+        //A cycle is the app's own analysis pass (ExperimentAnalysis.runCycle wraps update()):
+        //it runs the modules on the experiment's analysis queue and reports back on the main
+        //thread, so the cycles are driven from a third queue while the test waits for each -
+        //which also keeps every comparison here, on the main thread, between two cycles.
+        let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.analysis")
+        let driverQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.driver")
         var ran = 0
         var comparedBuffers = 0
 
@@ -4478,13 +4482,13 @@ final class AnalysisGoldenVectorTests: XCTestCase {
             guard version <= latestSupportedFileVersion else { continue }
 
             let expectedURL = url.deletingPathExtension().appendingPathExtension("expected.json")
-            guard let expectation = try JSONSerialization.jsonObject(with: Data(contentsOf: expectedURL)) as? [String: Any],
-                  let cycles = (expectation["cycles"] as? NSNumber)?.intValue,
-                  let expect = expectation["expect"] as? [[String: Any]] else {
+            guard let expected = try JSONSerialization.jsonObject(with: Data(contentsOf: expectedURL)) as? [String: Any],
+                  let cycles = (expected["cycles"] as? NSNumber)?.intValue,
+                  let expect = expected["expect"] as? [[String: Any]] else {
                 XCTFail("\(name): could not read \(expectedURL.lastPathComponent)")
                 continue
             }
-            let defaultTolerance = Tolerance.read(from: expectation["default_tolerance"] as? [String: Any] ?? [:],
+            let defaultTolerance = Tolerance.read(from: expected["default_tolerance"] as? [String: Any] ?? [:],
                                                   or: Tolerance(abs: 0, rel: 0))
 
             let experiment: Experiment
@@ -4496,13 +4500,19 @@ final class AnalysisGoldenVectorTests: XCTestCase {
                 continue
             }
 
-            //One kernel run per cycle, cycle numbers 0..<cycles, with the experiment time of a
-            //never-started experiment. The scheduling layer around the kernel does not run: the
-            //runner controls the cycle count.
+            experiment.analysis.queue = analysisQueue
+
+            //One analysis pass per cycle, cycle numbers 0..<cycles. The experiment is never
+            //started, so the pass sees the experiment time of a never-started experiment, and
+            //the scheduling around update() - which reschedules itself - is not involved: the
+            //runner decides when a cycle runs.
             for cycle in 0..<cycles {
-                queue.sync {
-                    experiment.analysis.runCycle(cycle, experimentTime: 0, linearTime: 0, experimentReference1970: 0, linearReference1970: 0)
+                let cycleFinished = expectation(description: "\(name) cycle \(cycle)")
+                driverQueue.async {
+                    experiment.analysis.runCycle(cycle)
+                    cycleFinished.fulfill()
                 }
+                wait(for: [cycleFinished], timeout: 30)
 
                 let executedCycles = cycle + 1
                 for entry in expect where (entry["after_cycle"] as? NSNumber)?.intValue == executedCycles {
