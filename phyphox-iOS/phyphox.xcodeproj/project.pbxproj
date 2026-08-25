@@ -155,6 +155,7 @@
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F22B514703008FAFC6 /* GCDWebServer */; };
 		860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F52E42AA0100000002 /* ZIPFoundation */; };
+		8A5A0001000000000000AA01 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 8A5A0002000000000000AA02 /* SnapshotTesting */; };
 		86147C122D78EC03008BAAD2 /* CameraGUIShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */; };
 		86147C192D78FB80008BAAD2 /* MovingAverageAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86147C182D78FB80008BAAD2 /* MovingAverageAnalysis.swift */; };
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -210,6 +211,7 @@
 		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
 		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
+		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
@@ -536,6 +538,7 @@
 		A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
+		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "translated-links.phyphox"; sourceTree = "<group>"; };
@@ -659,6 +662,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A5A0001000000000000AA01 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1257,6 +1261,7 @@
 			children = (
 				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
 				A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */,
+				8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
 				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
@@ -1353,6 +1358,9 @@
 				A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */,
 			);
 			name = phyphoxTests;
+			packageProductDependencies = (
+				8A5A0002000000000000AA02 /* SnapshotTesting */,
+			);
 			productName = phyphoxTests;
 			productReference = A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -1443,6 +1451,7 @@
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -1768,6 +1777,7 @@
 			files = (
 				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
 				A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */,
+				8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2290,6 +2300,14 @@
 				minimumVersion = 0.9.17;
 			};
 		};
+		8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JonasGessner/JGProgressHUD";
@@ -2318,6 +2336,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
+		};
+		8A5A0002000000000000AA02 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
 		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;

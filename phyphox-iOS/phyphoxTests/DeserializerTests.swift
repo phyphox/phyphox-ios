@@ -4246,14 +4246,33 @@ final class DuplicateRootMetadataTests: XCTestCase {
 enum DocsCorpus {
     //#filePath is resolvable at test time because the suite builds and runs on the same
     //machine, locally as well as on CI
+    static let repositoryRoot: URL = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()  // phyphoxTests
+        .deletingLastPathComponent()  // phyphox-iOS
+        .deletingLastPathComponent()
+
+    ///The phyphox-docs checkout, nil when there is none
+    static let docs: URL? = {
+        let docs = repositoryRoot.deletingLastPathComponent().appendingPathComponent("phyphox-docs", isDirectory: true)
+        return FileManager.default.fileExists(atPath: docs.path) ? docs : nil
+    }()
+
     static let url: URL? = {
-        let repositoryRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()  // phyphoxTests
-            .deletingLastPathComponent()  // phyphox-iOS
-            .deletingLastPathComponent()
-        let corpus = repositoryRoot.deletingLastPathComponent().appendingPathComponent("phyphox-docs/corpus", isDirectory: true)
+        guard let corpus = docs?.appendingPathComponent("corpus", isDirectory: true) else { return nil }
         return FileManager.default.fileExists(atPath: corpus.path) ? corpus : nil
     }()
+
+    ///A directory of the docs checkout (like fixtures/views), skipping the test without one
+    static func docsDirectory(_ subpath: String, notTestedNotice: String) throws -> URL {
+        guard let docs = docs else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - \(notTestedNotice) not tested")
+        }
+        let directory = docs.appendingPathComponent(subpath, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no \(subpath) - \(notTestedNotice) not tested")
+        }
+        return directory
+    }
 
     static func directory(_ subpath: String, notTestedNotice: String) throws -> URL {
         guard let url = url else {
