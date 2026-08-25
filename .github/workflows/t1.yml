@@ -103,7 +103,9 @@ jobs:
           # fires on the Submit button, so nothing is posted to phyphox.org from here. Do not
           # point a trigger probe (contract_test --allow-control) at that experiment.
           xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-          python3 phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
+          # -u: unbuffered, so each experiment is timestamped in the step log as it happens
+          # instead of the whole sweep arriving at once when the pipe is flushed
+          python3 -u phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
             --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
             --out t1-experiments.json
 
@@ -119,10 +121,25 @@ jobs:
           python3 phyphox-ios/.github/scripts/network_fixtures.py --udid "$UDID" \
             --fixtures phyphox-docs/fixtures/network --port "$PORT" --keep-going
 
+      # A failing step here usually means the app stopped answering, and the reason is in the
+      # crash reports and the device log - neither of which survives the runner. Collect both
+      # so the next failure explains itself instead of needing another run.
+      - name: Diagnostics
+        if: failure()
+        run: |
+          set -uo pipefail
+          mkdir -p t1-diagnostics
+          cp ~/Library/Logs/DiagnosticReports/phyphox-*.ips t1-diagnostics/ 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 20m --style compact \
+            --predicate 'process == "phyphox"' > t1-diagnostics/phyphox-device.log 2>&1 || true
+          ls -la t1-diagnostics
+
       - name: Collect the results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: t1-results
-          path: t1-*.json
+          path: |
+            t1-*.json
+            t1-diagnostics/
           if-no-files-found: ignore
