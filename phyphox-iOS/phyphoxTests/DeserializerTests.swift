@@ -2422,6 +2422,57 @@ final class RequireFillFirstRunTests: XCTestCase {
     }
 }
 
+//An export set is as long as its LONGEST column (ruled 2026-08-25). Sizing it by the first
+//column silently dropped every value a later column held beyond that length - and dropped the
+//whole set when the first container was empty, which is data loss rather than formatting.
+//Shorter columns keep the padding each writer already used.
+final class ExportSetRowCountTests: XCTestCase {
+    private func makeSet(_ columns: [(String, [Double])]) throws -> ExperimentExportSet {
+        let data: [(name: String, buffer: DataBuffer)] = try columns.map { column in
+            (name: column.0, buffer: try DataBuffer(name: column.0, size: 0, baseContents: column.1, static: false))
+        }
+        return ExperimentExportSet(name: "set", data: data)
+    }
+
+    func testLongestColumnDeterminesTheRowCount() throws {
+        let set = try makeSet([("t", [1, 2]), ("x", [10, 20, 30, 40])])
+        let rows = set.rowValues()
+
+        XCTAssertEqual(rows.count, 4, "the longest column decides how many rows are exported")
+        XCTAssertEqual(rows[1], [2, 20])
+        XCTAssertEqual(rows[3][1], 40, "values beyond the first column's length must survive")
+        XCTAssertNil(rows[3][0], "the shorter column has no value for that row")
+    }
+
+    func testAnEmptyFirstColumnNoLongerDropsTheSet() throws {
+        let set = try makeSet([("tlist", []), ("dtlist", [0.5, 0.75])])
+        let rows = set.rowValues()
+
+        XCTAssertEqual(rows.count, 2, "an empty first container must not empty the whole set")
+        XCTAssertEqual(rows.map { $0[1] }, [0.5, 0.75])
+        XCTAssertEqual(rows.compactMap { $0[0] }, [], "the empty column contributes no values")
+    }
+
+    func testEmptySetStaysEmpty() throws {
+        let set = try makeSet([("a", []), ("b", [])])
+        XCTAssertEqual(set.rowValues().count, 0)
+    }
+
+    func testCSVCoversTheLongestColumnAsWell() throws {
+        let set = try makeSet([("t", [1]), ("x", [10, 20, 30])])
+        let csv = try XCTUnwrap(set.serializeToCSV(separator: ",", decimalPoint: "."))
+        let lines = try XCTUnwrap(String(data: csv, encoding: .utf8)).components(separatedBy: "\n")
+
+        XCTAssertEqual(lines.count, 4, "a header and one line per row of the longest column")
+        XCTAssertTrue(lines[3].hasPrefix("\"\""), "the short column is padded, as it always was")
+
+        //The long column's values survive to the last row; the writer formats them in scientific
+        //notation, which Double parses back
+        let exported = lines.dropFirst().map { Double($0.components(separatedBy: ",")[1]) }
+        XCTAssertEqual(exported, [10, 20, 30])
+    }
+}
+
 //static data containers follow Android's model (decided 2026-08-24): the module writing them
 //executes a single time and is skipped from then on - so it also stops clearing its keep=false
 //input buffers - a static output locks once the module has run even if it wrote nothing, and the

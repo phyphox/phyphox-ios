@@ -110,8 +110,22 @@ struct ExperimentExportSet {
         return string.count > 0 ? string.data(using: .utf8) : nil
     }
     
+    //The rows this set exports, one entry per column, nil where a column has no value for that
+    //row. The LONGEST column decides how many rows there are (ruled 2026-08-25): sizing a set by
+    //its first column silently dropped every value beyond that column's length, and dropped the
+    //set entirely when the first container was empty. Buffers are snapshot here, so the row count
+    //and the cell values stay consistent even if the experiment keeps writing during the export.
+    func rowValues() -> [[Double?]] {
+        let columns = data.map { $0.buffer.toArray() }
+        let rows = columns.map({ $0.count }).max() ?? 0
+
+        return (0..<rows).map { row in
+            columns.map { row < $0.count ? $0[row] : nil }
+        }
+    }
+
     //Writes this set as one sheet into an xlsx file, laid out like the Android implementation
-    //(DataExport.ExcelFormat): a bold header row, then one row per value of the first column,
+    //(DataExport.ExcelFormat): a bold header row, then one row per value of the longest column,
     //with cells of shorter columns filled with the text "NaN"
     func serializeToXlsx(_ xlsx: XlsxWriter) throws {
         try xlsx.startSheet(name)
@@ -122,14 +136,11 @@ struct ExperimentExportSet {
         }
         xlsx.endRow()
 
-        //Snapshot the buffers so the row count and cell values are consistent even if the
-        //experiment keeps writing during the export
-        let columns = data.map { $0.buffer.toArray() }
-        for i in 0..<(columns.first?.count ?? 0) {
+        for row in rowValues() {
             xlsx.startRow()
-            for column in columns {
-                if i < column.count {
-                    xlsx.numberCell(column[i])
+            for value in row {
+                if let value = value {
+                    xlsx.numberCell(value)
                 } else {
                     xlsx.stringCell("NaN")
                 }
