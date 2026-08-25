@@ -33,9 +33,11 @@ jobs:
         run: |
           set -euo pipefail
           xcrun simctl ui "$UDID" appearance light
+          # The graph goldens are T1: they need the GL renderer in a visible window, so they
+          # run in the t1 workflow rather than here.
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$UDID" -only-testing phyphoxTests \
-            CODE_SIGNING_ALLOWED=NO
+            -skip-testing:phyphoxTests/GraphSnapshotTests CODE_SIGNING_ALLOWED=NO
 
       # Only the goldens care about the system appearance, and only their two follow-system spot
       # checks: each of the pair can be verified only while the simulator is in that appearance.

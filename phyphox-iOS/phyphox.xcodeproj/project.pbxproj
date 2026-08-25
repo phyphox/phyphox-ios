@@ -212,6 +212,7 @@
 		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
 		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
+		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
@@ -539,6 +540,7 @@
 		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
 		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
+		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "translated-links.phyphox"; sourceTree = "<group>"; };
@@ -1262,6 +1264,7 @@
 				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
 				A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */,
 				8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */,
+				8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
 				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
@@ -1778,6 +1781,7 @@
 				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
 				A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */,
 				8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */,
+				8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
