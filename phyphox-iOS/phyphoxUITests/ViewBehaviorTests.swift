@@ -137,11 +137,10 @@ final class ViewBehaviorTests: XCTestCase {
         app.buttons["write 7"].tap()
         expectBuffer("target", toEqual: [7], "a button writes its value")
 
-        //Both platforms treat every input/output pair on its own and clear the output before
-        //writing it (iOS replaceValues, Android clear+append), so two pairs pointing at the same
-        //buffer leave only the second value - the fixture's name notwithstanding. Reported to
-        //the docs session: either the fixture wants two outputs, or "append" wants a ruling.
-        app.buttons["append two values"].tap()
+        //Every input/output pair is applied on its own and clears its output first (iOS
+        //replaceValues, Android clear+append), so two pairs pointing at the same buffer leave
+        //only the second value - the agreed semantics on both platforms, now stated in the spec
+        app.buttons["two writes, last wins"].tap()
         expectBuffer("log", toEqual: [2], "the second pair replaces what the first wrote")
 
         app.buttons["clear"].tap()
@@ -163,11 +162,11 @@ final class ViewBehaviorTests: XCTestCase {
     func testSlidersAndDropdown() throws {
         let app = try launch(fixture: "sliders-dropdowns")
 
-        //Two of the three sliders are UISliders; the range slider is a custom control that
-        //exposes no accessibility element at all, so it is driven by coordinates below (and
-        //reported to the docs session - assistive technology cannot reach it either)
+        //Two of the three are UISliders; the range slider is a custom control whose two thumbs
+        //are accessibility elements of their own (see RangeSlider), which is how they are
+        //addressed further down
         let sliders = app.sliders
-        XCTAssertEqual(sliders.count, 2, "the plain and the coarse slider are accessible")
+        XCTAssertEqual(sliders.count, 2, "the plain and the coarse slider are UISliders")
 
         sliders.element(boundBy: 0).adjust(toNormalizedSliderPosition: 1.0)
         expectBuffer("s1", toEqual: [5], "a slider dragged to the end writes its maximum")
@@ -183,18 +182,24 @@ final class ViewBehaviorTests: XCTestCase {
         XCTAssertEqual(coarse.first?.truncatingRemainder(dividingBy: 10), 0,
                        "the step size quantises the value, got \(coarse)")
 
-        //The range slider: drag its lower handle to the left end. Its track sits between the
-        //min and max labels of that row, which is how a user sees it too.
-        let row = app.staticTexts["20 - 60"]
-        XCTAssertTrue(row.waitForExistence(timeout: 5), "the range slider shows its current range")
-        let track = row.frame.maxY + 30
-        let start = app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: 60 + 0.2 * 282, dy: track))
-        let leftEnd = app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: 62, dy: track))
-        start.press(forDuration: 0.1, thenDragTo: leftEnd)
+        //The range slider's two thumbs are accessibility elements of their own, so they can be
+        //found and read rather than guessed at by coordinate
+        let lower = app.otherElements["Lower value"]
+        let upper = app.otherElements["Upper value"]
+        XCTAssertTrue(lower.waitForExistence(timeout: 5), "the lower thumb is reachable")
+        XCTAssertTrue(upper.exists, "the upper thumb is reachable")
+        XCTAssertEqual(lower.value as? String, "20", "the thumb reports the value it stands for")
+        XCTAssertEqual(upper.value as? String, "60")
+
+        //Dragging still happens by touch - XCUITest offers no accessibility adjustment - but it
+        //starts from the thumb's own frame and simply overshoots the left end, which the slider
+        //clamps
+        lower.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1,
+                   thenDragTo: lower.coordinate(withNormalizedOffset: CGVector(dx: -2, dy: 0.5)))
         expectBuffer("lower", toEqual: [0], "the lower handle writes the lower output")
         expectBuffer("upper", toEqual: [60], "and leaves the upper one where it was")
+        XCTAssertEqual(lower.value as? String, "0", "and the element reports the new value")
 
         //The dropdown writes the value of the entry, not its position
         let dropdown = app.buttons["slow"]
