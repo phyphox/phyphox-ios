@@ -50,6 +50,16 @@
                ReferencedContainer = "container:phyphox.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8A5A0102000000000000AA12"
+               BuildableName = "phyphoxUITests.xctest"
+               BlueprintName = "phyphoxUITests"
+               ReferencedContainer = "container:phyphox.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -213,6 +213,7 @@
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
 		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
 		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
+		8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
@@ -286,6 +287,13 @@
 
 /* Begin PBXContainerItemProxy section */
 		A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
+		8A5A0107000000000000AA17 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
 			proxyType = 1;
@@ -541,6 +549,8 @@
 		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
 		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
 		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
+		8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewBehaviorTests.swift; sourceTree = "<group>"; };
+		8A5A0100000000000000AA10 /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "translated-links.phyphox"; sourceTree = "<group>"; };
@@ -657,6 +667,28 @@
 				C0BD4DF627079C600020A5AF /* JGProgressHUD in Frameworks */,
 				C06BCD4C2707B07100B29595 /* MobileCoreServices.framework in Frameworks */,
 				C06BCD4F2707B09C00B29595 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A5A0103000000000000AA13 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A5A0104000000000000AA14 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A5A0105000000000000AA15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -777,6 +809,7 @@
 				6B7BF77C1C130425007408FB /* phyphox */,
 				C051CFAD22AEEB4100355864 /* phyphox screenshots */,
 				A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */,
+				8A5A0101000000000000AA11 /* phyphoxUITests */,
 				6B7BF77B1C130425007408FB /* Products */,
 				C075AA7B2232CC0500DE86D8 /* Frameworks */,
 			);
@@ -788,6 +821,7 @@
 				6B7BF77A1C130425007408FB /* phyphox.app */,
 				C051CFAC22AEEB4000355864 /* phyphox screenshots.xctest */,
 				A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */,
+				8A5A0100000000000000AA10 /* phyphoxUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1273,6 +1307,14 @@
 			path = phyphoxTests;
 			sourceTree = "<group>";
 		};
+		8A5A0101000000000000AA11 /* phyphoxUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */,
+			);
+			path = phyphoxUITests;
+			sourceTree = "<group>";
+		};
 		C034B02227171E0100C0EF00 /* DepthGUI */ = {
 			isa = PBXGroup;
 			children = (
@@ -1346,6 +1388,24 @@
 			productName = phyphox;
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8A5A0102000000000000AA12 /* phyphoxUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A5A0108000000000000AA18 /* Build configuration list for PBXNativeTarget "phyphoxUITests" */;
+			buildPhases = (
+				8A5A0103000000000000AA13 /* Sources */,
+				8A5A0104000000000000AA14 /* Frameworks */,
+				8A5A0105000000000000AA15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A5A0106000000000000AA16 /* PBXTargetDependency */,
+			);
+			name = phyphoxUITests;
+			productName = phyphoxUITests;
+			productReference = 8A5A0100000000000000AA10 /* phyphoxUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */ = {
 			isa = PBXNativeTarget;
@@ -1463,6 +1523,7 @@
 				6B7BF7791C130425007408FB /* phyphox */,
 				C051CFAB22AEEB4000355864 /* phyphox screenshots */,
 				A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */,
+				8A5A0102000000000000AA12 /* phyphoxUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1801,6 +1862,11 @@
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */;
+		};
+		8A5A0106000000000000AA16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = 8A5A0107000000000000AA17 /* PBXContainerItemProxy */;
 		};
 		C051CFB222AEEB4100355864 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2185,6 +2251,59 @@
 			};
 			name = Release;
 		};
+		8A5A0109000000000000AA19 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = phyphox;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+			};
+			name = Debug;
+		};
+		8A5A010A000000000000AA1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = phyphox;
+			};
+			name = Release;
+		};
 		C051CFB322AEEB4100355864 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2272,6 +2391,15 @@
 			buildConfigurations = (
 				A1FA9A1329ACC5F800E0FDBF /* Debug */,
 				A1FA9A1429ACC5F800E0FDBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A5A0108000000000000AA18 /* Build configuration list for PBXNativeTarget "phyphoxUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A5A0109000000000000AA19 /* Debug */,
+				8A5A010A000000000000AA1A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

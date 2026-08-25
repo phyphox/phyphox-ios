@@ -126,6 +126,17 @@ jobs:
             -scheme phyphox -destination "id=$UDID" \
             -only-testing phyphoxTests/GraphSnapshotTests CODE_SIGNING_ALLOWED=NO
 
+      # phyphox-test: view-behavior
+      - name: View behaviour
+        run: |
+          set -euo pipefail
+          # XCUITest drives the fixtures' controls and asserts what each interaction wrote,
+          # through the remote API on its own port - the app is launched by the test itself.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" \
+            -only-testing phyphoxUITests CODE_SIGNING_ALLOWED=NO
+
       # phyphox-test: network-http
       # phyphox-test: network-mqtt
       - name: Network fixtures
