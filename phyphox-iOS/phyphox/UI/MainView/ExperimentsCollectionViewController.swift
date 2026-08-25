@@ -1113,7 +1113,26 @@ print("\(url)")
         }
         
         guard let loadedExperiment = experiment else { return false }
-        
+
+        //A link experiment has no views to show - opening its link is what tapping its entry in
+        //the collection does, and it is what a QR code or a file carrying isLink="true" means.
+        //Pushing an experiment page for it used to crash on the missing view descriptors.
+        if loadedExperiment.isLink {
+            guard let linkURL = loadedExperiment.localizedLinks.first?.url else {
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("url_invalid"))
+                    .message(message: localize("url_invalid_msg"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction()
+                    .show(in: self, animated: true)
+
+                return false
+            }
+            UIApplication.shared.open(linkURL)
+
+            return true
+        }
+
         if loadedExperiment.appleBan {
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
              controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in

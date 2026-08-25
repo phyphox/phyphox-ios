@@ -134,6 +134,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var modules: [[ExperimentModule]] = []
         
+        //Nil for a link experiment and for the placeholder of a file that failed to load; see
+        //viewCollections, which the rest of the class uses (self is not available yet here)
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
@@ -273,7 +275,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         //frame set at creation goes stale (in landscape the tabs ended up slightly under the bar)
         tabBar?.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
         let timerInset: CGFloat = timerDisplay.map { $0.frame.height + 8 } ?? 0
-        let tabInset: CGFloat = (experiment.viewDescriptors!.count > 1) ? tabBarHeight : timerInset
+        let tabInset: CGFloat = (viewCollections.count > 1) ? tabBarHeight : timerInset
         for vc in experimentViewControllers {
             let oldInset = vc.tableView.contentInset.top
             if oldInset != tabInset {
@@ -370,9 +372,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         //TabBar to switch collections
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             var buttons: [String] = []
-            for collection in experiment.viewDescriptors! {
+            for collection in viewCollections {
                 buttons.append(collection.localizedLabel)
             }
             segControl = UIExperimentTabControl(items: buttons)
@@ -452,7 +454,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
         refreshAppTheme()
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             updateSegControlDesign()
         }
         
@@ -831,6 +833,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    ///The experiment's view collections. Nil descriptors are possible - a link experiment has no
+    ///views, and neither does the placeholder built for a file that failed to load - so this is
+    ///never force-unwrapped: the collection view controller keeps such experiments away from
+    ///this screen, and if one ever arrives here it must not trap.
+    private var viewCollections: [ExperimentViewCollectionDescriptor] {
+        return experiment.viewDescriptors ?? []
+    }
+
     private var remoteUrl: String = ""
 
     private var didLaunchWebServerForAutomation = false
