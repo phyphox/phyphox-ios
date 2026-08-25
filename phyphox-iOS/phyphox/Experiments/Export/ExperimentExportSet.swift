@@ -82,7 +82,9 @@ struct ExperimentExportSet {
                 for (j, entry) in data.enumerated() {
                     let val = entry.buffer.objectAtIndex(index-1)
                     
-                    let str = val != nil ? format(val!) : "\"\""
+                    //A missing cell of a shorter column is padded NaN in every format on every
+                    //platform (ruled 2026-08-25); this writer used to leave an empty string
+                    let str = val != nil ? format(val!) : "NaN"
                     
                     if j == 0 {
                         line += "\n" + str

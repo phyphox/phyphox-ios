@@ -2422,10 +2422,11 @@ final class RequireFillFirstRunTests: XCTestCase {
     }
 }
 
-//An export set is as long as its LONGEST column (ruled 2026-08-25). Sizing it by the first
-//column silently dropped every value a later column held beyond that length - and dropped the
-//whole set when the first container was empty, which is data loss rather than formatting.
-//Shorter columns keep the padding each writer already used.
+//An export set is as long as its LONGEST column, and a missing cell of a shorter column is
+//padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
+//dropped every value a later column held beyond that length - and dropped the whole set when
+//the first container was empty, which is data loss rather than formatting; the CSV writer left
+//an empty string where every other writer, on both platforms, writes NaN.
 final class ExportSetRowCountTests: XCTestCase {
     private func makeSet(_ columns: [(String, [Double])]) throws -> ExperimentExportSet {
         let data: [(name: String, buffer: DataBuffer)] = try columns.map { column in
@@ -2464,7 +2465,7 @@ final class ExportSetRowCountTests: XCTestCase {
         let lines = try XCTUnwrap(String(data: csv, encoding: .utf8)).components(separatedBy: "\n")
 
         XCTAssertEqual(lines.count, 4, "a header and one line per row of the longest column")
-        XCTAssertTrue(lines[3].hasPrefix("\"\""), "the short column is padded, as it always was")
+        XCTAssertTrue(lines[3].hasPrefix("NaN,"), "a missing cell is padded NaN, like every other writer")
 
         //The long column's values survive to the last row; the writer formats them in scientific
         //notation, which Double parses back
