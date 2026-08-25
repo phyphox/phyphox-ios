@@ -214,6 +214,10 @@
 		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
 		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
 		8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */; };
+		8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010F000000000000AA1F /* AppChromeTests.swift */; };
+		8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */; };
+		8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */; };
+		8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0111000000000000AA21 /* LifecycleTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
@@ -550,6 +554,10 @@
 		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
 		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
 		8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewBehaviorTests.swift; sourceTree = "<group>"; };
+		8A5A010F000000000000AA1F /* AppChromeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeTests.swift; sourceTree = "<group>"; };
+		8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchBypassedUITests.swift; sourceTree = "<group>"; };
+		8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySmokeTests.swift; sourceTree = "<group>"; };
+		8A5A0111000000000000AA21 /* LifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleTests.swift; sourceTree = "<group>"; };
 		8A5A0100000000000000AA10 /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
@@ -675,6 +683,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */,
+				8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */,
+				8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */,
+				8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */,
+				8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1311,6 +1323,10 @@
 			isa = PBXGroup;
 			children = (
 				8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */,
+				8A5A010F000000000000AA1F /* AppChromeTests.swift */,
+				8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */,
+				8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */,
+				8A5A0111000000000000AA21 /* LifecycleTests.swift */,
 			);
 			path = phyphoxUITests;
 			sourceTree = "<group>";

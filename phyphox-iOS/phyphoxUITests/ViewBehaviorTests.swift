@@ -21,7 +21,7 @@ final class ViewBehaviorTests: XCTestCase {
 
     //The fixtures live in the phyphox-docs checkout next to this repository; #filePath resolves
     //because the tests build and run on the same machine, and a simulator reads the host's files
-    private static let fixtures: URL? = {
+    static let fixturesDirectory: URL? = {
         let repository = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()  // phyphoxUITests
             .deletingLastPathComponent()  // phyphox-iOS
@@ -32,7 +32,7 @@ final class ViewBehaviorTests: XCTestCase {
     }()
 
     private func launch(fixture: String) throws -> XCUIApplication {
-        guard let fixtures = ViewBehaviorTests.fixtures else {
+        guard let fixtures = ViewBehaviorTests.fixturesDirectory else {
             throw XCTSkip("phyphox-docs is not checked out next to this repository - view behavior not tested")
         }
         let url = fixtures.appendingPathComponent("\(fixture).phyphox")
