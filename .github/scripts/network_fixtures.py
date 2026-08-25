@@ -278,7 +278,12 @@ def main():
     #A fixture that cannot reach its server produces empty buffers, which reads like an app
     #failure - so the server has to prove it is serving before a single experiment is launched
     fixture_base = f"http://{HOST}:{args.fixture_port}"
-    if not wait_for(lambda: api(fixture_base, "/reset", timeout=2).get("result") is True, 20):
+    #Generous, because http.server's HTTPServer.server_bind does a reverse DNS lookup of the
+    #bind address (socket.getfqdn) between binding and listening, and that lookup takes tens of
+    #seconds on a CI runner - the port is then bound but not yet listening, so a connection
+    #attempt neither succeeds nor is refused. Instant on a development machine.
+    started = time.time()
+    if not wait_for(lambda: api(fixture_base, "/reset", timeout=2).get("result") is True, 120):
         fixture_log.seek(0)
         print(f"the fixture server at {fixture_base} never answered /reset")
         print(f"   process: {'alive' if fixture_server.poll() is None else f'exited {fixture_server.returncode}'}")
@@ -294,6 +299,9 @@ def main():
         served.shutdown()
         shutil.rmtree(directory, ignore_errors=True)
         return 1
+
+    if time.time() - started > 2:
+        print(f"fixture server ready after {time.time() - started:.0f}s")
 
     failures = 0
     try:
