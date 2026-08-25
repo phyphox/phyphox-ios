@@ -132,6 +132,12 @@ jobs:
           cp ~/Library/Logs/DiagnosticReports/phyphox-*.ips t1-diagnostics/ 2>/dev/null || true
           xcrun simctl spawn "$UDID" log show --last 20m --style compact \
             --predicate 'process == "phyphox"' > t1-diagnostics/phyphox-device.log 2>&1 || true
+          # Who took the foreground: the app tears its remote server down when it resigns
+          # active, so a run can end with the app alive and silent, and the reason is in
+          # SpringBoard's log rather than the app's.
+          xcrun simctl spawn "$UDID" log show --last 20m --style compact \
+            --predicate 'process == "SpringBoard" OR process == "runningboardd"' 2>/dev/null \
+            | tail -c 4000000 > t1-diagnostics/springboard.log || true
           ls -la t1-diagnostics
 
       - name: Collect the results
