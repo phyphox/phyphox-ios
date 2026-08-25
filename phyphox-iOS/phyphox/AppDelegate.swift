@@ -28,6 +28,14 @@ import UIKit
 //  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one,
 //                             so a host script does not have to discover the port the fallback
 //                             ladder picked.
+//  -phyphoxAutoConfirm        confirms the notices an experiment shows when it opens - the
+//                             network privacy warning, the photosensitivity warning - and
+//                             declines the offer to save a downloaded experiment locally. They
+//                             are informational (their only action is OK), but unattended they
+//                             stall the run: the network privacy notice in particular gates the
+//                             connection setup, so the network fixture experiments cannot run
+//                             without this. It skips no user choice and no system permission
+//                             dialog, which the app cannot dismiss anyway.
 //
 //Example:
 //xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox" -phyphoxRemote
@@ -44,6 +52,8 @@ enum AutomationLaunchOptions {
     static let remoteEnabled = arguments.contains("-phyphoxRemote")
 
     static let remotePort: UInt? = value(after: "-phyphoxRemotePort").flatMap { UInt($0) }
+
+    static let autoConfirm = arguments.contains("-phyphoxAutoConfirm")
 }
 
 @UIApplicationMain

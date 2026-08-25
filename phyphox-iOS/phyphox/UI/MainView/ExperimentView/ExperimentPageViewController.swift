@@ -553,7 +553,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             )
 
         case .dataPolicy:
-            if let networkConnection = experiment.networkConnections.first {
+            //-phyphoxAutoConfirm (see AutomationLaunchOptions) confirms the notice for an
+            //unattended run - it gates the connection setup, so a headless network test could
+            //not run otherwise
+            if AutomationLaunchOptions.autoConfirm {
+                dataPolicyInfoDismissed()
+            } else if let networkConnection = experiment.networkConnections.first {
                 let sensorList = experiment.sensorInputs.map { $0.sensorType.getLocalizedName() }
                 networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
             } else {
@@ -578,7 +583,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //Like on Android, the photosensitivity warning is deliberately shown on every open
             //of an experiment that can strobe the flashlight, rather than offering a permanent
             //dismissal that would silence it forever.
-            if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true {
+            if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true,
+               !AutomationLaunchOptions.autoConfirm {
                 photosensitivityWarningShown = true
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("warning_photosensitivity"))
@@ -594,7 +600,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         case .saveLocally:
             //Ask to save the experiment locally if it has been loaded from a remote source
-            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
+               !AutomationLaunchOptions.autoConfirm {
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("save_locally"))
                     .message(message: localize("save_locally_message"))

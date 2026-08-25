@@ -115,6 +115,24 @@ jobs:
           done
           exit $status
 
+      # phyphox-test: network-http
+      # The network-mqtt row is implemented in the same runner script but is not tagged here
+      # while its fixture cannot work (see below) - a tag would claim a test this workflow does
+      # not run. The tags have to live in this file: the matrix checker scans workflow YAML and
+      # app sources, not the .py the runner is written in.
+      - name: Network fixtures
+        run: |
+          set -euo pipefail
+          # The runner starts phyphox-docs' fixture server itself, substitutes the placeholders
+          # and serves the experiments over http, which is how they reach the app.
+          # Only the http row for now: the mqtt fixture is missing conversion="json", so its
+          # receive path cannot produce values on either platform (reported to the docs
+          # session). Once the fixture carries the attribute, drop --only http and install the
+          # broker with `brew install mosquitto`.
+          python3 phyphox-ios/.github/scripts/network_fixtures.py --udid "$UDID" \
+            --fixtures phyphox-docs/fixtures/network --port "$CONTRACT_PORT" \
+            --only http --keep-going
+
       - name: Collect the results
         if: always()
         uses: actions/upload-artifact@v4
