@@ -124,8 +124,13 @@ jobs:
           # the placeholders and serves the experiments over http, which is how they reach the
           # app.
           xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-          python3 phyphox-ios/.github/scripts/network_fixtures.py --udid "$UDID" \
-            --fixtures phyphox-docs/fixtures/network --port "$PORT" --keep-going
+          # The helpers' own logs go to the artifact: a fixture that cannot reach its server
+          # produces empty buffers, which reads like an app failure until you can see whether
+          # the server was even up.
+          mkdir -p t1-diagnostics
+          python3 -u phyphox-ios/.github/scripts/network_fixtures.py --udid "$UDID" \
+            --fixtures phyphox-docs/fixtures/network --port "$PORT" \
+            --log-dir t1-diagnostics --keep-going
 
       # A failing step here usually means the app stopped answering, and the reason is in the
       # crash reports and the device log - neither of which survives the runner. Collect both

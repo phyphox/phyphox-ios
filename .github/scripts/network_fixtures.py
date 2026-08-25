@@ -57,6 +57,18 @@ def api(base, path, timeout=10):
         return {"error": str(error)}
 
 
+def wait_for(condition, seconds):
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        try:
+            if condition():
+                return True
+        except Exception:
+            pass
+        time.sleep(0.5)
+    return False
+
+
 def wait_for_api(base, seconds):
     deadline = time.time() + seconds
     while time.time() < deadline:
@@ -218,7 +230,10 @@ def main():
                         help="phyphox-docs fixtures/network directory")
     parser.add_argument("--port", type=int, default=8080,
                         help="port the app serves remote access on")
-    parser.add_argument("--fixture-port", type=int, default=8113)
+    parser.add_argument("--fixture-port", type=int, default=0,
+                        help="port for the http fixture server (default: a free one)")
+    parser.add_argument("--log-dir", default=".",
+                        help="where the fixture server and broker logs are written")
     parser.add_argument("--seconds", type=float, default=4.0,
                         help="how long each fixture polls")
     parser.add_argument("--api-wait", type=float, default=20.0)
@@ -228,6 +243,9 @@ def main():
                         help="report every fixture instead of stopping at the first failure")
     args = parser.parse_args()
 
+    if not args.fixture_port:
+        args.fixture_port = free_port()
+
     fixtures = os.path.normpath(args.fixtures)
     if not os.path.isdir(fixtures):
         sys.exit(f"no fixture directory at {fixtures} - is phyphox-docs checked out?")
@@ -236,20 +254,37 @@ def main():
     base = f"http://{HOST}:{args.port}"
     directory = prepare_fixtures(fixtures, args.fixture_port)
     served = serve_directory(directory)
+    os.makedirs(args.log_dir, exist_ok=True)
+    fixture_log = open(os.path.join(args.log_dir, "network_fixture.log"), "w+")
     fixture_server = subprocess.Popen(
         [sys.executable, os.path.join(tools, "network_fixture.py"), str(args.fixture_port)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        stdout=fixture_log, stderr=subprocess.STDOUT)
 
     broker = None
+    broker_log = None
     selected = []
     if args.only != "mqtt":
         selected += HTTP_FIXTURES
     if args.only != "http":
         selected += MQTT_FIXTURES
+        broker_log = open(os.path.join(args.log_dir, "mosquitto.log"), "w+")
         broker = subprocess.Popen(
             ["mosquitto", "-c", os.path.join(fixtures, "mosquitto.conf")],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(1.0)
+            stdout=broker_log, stderr=subprocess.STDOUT)
+
+    #A fixture that cannot reach its server produces empty buffers, which reads like an app
+    #failure - so the server has to prove it is serving before a single experiment is launched
+    fixture_base = f"http://{HOST}:{args.fixture_port}"
+    if not wait_for(lambda: api(fixture_base, "/reset").get("result") is True, 15):
+        fixture_log.seek(0)
+        print(f"the fixture server at {fixture_base} never answered /reset")
+        print(fixture_log.read().strip() or "(it logged nothing)")
+        fixture_server.terminate()
+        if broker:
+            broker.terminate()
+        served.shutdown()
+        shutil.rmtree(directory, ignore_errors=True)
+        return 1
 
     failures = 0
     try:
@@ -277,6 +312,9 @@ def main():
         fixture_server.terminate()
         if broker:
             broker.terminate()
+        fixture_log.close()
+        if broker_log:
+            broker_log.close()
         shutil.rmtree(directory, ignore_errors=True)
 
     print(f"\n{len(selected)} fixture(s), {failures} with findings")
