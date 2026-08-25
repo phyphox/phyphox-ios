@@ -119,11 +119,15 @@ jobs:
       - name: Graph goldens
         run: |
           set -euo pipefail
+          mkdir -p t1-diagnostics
           # The plot is drawn by OpenGL into a GLKView, which renders nothing in a layer-based
           # capture: the goldens need the view in a visible window on a real context, which is
           # what makes this row T1 while the other view goldens are T0.
+          # The result bundle carries the reference and the actual image of a failed golden,
+          # which is the only way to see WHY one did not match on a machine you cannot open
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$UDID" \
+            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/graph-goldens.xcresult" \
             -only-testing phyphoxTests/GraphSnapshotTests CODE_SIGNING_ALLOWED=NO
 
       # phyphox-test: view-behavior
