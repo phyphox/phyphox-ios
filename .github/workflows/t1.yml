@@ -139,8 +139,8 @@ jobs:
           # the paths the -phyphox* switches bypass, and a report-only accessibility audit.
           xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
-            -scheme phyphox -destination "id=$UDID" \
-            -only-testing phyphoxUITests CODE_SIGNING_ALLOWED=NO
+            -scheme phyphox -destination "id=$UDID" -only-testing phyphoxUITests \
+            -skip-testing:phyphoxUITests/TranslationsUITests CODE_SIGNING_ALLOWED=NO
 
       # The chrome suite again on a tablet: the layouts differ, and an action sheet becomes a
       # popover there, which is a different dismissal path.
@@ -155,6 +155,18 @@ jobs:
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$IPAD" \
             -only-testing phyphoxUITests/AppChromeTests CODE_SIGNING_ALLOWED=NO
+
+      # phyphox-test: translations-ui
+      - name: Every shipped language
+        run: |
+          set -euo pipefail
+          # One launch per language of the canonical list: the experiment screen, its menu and
+          # the collection, checked for text that lands outside the screen and for a menu that
+          # lost entries. Screenshots per language are attached to the result bundle.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" \
+            -only-testing phyphoxUITests/TranslationsUITests CODE_SIGNING_ALLOWED=NO
 
       # phyphox-test: network-http
       # phyphox-test: network-mqtt

@@ -213,8 +213,10 @@
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
 		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
 		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
+		8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */; };
 		8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */; };
 		8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010F000000000000AA1F /* AppChromeTests.swift */; };
+		8A5A011A000000000000AA2A /* TranslationsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0119000000000000AA29 /* TranslationsUITests.swift */; };
 		8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */; };
 		8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */; };
 		8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0111000000000000AA21 /* LifecycleTests.swift */; };
@@ -553,8 +555,10 @@
 		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
 		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
 		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
+		8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsBuildTests.swift; sourceTree = "<group>"; };
 		8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewBehaviorTests.swift; sourceTree = "<group>"; };
 		8A5A010F000000000000AA1F /* AppChromeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeTests.swift; sourceTree = "<group>"; };
+		8A5A0119000000000000AA29 /* TranslationsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsUITests.swift; sourceTree = "<group>"; };
 		8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchBypassedUITests.swift; sourceTree = "<group>"; };
 		8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySmokeTests.swift; sourceTree = "<group>"; };
 		8A5A0111000000000000AA21 /* LifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleTests.swift; sourceTree = "<group>"; };
@@ -684,6 +688,7 @@
 			files = (
 				8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */,
 				8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */,
+				8A5A011A000000000000AA2A /* TranslationsUITests.swift in Sources */,
 				8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */,
 				8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */,
 				8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */,
@@ -1311,6 +1316,7 @@
 				A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */,
 				8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */,
 				8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */,
+				8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
 				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
@@ -1324,6 +1330,7 @@
 			children = (
 				8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */,
 				8A5A010F000000000000AA1F /* AppChromeTests.swift */,
+				8A5A0119000000000000AA29 /* TranslationsUITests.swift */,
 				8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */,
 				8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */,
 				8A5A0111000000000000AA21 /* LifecycleTests.swift */,
@@ -1859,6 +1866,7 @@
 				A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */,
 				8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */,
 				8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */,
+				8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
