@@ -256,9 +256,12 @@ def main():
     served = serve_directory(directory)
     os.makedirs(args.log_dir, exist_ok=True)
     fixture_log = open(os.path.join(args.log_dir, "network_fixture.log"), "w+")
+    #-u: the child prints one startup line and then serves forever, so a buffered stdout would
+    #keep that line (and any later output) invisible for the whole run
     fixture_server = subprocess.Popen(
-        [sys.executable, os.path.join(tools, "network_fixture.py"), str(args.fixture_port)],
+        [sys.executable, "-u", os.path.join(tools, "network_fixture.py"), str(args.fixture_port)],
         stdout=fixture_log, stderr=subprocess.STDOUT)
+    print(f"fixture server: pid {fixture_server.pid} on {HOST}:{args.fixture_port}")
 
     broker = None
     broker_log = None
@@ -275,10 +278,16 @@ def main():
     #A fixture that cannot reach its server produces empty buffers, which reads like an app
     #failure - so the server has to prove it is serving before a single experiment is launched
     fixture_base = f"http://{HOST}:{args.fixture_port}"
-    if not wait_for(lambda: api(fixture_base, "/reset").get("result") is True, 15):
+    if not wait_for(lambda: api(fixture_base, "/reset", timeout=2).get("result") is True, 20):
         fixture_log.seek(0)
         print(f"the fixture server at {fixture_base} never answered /reset")
-        print(fixture_log.read().strip() or "(it logged nothing)")
+        print(f"   process: {'alive' if fixture_server.poll() is None else f'exited {fixture_server.returncode}'}")
+        try:
+            with socket.create_connection((HOST, args.fixture_port), timeout=2):
+                print("   the port accepts connections, so something is listening and not answering")
+        except Exception as error:
+            print(f"   connecting to the port fails: {error}")
+        print(fixture_log.read().strip() or "   (it logged nothing)")
         fixture_server.terminate()
         if broker:
             broker.terminate()
