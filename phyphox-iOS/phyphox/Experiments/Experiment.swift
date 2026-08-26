@@ -371,14 +371,24 @@ final class Experiment {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
             if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
-                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: false)
+                //An existing folder is used as it is rather than being an error. The folder is
+                //named after the CRC32 of the experiment file, so whatever is in it belongs to
+                //this very file - it can only be left over from a save or a delete that did not
+                //finish. Insisting on creating it threw here, after the experiment file had
+                //already been copied, which left a saved experiment without its resources.
+                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: true)
                 for resource in self.resources {
                     guard !resource.components(separatedBy: "/").contains("..") else {
                         print("Refusing to save resource with path traversal: \(resource)")
                         continue
                     }
+                    let target = localResourceFolder.appendingPathComponent(resource)
+                    guard !FileManager.default.fileExists(atPath: target.path) else {
+                        print("Keeping the \(resource) already in the resource folder.")
+                        continue
+                    }
                     do {
-                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: localResourceFolder.appendingPathComponent(resource))
+                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: target)
                     } catch {
                         print("Could not save \(resource).")
                     }

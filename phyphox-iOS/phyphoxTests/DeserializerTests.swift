@@ -2732,6 +2732,71 @@ final class ContainerIntakeTests: XCTestCase {
 }
 
 
+//Saving an experiment whose resource folder is already there. The folder is named after the
+//CRC32 of the experiment file, so it can only be left over from a save or a delete that did not
+//run to the end - and insisting on creating it threw AFTER the experiment file had been copied,
+//which saved the experiment without its resources and reported nothing to the user (the caller
+//only prints the error). Found while building the save-to-collection suite, where an interrupted
+//run left exactly that state behind.
+final class SaveLocallyResourceFolderTests: XCTestCase {
+    private var extractionDirectory: URL!
+    private var saved: [URL] = []
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        extractionDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("save-locally-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: extractionDirectory, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        //Whatever the test put into the collection goes out again, resource folder included
+        for url in saved {
+            try? FileManager.default.removeItem(at: url)
+        }
+        try? FileManager.default.removeItem(at: extractionDirectory)
+        try super.tearDownWithError()
+    }
+
+    ///The experiment of with-resource.zip, unpacked the way the intake unpacks it
+    private func experimentFromTheContainer() throws -> Experiment {
+        let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "saving a container")
+        let url = directory.appendingPathComponent("with-resource.zip")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no fixtures/containers/with-resource.zip")
+        }
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory)
+        return try ExperimentSerialization.readExperimentFromURL(try XCTUnwrap(files.first))
+    }
+
+    func testSavingAgainOverALeftOverResourceFolder() throws {
+        let experiment = try experimentFromTheContainer()
+        try experiment.saveLocally(quiet: true, presenter: nil)
+        let savedFile = try XCTUnwrap(experiment.source)
+        let resourceFolder = try XCTUnwrap(experiment.localResourceFolder)
+        saved = [savedFile, resourceFolder]
+
+        let picture = resourceFolder.appendingPathComponent("pic.png")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: picture.path),
+                      "saving takes the resources along")
+
+        //An interrupted delete: the experiment file is gone, its resource folder is not
+        try FileManager.default.removeItem(at: savedFile)
+
+        let again = try experimentFromTheContainer()
+        XCTAssertNoThrow(try again.saveLocally(quiet: true, presenter: nil),
+                         "the folder that is already there must not fail the save")
+        let savedAgain = try XCTUnwrap(again.source)
+        saved.append(savedAgain)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: savedAgain.path),
+                      "the experiment file is in the collection")
+        XCTAssertEqual(again.localResourceFolder, resourceFolder, "the same CRC32 names the same folder")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: picture.path), "and the resource is still there")
+        XCTAssertNotNil(again.resolveResource("pic.png"), "so the saved experiment resolves it")
+    }
+}
+
 //An export set is as long as its LONGEST column, and a missing cell of a shorter column is
 //padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
 //dropped every value a later column held beyond that length - and dropped the whole set when
