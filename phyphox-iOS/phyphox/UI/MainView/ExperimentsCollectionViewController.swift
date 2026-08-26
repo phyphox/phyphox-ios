@@ -15,7 +15,8 @@ private let phyphoxCatHintRelease = "1.2.1" //If this is updated to the current 
 private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
+    ///acceptPartialZip is for the QR scanner and the Bluetooth transfer only, see intakeRoute
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
@@ -862,8 +863,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 continue
             }
             guard let fileName = containerEntryDestination(entry.path, in: destination) else {
-                print("Refusing container entry pointing outside the extraction directory: \(entry.path)")
-                continue
+                //An entry pointing outside the extraction directory is evidence that the file was
+                //tampered with, so nothing in it is trustworthy and the remaining entries are not
+                //salvaged: the whole archive is refused and the app's could-not-load path takes
+                //over (ruling 2026-08-26, container-traversal-entry; Android refuses the same way
+                //in its ZipIntentHandler). What was already unpacked goes with it.
+                try? FileManager.default.removeItem(at: destination)
+                throw SerializationError.genericError(message: "Refusing an archive whose entry \(entry.path) points outside the extraction directory.")
             }
             if entry.path.hasSuffix(".phyphox") {
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
@@ -879,6 +885,37 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return files
     }
 
+    ///What an intake route makes of a sniffed file. The partial (headerless) zip is accepted only
+    ///from the QR scanner and the Bluetooth transfer: those are low-bandwidth paths where
+    ///dropping the zip structure is worth its cost, while everywhere else the form is
+    ///discouraged - what arrives is a file that only phyphox can unpack, where a plain .phyphox
+    ///file or an ordinary zip serves the user better (ruling 2026-08-26,
+    ///partial-zip-intake-scope). Refused, it goes down the app's could-not-load path like any
+    ///other unknown file.
+    static func intakeRoute(for fileType: FileType, acceptPartialZip: Bool) -> FileType {
+        if fileType == .partialZip && !acceptPartialZip {
+            return .unknown
+        }
+        return fileType
+    }
+
+    ///What is done with what an archive turned out to hold
+    enum ContainerDispatch: Equatable {
+        ///The one experiment it carries is opened right away
+        case open(URL)
+        ///Several: the user picks one, or saves them all
+        case choose([URL])
+    }
+
+    ///The decision handleZipFile acts on, kept apart from acting on it so it can be tested: an
+    ///archive without any experiment in it is refused here rather than opening an empty picker.
+    static func containerDispatch(for files: [URL]) throws -> ContainerDispatch {
+        guard let first = files.first else {
+            throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
+        }
+        return files.count == 1 ? .open(first) : .choose(files)
+    }
+
     func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
         try? FileManager.default.removeItem(at: tmp)
@@ -886,18 +923,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: tmp)
         
-        guard files.count > 0 else {
-            throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
-        }
-        
-        if files.count == 1 {
-            _ = launchExperimentByURL(files.first!, chosenPeripheral: chosenPeripheral)
-        } else {
-            var experiments: [URL] = []
-            for file in files {
-                experiments.append(file)
-            }
-            
+        switch try ExperimentsCollectionViewController.containerDispatch(for: files) {
+        case .open(let file):
+            _ = launchExperimentByURL(file, chosenPeripheral: chosenPeripheral)
+        case .choose(let files):
             let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
@@ -986,7 +1015,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return experimentsBaseURL.appendingPathComponent(path)
     }
 
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool = false) -> Bool {
 print("\(url)")
         var fileType = FileType.unknown
         var experiment: Experiment?
@@ -1082,7 +1111,7 @@ print("\(url)")
         }
         
         if experimentLoadingError == nil {
-            switch fileType {
+            switch ExperimentsCollectionViewController.intakeRoute(for: fileType, acceptPartialZip: acceptPartialZip) {
             case .phyphox:
                     do {
                         experiment = try ExperimentSerialization.readExperimentFromURL(finalURL)
@@ -1142,7 +1171,7 @@ print("\(url)")
                 //that first request while the prompt is still on screen. Offer a retry so the
                 //user can simply try again after granting.
                 _ = alertBuilder.addActionWithTitle(localize("tryagain"), style: .default, handler: { [weak self] _ in
-                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral)
+                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral, acceptPartialZip: acceptPartialZip)
                 })
             }
             alertBuilder.addOkAction()

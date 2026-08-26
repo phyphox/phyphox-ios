@@ -135,12 +135,14 @@ jobs:
       # phyphox-test: lifecycle
       # phyphox-test: accessibility-smoke
       # phyphox-test: switch-bypassed-ui
+      # phyphox-test: save-to-collection
       - name: UI suites
         run: |
           set -euo pipefail
           # XCUITest drives the app itself: the fixtures' controls and what they write (through
           # the remote API), the chrome around an experiment, what an interruption does to a run,
-          # the paths the -phyphox* switches bypass, and a report-only accessibility audit.
+          # the paths the -phyphox* switches bypass, saving a container to the collection, and a
+          # report-only accessibility audit.
           xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$UDID" -only-testing phyphoxUITests \

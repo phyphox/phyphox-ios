@@ -373,7 +373,8 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                         return
                     }
                     
-                    _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral)
+                    //A Bluetooth transfer is the other route that may carry the partial zip form
+                    _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral, acceptPartialZip: true)
                     
                 } else {
                     loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: true)

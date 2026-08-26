@@ -110,8 +110,12 @@ final class SaveToCollectionTests: XCTestCase {
 
         for title in savedTitles {
             let entry = try XCTUnwrap(scrollToEntry(app, title: title), "\(title) is in the collection")
+            XCTAssertEqual(app.staticTexts.matching(identifier: title).count, 1,
+                           "\(title) was saved once, not once per experiment in the archive")
             entry.tap()
             XCTAssertTrue(app.buttons["Actions"].waitForExistence(timeout: 20), "\(title) reopens from the collection")
+            XCTAssertFalse(app.alerts.firstMatch.waitForExistence(timeout: 3),
+                           "\(title) is part of the collection now and is not offered for saving again")
             returnToCollection(app)
         }
     }

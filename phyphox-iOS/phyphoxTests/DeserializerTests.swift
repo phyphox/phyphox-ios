@@ -2716,20 +2716,151 @@ final class ContainerIntakeTests: XCTestCase {
     }
 
     // phyphox-test: containers-load
-    func testAnEntryPointingOutsideTheExtractionDirectoryIsRejected() throws {
-        //A container is untrusted input: "../evil.phyphox" must not be written above the
-        //directory the archive is unpacked into, while the archive's legitimate entry still
-        //loads. Security pin - Android refuses the same entry in its ZipIntentHandler.
+    func testAnEntryPointingOutsideTheExtractionDirectoryRefusesTheArchive() throws {
+        //A container is untrusted input, and an entry like "../evil.phyphox" is evidence that
+        //the file was tampered with: nothing in it is trustworthy, so the whole archive is
+        //refused rather than unpacked minus the bad entry (ruled 2026-08-26, Android does the
+        //same in its ZipIntentHandler). Security pin.
         let url = try fixture("traversal.zip")
 
-        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory)
+        XCTAssertThrowsError(try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory),
+                             "the archive is refused as a whole") { error in
+            XCTAssertTrue("\(error)".contains("evil.phyphox"), "and the message names the entry: \(error)")
+        }
 
         let escaped = extractionDirectory.deletingLastPathComponent().appendingPathComponent("evil.phyphox")
         XCTAssertFalse(FileManager.default.fileExists(atPath: escaped.path),
                        "nothing may be written outside the extraction directory")
-        XCTAssertEqual(files.count, 1, "the traversal entry is refused, the legitimate one is not")
-        XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(files[0]).localizedTitle,
-                       "Container fixture A", "and the rest of the archive still works")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: extractionDirectory.appendingPathComponent("container-a.phyphox").path),
+                       "and the entries that looked harmless are not salvaged either")
+    }
+
+    // phyphox-test: containers-load
+    func testTheIntakeRouteOfEachFileForm() throws {
+        //What the app does with a sniffed file, per route. A bare phyphox file and an ordinary
+        //zip go the same way whatever the route is; the partial (headerless) form is accepted
+        //only from the QR scanner and the Bluetooth transfer and is refused everywhere else -
+        //where it is refused it becomes .unknown, which is the app's could-not-load path.
+        typealias Intake = ExperimentsCollectionViewController
+        for accepted in [true, false] {
+            XCTAssertEqual(Intake.intakeRoute(for: .phyphox, acceptPartialZip: accepted), .phyphox)
+            XCTAssertEqual(Intake.intakeRoute(for: .zip, acceptPartialZip: accepted), .zip)
+            XCTAssertEqual(Intake.intakeRoute(for: .unknown, acceptPartialZip: accepted), .unknown)
+        }
+        XCTAssertEqual(Intake.intakeRoute(for: .partialZip, acceptPartialZip: true), .partialZip,
+                       "the QR scanner and the Bluetooth transfer may carry it")
+        XCTAssertEqual(Intake.intakeRoute(for: .partialZip, acceptPartialZip: false), .unknown,
+                       "a file opened from anywhere else is not unpacked, it is refused")
+    }
+
+    // phyphox-test: containers-load
+    func testWhatEachContainerFormIsSniffedAs() throws {
+        //The switch the routing is fed from, over the real fixtures: the zip by its leading
+        //signature, the partial zip by its trailing data descriptor, a bare experiment by its
+        //root element, and something that is none of them
+        XCTAssertEqual(try detectedType(of: try fixture("two-experiments.zip")), .zip)
+        XCTAssertEqual(try detectedType(of: try fixture("with-resource.zip")), .zip)
+        XCTAssertEqual(try detectedType(of: try fixture("partial.bin")), .partialZip)
+        XCTAssertEqual(try detectedType(of: try fixture("src/container-a.phyphox")), .phyphox)
+        XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(
+            data: Data(repeating: 0x2a, count: 512)), .unknown)
+    }
+
+
+    // phyphox-test: containers-load
+    func testWhatTheAppDoesWithWhatAnArchiveHeld() throws {
+        //The branch handleZipFile takes: one experiment is opened right away, several are
+        //offered for picking, and an archive carrying none is refused rather than opening an
+        //empty picker
+        let single = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        XCTAssertEqual(try ExperimentsCollectionViewController.containerDispatch(for: single),
+                       .open(single[0]), "one experiment opens directly")
+
+        let several = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("two-experiments.zip"),
+            to: extractionDirectory.appendingPathComponent("several", isDirectory: true))
+        XCTAssertEqual(try ExperimentsCollectionViewController.containerDispatch(for: several),
+                       .choose(several), "several go to the picker")
+
+        XCTAssertThrowsError(try ExperimentsCollectionViewController.containerDispatch(for: []),
+                             "an archive without an experiment in it is refused")
+    }
+
+    // phyphox-test: containers-load
+    func testAnExperimentFromAnArchiveIsNotPartOfTheCollection() throws {
+        //What makes the app offer to save it: unpacked into the scratch directory, it is neither
+        //a local experiment nor one the collection already holds
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        XCTAssertFalse(experiment.local, "an experiment out of an archive is not a saved one")
+        XCTAssertTrue(experiment.custom, "and it does not come from the bundled collection")
+        XCTAssertFalse(ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
+                       "so the collection does not hold it yet")
+    }
+
+    // phyphox-test: containers-load
+    func testTheResourceFolderIsNamedByTheHexCRC32OfTheExperimentFile() throws {
+        //The contract spells the naming out, and the web server, the image element and saving
+        //all resolve through it - so the scheme itself is pinned, not just that two callers
+        //happen to agree
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        let crc32 = try XCTUnwrap(experiment.crc32)
+        let folder = try XCTUnwrap(experiment.localResourceFolder)
+        XCTAssertEqual(folder.lastPathComponent, String(crc32, radix: 16), "hex, unpadded")
+        XCTAssertEqual(folder.lastPathComponent, "a843768e", "the CRC32 of this very fixture")
+        XCTAssertEqual(folder.deletingLastPathComponent().standardizedFileURL,
+                       customExperimentsURL.standardizedFileURL, "next to the saved experiments")
+    }
+
+    // phyphox-test: containers-load
+    func testTheImageElementRendersTheImageTheArchiveDelivered() throws {
+        //Not just "an image is there": the pixels the image element ends up showing are the
+        //pixels of the file the archive carried, so neither a placeholder nor the bundled
+        //fallback image can pass this
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        //The app renders with its own light/dark setting, and the image element applies a filter
+        //per mode - pinned to light, like the golden suite does
+        let appMode = SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue
+        let previousMode = UserDefaults.standard.object(forKey: appMode)
+        UserDefaults.standard.set(Utility.LIGHT_MODE, forKey: appMode)
+        defer { UserDefaults.standard.set(previousMode, forKey: appMode) }
+
+        let collection = try XCTUnwrap(experiment.viewDescriptors?.first)
+        let modules = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
+        let imageView = try XCTUnwrap(modules.compactMap { $0.view as? ExperimentImageView }.first,
+                                      "the experiment screen builds an image element")
+
+        let delivered = try XCTUnwrap(UIImage(contentsOfFile: try XCTUnwrap(experiment.resolveResource("pic.png")).path))
+        let rendered = try XCTUnwrap((imageView.imageView as? UIImageView)?.image, "and it holds an image")
+        XCTAssertEqual(ContainerIntakeTests.pixels(of: rendered), ContainerIntakeTests.pixels(of: delivered),
+                       "pixel for pixel the image the archive delivered")
+
+        //The negative control: without the resource folder there is no image at all, so the
+        //assertion above cannot be satisfied by an element that quietly fell back to something
+        let withoutResources = ExperimentViewModuleFactory.createViews(collection, resourceFolder: nil)
+        let placeholder = try XCTUnwrap(withoutResources.compactMap { $0.view as? ExperimentImageView }.first)
+        XCTAssertNil(placeholder.image, "no resource folder, no image")
+    }
+
+    ///The RGBA bytes of an image, so two of them can be compared regardless of how they were made
+    private static func pixels(of image: UIImage) -> [UInt8]? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = cgImage.width, height = cgImage.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        guard let context = CGContext(data: &bytes, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return bytes
     }
 
     // phyphox-test: containers-load
@@ -2751,36 +2882,11 @@ final class ContainerIntakeTests: XCTestCase {
     }
 
     // phyphox-test: containers-load
-    func testThePartialFormIsRecognizedByItsTrailingDescriptor() throws {
-        //The sniffing half of the QR/Bluetooth path: no zip signature at the front, so the file
-        //is recognized by the data descriptor at its end. The fixture is used for exactly this -
-        //its payload is a raw DEFLATE stream, which neither app can rebuild a zip around (both
-        //synthesize a stored entry, and the editor's QR export writes stored as well); reported
-        //to the docs session, see the load test below for the form that is actually on the wire.
-        XCTAssertEqual(try detectedType(of: try fixture("partial.bin")), .partialZip)
-    }
-
-    ///The wire form of a QR code or a Bluetooth transfer, built the way the editor's offline QR
-    ///export builds it (offlineQrCode.ts): the raw file, then a 16-byte data descriptor whose
-    ///compressed and uncompressed size are both the file's length - a STORED entry without a
-    ///local file header and without a central directory.
-    private func partialZipPayload(of file: URL) throws -> Data {
-        let content = try Data(contentsOf: file)
-        let crc32 = try XCTUnwrap(ExperimentSerialization.readExperimentFromURL(file).crc32,
-                                  "the parser reports the CRC32 the descriptor has to carry")
-
-        var payload = content
-        payload.append(Data([0x50, 0x4b, 0x07, 0x08]))
-        for value in [UInt32(crc32), UInt32(content.count), UInt32(content.count)] {
-            payload.append(contentsOf: withUnsafeBytes(of: value.littleEndian) { Array($0) })
-        }
-        return payload
-    }
-
-    // phyphox-test: containers-load
     func testThePartialZipOfAQRCodeOrBluetoothTransfer() throws {
-        let source = try fixture("src/container-a.phyphox")
-        let payload = try partialZipPayload(of: source)
+        //No local file header and no central directory, only the entry and its trailing data
+        //descriptor - the form a QR code or a Bluetooth transfer carries, and the only two
+        //routes allowed to hand it over (see testTheIntakeRouteOfEachFileForm)
+        let payload = try Data(contentsOf: try fixture("partial.bin"))
         XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(data: payload), .partialZip,
                        "no zip signature at the front, a data descriptor at the end")
 
