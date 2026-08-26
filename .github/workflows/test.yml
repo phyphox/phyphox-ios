@@ -4,6 +4,13 @@
 # those tests would skip; checking it out explicitly means CI always runs them.
 name: tests
 on: [push, pull_request]
+
+# A push supersedes the run of the push before it - an answer about a commit that is no longer
+# the head of the branch is worth no runner minutes
+concurrency:
+  group: t0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   t0:
     runs-on: macos-latest
@@ -16,6 +23,14 @@ jobs:
         with:
           repository: phyphox/phyphox-docs
           path: phyphox-docs
+
+      # The package checkouts are the same for every run that does not change Package.resolved,
+      # and resolving them is network-bound rather than CPU-bound
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/spm
+          key: spm-${{ runner.os }}-${{ hashFiles('phyphox-ios/phyphox-iOS/phyphox.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
 
       # A named destination would let xcodebuild pick the simulator; the goldens need a known
       # one, because the app's follow-system theme resolves against the SYSTEM appearance and
@@ -37,7 +52,9 @@ jobs:
           # run in the t1 workflow rather than here.
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$UDID" -only-testing phyphoxTests \
-            -skip-testing:phyphoxTests/GraphSnapshotTests CODE_SIGNING_ALLOWED=NO
+            -skip-testing:phyphoxTests/GraphSnapshotTests \
+            -derivedDataPath "$GITHUB_WORKSPACE/dd" \
+            -clonedSourcePackagesDirPath "$GITHUB_WORKSPACE/spm" CODE_SIGNING_ALLOWED=NO
 
       # Only the goldens care about the system appearance, and only their two follow-system spot
       # checks: each of the pair can be verified only while the simulator is in that appearance.
@@ -47,4 +64,6 @@ jobs:
           xcrun simctl ui "$UDID" appearance dark
           cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
             -scheme phyphox -destination "id=$UDID" \
-            -only-testing phyphoxTests/ViewSnapshotTests CODE_SIGNING_ALLOWED=NO
+            -only-testing phyphoxTests/ViewSnapshotTests \
+            -derivedDataPath "$GITHUB_WORKSPACE/dd" \
+            -clonedSourcePackagesDirPath "$GITHUB_WORKSPACE/spm" CODE_SIGNING_ALLOWED=NO
