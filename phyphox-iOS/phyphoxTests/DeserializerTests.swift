@@ -2424,7 +2424,11 @@ final class RequireFillFirstRunTests: XCTestCase {
         runOnce(analysis, expectingExecution: false)
     }
 
-    func testStoppingExemptsTheNextRunAgain() throws {
+    func testStoppingDoesNotExemptAPass() throws {
+        //A stopped experiment still runs passes (a remote cmd=set, an edit view), and those run
+        //with the inputs the last measuring pass consumed. Exempting them from the gate is how
+        //Android lost the results a user had stopped on - ruled 2026-08-26: the exemption
+        //belongs to opening and starting, and a run after stopping is neither.
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, requireFill: requireFill)
@@ -2434,7 +2438,71 @@ final class RequireFillFirstRunTests: XCTestCase {
         runOnce(analysis, expectingExecution: false)
 
         analysis.running = false //what Experiment.stop() does
+        runOnce(analysis, expectingExecution: false)
+    }
+}
+
+//What the gate protects while an experiment sits stopped (Android: StopKeepsResultsTest). The
+//shape is audio_scope's: an analysis whose input is consumed by the pass that reads it and whose
+//result is written to a non-append output. A pass that runs after the stop - a remote cmd=set or
+//an edit view is enough to schedule one - then computes from an empty input and overwrites the
+//result with it, which is what the user's export is taken from.
+final class StopKeepsResultsTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        var onUpdate: (() -> Void)?
+        var onSkip: (() -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {}
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) { onUpdate?() }
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { onSkip?() }
+    }
+
+    private let delegate = Delegate()
+
+    ///Writes what the input holds into a non-append output, and does not run before the input
+    ///has three values - the requireFill container is the input itself, as in audio_scope
+    private func makeAnalysis(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.buffer(buffer: input, data: MutableDoubleArray(data: []), usedAs: "", keep: true)],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: true,
+                                          requireFill: input, requireFillThreshold: 3, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    private func runOnce(_ analysis: ExperimentAnalysis, expectingExecution: Bool) {
+        let done = expectation(description: expectingExecution ? "analysis executes" : "analysis is skipped")
+        delegate.onUpdate = {
+            if expectingExecution { done.fulfill() } else { XCTFail("the requireFill gate should have skipped this run") }
+        }
+        delegate.onSkip = {
+            if expectingExecution { XCTFail("this run should not have been gated") } else { done.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true) //what userInputTriggered does while stopped
+        wait(for: [done], timeout: 5)
+    }
+
+    func testAPassAfterTheStopDoesNotOverwriteTheResult() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(input: input, output: output)
+
+        analysis.running = true
+        input.appendFromArray([1, 2, 3])
         runOnce(analysis, expectingExecution: true)
+        XCTAssertEqual(output.toArray(), [1, 2, 3], "the measurement produced a result")
+
+        //What a keep="false" input leaves behind: the pass that read the buffer emptied it
+        input.clear(reset: false)
+
+        analysis.running = false //what Experiment.stop() does
+        runOnce(analysis, expectingExecution: false)
+        XCTAssertEqual(output.toArray(), [1, 2, 3], "the result the user stopped on survives the paused pass")
     }
 }
 

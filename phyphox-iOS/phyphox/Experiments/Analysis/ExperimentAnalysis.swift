@@ -39,13 +39,20 @@ final class ExperimentAnalysis {
     
     var running = false {
         didSet {
-            //Starting re-arms the requireFill exemption exactly as stopping does: the ruled
-            //semantics are that the first run after opening OR starting is exempt
-            //(phyphox-docs spec/analysis.yml). Resetting only on stop would leave the very
-            //first start after opening gated - the pre-start pass has already consumed the
-            //exemption by then - and an experiment whose initialisation depends on that pass
-            //would never initialize.
-            didRunSinceStart = false
+            //Starting re-arms the requireFill exemption - the ruled semantics are that the first
+            //run after opening OR STARTING is exempt (phyphox-docs spec/analysis.yml), and
+            //without the reset here the very first start after opening would be gated, since the
+            //pre-start pass has consumed the exemption by then.
+            //
+            //STOPPING must not re-arm it. A stopped experiment still runs passes - a remote
+            //cmd=set or an edit view writes a buffer, and userInputTriggered schedules one -
+            //and those run with the inputs already consumed by the last measuring pass. Exempt
+            //from the gate, such a pass overwrites every non-append output with nothing, so the
+            //results the user stopped on, and the export taken from them, are lost. Android had
+            //exactly this bug (stopAllIO reset analysisRan, fixed 2026-08-26).
+            if running {
+                didRunSinceStart = false
+            }
         }
     }
 
