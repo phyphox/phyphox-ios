@@ -807,7 +807,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         case partialZip
     }
     
-    func detectFileType(data: Data) -> FileType {
+    static func detectFileType(data: Data) -> FileType {
         if data.count < 20 {
             return .unknown
         }
@@ -832,18 +832,39 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return .unknown
     }
     
-    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
-        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
-        try? FileManager.default.removeItem(at: tmp)
-        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
-        
+    //Where a container entry may be written, or nil when it would end up outside the extraction
+    //directory. An archive is free to name an entry "../evil.phyphox", and appendingPathComponent
+    //builds that path without complaint, so every destination is checked before anything is
+    //written - the archive's legitimate entries are extracted either way. Android refuses the
+    //same way in its ZipIntentHandler.
+    static func containerEntryDestination(_ entryPath: String, in directory: URL) -> URL? {
+        let destination = directory.appendingPathComponent(entryPath)
+
+        var base = directory.standardizedFileURL.resolvingSymlinksInPath().path
+        if !base.hasSuffix("/") {
+            base += "/"
+        }
+        guard destination.standardizedFileURL.resolvingSymlinksInPath().path.hasPrefix(base) else {
+            return nil
+        }
+
+        return destination
+    }
+
+    ///Unpacks a container archive into `destination` and returns the experiment files it holds.
+    ///This is the intake route's own unpacking - handleZipFile only decides what to do with the
+    ///result - so a test can drive it without a view controller.
+    static func extractContainer(at url: URL, to destination: URL) throws -> [URL] {
         let archive = try Archive(url: url, accessMode: .read)
         var files: [URL] = []
         for entry in archive {
             if entry.type != .file {
                 continue
             }
-            let fileName = tmp.appendingPathComponent(entry.path)
+            guard let fileName = containerEntryDestination(entry.path, in: destination) else {
+                print("Refusing container entry pointing outside the extraction directory: \(entry.path)")
+                continue
+            }
             if entry.path.hasSuffix(".phyphox") {
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
                 try? FileManager.default.removeItem(at: fileName)
@@ -855,6 +876,15 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 _ = try archive.extract(entry, to: fileName)
             }
         }
+        return files
+    }
+
+    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
+        try? FileManager.default.removeItem(at: tmp)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
+        
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: tmp)
         
         guard files.count > 0 else {
             throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
@@ -873,9 +903,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
     }
     
-    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
-        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
-        
+    ///Rebuilds a whole zip around a partial one. A QR code or a Bluetooth transfer carries a
+    ///single deflate entry with its trailing data descriptor, without the local file header and
+    ///without a central directory; both are synthesized here around the payload, which becomes
+    ///the entry a.phyphox. Static so the intake route's own rebuilding is testable.
+    static func rebuiltPartialZipData(from payload: Data) -> Data {
         var data = Data()
         
         //Local file header
@@ -893,7 +925,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append("a.phyphox".data(using: .utf8)!) //File name
         
         //Data (including data descriptor)
-        data.append(try Data(contentsOf: url))
+        data.append(payload)
         
         let i = data.count - 16 //Offset of possible data descriptor
         let crc32 = data.subdata(in: (i+4..<i+8))
@@ -931,6 +963,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
         data.append(Data([0x00, 0x00])) //Comment length
         
+        return data
+    }
+    
+    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        let data = ExperimentsCollectionViewController.rebuiltPartialZipData(from: try Data(contentsOf: url))
         
         try data.write(to: tmp, options: .atomic)
         try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
@@ -984,7 +1023,7 @@ print("\(url)")
                 components.scheme = "https"
                 do {
                     let data = try Data(contentsOf: components.url!)
-                    fileType = detectFileType(data: data)
+                    fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                     if fileType == .phyphox || fileType == .zip {
                         try data.write(to: tmp, options: .atomic)
                         finalURL = tmp
@@ -995,7 +1034,7 @@ print("\(url)")
                     components.scheme = "http"
                     do {
                         let data = try Data(contentsOf: components.url!)
-                        fileType = detectFileType(data: data)
+                        fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                         if fileType == .phyphox || fileType == .zip {
                             try data.write(to: tmp, options: .atomic)
                             finalURL = tmp
@@ -1013,7 +1052,7 @@ print("\(url)")
             //Specific http or https. We need to download it first as InputStream/XMLParser only handles URLs to local files properly. (See todo above)
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     try data.write(to: tmp, options: .atomic)
                     finalURL = tmp
@@ -1025,7 +1064,7 @@ print("\(url)")
             //Local file
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     if (url.absoluteString.starts(with: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString)) {
                         finalURL = url
