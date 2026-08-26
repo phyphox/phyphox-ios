@@ -2438,6 +2438,145 @@ final class RequireFillFirstRunTests: XCTestCase {
     }
 }
 
+//A request that arrives while an analysis pass is busy is remembered and rescheduled when that
+//pass finishes - but the pre-run, the pass an experiment makes when it is opened, used to
+//discard what it had absorbed. Experiment.start() sets analysis.running and calls
+//setNeedsUpdate() immediately, so a remote cmd=start milliseconds after the experiment was
+//opened landed exactly there: the start was recorded as "requested while busy" and then thrown
+//away, and the measuring chain never began although the sensors and the audio output were
+//running. Only the next start by hand revived it. Found by the device lab's audio suite
+//(random, 1-2 of 3 devices per run, always the run right after a fresh fixture load).
+final class QueuedUpdateDuringPreRunTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        private(set) var willUpdates = 0
+        private(set) var executions = 0
+        private(set) var skips = 0
+
+        var onWillUpdate: ((Int) -> Void)?
+        var onUpdate: ((Int) -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
+            willUpdates += 1
+            onWillUpdate?(willUpdates)
+        }
+
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) {
+            executions += 1
+            onUpdate?(executions)
+        }
+
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { skips += 1 }
+    }
+
+    private let delegate = Delegate()
+
+    ///One module appending 1+2 to the output, so the number of passes is what the buffer holds
+    private func makeAnalysis(output: DataBuffer, onUserInput: Bool) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.value(value: 1, usedAs: ""), .value(value: 2, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: true)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: onUserInput,
+                                          requireFill: nil, requireFillThreshold: 0, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    func testAStartQueuedDuringThePreRunStillRuns() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: true)
+
+        let ran = expectation(description: "the queued start runs its own pass")
+        delegate.onUpdate = { count in
+            if count == 2 { ran.fulfill() }
+        }
+        //The start lands while the open-time pre-run is still in flight - what Experiment.start()
+        //does when the remote API sends cmd=start right after the experiment was opened
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.running = true
+            analysis.setNeedsUpdate()
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [ran], timeout: 5)
+        XCTAssertEqual(output.toArray(), [3, 3], "the pre-run's pass and the start that was queued behind it")
+    }
+
+    func testAStartQueuedDuringThePreRunStartsTheFreeRunningChain() throws {
+        //The lab's case: an analysis without onUserInput keeps rescheduling itself, and that
+        //chain has to begin. Dropping the queued start left it never begun, so the tone played
+        //and the microphone recorded with nothing computing.
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: false)
+
+        let kept = expectation(description: "the chain keeps running on its own")
+        delegate.onUpdate = { count in
+            guard count == 3 else { return }
+            analysis.running = false //stop the loop again, or it would run for the whole test
+            kept.fulfill()
+        }
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.running = true
+            analysis.setNeedsUpdate()
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [kept], timeout: 10)
+    }
+
+    func testAUserInputQueuedWhileStoppedRunsAsAPreRun() throws {
+        //A value written while the experiment is stopped schedules a pre-run
+        //(userInputTriggered: isPreRun = !running), and a pre-run resets the cycle counter.
+        //Rescheduling the queued request as a plain one would hand it to the guard that keeps a
+        //stopped experiment from overwriting what it is showing, and it would end there - so
+        //what the request was has to be remembered along with it.
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: true)
+
+        let ran = expectation(description: "the queued input runs its own pass")
+        delegate.onUpdate = { count in
+            if count == 2 { ran.fulfill() }
+        }
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.setNeedsUpdate(isPreRun: true) //running stays false
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [ran], timeout: 5)
+        XCTAssertEqual(output.toArray(), [3, 3])
+    }
+
+    func testThePreRunAloneDoesNotStartTheFreeRunningChain() throws {
+        //The other side of the fix: with nothing queued behind it, the pre-run is still a single
+        //pass and does not start the loop of an analysis that has no onUserInput
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: false)
+
+        let first = expectation(description: "the pre-run runs")
+        delegate.onUpdate = { count in
+            if count == 1 { first.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true)
+        wait(for: [first], timeout: 5)
+
+        let more = expectation(description: "and nothing follows it")
+        more.isInverted = true
+        delegate.onUpdate = { _ in more.fulfill() }
+        wait(for: [more], timeout: 0.5)
+
+        XCTAssertEqual(output.toArray(), [3], "one pass, not the start of the chain")
+    }
+}
+
 //An export set is as long as its LONGEST column, and a missing cell of a shorter column is
 //padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
 //dropped every value a later column held beyond that length - and dropped the whole set when

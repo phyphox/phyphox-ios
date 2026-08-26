@@ -117,6 +117,27 @@ final class ExperimentAnalysis {
 
     private var busy = false
     private var requestedUpdateWhileBusy = false
+    //What the queued request was: a pre-run resets the cycle counter, so honoring it later has
+    //to honor which kind of request it was
+    private var requestedUpdateWasPreRun = false
+
+    ///Reschedules the request that arrived while this cycle was busy, if there was one, and
+    ///reports whether it did. A queued request is a request: it has to end up exactly where it
+    ///would have gone had it arrived while nothing was busy, so the pass that happened to absorb
+    ///it does not get to decide whether it happens.
+    ///
+    ///Only call this with busy already cleared - setNeedsUpdate would queue the request again.
+    @discardableResult
+    private func rescheduleRequestedUpdate() -> Bool {
+        guard requestedUpdateWhileBusy else { return false }
+
+        let wasPreRun = requestedUpdateWasPreRun
+        requestedUpdateWhileBusy = false
+        requestedUpdateWasPreRun = false
+        setNeedsUpdate(isPreRun: wasPreRun)
+
+        return true
+    }
 
     /**
      Schedules an update.
@@ -128,6 +149,7 @@ final class ExperimentAnalysis {
         
         guard !busy else {
             requestedUpdateWhileBusy = true
+            requestedUpdateWasPreRun = requestedUpdateWasPreRun || isPreRun
             return
         }
 
@@ -138,23 +160,33 @@ final class ExperimentAnalysis {
         after(delay) {
             if !self.running && self.cycle > 0 { //If the user stopped the experiment during sleep, we do not even want to start updating as we might end up overwriting the data the user wanted to pause on...
                 self.busy = false
+                //...but a request that arrived while this cycle was sleeping is not this
+                //cycle's to discard. Rescheduled, it stands or falls on its own: a plain
+                //request runs into this same guard again and ends here, a pre-run has reset
+                //the cycle counter and runs.
+                self.rescheduleRequestedUpdate()
                 return
             }
 
             self.delegate?.analysisWillUpdate(self)
             
             self.update {didExecute in
-                let didRequestUpdateWhileBusy = self.requestedUpdateWhileBusy
-
-                self.requestedUpdateWhileBusy = false
                 self.busy = false
+
                 if didExecute {
                     self.delegate?.analysisDidUpdate(self)
                 } else {
                     self.delegate?.analysisSkipped(self)
                 }
 
-                if !isPreRun && (didRequestUpdateWhileBusy || !self.onUserInput) {
+                //A queued request runs whatever this pass was. Gating it on !isPreRun dropped
+                //every request that arrived while the pre-run - the pass an experiment makes
+                //when it is opened - was still busy, which is exactly where a remote cmd=start
+                //lands: Experiment.start() sets running and calls setNeedsUpdate() milliseconds
+                //after the view appeared. The measuring chain then never began although sensors
+                //and audio were running, until a human pressed play. (Found by the device lab's
+                //audio suite, 2026-08-26.)
+                if !self.rescheduleRequestedUpdate() && !isPreRun && !self.onUserInput {
                     self.setNeedsUpdate()
                 }
             }
