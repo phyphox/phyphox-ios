@@ -2814,8 +2814,10 @@ final class ContainerIntakeTests: XCTestCase {
         let folder = try XCTUnwrap(experiment.localResourceFolder)
         XCTAssertEqual(folder.lastPathComponent, String(crc32, radix: 16), "hex, unpadded")
         XCTAssertEqual(folder.lastPathComponent, "a843768e", "the CRC32 of this very fixture")
-        XCTAssertEqual(folder.deletingLastPathComponent().standardizedFileURL,
-                       customExperimentsURL.standardizedFileURL, "next to the saved experiments")
+        //Compared as paths: whether a file URL carries a trailing slash depends on whether the
+        //directory exists on the machine running the test
+        XCTAssertEqual(folder.deletingLastPathComponent().standardizedFileURL.path,
+                       customExperimentsURL.standardizedFileURL.path, "next to the saved experiments")
     }
 
     // phyphox-test: containers-load

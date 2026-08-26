@@ -170,16 +170,38 @@ final class GraphSnapshotTests: XCTestCase {
                     }
                     RunLoop.current.run(until: Date().addingTimeInterval(0.2))
 
-                    let failure = verifySnapshot(
-                        of: host,
-                        as: .image(drawHierarchyInKeyWindow: true,
-                                   precision: GraphSnapshotTests.precision,
-                                   perceptualPrecision: GraphSnapshotTests.perceptualPrecision(forMap: key.contains("map")),
-                                   size: CGSize(width: configuration.width, height: height),
-                                   traits: configuration.traits),
-                        named: configuration.name,
-                        snapshotDirectory: snapshotDirectory(fixture: fixture),
-                        testName: key)
+                    func compare() -> String? {
+                        return verifySnapshot(
+                            of: host,
+                            as: .image(drawHierarchyInKeyWindow: true,
+                                       precision: GraphSnapshotTests.precision,
+                                       perceptualPrecision: GraphSnapshotTests.perceptualPrecision(forMap: key.contains("map")),
+                                       size: CGSize(width: configuration.width, height: height),
+                                       traits: configuration.traits),
+                            named: configuration.name,
+                            snapshotDirectory: snapshotDirectory(fixture: fixture),
+                            testName: key)
+                    }
+
+                    var failure = compare()
+
+                    //The plots draw on the GPU on their own schedule, so a capture can land on a
+                    //frame that is not settled - which showed as a single colour-map
+                    //configuration failing on one CI run and passing on the next, with nothing
+                    //about the graphs changed in between. One more tick and one more attempt
+                    //tells that apart from a real difference, which fails both times. Only for a
+                    //golden that already exists: a missing one is recorded by the first attempt
+                    //and must still be reported rather than confirmed against itself.
+                    let reference = (snapshotDirectory(fixture: fixture) as NSString)
+                        .appendingPathComponent("\(key).\(configuration.name).png")
+                    if failure != nil, FileManager.default.fileExists(atPath: reference) {
+                        if let listener = view as? DisplayLinkListener {
+                            listener.display(DisplayLink(refreshRate: 0))
+                        }
+                        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+                        failure = compare()
+                    }
+
                     if let failure = failure {
                         XCTFail("\(fixture)/\(key)/\(configuration.name): \(failure)")
                     }

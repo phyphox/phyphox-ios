@@ -51,6 +51,23 @@ final class TranslationsUITests: XCTestCase {
         return app
     }
 
+    ///The last button of the screen - the actions menu - resolved against a fresh hierarchy and
+    ///checked immediately before it is handed back, so a hierarchy that changed between reading
+    ///the count and tapping costs a retry instead of the run
+    private func lastButton(of app: XCUIApplication) -> XCUIElement? {
+        for _ in 0..<5 {
+            let count = app.buttons.count
+            if count > 0 {
+                let candidate = app.buttons.element(boundBy: count - 1)
+                if candidate.exists && candidate.isHittable {
+                    return candidate
+                }
+            }
+            _ = app.buttons.firstMatch.waitForExistence(timeout: 1)
+        }
+        return nil
+    }
+
     ///Text that ends up outside the screen is the regression a long translation causes
     private func textOutsideTheScreen(_ app: XCUIApplication) -> [String] {
         let window = app.windows.firstMatch.frame
@@ -95,8 +112,15 @@ final class TranslationsUITests: XCTestCase {
             attachScreenshot(app, name: "experiment-\(language)")
 
             //The actions menu keeps all six entries whatever their translation is - it is where
-            //a long translation shows first
-            app.buttons.element(boundBy: app.buttons.count - 1).tap()
+            //a long translation shows first. The button carries a translated label, so it is
+            //addressed by position - resolved right before the tap, because the count read a
+            //moment earlier can be stale by the time the tap lands (one sweep failed on the
+            //22nd language that way).
+            if let actions = lastButton(of: app) {
+                actions.tap()
+            } else {
+                XCTFail("the experiment screen shows no actions button in \(language)")
+            }
             if app.sheets.firstMatch.waitForExistence(timeout: 5) {
                 let entries = app.sheets.buttons.count
                 XCTAssertGreaterThanOrEqual(entries, 6,

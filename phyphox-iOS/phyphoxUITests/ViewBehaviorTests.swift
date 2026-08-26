@@ -168,14 +168,14 @@ final class ViewBehaviorTests: XCTestCase {
         let sliders = app.sliders
         XCTAssertEqual(sliders.count, 2, "the plain and the coarse slider are UISliders")
 
-        sliders.element(boundBy: 0).adjust(toNormalizedSliderPosition: 1.0)
-        expectBuffer("s1", toEqual: [5], "a slider dragged to the end writes its maximum")
-        sliders.element(boundBy: 0).adjust(toNormalizedSliderPosition: 0.0)
-        expectBuffer("s1", toEqual: [0], "and its minimum at the other end")
+        adjust(sliders.element(boundBy: 0), to: 1.0, until: [5], in: "s1",
+               "a slider dragged to the end writes its maximum")
+        adjust(sliders.element(boundBy: 0), to: 0.0, until: [0], in: "s1",
+               "and its minimum at the other end")
 
         //stepSize=10 on 0...50: whatever the drag lands on is quantised to a multiple of ten
-        sliders.element(boundBy: 1).adjust(toNormalizedSliderPosition: 1.0)
-        expectBuffer("coarse", toEqual: [50], "the coarse slider reaches its maximum")
+        adjust(sliders.element(boundBy: 1), to: 1.0, until: [50], in: "coarse",
+               "the coarse slider reaches its maximum")
         sliders.element(boundBy: 1).adjust(toNormalizedSliderPosition: 0.62)
         let coarse = buffer("coarse")
         XCTAssertEqual(coarse.count, 1)
@@ -212,6 +212,30 @@ final class ViewBehaviorTests: XCTestCase {
     }
 
     // MARK: - helpers
+
+    ///Moves a slider and waits for the value the fixture should end up with, repeating the gesture
+    ///if it did not. XCUITest turns a normalized position into a coordinate, and that mapping is
+    ///not exact - a CI run asking for the minimum of a 0...5 slider landed on 0.1, which is a
+    ///gesture that fell short rather than a slider that misbehaved. A value that never arrives
+    ///still fails, with what the buffer holds.
+    private func adjust(_ slider: XCUIElement, to position: CGFloat, until expected: [Double],
+                        in name: String, _ message: String,
+                        file: StaticString = #filePath, line: UInt = #line) {
+        for attempt in 0..<3 {
+            slider.adjust(toNormalizedSliderPosition: position)
+            if attempt < 2 {
+                let deadline = Date().addingTimeInterval(2)
+                repeat {
+                    let values = buffer(name)
+                    if values.count == expected.count,
+                       zip(values, expected).allSatisfy({ abs($0 - $1) <= 1e-6 }) {
+                        return
+                    }
+                } while Date() < deadline
+            }
+        }
+        expectBuffer(name, toEqual: expected, message, file: file, line: line)
+    }
 
     private func type(_ value: Double, into field: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(field.waitForExistence(timeout: 5), "the field is on screen")
