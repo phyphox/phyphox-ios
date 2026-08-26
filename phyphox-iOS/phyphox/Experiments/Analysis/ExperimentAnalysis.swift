@@ -39,11 +39,13 @@ final class ExperimentAnalysis {
     
     var running = false {
         didSet {
-            if !running {
-                //Stopping re-exempts the next run from the requireFill gate, like Android
-                //resetting lastAnalysis in stopAllIO
-                didRunSinceStart = false
-            }
+            //Starting re-arms the requireFill exemption exactly as stopping does: the ruled
+            //semantics are that the first run after opening OR starting is exempt
+            //(phyphox-docs spec/analysis.yml). Resetting only on stop would leave the very
+            //first start after opening gated - the pre-start pass has already consumed the
+            //exemption by then - and an experiment whose initialisation depends on that pass
+            //would never initialize.
+            didRunSinceStart = false
         }
     }
 

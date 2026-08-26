@@ -2408,6 +2408,22 @@ final class RequireFillFirstRunTests: XCTestCase {
         runOnce(analysis, expectingExecution: true)
     }
 
+    func testStartingExemptsTheNextRunAgain() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        //The pass an experiment makes when it is opened, before it is ever started, consumes
+        //the exemption - so the very first START after opening has to re-arm it, or an
+        //experiment whose initialisation depends on that pass never gets one
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+
+        analysis.running = true //what Experiment.start() does
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+    }
+
     func testStoppingExemptsTheNextRunAgain() throws {
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
