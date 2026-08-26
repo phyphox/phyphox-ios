@@ -3023,6 +3023,140 @@ final class ExportSetRowCountTests: XCTestCase {
     }
 }
 
+
+//An export of a RUNNING experiment reads containers that the analysis and the sensor threads keep
+//writing. An analysis cycle clears a container before it refills it, so an export landing inside
+//one used to write a set with nothing but its header - the device lab caught it twice on
+//camera_stopwatch_luma on an iPad, each time in exactly one of the six formats of a sweep, with
+//the buffers demonstrably still full afterwards. The fix takes one copy of every set under the
+//experiment's data lock; these tests run an exporter against a writer doing what a cycle does,
+//and fail if the copy is taken without it.
+final class ExportUnderWritesTests: XCTestCase {
+    private let rowCount = 200
+    private let iterations = 200
+
+    ///A writer thread doing what an analysis cycle does: clear every container and write it again,
+    ///all inside one barrier on the experiment's data lock (ExperimentAnalysis.writeLocked)
+    private func writeCycles(lock: BufferLock, buffers: [(DataBuffer, [Double])], until stopped: @escaping () -> Bool) -> Thread {
+        let thread = Thread {
+            while !stopped() {
+                lock.write {
+                    for (buffer, _) in buffers {
+                        buffer.clear(reset: false)
+                    }
+                    //A real cycle computes between emptying its containers and writing them
+                    //again; the pause makes that window as observable in a test as it is on a
+                    //phone, where the modules take milliseconds
+                    usleep(100)
+                    for (buffer, values) in buffers {
+                        buffer.appendFromArray(values)
+                    }
+                }
+                usleep(200)
+            }
+        }
+        thread.start()
+        return thread
+    }
+
+    private func makeBuffers(_ lock: BufferLock) throws -> (t: DataBuffer, x: DataBuffer, values: [Double]) {
+        let t = try DataBuffer(name: "t", size: 0, baseContents: [], static: false)
+        let x = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        //Wired exactly as Experiment.init wires an experiment's containers
+        t.dataLock = lock
+        x.dataLock = lock
+
+        let values = (0..<rowCount).map(Double.init)
+        t.appendFromArray(values)
+        x.appendFromArray(values.map { $0 * 2 })
+        return (t, x, values)
+    }
+
+    func testTheSnapshotNeverCatchesACycleHalfApplied() throws {
+        let lock = BufferLock()
+        let (t, x, values) = try makeBuffers(lock)
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: "Raw", data: [("t", t), ("x", x)]),
+                                             ExperimentExportSet(name: "Second", data: [("x", x)])])
+
+        var stop = false
+        let writer = writeCycles(lock: lock, buffers: [(t, values), (x, values.map { $0 * 2 })], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let snapshot = export.snapshot()
+
+            XCTAssertEqual(snapshot.count, 2)
+            for set in snapshot {
+                for column in set.columns {
+                    XCTAssertEqual(column.values.count, rowCount,
+                                   "\(set.name).\(column.name) came out with \(column.values.count) values in iteration \(iteration)")
+                }
+            }
+            XCTAssertEqual(snapshot[0].rowValues.count, rowCount, "the set exports every row it holds")
+            //One acquisition for all sets, so the sets agree with each other as well
+            XCTAssertEqual(snapshot[1].columns[0].values, snapshot[0].columns[1].values,
+                           "the same container exported twice must not differ between the sets")
+        }
+    }
+
+    func testAnExportedFileHoldsEveryRowWhileTheExperimentKeepsWriting() throws {
+        //The whole path, not just the copy: what ends up in the file is what the lab found empty
+        let lock = BufferLock()
+        let (t, x, values) = try makeBuffers(lock)
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: "Raw", data: [("t", t), ("x", x)])])
+
+        var stop = false
+        let writer = writeCycles(lock: lock, buffers: [(t, values), (x, values.map { $0 * 2 })], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let written = expectation(description: "export \(iteration)")
+            var exported: URL?
+            var failure: String?
+            export.runExport(.csv(separator: ",", decimalPoint: "."), singleSet: true,
+                             filename: "export-under-writes-\(iteration)", timeReference: nil) { error, url in
+                failure = error
+                exported = url
+                written.fulfill()
+            }
+            wait(for: [written], timeout: 20)
+
+            XCTAssertNil(failure)
+            let url = try XCTUnwrap(exported)
+            let lines = try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+            XCTAssertEqual(lines.count, rowCount + 1,
+                           "a header and one line per row, not the header alone (iteration \(iteration))")
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+    //The saved state writes the same containers and got the same treatment: a state saved while
+    //the experiment runs must not hold a container the analysis had just emptied
+    func testASavedStateHoldsEveryValueWhileTheExperimentKeepsWriting() throws {
+        let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "saving a state under writes")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(
+            directory.appendingPathComponent("src/container-a.phyphox"))
+        let buffer = try XCTUnwrap(experiment.buffers["a"], "the fixture's data container")
+
+        let values: [Double] = (1...8).map(Double.init)
+        buffer.clear(reset: false)
+        buffer.appendFromArray(values)
+
+        var stop = false
+        let writer = writeCycles(lock: experiment.dataLock, buffers: [(buffer, values)], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let state = try LegacyStateSerializer.serializeState(customTitle: "under writes", experiment: experiment)
+            let line = try XCTUnwrap(state.components(separatedBy: "\n").first(where: { $0.hasSuffix(">a</container>") }),
+                                     "the state names the container")
+            let initValues = line.components(separatedBy: "init=\"")[1].components(separatedBy: "\"")[0]
+            let saved = initValues.isEmpty ? 0 : initValues.components(separatedBy: ",").count
+            XCTAssertEqual(saved, values.count,
+                           "the state saved \(saved) of \(values.count) values in iteration \(iteration)")
+        }
+    }
+}
+
 //static data containers follow Android's model (decided 2026-08-24): the module writing them
 //executes a single time and is skipped from then on - so it also stops clearing its keep=false
 //input buffers - a static output locks once the module has run even if it wrote nothing, and the

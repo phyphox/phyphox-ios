@@ -108,13 +108,24 @@ final class LegacyStateSerializer {
             throw stateError.SourceError("No valid data containers block found.")
         }
         
+        //The values of every container are copied in ONE go under the experiment's data lock, so
+        //a saved state cannot catch an analysis cycle half applied - the same treatment the
+        //export got, and for the same reason (see ExperimentExport.snapshot; Android: 2b8d7acf)
+        let contents: [String: [Double]] = experiment.dataLock.read {
+            var contents: [String: [Double]] = [:]
+            for buffer in experiment.buffers {
+                contents[buffer.key] = buffer.value.toArray()
+            }
+            return contents
+        }
+
         var newBlock = ""
         for buffer in experiment.buffers {
             newBlock += "<container "
             newBlock += "size=\"\(buffer.value.size)\" "
             newBlock += "static=\"\(buffer.value.staticBuffer ? "true" : "false")\" "
             newBlock += "init=\""
-            for (i, v) in buffer.value.toArray().enumerated() {
+            for (i, v) in (contents[buffer.key] ?? []).enumerated() {
                 if i > 0 {
                     newBlock += ","
                 }
