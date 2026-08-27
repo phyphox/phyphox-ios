@@ -143,7 +143,11 @@ final class SwitchBypassedUITests: XCTestCase {
                 done.fulfill()
             }
             task.resume()
-            wait(for: [done], timeout: 5)
+            //XCTWaiter, not wait(for:): the reply not arriving is an ANSWER here, not a test
+            //failure. XCTestCase.wait(for:) records one, so a request that simply found no server -
+            //which is exactly what several of these checks are looking for - failed the test on a
+            //runner where the connection attempt took longer than the wait
+            _ = XCTWaiter().wait(for: [done], timeout: 5)
             if reachable { return true }
         } while Date() < deadline
         return false

@@ -12,12 +12,6 @@ inputs:
   device:
     description: Which simulator family to boot - iPhone or iPad
     default: iPhone
-  second_device:
-    description: >-
-      A second family to START booting as well, for a job that runs on both (the tablet chrome).
-      Only started here - the step that uses it waits for it, installs the app and grants what it
-      needs, so a device that never comes up costs that step and not the job.
-    default: ''
   bundle:
     description: The app's bundle identifier
     default: de.rwth-aachen.physics.phyphox
@@ -29,9 +23,6 @@ outputs:
   udid:
     description: The booted simulator, empty when the runner has none of the requested family
     value: ${{ steps.simulator.outputs.udid }}
-  second_udid:
-    description: The second simulator, empty when none was asked for or the runner has none
-    value: ${{ steps.simulator.outputs.second_udid }}
   xctestrun:
     description: The .xctestrun of the shared build, for xcodebuild test-without-building
     value: ${{ steps.build.outputs.xctestrun }}
@@ -68,38 +59,23 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        newest() {
-          # export, not a command prefix: the prefix would only reach xcrun, not the python on
-          # the other side of the pipe, which is what reads the variable
-          export FAMILY="$1"
-          xcrun simctl list devices available -j | python3 -c "import json,sys,os;d=json.load(sys.stdin)['devices'];f=os.environ['FAMILY'];print(([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith(f)] or [''])[-1])"
-        }
-
-        UDID=$(newest "${{ inputs.device }}")
-        SECOND=""
-        if [ -n "${{ inputs.second_device }}" ]; then
-          SECOND=$(newest "${{ inputs.second_device }}")
-        fi
+        # ONE simulator per job. A second one booting alongside starves the runner - the job
+        # that did it spent 10.4 minutes in this step against 2.7 elsewhere - so the tablet
+        # chrome boots its own device when it is its turn, with the phone's work already done.
+        export FAMILY="${{ inputs.device }}"
+        UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys,os;d=json.load(sys.stdin)['devices'];f=os.environ['FAMILY'];print(([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith(f)] or [''])[-1])")
         if [ -z "$UDID" ]; then
-          echo "no ${{ inputs.device }} simulator on this runner"
+          echo "no $FAMILY simulator on this runner"
           echo "udid=" >> "$GITHUB_OUTPUT"
-          echo "second_udid=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
         # A runner image may already have a simulator booted, and simctl calls that an error -
         # the wait below is what actually decides whether the device is usable
         xcrun simctl boot "$UDID" || true
-        # The second device is only STARTED here. Waiting for two simulators to finish booting
-        # held a runner for the whole 30 minute job timeout once; the step that needs the second
-        # one waits for it itself, by which time it has had the first device's test run to get
-        # there. Bounded either way - see wait_for_boot.sh.
-        if [ -n "$SECOND" ]; then xcrun simctl boot "$SECOND" || true; fi
-
         bash "$GITHUB_WORKSPACE/phyphox-ios/.github/scripts/wait_for_boot.sh" "$UDID" 420
 
         xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
-        echo "second_udid=$SECOND" >> "$GITHUB_OUTPUT"
         # No permission dialog may block a headless run - and no launch argument can dismiss a
         # system one: a TCC prompt deactivates the app's scene, and phyphox tears its remote
         # server down when it resigns active, so the run is over with the app still alive.
