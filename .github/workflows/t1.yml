@@ -166,7 +166,7 @@ jobs:
 
       - name: Diagnostics
         if: failure()
-        run: phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -206,7 +206,7 @@ jobs:
 
       - name: Diagnostics
         if: failure()
-        run: phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -248,7 +248,7 @@ jobs:
 
       - name: Diagnostics
         if: failure()
-        run: phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -283,7 +283,7 @@ jobs:
 
       - name: Diagnostics
         if: failure()
-        run: phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -319,7 +319,7 @@ jobs:
 
       - name: Diagnostics
         if: failure()
-        run: phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
 
       - uses: actions/upload-artifact@v4
         if: always()

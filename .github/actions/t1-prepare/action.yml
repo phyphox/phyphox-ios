@@ -15,6 +15,9 @@ inputs:
   bundle:
     description: The app's bundle identifier
     default: de.rwth-aachen.physics.phyphox
+  port:
+    description: The port the warm-up launch serves remote access on
+    default: '8080'
 
 outputs:
   udid:
@@ -80,3 +83,31 @@ runs:
           xcrun simctl privacy "$UDID" grant "$service" "${{ inputs.bundle }}"
         done
         echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+    - name: Warm the app up
+      shell: bash
+      run: |
+        set -uo pipefail
+        UDID="${{ steps.simulator.outputs.udid }}"
+        [ -n "$UDID" ] || exit 0
+        # The FIRST launch of a freshly installed app on a freshly booted simulator is the slow
+        # one - dyld caches, on-disk validation, and phyphox reads its whole experiment
+        # collection while it starts. XCUITest's launch timeout is not generous, and the
+        # language sweep hit exactly that in its first language when the tier was split into
+        # jobs that each get their own simulator: serially, the sweep had always run last, with
+        # everything long since warm. So the app is launched here once, and remote access makes
+        # it say when it is really up.
+        xcrun simctl launch "$UDID" "${{ inputs.bundle }}" \
+          -phyphoxRemote -phyphoxRemotePort "${{ inputs.port }}" >/dev/null 2>&1 || true
+        for i in $(seq 60); do
+          curl -fs -m 2 "http://127.0.0.1:${{ inputs.port }}/config" >/dev/null && break
+          sleep 1
+        done
+        if curl -fs -m 5 "http://127.0.0.1:${{ inputs.port }}/config" >/dev/null; then
+          echo "the app is up after $i s"
+        else
+          # Not fatal here: what matters is that the tests get a warm app, and a genuinely
+          # broken launch fails them loudly enough
+          echo "::warning::the warm-up launch did not answer within 60 s"
+        fi
+        xcrun simctl terminate "$UDID" "${{ inputs.bundle }}" >/dev/null 2>&1 || true
