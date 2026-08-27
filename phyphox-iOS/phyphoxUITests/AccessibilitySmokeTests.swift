@@ -91,6 +91,41 @@ final class AccessibilitySmokeTests: XCTestCase {
         audit(app, screen: "experiment info")
     }
 
+
+    // phyphox-test: accessibility-smoke
+    func testTheAddExperimentMenuIsReachable() throws {
+        //The three ways into a new experiment - a QR code, a Bluetooth device, the simple
+        //creator - live behind the collection's + button. On Android the same menu is drawn but
+        //never made visible in the view-hierarchy sense, so TalkBack cannot reach any of it and
+        //nobody noticed, because no accessibility check ever opened that menu. This one does:
+        //what XCUITest sees IS the accessibility tree VoiceOver reads, so an entry that is
+        //present here with a label, and hittable, is an entry VoiceOver can reach and activate.
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Raw Sensors"].waitForExistence(timeout: 20))
+
+        let add = app.buttons["Add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "the + button is an element of its own")
+        add.tap()
+
+        let entries = ["Add experiment from QR code",
+                       "Add experiment for Bluetooth device",
+                       "Add simple experiment"]
+        for entry in entries {
+            let element = app.cells.staticTexts[entry].exists ? app.cells.staticTexts[entry] : app.staticTexts[entry]
+            XCTAssertTrue(element.waitForExistence(timeout: 5), "\(entry) is in the accessibility tree")
+            XCTAssertTrue(element.isHittable, "\(entry) can be activated")
+        }
+
+        if #available(iOS 17.0, *) {
+            audit(app, screen: "add experiment menu")
+        }
+
+        //And the entries really do lead somewhere: the simple creator opens and comes back
+        app.cells.staticTexts["Add simple experiment"].tap()
+        XCTAssertTrue(app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 10),
+                      "activating an entry opens what it promises")
+    }
+
     // phyphox-test: accessibility-smoke
     func testViewElementsScreen() throws {
         guard #available(iOS 17.0, *) else { throw XCTSkip("performAccessibilityAudit needs iOS 17") }
