@@ -20,7 +20,11 @@ import XCTest
 //The language list comes from the canonical languages.yml; whether this build enables exactly
 //that set is what the T0 row (translations-build) reports on.
 final class TranslationsUITests: XCTestCase {
-    private static let languages: [String] = {
+    ///Every language of the canonical list, sorted - the order the shards are cut from, so a
+    ///shard means the same set on both platforms. (The sweep cannot read the app's own bundle
+    ///from here, so it shards the canonical list; that this list is what the build enables is
+    ///what the T0 row translations-build asserts.)
+    private static let allLanguages: [String] = {
         guard let fixtures = ViewBehaviorTests.fixturesDirectory else { return [] }
         let docs = fixtures.deletingLastPathComponent().deletingLastPathComponent()
         guard let text = try? String(contentsOf: docs.appendingPathComponent("languages.yml"), encoding: .utf8) else {
@@ -39,7 +43,54 @@ final class TranslationsUITests: XCTestCase {
                 languages.append(String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces))
             }
         }
-        return languages
+        return languages.sorted()
+    }()
+
+    ///What the environment asked for and could not have - reported by the test rather than
+    ///silently narrowing the sweep
+    private static var selectionProblem: String?
+
+    ///The languages this run covers. The whole list unless the environment narrows it, in the
+    ///convention shared with Android so a shard covers the same languages on both platforms
+    ///(test-matrix row translations-ui):
+    ///
+    ///  PHYPHOX_TEST_LANGUAGE_SHARD=i/n  every n-th language of the sorted list, starting at i
+    ///  PHYPHOX_TEST_LANGUAGES=de,fr     exactly these, for reproducing one language
+    ///
+    ///A code the build does not have is an ERROR, not a skip: a typo must not quietly remove
+    ///coverage while the run stays green.
+    private static let languages: [String] = {
+        let all = allLanguages
+        let environment = ProcessInfo.processInfo.environment
+
+        if let explicit = environment["PHYPHOX_TEST_LANGUAGES"]?.trimmingCharacters(in: .whitespaces),
+           !explicit.isEmpty {
+            let requested = explicit.components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+            let unknown = requested.filter { !all.contains($0) }
+            guard unknown.isEmpty else {
+                selectionProblem = "PHYPHOX_TEST_LANGUAGES asks for \(unknown.joined(separator: ", ")), "
+                    + "which this build does not have"
+                return []
+            }
+            return requested
+        }
+
+        if let spec = environment["PHYPHOX_TEST_LANGUAGE_SHARD"]?.trimmingCharacters(in: .whitespaces),
+           !spec.isEmpty {
+            let parts = spec.components(separatedBy: "/")
+            guard parts.count == 2, let index = Int(parts[0]), let count = Int(parts[1]),
+                  count > 0, index >= 1, index <= count else {
+                selectionProblem = "PHYPHOX_TEST_LANGUAGE_SHARD must be i/n with 1 <= i <= n, got \(spec)"
+                return []
+            }
+            //Round robin over the sorted list: consecutive languages land in different shards,
+            //so the shards are of equal size and equal cost whatever the list looks like
+            return all.enumerated().filter { $0.offset % count == index - 1 }.map { $0.element }
+        }
+
+        return all
     }()
 
     private func launch(language: String, arguments: [String] = []) -> XCUIApplication {
@@ -94,9 +145,15 @@ final class TranslationsUITests: XCTestCase {
     // phyphox-test: translations-ui
     func testEveryLanguageRendersTheMainScreens() throws {
         let languages = TranslationsUITests.languages
+        if let problem = TranslationsUITests.selectionProblem {
+            XCTFail(problem)
+            return
+        }
         guard !languages.isEmpty else {
             throw XCTSkip("phyphox-docs is not checked out next to this repository - languages not tested")
         }
+        print("translations-ui: \(languages.count) of \(TranslationsUITests.allLanguages.count) languages: "
+              + languages.joined(separator: ", "))
 
         for language in languages {
             //One launch per language, straight into an experiment, then back out to the
