@@ -14,8 +14,9 @@ inputs:
     default: iPhone
   second_device:
     description: >-
-      A second family to boot as well, for a job that runs on both (the tablet chrome). Booted
-      alongside the first, so it costs almost nothing on the clock.
+      A second family to START booting as well, for a job that runs on both (the tablet chrome).
+      Only started here - the step that uses it waits for it, installs the app and grants what it
+      needs, so a device that never comes up costs that step and not the job.
     default: ''
   bundle:
     description: The app's bundle identifier
@@ -86,18 +87,18 @@ runs:
           exit 0
         fi
 
-        # Both boots are started before either is waited for: a second simulator then costs the
-        # job almost nothing, which is what lets the tablet chrome share a job with other work
         # A runner image may already have a simulator booted, and simctl calls that an error -
-        # bootstatus below is what actually decides whether the device is usable
+        # the wait below is what actually decides whether the device is usable
         xcrun simctl boot "$UDID" || true
+        # The second device is only STARTED here. Waiting for two simulators to finish booting
+        # held a runner for the whole 30 minute job timeout once; the step that needs the second
+        # one waits for it itself, by which time it has had the first device's test run to get
+        # there. Bounded either way - see wait_for_boot.sh.
         if [ -n "$SECOND" ]; then xcrun simctl boot "$SECOND" || true; fi
-        xcrun simctl bootstatus "$UDID" -b
-        if [ -n "$SECOND" ]; then xcrun simctl bootstatus "$SECOND" -b; fi
 
-        for device in "$UDID" $SECOND; do
-          xcrun simctl install "$device" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
-        done
+        bash "$GITHUB_WORKSPACE/phyphox-ios/.github/scripts/wait_for_boot.sh" "$UDID" 420
+
+        xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
         echo "second_udid=$SECOND" >> "$GITHUB_OUTPUT"
         # No permission dialog may block a headless run - and no launch argument can dismiss a
         # system one: a TCC prompt deactivates the app's scene, and phyphox tears its remote
@@ -108,11 +109,9 @@ runs:
         # ignoreUnavailable and are therefore started even on a simulator that has none.
         # Granted by name, and loudly, so a future Xcode dropping a service name fails here
         # instead of hanging a test.
-        for device in "$UDID" $SECOND; do
-          xcrun simctl privacy "$device" grant all "${{ inputs.bundle }}"
-          for service in camera motion microphone location; do
-            xcrun simctl privacy "$device" grant "$service" "${{ inputs.bundle }}"
-          done
+        xcrun simctl privacy "$UDID" grant all "${{ inputs.bundle }}"
+        for service in camera motion microphone location; do
+          xcrun simctl privacy "$UDID" grant "$service" "${{ inputs.bundle }}"
         done
         echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 

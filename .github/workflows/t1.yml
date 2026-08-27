@@ -411,10 +411,18 @@ jobs:
         run: |
           set -euo pipefail
           # The layouts differ there, and an action sheet becomes a popover, which is a
-          # different dismissal path. The tablet is booted alongside the phone by the
-          # preparation, so it costs this job a test run rather than a runner slot.
+          # different dismissal path. The tablet starts booting in the preparation and is
+          # waited for here, so it costs this job a test run rather than a runner slot.
           IPAD="${{ steps.prepare.outputs.second_udid }}"
           if [ -z "$IPAD" ]; then echo "no iPad simulator on this runner - tablet layouts not covered"; exit 0; fi
+          # It has been booting since the preparation; waiting for it here is bounded, so a
+          # device that never comes up costs this step and not the job
+          if ! bash phyphox-ios/.github/scripts/wait_for_boot.sh "$IPAD" 420; then
+            echo "::warning::the iPad simulator did not boot - tablet layouts not covered"
+            exit 0
+          fi
+          xcrun simctl install "$IPAD" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
+          xcrun simctl privacy "$IPAD" grant all "$BUNDLE" || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=$IPAD" -only-testing:phyphoxUITests/AppChromeTests
 
