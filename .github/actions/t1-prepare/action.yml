@@ -68,7 +68,10 @@ runs:
       run: |
         set -euo pipefail
         newest() {
-          FAMILY="$1" xcrun simctl list devices available -j | python3 -c "import json,sys,os;d=json.load(sys.stdin)['devices'];f=os.environ['FAMILY'];print(([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith(f)] or [''])[-1])"
+          # export, not a command prefix: the prefix would only reach xcrun, not the python on
+          # the other side of the pipe, which is what reads the variable
+          export FAMILY="$1"
+          xcrun simctl list devices available -j | python3 -c "import json,sys,os;d=json.load(sys.stdin)['devices'];f=os.environ['FAMILY'];print(([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith(f)] or [''])[-1])"
         }
 
         UDID=$(newest "${{ inputs.device }}")
@@ -85,8 +88,10 @@ runs:
 
         # Both boots are started before either is waited for: a second simulator then costs the
         # job almost nothing, which is what lets the tablet chrome share a job with other work
-        xcrun simctl boot "$UDID"
-        if [ -n "$SECOND" ]; then xcrun simctl boot "$SECOND"; fi
+        # A runner image may already have a simulator booted, and simctl calls that an error -
+        # bootstatus below is what actually decides whether the device is usable
+        xcrun simctl boot "$UDID" || true
+        if [ -n "$SECOND" ]; then xcrun simctl boot "$SECOND" || true; fi
         xcrun simctl bootstatus "$UDID" -b
         if [ -n "$SECOND" ]; then xcrun simctl bootstatus "$SECOND" -b; fi
 
@@ -124,7 +129,11 @@ runs:
         # jobs that each get their own simulator: serially, the sweep had always run last, with
         # everything long since warm. So the app is launched here once, and remote access makes
         # it say when it is really up.
+        # WITH an experiment: -phyphoxRemote opens the server for the experiment session, so an
+        # app sitting on the collection screen never answers - and the state the tests need warm
+        # is an experiment on screen anyway.
         xcrun simctl launch "$UDID" "${{ inputs.bundle }}" \
+          -phyphoxUrl "phyphox://asset=tone_generator.phyphox" -phyphoxAutoConfirm \
           -phyphoxRemote -phyphoxRemotePort "${{ inputs.port }}" >/dev/null 2>&1 || true
         for i in $(seq 60); do
           curl -fs -m 2 "http://127.0.0.1:${{ inputs.port }}/config" >/dev/null && break

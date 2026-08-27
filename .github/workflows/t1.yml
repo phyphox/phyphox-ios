@@ -8,19 +8,27 @@
 # without that hand-off, every job would rebuild and the wall clock would stay where it was.
 # What each job needs beforehand is the same, so it lives in .github/actions/t1-prepare.
 #
-# FIVE test jobs, no more: a free-tier macOS runner allows five at a time, so a sixth would wait
-# for a slot and finish later than if its work had been packed into the five. The wall clock is
-# therefore the slowest job, and the jobs are packed to be of roughly equal length rather than
-# by subject. Measured minutes from the run of 2026-08-27 (67 min serially, before any of this):
+# FIVE test jobs, and FOUR of them equal: the account runs at most five macOS jobs at a time,
+# ACROSS WORKFLOWS - and the t0 workflow, which starts on the same push, holds one of those five
+# for its first ten minutes. Measured on 2026-08-27: four t1 jobs started three seconds after the
+# build finished, the fifth three seconds after t0 ended. So four jobs get the whole run and the
+# fifth gets what is left after that wait, which is why the short work - the audits and the
+# tablet chrome - is packed into the one that starts late.
 #
-#   experiment sweep 13.1   language sweep 16.0   UI suites 13.6 (chrome 2.7, lifecycle 2.0,
-#   save-to-collection 2.5, view behavior 1.5, accessibility 1.3, switch-bypassed 1.3)
-#   tablet chrome 4.3   graph goldens 2.3   network fixtures 1.3   contract test 0.5
-#   and 2 to 3 minutes per job for the checkout, the build artifact and a booted simulator
+# Measured minutes (the run of 2026-08-27, which took 29 with five equal jobs; 67 serially
+# before any of this):
+#
+#   language sweep 19.7   experiment sweep 12.7   UI suites 13.5 (chrome 2.7, save-to-collection
+#   2.5, lifecycle 2.0, view behavior 1.5, accessibility 1.3, switch-bypassed 1.3)
+#   tablet chrome 3.1   graph goldens 2.2   network fixtures 1.3   contract test 1.1
+#   and about four minutes per job for the checkout, the build artifact, a booted simulator and
+#   the warm-up launch
 #
 # The two sweeps are split with the shard mechanism the test matrix defines (--shard i/n for the
 # experiments driver, PHYPHOX_TEST_LANGUAGE_SHARD for the language sweep), which is what makes a
-# balanced packing possible at all - each of them alone was longer than the target.
+# balanced packing possible at all - each of them alone was longer than the target. What the
+# capacity allows is about 19 minutes: four jobs running the whole time plus one starting seven
+# minutes late, against 52 minutes of work.
 #
 # NOT used: xcodebuild's own -parallel-testing-enabled. Measured on a 12-core development Mac,
 # the UI suite went from 460 s to 321 s with two workers - but it parallelises by test CLASS, so
@@ -99,10 +107,9 @@ jobs:
           retention-days: 1
           compression-level: 0
 
-  # phyphox-test: remote-contract-t1
-  # phyphox-test: experiments-e2e-t1
+  # phyphox-test: translations-ui
   # phyphox-test: graph-snapshots
-  experiments-1:
+  languages-1:
     needs: build
     runs-on: macos-latest
     timeout-minutes: 45
@@ -110,8 +117,66 @@ jobs:
       - uses: actions/checkout@v5
         with:
           path: phyphox-ios
-          # the experiment collection the driver sweeps
-          submodules: recursive
+
+      - id: prepare
+        uses: ./phyphox-ios/.github/actions/t1-prepare
+
+      - name: Half of the shipped languages
+        run: |
+          set -euo pipefail
+          # One launch per language: the experiment screen, its menu and the collection, checked
+          # for text that lands outside the screen and for a menu that lost entries. Which
+          # languages is decided by the shard convention of the test matrix - round robin over
+          # the sorted language list, so both halves cost the same and Android's shards cover
+          # the same languages. A test bundle does not inherit the environment of the xcodebuild
+          # that starts it, so the variable goes into the .xctestrun.
+          mkdir -p t1-diagnostics
+          python3 phyphox-ios/.github/scripts/xctestrun_env.py \
+            "${{ steps.prepare.outputs.xctestrun }}" phyphoxUITests \
+            PHYPHOX_TEST_LANGUAGE_SHARD=1/2
+          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
+            -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-1-2.xcresult" \
+            -only-testing:phyphoxUITests/TranslationsUITests
+
+      - name: Graph goldens
+        run: |
+          set -euo pipefail
+          mkdir -p t1-diagnostics
+          # The plot is drawn by OpenGL into a GLKView, which renders nothing in a layer-based
+          # capture: the goldens need the view in a visible window on a real context, which is
+          # what makes this row T1 while the other view goldens are T0.
+          # The result bundle carries the reference and the actual image of a failed golden,
+          # which is the only way to see WHY one did not match on a machine you cannot open
+          xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
+          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
+            -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/graph-goldens.xcresult" \
+            -only-testing:phyphoxTests/GraphSnapshotTests
+
+      - name: Diagnostics
+        if: failure()
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t1-results-languages-1
+          path: t1-diagnostics/
+          if-no-files-found: ignore
+
+  # phyphox-test: translations-ui
+  # phyphox-test: remote-contract-t1
+  # phyphox-test: network-http
+  # phyphox-test: network-mqtt
+  languages-2:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-ios
 
       - id: prepare
         uses: ./phyphox-ios/.github/actions/t1-prepare
@@ -120,6 +185,26 @@ jobs:
         run: |
           set -euo pipefail
           pip3 install --break-system-packages pyyaml jsonschema
+          # the broker the mqtt network fixture talks to
+          brew install mosquitto
+
+      - name: The other half of the shipped languages
+        run: |
+          set -euo pipefail
+          # One launch per language: the experiment screen, its menu and the collection, checked
+          # for text that lands outside the screen and for a menu that lost entries. Which
+          # languages is decided by the shard convention of the test matrix - round robin over
+          # the sorted language list, so both halves cost the same and Android's shards cover
+          # the same languages. A test bundle does not inherit the environment of the xcodebuild
+          # that starts it, so the variable goes into the .xctestrun.
+          mkdir -p t1-diagnostics
+          python3 phyphox-ios/.github/scripts/xctestrun_env.py \
+            "${{ steps.prepare.outputs.xctestrun }}" phyphoxUITests \
+            PHYPHOX_TEST_LANGUAGE_SHARD=2/2
+          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
+            -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-2-2.xcresult" \
+            -only-testing:phyphoxUITests/TranslationsUITests
 
       - name: Remote interface contract test
         run: |
@@ -144,82 +229,6 @@ jobs:
           python3 phyphox-docs/tools/contract_test.py --ios "$BASE" --allow-control
           xcrun simctl terminate "$UDID" "$BUNDLE" || true
 
-      - name: Experiments end to end, first half
-        run: |
-          set -euo pipefail
-          UDID="${{ steps.prepare.outputs.udid }}"
-          # The driver opens, starts, stops and exports every experiment - it never presses a
-          # button, which matters for sensordb.phyphox: its connection has no interval and only
-          # fires on the Submit button, so nothing is posted to phyphox.org from here. Do not
-          # point a trigger probe (contract_test --allow-control) at that experiment.
-          # --shard is round robin over the sorted collection, so the two halves are of equal
-          # size whatever the collection looks like.
-          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-          # -u: unbuffered, so each experiment is timestamped in the step log as it happens
-          # instead of the whole sweep arriving at once when the pipe is flushed
-          python3 -u phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
-            --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
-            --shard 1/2 --out t1-experiments-1.json
-
-      - name: Graph goldens
-        run: |
-          set -euo pipefail
-          mkdir -p t1-diagnostics
-          # The plot is drawn by OpenGL into a GLKView, which renders nothing in a layer-based
-          # capture: the goldens need the view in a visible window on a real context, which is
-          # what makes this row T1 while the other view goldens are T0.
-          # The result bundle carries the reference and the actual image of a failed golden,
-          # which is the only way to see WHY one did not match on a machine you cannot open
-          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=${{ steps.prepare.outputs.udid }}" \
-            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/graph-goldens.xcresult" \
-            -only-testing:phyphoxTests/GraphSnapshotTests
-
-      - name: Diagnostics
-        if: failure()
-        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: t1-results-experiments-1
-          path: |
-            t1-*.json
-            t1-diagnostics/
-          if-no-files-found: ignore
-
-  # phyphox-test: experiments-e2e-t1
-  # phyphox-test: network-http
-  # phyphox-test: network-mqtt
-  experiments-2:
-    needs: build
-    runs-on: macos-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          path: phyphox-ios
-          submodules: recursive
-
-      - id: prepare
-        uses: ./phyphox-ios/.github/actions/t1-prepare
-
-      - name: Test dependencies
-        run: |
-          set -euo pipefail
-          pip3 install --break-system-packages pyyaml jsonschema
-          # the broker the mqtt network fixture talks to
-          brew install mosquitto
-
-      - name: Experiments end to end, second half
-        run: |
-          set -euo pipefail
-          UDID="${{ steps.prepare.outputs.udid }}"
-          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
-          python3 -u phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
-            --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
-            --shard 2/2 --out t1-experiments-2.json
-
       - name: Network fixtures
         run: |
           set -euo pipefail
@@ -243,70 +252,141 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: t1-results-languages-2
+          path: t1-diagnostics/
+          if-no-files-found: ignore
+
+  # phyphox-test: experiments-e2e-t1
+  # phyphox-test: app-chrome
+  # phyphox-test: view-behavior
+  experiments-1:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-ios
+          # the experiment collection the driver sweeps
+          submodules: recursive
+
+      - id: prepare
+        uses: ./phyphox-ios/.github/actions/t1-prepare
+
+      - name: Test dependencies
+        run: |
+          set -euo pipefail
+          pip3 install --break-system-packages pyyaml jsonschema
+
+      - name: Experiments end to end, shard 1/2
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.prepare.outputs.udid }}"
+          # The driver opens, starts, stops and exports every experiment of its shard - it never
+          # presses a button, which matters for sensordb.phyphox: its connection has no interval
+          # and only fires on the Submit button, so nothing is posted to phyphox.org from here.
+          # Do not point a trigger probe (contract_test --allow-control) at that experiment.
+          # --shard is round robin over the sorted collection, so the halves are of equal size
+          # whatever the collection looks like.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+          # -u: unbuffered, so each experiment is timestamped in the step log as it happens
+          # instead of the whole sweep arriving at once when the pipe is flushed
+          python3 -u phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
+            --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
+            --shard 1/2 --out t1-experiments-1-2.json
+
+      - name: Chrome and the view elements
+        run: |
+          set -euo pipefail
+          # What surrounds an experiment, and what the fixtures' controls write
+          xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
+          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
+            -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -only-testing:phyphoxUITests/AppChromeTests \
+            -only-testing:phyphoxUITests/ViewBehaviorTests
+
+      - name: Diagnostics
+        if: failure()
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t1-results-experiments-1
+          path: |
+            t1-*.json
+            t1-diagnostics/
+          if-no-files-found: ignore
+
+  # phyphox-test: experiments-e2e-t1
+  # phyphox-test: lifecycle
+  # phyphox-test: save-to-collection
+  experiments-2:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-ios
+          # the experiment collection the driver sweeps
+          submodules: recursive
+
+      - id: prepare
+        uses: ./phyphox-ios/.github/actions/t1-prepare
+
+      - name: Test dependencies
+        run: |
+          set -euo pipefail
+          pip3 install --break-system-packages pyyaml jsonschema
+
+      - name: Experiments end to end, shard 2/2
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.prepare.outputs.udid }}"
+          # The driver opens, starts, stops and exports every experiment of its shard - it never
+          # presses a button, which matters for sensordb.phyphox: its connection has no interval
+          # and only fires on the Submit button, so nothing is posted to phyphox.org from here.
+          # Do not point a trigger probe (contract_test --allow-control) at that experiment.
+          # --shard is round robin over the sorted collection, so the halves are of equal size
+          # whatever the collection looks like.
+          xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+          # -u: unbuffered, so each experiment is timestamped in the step log as it happens
+          # instead of the whole sweep arriving at once when the pipe is flushed
+          python3 -u phyphox-docs/tools/t1_experiments.py --platform ios --serial "$UDID" \
+            --port "$PORT" --collection "$GITHUB_WORKSPACE/phyphox-ios/phyphox-experiments" \
+            --shard 2/2 --out t1-experiments-2-2.json
+
+      - name: Interruptions and saving to the collection
+        run: |
+          set -euo pipefail
+          # What an interruption does to a run, and saving a container the app opened
+          xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
+          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
+            -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -only-testing:phyphoxUITests/LifecycleTests \
+            -only-testing:phyphoxUITests/SaveToCollectionTests
+
+      - name: Diagnostics
+        if: failure()
+        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
           name: t1-results-experiments-2
           path: |
             t1-*.json
             t1-diagnostics/
           if-no-files-found: ignore
 
-  # phyphox-test: translations-ui
-  # phyphox-test: app-chrome
-  languages-1:
-    needs: build
-    runs-on: macos-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          path: phyphox-ios
-
-      - id: prepare
-        uses: ./phyphox-ios/.github/actions/t1-prepare
-
-      - name: Half the shipped languages
-        run: |
-          set -euo pipefail
-          # One launch per language: the experiment screen, its menu and the collection, checked
-          # for text that lands outside the screen and for a menu that lost entries. Which half
-          # is decided by the shard convention of the test matrix - round robin over the sorted
-          # language list, so both halves cost the same and Android's shards cover the same
-          # languages. A test bundle does not inherit the environment of the xcodebuild that
-          # starts it, so the variable goes into the .xctestrun.
-          mkdir -p t1-diagnostics
-          python3 phyphox-ios/.github/scripts/xctestrun_env.py \
-            "${{ steps.prepare.outputs.xctestrun }}" phyphoxUITests \
-            PHYPHOX_TEST_LANGUAGE_SHARD=1/2
-          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=${{ steps.prepare.outputs.udid }}" \
-            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-1.xcresult" \
-            -only-testing:phyphoxUITests/TranslationsUITests
-
-      - name: Chrome around an experiment
-        run: |
-          set -euo pipefail
-          xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
-          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=${{ steps.prepare.outputs.udid }}" \
-            -only-testing:phyphoxUITests/AppChromeTests
-
-      - name: Diagnostics
-        if: failure()
-        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: t1-results-languages-1
-          path: t1-diagnostics/
-          if-no-files-found: ignore
-
-  # phyphox-test: translations-ui
   # phyphox-test: accessibility-smoke
   # phyphox-test: switch-bypassed-ui
-  languages-2:
+  # phyphox-test: app-chrome
+  interaction:
     needs: build
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
@@ -314,77 +394,25 @@ jobs:
 
       - id: prepare
         uses: ./phyphox-ios/.github/actions/t1-prepare
-
-      - name: The other half of the shipped languages
-        run: |
-          set -euo pipefail
-          mkdir -p t1-diagnostics
-          python3 phyphox-ios/.github/scripts/xctestrun_env.py \
-            "${{ steps.prepare.outputs.xctestrun }}" phyphoxUITests \
-            PHYPHOX_TEST_LANGUAGE_SHARD=2/2
-          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=${{ steps.prepare.outputs.udid }}" \
-            -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-2.xcresult" \
-            -only-testing:phyphoxUITests/TranslationsUITests
+        with:
+          second_device: iPad
 
       - name: What the switches bypass, and the accessibility audit
         run: |
           set -euo pipefail
-          # Everything -phyphoxAutoConfirm and -phyphoxRemote skip, driven by hand instead, and
-          # a report-only audit of the main screens
+          # Everything -phyphoxAutoConfirm and -phyphoxRemote skip, driven by hand instead, plus a report-only audit
           xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
             -only-testing:phyphoxUITests/SwitchBypassedUITests \
             -only-testing:phyphoxUITests/AccessibilitySmokeTests
 
-      - name: Diagnostics
-        if: failure()
-        run: bash phyphox-ios/.github/scripts/t1_diagnostics.sh "${{ steps.prepare.outputs.udid }}"
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: t1-results-languages-2
-          path: t1-diagnostics/
-          if-no-files-found: ignore
-
-  # phyphox-test: view-behavior
-  # phyphox-test: lifecycle
-  # phyphox-test: save-to-collection
-  # phyphox-test: app-chrome
-  interaction:
-    needs: build
-    runs-on: macos-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          path: phyphox-ios
-
-      # The tablet is booted alongside the phone here rather than in a job of its own: a sixth
-      # job would wait for a runner slot, while a second simulator boots while the first does.
-      - id: prepare
-        uses: ./phyphox-ios/.github/actions/t1-prepare
-        with:
-          second_device: iPad
-
-      - name: What the user does with an experiment
-        run: |
-          set -euo pipefail
-          # The fixtures' controls and what they write (through the remote API), what an
-          # interruption does to a run, and saving a container to the collection
-          xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=${{ steps.prepare.outputs.udid }}" \
-            -only-testing:phyphoxUITests/ViewBehaviorTests \
-            -only-testing:phyphoxUITests/LifecycleTests \
-            -only-testing:phyphoxUITests/SaveToCollectionTests
-
       - name: App chrome on a tablet
         run: |
           set -euo pipefail
           # The layouts differ there, and an action sheet becomes a popover, which is a
-          # different dismissal path
+          # different dismissal path. The tablet is booted alongside the phone by the
+          # preparation, so it costs this job a test run rather than a runner slot.
           IPAD="${{ steps.prepare.outputs.second_udid }}"
           if [ -z "$IPAD" ]; then echo "no iPad simulator on this runner - tablet layouts not covered"; exit 0; fi
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
