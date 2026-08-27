@@ -84,6 +84,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         super.viewWillAppear(animated)
         setupNavbar()
 
+        //Launch-argument seam: with -phyphoxBleConnect the app goes looking for that device as
+        //soon as it has a screen to show the transfer's progress in
+        if let device = AutomationLaunchOptions.bluetoothDeviceName {
+            connectToBluetoothDeviceForAutomation(named: device)
+        }
+
         let defaults = UserDefaults.standard
         if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
             //A solid tooltip near the bottom of the list, pointing down at the support options at its
@@ -290,6 +296,46 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral) {
         bluetoothScanResultsTableViewController?.ble.loadExperimentFromPeripheral(peripheral, viewController: self, experimentLauncher: self)
+    }
+
+    // MARK: - the Bluetooth seam for unattended automation
+
+    //-phyphoxBleConnect <name> (see AutomationLaunchOptions in AppDelegate) stands in for the
+    //user opening the Bluetooth scan and picking a device: the scan, the name matching, the
+    //transfer of the experiment the device offers and the loading are the app's own code, and
+    //what follows is the same as for any experiment - the page comes up, -phyphoxRemote brings
+    //the remote server up with it (ExperimentPageViewController), and nothing is started, since
+    //the host drives the measurement from there.
+    private var automationBluetoothScan: BluetoothScan?
+    private var didTakeAutomationBluetoothDevice = false
+
+    ///Whether a scanned device is the one the driver named. EXACT, on either the advertised name
+    ///or the peripheral's own: the compatibility suite runs boards side by side, one of them
+    ///deliberately advertising under a different name, so a device that merely contains the name
+    ///is the wrong device. (BluetoothScan's own filter is a substring match, which is right for a
+    ///user picking from a list and not enough here.)
+    static func automationBluetoothMatch(advertisedName: String?, peripheralName: String?, requested: String) -> Bool {
+        return advertisedName == requested || peripheralName == requested
+    }
+
+    private func connectToBluetoothDeviceForAutomation(named name: String) {
+        guard automationBluetoothScan == nil else { return }
+
+        //checkExperiments false: what is wanted is the experiment the DEVICE offers, not the
+        //bundled ones that happen to be registered for its name
+        let scan = BluetoothScan(scanDirectly: true, filterByName: name, filterByUUID: nil,
+                                 checkExperiments: false, autoConnect: true)
+        scan.scanResultsDelegate = self
+        automationBluetoothScan = scan
+
+        //Bounded: a device that never turns up would leave the app scanning for as long as the
+        //suite runs, and the host would see nothing but a remote API that never came up. This
+        //says what happened in the device log and stops draining the phone.
+        after(60) { [weak self] in
+            guard let self = self, !self.didTakeAutomationBluetoothDevice else { return }
+            print("-phyphoxBleConnect: no device advertising as \(name) turned up within 60 s")
+            self.automationBluetoothScan?.stopScan()
+        }
     }
 
     func infoPressed(_ action: UIAlertAction) {
@@ -1373,5 +1419,33 @@ print("\(url)")
                 self.selfView.collectionView.reloadData()
             }
         }
+    }
+}
+
+//The scan started by -phyphoxBleConnect reports its find here. Only the automation scan uses
+//this - the scan the user opens has its own list to fill, in BluetoothScanResultsTableViewController.
+extension ExperimentsCollectionViewController: ScanResultsDelegate {
+    func reloadScanResults(updatedEntry: UUID) {
+        //Nothing to update: the automation scan has no list on screen
+    }
+
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+        guard let requested = AutomationLaunchOptions.bluetoothDeviceName,
+              !didTakeAutomationBluetoothDevice,
+              let scan = automationBluetoothScan else { return }
+
+        let advertised = scan.discoveredDevices[device.identifier]?.advertisedName
+        guard ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertised,
+                                                                          peripheralName: device.name,
+                                                                          requested: requested) else {
+            //A device the substring filter let through, but not the one that was named
+            return
+        }
+
+        didTakeAutomationBluetoothDevice = true
+        scan.stopScan()
+        //The same call the user's tap ends in, and from here nothing about this experiment is
+        //special: it is transferred, loaded, and left waiting for the host to start it
+        scan.loadExperimentFromPeripheral(device, viewController: self, experimentLauncher: self)
     }
 }

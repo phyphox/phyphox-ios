@@ -731,6 +731,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         //AppDelegate): -phyphoxRemote brings the remote server up for this session, exactly as
         //the menu toggle's confirmed action does, so a host script can drive the REST API.
         //Only once - a later manual toggle stays the user's decision.
+        //
+        //It does not matter where the experiment came from: this runs for every experiment page,
+        //so an experiment transferred from a Bluetooth device (-phyphoxBleConnect) serves the
+        //remote API exactly as a launched one does. The Bluetooth compatibility suite depends on
+        //that, and it is why the switch needs no counterpart there.
         if AutomationLaunchOptions.remoteEnabled && !didLaunchWebServerForAutomation {
             didLaunchWebServerForAutomation = true
             launchWebServer()

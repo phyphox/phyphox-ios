@@ -28,6 +28,15 @@ import UIKit
 //  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one,
 //                             so a host script does not have to discover the port the fallback
 //                             ladder picked.
+//  -phyphoxBleConnect <name>  opens the Bluetooth scan and loads the experiment offered by the
+//                             device advertising under that name, which is what the Bluetooth
+//                             compatibility suite needs: picking a device out of a scan has no
+//                             remote-API equivalent, and the boards it drives sit next to each
+//                             other, so the name decides. It replaces the tapping and nothing
+//                             else - the scan, the name matching, the transfer and the loading
+//                             are the app's own, the experiment is left NOT started, and the
+//                             host takes over through the remote API from there. Android has
+//                             the same seam as an instrumentation argument (bleDevice).
 //  -phyphoxAutoConfirm        confirms the notices an experiment shows when it opens - the
 //                             network privacy warning, the photosensitivity warning - and
 //                             declines the offer to save a downloaded experiment locally. They
@@ -54,6 +63,9 @@ enum AutomationLaunchOptions {
     static let remotePort: UInt? = value(after: "-phyphoxRemotePort").flatMap { UInt($0) }
 
     static let autoConfirm = arguments.contains("-phyphoxAutoConfirm")
+
+    ///The Bluetooth device to take an experiment from, for the compatibility suite
+    static let bluetoothDeviceName: String? = value(after: "-phyphoxBleConnect")
 }
 
 @UIApplicationMain

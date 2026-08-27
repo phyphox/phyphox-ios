@@ -2973,6 +2973,51 @@ final class SaveLocallyResourceFolderTests: XCTestCase {
     }
 }
 
+
+//The Bluetooth seam the compatibility suite drives (-phyphoxBleConnect, see
+//AutomationLaunchOptions and ExperimentsCollectionViewController): the app opens a scan, takes
+//the experiment the NAMED device offers, loads it and leaves it for the host to start.
+//
+//What can be tested without a board is the part that decides WHICH device: the suite runs the
+//boards side by side and has one of them advertise under a different name on purpose, so a
+//device that merely contains the requested name is the wrong device. BluetoothScan's own filter
+//is a substring match - right for a user picking from a list, not enough here - and this is the
+//exact match that follows it. Everything after the connection is asserted by the host over the
+//remote API (phyphox-docs/tools/lab/ble.py).
+final class BluetoothAutomationSeamTests: XCTestCase {
+    private func matches(advertised: String?, peripheral: String?, requested: String) -> Bool {
+        return ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertised,
+                                                                           peripheralName: peripheral,
+                                                                           requested: requested)
+    }
+
+    // phyphox-test: ble-compat-arduino
+    // phyphox-test: ble-compat-micropython
+    func testTheNamedDeviceIsTaken() {
+        XCTAssertTrue(matches(advertised: "phyphox-arduino", peripheral: nil, requested: "phyphox-arduino"),
+                      "the name the device advertises")
+        XCTAssertTrue(matches(advertised: nil, peripheral: "phyphox-arduino", requested: "phyphox-arduino"),
+                      "or the peripheral's own, for a device that advertises none")
+        XCTAssertTrue(matches(advertised: "phyphox-arduino", peripheral: "something else", requested: "phyphox-arduino"),
+                      "either of the two is enough")
+    }
+
+    // phyphox-test: ble-compat-arduino
+    // phyphox-test: ble-compat-micropython
+    func testEveryOtherDeviceIsLeftAlone() {
+        //The neighbour board of the suite, advertising under its own name
+        XCTAssertFalse(matches(advertised: "phyphox-micropython", peripheral: nil, requested: "phyphox-arduino"),
+                       "the board next to it is not the board that was named")
+        //What the substring filter lets through and this must not
+        XCTAssertFalse(matches(advertised: "phyphox-arduino-2", peripheral: nil, requested: "phyphox-arduino"),
+                       "a longer name that contains the requested one is a different device")
+        XCTAssertFalse(matches(advertised: nil, peripheral: nil, requested: "phyphox-arduino"),
+                       "a device with no name at all is not it either")
+        XCTAssertFalse(matches(advertised: "PHYPHOX-ARDUINO", peripheral: nil, requested: "phyphox-arduino"),
+                       "and the comparison is not case folded - a BLE name is what the board sets")
+    }
+}
+
 //An export set is as long as its LONGEST column, and a missing cell of a shorter column is
 //padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
 //dropped every value a later column held beyond that length - and dropped the whole set when
