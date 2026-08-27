@@ -373,7 +373,8 @@ final class WebServerCORSTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -583,7 +584,8 @@ final class WebServerExportFormatTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -674,13 +676,15 @@ final class WebServerExportFormatTests: XCTestCase {
 
 //Conformance of the /get, /control, /meta and /res endpoints with the canonical behaviour from
 //phyphox-docs: get-no-parameters, get-invalid-threshold, get-negative-threshold,
-//get-nonfinite-single-value, get-force-full-update, control-trigger-out-of-range,
-//meta-missing-value-representation, res-content-type and res-fallback.
+//get-nonfinite-single-value, get-force-full-update, control-start-refused,
+//control-trigger-out-of-range, meta-missing-value-representation, res-content-type and
+//res-fallback.
 final class WebServerConformanceTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -761,6 +765,23 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual(buf["updateMode"] as? String, "full")
     }
 
+    //control-start-refused: cmd=start reports whether the measurement actually began, so a
+    //start the experiment refuses answers result:false. The other commands keep the weaker
+    //"was the command accepted" meaning.
+    func testControlStartReportsRefusal() throws {
+        delegate.startResult = true
+        var result = get("/control?cmd=start")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, true)
+
+        delegate.startResult = false
+        result = get("/control?cmd=start")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, false)
+
+        //A refused start does not change how stop is answered
+        result = get("/control?cmd=stop")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, true)
+    }
+
     func testControlTriggerOutOfRange() throws {
         var result = get("/control?cmd=trigger&element=999")
         XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, false)
@@ -838,7 +859,8 @@ final class WebServerSetEndpointTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}

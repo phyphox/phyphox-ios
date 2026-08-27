@@ -13,7 +13,10 @@ protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }
     var remainingTimerTime: Double { get }
     
-    func startExperiment()
+    //Answers whether the measurement (or, with a timed run, its countdown) actually began.
+    //A start can be refused, most commonly by a Bluetooth device that is not connected yet,
+    //and /control?cmd=start has to report that (control-start-refused).
+    func startExperiment() -> Bool
     func stopExperiment()
     func clearData(clearGroups: [String])
     func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?)
@@ -287,11 +290,16 @@ final class ExperimentWebServer {
             let cmd = query["cmd"]
             
             if cmd == "start" {
+                //Unlike the other commands, the answer says whether the measurement began and
+                //not merely that the command was accepted, so wait for the attempt on the main
+                //thread and report its outcome (control-start-refused).
                 mainThread {
-                    self.delegate!.startExperiment()
+                    if self.delegate!.startExperiment() {
+                        returnSuccessResponse()
+                    } else {
+                        returnErrorResponse()
+                    }
                 }
-                
-                returnSuccessResponse()
             }
             else if cmd == "stop" {
                 mainThread {

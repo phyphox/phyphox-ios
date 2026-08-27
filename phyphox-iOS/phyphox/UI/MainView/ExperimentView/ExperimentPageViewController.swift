@@ -1400,7 +1400,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    func startExperiment() {
+    //Returns whether the measurement is running afterwards - with a timed run, whether its
+    //countdown was started. A start can be refused (a Bluetooth device that is not connected,
+    //an audio engine that will not start), and the remote interface reports that to its client
+    //instead of claiming success (control-start-refused).
+    @discardableResult
+    func startExperiment() -> Bool {
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
@@ -1409,11 +1414,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             experiment.setKeepScreenOn(true)
             
             if experimentStartTimer != nil {
+                //A running countdown is cancelled rather than started again, so nothing begins
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
                 updateTimerDisplay()
-                return
+                return false
             }
             
             if timerEnabled {
@@ -1423,14 +1429,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     } catch {
                         showError(message: "Could not start experiment \(error).")
                         experiment.stop()
-                        return
+                        return false
                     }
                 }
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
 
-                guard timerLabel != nil else { return }
+                guard timerLabel != nil else { return false }
 
                 setTimerLabel(d)
 
@@ -1457,11 +1463,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
                 
                 experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
+                return true
             }
             else {
-                actuallyStartExperiment()
+                return actuallyStartExperiment()
             }
         }
+        
+        return true
     }
     
     func showError(message: String) {
@@ -1470,17 +1479,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         present(alert, animated: true)
     }
     
-    func actuallyStartExperiment() {
+    @discardableResult
+    func actuallyStartExperiment() -> Bool {
         do {
             try experiment.start(stopExperimentDelegate: self)
         } catch AudioEngine.AudioEngineError.NoInput {
             showError(message: "Could not start experiment: No microphone available.")
             experiment.stop()
-            return
+            return false
         } catch {
             showError(message: "Could not start experiment \(error).")
             experiment.stop()
-            return
+            return false
+        }
+        
+        //Experiment.start() also refuses silently when one of its Bluetooth devices is not
+        //connected - it shows its own dialog and leaves the experiment stopped, so neither the
+        //toolbar item nor the remote interface may pretend that a measurement is running.
+        guard experiment.running else {
+            return false
         }
         
         var items = navigationItem.rightBarButtonItems!
@@ -1488,6 +1505,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         items[2] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
         
         navigationItem.rightBarButtonItems = items
+        
+        return true
     }
     
     func stopExperiment() {
