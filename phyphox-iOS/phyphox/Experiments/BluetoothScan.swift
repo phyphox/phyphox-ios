@@ -209,6 +209,11 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     //no way to tell a stalled device from a slow one. Android watches the same way
     //(BluetoothExperimentLoader.DATA_TIMEOUT_MS, 10 s per packet).
     private static let transferInactivityTimeout = 10.0
+    
+    ///How long the link is left idle between having everything ready and asking the device to
+    ///start. Short enough to be invisible next to the connection it follows, long enough for a
+    ///handful of connection intervals at the 30 ms iOS tends to grant.
+    private static let subscribeSettle = 0.4
     private var transferWatchdog = 0
     private var transferStarted: Date? = nil
     private var lastProgressShown: Date? = nil
@@ -477,10 +482,30 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
         if characteristic.properties.contains(.notify) {
             loadFromBluetoothDeviceStage = .subscribing
-            peripheral.setNotifyValue(true, for: characteristic)
-        }
-        setControlCharacteristicIfPresent(value: 0x01, peripheral: peripheral)
-        if !characteristic.properties.contains(.notify) {
+            //Everything the subscription needs is done FIRST, and then the link is left alone for
+            //a moment before the device is asked to start.
+            //
+            //The subscription is what starts the transfer, and a device sends it as fast as it
+            //can into a queue whose depth is all the margin there is - the Arduino library, for
+            //one, pushes a 20-byte notification every 10 ms and never looks at whether the stack
+            //accepted it (measured 2026-08-28). That rate was chosen against a link with nothing
+            //else on it, so anything the connection is still busy with when the device starts
+            //eats into the queue before the transfer has sent a byte, and a queue that starts
+            //short overflows in the middle of a transfer that would otherwise have finished.
+            //Two things are ours to keep out of the way: iOS discovers the CCCD descriptor on the
+            //first setNotifyValue, so that exchange is done here instead, and then a settle for
+            //whatever the stack is still doing of its own (the MTU exchange, its cache of the
+            //services we did not ask about).
+            peripheral.discoverDescriptors(for: characteristic)
+            after(BluetoothScan.subscribeSettle) {
+                guard self.loadFromBluetoothDeviceStage == .subscribing else { return }
+                peripheral.setNotifyValue(true, for: characteristic)
+                //A device with the control characteristic starts on this write rather than on the
+                //subscription, so it belongs in the same quiet moment
+                self.setControlCharacteristicIfPresent(value: 0x01, peripheral: peripheral)
+            }
+        } else {
+            setControlCharacteristicIfPresent(value: 0x01, peripheral: peripheral)
             print("Polling experiment data.")
             loadFromBluetoothDeviceStage = .transmitting
             peripheral.readValue(for: characteristic)
