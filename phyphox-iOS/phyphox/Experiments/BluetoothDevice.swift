@@ -312,17 +312,17 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         centralManager?.connect(peripheral, options: nil)
         after(ExperimentBluetoothDevice.deviceConnectTimeout) {
             guard attempt == self.deviceConnectAttempt, peripheral.state != .connected else { return }
-            self.retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_notfound"))
+            self.retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_notfound"), reason: "timeout")
         }
     }
     
-    private func retryOrFailConnect(peripheral: CBPeripheral, message: String) {
+    private func retryOrFailConnect(peripheral: CBPeripheral, message: String, reason: String) {
         //The attempt is cancelled either way: a connection request left pending would come up
         //later, behind the retry, with nothing expecting it
         centralManager?.cancelPeripheralConnection(peripheral)
         guard deviceConnectAttempt < ExperimentBluetoothDevice.deviceConnectAttempts else {
             BluetoothScan.reportBLERetries("event=connect attempts=\(deviceConnectAttempt) "
-                                           + "result=failed reason=refused")
+                                           + "result=failed reason=\(reason)")
             hud.dismiss()
             disconnect()
             showError(msg: message)
@@ -410,7 +410,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     override func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("Bluetooth connection refused: \(error?.localizedDescription ?? "no reason given")")
-        retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_connection"))
+        retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_connection"),
+                           reason: "refused" + ((error as NSError?).map { "_\($0.code)" } ?? ""))
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
