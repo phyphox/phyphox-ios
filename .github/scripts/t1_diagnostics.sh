@@ -20,7 +20,11 @@ if [ -n "$UDID" ]; then
   # than the app's.
   xcrun simctl spawn "$UDID" log show --last 20m --style compact \
     --predicate 'process == "SpringBoard" OR process == "runningboardd"' 2>/dev/null \
-    | tail -c 4000000 > t1-diagnostics/springboard.log || true
+    | tail -c 12000000 > t1-diagnostics/springboard.log || true
+  # 12 MB, not 4: SpringBoard and runningboardd are chatty enough at debug level that 4 MB was
+  # the last six minutes of a twenty-minute job. On 2026-08-28 a launch that timed out at 16:22
+  # left a log starting at 16:23, so the failure itself was outside the window and only its
+  # aftermath survived - which is the one thing this script exists to prevent.
 fi
 
 ls -la t1-diagnostics
