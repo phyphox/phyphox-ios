@@ -284,21 +284,52 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
     }
     
+    //A refused connection is retried before it becomes an error, as on Android
+    //(Bluetooth.openConnection, CONNECT_ATTEMPTS/CONNECT_RETRY_DELAY_MS/CONNECT_TIMEOUT_MS).
+    //A first attempt fails often enough to matter, and the pause also covers a device that has
+    //not finished releasing the previous connection - which is exactly this moment: the
+    //experiment connects to the same device the transfer of its own configuration just let go
+    //of, and a peripheral serving one central at a time needs that moment.
+    static let deviceConnectAttempts = 3
+    static let deviceConnectRetryDelay = 0.5
+    static let deviceConnectTimeout = 10.0
+    private var deviceConnectAttempt = 0
+    
     func connect(peripheral: CBPeripheral) {
         if let feedbackView = feedbackViewController?.view {
             hud.show(in: feedbackView)
         }
+        deviceConnectAttempt = 0
+        attemptConnect(peripheral: peripheral)
+    }
+    
+    private func attemptConnect(peripheral: CBPeripheral) {
+        deviceConnectAttempt += 1
+        let attempt = deviceConnectAttempt
         
         self.peripheral = peripheral
         peripheral.delegate = self
         centralManager?.connect(peripheral, options: nil)
-        after(5) {
-            if peripheral.state != .connected {
-                self.centralManager?.cancelPeripheralConnection(peripheral)
-                self.hud.dismiss()
-                self.disconnect()
-                self.showError(msg: localize("bt_exception_notfound"))
-            }
+        after(ExperimentBluetoothDevice.deviceConnectTimeout) {
+            guard attempt == self.deviceConnectAttempt, peripheral.state != .connected else { return }
+            self.retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_notfound"))
+        }
+    }
+    
+    private func retryOrFailConnect(peripheral: CBPeripheral, message: String) {
+        //The attempt is cancelled either way: a connection request left pending would come up
+        //later, behind the retry, with nothing expecting it
+        centralManager?.cancelPeripheralConnection(peripheral)
+        guard deviceConnectAttempt < ExperimentBluetoothDevice.deviceConnectAttempts else {
+            hud.dismiss()
+            disconnect()
+            showError(msg: message)
+            return
+        }
+        print("Bluetooth connect attempt \(deviceConnectAttempt) of \(ExperimentBluetoothDevice.deviceConnectAttempts) failed, retrying")
+        after(ExperimentBluetoothDevice.deviceConnectRetryDelay) {
+            guard peripheral.state != .connected else { return }
+            self.attemptConnect(peripheral: peripheral)
         }
     }
     
@@ -375,8 +406,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     override func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        self.disconnect()
-        self.showError(msg: localize("bt_exception_connection"))
+        print("Bluetooth connection refused: \(error?.localizedDescription ?? "no reason given")")
+        retryOrFailConnect(peripheral: peripheral, message: localize("bt_exception_connection"))
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
