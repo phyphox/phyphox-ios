@@ -11,7 +11,11 @@ import CoreBluetooth
 
 protocol ScanResultsDelegate {
     func reloadScanResults(updatedEntry: UUID)
-    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?)
+    //advertisedName is the name from the advertisement (remembered from an earlier packet of
+    //the same peripheral if this one carried none), which is NOT peripheral.name: that one is
+    //whatever CoreBluetooth cached for the device, typically from an earlier connection, and is
+    //stale as soon as the device is renamed. A receiver that needs the current name needs this.
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?)
 }
 
 protocol DeviceIsChosenDelegate {
@@ -112,7 +116,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         })
     }
     
-    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?) {
         self.dismiss(animated: true, completion: { () in
             self.deviceIsChosenDelegate?.useChosenBLEDevice(chosenDevice: device, advertisedUUIDs: advertisedUUIDs)
             self.dialogDismissedDelegate?.bluetoothScanDialogDismissed()

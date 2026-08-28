@@ -122,7 +122,11 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             }
             
             if autoConnect {
-                scanResultsDelegate?.autoConnect(device: peripheral, advertisedUUIDs: advertisedUUIDs)
+                //The advertised name goes with the device: this path returns before
+                //discoveredDevices is written, so a receiver that looked the name up there would
+                //find nothing and be left with the stale peripheral.name
+                scanResultsDelegate?.autoConnect(device: peripheral, advertisedUUIDs: advertisedUUIDs,
+                                                 advertisedName: advertisedName)
                 return
             }
             

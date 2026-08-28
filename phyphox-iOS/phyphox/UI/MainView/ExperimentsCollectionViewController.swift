@@ -1429,21 +1429,28 @@ extension ExperimentsCollectionViewController: ScanResultsDelegate {
         //Nothing to update: the automation scan has no list on screen
     }
 
-    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?) {
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?) {
         guard let requested = AutomationLaunchOptions.bluetoothDeviceName,
               !didTakeAutomationBluetoothDevice,
               let scan = automationBluetoothScan else { return }
 
-        let advertised = scan.discoveredDevices[device.identifier]?.advertisedName
-        guard ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertised,
+        //The name comes with the call. Looking it up in scan.discoveredDevices found nothing -
+        //this path returns before that dictionary is written - which left the match to
+        //device.name, the name CoreBluetooth cached for the peripheral; that one is stale the
+        //moment the device is renamed, as the lab's per-flash bench tags do, so the seam never
+        //took a board.
+        guard ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertisedName,
                                                                           peripheralName: device.name,
                                                                           requested: requested) else {
             //A device the substring filter let through, but not the one that was named
+            print("-phyphoxBleConnect: skipping a device advertising as \(advertisedName ?? "nil") "
+                  + "(cached name \(device.name ?? "nil")), waiting for \(requested)")
             return
         }
 
         didTakeAutomationBluetoothDevice = true
         scan.stopScan()
+        print("-phyphoxBleConnect: taking the device advertising as \(requested)")
         //The same call the user's tap ends in, and from here nothing about this experiment is
         //special: it is transferred, loaded, and left waiting for the host to start it
         scan.loadExperimentFromPeripheral(device, viewController: self, experimentLauncher: self)
