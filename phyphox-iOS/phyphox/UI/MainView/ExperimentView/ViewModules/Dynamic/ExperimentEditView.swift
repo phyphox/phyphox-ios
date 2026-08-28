@@ -217,12 +217,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     }
 
     private func update() {
-        //If the buffer was cleared (e.g. by an analysis input without keep="true"), write the
-        //default value back while the field is not being edited, so the setting is not lost
-        //for subsequent analysis cycles (matching Android's re-init)
-        if descriptor.buffer.last == nil && !textField.isFirstResponder {
-            descriptor.buffer.replaceValues([descriptor.defaultValue])
-        }
+        //The default is seeded by Experiment.seedInputDefaults(), not from here: this runs off
+        //a display link that only turns over while this view collection is the active one, so
+        //an element on any other page never got its value (input-defaults-on-hidden-view)
 
         let value = descriptor.value
         let rawValue = value * descriptor.factor

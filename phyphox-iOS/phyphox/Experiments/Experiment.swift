@@ -179,6 +179,8 @@ final class Experiment {
     let timeReference: ExperimentTimeReference
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
+    ///Every input element's default and the buffer it belongs in, see seedInputDefaults()
+    private var inputDefaults: [(Double, DataBuffer)] = []
     
     let translation: ExperimentTranslationCollection?
 
@@ -286,6 +288,11 @@ final class Experiment {
             }
         }
         
+        
+        //Before anything can run and before any view exists: an experiment that is opened and
+        //started without the user visiting every page must still have its input defaults
+        inputDefaults = Experiment.collectInputDefaults(viewDescriptors)
+        seedInputDefaults()
         
         analysis.delegate = self
         //The queue must be assigned before anything can trigger an analysis run. Input view
@@ -668,6 +675,49 @@ final class Experiment {
         return Set(buffers.values.compactMap { $0.clearGroup }).subtracting(["_"]).sorted()
     }
 
+    ///Writes each input element's default into its buffer wherever that buffer is empty.
+    ///
+    ///These values are experiment data, not a property of a view being drawn: an analysis module
+    ///reading an edit field, or a bluetooth output sending one to a device, must see the same
+    ///thing whatever page the user happens to be looking at. The view modules used to seed from
+    ///their own render path, which only turns over for the ONE view collection that is active
+    ///(ExperimentPageViewController activates exactly one), so an element on any other page never
+    ///seeded its buffer at all - on the bench, an edit field on the second page of
+    ///micropython/createExperiment left the board configured with nothing until somebody opened
+    ///that page. Android seeds for every view (ExpView.setValue substitutes the default for a
+    ///buffer holding NaN) and that is the canonical behaviour (input-defaults-on-hidden-view).
+    ///
+    ///Only empty buffers are touched, so a value the user set - or one restored with a saved
+    ///state - stays as it is.
+    func seedInputDefaults() {
+        for (defaultValue, buffer) in inputDefaults where buffer.last == nil {
+            buffer.replaceValues([defaultValue])
+        }
+    }
+    
+    ///Collected once in init rather than walked per analysis cycle, which is where the seeding
+    ///runs. Deliberately without the slider: the parser gives it its default when the file is
+    ///read and Android never seeds one at all, so putting it back here would be a new divergence
+    ///in the other direction rather than the end of one (slider-default-never-reaches-buffer).
+    private static func collectInputDefaults(_ viewDescriptors: [ExperimentViewCollectionDescriptor]?) -> [(Double, DataBuffer)] {
+        var found: [(Double, DataBuffer)] = []
+        for collection in viewDescriptors ?? [] {
+            for view in collection.views {
+                switch view {
+                case let edit as EditViewDescriptor:
+                    found.append((edit.defaultValue, edit.buffer))
+                case let dropdown as DropdownViewDescriptor:
+                    found.append((dropdown.defaultValue, dropdown.buffer))
+                case let toggle as SwitchViewDescriptor:
+                    found.append((toggle.defaultValue, toggle.buffer))
+                default:
+                    break
+                }
+            }
+        }
+        return found
+    }
+    
     func clear(byUser: Bool, clearGroups: [String] = []) {
         stop()
         timeReference.reset()
@@ -694,6 +744,9 @@ final class Experiment {
         cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
         
+        //The defaults belong to the experiment, not to the data that was just discarded
+        seedInputDefaults()
+        
         if byUser {
             analysis.setNeedsUpdate(isPreRun: true)
         }
@@ -703,6 +756,10 @@ final class Experiment {
 extension Experiment: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
         analysisDelegate?.analysisWillUpdate(analysis)
+        //An analysis input without keep="true" empties the buffer it read, including an input
+        //element's. Android's re-init runs for every view on every cycle; this is that, and it
+        //is what keeps the value there for the NEXT cycle whether or not the page is on screen.
+        seedInputDefaults()
         for networkConnection in networkConnections {
             networkConnection.pushDataToBuffers()
         }

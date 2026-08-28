@@ -1515,6 +1515,114 @@ final class MqttHardwareTests: XCTestCase {
     }
 }
 
+//What an experiment computes must not depend on which page the user is looking at. An input
+//element's default is experiment data: an analysis module reading an edit field, or a bluetooth
+//output sending one to a device, has to see it whether or not that element's view has ever been
+//drawn. iOS used to seed these from the view module's render path, which runs only for the one
+//view collection that is active, so an element on any other page left its buffer empty
+//(input-defaults-on-hidden-view; Android seeds for every view, and that is canonical).
+final class InputDefaultsTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    ///Two views, and every input element on the SECOND one - the page a running experiment need
+    ///never show. No view module exists at all here, which is the point: parsing the file is
+    ///enough for the values to be in their buffers.
+    private func twoViewExperiment() throws -> Experiment {
+        return try parse("""
+        <phyphox version="1.7">
+            <title>t</title><category>c</category>
+            <data-containers>
+                <container size="1" init="">editOut</container>
+                <container size="1" init="">dropdownOut</container>
+                <container size="1" init="">switchOut</container>
+                <container size="1" init="">shown</container>
+            </data-containers>
+            <views>
+                <view label="first">
+                    <value label="v"><input>shown</input></value>
+                </view>
+                <view label="second">
+                    <edit label="e" default="3.5"><output>editOut</output></edit>
+                    <dropdown label="d" default="2">
+                        <output>dropdownOut</output>
+                        <map value="1">one</map>
+                        <map value="2">two</map>
+                    </dropdown>
+                    <toggle label="s" default="1"><output>switchOut</output></toggle>
+                </view>
+            </views>
+        </phyphox>
+        """)
+    }
+
+    func testDefaultsAreInTheirBuffersWithoutAnyViewBeingShown() throws {
+        let experiment = try twoViewExperiment()
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5, "the edit field's default")
+        XCTAssertEqual(experiment.buffers["dropdownOut"]?.last, 2.0, "the dropdown's default")
+        XCTAssertEqual(experiment.buffers["switchOut"]?.last, 1.0, "the switch's default")
+    }
+
+    func testAValueThatIsAlreadyThereSurvives() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.seedInputDefaults()
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 42.0,
+                       "what the user set, or a restored state, is not overwritten by the default")
+    }
+
+    func testTheDefaultComesBackAfterAClear() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.clear(byUser: true)
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "clearing the data leaves the experiment configured, not empty")
+    }
+
+    ///The way it actually went missing on the bench: a `<bluetooth>` output empties an input it
+    ///has sent unless it says keep="true", so the edit field's value survived exactly one cycle
+    ///and the device was configured with nothing from then on - unless the user happened to be
+    ///looking at the page that element is on.
+    func testAnEmptiedBufferIsBackBeforeTheNextAnalysisPass() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.clear(reset: false)
+        XCTAssertNil(experiment.buffers["editOut"]?.last)
+
+        experiment.analysisWillUpdate(experiment.analysis)
+
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "the next cycle sees the setting again, on whichever page it lives")
+    }
+
+    ///The slider is deliberately left out of the seeding: the parser gives it its default when
+    ///the file is read, and Android never seeds a slider at all, so re-seeding it here would be a
+    ///new divergence in the other direction rather than the end of one
+    ///(slider-default-never-reaches-buffer, open).
+    func testTheSliderIsLeftAsItIs() throws {
+        let experiment = try parse("""
+        <phyphox version="1.7">
+            <title>t</title><category>c</category>
+            <data-containers><container size="1" init="">sliderOut</container></data-containers>
+            <views>
+                <view label="only">
+                    <slider label="s" minValue="0" maxValue="10" default="7">
+                        <output value="value">sliderOut</output>
+                    </slider>
+                </view>
+            </views>
+        </phyphox>
+        """)
+        XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0,
+                       "the parser seeds it while reading the file")
+        experiment.buffers["sliderOut"]?.clear(reset: true)
+        experiment.seedInputDefaults()
+        XCTAssertNil(experiment.buffers["sliderOut"]?.last,
+                     "and nothing here puts it back, which is today's behaviour on both platforms")
+    }
+}
+
 //Enumerated values from an experiment file are matched case-insensitively across the whole
 //format, and an invalid value is an error rather than silently selecting the default
 //(enum-case-insensitive and enum-invalid-value in phyphox-docs, matching the Android parser).
@@ -2145,10 +2253,12 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
-//Buffers bound to interactive view elements (edit, switch, dropdown, slider) are no longer
-//exempt from clearing; instead each element re-initializes an empty buffer to its default
-//value while it is not being edited, matching Android's re-init (ExpView.java setValue's NaN
-//branch).
+//Buffers bound to interactive view elements (edit, switch, dropdown, slider) are not exempt
+//from clearing; the default is written back afterwards instead. For edit, switch and dropdown
+//that now happens in Experiment.seedInputDefaults() rather than in the view module, because a
+//view module only runs while its page is the one on screen - see InputDefaultsTests, which
+//covers all three. What is left here is the clearing itself, and the slider, which still seeds
+//from its own update().
 final class InteractiveElementReInitTests: XCTestCase {
     private func makeBuffer(_ name: String) throws -> DataBuffer {
         return try DataBuffer(name: name, size: 10, baseContents: [], static: false)
@@ -2161,41 +2271,6 @@ final class InteractiveElementReInitTests: XCTestCase {
         let input = ExperimentAnalysisDataInput.buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "in", keep: false)
         input.clear()
         XCTAssertNil(buffer.last, "a keep=false analysis input must clear the buffer, edit-bound or not")
-    }
-
-    func testEditViewReInitializesClearedBuffer() throws {
-        let buffer = try makeBuffer("edit")
-        let descriptor = EditViewDescriptor(label: "l", visibilityBuffer: nil, translation: nil, signed: true, decimal: true, unit: nil, factor: 1, min: -Double.infinity, max: Double.infinity, defaultValue: 5, buffer: buffer)
-        let view = ExperimentEditView(descriptor: descriptor, resourceFolder: nil)!
-
-        view.setNeedsUpdate()
-        view.display(DisplayLink(refreshRate: 5))
-        XCTAssertEqual(buffer.last, 5, "an empty buffer is re-initialized to the default value")
-
-        buffer.replaceValues([9])
-        buffer.clear(reset: false)
-        view.setNeedsUpdate()
-        view.display(DisplayLink(refreshRate: 5))
-        XCTAssertEqual(buffer.last, 5, "a cleared buffer is re-initialized to the default value")
-    }
-
-    func testSwitchViewReInitializesClearedBuffer() throws {
-        let buffer = try makeBuffer("switch")
-        let descriptor = SwitchViewDescriptor(label: "l", visibilityBuffer: nil, translation: nil, defaultValue: 1, buffer: buffer)
-        let view = ExperimentSwitchView(descriptor: descriptor, resourceFolder: nil)!
-
-        view.setNeedsUpdate()
-        view.display(DisplayLink(refreshRate: 5))
-        XCTAssertEqual(buffer.last, 1)
-    }
-
-    func testDropdownViewReInitializesClearedBuffer() throws {
-        let buffer = try makeBuffer("dropdown")
-        let descriptor = DropdownViewDescriptor(label: "l", visibilityBuffer: nil, defaultValue: 2, buffer: buffer, mappings: [DropdownViewMap(value: 1, replacement: "one"), DropdownViewMap(value: 2, replacement: "two")], translation: nil)
-        let view = ExperimentDropdownView(descriptor: descriptor, resourceFolder: nil)
-
-        view.update()
-        XCTAssertEqual(buffer.last, 2)
     }
 
     func testSliderViewReInitializesClearedBuffers() throws {
