@@ -224,17 +224,40 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     var viewController: UIViewController? = nil
     var experimentLauncher: ExperimentController? = nil
     
+    //A transfer that lost packets is started again rather than handed to the user as a dialog.
+    //The stream carries no sequence numbers, so a missing chunk cannot be asked for again and
+    //the whole experiment has to come once more - 1.5 s on the bench board, against a failure
+    //the user cannot do anything about but tap "try again" themselves. Measured cause, 2026-08-28:
+    //the Arduino library's ESP32 send loop ignores what notify() returns, and the Bluedroid
+    //stack refuses a send while its buffers are full, which happens on iOS more than on Android
+    //because the connection interval - the rate those buffers drain at - is the central's to
+    //decide and iOS grants a slower one. Devices already in the field carry that library, so
+    //this stays useful even once it is fixed.
+    private static let transferAttempts = 3
+    private static let transferRetryDelay = 1.0
+    private var transferAttempt = 0
+    
     public func loadExperimentFromPeripheral(_ peripheral: CBPeripheral, viewController: UIViewController, experimentLauncher: ExperimentController?) {
         self.viewController = viewController
         self.experimentLauncher = experimentLauncher
+        transferAttempt = 0
         
-        loadHud = JGProgressHUD()
-        loadHud?.indicatorView = JGProgressHUDPieIndicatorView()
-        loadHud?.interactionType = .blockTouchesOnHUDView
-        loadHud?.textLabel.text = localize("loadingTitle")
-        loadHud?.detailTextLabel.text = localize("loadingText")
-        loadHud?.setProgress(0.0, animated: true)
-        loadHud?.show(in: viewController.view)
+        startTransfer(from: peripheral)
+    }
+    
+    private func startTransfer(from peripheral: CBPeripheral) {
+        //Kept across attempts, so a retry does not flicker the dialog away and back
+        if loadHud == nil {
+            loadHud = JGProgressHUD()
+            loadHud?.indicatorView = JGProgressHUDPieIndicatorView()
+            loadHud?.interactionType = .blockTouchesOnHUDView
+            loadHud?.textLabel.text = localize("loadingTitle")
+            loadHud?.detailTextLabel.text = localize("loadingText")
+            if let view = viewController?.view {
+                loadHud?.show(in: view)
+            }
+        }
+        loadHud?.setProgress(0.0, animated: false)
         
         loadFromBluetoothDeviceStage = .connecting
         resetTransferState()
@@ -321,7 +344,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             } else {
                 print("Bluetooth experiment transfer: nothing arrived at all")
             }
-            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("bt_fail_reading") + " (timeout)")
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("bt_fail_reading") + " (timeout)", retryable: true)
         }
     }
     
@@ -345,7 +368,11 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         }
     }
     
-    func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?, message: String) {
+    ///`retryable` is for a transfer that went wrong on the way - packets lost, a checksum that
+    ///did not match - as opposed to a device that does not offer what we came for. The first is
+    ///a bad run of a working thing and is worth another go; the second would fail identically
+    ///every time and belongs in front of the user.
+    func loadExperimentFromPeripheralError(peripheral: CBPeripheral, characteristic: CBCharacteristic?, message: String, retryable: Bool = false) {
         if let char = characteristic, char.properties.contains(.notify) {
             peripheral.setNotifyValue(false, for: char)
         }
@@ -353,6 +380,18 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         centralManager?.cancelPeripheralConnection(peripheral)
         loadFromBluetoothDeviceStage = .failed
         resetTransferState()
+        
+        if retryable && transferAttempt + 1 < BluetoothScan.transferAttempts {
+            transferAttempt += 1
+            print("Bluetooth experiment transfer: \(message) - attempt "
+                  + "\(transferAttempt + 1) of \(BluetoothScan.transferAttempts)")
+            //From a fresh connection: the device starts its transfer when it is subscribed to,
+            //and the pause lets it finish releasing the connection this one just dropped
+            after(BluetoothScan.transferRetryDelay) {
+                self.startTransfer(from: peripheral)
+            }
+            return
+        }
         
         loadHud?.dismiss()
         loadHud = nil
@@ -425,7 +464,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             receivedPackets += 1
             if let currentBluetoothDataSize = currentBluetoothDataSize, let currentBluetoothDataCRC32 = currentBluetoothDataCRC32 {
                 guard currentBluetoothData != nil else {
-                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (unexpected nil)")
+                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (unexpected nil)", retryable: true)
                     return
                 }
                 if streamOddities.count < 12 {
@@ -464,7 +503,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     //print("\(transmittedExperimentData.map{String(format: "%02hhx", $0)}.joined(separator: " "))")
                     guard receivedCRC32 == currentBluetoothDataCRC32 else {
                         print("CRC32 mismatch")
-                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (CRC mismatch)")
+                        self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (CRC mismatch)", retryable: true)
                         return
                     }
                     
@@ -499,7 +538,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             } else {
                 if !newData.starts(with: "phyphox".data(using: .utf8)!) {
                     print("Bad header: \(newData.map{ String(format: "%02d", $0)}.joined()) from \(characteristic.uuid)")
-                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (bad header)")
+                    self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (bad header)", retryable: true)
                 } else {
                     let sizeData = newData.subdata(in: (7..<7+4))
                     currentBluetoothDataSize = UInt32(bigEndian: sizeData.withUnsafeBytes{$0.load(as: UInt32.self)})
@@ -515,7 +554,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             }
         } else {
             print("No data.")
-            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (no data)")
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (no data)", retryable: true)
         }
     }
 }
