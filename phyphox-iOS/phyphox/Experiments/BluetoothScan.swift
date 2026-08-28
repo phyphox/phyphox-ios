@@ -203,6 +203,17 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     var currentBluetoothDataSize: UInt32? = nil
     var currentBluetoothDataCRC32: UInt32? = nil
     
+    //A transfer is watched for INACTIVITY, not against a deadline for the whole of it: the
+    //experiment can be up to 16 kB in 20-byte notifications, and how long that takes is the
+    //link's business, not ours. A fixed cap failed a transfer that was still arriving and left
+    //no way to tell a stalled device from a slow one. Android watches the same way
+    //(BluetoothExperimentLoader.DATA_TIMEOUT_MS, 10 s per packet).
+    private static let transferInactivityTimeout = 10.0
+    private var transferWatchdog = 0
+    private var transferStarted: Date? = nil
+    private var lastProgressShown: Date? = nil
+    private var receivedPackets = 0
+    
     var viewController: UIViewController? = nil
     var experimentLauncher: ExperimentController? = nil
     
@@ -219,7 +230,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         loadHud?.show(in: viewController.view)
         
         loadFromBluetoothDeviceStage = .connecting
-        currentBluetoothData = nil
+        resetTransferState()
         
         self.peripheralToBeConnected = peripheral
         
@@ -231,6 +242,40 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             if self.loadFromBluetoothDeviceStage == .connecting {
                 self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: nil, message: localize("bt_exception_connection") + " (1)")
             }
+        }
+    }
+    
+    //Everything a transfer accumulates, cleared together. The size and the CRC used to survive
+    //both a completed transfer and the start of the next one, so a second load in the same
+    //session took the new device's header for payload and failed on the first packet.
+    private func resetTransferState() {
+        currentBluetoothData = nil
+        currentBluetoothDataSize = nil
+        currentBluetoothDataCRC32 = nil
+        transferStarted = nil
+        lastProgressShown = nil
+        receivedPackets = 0
+        transferWatchdog += 1
+    }
+    
+    ///Fails the transfer if nothing more arrives within the inactivity timeout. Re-armed by every
+    ///packet, so it only fires on a device that stopped sending - and it says how far it got,
+    ///which is the difference between a device that never started and one that stopped halfway.
+    private func armTransferWatchdog(peripheral: CBPeripheral, characteristic: CBCharacteristic) {
+        transferWatchdog += 1
+        let generation = transferWatchdog
+        after(BluetoothScan.transferInactivityTimeout) {
+            guard generation == self.transferWatchdog,
+                  self.loadFromBluetoothDeviceStage != .done,
+                  self.loadFromBluetoothDeviceStage != .failed else { return }
+            let received = self.currentBluetoothData?.count ?? 0
+            if let announced = self.currentBluetoothDataSize {
+                print("Bluetooth experiment transfer stalled after \(received) of \(announced) "
+                      + "bytes in \(self.receivedPackets) packet(s)")
+            } else {
+                print("Bluetooth experiment transfer: nothing arrived at all")
+            }
+            self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("bt_fail_reading") + " (timeout)")
         }
     }
     
@@ -261,9 +306,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         setControlCharacteristicIfPresent(value: 0x00, peripheral: peripheral)
         centralManager?.cancelPeripheralConnection(peripheral)
         loadFromBluetoothDeviceStage = .failed
-        currentBluetoothData = nil
-        currentBluetoothDataSize = nil
-        currentBluetoothDataCRC32 = nil
+        resetTransferState()
         
         loadHud?.dismiss()
         loadHud = nil
@@ -322,12 +365,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             loadFromBluetoothDeviceStage = .transmitting
             peripheral.readValue(for: characteristic)
         }
-        after(30) {
-            if self.loadFromBluetoothDeviceStage != .done && self.loadFromBluetoothDeviceStage != .failed {
-                print("Timeout.")
-                self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("bt_fail_reading") + " (timeout)")
-            }
-        }
+        armTransferWatchdog(peripheral: peripheral, characteristic: characteristic)
     }
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -335,7 +373,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             return
         }
         loadFromBluetoothDeviceStage = .transmitting
+        armTransferWatchdog(peripheral: peripheral, characteristic: characteristic)
         if let newData = characteristic.value {
+            receivedPackets += 1
             if let currentBluetoothDataSize = currentBluetoothDataSize, let currentBluetoothDataCRC32 = currentBluetoothDataCRC32 {
                 guard currentBluetoothData != nil else {
                     self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (unexpected nil)")
@@ -345,6 +385,10 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
 
                 if currentBluetoothData!.count >= currentBluetoothDataSize {
                     loadFromBluetoothDeviceStage = .done
+                    let seconds = -(transferStarted?.timeIntervalSinceNow ?? 0)
+                    print(String(format: "Bluetooth experiment transfer: %d bytes in %d packets, %.1f s (%.0f packets/s)",
+                                 Int(currentBluetoothDataSize), receivedPackets, seconds,
+                                 seconds > 0 ? Double(receivedPackets)/seconds : 0))
                     if characteristic.properties.contains(.notify) {
                         peripheral.setNotifyValue(false, for: characteristic)
                     }
@@ -379,9 +423,19 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     
                     //A Bluetooth transfer is the other route that may carry the partial zip form
                     _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: peripheral, acceptPartialZip: true)
+                    //Nothing of this transfer may be left for the next one - the data has been
+                    //handed over, and a stale size would make the next header look like payload
+                    resetTransferState()
                     
                 } else {
-                    loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: true)
+                    //Throttled, and not animated: the packets arrive on the main queue, so a pie
+                    //animation started for each of them is main-thread work between one packet
+                    //and the next - on a large experiment that is hundreds of them, and what
+                    //backs up behind it is the reading of the transfer itself.
+                    if lastProgressShown == nil || -lastProgressShown!.timeIntervalSinceNow > 0.1 {
+                        lastProgressShown = Date()
+                        loadHud?.setProgress(Float(currentBluetoothData!.count)/Float(currentBluetoothDataSize), animated: false)
+                    }
                     if !characteristic.properties.contains(.notify) {
                         peripheral.readValue(for: characteristic)
                     }
@@ -396,6 +450,8 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     let crcData = newData.subdata(in: (11..<11+4))
                     currentBluetoothDataCRC32 = UInt32(bigEndian: crcData.withUnsafeBytes{$0.load(as: UInt32.self)})
                     currentBluetoothData = Data()
+                    transferStarted = Date()
+                    print("Bluetooth experiment transfer: header announces \(currentBluetoothDataSize ?? 0) bytes")
                     if !characteristic.properties.contains(.notify) {
                         peripheral.readValue(for: characteristic)
                     }
