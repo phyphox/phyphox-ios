@@ -214,6 +214,13 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     private var lastProgressShown: Date? = nil
     private var receivedPackets = 0
     
+    //The byte count alone cannot say whether what arrived was ONE stream. The library sends the
+    //experiment in 20-byte notifications, so anything else - a second "phyphox" header, a short
+    //packet anywhere but at the very end - belongs to another transfer: a device that never
+    //released the previous subscription can have a second send task in flight, and its packets
+    //are appended here like any other. This records that shape, bounded, for the stall report.
+    private var streamOddities: [String] = []
+    
     var viewController: UIViewController? = nil
     var experimentLauncher: ExperimentController? = nil
     
@@ -291,6 +298,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         transferStarted = nil
         lastProgressShown = nil
         receivedPackets = 0
+        streamOddities = []
         transferWatchdog += 1
     }
     
@@ -307,7 +315,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             let received = self.currentBluetoothData?.count ?? 0
             if let announced = self.currentBluetoothDataSize {
                 print("Bluetooth experiment transfer stalled after \(received) of \(announced) "
-                      + "bytes in \(self.receivedPackets) packet(s)")
+                      + "bytes in \(self.receivedPackets) packet(s); "
+                      + (self.streamOddities.isEmpty ? "every payload packet was a full 20 bytes"
+                                                     : "not one plain stream: " + self.streamOddities.joined(separator: ", ")))
             } else {
                 print("Bluetooth experiment transfer: nothing arrived at all")
             }
@@ -418,6 +428,14 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     self.loadExperimentFromPeripheralError(peripheral: peripheral, characteristic: characteristic, message: localize("newExperimentBTReadErrorCorrupted") + " (unexpected nil)")
                     return
                 }
+                if streamOddities.count < 12 {
+                    let atByte = currentBluetoothData!.count
+                    if newData.count == 20 && newData.starts(with: "phyphox".data(using: .utf8)!) {
+                        streamOddities.append("a second header at byte \(atByte)")
+                    } else if newData.count != 20 {
+                        streamOddities.append("a \(newData.count)-byte packet at byte \(atByte)")
+                    }
+                }
                 currentBluetoothData!.append(newData)
 
                 if currentBluetoothData!.count >= currentBluetoothDataSize {
@@ -425,7 +443,8 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                     let seconds = -(transferStarted?.timeIntervalSinceNow ?? 0)
                     print(String(format: "Bluetooth experiment transfer: %d bytes in %d packets, %.1f s (%.0f packets/s)",
                                  Int(currentBluetoothDataSize), receivedPackets, seconds,
-                                 seconds > 0 ? Double(receivedPackets)/seconds : 0))
+                                 seconds > 0 ? Double(receivedPackets)/seconds : 0)
+                          + (streamOddities.isEmpty ? "" : "; not one plain stream: " + streamOddities.joined(separator: ", ")))
                     if characteristic.properties.contains(.notify) {
                         peripheral.setNotifyValue(false, for: characteristic)
                     }
