@@ -321,6 +321,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         //later, behind the retry, with nothing expecting it
         centralManager?.cancelPeripheralConnection(peripheral)
         guard deviceConnectAttempt < ExperimentBluetoothDevice.deviceConnectAttempts else {
+            BluetoothScan.reportBLERetries("event=connect attempts=\(deviceConnectAttempt) "
+                                           + "result=failed reason=refused")
             hud.dismiss()
             disconnect()
             showError(msg: message)
@@ -361,6 +363,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     override func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        BluetoothScan.reportBLERetries("event=connect attempts=\(deviceConnectAttempt) result=ok")
         print("Connected: \(peripheral.name ?? "No Name")")
         pendingWrites = 0
         pendingWithoutResponseWrites.removeAll()
