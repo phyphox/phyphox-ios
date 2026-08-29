@@ -1532,7 +1532,7 @@ final class InputDefaultsTests: XCTestCase {
     ///enough for the values to be in their buffers.
     private func twoViewExperiment() throws -> Experiment {
         return try parse("""
-        <phyphox version="1.7">
+        <phyphox version="1.19">
             <title>t</title><category>c</category>
             <data-containers>
                 <container size="1" init="">editOut</container>
@@ -1573,18 +1573,67 @@ final class InputDefaultsTests: XCTestCase {
                        "what the user set, or a restored state, is not overwritten by the default")
     }
 
+    ///How the value actually went missing on the bench: not an analysis or an output emptying it
+    ///- micropython/createExperiment has an empty analysis block and its output's input has no
+    ///keep attribute, which means keep="true" - but a plain clear. The lab issues
+    ////control?cmd=clear before every start, and "clear data" does the same, both landing here.
     func testTheDefaultComesBackAfterAClear() throws {
         let experiment = try twoViewExperiment()
         experiment.buffers["editOut"]?.replaceValues([42.0])
         experiment.clear(byUser: true)
         XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
                        "clearing the data leaves the experiment configured, not empty")
+
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.clear(byUser: false)
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "and so does a clear the user did not ask for, like closing the experiment")
     }
 
-    ///The way it actually went missing on the bench: a `<bluetooth>` output empties an input it
-    ///has sent unless it says keep="true", so the edit field's value survived exactly one cycle
-    ///and the device was configured with nothing from then on - unless the user happened to be
-    ///looking at the page that element is on.
+    ///The other half of that: an output only empties what it sent if the file SAYS so. `keep`
+    ///defaults to true, and the experiment this was found with declares format 1.10, where the
+    ///attribute does not exist at all - so nothing about the bluetooth output was ever going to
+    ///clear that buffer. If this ever regressed, an input element would lose its value after the
+    ///first send on any page, and the comment on seedInputDefaults() would become true for the
+    ///wrong reason.
+    func testABluetoothOutputKeepsWhatItSentUnlessTheFileSaysOtherwise() throws {
+        func experiment(keep: String) throws -> Experiment {
+            return try parse("""
+            <phyphox version="1.19">
+                <title>t</title><category>c</category>
+                <data-containers><container size="1" init="">editOut</container></data-containers>
+                <output>
+                    <bluetooth id="ble" name="dev" uuid="cddf0000-30f7-4671-8b43-5e40ba53514a">
+                        <input char="cddf1002-30f7-4671-8b43-5e40ba53514a"
+                               conversion="float32LittleEndian" offset="0"\(keep)>editOut</input>
+                    </bluetooth>
+                </output>
+                <views>
+                    <view label="first"><info label="i"/></view>
+                    <view label="second">
+                        <edit label="e" default="3.5"><output>editOut</output></edit>
+                    </view>
+                </views>
+            </phyphox>
+            """)
+        }
+
+        let keeping = try experiment(keep: "")
+        keeping.buffers["editOut"]?.replaceValues([7.0])
+        keeping.bluetoothOutputs.first?.send()
+        XCTAssertEqual(keeping.buffers["editOut"]?.last, 7.0,
+                       "no keep attribute means keep=true, and the value stays after a send")
+
+        let clearing = try experiment(keep: " keep=\"false\"")
+        clearing.buffers["editOut"]?.replaceValues([7.0])
+        clearing.bluetoothOutputs.first?.send()
+        XCTAssertNil(clearing.buffers["editOut"]?.last,
+                     "keep=\"false\" is the one that empties it")
+    }
+
+    ///The general case the per-cycle seeding is there for: an analysis input without keep="true",
+    ///or a bluetooth output whose input says keep="false", empties the buffer it read, and the
+    ///value has to be back for the next cycle wherever that element lives.
     func testAnEmptiedBufferIsBackBeforeTheNextAnalysisPass() throws {
         let experiment = try twoViewExperiment()
         experiment.buffers["editOut"]?.clear(reset: false)

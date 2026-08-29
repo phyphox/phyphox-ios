@@ -682,10 +682,15 @@ final class Experiment {
     ///thing whatever page the user happens to be looking at. The view modules used to seed from
     ///their own render path, which only turns over for the ONE view collection that is active
     ///(ExperimentPageViewController activates exactly one), so an element on any other page never
-    ///seeded its buffer at all - on the bench, an edit field on the second page of
-    ///micropython/createExperiment left the board configured with nothing until somebody opened
-    ///that page. Android seeds for every view (ExpView.setValue substitutes the default for a
-    ///buffer holding NaN) and that is the canonical behaviour (input-defaults-on-hidden-view).
+    ///got its value back. Android seeds for every view (ExpView.setValue substitutes the default
+    ///for a buffer holding NaN) and that is the canonical behaviour.
+    ///
+    ///The parser already seeds these while reading the file, so a freshly loaded experiment looks
+    ///right and the gap only opens once something empties the buffer again. In the case this was
+    ///found with - micropython/createExperiment, whose edit field configures the board over BLE -
+    ///that was a plain CLEAR: the "clear data" button, or /control?cmd=clear, which the lab
+    ///issues before every start. From then on the device was told nothing until somebody opened
+    ///the page the edit field is on.
     ///
     ///Only empty buffers are touched, so a value the user set - or one restored with a saved
     ///state - stays as it is.
@@ -744,7 +749,10 @@ final class Experiment {
         cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
         
-        //The defaults belong to the experiment, not to the data that was just discarded
+        //The defaults belong to the experiment, not to the data that was just discarded. This is
+        //the call that fixes the observed failure: the lab clears before every start, and so does
+        //a user pressing "clear data", which is what left an input element's buffer empty for the
+        //rest of the run when its page was not the one on screen.
         seedInputDefaults()
         
         if byUser {
@@ -756,9 +764,12 @@ final class Experiment {
 extension Experiment: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
         analysisDelegate?.analysisWillUpdate(analysis)
-        //An analysis input without keep="true" empties the buffer it read, including an input
-        //element's. Android's re-init runs for every view on every cycle; this is that, and it
-        //is what keeps the value there for the NEXT cycle whether or not the page is on screen.
+        //For the general case rather than the one that started this: an analysis input without
+        //keep="true", or a bluetooth output whose input says keep="false", empties the buffer it
+        //read, and the value has to be back for the NEXT cycle whether or not the page is on
+        //screen. Android's re-init runs for every view on every cycle; this is that. (Neither
+        //applied in micropython/createExperiment: keep defaults to TRUE and its analysis block is
+        //empty - there it was the clear before each start, see clear().)
         seedInputDefaults()
         for networkConnection in networkConnections {
             networkConnection.pushDataToBuffers()
