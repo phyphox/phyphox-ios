@@ -122,13 +122,19 @@ final class DeserializerTests: XCTestCase {
 
     /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files. Also tests that reusing the same parser and using a fresh parser produces the same result.
     ///
-    /// What is left here is what the shared corpus cannot take yet. Seventeen of these fixtures
-    /// moved to phyphox-docs corpus/invalid on 2026-08-29, where both platforms run them; these
-    /// seventeen produce no finding from tools/validate_experiments.py, and the docs build fails
-    /// a corpus/invalid file that validates cleanly ("the spec now accepts its documented
-    /// defect"). They can follow one at a time, as the spec learns each rule. Note the reuse
-    /// half of this test has no counterpart in the corpus runner, so keep it wherever the last
-    /// fixture ends up.
+    /// One fixture is left. The other 33 moved to phyphox-docs corpus/invalid over 2026-08-29,
+    /// where both platforms run them - seventeen once their defect produced a
+    /// validate_experiments finding, the rest once the validator learned the spec fields the
+    /// published RELAX NG and Schematron were already generated from.
+    ///
+    /// What remains is `bluetooth-address-android-only`, the recorded platform difference. Note
+    /// the corpus pins that same rule from both sides already, in generated/bluetooth-address
+    /// with a per-platform `parser:` map that this suite asserts too - so this file duplicates
+    /// it, and the folder could go entirely. Kept because removing it was not this change's to
+    /// decide.
+    ///
+    /// The reuse half - a reused DocumentParser and a fresh one must agree - has no counterpart
+    /// in the corpus runner. If this folder does go, that assertion needs a home first.
     func testIncorrectFilesAndReuse() throws {
         let experimentsURL = try testBundle.url(forResource: "incorrect-files", withExtension: nil).unwrap()
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsURL.path)
@@ -156,8 +162,7 @@ final class DeserializerTests: XCTestCase {
 //is appended, a label-only link removes the base link, the translation attribute holds the
 //displayed text and highlight is inherited where not explicitly set. The invalid forms (missing
 //label, duplicate labels, unmatched label without URL, translation attribute or empty URL at the
-//root) are covered by fixtures: the missing label and the root translation attribute in
-//phyphox-docs corpus/invalid, the rest still in incorrect-files.
+//root) are all covered by fixtures in phyphox-docs corpus/invalid, which both platforms run.
 final class TranslatedLinkTests: XCTestCase {
     //The conformance fixture from phyphox-docs (corpus/generated/translated-links.phyphox)
     //exercises every form of a translated link in one document
