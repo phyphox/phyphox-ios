@@ -504,6 +504,8 @@
 		A1C0DE192E47BB0100000002 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A1C0DE192E47BB0100000003 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A1C0DE192E47BB0100000004 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000005 /* gu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = gu; path = gu.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000006 /* gu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = gu; path = gu.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AnalyzingShaders.metal; sourceTree = "<group>"; };
 		86E0978D2D64D3E5005C7378 /* Shaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shaders.h; sourceTree = "<group>"; };
 		86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewDescriptor.swift; sourceTree = "<group>"; };
@@ -1534,6 +1536,7 @@
 				ka,
 				ta,
 				ko,
+				gu,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
@@ -1929,6 +1932,7 @@
 				86C183D129F132020089E396 /* ka */,
 				A1C0DE192E47BB0100000001 /* ko */,
 				A1C0DE192E47BB0100000003 /* ta */,
+				A1C0DE192E47BB0100000005 /* gu */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1958,6 +1962,7 @@
 				86C183D229F132020089E396 /* ka */,
 				A1C0DE192E47BB0100000002 /* ko */,
 				A1C0DE192E47BB0100000004 /* ta */,
+				A1C0DE192E47BB0100000006 /* gu */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
