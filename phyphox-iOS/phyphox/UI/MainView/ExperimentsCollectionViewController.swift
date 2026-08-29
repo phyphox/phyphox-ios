@@ -15,7 +15,8 @@ private let phyphoxCatHintRelease = "1.2.1" //If this is updated to the current 
 private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
+    ///acceptPartialZip is for the QR scanner and the Bluetooth transfer only, see intakeRoute
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
@@ -82,6 +83,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setupNavbar()
+
+        //Launch-argument seam: with -phyphoxBleConnect the app goes looking for that device as
+        //soon as it has a screen to show the transfer's progress in
+        if let device = AutomationLaunchOptions.bluetoothDeviceName {
+            connectToBluetoothDeviceForAutomation(named: device)
+        }
 
         let defaults = UserDefaults.standard
         if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
@@ -289,6 +296,46 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral) {
         bluetoothScanResultsTableViewController?.ble.loadExperimentFromPeripheral(peripheral, viewController: self, experimentLauncher: self)
+    }
+
+    // MARK: - the Bluetooth seam for unattended automation
+
+    //-phyphoxBleConnect <name> (see AutomationLaunchOptions in AppDelegate) stands in for the
+    //user opening the Bluetooth scan and picking a device: the scan, the name matching, the
+    //transfer of the experiment the device offers and the loading are the app's own code, and
+    //what follows is the same as for any experiment - the page comes up, -phyphoxRemote brings
+    //the remote server up with it (ExperimentPageViewController), and nothing is started, since
+    //the host drives the measurement from there.
+    private var automationBluetoothScan: BluetoothScan?
+    private var didTakeAutomationBluetoothDevice = false
+
+    ///Whether a scanned device is the one the driver named. EXACT, on either the advertised name
+    ///or the peripheral's own: the compatibility suite runs boards side by side, one of them
+    ///deliberately advertising under a different name, so a device that merely contains the name
+    ///is the wrong device. (BluetoothScan's own filter is a substring match, which is right for a
+    ///user picking from a list and not enough here.)
+    static func automationBluetoothMatch(advertisedName: String?, peripheralName: String?, requested: String) -> Bool {
+        return advertisedName == requested || peripheralName == requested
+    }
+
+    private func connectToBluetoothDeviceForAutomation(named name: String) {
+        guard automationBluetoothScan == nil else { return }
+
+        //checkExperiments false: what is wanted is the experiment the DEVICE offers, not the
+        //bundled ones that happen to be registered for its name
+        let scan = BluetoothScan(scanDirectly: true, filterByName: name, filterByUUID: nil,
+                                 checkExperiments: false, autoConnect: true)
+        scan.scanResultsDelegate = self
+        automationBluetoothScan = scan
+
+        //Bounded: a device that never turns up would leave the app scanning for as long as the
+        //suite runs, and the host would see nothing but a remote API that never came up. This
+        //says what happened in the device log and stops draining the phone.
+        after(60) { [weak self] in
+            guard let self = self, !self.didTakeAutomationBluetoothDevice else { return }
+            print("-phyphoxBleConnect: no device advertising as \(name) turned up within 60 s")
+            self.automationBluetoothScan?.stopScan()
+        }
     }
 
     func infoPressed(_ action: UIAlertAction) {
@@ -807,7 +854,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         case partialZip
     }
     
-    func detectFileType(data: Data) -> FileType {
+    static func detectFileType(data: Data) -> FileType {
         if data.count < 20 {
             return .unknown
         }
@@ -832,18 +879,44 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return .unknown
     }
     
-    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
-        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
-        try? FileManager.default.removeItem(at: tmp)
-        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
-        
+    //Where a container entry may be written, or nil when it would end up outside the extraction
+    //directory. An archive is free to name an entry "../evil.phyphox", and appendingPathComponent
+    //builds that path without complaint, so every destination is checked before anything is
+    //written - the archive's legitimate entries are extracted either way. Android refuses the
+    //same way in its ZipIntentHandler.
+    static func containerEntryDestination(_ entryPath: String, in directory: URL) -> URL? {
+        let destination = directory.appendingPathComponent(entryPath)
+
+        var base = directory.standardizedFileURL.resolvingSymlinksInPath().path
+        if !base.hasSuffix("/") {
+            base += "/"
+        }
+        guard destination.standardizedFileURL.resolvingSymlinksInPath().path.hasPrefix(base) else {
+            return nil
+        }
+
+        return destination
+    }
+
+    ///Unpacks a container archive into `destination` and returns the experiment files it holds.
+    ///This is the intake route's own unpacking - handleZipFile only decides what to do with the
+    ///result - so a test can drive it without a view controller.
+    static func extractContainer(at url: URL, to destination: URL) throws -> [URL] {
         let archive = try Archive(url: url, accessMode: .read)
         var files: [URL] = []
         for entry in archive {
             if entry.type != .file {
                 continue
             }
-            let fileName = tmp.appendingPathComponent(entry.path)
+            guard let fileName = containerEntryDestination(entry.path, in: destination) else {
+                //An entry pointing outside the extraction directory is evidence that the file was
+                //tampered with, so nothing in it is trustworthy and the remaining entries are not
+                //salvaged: the whole archive is refused and the app's could-not-load path takes
+                //over (ruling 2026-08-26, container-traversal-entry; Android refuses the same way
+                //in its ZipIntentHandler). What was already unpacked goes with it.
+                try? FileManager.default.removeItem(at: destination)
+                throw SerializationError.genericError(message: "Refusing an archive whose entry \(entry.path) points outside the extraction directory.")
+            }
             if entry.path.hasSuffix(".phyphox") {
                 try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
                 try? FileManager.default.removeItem(at: fileName)
@@ -855,27 +928,61 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
                 _ = try archive.extract(entry, to: fileName)
             }
         }
-        
-        guard files.count > 0 else {
+        return files
+    }
+
+    ///What an intake route makes of a sniffed file. The partial (headerless) zip is accepted only
+    ///from the QR scanner and the Bluetooth transfer: those are low-bandwidth paths where
+    ///dropping the zip structure is worth its cost, while everywhere else the form is
+    ///discouraged - what arrives is a file that only phyphox can unpack, where a plain .phyphox
+    ///file or an ordinary zip serves the user better (ruling 2026-08-26,
+    ///partial-zip-intake-scope). Refused, it goes down the app's could-not-load path like any
+    ///other unknown file.
+    static func intakeRoute(for fileType: FileType, acceptPartialZip: Bool) -> FileType {
+        if fileType == .partialZip && !acceptPartialZip {
+            return .unknown
+        }
+        return fileType
+    }
+
+    ///What is done with what an archive turned out to hold
+    enum ContainerDispatch: Equatable {
+        ///The one experiment it carries is opened right away
+        case open(URL)
+        ///Several: the user picks one, or saves them all
+        case choose([URL])
+    }
+
+    ///The decision handleZipFile acts on, kept apart from acting on it so it can be tested: an
+    ///archive without any experiment in it is refused here rather than opening an empty picker.
+    static func containerDispatch(for files: [URL]) throws -> ContainerDispatch {
+        guard let first = files.first else {
             throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
         }
+        return files.count == 1 ? .open(first) : .choose(files)
+    }
+
+    func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
+        try? FileManager.default.removeItem(at: tmp)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
         
-        if files.count == 1 {
-            _ = launchExperimentByURL(files.first!, chosenPeripheral: chosenPeripheral)
-        } else {
-            var experiments: [URL] = []
-            for file in files {
-                experiments.append(file)
-            }
-            
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: tmp)
+        
+        switch try ExperimentsCollectionViewController.containerDispatch(for: files) {
+        case .open(let file):
+            _ = launchExperimentByURL(file, chosenPeripheral: chosenPeripheral)
+        case .choose(let files):
             let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
     }
     
-    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
-        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
-        
+    ///Rebuilds a whole zip around a partial one. A QR code or a Bluetooth transfer carries a
+    ///single deflate entry with its trailing data descriptor, without the local file header and
+    ///without a central directory; both are synthesized here around the payload, which becomes
+    ///the entry a.phyphox. Static so the intake route's own rebuilding is testable.
+    static func rebuiltPartialZipData(from payload: Data) -> Data {
         var data = Data()
         
         //Local file header
@@ -893,7 +1000,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append("a.phyphox".data(using: .utf8)!) //File name
         
         //Data (including data descriptor)
-        data.append(try Data(contentsOf: url))
+        data.append(payload)
         
         let i = data.count - 16 //Offset of possible data descriptor
         let crc32 = data.subdata(in: (i+4..<i+8))
@@ -931,12 +1038,30 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
         data.append(Data([0x00, 0x00])) //Comment length
         
+        return data
+    }
+    
+    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        let data = ExperimentsCollectionViewController.rebuiltPartialZipData(from: try Data(contentsOf: url))
         
         try data.write(to: tmp, options: .atomic)
         try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
     }
     
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
+    //Resolves the url-encoded path of a phyphox://asset= link within the bundled experiment
+    //collection. The identifier is the file path within the collection, identical to Android's
+    //assets/experiments/<path>. An empty path, a leading / and any path containing .. are
+    //refused - the link is deliberately limited to the bundled collection.
+    static func bundledExperimentAssetURL(encodedPath: String) -> URL? {
+        guard let path = encodedPath.removingPercentEncoding, !path.isEmpty, !path.hasPrefix("/"), !path.contains("..") else {
+            return nil
+        }
+        return experimentsBaseURL.appendingPathComponent(path)
+    }
+
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool = false) -> Bool {
 print("\(url)")
         var fileType = FileType.unknown
         var experiment: Experiment?
@@ -949,13 +1074,31 @@ print("\(url)")
         _ = url.startAccessingSecurityScopedResource()
         
         //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
-        if url.scheme == "phyphox" {
+        if url.scheme == "phyphox", url.absoluteString.hasPrefix("phyphox://asset=") {
+            //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
+            //transferring-experiments.md in phyphox-docs) - no server involved. The path is
+            //taken from the raw URL string: URLComponents' host/authority accessors normalize
+            //their case, which would corrupt the case-sensitive asset path. Any other
+            //phyphox:// URL keeps the https-rewrite behavior below. Mirrored on Android
+            //(ExperimentListActivity.handleIntent) - the two must stay in step.
+            let encodedPath = String(url.absoluteString.dropFirst("phyphox://asset=".count))
+            if let assetURL = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: encodedPath) {
+                //An unknown path fails the load below like any other unreadable file, showing
+                //the app's normal could-not-load message
+                fileType = .phyphox
+                finalURL = assetURL
+            }
+            else {
+                experimentLoadingError = SerializationError.genericError(message: "Invalid experiment asset path.")
+            }
+        }
+        else if url.scheme == "phyphox" {
             //phyphox:// allow to retreive the experiment via https or http. Try both.
             if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 components.scheme = "https"
                 do {
                     let data = try Data(contentsOf: components.url!)
-                    fileType = detectFileType(data: data)
+                    fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                     if fileType == .phyphox || fileType == .zip {
                         try data.write(to: tmp, options: .atomic)
                         finalURL = tmp
@@ -966,7 +1109,7 @@ print("\(url)")
                     components.scheme = "http"
                     do {
                         let data = try Data(contentsOf: components.url!)
-                        fileType = detectFileType(data: data)
+                        fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                         if fileType == .phyphox || fileType == .zip {
                             try data.write(to: tmp, options: .atomic)
                             finalURL = tmp
@@ -984,7 +1127,7 @@ print("\(url)")
             //Specific http or https. We need to download it first as InputStream/XMLParser only handles URLs to local files properly. (See todo above)
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     try data.write(to: tmp, options: .atomic)
                     finalURL = tmp
@@ -996,7 +1139,7 @@ print("\(url)")
             //Local file
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     if (url.absoluteString.starts(with: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString)) {
                         finalURL = url
@@ -1014,7 +1157,7 @@ print("\(url)")
         }
         
         if experimentLoadingError == nil {
-            switch fileType {
+            switch ExperimentsCollectionViewController.intakeRoute(for: fileType, acceptPartialZip: acceptPartialZip) {
             case .phyphox:
                     do {
                         experiment = try ExperimentSerialization.readExperimentFromURL(finalURL)
@@ -1065,7 +1208,7 @@ print("\(url)")
             
             
             let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("exp_error"))
+                .title(title: localize("warning"))
                 .message(message: "Could not load experiment: \(message)")
                 .preferredStyle(style: .alert)
             if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {
@@ -1074,7 +1217,7 @@ print("\(url)")
                 //that first request while the prompt is still on screen. Offer a retry so the
                 //user can simply try again after granting.
                 _ = alertBuilder.addActionWithTitle(localize("tryagain"), style: .default, handler: { [weak self] _ in
-                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral)
+                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral, acceptPartialZip: acceptPartialZip)
                 })
             }
             alertBuilder.addOkAction()
@@ -1084,7 +1227,26 @@ print("\(url)")
         }
         
         guard let loadedExperiment = experiment else { return false }
-        
+
+        //A link experiment has no views to show - opening its link is what tapping its entry in
+        //the collection does, and it is what a QR code or a file carrying isLink="true" means.
+        //Pushing an experiment page for it used to crash on the missing view descriptors.
+        if loadedExperiment.isLink {
+            guard let linkURL = loadedExperiment.localizedLinks.first?.url else {
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("url_invalid"))
+                    .message(message: localize("url_invalid_msg"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction()
+                    .show(in: self, animated: true)
+
+                return false
+            }
+            UIApplication.shared.open(linkURL)
+
+            return true
+        }
+
         if loadedExperiment.appleBan {
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
              controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
@@ -1257,5 +1419,40 @@ print("\(url)")
                 self.selfView.collectionView.reloadData()
             }
         }
+    }
+}
+
+//The scan started by -phyphoxBleConnect reports its find here. Only the automation scan uses
+//this - the scan the user opens has its own list to fill, in BluetoothScanResultsTableViewController.
+extension ExperimentsCollectionViewController: ScanResultsDelegate {
+    func reloadScanResults(updatedEntry: UUID) {
+        //Nothing to update: the automation scan has no list on screen
+    }
+
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?) {
+        guard let requested = AutomationLaunchOptions.bluetoothDeviceName,
+              !didTakeAutomationBluetoothDevice,
+              let scan = automationBluetoothScan else { return }
+
+        //The name comes with the call. Looking it up in scan.discoveredDevices found nothing -
+        //this path returns before that dictionary is written - which left the match to
+        //device.name, the name CoreBluetooth cached for the peripheral; that one is stale the
+        //moment the device is renamed, as the lab's per-flash bench tags do, so the seam never
+        //took a board.
+        guard ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertisedName,
+                                                                          peripheralName: device.name,
+                                                                          requested: requested) else {
+            //A device the substring filter let through, but not the one that was named
+            print("-phyphoxBleConnect: skipping a device advertising as \(advertisedName ?? "nil") "
+                  + "(cached name \(device.name ?? "nil")), waiting for \(requested)")
+            return
+        }
+
+        didTakeAutomationBluetoothDevice = true
+        scan.stopScan()
+        print("-phyphoxBleConnect: taking the device advertising as \(requested)")
+        //The same call the user's tap ends in, and from here nothing about this experiment is
+        //special: it is transferred, loaded, and left waiting for the host to start it
+        scan.loadExperimentFromPeripheral(device, viewController: self, experimentLauncher: self)
     }
 }

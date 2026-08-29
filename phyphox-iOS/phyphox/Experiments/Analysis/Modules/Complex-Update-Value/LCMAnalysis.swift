@@ -8,8 +8,25 @@
 
 import Foundation
 
-func lcm(_ u: UInt, _ v: UInt) -> UInt {
-    return (u*v)/gcd(u, v)
+//The domain of lcm is non-negative integers: fractional values are rounded half away from zero
+//like the formula language's round, while negative inputs, non-finite inputs and values beyond
+//UInt.max yield NaN instead of trapping in the UInt conversion. lcm(0,x) is 0 by the usual
+//convention, including lcm(0,0) (formerly a 0/0 trap), and a product overflowing UInt yields
+//NaN instead of trapping.
+func lcmOfDoubles(_ a: Double, _ b: Double) -> Double {
+    guard a.isFinite && b.isFinite && a >= 0 && b >= 0 else { return Double.nan }
+    let ra = a.rounded(.toNearestOrAwayFromZero)
+    let rb = b.rounded(.toNearestOrAwayFromZero)
+    guard ra < 0x1p64 && rb < 0x1p64 else { return Double.nan }
+    let u = UInt(ra)
+    let v = UInt(rb)
+    if u == 0 || v == 0 {
+        return 0.0
+    }
+    //u/gcd is exact, so this is the smallest intermediate; overflow here means the lcm itself
+    //does not fit
+    let (result, overflow) = (u / gcd(u, v)).multipliedReportingOverflow(by: v)
+    return overflow ? Double.nan : Double(result)
 }
 
 final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
@@ -33,68 +50,23 @@ final class LCMAnalysis: ExperimentComplexUpdateValueAnalysis {
             
             
             return main
-            }, priorityInputKey: nil)
+            })
     }
     
     func lcmValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
         if let scalarA = a.scalar, let scalarB = b.scalar { // lcm(scalar,scalar)
-            if !scalarA.isFinite || !scalarB.isFinite {
-                return ValueSource(scalar: Double.nan)
-            }
-            
-            let result = Double(lcm(UInt(scalarA), UInt(scalarB)))
-            
-            return ValueSource(scalar: result)
+            return ValueSource(scalar: lcmOfDoubles(scalarA, scalarB))
         }
         else if let scalar = a.scalar, let vector = b.vector { // lcm(scalar,vector)
-            var out = [Double]()
-            out.reserveCapacity(vector.count)
-            
-            for val in vector {
-                if !val.isFinite || !scalar.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                    out.append(Double(lcm(UInt(scalar), UInt(val))))
-                }
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vector.map { lcmOfDoubles(scalar, $0) })
         }
         else if let vector = a.vector, let scalar = b.scalar { // lcm(vector,scalar)
-            var out = [Double]()
-            out.reserveCapacity(vector.count)
-            
-            for val in vector {
-                if !val.isFinite || !scalar.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                    out.append(Double(lcm(UInt(scalar), UInt(val))))
-                }
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vector.map { lcmOfDoubles(scalar, $0) })
         }
         else if let vectorA = a.vector, let vectorB = b.vector { // lcm(vector,vector)
-            var out = [Double]()
-            out.reserveCapacity(vectorA.count)
-            
-            for (i, val) in vectorA.enumerated() {
-                let valB = vectorB[i]
-                
-                if !val.isFinite || !valB.isFinite {
-                    out.append(Double.nan)
-                }
-                else {
-                     out.append(Double(lcm(UInt(valB), UInt(val))))
-                }
-               
-            }
-            
-            return ValueSource(vector: out)
+            return ValueSource(vector: vectorA.enumerated().map { lcmOfDoubles(vectorB[$0.offset], $0.element) })
         }
-        
+
         fatalError("Invalid value sources")
     }
 }

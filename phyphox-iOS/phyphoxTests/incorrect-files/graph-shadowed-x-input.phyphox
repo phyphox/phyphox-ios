@@ -1,0 +1,22 @@
+<phyphox version="1.20">
+    <!-- Mirrors the "shadowed x" graph of phyphox-docs corpus/invalid/graph-unused-x.phyphox:
+         with unequal x and y counts, an x input shadowed by a later x before any y consumed
+         it is an error. -->
+    <title>t</title>
+    <category>c</category>
+    <description>d</description>
+    <data-containers>
+        <container>t</container>
+        <container>a</container>
+    </data-containers>
+    <input></input>
+    <views>
+        <view label="v">
+            <graph label="shadowed x">
+                <input axis="x">t</input>
+                <input axis="x">t</input>
+                <input axis="y">a</input>
+            </graph>
+        </view>
+    </views>
+</phyphox>

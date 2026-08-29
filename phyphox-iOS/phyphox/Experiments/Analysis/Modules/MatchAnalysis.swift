@@ -53,6 +53,8 @@ final class MatchAnalysis: AutoClearingExperimentAnalysisModule {
         }
                 
         for (i, output) in outputs.enumerated() {
+            //Outputs beyond the input count are left empty (matching Android)
+            guard i < out.count else { break }
             switch output {
             case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
                 buffer.appendFromArray(out[i])

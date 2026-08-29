@@ -103,7 +103,6 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
 
         registerForUpdatesFromBuffer(descriptor.buffer)
-        descriptor.buffer.attachedToTextField = true
 
         textField.addTarget(self, action: #selector(hideKeyboard(_:)), for: .editingDidEndOnExit)
 
@@ -218,6 +217,10 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     }
 
     private func update() {
+        //The default is seeded by Experiment.seedInputDefaults(), not from here: this runs off
+        //a display link that only turns over while this view collection is the active one, so
+        //an element on any other page never got its value (input-defaults-on-hidden-view)
+
         let value = descriptor.value
         let rawValue = value * descriptor.factor
 

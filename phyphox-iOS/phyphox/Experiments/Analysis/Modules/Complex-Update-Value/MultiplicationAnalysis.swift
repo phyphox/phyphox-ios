@@ -29,7 +29,7 @@ final class MultiplicationAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: nil)
+            })
     }
     
     func multiplyValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

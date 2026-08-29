@@ -17,6 +17,18 @@ protocol AttributeKey {
     var rawValue: String { get }
 }
 
+///Decodes a floating point number from an experiment file value. The accepted lexical space
+///matches the docs validators (number-invalid-value rule in phyphox-docs) and is narrower than
+///what Swift's Double(String) parses: decimal notation plus NaN and [+-]Infinity with case
+///folded - "inf" or hex floats like "0x1p3" are not portable, as Java cannot parse them.
+///Returns nil for a value outside this space. Used by the numeric attribute readers below and
+///for the entries of a data container's init list.
+func parseExperimentNumber(_ stringValue: String) -> Double? {
+    let pattern = "^(?:[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY])$"
+    guard stringValue.range(of: pattern, options: .regularExpression) != nil else { return nil }
+    return Double(stringValue)
+}
+
 /// This structure provides readonly access to attribute values for a specific `AttributeKey` key type.
 struct KeyedAttributeContainer<Key: AttributeKey> {
     /// The raw, underlying attribute dictionary
@@ -114,12 +126,22 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return value
     }
 
+    ///Floating point decodes are restricted to the format's number lexical space, which is
+    ///narrower than what T.init(String) accepts (number-invalid-value rule in phyphox-docs,
+    ///see parseExperimentNumber). Other types, i.e. String, pass through unchecked.
+    private func isValidValue<T: LosslessStringConvertible>(_ stringValue: String, for type: T.Type) -> Bool {
+        if T.self == Double.self || T.self == CGFloat.self || T.self == Float.self {
+            return parseExperimentNumber(stringValue) != nil
+        }
+        return true
+    }
+
     /// Returns an optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error decoding to `T` fails.
     func optionalValue<T: LosslessStringConvertible>(for key: Key) throws -> T? {
         let keyString = key.rawValue
 
         return try attributes[keyString].map({
-            guard let value = T.init($0) else {
+            guard isValidValue($0, for: T.self), let value = T.init($0) else {
                 throw ElementHandlerError.unexpectedAttributeValue(keyString)
             }
 
@@ -133,7 +155,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         guard let stringValue = attributes[keyString] else {
             throw ElementHandlerError.missingAttribute(key.rawValue)
         }
-        guard let value = T.init(stringValue) else {
+        guard isValidValue(stringValue, for: T.self), let value = T.init(stringValue) else {
             throw ElementHandlerError.unexpectedAttributeValue(keyString)
         }
         return value

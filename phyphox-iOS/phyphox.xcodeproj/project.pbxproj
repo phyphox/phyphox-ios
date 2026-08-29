@@ -155,6 +155,7 @@
 		6BFE372C20442AB400301CA3 /* KeyboardTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFE372B20442AB400301CA3 /* KeyboardTracker.swift */; };
 		860E13F32B514703008FAFC6 /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F22B514703008FAFC6 /* GCDWebServer */; };
 		860E13F62E42AA0100000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 860E13F52E42AA0100000002 /* ZIPFoundation */; };
+		8A5A0001000000000000AA01 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 8A5A0002000000000000AA02 /* SnapshotTesting */; };
 		86147C122D78EC03008BAAD2 /* CameraGUIShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */; };
 		86147C192D78FB80008BAAD2 /* MovingAverageAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86147C182D78FB80008BAAD2 /* MovingAverageAnalysis.swift */; };
 		8640FE6B2BAA3B7E006D7973 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8640FE692BAA3AD0006D7973 /* SwiftUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -210,9 +211,21 @@
 		A1FA9A0429A7ACE800E0FDBF /* ColorConverterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0329A7ACE800E0FDBF /* ColorConverterHelper.swift */; };
 		A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */; };
 		A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */; };
+		8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */; };
+		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
+		8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */; };
+		8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */; };
+		8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010F000000000000AA1F /* AppChromeTests.swift */; };
+		8A5A011A000000000000AA2A /* TranslationsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0119000000000000AA29 /* TranslationsUITests.swift */; };
+		8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */; };
+		8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */; };
+		8A5A011C000000000000AA2C /* SaveToCollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */; };
+		8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0111000000000000AA21 /* LifecycleTests.swift */; };
 		A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */; };
 		A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000003 /* incorrect-files */; };
 		A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */ = {isa = PBXBuildFile; fileRef = 6B0814C81CABEE0700EE2791 /* phyphox-experiments */; };
+		A1FA9A2E2E42BB0200000005 /* translated-links.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */; };
+		A1FA9A2E2E42BB0200000006 /* graph-input-orders.phyphox in Resources */ = {isa = PBXBuildFile; fileRef = A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */; };
 		A1FL19H72E44AA0100000001 /* ExperimentFlashlightOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FL19H72E44AA0100000002 /* ExperimentFlashlightOutput.swift */; };
 		A1ID19H72E45AA0100000003 /* ImageDecodeAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1ID19H72E45AA0100000004 /* ImageDecodeAnalysis.swift */; };
 		C01B1DC721A89E06001FE525 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01B1DC621A89E06001FE525 /* ScannerViewController.swift */; };
@@ -281,6 +294,13 @@
 
 /* Begin PBXContainerItemProxy section */
 		A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7BF7791C130425007408FB;
+			remoteInfo = phyphox;
+		};
+		8A5A0107000000000000AA17 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B7BF7721C130425007408FB /* Project object */;
 			proxyType = 1;
@@ -480,6 +500,10 @@
 		86C183D029F131BC0089E396 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86C183D129F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/Localizable.strings; sourceTree = "<group>"; };
 		86C183D229F132020089E396 /* ka */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ka; path = ka.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000001 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000002 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000003 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1C0DE192E47BB0100000004 /* ta */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ta; path = ta.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86E0978B2D64D006005C7378 /* AnalyzingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AnalyzingShaders.metal; sourceTree = "<group>"; };
 		86E0978D2D64D3E5005C7378 /* Shaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shaders.h; sourceTree = "<group>"; };
 		86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewDescriptor.swift; sourceTree = "<group>"; };
@@ -530,8 +554,21 @@
 		A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = phyphoxTests.swift; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeserializerTests.swift; sourceTree = "<group>"; };
+		8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSnapshotTests.swift; sourceTree = "<group>"; };
+		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
+		8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsBuildTests.swift; sourceTree = "<group>"; };
+		8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewBehaviorTests.swift; sourceTree = "<group>"; };
+		8A5A010F000000000000AA1F /* AppChromeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeTests.swift; sourceTree = "<group>"; };
+		8A5A0119000000000000AA29 /* TranslationsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsUITests.swift; sourceTree = "<group>"; };
+		8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchBypassedUITests.swift; sourceTree = "<group>"; };
+		8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySmokeTests.swift; sourceTree = "<group>"; };
+		8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToCollectionTests.swift; sourceTree = "<group>"; };
+		8A5A0111000000000000AA21 /* LifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleTests.swift; sourceTree = "<group>"; };
+		8A5A0100000000000000AA10 /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "full-skeleton.phyphox"; sourceTree = "<group>"; };
 		A1FA9A2E2E42BB0100000003 /* incorrect-files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "incorrect-files"; sourceTree = "<group>"; };
+		A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "translated-links.phyphox"; sourceTree = "<group>"; };
+		A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "graph-input-orders.phyphox"; sourceTree = "<group>"; };
 		A1FL19H72E44AA0100000002 /* ExperimentFlashlightOutput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExperimentFlashlightOutput.swift; sourceTree = "<group>"; };
 		A1ID19H72E45AA0100000004 /* ImageDecodeAnalysis.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageDecodeAnalysis.swift; sourceTree = "<group>"; };
 		C01B1DC621A89E06001FE525 /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
@@ -647,10 +684,39 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A5A0103000000000000AA13 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */,
+				8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */,
+				8A5A011A000000000000AA2A /* TranslationsUITests.swift in Sources */,
+				8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */,
+				8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */,
+				8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */,
+				8A5A011C000000000000AA2C /* SaveToCollectionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A5A0104000000000000AA14 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A5A0105000000000000AA15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1FA9A0929ACC5F800E0FDBF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A5A0001000000000000AA01 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -763,6 +829,7 @@
 				6B7BF77C1C130425007408FB /* phyphox */,
 				C051CFAD22AEEB4100355864 /* phyphox screenshots */,
 				A1FA9A0D29ACC5F800E0FDBF /* phyphoxTests */,
+				8A5A0101000000000000AA11 /* phyphoxUITests */,
 				6B7BF77B1C130425007408FB /* Products */,
 				C075AA7B2232CC0500DE86D8 /* Frameworks */,
 			);
@@ -774,6 +841,7 @@
 				6B7BF77A1C130425007408FB /* phyphox.app */,
 				C051CFAC22AEEB4000355864 /* phyphox screenshots.xctest */,
 				A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */,
+				8A5A0100000000000000AA10 /* phyphoxUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1249,10 +1317,29 @@
 			children = (
 				A1FA9A0E29ACC5F800E0FDBF /* phyphoxTests.swift */,
 				A1FA9A2E2E42BB0100000001 /* DeserializerTests.swift */,
+				8A5A0004000000000000AA04 /* ViewSnapshotTests.swift */,
+				8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */,
+				8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
+				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
+				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
 				A1FA9A2E2E42BB0100000003 /* incorrect-files */,
 			);
 			path = phyphoxTests;
+			sourceTree = "<group>";
+		};
+		8A5A0101000000000000AA11 /* phyphoxUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */,
+				8A5A010F000000000000AA1F /* AppChromeTests.swift */,
+				8A5A0119000000000000AA29 /* TranslationsUITests.swift */,
+				8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */,
+				8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */,
+				8A5A0111000000000000AA21 /* LifecycleTests.swift */,
+				8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */,
+			);
+			path = phyphoxUITests;
 			sourceTree = "<group>";
 		};
 		C034B02227171E0100C0EF00 /* DepthGUI */ = {
@@ -1329,6 +1416,24 @@
 			productReference = 6B7BF77A1C130425007408FB /* phyphox.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8A5A0102000000000000AA12 /* phyphoxUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A5A0108000000000000AA18 /* Build configuration list for PBXNativeTarget "phyphoxUITests" */;
+			buildPhases = (
+				8A5A0103000000000000AA13 /* Sources */,
+				8A5A0104000000000000AA14 /* Frameworks */,
+				8A5A0105000000000000AA15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A5A0106000000000000AA16 /* PBXTargetDependency */,
+			);
+			name = phyphoxUITests;
+			productName = phyphoxUITests;
+			productReference = 8A5A0100000000000000AA10 /* phyphoxUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1FA9A1229ACC5F800E0FDBF /* Build configuration list for PBXNativeTarget "phyphoxTests" */;
@@ -1343,6 +1448,9 @@
 				A1FA9A1129ACC5F800E0FDBF /* PBXTargetDependency */,
 			);
 			name = phyphoxTests;
+			packageProductDependencies = (
+				8A5A0002000000000000AA02 /* SnapshotTesting */,
+			);
 			productName = phyphoxTests;
 			productReference = A1FA9A0C29ACC5F800E0FDBF /* phyphoxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -1424,6 +1532,8 @@
 				tr,
 				hi,
 				ka,
+				ta,
+				ko,
 			);
 			mainGroup = 6B7BF7711C130425007408FB;
 			packageReferences = (
@@ -1431,6 +1541,7 @@
 				C0F430C428E5A2DB00BC98DE /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				860E13F12B514703008FAFC6 /* XCRemoteSwiftPackageReference "GCDWebServer" */,
 				860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			productRefGroup = 6B7BF77B1C130425007408FB /* Products */;
 			projectDirPath = "";
@@ -1439,6 +1550,7 @@
 				6B7BF7791C130425007408FB /* phyphox */,
 				C051CFAB22AEEB4000355864 /* phyphox screenshots */,
 				A1FA9A0B29ACC5F800E0FDBF /* phyphoxTests */,
+				8A5A0102000000000000AA12 /* phyphoxUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1471,6 +1583,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1FA9A2E2E42BB0200000002 /* full-skeleton.phyphox in Resources */,
+				A1FA9A2E2E42BB0200000005 /* translated-links.phyphox in Resources */,
+				A1FA9A2E2E42BB0200000006 /* graph-input-orders.phyphox in Resources */,
 				A1FA9A2E2E42BB0200000003 /* incorrect-files in Resources */,
 				A1FA9A2E2E42BB0200000004 /* phyphox-experiments in Resources */,
 			);
@@ -1754,6 +1868,9 @@
 			files = (
 				A1FA9A0F29ACC5F800E0FDBF /* phyphoxTests.swift in Sources */,
 				A1FA9A2E2E42BB0200000001 /* DeserializerTests.swift in Sources */,
+				8A5A0005000000000000AA05 /* ViewSnapshotTests.swift in Sources */,
+				8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */,
+				8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1773,6 +1890,11 @@
 			isa = PBXTargetDependency;
 			target = 6B7BF7791C130425007408FB /* phyphox */;
 			targetProxy = A1FA9A1029ACC5F800E0FDBF /* PBXContainerItemProxy */;
+		};
+		8A5A0106000000000000AA16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7BF7791C130425007408FB /* phyphox */;
+			targetProxy = 8A5A0107000000000000AA17 /* PBXContainerItemProxy */;
 		};
 		C051CFB222AEEB4100355864 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1805,6 +1927,8 @@
 				C0D47C182408741600F84F74 /* tr */,
 				86C183CF29F131BC0089E396 /* hi */,
 				86C183D129F132020089E396 /* ka */,
+				A1C0DE192E47BB0100000001 /* ko */,
+				A1C0DE192E47BB0100000003 /* ta */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1832,6 +1956,8 @@
 				C0D47C172408741600F84F74 /* tr */,
 				86C183D029F131BC0089E396 /* hi */,
 				86C183D229F132020089E396 /* ka */,
+				A1C0DE192E47BB0100000002 /* ko */,
+				A1C0DE192E47BB0100000004 /* ta */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -2153,6 +2279,59 @@
 			};
 			name = Release;
 		};
+		8A5A0109000000000000AA19 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = phyphox;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+			};
+			name = Debug;
+		};
+		8A5A010A000000000000AA1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44GTV4NJA9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "de.rwth-aachen.physics.phyphoxUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = phyphox;
+			};
+			name = Release;
+		};
 		C051CFB322AEEB4100355864 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2244,6 +2423,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		8A5A0108000000000000AA18 /* Build configuration list for PBXNativeTarget "phyphoxUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A5A0109000000000000AA19 /* Debug */,
+				8A5A010A000000000000AA1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C051CFC322AEEB4100355864 /* Build configuration list for PBXNativeTarget "phyphox screenshots" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2270,6 +2458,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.9.17;
+			};
+		};
+		8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
 			};
 		};
 		C0BD4DF427079C600020A5AF /* XCRemoteSwiftPackageReference "JGProgressHUD" */ = {
@@ -2300,6 +2496,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 860E13F42E42AA0100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
+		};
+		8A5A0002000000000000AA02 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A5A0003000000000000AA03 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
 		};
 		C0BD4DF527079C600020A5AF /* JGProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;

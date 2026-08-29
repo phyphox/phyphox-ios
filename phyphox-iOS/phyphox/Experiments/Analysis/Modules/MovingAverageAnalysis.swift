@@ -37,22 +37,43 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
     }
     
     override func update() {
-        
+
         let inArray = dataIn.data
-        
-        let width = Int(widthIn?.getSingleValue() ?? 10.0)
-        
+
+        let width: Int
+        if let widthValue = widthIn?.getSingleValue() {
+            //A present but invalid width - non-finite or negative - is an error state yielding
+            //empty output; it must not act as some substitute width.
+            guard widthValue.isFinite && widthValue >= 0 && widthValue < 9e18 else {
+                return
+            }
+            width = Int(widthValue)
+        } else {
+            //The documented default, also selected by an empty width buffer
+            width = 10
+        }
+
         let start = dropIncomplete ? width : 0
         if start >= inArray.count {
             return
         }
-        
+
         var result: [Double] = []
-                
+
         for i in start..<inArray.count {
             let substart = max(i-width, 0)
-            let sum = inArray[substart ... i].reduce(0.0, +)
-            result.append(sum / (Double(i - substart + 1)))
+            //Skip non-finite values inside the window, aligning with average and binning; a
+            //window without any finite value yields NaN
+            var sum = 0.0
+            var count = 0
+            for j in substart...i {
+                let v = inArray[j]
+                if v.isFinite {
+                    sum += v
+                    count += 1
+                }
+            }
+            result.append(sum / Double(count))
         }
         
         if let dataOut = dataOut {

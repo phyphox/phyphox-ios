@@ -30,7 +30,7 @@ final class DivisionAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "dividend")
+            })
     }
     
     func divideValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

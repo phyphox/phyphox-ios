@@ -30,7 +30,7 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "base")
+            })
     }
     
     func powValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

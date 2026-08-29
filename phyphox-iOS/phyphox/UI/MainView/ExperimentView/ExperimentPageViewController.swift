@@ -134,6 +134,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var modules: [[ExperimentModule]] = []
         
+        //Nil for a link experiment and for the placeholder of a file that failed to load; see
+        //viewCollections, which the rest of the class uses (self is not available yet here)
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
@@ -273,7 +275,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         //frame set at creation goes stale (in landscape the tabs ended up slightly under the bar)
         tabBar?.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
         let timerInset: CGFloat = timerDisplay.map { $0.frame.height + 8 } ?? 0
-        let tabInset: CGFloat = (experiment.viewDescriptors!.count > 1) ? tabBarHeight : timerInset
+        let tabInset: CGFloat = (viewCollections.count > 1) ? tabBarHeight : timerInset
         for vc in experimentViewControllers {
             let oldInset = vc.tableView.contentInset.top
             if oldInset != tabInset {
@@ -370,9 +372,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         //TabBar to switch collections
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             var buttons: [String] = []
-            for collection in experiment.viewDescriptors! {
+            for collection in viewCollections {
                 buttons.append(collection.localizedLabel)
             }
             segControl = UIExperimentTabControl(items: buttons)
@@ -452,7 +454,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
         refreshAppTheme()
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             updateSegControlDesign()
         }
         
@@ -553,7 +555,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             )
 
         case .dataPolicy:
-            if let networkConnection = experiment.networkConnections.first {
+            //-phyphoxAutoConfirm (see AutomationLaunchOptions) confirms the notice for an
+            //unattended run - it gates the connection setup, so a headless network test could
+            //not run otherwise
+            if AutomationLaunchOptions.autoConfirm {
+                dataPolicyInfoDismissed()
+            } else if let networkConnection = experiment.networkConnections.first {
                 let sensorList = experiment.sensorInputs.map { $0.sensorType.getLocalizedName() }
                 networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
             } else {
@@ -578,7 +585,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //Like on Android, the photosensitivity warning is deliberately shown on every open
             //of an experiment that can strobe the flashlight, rather than offering a permanent
             //dismissal that would silence it forever.
-            if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true {
+            if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true,
+               !AutomationLaunchOptions.autoConfirm {
                 photosensitivityWarningShown = true
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("warning_photosensitivity"))
@@ -594,7 +602,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         case .saveLocally:
             //Ask to save the experiment locally if it has been loaded from a remote source
-            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
+               !AutomationLaunchOptions.autoConfirm {
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("save_locally"))
                     .message(message: localize("save_locally_message"))
@@ -717,6 +726,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //viewDidDisappear tore down and let the sequence pass through the remaining steps
             executeSequence(from: .dataPolicy)
         }
+
+        //Launch-argument seam for unattended automation (see AutomationLaunchOptions in
+        //AppDelegate): -phyphoxRemote brings the remote server up for this session, exactly as
+        //the menu toggle's confirmed action does, so a host script can drive the REST API.
+        //Only once - a later manual toggle stays the user's decision.
+        //
+        //It does not matter where the experiment came from: this runs for every experiment page,
+        //so an experiment transferred from a Bluetooth device (-phyphoxBleConnect) serves the
+        //remote API exactly as a launched one does. The Bluetooth compatibility suite depends on
+        //that, and it is why the switch needs no counterpart there.
+        if AutomationLaunchOptions.remoteEnabled && !didLaunchWebServerForAutomation {
+            didLaunchWebServerForAutomation = true
+            launchWebServer()
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -815,7 +838,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    ///The experiment's view collections. Nil descriptors are possible - a link experiment has no
+    ///views, and neither does the placeholder built for a file that failed to load - so this is
+    ///never force-unwrapped: the collection view controller keeps such experiments away from
+    ///this screen, and if one ever arrives here it must not trap.
+    private var viewCollections: [ExperimentViewCollectionDescriptor] {
+        return experiment.viewDescriptors ?? []
+    }
+
     private var remoteUrl: String = ""
+
+    private var didLaunchWebServerForAutomation = false
     
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
@@ -1367,7 +1400,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    func startExperiment() {
+    //Returns whether the measurement is running afterwards - with a timed run, whether its
+    //countdown was started. A start can be refused (a Bluetooth device that is not connected,
+    //an audio engine that will not start), and the remote interface reports that to its client
+    //instead of claiming success (control-start-refused).
+    @discardableResult
+    func startExperiment() -> Bool {
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
@@ -1376,11 +1414,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             experiment.setKeepScreenOn(true)
             
             if experimentStartTimer != nil {
+                //A running countdown is cancelled rather than started again, so nothing begins
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
                 updateTimerDisplay()
-                return
+                return false
             }
             
             if timerEnabled {
@@ -1390,14 +1429,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     } catch {
                         showError(message: "Could not start experiment \(error).")
                         experiment.stop()
-                        return
+                        return false
                     }
                 }
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
 
-                guard timerLabel != nil else { return }
+                guard timerLabel != nil else { return false }
 
                 setTimerLabel(d)
 
@@ -1424,11 +1463,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
                 
                 experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
+                return true
             }
             else {
-                actuallyStartExperiment()
+                return actuallyStartExperiment()
             }
         }
+        
+        return true
     }
     
     func showError(message: String) {
@@ -1437,17 +1479,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         present(alert, animated: true)
     }
     
-    func actuallyStartExperiment() {
+    @discardableResult
+    func actuallyStartExperiment() -> Bool {
         do {
             try experiment.start(stopExperimentDelegate: self)
         } catch AudioEngine.AudioEngineError.NoInput {
             showError(message: "Could not start experiment: No microphone available.")
             experiment.stop()
-            return
+            return false
         } catch {
             showError(message: "Could not start experiment \(error).")
             experiment.stop()
-            return
+            return false
+        }
+        
+        //Experiment.start() also refuses silently when one of its Bluetooth devices is not
+        //connected - it shows its own dialog and leaves the experiment stopped, so neither the
+        //toolbar item nor the remote interface may pretend that a measurement is running.
+        guard experiment.running else {
+            return false
         }
         
         var items = navigationItem.rightBarButtonItems!
@@ -1455,6 +1505,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         items[2] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
         
         navigationItem.rightBarButtonItems = items
+        
+        return true
     }
     
     func stopExperiment() {

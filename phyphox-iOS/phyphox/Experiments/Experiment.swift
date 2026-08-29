@@ -25,6 +25,34 @@ struct ExperimentLink: Equatable {
     let label: String
     let url: URL
     let highlighted: Bool
+
+    /// Applies the link elements of the selected translation block to the base links, per the
+    /// canonical behaviour (translation-link-matching in phyphox-docs): a translated link
+    /// matching a base label replaces it in its original position (inheriting URL and highlight
+    /// where not given), a label-only link with no URL removes the base link, and an unmatched
+    /// label is an additional link appended after the base links in declaration order. The
+    /// displayed text is the translation attribute if present, otherwise the label as written -
+    /// labels never pass through the string-translation mechanism.
+    static func localizedLinks(base links: [ExperimentLink], translatedLinks: [ExperimentTranslatedLink]) -> [ExperimentLink] {
+        var localized = [ExperimentLink]()
+        for link in links {
+            if let translated = translatedLinks.first(where: { $0.label == link.label }) {
+                if translated.removesBaseLink {
+                    continue
+                }
+                localized.append(ExperimentLink(label: translated.translation ?? translated.label, url: translated.url ?? link.url, highlighted: translated.highlighted ?? link.highlighted))
+            } else {
+                localized.append(link)
+            }
+        }
+        let baseLabels = Set(links.map { $0.label })
+        for translated in translatedLinks where !baseLabels.contains(translated.label) {
+            //An unmatched label without a URL is rejected at parse time (PhyphoxElementHandler)
+            guard let url = translated.url else { continue }
+            localized.append(ExperimentLink(label: translated.translation ?? translated.label, url: url, highlighted: translated.highlighted ?? false))
+        }
+        return localized
+    }
 }
 
 final class Experiment {
@@ -151,6 +179,8 @@ final class Experiment {
     let timeReference: ExperimentTimeReference
     
     let viewDescriptors: [ExperimentViewCollectionDescriptor]?
+    ///Every input element's default and the buffer it belongs in, see seedInputDefaults()
+    private var inputDefaults: [(Double, DataBuffer)] = []
     
     let translation: ExperimentTranslationCollection?
 
@@ -198,7 +228,7 @@ final class Experiment {
         self.description = description
         self.links = links
 
-        self.localizedLinks = links.map { ExperimentLink(label: translation?.localizeString($0.label) ?? $0.label, url: translation?.localizeLink($0.label, fallback: $0.url) ?? $0.url, highlighted: $0.highlighted) }
+        self.localizedLinks = ExperimentLink.localizedLinks(base: links, translatedLinks: translation?.selectedTranslation?.translatedLinks ?? [])
 
         self.category = category
         
@@ -258,6 +288,11 @@ final class Experiment {
             }
         }
         
+        
+        //Before anything can run and before any view exists: an experiment that is opened and
+        //started without the user visiting every page must still have its input defaults
+        inputDefaults = Experiment.collectInputDefaults(viewDescriptors)
+        seedInputDefaults()
         
         analysis.delegate = self
         //The queue must be assigned before anything can trigger an analysis run. Input view
@@ -343,14 +378,24 @@ final class Experiment {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
             if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
-                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: false)
+                //An existing folder is used as it is rather than being an error. The folder is
+                //named after the CRC32 of the experiment file, so whatever is in it belongs to
+                //this very file - it can only be left over from a save or a delete that did not
+                //finish. Insisting on creating it threw here, after the experiment file had
+                //already been copied, which left a saved experiment without its resources.
+                try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: true)
                 for resource in self.resources {
                     guard !resource.components(separatedBy: "/").contains("..") else {
                         print("Refusing to save resource with path traversal: \(resource)")
                         continue
                     }
+                    let target = localResourceFolder.appendingPathComponent(resource)
+                    guard !FileManager.default.fileExists(atPath: target.path) else {
+                        print("Keeping the \(resource) already in the resource folder.")
+                        continue
+                    }
                     do {
-                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: localResourceFolder.appendingPathComponent(resource))
+                        try FileManager.default.copyItem(at: resourceFolder.appendingPathComponent(resource), to: target)
                     } catch {
                         print("Could not save \(resource).")
                     }
@@ -630,10 +675,60 @@ final class Experiment {
         return Set(buffers.values.compactMap { $0.clearGroup }).subtracting(["_"]).sorted()
     }
 
+    ///Writes each input element's default into its buffer wherever that buffer is empty.
+    ///
+    ///These values are experiment data, not a property of a view being drawn: an analysis module
+    ///reading an edit field, or a bluetooth output sending one to a device, must see the same
+    ///thing whatever page the user happens to be looking at. The view modules used to seed from
+    ///their own render path, which only turns over for the ONE view collection that is active
+    ///(ExperimentPageViewController activates exactly one), so an element on any other page never
+    ///got its value back. Android seeds for every view (ExpView.setValue substitutes the default
+    ///for a buffer holding NaN) and that is the canonical behaviour.
+    ///
+    ///The parser already seeds these while reading the file, so a freshly loaded experiment looks
+    ///right and the gap only opens once something empties the buffer again. In the case this was
+    ///found with - micropython/createExperiment, whose edit field configures the board over BLE -
+    ///that was a plain CLEAR: the "clear data" button, or /control?cmd=clear, which the lab
+    ///issues before every start. From then on the device was told nothing until somebody opened
+    ///the page the edit field is on.
+    ///
+    ///Only empty buffers are touched, so a value the user set - or one restored with a saved
+    ///state - stays as it is.
+    func seedInputDefaults() {
+        for (defaultValue, buffer) in inputDefaults where buffer.last == nil {
+            buffer.replaceValues([defaultValue])
+        }
+    }
+    
+    ///Collected once in init rather than walked per analysis cycle, which is where the seeding
+    ///runs. Deliberately without the slider: the parser gives it its default when the file is
+    ///read and Android never seeds one at all, so putting it back here would be a new divergence
+    ///in the other direction rather than the end of one (slider-default-never-reaches-buffer).
+    private static func collectInputDefaults(_ viewDescriptors: [ExperimentViewCollectionDescriptor]?) -> [(Double, DataBuffer)] {
+        var found: [(Double, DataBuffer)] = []
+        for collection in viewDescriptors ?? [] {
+            for view in collection.views {
+                switch view {
+                case let edit as EditViewDescriptor:
+                    found.append((edit.defaultValue, edit.buffer))
+                case let dropdown as DropdownViewDescriptor:
+                    found.append((dropdown.defaultValue, dropdown.buffer))
+                case let toggle as SwitchViewDescriptor:
+                    found.append((toggle.defaultValue, toggle.buffer))
+                default:
+                    break
+                }
+            }
+        }
+        return found
+    }
+    
     func clear(byUser: Bool, clearGroups: [String] = []) {
         stop()
         timeReference.reset()
         hasStarted = false
+
+        var resetBuffers = Set<ObjectIdentifier>()
 
         for buffer in buffers.values {
             //A user clear spares buffers assigned to a clear group unless the user selected
@@ -641,15 +736,24 @@ final class Experiment {
             if byUser, let clearGroup = buffer.clearGroup, !clearGroups.contains(clearGroup) {
                 continue
             }
-            if !buffer.attachedToTextField {
-                buffer.clear(reset: true)
-            }
+            buffer.clear(reset: true)
+            resetBuffers.insert(ObjectIdentifier(buffer))
         }
+
+        //A reset also re-arms static modules, which have been skipped since their single
+        //execution - static data does not survive a clear
+        analysis.notifyBuffersReset(resetBuffers)
 
         sensorInputs.forEach { $0.clear() }
         depthInput?.clear()
         cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
+        
+        //The defaults belong to the experiment, not to the data that was just discarded. This is
+        //the call that fixes the observed failure: the lab clears before every start, and so does
+        //a user pressing "clear data", which is what left an input element's buffer empty for the
+        //rest of the run when its page was not the one on screen.
+        seedInputDefaults()
         
         if byUser {
             analysis.setNeedsUpdate(isPreRun: true)
@@ -660,6 +764,13 @@ final class Experiment {
 extension Experiment: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
         analysisDelegate?.analysisWillUpdate(analysis)
+        //For the general case rather than the one that started this: an analysis input without
+        //keep="true", or a bluetooth output whose input says keep="false", empties the buffer it
+        //read, and the value has to be back for the NEXT cycle whether or not the page is on
+        //screen. Android's re-init runs for every view on every cycle; this is that. (Neither
+        //applied in micropython/createExperiment: keep defaults to TRUE and its analysis block is
+        //empty - there it was the clear before each start, see clear().)
+        seedInputDefaults()
         for networkConnection in networkConnections {
             networkConnection.pushDataToBuffers()
         }

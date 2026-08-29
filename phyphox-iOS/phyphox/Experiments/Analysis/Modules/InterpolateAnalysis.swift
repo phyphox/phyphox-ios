@@ -12,7 +12,7 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
     private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let xiInSlot = AnalysisIOSlot(name: "xi", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
-    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+    private static let outOutSlot = AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
 
     override class var ioMapping: AnalysisIOMapping? {
         return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.xiInSlot], outputs: [Self.outOutSlot])
@@ -28,10 +28,10 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
     
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray?
-    private var xLocIn: MutableDoubleArray?
-    
+    private var xLocIn: ExperimentAnalysisDataInput?
+
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        
+
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
 
         method = try attributes.optionalValue(for: "method") ?? .linear
@@ -39,7 +39,9 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
         xIn = io.data(Self.xInSlot)
         yIn = io.data(Self.yInSlot)
-        xLocIn = io.data(Self.xiInSlot)
+        //io.input, not io.data: xi allows a value-type input, which acts as a one-element
+        //buffer like on Android
+        xLocIn = io.input(Self.xiInSlot)
 
         if (xIn == nil) {
             throw SerializationError.genericError(message: "Error: No input for x provided to interpolate module.")
@@ -67,10 +69,10 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         guard let y = yIn?.data else {
             return
         }
-        guard let xOut = xLocIn?.data else {
+        guard let xOut = xLocIn?.getArray() else {
             return
         }
-        
+
         let incount = min(x.count, y.count)
 
         var result: [Double] = []

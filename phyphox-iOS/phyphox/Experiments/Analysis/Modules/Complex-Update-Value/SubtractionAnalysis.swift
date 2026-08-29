@@ -30,7 +30,7 @@ final class SubtractionAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "minuend")
+            })
     }
     
     func subtractValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

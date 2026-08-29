@@ -103,8 +103,6 @@ final class DataBuffer {
         }
     }
 
-    var attachedToTextField = false
-
     private let baseContents: [Double]
     
     private var lazyStateToken: UUID?
@@ -169,7 +167,10 @@ final class DataBuffer {
     //selected. The reserved name "_" protects the buffer without offering it for selection.
     let clearGroup: String?
 
-    private var written: Bool = false
+    //Mirrors Android's staticAndSet: a static buffer is locked once the side writing it declares
+    //its write complete (markSet), even if it wrote nothing - not on the first write itself, so a
+    //module can fill a static buffer value by value. The user's clear-data action unlocks it again.
+    private var staticAndSet: Bool = false
 
     /**
      Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
@@ -209,6 +210,12 @@ final class DataBuffer {
         }
 
         appendFromArray(baseContents)
+
+        //A static buffer that carries init values is filled and locked right away, like any other
+        //completed write (Android: DataBuffer.setInit)
+        if !baseContents.isEmpty {
+            markSet()
+        }
     }
 
     private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
@@ -229,12 +236,32 @@ final class DataBuffer {
         }
     }
 
-    private func willWrite() {
-        written = true
-    }
-
     private func didWrite() {
         bufferMutated()
+    }
+
+    /**
+     Declares the write into this buffer complete. A static buffer locks here - even if nothing was
+     written - and ignores every further write until it is reset (Android: DataBuffer.markSet).
+     */
+    func markSet() {
+        guard staticBuffer else { return }
+
+        syncWrite {
+            staticAndSet = true
+        }
+    }
+
+    //A static buffer ignores an ordinary clear, but the user's clear-data action (reset) unlocks it
+    //and restores its init values - static data does not survive a user clear (Android:
+    //DataBuffer.clear). Only to be used from within the locking queue.
+    private func unlockedForClear(reset: Bool) -> Bool {
+        guard staticBuffer else { return true }
+        guard reset else { return false }
+
+        staticAndSet = false
+
+        return true
     }
 
     func removeFirst(_ n: Int) {
@@ -245,9 +272,7 @@ final class DataBuffer {
 
     func clear(reset: Bool) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard unlockedForClear(reset: reset) else { return }
 
             if reset {
                 contents = baseContents
@@ -261,9 +286,7 @@ final class DataBuffer {
     
     func readAndClear(reset: Bool) -> [Double] {
         return syncWrite {
-            guard !staticBuffer || !written else { return contents }
-
-            willWrite()
+            guard unlockedForClear(reset: reset) else { return contents }
 
             let copy = contents
             
@@ -281,9 +304,7 @@ final class DataBuffer {
 
     func replaceValues(_ values: [Double]) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             autoreleasepool {
                 var cutValues = values
@@ -303,9 +324,7 @@ final class DataBuffer {
 
     func append(_ value: Double) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             contents.append(value)
 
@@ -321,9 +340,7 @@ final class DataBuffer {
         guard !values.isEmpty else { return }
 
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             autoreleasepool {
 

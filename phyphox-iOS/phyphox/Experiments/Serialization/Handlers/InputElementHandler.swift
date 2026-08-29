@@ -34,9 +34,7 @@ private let depthComponents = [
     AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
     AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 ]
-//wavelength is accepted on iOS only: part of the superseded calibration draft, never filled
-//(see the camera element in spec/input.yml)
-private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "threshold", "shutterSpeed", "iso", "aperture", "pixelPosition", "wavelength"].map {
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
     AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 }
 
@@ -312,7 +310,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
         //Each output's component must be in the element's component list, once at most
-        //(input-output-component-validation in phyphox-docs, matching Android)
+        //(matching Android)
         let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
 
         results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))

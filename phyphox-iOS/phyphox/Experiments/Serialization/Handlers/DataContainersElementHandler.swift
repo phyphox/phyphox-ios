@@ -39,7 +39,21 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
         let size = try attributes.optionalValue(for: .size) ?? 1
 
-        let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
+        //A malformed init entry rejects the file instead of being silently dropped, which would
+        //also shift every later entry one position forward (number-invalid-value rule in
+        //phyphox-docs). An empty attribute still just starts the buffer empty, but an empty
+        //entry ("1,,2", a trailing comma) is an error.
+        let baseContents: [Double]
+        if let initValues = attributes.optionalString(for: .initKey), !initValues.isEmpty {
+            baseContents = try initValues.components(separatedBy: ",").map {
+                guard let value = parseExperimentNumber($0.trimmingCharacters(in: .whitespaces)) else {
+                    throw ElementHandlerError.unexpectedAttributeValue("init")
+                }
+                return value
+            }
+        } else {
+            baseContents = []
+        }
         let staticBuffer = try attributes.optionalValue(for: .staticKey) ?? false
 
         let clearGroup = attributes.optionalString(for: .clearGroup)

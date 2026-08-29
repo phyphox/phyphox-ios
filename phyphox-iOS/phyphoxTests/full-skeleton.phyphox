@@ -8,12 +8,15 @@
         <container>buffer</container>
         <container size="2" init="1,2" clearGroup="g1">buffer2</container>
         <container clearGroup="_">buffer3</container>
+        <container size="10" init="NaN, nan, Infinity, +infinity, -INFINITY, .5, 5., 1e-3, -0.5">buffer4</container>
     </data-containers>
     <translations>
         <translation locale="de">
             <title>titlede</title>
             <category>categoryde</category>
             <description>descriptionde</description>
+            <link label="l0" translation="l0de" highlight="true">http://test.test/de</link>
+            <link label="l1">http://test.test/added</link>
         </translation>
    </translations>
     <input>

@@ -13,9 +13,9 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
     private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let dInSlot = AnalysisIOSlot(name: "d", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let xiInSlot = AnalysisIOSlot(name: "xi", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
-    private static let yi0OutSlot = AnalysisIOSlot(name: "yi0", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
-    private static let yi1OutSlot = AnalysisIOSlot(name: "yi1", asRequired: true, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 0)
-    private static let yi2OutSlot = AnalysisIOSlot(name: "yi2", asRequired: true, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 0)
+    private static let yi0OutSlot = AnalysisIOSlot(name: "yi0", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yi1OutSlot = AnalysisIOSlot(name: "yi1", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yi2OutSlot = AnalysisIOSlot(name: "yi2", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 
     override class var ioMapping: AnalysisIOMapping? {
         return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.dInSlot, Self.xiInSlot], outputs: [Self.yi0OutSlot, Self.yi1OutSlot, Self.yi2OutSlot])
@@ -24,18 +24,20 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
     private var xIn: MutableDoubleArray?
     private var yIn: MutableDoubleArray?
     private var dIn: ExperimentAnalysisDataInput?
-    private var xLocIn: MutableDoubleArray?
+    private var xLocIn: ExperimentAnalysisDataInput?
 
     private var yi0Output: ExperimentAnalysisDataOutput?
     private var yi1Output: ExperimentAnalysisDataOutput?
     private var yi2Output: ExperimentAnalysisDataOutput?
-    
+
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        
+
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
         xIn = io.data(Self.xInSlot)
         yIn = io.data(Self.yInSlot)
-        xLocIn = io.data(Self.xiInSlot)
+        //io.input, not io.data: xi allows a value-type input, which acts as a one-element
+        //buffer like on Android
+        xLocIn = io.input(Self.xiInSlot)
         dIn = io.input(Self.dInSlot)
 
         if (xIn == nil) {
@@ -54,9 +56,8 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Error: No input for d provided to loess module.")
         }
 
-        //Outputs map by name; an unnamed output fills yi0 - formerly they were read in
-        //document order, ignoring the as attribute
-        //(analysis-outputs-assigned-by-position in phyphox-docs)
+        //Outputs map by name; an unnamed output fills yi0. The as attribute decides the
+        //slot, never document order.
         yi0Output = io.output(Self.yi0OutSlot)
         yi1Output = io.output(Self.yi1OutSlot)
         yi2Output = io.output(Self.yi2OutSlot)
@@ -84,11 +85,14 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
         guard let y = yIn?.data else {
             return
         }
-        guard let xOut = xLocIn?.data else {
+        guard let xOut = xLocIn?.getArray() else {
             return
         }
-        
-        guard let d = dIn?.getSingleValue() else {
+
+        //A non-positive or non-finite d is an error state yielding empty outputs - without the
+        //guard every window is empty and det = 0 fills the outputs with NaN. d is read from the
+        //last element of its buffer, the convention for single-value inputs.
+        guard let d = dIn?.getSingleValue(), d.isFinite, d > 0 else {
             return
         }
         

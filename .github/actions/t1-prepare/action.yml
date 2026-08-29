@@ -1,0 +1,124 @@
+# Everything a T1 test job needs before it runs its own slice of the tier. The jobs share one
+# build - produced once by the build job and handed over as an artifact - so what is left per job
+# is the docs checkout the tools and fixtures come from, unpacking that build, and a simulator
+# with the app installed and every permission granted.
+#
+# Used as ./phyphox-ios/.github/actions/t1-prepare, which means the repository has to be checked
+# out (into phyphox-ios/) before this action runs.
+name: Prepare a T1 job
+description: Docs checkout, the shared build, and a booted simulator with the app installed
+
+inputs:
+  device:
+    description: Which simulator family to boot - iPhone or iPad
+    default: iPhone
+  bundle:
+    description: The app's bundle identifier
+    default: de.rwth-aachen.physics.phyphox
+  port:
+    description: The port the warm-up launch serves remote access on
+    default: '8080'
+
+outputs:
+  udid:
+    description: The booted simulator, empty when the runner has none of the requested family
+    value: ${{ steps.simulator.outputs.udid }}
+  xctestrun:
+    description: The .xctestrun of the shared build, for xcodebuild test-without-building
+    value: ${{ steps.build.outputs.xctestrun }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        repository: phyphox/phyphox-docs
+        path: phyphox-docs
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: t1-build
+        path: ${{ github.workspace }}
+
+    - name: Unpack the shared build
+      id: build
+      shell: bash
+      run: |
+        set -euo pipefail
+        # A tar rather than the artifact's own layout: upload-artifact does not preserve the
+        # executable bit, and an app bundle that cannot be executed fails in ways that look
+        # like the app is broken.
+        mkdir -p "$GITHUB_WORKSPACE/dd/Build"
+        tar -xzf "$GITHUB_WORKSPACE/products.tar.gz" -C "$GITHUB_WORKSPACE/dd/Build"
+        XCTESTRUN=$(ls "$GITHUB_WORKSPACE"/dd/Build/Products/*.xctestrun | head -1)
+        test -n "$XCTESTRUN"
+        echo "xctestrun=$XCTESTRUN" >> "$GITHUB_OUTPUT"
+
+    - name: Boot a simulator and install the app
+      id: simulator
+      shell: bash
+      run: |
+        set -euo pipefail
+        # ONE simulator per job. A second one booting alongside starves the runner - the job
+        # that did it spent 10.4 minutes in this step against 2.7 elsewhere - so the tablet
+        # chrome boots its own device when it is its turn, with the phone's work already done.
+        export FAMILY="${{ inputs.device }}"
+        UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys,os;d=json.load(sys.stdin)['devices'];f=os.environ['FAMILY'];print(([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith(f)] or [''])[-1])")
+        if [ -z "$UDID" ]; then
+          echo "no $FAMILY simulator on this runner"
+          echo "udid=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # A runner image may already have a simulator booted, and simctl calls that an error -
+        # the wait below is what actually decides whether the device is usable
+        xcrun simctl boot "$UDID" || true
+        bash "$GITHUB_WORKSPACE/phyphox-ios/.github/scripts/wait_for_boot.sh" "$UDID" 420
+
+        xcrun simctl install "$UDID" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
+        # No permission dialog may block a headless run - and no launch argument can dismiss a
+        # system one: a TCC prompt deactivates the app's scene, and phyphox tears its remote
+        # server down when it resigns active, so the run is over with the app still alive.
+        # "all" covers neither the camera nor motion & fitness (the camera is not even in
+        # simctl's service list, though it is accepted), and those two are exactly what the
+        # sweep needs: the camera experiments, and sensordb, whose sensors are declared
+        # ignoreUnavailable and are therefore started even on a simulator that has none.
+        # Granted by name, and loudly, so a future Xcode dropping a service name fails here
+        # instead of hanging a test.
+        xcrun simctl privacy "$UDID" grant all "${{ inputs.bundle }}"
+        for service in camera motion microphone location; do
+          xcrun simctl privacy "$UDID" grant "$service" "${{ inputs.bundle }}"
+        done
+        echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+    - name: Warm the app up
+      shell: bash
+      run: |
+        set -uo pipefail
+        UDID="${{ steps.simulator.outputs.udid }}"
+        [ -n "$UDID" ] || exit 0
+        # The FIRST launch of a freshly installed app on a freshly booted simulator is the slow
+        # one - dyld caches, on-disk validation, and phyphox reads its whole experiment
+        # collection while it starts. XCUITest's launch timeout is not generous, and the
+        # language sweep hit exactly that in its first language when the tier was split into
+        # jobs that each get their own simulator: serially, the sweep had always run last, with
+        # everything long since warm. So the app is launched here once, and remote access makes
+        # it say when it is really up.
+        # WITH an experiment: -phyphoxRemote opens the server for the experiment session, so an
+        # app sitting on the collection screen never answers - and the state the tests need warm
+        # is an experiment on screen anyway.
+        xcrun simctl launch "$UDID" "${{ inputs.bundle }}" \
+          -phyphoxUrl "phyphox://asset=tone_generator.phyphox" -phyphoxAutoConfirm \
+          -phyphoxRemote -phyphoxRemotePort "${{ inputs.port }}" >/dev/null 2>&1 || true
+        for i in $(seq 60); do
+          curl -fs -m 2 "http://127.0.0.1:${{ inputs.port }}/config" >/dev/null && break
+          sleep 1
+        done
+        if curl -fs -m 5 "http://127.0.0.1:${{ inputs.port }}/config" >/dev/null; then
+          echo "the app is up after $i s"
+        else
+          # Not fatal here: what matters is that the tests get a warm app, and a genuinely
+          # broken launch fails them loudly enough
+          echo "::warning::the warm-up launch did not answer within 60 s"
+        fi
+        xcrun simctl terminate "$UDID" "${{ inputs.bundle }}" >/dev/null 2>&1 || true

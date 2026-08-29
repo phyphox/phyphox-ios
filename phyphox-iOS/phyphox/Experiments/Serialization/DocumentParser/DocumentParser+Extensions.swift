@@ -107,6 +107,16 @@ extension ResultElementHandler {
         return results.first
     }
 
+    /// Returns the last result, tolerating a repeated element instead of rejecting the file.
+    /// Only for the root element's metadata children (title, state-title, category, icon,
+    /// color, description), where the last occurrence wins (duplicate-metadata-last-wins in
+    /// phyphox-docs, matching Android): files with such duplicates exist in the wild - old
+    /// Android versions appended a fresh state-title on every re-save of a saved state.
+    /// Everywhere else a duplicate element stays an error via `expectOptionalResult`.
+    func lastResult() -> Result? {
+        return results.last
+    }
+
     /// Returns the single result object, throws error otherwise.
     func expectSingleResult() throws -> Result {
         guard let result = try expectOptionalResult() else {

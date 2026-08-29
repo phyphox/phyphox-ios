@@ -118,7 +118,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         //The outputs are validated against the slot tables Android uses: a normal slider takes
         //exactly one output (its value attribute is not consulted), a range slider fills
         //lowerValue and upperValue, each exactly once, with unnamed outputs taking the next free
-        //one (input-output-component-validation in phyphox-docs)
+        //one
         let outputBufferName = (sliderType == .Normal) ? rangeSliderOutputHandler.results.first?.bufferName : nil
 
         var outputBufferNames_: [String] = []

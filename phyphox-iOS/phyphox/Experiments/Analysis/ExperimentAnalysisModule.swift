@@ -94,6 +94,13 @@ class ExperimentAnalysisModule {
 
     let inputs: [ExperimentAnalysisDataInput]
     let outputs: [ExperimentAnalysisDataOutput]
+
+    ///A module whose output buffers are all static executes a single time and is skipped from then
+    ///on - saving the recomputation of values that do not depend on measured data is the point of
+    ///the static attribute (Android: AnalysisModule.isStatic/executed). Accepted side effect: a
+    ///skipped module no longer clears its keep=false input buffers either.
+    let isStatic: Bool
+    private var executed = false
     
     var cycles: [(Int,Int)] = []
     
@@ -108,6 +115,23 @@ class ExperimentAnalysisModule {
         self.inputs = inputs
         self.outputs = outputs
         self.attributeContainer = additionalAttributes
+        self.isStatic = outputs.allSatisfy { $0.isStatic }
+    }
+
+    ///Re-arms a skipped static module when a buffer it reads or writes has been reset by the
+    ///user's clear-data action, mirroring Android's buffer notification with reset=true
+    ///(Analysis.java, notifyUpdate).
+    func notifyBuffersReset(_ resetBuffers: Set<ObjectIdentifier>) {
+        guard executed else { return }
+
+        let touched = inputs.contains { input in
+            guard let buffer = input.dataBuffer else { return false }
+            return resetBuffers.contains(ObjectIdentifier(buffer))
+        } || outputs.contains { resetBuffers.contains(ObjectIdentifier($0.dataBuffer)) }
+
+        if touched {
+            executed = false
+        }
     }
     
     func setCycles(cycles: [(Int,Int)]) {
@@ -121,6 +145,12 @@ class ExperimentAnalysisModule {
         if Thread.isMainThread {
             print("Analysis should run in the background!")
         }
+
+        //A module writing only static buffers has nothing left to do after its first execution
+        guard !(isStatic && executed) else {
+            return
+        }
+
         self.analysisTime = experimentTime
         self.analysisLinearTime = linearTime
         self.analysisTimeOffset1970 = experimentReference1970
@@ -129,6 +159,13 @@ class ExperimentAnalysisModule {
         willUpdate()
         update()
         didUpdate()
+
+        //The write is complete, which locks static outputs even if the module wrote nothing
+        for output in outputs {
+            output.markSet()
+        }
+
+        executed = true
     }
     
     func retainData() {

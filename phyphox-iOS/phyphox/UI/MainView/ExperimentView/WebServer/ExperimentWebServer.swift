@@ -13,7 +13,10 @@ protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }
     var remainingTimerTime: Double { get }
     
-    func startExperiment()
+    //Answers whether the measurement (or, with a timed run, its countdown) actually began.
+    //A start can be refused, most commonly by a Bluetooth device that is not connected yet,
+    //and /control?cmd=start has to report that (control-start-refused).
+    func startExperiment() -> Bool
     func stopExperiment()
     func clearData(clearGroups: [String])
     func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?)
@@ -54,6 +57,16 @@ final class ExperimentWebServer {
             response?.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
             completionBlock(response)
         }
+    }
+
+    //An error response is never empty: it carries {"error": "<reason>"} as application/json
+    //whatever the status code, the pattern /export and /res already use
+    //(error-response-content-type in phyphox-docs; must stay in step with Android). The reason
+    //is human-readable and not part of the contract - clients must not match on it.
+    private static func errorResponse(statusCode: Int, reason: String) -> GCDWebServerResponse? {
+        let response = GCDWebServerDataResponse(jsonObject: ["error": reason])
+        response?.statusCode = statusCode
+        return response
     }
 
     //Registers a handler for both GET and POST: every endpoint accepts POST as well as GET with
@@ -100,7 +113,7 @@ final class ExperimentWebServer {
         var params: [String: String] = [:]
 
         func malformed() -> [String: String]? {
-            cors(completionBlock)(GCDWebServerResponse(statusCode: 400))
+            cors(completionBlock)(errorResponse(statusCode: 400, reason: "Malformed request body."))
             return nil
         }
 
@@ -277,11 +290,16 @@ final class ExperimentWebServer {
             let cmd = query["cmd"]
             
             if cmd == "start" {
+                //Unlike the other commands, the answer says whether the measurement began and
+                //not merely that the command was accepted, so wait for the attempt on the main
+                //thread and report its outcome (control-start-refused).
                 mainThread {
-                    self.delegate!.startExperiment()
+                    if self.delegate!.startExperiment() {
+                        returnSuccessResponse()
+                    } else {
+                        returnErrorResponse()
+                    }
                 }
-                
-                returnSuccessResponse()
             }
             else if cmd == "stop" {
                 mainThread {
@@ -339,13 +357,104 @@ final class ExperimentWebServer {
                 returnErrorResponse()
             }
             })
-        
+
+        //Bulk write of buffer values from a JSON body: the array-valued counterpart of
+        //control?cmd=set, specified in phyphox-docs (openapi.yaml, path /set). GET is
+        //registered so it can be answered with a clean result:false instead of a 405. Must
+        //stay in step with Android (RemoteServer.handleSet), error messages included.
+        addGETPOSTHandler(pathRegex: "/set", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            func returnSetError(_ error: String) {
+                completionBlock(GCDWebServerDataResponse(jsonObject: ["result": false, "error": error]))
+            }
+
+            //A GET or a form-encoded body is a well-formed request that cannot carry the
+            //documented shape - rejected with result:false, while a body that is not
+            //parseable JSON at all (or not a JSON object) is a 400 like everywhere else
+            guard let dataRequest = request as? GCDWebServerDataRequest, (request.contentType ?? "").lowercased().hasPrefix("application/json") else {
+                returnSetError("A JSON body of the form {\"buffers\": {...}} is required.")
+                return
+            }
+            guard dataRequest.data.count <= 2097152, //2 MB, matching the Android limit
+                  let obj = try? JSONSerialization.jsonObject(with: dataRequest.data),
+                  let json = obj as? [String: Any] else {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Malformed request body."))
+                return
+            }
+
+            //Validate everything first: the mode, every buffer name and every entry...
+            var append = false
+            if let mode = json["mode"] {
+                if (mode as? String) == "append" {
+                    append = true
+                }
+                else if (mode as? String) != "replace" { //Anything but the two enum strings, including null
+                    returnSetError("Unknown mode \"\(mode is NSNull ? "null" : mode)\".")
+                    return
+                }
+            }
+
+            guard let buffersObject = json["buffers"] as? [String: Any] else {
+                returnSetError("A \"buffers\" object is required.")
+                return
+            }
+
+            var writes: [(DataBuffer, [Double])] = []
+            for (name, entriesAny) in buffersObject {
+                guard let buffer = self.experiment.buffers[name] else {
+                    returnSetError("Unknown buffer \"\(name)\".")
+                    return
+                }
+                guard let entries = entriesAny as? [Any] else {
+                    returnSetError("The values for buffer \"\(name)\" must be an array.")
+                    return
+                }
+                var values: [Double] = []
+                values.reserveCapacity(entries.count)
+                for entry in entries {
+                    if entry is NSNull {
+                        //null is exactly the representation /get uses for every non-finite
+                        //value, so /get output can be fed back unchanged
+                        values.append(.nan)
+                    }
+                    else if let number = entry as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() {
+                        values.append(number.doubleValue)
+                    }
+                    else if let string = entry as? String {
+                        //The file format's number lexical space, with the same helper the
+                        //experiment parser uses: "nan"/"Infinity"/"-infinity" work, "inf"
+                        //does not
+                        guard let value = parseExperimentNumber(string) else {
+                            returnSetError("Invalid value \"\(string)\" for buffer \"\(name)\".")
+                            return
+                        }
+                        values.append(value)
+                    }
+                    else {
+                        //Booleans, nested arrays/objects
+                        returnSetError("Invalid entry for buffer \"\(name)\": must be a number, null or a number string.")
+                        return
+                    }
+                }
+                writes.append((buffer, values))
+            }
+
+            //...then write: on any error above nothing was written. The buffer writes mark
+            //the analysis as having new data through the observer mechanism, exactly like
+            //cmd=set. An empty buffers object is a valid no-op.
+            for (buffer, values) in writes {
+                if !append {
+                    buffer.clear(reset: false) //Normal buffer semantics apply, so this cannot clear a written static buffer
+                }
+                buffer.appendFromArray(values)
+            }
+            completionBlock(GCDWebServerDataResponse(jsonObject: ["result": true]))
+            })
+
         addGETPOSTHandler(pathRegex: "/get", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
-            func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+            func returnErrorResponse(_ reason: String) {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: reason))
             }
             
             guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
@@ -410,7 +519,7 @@ final class ExperimentWebServer {
                         //A threshold that does not parse as a number is a malformed request
                         //(get-invalid-threshold)
                         guard let thresholdGiven = Double(extraComponents.first!) else {
-                            returnErrorResponse()
+                            returnErrorResponse("Invalid threshold.")
                             return
                         }
                         
@@ -427,9 +536,7 @@ final class ExperimentWebServer {
                             let extra = extraComponents.last!
 
                             guard let extraArray = extraSnapshots[extra] else {
-                                let response = GCDWebServerResponse(statusCode: 400)
-
-                                completionBlock(response)
+                                returnErrorResponse("Unknown reference buffer.")
                                 return
                             }
 
@@ -481,9 +588,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/config", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -593,9 +698,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/meta", asyncProcessBlock: { (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -621,9 +724,7 @@ final class ExperimentWebServer {
         addGETPOSTHandler(pathRegex: "/time", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [AnyObject]()
@@ -641,7 +742,9 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        let configuredPort = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
+        //-phyphoxRemotePort pins the port for unattended automation (see AutomationLaunchOptions
+        //in AppDelegate); otherwise the user's setting applies
+        let configuredPort = AutomationLaunchOptions.remotePort ?? UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
 
         //If the port setting is at its default, we assume that the user does not care (or might
         //not even know) which port is used, so if the default port is taken, we try 8080 and then

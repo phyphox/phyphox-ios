@@ -143,6 +143,201 @@ final class DeserializerTests: XCTestCase {
     }
 }
 
+//The decided translated-link semantics (specified in phyphox-docs): the label is
+//a required key, a matching translated link replaces the base link in place, an unmatched label
+//is appended, a label-only link removes the base link, the translation attribute holds the
+//displayed text and highlight is inherited where not explicitly set. The invalid forms (missing
+//label, duplicate labels, unmatched label without URL, translation attribute or empty URL at the
+//root) are covered by the incorrect-files fixtures.
+final class TranslatedLinkTests: XCTestCase {
+    //The conformance fixture from phyphox-docs (corpus/generated/translated-links.phyphox)
+    //exercises every form of a translated link in one document
+    private func parseFixture() throws -> Experiment {
+        let path = try testBundle.path(forResource: "translated-links", ofType: "phyphox").unwrap()
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(fileAtPath: path).unwrap())
+    }
+
+    func testFixtureParsesIntoTranslatedLinks() throws {
+        let experiment = try parseFixture()
+        let de = try (experiment.translation?.translations["de"]).unwrap()
+        XCTAssertEqual(de.translatedLinks, [
+            ExperimentTranslatedLink(label: "Wiki", translation: "Wiki (deutsch)", url: URL(string: "https://phyphox.org/de/wiki"), highlighted: true),
+            ExperimentTranslatedLink(label: "Contact", translation: "Kontakt", url: nil, highlighted: nil),
+            ExperimentTranslatedLink(label: "Survey", translation: nil, url: nil, highlighted: nil),
+            ExperimentTranslatedLink(label: "Impressum", translation: nil, url: URL(string: "https://example.org/impressum"), highlighted: nil)
+        ])
+    }
+
+    func testLinkLocalization() throws {
+        //Applying the fixture's de block to its base links (done manually here because the block
+        //selected at runtime depends on the test host's locale): full replacement in place,
+        //text-only change with inherited URL and highlight, removal, appended addition
+        let experiment = try parseFixture()
+        let de = try (experiment.translation?.translations["de"]).unwrap()
+        let base = [
+            ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: true),
+            ExperimentLink(label: "Contact", url: URL(string: "https://example.org/contact")!, highlighted: false),
+            ExperimentLink(label: "Survey", url: URL(string: "https://example.org/survey")!, highlighted: false)
+        ]
+        XCTAssertEqual(ExperimentLink.localizedLinks(base: base, translatedLinks: de.translatedLinks), [
+            ExperimentLink(label: "Wiki (deutsch)", url: URL(string: "https://phyphox.org/de/wiki")!, highlighted: true),
+            ExperimentLink(label: "Kontakt", url: URL(string: "https://example.org/contact")!, highlighted: false),
+            ExperimentLink(label: "Impressum", url: URL(string: "https://example.org/impressum")!, highlighted: false)
+        ])
+
+        //Without a translation the base links pass through unchanged - in particular the label
+        //is displayed as written, with no string-translation or [[...]] common-string expansion
+        XCTAssertEqual(ExperimentLink.localizedLinks(base: base, translatedLinks: []), base)
+    }
+
+    func testHighlightExplicitValuesWinOverInheritance() {
+        let base = [ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: true)]
+        //An explicit highlight="false" on a replacement overrides the base link's true...
+        var localized = ExperimentLink.localizedLinks(base: base, translatedLinks: [
+            ExperimentTranslatedLink(label: "Wiki", translation: nil, url: nil, highlighted: false)
+        ])
+        XCTAssertEqual(localized, [ExperimentLink(label: "Wiki", url: URL(string: "https://phyphox.org/wiki")!, highlighted: false)])
+
+        //...and an added link may set it explicitly instead of the false default
+        localized = ExperimentLink.localizedLinks(base: base, translatedLinks: [
+            ExperimentTranslatedLink(label: "Hilfe", translation: nil, url: URL(string: "https://example.org/hilfe"), highlighted: true)
+        ])
+        XCTAssertEqual(localized.last, ExperimentLink(label: "Hilfe", url: URL(string: "https://example.org/hilfe")!, highlighted: true))
+    }
+}
+
+//The decided graph dataset pairing ("How the input tags form datasets" on the graph page of
+//phyphox-docs, docs/file-format/views/graph.md): equal x and y input counts pair 1-on-1 in order of appearance
+//regardless of interleaving; with fewer x than y inputs each y uses the most recent preceding x,
+//or an index axis if none preceded it. The invalid forms (a trailing or shadowed x that no y
+//uses) are covered by the incorrect-files fixtures.
+final class GraphInputPairingTests: XCTestCase {
+    func testFixturePairings() throws {
+        //The conformance fixture from phyphox-docs (corpus/valid/view-tests/graph-input-orders.phyphox)
+        let path = try testBundle.path(forResource: "graph-input-orders", ofType: "phyphox").unwrap()
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(fileAtPath: path).unwrap())
+
+        let graphs = try (experiment.viewDescriptors?.first?.views.compactMap { $0 as? GraphViewDescriptor }).unwrap()
+        XCTAssertEqual(graphs.count, 4)
+
+        let pairings = graphs.map { graph in
+            zip(graph.xInputBuffers, graph.yInputBuffers).map { ($0?.name, $1.name) }
+        }
+
+        //y then x, one pair
+        XCTAssertTrue(pairings[0].elementsEqual([("t", "a")], by: ==))
+        //y then x, two pairs, 1-on-1 in order of appearance
+        XCTAssertTrue(pairings[1].elementsEqual([("t", "a"), ("t", "b")], by: ==))
+        //shared x, fewer x than y: both y inputs inherit the preceding x
+        XCTAssertTrue(pairings[2].elementsEqual([("t", "a"), ("t", "b")], by: ==))
+        //no x at all: index axis
+        XCTAssertTrue(pairings[3].elementsEqual([(nil, "c")], by: ==))
+    }
+}
+
+//The container init list follows the number-invalid-value rule from phyphox-docs: the special
+//values NaN and [+-]Infinity fold case (NaN entries are the documented gap markers for graphs),
+//while an entry that does not parse as a number - including an empty entry and spellings like
+//"inf" that the format does not define - rejects the whole file instead of being silently
+//dropped, which would also shift every later entry one position forward. The invalid forms are
+//also covered by the incorrect-files fixtures.
+final class ContainerInitValueTests: XCTestCase {
+    private func parse(initAttribute: String) throws -> Experiment {
+        let xml = """
+        <phyphox version="1.6">
+            <title>inittest</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container size="20" init="\(initAttribute)">buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testAcceptedLexicalSpace() throws {
+        let experiment = try parse(initAttribute: "1, -0.5, .5, 5., 1e-3, +2E1, NaN, nan, Infinity, +infinity, -INFINITY")
+        let values = try (experiment.buffers["buffer"]).unwrap().toArray()
+        XCTAssertEqual(values.count, 11)
+        XCTAssertEqual(Array(values[0..<6]), [1.0, -0.5, 0.5, 5.0, 0.001, 20.0])
+        XCTAssertTrue(values[6].isNaN && values[7].isNaN)
+        XCTAssertEqual(Array(values[8...]), [Double.infinity, Double.infinity, -Double.infinity])
+    }
+
+    func testEmptyInitAttributeStartsEmpty() throws {
+        let experiment = try parse(initAttribute: "")
+        XCTAssertEqual(try (experiment.buffers["buffer"]).unwrap().count, 0)
+    }
+
+    func testMalformedEntriesRejectTheFile() {
+        XCTAssertThrowsError(try parse(initAttribute: "1, two, 3"))
+        //An empty entry (also as a trailing comma) is an error, unlike an empty attribute
+        XCTAssertThrowsError(try parse(initAttribute: "1,,2"))
+        XCTAssertThrowsError(try parse(initAttribute: "1, 2,"))
+        //Spellings Double(String) would accept but the format does not
+        XCTAssertThrowsError(try parse(initAttribute: "inf"))
+        XCTAssertThrowsError(try parse(initAttribute: "+inf"))
+        XCTAssertThrowsError(try parse(initAttribute: "0x1p3"))
+        XCTAssertThrowsError(try parse(initAttribute: "1f"))
+    }
+}
+
+//Numeric attributes share the same lexical space as the init entries (number-invalid-value rule
+//in phyphox-docs): the central readers must reject spellings Swift's Double(String) accepts but
+//the format does not define, on the Double, CGFloat and Float decode paths alike (the Float path
+//- the camera crop attributes - goes through the same guard). Integer decodes were already
+//sign-and-digits only.
+final class NumericAttributeLexicalSpaceTests: XCTestCase {
+    //factor is a Double decode, the graph's lineWidth a CGFloat decode
+    private func parse(factor: String, lineWidth: String = "1") throws -> Experiment {
+        let xml = """
+        <phyphox version="1.20">
+            <title>numtest</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l" factor="\(factor)"><input>buffer</input></value>
+                    <graph label="g" lineWidth="\(lineWidth)"><input axis="y">buffer</input></graph>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func factor(of experiment: Experiment) throws -> Double {
+        return try ((experiment.viewDescriptors?.first?.views.compactMap { $0 as? ValueViewDescriptor })?.first).unwrap().factor
+    }
+
+    func testAcceptedForms() throws {
+        XCTAssertEqual(try factor(of: parse(factor: "1e-3")), 0.001)
+        //The special values fold case like everywhere else in the format
+        XCTAssertTrue(try factor(of: parse(factor: "nan")).isNaN)
+        XCTAssertEqual(try factor(of: parse(factor: "-INFINITY")), -Double.infinity)
+    }
+
+    func testSwiftOnlyFormsAreRejected() {
+        XCTAssertThrowsError(try parse(factor: "inf"))
+        XCTAssertThrowsError(try parse(factor: "+inf"))
+        XCTAssertThrowsError(try parse(factor: "0x1p3"))
+        //The CGFloat decode path applies the same check
+        XCTAssertThrowsError(try parse(factor: "1", lineWidth: "inf"))
+        XCTAssertThrowsError(try parse(factor: "1", lineWidth: "0x1p3"))
+    }
+}
+
 //Regression test for the analysis deadlock that broke the tone generator: input view
 //modules (sliders, edit fields) write their initial values with a user-input trigger while the
 //view is being built, i.e. before the experiment assigned the analysis queue. The triggered run
@@ -178,7 +373,8 @@ final class WebServerCORSTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -388,7 +584,8 @@ final class WebServerExportFormatTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -465,9 +662,10 @@ final class WebServerExportFormatTests: XCTestCase {
         result = post("/export?format=abc", body: "{\"format\": \"99\"}", contentType: "application/json")
         XCTAssertEqual(result.json?["error"] as? String, "Format out of range.")
 
-        //A malformed JSON body answers 400
+        //A malformed JSON body answers 400 with a JSON error object (error-response-content-type)
         result = post("/export", body: "{format: 99", contentType: "application/json")
         XCTAssertEqual(result.status, 400)
+        XCTAssertNotNil(result.json?["error"] as? String)
 
         //An endpoint without parameters ignores the body, even a malformed one
         result = post("/config", body: "{not json at all", contentType: "application/json")
@@ -478,13 +676,15 @@ final class WebServerExportFormatTests: XCTestCase {
 
 //Conformance of the /get, /control, /meta and /res endpoints with the canonical behaviour from
 //phyphox-docs: get-no-parameters, get-invalid-threshold, get-negative-threshold,
-//get-nonfinite-single-value, get-force-full-update, control-trigger-out-of-range,
-//meta-missing-value-representation, res-content-type and res-fallback.
+//get-nonfinite-single-value, get-force-full-update, control-start-refused,
+//control-trigger-out-of-range, meta-missing-value-representation, res-content-type and
+//res-fallback.
 final class WebServerConformanceTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
         var remainingTimerTime: Double { return 0.0 }
-        func startExperiment() {}
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
         func stopExperiment() {}
         func clearData(clearGroups: [String]) {}
         func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
@@ -535,8 +735,11 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual((root["buffer"] as? [String: Any])?.count, 0)
         XCTAssertNotNil((root["status"] as? [String: Any])?["session"])
 
-        //Unparseable threshold: 400
-        XCTAssertEqual(get("/get?accX=abc").status, 400)
+        //Unparseable threshold: 400 with a JSON error object (error-response-content-type)
+        result = get("/get?accX=abc")
+        XCTAssertEqual(result.status, 400)
+        XCTAssertEqual(result.contentType, "application/json")
+        XCTAssertNotNil((result.json as? [String: Any])?["error"] as? String)
 
         //Negative threshold: an ordinary partial answer, not an empty one caused by a NaN nudge
         experiment.buffers["accX"]?.append(1.0)
@@ -560,6 +763,23 @@ final class WebServerConformanceTests: XCTestCase {
         root = try XCTUnwrap(result.json as? [String: Any])
         buf = try XCTUnwrap((root["buffer"] as? [String: Any])?["accX"] as? [String: Any])
         XCTAssertEqual(buf["updateMode"] as? String, "full")
+    }
+
+    //control-start-refused: cmd=start reports whether the measurement actually began, so a
+    //start the experiment refuses answers result:false. The other commands keep the weaker
+    //"was the command accepted" meaning.
+    func testControlStartReportsRefusal() throws {
+        delegate.startResult = true
+        var result = get("/control?cmd=start")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, true)
+
+        delegate.startResult = false
+        result = get("/control?cmd=start")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, false)
+
+        //A refused start does not change how stop is answered
+        result = get("/control?cmd=stop")
+        XCTAssertEqual((result.json as? [String: Any])?["result"] as? Bool, true)
     }
 
     func testControlTriggerOutOfRange() throws {
@@ -586,6 +806,173 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
         result = get("/res?src=doesnotexist.png")
         XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
+    }
+}
+
+//The phyphox://asset= deep link (transferring-experiments.md in phyphox-docs): the url-encoded
+//path after asset= identifies an experiment within the bundled collection - the same
+//identifier as Android's assets/experiments/<path> - and must survive url-decoding with its
+//case and subfolders intact. Empty and absolute paths and any traversal are refused; the rest
+//of the pipeline is the app's normal experiment loading.
+final class AssetDeepLinkTests: XCTestCase {
+    func testResolvesWithinBundledCollection() throws {
+        let url = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "accelerometer.phyphox").unwrap()
+        XCTAssertTrue(url.path.hasSuffix("phyphox-experiments/accelerometer.phyphox"))
+        //The resolved file must load through the app's real loading path
+        XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(url).localizedTitle, "Acceleration with g")
+
+        //Subfolder (encoded /) and case-sensitive, space-carrying names decode unharmed
+        let sub = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2Fphyphox_m_bmp581.phyphox").unwrap()
+        XCTAssertTrue(sub.path.hasSuffix("phyphox-experiments/bluetooth/phyphox_m_bmp581.phyphox"))
+        _ = try ExperimentSerialization.readExperimentFromURL(sub)
+        let mixedCase = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2FHID%20Mouse%20Light.phyphox").unwrap()
+        XCTAssertTrue(mixedCase.path.hasSuffix("phyphox-experiments/bluetooth/HID Mouse Light.phyphox"))
+        _ = try ExperimentSerialization.readExperimentFromURL(mixedCase)
+    }
+
+    func testUnknownPathFailsTheLoadInsteadOfCrashing() {
+        //An unknown asset path reaches readExperimentFromURL as a nonexistent file. Its failed
+        //stream read returns -1, which CRC32InputStream once handed to crc32() as an unsigned
+        //count - a trap on any unreadable file. It must surface as an ordinary error.
+        let url = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "doesnotexist.phyphox")!
+        XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url))
+    }
+
+    func testInvalidPathsAreRefused() {
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: ""))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "/etc/passwd"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "%2Fetc%2Fpasswd"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "../secret.phyphox"))
+        //Traversal hidden behind percent-encoding is caught after decoding
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "%2E%2E%2Fsecret.phyphox"))
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "bluetooth%2F..%2F..%2Fsecret.phyphox"))
+        //An invalid percent-encoding cannot be decoded at all
+        XCTAssertNil(ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "abc%2"))
+    }
+}
+
+//The /set endpoint: bulk buffer writes from a JSON body, per the phyphox-docs specification
+//(openapi.yaml path /set, API 1.1.0) - JSON-body-only, the format's number lexical space for
+//string entries, null as NaN, atomic validation, replace/append modes. Behavior and error
+//messages mirror Android's RemoteServer.handleSet.
+final class WebServerSetEndpointTests: XCTestCase {
+    private class StubDelegate: ExperimentWebServerDelegate {
+        var timerRunning: Bool { return false }
+        var remainingTimerTime: Double { return 0.0 }
+        var startResult = true
+        func startExperiment() -> Bool { return startResult }
+        func stopExperiment() {}
+        func clearData(clearGroups: [String]) {}
+        func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?) {}
+        func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {}
+    }
+
+    private var webServer: ExperimentWebServer!
+    private var experiment: Experiment!
+    private var delegate: StubDelegate!
+
+    override func setUpWithError() throws {
+        let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
+        experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        UserDefaults.standard.set("8971", forKey: "remoteAccessPort")
+        delegate = StubDelegate()
+        webServer = ExperimentWebServer(experiment: experiment, delegate: delegate)
+        guard webServer.start() else { throw DeserializerTestError.nilOptional }
+    }
+
+    override func tearDown() {
+        webServer.stop()
+        UserDefaults.standard.removeObject(forKey: "remoteAccessPort")
+    }
+
+    private func request(method: String, body: String? = nil, contentType: String = "application/json") -> (status: Int, json: [String: Any]?) {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:\(webServer.port)/set")!)
+        request.httpMethod = method
+        if let body = body {
+            request.httpBody = body.data(using: .utf8)
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        }
+        let expectation = self.expectation(description: method + (body ?? ""))
+        var status = 0
+        var json: [String: Any]? = nil
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+            expectation.fulfill()
+        }.resume()
+        waitForExpectations(timeout: 5)
+        return (status, json)
+    }
+
+    private func expectRejected(_ result: (status: Int, json: [String: Any]?)) {
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, false)
+        XCTAssertNotNil(result.json?["error"] as? String)
+    }
+
+    func testWriteReplaceAndAppend() throws {
+        let accX = try (experiment.buffers["accX"]).unwrap()
+        accX.append(99.0) //replace mode must clear this out
+
+        //Numbers, null (the /get representation of non-finite values) and the format's number
+        //lexical space, several buffers in one atomic request
+        var result = request(method: "POST", body: "{\"buffers\": {\"accX\": [1, 2.5, null, \"nan\", \"Infinity\", \"-infinity\"], \"accY\": [4]}}")
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        let written = accX.toArray()
+        XCTAssertEqual(written.count, 6)
+        XCTAssertEqual(Array(written[0..<2]), [1.0, 2.5])
+        XCTAssertTrue(written[2].isNaN && written[3].isNaN)
+        XCTAssertEqual(Array(written[4...]), [Double.infinity, -Double.infinity])
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [4.0])
+
+        //append keeps the existing contents
+        result = request(method: "POST", body: "{\"buffers\": {\"accY\": [5]}, \"mode\": \"append\"}")
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [4.0, 5.0])
+
+        //replace is the explicit default
+        result = request(method: "POST", body: "{\"buffers\": {\"accY\": [6]}, \"mode\": \"replace\"}")
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+        XCTAssertEqual(try (self.experiment.buffers["accY"]).unwrap().toArray(), [6.0])
+    }
+
+    func testEmptyBuffersObjectIsANoOp() {
+        let result = request(method: "POST", body: "{\"buffers\": {}}")
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.json?["result"] as? Bool, true)
+    }
+
+    func testRequestsWithoutSuitableJSONBodyAreRejected() {
+        //GET carries no body of the documented shape...
+        expectRejected(request(method: "GET"))
+        //...and neither does a form-encoded body
+        expectRejected(request(method: "POST", body: "buffers=accX", contentType: "application/x-www-form-urlencoded"))
+        //A JSON body without a buffers object is well-formed but not the documented shape
+        expectRejected(request(method: "POST", body: "{\"mode\": \"replace\"}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": [1]}"))
+        //A body that is not parseable JSON at all (or not a JSON object) answers 400
+        XCTAssertEqual(request(method: "POST", body: "{not json").status, 400)
+        XCTAssertEqual(request(method: "POST", body: "[1, 2]").status, 400)
+    }
+
+    func testInvalidEntriesRejectAtomically() throws {
+        let accX = try (experiment.buffers["accX"]).unwrap()
+
+        //The valid accX write must NOT be applied when the accY entry is invalid - everything
+        //is validated before anything is written. Two-key JSON objects arrive in arbitrary
+        //dictionary order, so this also covers validation order independence.
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1], \"accY\": [\"inf\"]}}"))
+        XCTAssertEqual(accX.toArray(), [], "an atomic request must write nothing on any error")
+
+        //Unknown buffer, boolean entry, nested entry, non-array values, unknown mode
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"doesnotexist\": [1]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [true]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [[1]]}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": 1}}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1]}, \"mode\": \"prepend\"}"))
+        expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1]}, \"mode\": null}"))
+        XCTAssertEqual(accX.toArray(), [], "no rejected request may write anything")
     }
 }
 
@@ -1128,6 +1515,198 @@ final class MqttHardwareTests: XCTestCase {
     }
 }
 
+//What an experiment computes must not depend on which page the user is looking at. An input
+//element's default is experiment data: an analysis module reading an edit field, or a bluetooth
+//output sending one to a device, has to see it whether or not that element's view has ever been
+//drawn. iOS used to seed these from the view module's render path, which runs only for the one
+//view collection that is active, so an element on any other page left its buffer empty
+//(input-defaults-on-hidden-view; Android seeds for every view, and that is canonical).
+final class InputDefaultsTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    ///Two views, and every input element on the SECOND one - the page a running experiment need
+    ///never show. No view module exists at all here, which is the point: parsing the file is
+    ///enough for the values to be in their buffers.
+    private func twoViewExperiment() throws -> Experiment {
+        return try parse("""
+        <phyphox version="1.19">
+            <title>t</title><category>c</category>
+            <data-containers>
+                <container size="1" init="">editOut</container>
+                <container size="1" init="">dropdownOut</container>
+                <container size="1" init="">switchOut</container>
+                <container size="1" init="">shown</container>
+            </data-containers>
+            <views>
+                <view label="first">
+                    <value label="v"><input>shown</input></value>
+                </view>
+                <view label="second">
+                    <edit label="e" default="3.5"><output>editOut</output></edit>
+                    <dropdown label="d" default="2">
+                        <output>dropdownOut</output>
+                        <map value="1">one</map>
+                        <map value="2">two</map>
+                    </dropdown>
+                    <toggle label="s" default="1"><output>switchOut</output></toggle>
+                </view>
+            </views>
+        </phyphox>
+        """)
+    }
+
+    func testDefaultsAreInTheirBuffersWithoutAnyViewBeingShown() throws {
+        let experiment = try twoViewExperiment()
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5, "the edit field's default")
+        XCTAssertEqual(experiment.buffers["dropdownOut"]?.last, 2.0, "the dropdown's default")
+        XCTAssertEqual(experiment.buffers["switchOut"]?.last, 1.0, "the switch's default")
+    }
+
+    func testAValueThatIsAlreadyThereSurvives() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.seedInputDefaults()
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 42.0,
+                       "what the user set, or a restored state, is not overwritten by the default")
+    }
+
+    ///How the value actually went missing on the bench: not an analysis or an output emptying it
+    ///- micropython/createExperiment has an empty analysis block and its output's input has no
+    ///keep attribute, which means keep="true" - but a plain clear. The lab issues
+    ////control?cmd=clear before every start, and "clear data" does the same, both landing here.
+    func testTheDefaultComesBackAfterAClear() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.clear(byUser: true)
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "clearing the data leaves the experiment configured, not empty")
+
+        experiment.buffers["editOut"]?.replaceValues([42.0])
+        experiment.clear(byUser: false)
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "and so does a clear the user did not ask for, like closing the experiment")
+    }
+
+    ///The other half of that: an output only empties what it sent if the file SAYS so. `keep`
+    ///defaults to true, and the experiment this was found with declares format 1.10, where the
+    ///attribute does not exist at all - so nothing about the bluetooth output was ever going to
+    ///clear that buffer. If this ever regressed, an input element would lose its value after the
+    ///first send on any page, and the comment on seedInputDefaults() would become true for the
+    ///wrong reason.
+    func testABluetoothOutputKeepsWhatItSentUnlessTheFileSaysOtherwise() throws {
+        func experiment(keep: String) throws -> Experiment {
+            return try parse("""
+            <phyphox version="1.19">
+                <title>t</title><category>c</category>
+                <data-containers><container size="1" init="">editOut</container></data-containers>
+                <output>
+                    <bluetooth id="ble" name="dev" uuid="cddf0000-30f7-4671-8b43-5e40ba53514a">
+                        <input char="cddf1002-30f7-4671-8b43-5e40ba53514a"
+                               conversion="float32LittleEndian" offset="0"\(keep)>editOut</input>
+                    </bluetooth>
+                </output>
+                <views>
+                    <view label="first"><info label="i"/></view>
+                    <view label="second">
+                        <edit label="e" default="3.5"><output>editOut</output></edit>
+                    </view>
+                </views>
+            </phyphox>
+            """)
+        }
+
+        let keeping = try experiment(keep: "")
+        keeping.buffers["editOut"]?.replaceValues([7.0])
+        keeping.bluetoothOutputs.first?.send()
+        XCTAssertEqual(keeping.buffers["editOut"]?.last, 7.0,
+                       "no keep attribute means keep=true, and the value stays after a send")
+
+        let clearing = try experiment(keep: " keep=\"false\"")
+        clearing.buffers["editOut"]?.replaceValues([7.0])
+        clearing.bluetoothOutputs.first?.send()
+        XCTAssertNil(clearing.buffers["editOut"]?.last,
+                     "keep=\"false\" is the one that empties it")
+    }
+
+    ///The general case the per-cycle seeding is there for: an analysis input without keep="true",
+    ///or a bluetooth output whose input says keep="false", empties the buffer it read, and the
+    ///value has to be back for the next cycle wherever that element lives.
+    func testAnEmptiedBufferIsBackBeforeTheNextAnalysisPass() throws {
+        let experiment = try twoViewExperiment()
+        experiment.buffers["editOut"]?.clear(reset: false)
+        XCTAssertNil(experiment.buffers["editOut"]?.last)
+
+        experiment.analysisWillUpdate(experiment.analysis)
+
+        XCTAssertEqual(experiment.buffers["editOut"]?.last, 3.5,
+                       "the next cycle sees the setting again, on whichever page it lives")
+    }
+
+    ///After a clear an input element must come back to its DEFAULT, not to whatever its control
+    ///was showing (maintainer, 2026-08-29). Clearing is how a user deliberately returns an
+    ///experiment to its starting state, and clearGroup is how an author exempts a setting from
+    ///that - a control that remembered its position across a clear would leave clearGroup with
+    ///nothing to do. iOS satisfies this incidentally: the switch takes its state FROM the buffer
+    ///and never writes it back on its own. Nothing enforced it, and "remember where the user left
+    ///it" is a plausible-sounding change that would break the rule silently, which is what this
+    ///test is for. The rule lives on the `default` attribute of edit, toggle and dropdown in
+    ///phyphox-docs spec/views.yml.
+    func testAControlDoesNotCarryItsPositionThroughAClear() throws {
+        let experiment = try twoViewExperiment()
+        let descriptor = try XCTUnwrap(experiment.viewDescriptors?
+            .flatMap({ $0.views })
+            .compactMap({ $0 as? SwitchViewDescriptor })
+            .first)
+        let view = try XCTUnwrap(ExperimentSwitchView(descriptor: descriptor, resourceFolder: nil))
+
+        //The user turns it off, against a default of 1, and the control renders that
+        descriptor.buffer.replaceValues([0])
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+        XCTAssertEqual(descriptor.buffer.last, 0,
+                       "rendering the control takes the state FROM the buffer and puts nothing "
+                       + "back - a control that asserted its own position would fail here first")
+
+        experiment.clear(byUser: true)
+        //Whatever the control does on its next pass must not undo the clear
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+
+        XCTAssertEqual(descriptor.buffer.last, 1,
+                       "the clear returns the setting to its default and the control follows the "
+                       + "buffer, rather than writing the position it was showing back into it")
+    }
+
+    ///The slider is deliberately left out of the seeding: the parser gives it its default when
+    ///the file is read, and Android never seeds a slider at all, so re-seeding it here would be a
+    ///new divergence in the other direction rather than the end of one
+    ///(slider-default-never-reaches-buffer, open).
+    func testTheSliderIsLeftAsItIs() throws {
+        let experiment = try parse("""
+        <phyphox version="1.7">
+            <title>t</title><category>c</category>
+            <data-containers><container size="1" init="">sliderOut</container></data-containers>
+            <views>
+                <view label="only">
+                    <slider label="s" minValue="0" maxValue="10" default="7">
+                        <output value="value">sliderOut</output>
+                    </slider>
+                </view>
+            </views>
+        </phyphox>
+        """)
+        XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0,
+                       "the parser seeds it while reading the file")
+        experiment.buffers["sliderOut"]?.clear(reset: true)
+        experiment.seedInputDefaults()
+        XCTAssertNil(experiment.buffers["sliderOut"]?.last,
+                     "and nothing here puts it back, which is today's behaviour on both platforms")
+    }
+}
+
 //Enumerated values from an experiment file are matched case-insensitively across the whole
 //format, and an invalid value is an error rather than silently selecting the default
 //(enum-case-insensitive and enum-invalid-value in phyphox-docs, matching the Android parser).
@@ -1436,9 +2015,7 @@ final class FormatWideCaseFoldingTests: XCTestCase {
 
 //The input/output mapping mechanism is validated against slot tables, mirroring Android's
 //ioBlockParser: components of input elements, and the as attribute of analysis inputs and
-//outputs, must name an allowed slot with its count and type restrictions respected
-//(input-output-component-validation, analysis-slot-constraints-unenforced and
-//analysis-outputs-assigned-by-position in phyphox-docs).
+//outputs, must name an allowed slot with its count and type restrictions respected.
 final class SlotMappingValidationTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -1512,7 +2089,7 @@ final class SlotMappingValidationTests: XCTestCase {
 
     func testAverageMapsOutputsByName() throws {
         //Writing stddev before average must not swap the two values: outputs map by the
-        //documented names, not by document order (analysis-outputs-assigned-by-position)
+        //documented names, not by document order
         let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
         let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
         let inputData = MutableDoubleArray(data: [1.0, 2.0, 3.0, 4.0])
@@ -1529,6 +2106,2536 @@ final class SlotMappingValidationTests: XCTestCase {
 
         XCTAssertEqual(avgBuffer.last, 2.5, "the mean must land in the output named average")
         XCTAssertEqual(stddevBuffer.last ?? .nan, 1.2909944487358056, accuracy: 1e-12, "the standard deviation must land in the output named stddev")
+    }
+}
+
+//average delivers single values, so its error states are intermediate NaN values: an empty or
+//all-non-finite input writes exactly one NaN to each connected output instead of nothing. A
+//single finite value yields its own value as the average and exactly one NaN as the stddev.
+final class AverageDegenerateInputTests: XCTestCase {
+    private func runAverage(input: [Double]) throws -> (average: [Double], stddev: [Double]) {
+        let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
+        let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
+        let inputBuffer = try DataBuffer(name: "in", size: 10, baseContents: [], static: false)
+
+        let module = try AverageAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: MutableDoubleArray(data: input), usedAs: "buffer", keep: true)],
+            outputs: [
+                .buffer(buffer: avgBuffer, data: MutableDoubleArray(data: []), usedAs: "average", append: false),
+                .buffer(buffer: stddevBuffer, data: MutableDoubleArray(data: []), usedAs: "stddev", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        return (avgBuffer.toArray(), stddevBuffer.toArray())
+    }
+
+    func testEmptyInputWritesNaNToEachOutput() throws {
+        let result = try runAverage(input: [])
+        XCTAssertEqual(result.average.count, 1, "an empty input must write exactly one NaN, not nothing")
+        XCTAssertTrue(result.average[0].isNaN)
+        XCTAssertEqual(result.stddev.count, 1)
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+
+    func testAllNonFiniteInputWritesNaNToEachOutput() throws {
+        let result = try runAverage(input: [.nan, .infinity, -.infinity])
+        XCTAssertEqual(result.average.count, 1, "an all-non-finite input must write exactly one NaN, not nothing")
+        XCTAssertTrue(result.average[0].isNaN)
+        XCTAssertEqual(result.stddev.count, 1)
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+
+    func testSingleValueYieldsValueAndSingleNaNStddev() throws {
+        let result = try runAverage(input: [3.5])
+        XCTAssertEqual(result.average, [3.5])
+        XCTAssertEqual(result.stddev.count, 1, "a single input value must yield exactly one stddev value")
+        XCTAssertTrue(result.stddev[0].isNaN)
+    }
+}
+
+//threshold error states: when no crossing is found the output is NaN (not the last sample's x
+//or -1), and a NaN threshold value participates like any number - no comparison with it is ever
+//true, so no crossing is found. Only an absent threshold input or an empty threshold buffer
+//selects the documented default of 0. The sticky-side triggering (any value not on the trigger
+//side arms, NaN included; the next value on the trigger side fires) is the canonical behaviour.
+final class ThresholdNaNHandlingTests: XCTestCase {
+    private func runThreshold(x: [Double]? = nil, y: [Double], threshold: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let x = x {
+            let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        }
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        if let threshold = threshold {
+            inputs.append(threshold)
+        }
+        let out = try DataBuffer(name: "position", size: 0, baseContents: [], static: false)
+
+        let module = try ThresholdAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "position", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testNoCrossingOutputsNaN() throws {
+        let result = try runThreshold(y: [1, 2, 1], threshold: .value(value: 5.0, usedAs: "threshold"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "no crossing found must output NaN, not the last sample's x")
+    }
+
+    func testEmptyInputOutputsNaN() throws {
+        let result = try runThreshold(y: [])
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "an empty input must output NaN, not -1")
+    }
+
+    func testNaNThresholdParticipatesAndYieldsNaN() throws {
+        let result = try runThreshold(y: [-1, 1, -1, 1], threshold: .value(value: .nan, usedAs: "threshold"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN, "a NaN threshold makes every comparison false, so no crossing is found")
+    }
+
+    func testEmptyThresholdBufferSelectsDefaultZero() throws {
+        let thresholdBuffer = try DataBuffer(name: "threshold", size: 0, baseContents: [], static: false)
+        let result = try runThreshold(
+            y: [-1, 1],
+            threshold: .buffer(buffer: thresholdBuffer, data: MutableDoubleArray(data: []), usedAs: "threshold", keep: true))
+        XCTAssertEqual(result, [1], "an empty threshold buffer selects the default 0; the crossing fires at index 1")
+    }
+
+    func testStickySideSkipsNaNValues() throws {
+        //[2, NaN, 5] rising with threshold 3: 2 arms (below), NaN also counts as armed, 5 fires
+        let result = try runThreshold(x: [10, 20, 30], y: [2, .nan, 5], threshold: .value(value: 3.0, usedAs: "threshold"))
+        XCTAssertEqual(result, [30])
+    }
+
+    func testNormalCrossingStillFires() throws {
+        //5 is already on the trigger side but not armed; 1 arms; 6 fires
+        let result = try runThreshold(x: [10, 20, 30], y: [5, 1, 6], threshold: .value(value: 3.0, usedAs: "threshold"))
+        XCTAssertEqual(result, [30])
+    }
+}
+
+//first pairs input i with output i, like Android: each output receives exactly the first value
+//of its own input; an empty input skips only its own pair, and outputs beyond the input count
+//stay empty. The first values must never be collected and broadcast to every output.
+final class FirstPairingTests: XCTestCase {
+    private func makeInput(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: "value", keep: true)
+    }
+
+    private func runFirst(inputs inputData: [[Double]], outputCount: Int) throws -> [[Double]] {
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try FirstAnalysis(
+            inputs: inputData.map { try makeInput($0) },
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "first", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testPairsInputWithOutput() throws {
+        let result = try runFirst(inputs: [[1, 2, 3], [4, 5, 6]], outputCount: 2)
+        XCTAssertEqual(result[0], [1], "output 0 must receive only the first value of input 0")
+        XCTAssertEqual(result[1], [4], "output 1 must receive only the first value of input 1")
+    }
+
+    func testEmptyInputSkipsOnlyItsOwnPair() throws {
+        let result = try runFirst(inputs: [[], [4, 5]], outputCount: 2)
+        XCTAssertEqual(result[0], [], "an empty input must leave its own output untouched")
+        XCTAssertEqual(result[1], [4])
+    }
+
+    func testExtraOutputsStayEmpty() throws {
+        let result = try runFirst(inputs: [[7]], outputCount: 2)
+        XCTAssertEqual(result[0], [7])
+        XCTAssertEqual(result[1], [], "an output without a paired input must stay empty")
+    }
+}
+
+//match with more outputs than inputs must leave the extra outputs empty (matching Android)
+//instead of trapping on an index out of range.
+final class MatchExtraOutputsTests: XCTestCase {
+    private func runMatch(inputs inputData: [[Double]], outputCount: Int) throws -> [[Double]] {
+        let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
+            let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+            return .buffer(buffer: buffer, data: MutableDoubleArray(data: $0), usedAs: "in", keep: true)
+        }
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try MatchAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testExtraOutputsAreLeftEmpty() throws {
+        let result = try runMatch(inputs: [[1, .nan, 3]], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 3], "rows with a non-finite value are dropped")
+        XCTAssertEqual(result[1], [], "an output beyond the input count must stay empty, not trap")
+    }
+
+    func testNormalMatchingUnchanged() throws {
+        let result = try runMatch(inputs: [[1, 2, 3], [4, .nan, 6]], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 3], "a non-finite value in any input drops the whole row")
+        XCTAssertEqual(result[1], [4, 6])
+    }
+}
+
+//gcd/lcm operate on non-negative integers: fractional values are rounded half away from zero
+//(C rounding, not truncation), negative and non-finite inputs yield NaN, values or results
+//beyond UInt yield NaN instead of trapping, and lcm(0,x) = 0 including lcm(0,0).
+final class GCDLCMDomainTests: XCTestCase {
+    private func runGCD(_ a: Double, _ b: Double) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try GCDAnalysis(
+            inputs: [.value(value: a, usedAs: "value"), .value(value: b, usedAs: "value")],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "gcd", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runLCM(_ a: Double, _ b: Double) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try LCMAnalysis(
+            inputs: [.value(value: a, usedAs: "value"), .value(value: b, usedAs: "value")],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "lcm", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testGCDDomain() throws {
+        XCTAssertEqual(try runGCD(12, 18), [6])
+        XCTAssertEqual(try runGCD(4.5, 10), [5], "4.5 rounds half away from zero to 5 (truncation to 4 would give gcd 2)")
+        XCTAssertTrue(try runGCD(-4, 6)[0].isNaN, "a negative input yields NaN, not a trap")
+        XCTAssertTrue(try runGCD(.nan, 6)[0].isNaN)
+        XCTAssertTrue(try runGCD(1e20, 6)[0].isNaN, "a value beyond UInt.max yields NaN, not a conversion trap")
+        XCTAssertEqual(try runGCD(0, 0), [0])
+    }
+
+    func testLCMDomain() throws {
+        XCTAssertEqual(try runLCM(4, 6), [12])
+        XCTAssertEqual(try runLCM(2.5, 5), [15], "2.5 rounds half away from zero to 3 (lcm 15), not to even (lcm 10)")
+        XCTAssertEqual(try runLCM(0, 5), [0], "lcm(0,x) = 0 by convention")
+        XCTAssertEqual(try runLCM(0, 0), [0], "lcm(0,0) = 0, formerly a division-by-zero trap")
+        XCTAssertTrue(try runLCM(-2, 4)[0].isNaN, "a negative input yields NaN, not a trap")
+        XCTAssertTrue(try runLCM(.infinity, 4)[0].isNaN)
+        XCTAssertTrue(try runLCM(1e10, 1e10 + 1)[0].isNaN, "an lcm overflowing UInt yields NaN, not a trap")
+    }
+
+}
+
+//Buffers bound to interactive view elements (edit, switch, dropdown, slider) are not exempt
+//from clearing; the default is written back afterwards instead. For edit, switch and dropdown
+//that now happens in Experiment.seedInputDefaults() rather than in the view module, because a
+//view module only runs while its page is the one on screen - see InputDefaultsTests, which
+//covers all three. What is left here is the clearing itself, and the slider, which still seeds
+//from its own update().
+final class InteractiveElementReInitTests: XCTestCase {
+    private func makeBuffer(_ name: String) throws -> DataBuffer {
+        return try DataBuffer(name: name, size: 10, baseContents: [], static: false)
+    }
+
+    func testAnalysisInputClearNoLongerExemptsEditBuffers() throws {
+        //the attachedToTextField exemption is gone: keep=false clears any non-static buffer
+        let buffer = try makeBuffer("edit")
+        buffer.append(7)
+        let input = ExperimentAnalysisDataInput.buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "in", keep: false)
+        input.clear()
+        XCTAssertNil(buffer.last, "a keep=false analysis input must clear the buffer, edit-bound or not")
+    }
+
+    func testSliderViewReInitializesClearedBuffers() throws {
+        let buffer = try makeBuffer("slider")
+        let descriptor = SliderViewDescriptor(label: "l", visibilityBuffer: nil, minValue: 0, maxValue: 10, stepSize: 1, defaultValue: 3, precision: 1, outputBuffers: [.Empty: buffer], translation: nil, type: .Normal, showValue: true)
+        let view = ExperimentSliderView(descriptor: descriptor, resourceFolder: nil)
+
+        view.update()
+        XCTAssertEqual(buffer.last, 3)
+
+        let lower = try makeBuffer("lower")
+        let upper = try makeBuffer("upper")
+        let rangeDescriptor = SliderViewDescriptor(label: "l", visibilityBuffer: nil, minValue: 0, maxValue: 10, stepSize: 1, defaultValue: 0, precision: 1, outputBuffers: [.LowerValue: lower, .UpperValue: upper], translation: nil, type: .Range, showValue: true)
+        let rangeView = ExperimentSliderView(descriptor: rangeDescriptor, resourceFolder: nil)
+
+        rangeView.update()
+        XCTAssertEqual(lower.last, 0, "the range slider re-initializes its lower buffer to the minimum")
+        XCTAssertEqual(upper.last, 10, "the range slider re-initializes its upper buffer to the maximum")
+    }
+}
+
+//The formula language uses conventional precedence: ^ is right-associative and binds tighter
+//than unary minus (-2^2 = -4, 2^3^2 = 512); unary minus applies to the immediately following
+//operand only (-2+3 = 1); then * / %, then + -, left-associative at each level. A missing or
+//empty formula and structurally broken formulas (wrong arity, dangling operands) reject the
+//file at load; 1e+5 parses as 100000.
+final class FormulaParserTests: XCTestCase {
+    private func eval(_ formula: String, buffers: [[Double]] = [[0]]) throws -> [Double] {
+        return try FormulaParser(formula: formula).execute(buffers: buffers)
+    }
+
+    func testConventionalPrecedence() throws {
+        let cases: [(String, Double)] = [
+            ("2^3^2", 512),        //^ is right-associative
+            ("-2^2", -4),          //^ binds tighter than unary minus
+            ("-2+3", 1),           //unary minus applies to the following operand only
+            ("-2*3", -6),
+            ("2^-2", 0.25),        //unary minus in the exponent
+            ("-2^-2", -0.25),
+            ("1-2-3", -4),         //left-associative subtraction
+            ("8/4/2", 1),          //left-associative division
+            ("2+3*4", 14),
+            ("2^3*2", 16),         //^ binds tighter than *
+            ("2*3^2", 18),
+            ("-(2+3)", -5),
+            ("5--3", 8),
+            ("-sin(0)+1", 1),      //unary minus before a function call
+            ("7%4", 3),
+            ("1e+5", 100000),      //scientific notation with explicit positive exponent
+            ("-1e+5", -100000)
+        ]
+        for (formula, expected) in cases {
+            let result = try eval(formula)
+            XCTAssertEqual(result.count, 1, formula)
+            XCTAssertEqual(result[0], expected, accuracy: 1e-12, formula)
+        }
+    }
+
+    func testBrokenFormulasRejectAtLoad() {
+        for formula in ["", "5+", "+5", "*5", "-", "min(5)", "sin(1,2)", "5//3", "2^"] {
+            XCTAssertThrowsError(try FormulaParser(formula: formula), "\"\(formula)\" must be rejected at load, not produce NaN at runtime")
+        }
+    }
+
+    func testValidFormulasStillLoad() throws {
+        XCTAssertEqual(try eval("min(2,5)"), [2])
+        XCTAssertEqual(try eval("max(2,5)"), [5])
+        XCTAssertEqual(try eval("atan2(0,1)"), [0])
+        XCTAssertEqual(try eval("sqrt(9)"), [3])
+    }
+
+    func testBufferReferences() throws {
+        XCTAssertEqual(try eval("[1]+1", buffers: [[41]]), [42])
+        XCTAssertEqual(try eval("[1_]*2", buffers: [[1, 2, 3]]), [2, 4, 6], "[n_] iterates the buffer element-wise")
+        XCTAssertEqual(try eval("[1]*2", buffers: [[1, 2, 3]]), [6, 6, 6], "[n] reads the last value for every element")
+        XCTAssertEqual(try eval("-[1]", buffers: [[5]]), [-5])
+    }
+}
+
+//A formula module without a formula attribute is rejected at load (matching Android) instead
+//of silently outputting nothing.
+final class FormulaMissingAttributeTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(_ formulaAttribute: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+                <container>buffer2</container>
+            </data-containers>
+            <analysis>
+                <formula\(formulaAttribute)><input>buffer</input><output>buffer2</output></formula>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer2</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMissingFormulaAttributeRejected() {
+        XCTAssertThrowsError(try parse(xml("")))
+        XCTAssertThrowsError(try parse(xml(" formula=\"\"")), "an empty formula is rejected like a missing one")
+    }
+
+    func testValidFormulaLoads() throws {
+        _ = try parse(xml(" formula=\"[1]*2\""))
+    }
+}
+
+//subtract/divide/power/atan2 consume the validated slot mapping: operands follow the as
+//attributes matched case-insensitively, and unnamed inputs fill the remaining slots in
+//declaration order - never document order (which silently swapped operands when only the
+//second operand was named or the first slot's name was written in different case).
+final class ComplexModuleOperandOrderTests: XCTestCase {
+    private func run<T: ExperimentComplexUpdateValueAnalysis>(_ type: T.Type, inputs: [ExperimentAnalysisDataInput], outputName: String) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try T(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: outputName, append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testOnlySecondOperandNamed() throws {
+        //<input as="subtrahend">5</input><input>8</input> - the unnamed input fills minuend
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 5, usedAs: "subtrahend"), .value(value: 8, usedAs: "")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [3], "the unnamed input must fill the minuend slot: 8 - 5")
+
+        let quotient = try run(DivisionAnalysis.self, inputs: [
+            .value(value: 2, usedAs: "divisor"), .value(value: 10, usedAs: "")
+        ], outputName: "quotient")
+        XCTAssertEqual(quotient, [5], "the unnamed input must fill the dividend slot: 10 / 2")
+
+        let angle = try run(Atan2Analysis.self, inputs: [
+            .value(value: 0, usedAs: "x"), .value(value: 1, usedAs: "")
+        ], outputName: "atan2")
+        XCTAssertEqual(angle.count, 1)
+        XCTAssertEqual(angle[0], Double.pi/2, accuracy: 1e-12, "the unnamed input must fill the y slot: atan2(1, 0)")
+    }
+
+    func testCaseInsensitiveAsAttributes() throws {
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 2, usedAs: "Subtrahend"), .value(value: 10, usedAs: "MINUEND")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [8], "as attributes match case-insensitively: 10 - 2")
+
+        let power = try run(PowerAnalysis.self, inputs: [
+            .value(value: 3, usedAs: "Exponent"), .value(value: 2, usedAs: "BASE")
+        ], outputName: "power")
+        XCTAssertEqual(power, [8], "base and exponent follow the slots, not document order: 2^3")
+    }
+
+    func testDocumentOrderStillWorksWhenItMatchesTheSlots() throws {
+        let difference = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 10, usedAs: "minuend"), .value(value: 4, usedAs: "subtrahend")
+        ], outputName: "difference")
+        XCTAssertEqual(difference, [6])
+
+        //multiple subtrahends chain in declaration order
+        let chained = try run(SubtractionAnalysis.self, inputs: [
+            .value(value: 10, usedAs: ""), .value(value: 1, usedAs: "subtrahend"), .value(value: 2, usedAs: "subtrahend")
+        ], outputName: "difference")
+        XCTAssertEqual(chained, [7])
+    }
+}
+
+//requireFill: the first analysis run after opening or starting is exempt from the gate, so the
+//initialization pass runs while the required container is still empty (Android's model, decided
+//2026-08-24).
+final class RequireFillFirstRunTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        var onUpdate: (() -> Void)?
+        var onSkip: (() -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {}
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) { onUpdate?() }
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { onSkip?() }
+    }
+
+    private let delegate = Delegate()
+
+    private func makeAnalysis(output: DataBuffer, requireFill: DataBuffer) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.value(value: 1, usedAs: ""), .value(value: 2, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: false,
+                                          requireFill: requireFill, requireFillThreshold: 5, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    private func runOnce(_ analysis: ExperimentAnalysis, expectingExecution: Bool) {
+        let done = expectation(description: expectingExecution ? "analysis executes" : "analysis is skipped")
+        delegate.onUpdate = {
+            if expectingExecution { done.fulfill() } else { XCTFail("the requireFill gate should have skipped this run") }
+        }
+        delegate.onSkip = {
+            if expectingExecution { XCTFail("this run should not have been gated") } else { done.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true) //a pre-run does not reschedule itself
+        wait(for: [done], timeout: 5)
+    }
+
+    func testFirstRunIsExemptAndLaterRunsAreGated() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        runOnce(analysis, expectingExecution: true)
+        XCTAssertEqual(output.toArray(), [3], "the initialization pass runs although the required container is empty")
+
+        runOnce(analysis, expectingExecution: false)
+
+        requireFill.appendFromArray([1, 2, 3, 4, 5])
+        runOnce(analysis, expectingExecution: true)
+    }
+
+    func testStartingExemptsTheNextRunAgain() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        //The pass an experiment makes when it is opened, before it is ever started, consumes
+        //the exemption - so the very first START after opening has to re-arm it, or an
+        //experiment whose initialisation depends on that pass never gets one
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+
+        analysis.running = true //what Experiment.start() does
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+    }
+
+    func testStoppingDoesNotExemptAPass() throws {
+        //A stopped experiment still runs passes (a remote cmd=set, an edit view), and those run
+        //with the inputs the last measuring pass consumed. Exempting them from the gate is how
+        //Android lost the results a user had stopped on - ruled 2026-08-26: the exemption
+        //belongs to opening and starting, and a run after stopping is neither.
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, requireFill: requireFill)
+
+        analysis.running = true
+        runOnce(analysis, expectingExecution: true)
+        runOnce(analysis, expectingExecution: false)
+
+        analysis.running = false //what Experiment.stop() does
+        runOnce(analysis, expectingExecution: false)
+    }
+}
+
+//What the gate protects while an experiment sits stopped (Android: StopKeepsResultsTest). The
+//shape is audio_scope's: an analysis whose input is consumed by the pass that reads it and whose
+//result is written to a non-append output. A pass that runs after the stop - a remote cmd=set or
+//an edit view is enough to schedule one - then computes from an empty input and overwrites the
+//result with it, which is what the user's export is taken from.
+final class StopKeepsResultsTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        var onUpdate: (() -> Void)?
+        var onSkip: (() -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {}
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) { onUpdate?() }
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { onSkip?() }
+    }
+
+    private let delegate = Delegate()
+
+    ///Writes what the input holds into a non-append output, and does not run before the input
+    ///has three values - the requireFill container is the input itself, as in audio_scope
+    private func makeAnalysis(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.buffer(buffer: input, data: MutableDoubleArray(data: []), usedAs: "", keep: true)],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: true,
+                                          requireFill: input, requireFillThreshold: 3, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    private func runOnce(_ analysis: ExperimentAnalysis, expectingExecution: Bool) {
+        let done = expectation(description: expectingExecution ? "analysis executes" : "analysis is skipped")
+        delegate.onUpdate = {
+            if expectingExecution { done.fulfill() } else { XCTFail("the requireFill gate should have skipped this run") }
+        }
+        delegate.onSkip = {
+            if expectingExecution { XCTFail("this run should not have been gated") } else { done.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true) //what userInputTriggered does while stopped
+        wait(for: [done], timeout: 5)
+    }
+
+    func testAPassAfterTheStopDoesNotOverwriteTheResult() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(input: input, output: output)
+
+        analysis.running = true
+        input.appendFromArray([1, 2, 3])
+        runOnce(analysis, expectingExecution: true)
+        XCTAssertEqual(output.toArray(), [1, 2, 3], "the measurement produced a result")
+
+        //What a keep="false" input leaves behind: the pass that read the buffer emptied it
+        input.clear(reset: false)
+
+        analysis.running = false //what Experiment.stop() does
+        runOnce(analysis, expectingExecution: false)
+        XCTAssertEqual(output.toArray(), [1, 2, 3], "the result the user stopped on survives the paused pass")
+    }
+}
+
+//A request that arrives while an analysis pass is busy is remembered and rescheduled when that
+//pass finishes - but the pre-run, the pass an experiment makes when it is opened, used to
+//discard what it had absorbed. Experiment.start() sets analysis.running and calls
+//setNeedsUpdate() immediately, so a remote cmd=start milliseconds after the experiment was
+//opened landed exactly there: the start was recorded as "requested while busy" and then thrown
+//away, and the measuring chain never began although the sensors and the audio output were
+//running. Only the next start by hand revived it. Found by the device lab's audio suite
+//(random, 1-2 of 3 devices per run, always the run right after a fresh fixture load).
+final class QueuedUpdateDuringPreRunTests: XCTestCase {
+    private final class Delegate: ExperimentAnalysisDelegate {
+        private(set) var willUpdates = 0
+        private(set) var executions = 0
+        private(set) var skips = 0
+
+        var onWillUpdate: ((Int) -> Void)?
+        var onUpdate: ((Int) -> Void)?
+
+        func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
+            willUpdates += 1
+            onWillUpdate?(willUpdates)
+        }
+
+        func analysisDidUpdate(_ analysis: ExperimentAnalysis) {
+            executions += 1
+            onUpdate?(executions)
+        }
+
+        func analysisSkipped(_ analysis: ExperimentAnalysis) { skips += 1 }
+    }
+
+    private let delegate = Delegate()
+
+    ///One module appending 1+2 to the output, so the number of passes is what the buffer holds
+    private func makeAnalysis(output: DataBuffer, onUserInput: Bool) throws -> ExperimentAnalysis {
+        let module = try AdditionAnalysis(
+            inputs: [.value(value: 1, usedAs: ""), .value(value: 2, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: true)],
+            additionalAttributes: .empty)
+        let analysis = ExperimentAnalysis(modules: [module], sleep: 0, dynamicSleep: nil, onUserInput: onUserInput,
+                                          requireFill: nil, requireFillThreshold: 0, requireFillDynamic: nil,
+                                          timedRun: false, timedRunStartDelay: 0, timedRunStopDelay: 0,
+                                          timeReference: ExperimentTimeReference(), sensorInputs: [], audioInputs: [])
+        analysis.queue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.analysis")
+        analysis.delegate = delegate
+        return analysis
+    }
+
+    func testAStartQueuedDuringThePreRunStillRuns() throws {
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: true)
+
+        let ran = expectation(description: "the queued start runs its own pass")
+        delegate.onUpdate = { count in
+            if count == 2 { ran.fulfill() }
+        }
+        //The start lands while the open-time pre-run is still in flight - what Experiment.start()
+        //does when the remote API sends cmd=start right after the experiment was opened
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.running = true
+            analysis.setNeedsUpdate()
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [ran], timeout: 5)
+        XCTAssertEqual(output.toArray(), [3, 3], "the pre-run's pass and the start that was queued behind it")
+    }
+
+    func testAStartQueuedDuringThePreRunStartsTheFreeRunningChain() throws {
+        //The lab's case: an analysis without onUserInput keeps rescheduling itself, and that
+        //chain has to begin. Dropping the queued start left it never begun, so the tone played
+        //and the microphone recorded with nothing computing.
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: false)
+
+        let kept = expectation(description: "the chain keeps running on its own")
+        delegate.onUpdate = { count in
+            guard count == 3 else { return }
+            analysis.running = false //stop the loop again, or it would run for the whole test
+            kept.fulfill()
+        }
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.running = true
+            analysis.setNeedsUpdate()
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [kept], timeout: 10)
+    }
+
+    func testAUserInputQueuedWhileStoppedRunsAsAPreRun() throws {
+        //A value written while the experiment is stopped schedules a pre-run
+        //(userInputTriggered: isPreRun = !running), and a pre-run resets the cycle counter.
+        //Rescheduling the queued request as a plain one would hand it to the guard that keeps a
+        //stopped experiment from overwriting what it is showing, and it would end there - so
+        //what the request was has to be remembered along with it.
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: true)
+
+        let ran = expectation(description: "the queued input runs its own pass")
+        delegate.onUpdate = { count in
+            if count == 2 { ran.fulfill() }
+        }
+        delegate.onWillUpdate = { count in
+            guard count == 1 else { return }
+            analysis.setNeedsUpdate(isPreRun: true) //running stays false
+        }
+
+        analysis.setNeedsUpdate(isPreRun: true)
+
+        wait(for: [ran], timeout: 5)
+        XCTAssertEqual(output.toArray(), [3, 3])
+    }
+
+    func testThePreRunAloneDoesNotStartTheFreeRunningChain() throws {
+        //The other side of the fix: with nothing queued behind it, the pre-run is still a single
+        //pass and does not start the loop of an analysis that has no onUserInput
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let analysis = try makeAnalysis(output: output, onUserInput: false)
+
+        let first = expectation(description: "the pre-run runs")
+        delegate.onUpdate = { count in
+            if count == 1 { first.fulfill() }
+        }
+        analysis.setNeedsUpdate(isPreRun: true)
+        wait(for: [first], timeout: 5)
+
+        let more = expectation(description: "and nothing follows it")
+        more.isInverted = true
+        delegate.onUpdate = { _ in more.fulfill() }
+        wait(for: [more], timeout: 0.5)
+
+        XCTAssertEqual(output.toArray(), [3], "one pass, not the start of the chain")
+    }
+}
+
+
+//The container forms of the phyphox format, through the intake route the app itself runs
+//(test-matrix row containers-load): the zip sniffing of detectFileType, the unpacking of
+//handleZipFile and the header synthesis of handlePartialZipFile, with the fixtures from
+//phyphox-docs/fixtures/containers. Deliberately not a lenient unzip of the fixture - what is
+//pinned is what an incoming file actually goes through, including the guard that keeps an
+//archive from writing outside the extraction directory.
+final class ContainerIntakeTests: XCTestCase {
+    private var extractionDirectory: URL!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        //Under a directory of its own, so "outside the extraction directory" is observable
+        extractionDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("container-intake-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("extracted", isDirectory: true)
+        try FileManager.default.createDirectory(at: extractionDirectory, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: extractionDirectory.deletingLastPathComponent())
+        try super.tearDownWithError()
+    }
+
+    private func fixture(_ name: String) throws -> URL {
+        let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "the container forms")
+        let url = directory.appendingPathComponent(name)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no fixtures/containers/\(name)")
+        }
+        return url
+    }
+
+    ///What the intake sniffs the file as, from its leading bytes alone
+    private func detectedType(of url: URL) throws -> ExperimentsCollectionViewController.FileType {
+        return ExperimentsCollectionViewController.detectFileType(data: try Data(contentsOf: url))
+    }
+
+    // phyphox-test: containers-load
+    func testMultipleExperimentsInOneArchive() throws {
+        let url = try fixture("two-experiments.zip")
+        XCTAssertEqual(try detectedType(of: url), .zip, "a plain zip is recognized by its PK\\u{03}\\u{04} signature")
+
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory)
+        XCTAssertEqual(files.count, 2, "both experiments are unpacked, which is what makes the app offer a choice")
+
+        let titles = try files.map { try ExperimentSerialization.readExperimentFromURL($0).localizedTitle }
+        XCTAssertEqual(titles.sorted(), ["Container fixture A", "Container fixture B"], "and both of them load")
+    }
+
+    // phyphox-test: containers-load
+    func testAnArchiveDeliversTheResourceItsExperimentReferences() throws {
+        let url = try fixture("with-resource.zip")
+        XCTAssertEqual(try detectedType(of: url), .zip)
+
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory)
+        XCTAssertEqual(files.count, 1)
+
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+        XCTAssertEqual(experiment.resources, ["pic.png"], "the resource list is derived from the image element")
+
+        //Resolved the way the image element and the /res endpoint resolve it, against the res
+        //folder next to the experiment file the archive was unpacked into
+        let resource = experiment.resolveResource("pic.png")
+        XCTAssertNotNil(resource, "the image the experiment references came out of the archive")
+        XCTAssertEqual(resource?.deletingLastPathComponent().lastPathComponent, "res")
+        XCTAssertEqual(try resource.map { try Data(contentsOf: $0).prefix(4) }, Data([0x89, 0x50, 0x4e, 0x47]),
+                       "and it is the PNG itself, not an empty placeholder")
+    }
+
+    // phyphox-test: containers-load
+    func testAnEntryPointingOutsideTheExtractionDirectoryRefusesTheArchive() throws {
+        //A container is untrusted input, and an entry like "../evil.phyphox" is evidence that
+        //the file was tampered with: nothing in it is trustworthy, so the whole archive is
+        //refused rather than unpacked minus the bad entry (ruled 2026-08-26, Android does the
+        //same in its ZipIntentHandler). Security pin.
+        let url = try fixture("traversal.zip")
+
+        XCTAssertThrowsError(try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory),
+                             "the archive is refused as a whole") { error in
+            XCTAssertTrue("\(error)".contains("evil.phyphox"), "and the message names the entry: \(error)")
+        }
+
+        let escaped = extractionDirectory.deletingLastPathComponent().appendingPathComponent("evil.phyphox")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: escaped.path),
+                       "nothing may be written outside the extraction directory")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: extractionDirectory.appendingPathComponent("container-a.phyphox").path),
+                       "and the entries that looked harmless are not salvaged either")
+    }
+
+    // phyphox-test: containers-load
+    func testTheIntakeRouteOfEachFileForm() throws {
+        //What the app does with a sniffed file, per route. A bare phyphox file and an ordinary
+        //zip go the same way whatever the route is; the partial (headerless) form is accepted
+        //only from the QR scanner and the Bluetooth transfer and is refused everywhere else -
+        //where it is refused it becomes .unknown, which is the app's could-not-load path.
+        typealias Intake = ExperimentsCollectionViewController
+        for accepted in [true, false] {
+            XCTAssertEqual(Intake.intakeRoute(for: .phyphox, acceptPartialZip: accepted), .phyphox)
+            XCTAssertEqual(Intake.intakeRoute(for: .zip, acceptPartialZip: accepted), .zip)
+            XCTAssertEqual(Intake.intakeRoute(for: .unknown, acceptPartialZip: accepted), .unknown)
+        }
+        XCTAssertEqual(Intake.intakeRoute(for: .partialZip, acceptPartialZip: true), .partialZip,
+                       "the QR scanner and the Bluetooth transfer may carry it")
+        XCTAssertEqual(Intake.intakeRoute(for: .partialZip, acceptPartialZip: false), .unknown,
+                       "a file opened from anywhere else is not unpacked, it is refused")
+    }
+
+    // phyphox-test: containers-load
+    func testWhatEachContainerFormIsSniffedAs() throws {
+        //The switch the routing is fed from, over the real fixtures: the zip by its leading
+        //signature, the partial zip by its trailing data descriptor, a bare experiment by its
+        //root element, and something that is none of them
+        XCTAssertEqual(try detectedType(of: try fixture("two-experiments.zip")), .zip)
+        XCTAssertEqual(try detectedType(of: try fixture("with-resource.zip")), .zip)
+        XCTAssertEqual(try detectedType(of: try fixture("partial.bin")), .partialZip)
+        XCTAssertEqual(try detectedType(of: try fixture("src/container-a.phyphox")), .phyphox)
+        XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(
+            data: Data(repeating: 0x2a, count: 512)), .unknown)
+    }
+
+
+    // phyphox-test: containers-load
+    func testWhatTheAppDoesWithWhatAnArchiveHeld() throws {
+        //The branch handleZipFile takes: one experiment is opened right away, several are
+        //offered for picking, and an archive carrying none is refused rather than opening an
+        //empty picker
+        let single = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        XCTAssertEqual(try ExperimentsCollectionViewController.containerDispatch(for: single),
+                       .open(single[0]), "one experiment opens directly")
+
+        let several = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("two-experiments.zip"),
+            to: extractionDirectory.appendingPathComponent("several", isDirectory: true))
+        XCTAssertEqual(try ExperimentsCollectionViewController.containerDispatch(for: several),
+                       .choose(several), "several go to the picker")
+
+        XCTAssertThrowsError(try ExperimentsCollectionViewController.containerDispatch(for: []),
+                             "an archive without an experiment in it is refused")
+    }
+
+    // phyphox-test: containers-load
+    func testAnExperimentFromAnArchiveIsNotPartOfTheCollection() throws {
+        //What makes the app offer to save it: unpacked into the scratch directory, it is neither
+        //a local experiment nor one the collection already holds
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        XCTAssertFalse(experiment.local, "an experiment out of an archive is not a saved one")
+        XCTAssertTrue(experiment.custom, "and it does not come from the bundled collection")
+        XCTAssertFalse(ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
+                       "so the collection does not hold it yet")
+    }
+
+    // phyphox-test: containers-load
+    func testTheResourceFolderIsNamedByTheHexCRC32OfTheExperimentFile() throws {
+        //The contract spells the naming out, and the web server, the image element and saving
+        //all resolve through it - so the scheme itself is pinned, not just that two callers
+        //happen to agree
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        let crc32 = try XCTUnwrap(experiment.crc32)
+        let folder = try XCTUnwrap(experiment.localResourceFolder)
+        XCTAssertEqual(folder.lastPathComponent, String(crc32, radix: 16), "hex, unpadded")
+        XCTAssertEqual(folder.lastPathComponent, "a843768e", "the CRC32 of this very fixture")
+        //Compared as paths: whether a file URL carries a trailing slash depends on whether the
+        //directory exists on the machine running the test
+        XCTAssertEqual(folder.deletingLastPathComponent().standardizedFileURL.path,
+                       customExperimentsURL.standardizedFileURL.path, "next to the saved experiments")
+    }
+
+    // phyphox-test: containers-load
+    func testTheImageElementRendersTheImageTheArchiveDelivered() throws {
+        //Not just "an image is there": the pixels the image element ends up showing are the
+        //pixels of the file the archive carried, so neither a placeholder nor the bundled
+        //fallback image can pass this
+        let files = try ExperimentsCollectionViewController.extractContainer(
+            at: try fixture("with-resource.zip"), to: extractionDirectory)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
+
+        //The app renders with its own light/dark setting, and the image element applies a filter
+        //per mode - pinned to light, like the golden suite does
+        let appMode = SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue
+        let previousMode = UserDefaults.standard.object(forKey: appMode)
+        UserDefaults.standard.set(Utility.LIGHT_MODE, forKey: appMode)
+        defer { UserDefaults.standard.set(previousMode, forKey: appMode) }
+
+        let collection = try XCTUnwrap(experiment.viewDescriptors?.first)
+        let modules = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
+        let imageView = try XCTUnwrap(modules.compactMap { $0.view as? ExperimentImageView }.first,
+                                      "the experiment screen builds an image element")
+
+        let delivered = try XCTUnwrap(UIImage(contentsOfFile: try XCTUnwrap(experiment.resolveResource("pic.png")).path))
+        let rendered = try XCTUnwrap((imageView.imageView as? UIImageView)?.image, "and it holds an image")
+        XCTAssertEqual(ContainerIntakeTests.pixels(of: rendered), ContainerIntakeTests.pixels(of: delivered),
+                       "pixel for pixel the image the archive delivered")
+
+        //The negative control: without the resource folder there is no image at all, so the
+        //assertion above cannot be satisfied by an element that quietly fell back to something
+        let withoutResources = ExperimentViewModuleFactory.createViews(collection, resourceFolder: nil)
+        let placeholder = try XCTUnwrap(withoutResources.compactMap { $0.view as? ExperimentImageView }.first)
+        XCTAssertNil(placeholder.image, "no resource folder, no image")
+    }
+
+    ///The RGBA bytes of an image, so two of them can be compared regardless of how they were made
+    private static func pixels(of image: UIImage) -> [UInt8]? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = cgImage.width, height = cgImage.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        guard let context = CGContext(data: &bytes, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return bytes
+    }
+
+    // phyphox-test: containers-load
+    func testTheDestinationGuardCoversTheFormsAnArchiveCanName() throws {
+        let directory = extractionDirectory!
+
+        XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("../evil.phyphox", in: directory))
+        XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("res/../../evil.png", in: directory))
+        XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("..", in: directory))
+        //A sibling directory whose name merely starts with the extraction directory's name is
+        //outside it as well
+        XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("../extracted-evil/x.phyphox", in: directory))
+
+        XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("a.phyphox", in: directory))
+        XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("res/pic.png", in: directory))
+        //Harmless as long as it stays inside: an absolute-looking entry lands under the
+        //extraction directory rather than at the root
+        XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("/res/pic.png", in: directory))
+    }
+
+    // phyphox-test: containers-load
+    func testThePartialZipOfAQRCodeOrBluetoothTransfer() throws {
+        //No local file header and no central directory, only the entry and its trailing data
+        //descriptor - the form a QR code or a Bluetooth transfer carries, and the only two
+        //routes allowed to hand it over (see testTheIntakeRouteOfEachFileForm)
+        let payload = try Data(contentsOf: try fixture("partial.bin"))
+        XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(data: payload), .partialZip,
+                       "no zip signature at the front, a data descriptor at the end")
+
+        //The intake rebuilds the local file header and the central directory around it
+        let rebuilt = ExperimentsCollectionViewController.rebuiltPartialZipData(from: payload)
+        XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(data: rebuilt), .zip,
+                       "what comes out is an ordinary zip")
+
+        let rebuiltURL = extractionDirectory.deletingLastPathComponent().appendingPathComponent("rebuilt.zip")
+        try rebuilt.write(to: rebuiltURL, options: .atomic)
+
+        let files = try ExperimentsCollectionViewController.extractContainer(at: rebuiltURL, to: extractionDirectory)
+        XCTAssertEqual(files.count, 1, "the single entry the transfer carried")
+        XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(files[0]).localizedTitle,
+                       "Container fixture A", "and it is the experiment that went in")
+    }
+}
+
+
+//Saving an experiment whose resource folder is already there. The folder is named after the
+//CRC32 of the experiment file, so it can only be left over from a save or a delete that did not
+//run to the end - and insisting on creating it threw AFTER the experiment file had been copied,
+//which saved the experiment without its resources and reported nothing to the user (the caller
+//only prints the error). Found while building the save-to-collection suite, where an interrupted
+//run left exactly that state behind.
+final class SaveLocallyResourceFolderTests: XCTestCase {
+    private var extractionDirectory: URL!
+    private var saved: [URL] = []
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        extractionDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("save-locally-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: extractionDirectory, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        //Whatever the test put into the collection goes out again, resource folder included
+        for url in saved {
+            try? FileManager.default.removeItem(at: url)
+        }
+        try? FileManager.default.removeItem(at: extractionDirectory)
+        try super.tearDownWithError()
+    }
+
+    ///The experiment of with-resource.zip, unpacked the way the intake unpacks it
+    private func experimentFromTheContainer() throws -> Experiment {
+        let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "saving a container")
+        let url = directory.appendingPathComponent("with-resource.zip")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no fixtures/containers/with-resource.zip")
+        }
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory)
+        return try ExperimentSerialization.readExperimentFromURL(try XCTUnwrap(files.first))
+    }
+
+    func testSavingAgainOverALeftOverResourceFolder() throws {
+        let experiment = try experimentFromTheContainer()
+        try experiment.saveLocally(quiet: true, presenter: nil)
+        let savedFile = try XCTUnwrap(experiment.source)
+        let resourceFolder = try XCTUnwrap(experiment.localResourceFolder)
+        saved = [savedFile, resourceFolder]
+
+        let picture = resourceFolder.appendingPathComponent("pic.png")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: picture.path),
+                      "saving takes the resources along")
+
+        //An interrupted delete: the experiment file is gone, its resource folder is not
+        try FileManager.default.removeItem(at: savedFile)
+
+        let again = try experimentFromTheContainer()
+        XCTAssertNoThrow(try again.saveLocally(quiet: true, presenter: nil),
+                         "the folder that is already there must not fail the save")
+        let savedAgain = try XCTUnwrap(again.source)
+        saved.append(savedAgain)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: savedAgain.path),
+                      "the experiment file is in the collection")
+        XCTAssertEqual(again.localResourceFolder, resourceFolder, "the same CRC32 names the same folder")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: picture.path), "and the resource is still there")
+        XCTAssertNotNil(again.resolveResource("pic.png"), "so the saved experiment resolves it")
+    }
+}
+
+
+//The Bluetooth seam the compatibility suite drives (-phyphoxBleConnect, see
+//AutomationLaunchOptions and ExperimentsCollectionViewController): the app opens a scan, takes
+//the experiment the NAMED device offers, loads it and leaves it for the host to start.
+//
+//What can be tested without a board is the part that decides WHICH device: the suite runs the
+//boards side by side and has one of them advertise under a different name on purpose, so a
+//device that merely contains the requested name is the wrong device. BluetoothScan's own filter
+//is a substring match - right for a user picking from a list, not enough here - and this is the
+//exact match that follows it. Everything after the connection is asserted by the host over the
+//remote API (phyphox-docs/tools/lab/ble.py).
+final class BluetoothAutomationSeamTests: XCTestCase {
+    private func matches(advertised: String?, peripheral: String?, requested: String) -> Bool {
+        return ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertised,
+                                                                           peripheralName: peripheral,
+                                                                           requested: requested)
+    }
+
+    // phyphox-test: ble-compat-arduino
+    // phyphox-test: ble-compat-micropython
+    func testTheNamedDeviceIsTaken() {
+        XCTAssertTrue(matches(advertised: "phyphox-arduino", peripheral: nil, requested: "phyphox-arduino"),
+                      "the name the device advertises")
+        XCTAssertTrue(matches(advertised: nil, peripheral: "phyphox-arduino", requested: "phyphox-arduino"),
+                      "or the peripheral's own, for a device that advertises none")
+        XCTAssertTrue(matches(advertised: "phyphox-arduino", peripheral: "something else", requested: "phyphox-arduino"),
+                      "either of the two is enough")
+    }
+
+    // phyphox-test: ble-compat-arduino
+    // phyphox-test: ble-compat-micropython
+    func testEveryOtherDeviceIsLeftAlone() {
+        //The neighbour board of the suite, advertising under its own name
+        XCTAssertFalse(matches(advertised: "phyphox-micropython", peripheral: nil, requested: "phyphox-arduino"),
+                       "the board next to it is not the board that was named")
+        //What the substring filter lets through and this must not
+        XCTAssertFalse(matches(advertised: "phyphox-arduino-2", peripheral: nil, requested: "phyphox-arduino"),
+                       "a longer name that contains the requested one is a different device")
+        XCTAssertFalse(matches(advertised: nil, peripheral: nil, requested: "phyphox-arduino"),
+                       "a device with no name at all is not it either")
+        XCTAssertFalse(matches(advertised: "PHYPHOX-ARDUINO", peripheral: nil, requested: "phyphox-arduino"),
+                       "and the comparison is not case folded - a BLE name is what the board sets")
+    }
+}
+
+//An export set is as long as its LONGEST column, and a missing cell of a shorter column is
+//padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
+//dropped every value a later column held beyond that length - and dropped the whole set when
+//the first container was empty, which is data loss rather than formatting; the CSV writer left
+//an empty string where every other writer, on both platforms, writes NaN.
+final class ExportSetRowCountTests: XCTestCase {
+    private func makeSet(_ columns: [(String, [Double])]) throws -> ExperimentExportSet {
+        let data: [(name: String, buffer: DataBuffer)] = try columns.map { column in
+            (name: column.0, buffer: try DataBuffer(name: column.0, size: 0, baseContents: column.1, static: false))
+        }
+        return ExperimentExportSet(name: "set", data: data)
+    }
+
+    func testLongestColumnDeterminesTheRowCount() throws {
+        let set = try makeSet([("t", [1, 2]), ("x", [10, 20, 30, 40])])
+        let rows = set.rowValues()
+
+        XCTAssertEqual(rows.count, 4, "the longest column decides how many rows are exported")
+        XCTAssertEqual(rows[1], [2, 20])
+        XCTAssertEqual(rows[3][1], 40, "values beyond the first column's length must survive")
+        XCTAssertNil(rows[3][0], "the shorter column has no value for that row")
+    }
+
+    func testAnEmptyFirstColumnNoLongerDropsTheSet() throws {
+        let set = try makeSet([("tlist", []), ("dtlist", [0.5, 0.75])])
+        let rows = set.rowValues()
+
+        XCTAssertEqual(rows.count, 2, "an empty first container must not empty the whole set")
+        XCTAssertEqual(rows.map { $0[1] }, [0.5, 0.75])
+        XCTAssertEqual(rows.compactMap { $0[0] }, [], "the empty column contributes no values")
+    }
+
+    func testEmptySetStaysEmpty() throws {
+        let set = try makeSet([("a", []), ("b", [])])
+        XCTAssertEqual(set.rowValues().count, 0)
+    }
+
+    func testCSVCoversTheLongestColumnAsWell() throws {
+        let set = try makeSet([("t", [1]), ("x", [10, 20, 30])])
+        let csv = try XCTUnwrap(set.serializeToCSV(separator: ",", decimalPoint: "."))
+        let lines = try XCTUnwrap(String(data: csv, encoding: .utf8)).components(separatedBy: "\n")
+
+        XCTAssertEqual(lines.count, 4, "a header and one line per row of the longest column")
+        XCTAssertTrue(lines[3].hasPrefix("NaN,"), "a missing cell is padded NaN, like every other writer")
+
+        //The long column's values survive to the last row; the writer formats them in scientific
+        //notation, which Double parses back
+        let exported = lines.dropFirst().map { Double($0.components(separatedBy: ",")[1]) }
+        XCTAssertEqual(exported, [10, 20, 30])
+    }
+}
+
+
+//An export of a RUNNING experiment reads containers that the analysis and the sensor threads keep
+//writing. An analysis cycle clears a container before it refills it, so an export landing inside
+//one used to write a set with nothing but its header - the device lab caught it twice on
+//camera_stopwatch_luma on an iPad, each time in exactly one of the six formats of a sweep, with
+//the buffers demonstrably still full afterwards. The fix takes one copy of every set under the
+//experiment's data lock; these tests run an exporter against a writer doing what a cycle does,
+//and fail if the copy is taken without it.
+final class ExportUnderWritesTests: XCTestCase {
+    private let rowCount = 200
+    private let iterations = 200
+
+    ///A writer thread doing what an analysis cycle does: clear every container and write it again,
+    ///all inside one barrier on the experiment's data lock (ExperimentAnalysis.writeLocked)
+    private func writeCycles(lock: BufferLock, buffers: [(DataBuffer, [Double])], until stopped: @escaping () -> Bool) -> Thread {
+        let thread = Thread {
+            while !stopped() {
+                lock.write {
+                    for (buffer, _) in buffers {
+                        buffer.clear(reset: false)
+                    }
+                    //A real cycle computes between emptying its containers and writing them
+                    //again; the pause makes that window as observable in a test as it is on a
+                    //phone, where the modules take milliseconds
+                    usleep(100)
+                    for (buffer, values) in buffers {
+                        buffer.appendFromArray(values)
+                    }
+                }
+                usleep(200)
+            }
+        }
+        thread.start()
+        return thread
+    }
+
+    private func makeBuffers(_ lock: BufferLock) throws -> (t: DataBuffer, x: DataBuffer, values: [Double]) {
+        let t = try DataBuffer(name: "t", size: 0, baseContents: [], static: false)
+        let x = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        //Wired exactly as Experiment.init wires an experiment's containers
+        t.dataLock = lock
+        x.dataLock = lock
+
+        let values = (0..<rowCount).map(Double.init)
+        t.appendFromArray(values)
+        x.appendFromArray(values.map { $0 * 2 })
+        return (t, x, values)
+    }
+
+    func testTheSnapshotNeverCatchesACycleHalfApplied() throws {
+        let lock = BufferLock()
+        let (t, x, values) = try makeBuffers(lock)
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: "Raw", data: [("t", t), ("x", x)]),
+                                             ExperimentExportSet(name: "Second", data: [("x", x)])])
+
+        var stop = false
+        let writer = writeCycles(lock: lock, buffers: [(t, values), (x, values.map { $0 * 2 })], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let snapshot = export.snapshot()
+
+            XCTAssertEqual(snapshot.count, 2)
+            for set in snapshot {
+                for column in set.columns {
+                    XCTAssertEqual(column.values.count, rowCount,
+                                   "\(set.name).\(column.name) came out with \(column.values.count) values in iteration \(iteration)")
+                }
+            }
+            XCTAssertEqual(snapshot[0].rowValues.count, rowCount, "the set exports every row it holds")
+            //One acquisition for all sets, so the sets agree with each other as well
+            XCTAssertEqual(snapshot[1].columns[0].values, snapshot[0].columns[1].values,
+                           "the same container exported twice must not differ between the sets")
+        }
+    }
+
+    func testAnExportedFileHoldsEveryRowWhileTheExperimentKeepsWriting() throws {
+        //The whole path, not just the copy: what ends up in the file is what the lab found empty
+        let lock = BufferLock()
+        let (t, x, values) = try makeBuffers(lock)
+        let export = ExperimentExport(sets: [ExperimentExportSet(name: "Raw", data: [("t", t), ("x", x)])])
+
+        var stop = false
+        let writer = writeCycles(lock: lock, buffers: [(t, values), (x, values.map { $0 * 2 })], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let written = expectation(description: "export \(iteration)")
+            var exported: URL?
+            var failure: String?
+            export.runExport(.csv(separator: ",", decimalPoint: "."), singleSet: true,
+                             filename: "export-under-writes-\(iteration)", timeReference: nil) { error, url in
+                failure = error
+                exported = url
+                written.fulfill()
+            }
+            wait(for: [written], timeout: 20)
+
+            XCTAssertNil(failure)
+            let url = try XCTUnwrap(exported)
+            let lines = try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+            XCTAssertEqual(lines.count, rowCount + 1,
+                           "a header and one line per row, not the header alone (iteration \(iteration))")
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+    //The saved state writes the same containers and got the same treatment: a state saved while
+    //the experiment runs must not hold a container the analysis had just emptied
+    func testASavedStateHoldsEveryValueWhileTheExperimentKeepsWriting() throws {
+        let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "saving a state under writes")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(
+            directory.appendingPathComponent("src/container-a.phyphox"))
+        let buffer = try XCTUnwrap(experiment.buffers["a"], "the fixture's data container")
+
+        let values: [Double] = (1...8).map(Double.init)
+        buffer.clear(reset: false)
+        buffer.appendFromArray(values)
+
+        var stop = false
+        let writer = writeCycles(lock: experiment.dataLock, buffers: [(buffer, values)], until: { stop })
+        defer { stop = true; while !writer.isFinished { usleep(200) } }
+
+        for iteration in 0..<iterations {
+            let state = try LegacyStateSerializer.serializeState(customTitle: "under writes", experiment: experiment)
+            let line = try XCTUnwrap(state.components(separatedBy: "\n").first(where: { $0.hasSuffix(">a</container>") }),
+                                     "the state names the container")
+            let initValues = line.components(separatedBy: "init=\"")[1].components(separatedBy: "\"")[0]
+            let saved = initValues.isEmpty ? 0 : initValues.components(separatedBy: ",").count
+            XCTAssertEqual(saved, values.count,
+                           "the state saved \(saved) of \(values.count) values in iteration \(iteration)")
+        }
+    }
+}
+
+//static data containers follow Android's model (decided 2026-08-24): the module writing them
+//executes a single time and is skipped from then on - so it also stops clearing its keep=false
+//input buffers - a static output locks once the module has run even if it wrote nothing, and the
+//user's clear-data action resets the buffer and re-arms the module: static data does not survive
+//a clear.
+final class StaticBufferLifecycleTests: XCTestCase {
+    private func makeModule(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysisModule {
+        return try AdditionAnalysis(
+            inputs: [.buffer(buffer: input, data: MutableDoubleArray(data: []), usedAs: "", keep: false),
+                     .value(value: 1, usedAs: "")],
+            outputs: [.buffer(buffer: output, data: MutableDoubleArray(data: []), usedAs: "sum", append: false)],
+            additionalAttributes: .empty)
+    }
+
+    private func run(_ module: ExperimentAnalysisModule) {
+        module.setNeedsUpdate(experimentTime: 0, linearTime: 0, experimentReference1970: 0, linearReference1970: 0)
+    }
+
+    func testStaticOutputLocksOnlyWhenTheWriteIsComplete() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [], static: true)
+
+        buffer.append(1)
+        buffer.append(2)
+        XCTAssertEqual(buffer.toArray(), [1, 2], "a static buffer can be filled value by value until the write is declared complete")
+
+        buffer.markSet()
+        buffer.append(3)
+        XCTAssertEqual(buffer.toArray(), [1, 2], "markSet locks the static buffer")
+    }
+
+    func testStaticBufferWithInitValuesIsLockedFromTheStart() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [7], static: true)
+
+        buffer.append(1)
+        XCTAssertEqual(buffer.toArray(), [7])
+    }
+
+    func testOnlyAResetClearsAStaticBuffer() throws {
+        let buffer = try DataBuffer(name: "b", size: 0, baseContents: [7], static: true)
+
+        buffer.clear(reset: false)
+        XCTAssertEqual(buffer.toArray(), [7], "an ordinary clear leaves a static buffer alone")
+
+        buffer.clear(reset: true)
+        XCTAssertEqual(buffer.toArray(), [7], "a reset restores the init values")
+
+        buffer.append(1)
+        XCTAssertEqual(buffer.toArray(), [7, 1], "the reset unlocked the buffer again")
+    }
+
+    func testStaticModuleExecutesOnceAndStopsClearingItsInputs() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+        XCTAssertTrue(module.isStatic, "a module whose outputs are all static is static")
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2])
+        XCTAssertEqual(input.toArray(), [], "the first execution consumes its keep=false input")
+
+        input.append(5)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2], "the module is skipped from its second execution on")
+        XCTAssertEqual(input.toArray(), [5], "a skipped module no longer clears its keep=false input")
+    }
+
+    func testNonStaticModuleKeepsRunning() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try makeModule(input: input, output: output)
+        XCTAssertFalse(module.isStatic)
+
+        input.append(1)
+        run(module)
+        input.append(5)
+        run(module)
+        XCTAssertEqual(output.toArray(), [6])
+        XCTAssertEqual(input.toArray(), [])
+    }
+
+    func testAModuleThatWroteNothingIsStillDoneAfterOneRun() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+
+        run(module) //the empty input yields an empty result
+        XCTAssertEqual(output.toArray(), [])
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [], "the static output is locked by the completed run, not by the values written")
+    }
+
+    func testClearReArmsTheModule() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let module = try makeModule(input: input, output: output)
+
+        input.append(1)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2])
+
+        //what Experiment.clear does for a user clear
+        output.clear(reset: true)
+        input.clear(reset: true)
+        module.notifyBuffersReset([ObjectIdentifier(output), ObjectIdentifier(input)])
+
+        XCTAssertEqual(output.toArray(), [], "static data does not survive a user clear")
+
+        input.append(4)
+        run(module)
+        XCTAssertEqual(output.toArray(), [5], "the module is re-armed for one new execution")
+    }
+
+    func testResetOfAnUnrelatedBufferDoesNotReArmTheModule() throws {
+        let input = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: true)
+        let other = try DataBuffer(name: "other", size: 0, baseContents: [], static: false)
+        let module = try makeModule(input: input, output: output)
+
+        input.append(1)
+        run(module)
+        module.notifyBuffersReset([ObjectIdentifier(other)])
+
+        input.append(4)
+        run(module)
+        XCTAssertEqual(output.toArray(), [2], "only a reset of a buffer the module uses re-arms it")
+    }
+}
+
+//atan2 with a fixed value as one operand is element-wise like every other multi-input module:
+//the value repeats for every element of the other operand and the result has the length of the
+//longest input. It used to collapse to a single value computed from the buffer's first element.
+final class Atan2FixedValueOperandTests: XCTestCase {
+    private func run(y: ExperimentAnalysisDataInput, x: ExperimentAnalysisDataInput, deg: Bool = false) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try Atan2Analysis(
+            inputs: [y, x],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "atan2", append: false)],
+            additionalAttributes: .empty)
+        module.deg = deg
+        module.update()
+        return out.toArray()
+    }
+
+    private func makeBuffer(_ name: String, _ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: name, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: name, keep: true)
+    }
+
+    func testValueXWithBufferY() throws {
+        let result = try run(y: try makeBuffer("y", [1, 0, -1]), x: .value(value: 0, usedAs: "x"))
+        XCTAssertEqual(result.count, 3, "the result has the length of the longest input")
+        XCTAssertEqual(result[0], Double.pi/2, accuracy: 1e-12)
+        XCTAssertEqual(result[1], 0, accuracy: 1e-12)
+        XCTAssertEqual(result[2], -Double.pi/2, accuracy: 1e-12)
+    }
+
+    func testValueYWithBufferX() throws {
+        let result = try run(y: .value(value: 1, usedAs: "y"), x: try makeBuffer("x", [1, 0, -1]))
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0], Double.pi/4, accuracy: 1e-12)
+        XCTAssertEqual(result[1], Double.pi/2, accuracy: 1e-12)
+        XCTAssertEqual(result[2], 3*Double.pi/4, accuracy: 1e-12)
+    }
+
+    func testDegreesApplyToEveryElement() throws {
+        let result = try run(y: try makeBuffer("y", [1, 0, -1]), x: .value(value: 0, usedAs: "x"), deg: true)
+        XCTAssertEqual(result, [90, 0, -90])
+    }
+
+    func testEmptyBufferWithValueGivesEmptyResult() throws {
+        let result = try run(y: try makeBuffer("y", []), x: .value(value: 1, usedAs: "x"))
+        XCTAssertEqual(result, [], "a scalar and an empty buffer give an empty result")
+    }
+}
+
+//rangefilter: strictly row-wise filtering like Android - a row is dropped for all outputs when
+//any input's value falls outside its range, keeping outputs aligned; non-finite values are
+//compared like any number (infinities can be filtered, NaN never triggers); extra outputs are
+//ignored; a min/max before the first in binds to the first group.
+final class RangefilterRowAlignmentTests: XCTestCase {
+    private func makeIn(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)
+    }
+
+    private func run(inputs: [ExperimentAnalysisDataInput], outputCount: Int) throws -> [[Double]] {
+        let outBuffers = try (0..<outputCount).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+        let module = try RangefilterAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.update()
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testRowAlignmentWithMultipleFilteredInputs() throws {
+        //row 0 is filtered by input 2, row 1 by input 1, row 2 passes - the old global
+        //deleteCount misaligned exactly this pattern
+        let result = try run(inputs: [
+            try makeIn([1, 100, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max"),
+            try makeIn([100, 2, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 2)
+        XCTAssertEqual(result[0], [3], "outputs must stay row-aligned")
+        XCTAssertEqual(result[1], [3])
+    }
+
+    func testInfinitiesAreFiltered() throws {
+        let result = try run(inputs: [
+            try makeIn([1, .infinity, -.infinity, 2]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 1)
+        XCTAssertEqual(result[0], [1, 2], "infinities are compared like any number and filtered")
+    }
+
+    func testNaNNeverTriggersTheFilter() throws {
+        let result = try run(inputs: [
+            try makeIn([1, .nan, 2]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 1)
+        XCTAssertEqual(result[0].count, 3)
+        XCTAssertTrue(result[0][1].isNaN)
+    }
+
+    func testShorterInputContributesNaN() throws {
+        let result = try run(inputs: [
+            try makeIn([1, 2, 3]),
+            try makeIn([5]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
+        ], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 2, 3])
+        XCTAssertEqual(result[1].count, 3)
+        XCTAssertEqual(result[1][0], 5)
+        XCTAssertTrue(result[1][1].isNaN, "an exhausted input contributes NaN and does not trigger the filter")
+        XCTAssertTrue(result[1][2].isNaN)
+    }
+
+    func testExtraOutputsAreIgnored() throws {
+        let result = try run(inputs: [try makeIn([1, 2])], outputCount: 2)
+        XCTAssertEqual(result[0], [1, 2], "an extra output must be ignored, not trap")
+        XCTAssertEqual(result[1], [])
+    }
+
+    func testLeadingMinBindsToFirstGroup() throws {
+        let result = try run(inputs: [
+            .value(value: 2, usedAs: "min"), try makeIn([1, 2, 3])
+        ], outputCount: 1)
+        XCTAssertEqual(result[0], [2, 3], "a min before the first in must bind to the first group, not be discarded")
+    }
+}
+
+//map: x/y/z accept value-type inputs as one-element buffers; a degenerate range (minX equal to
+//maxX) clamps the bin index instead of trapping (NaN ratio -> bin 0, infinite ratios fall
+//outside the bounds check); a missing z input with zMode sum/average rejects the file at load.
+final class MapAnalysisTests: XCTestCase {
+    private func runMap(x: ExperimentAnalysisDataInput, y: ExperimentAnalysisDataInput, z: ExperimentAnalysisDataInput,
+                        minX: Double = 0, maxX: Double = 1, minY: Double = 0, maxY: Double = 1) throws -> (x: [Double], y: [Double], z: [Double]) {
+        let xOut = try DataBuffer(name: "xOut", size: 0, baseContents: [], static: false)
+        let yOut = try DataBuffer(name: "yOut", size: 0, baseContents: [], static: false)
+        let zOut = try DataBuffer(name: "zOut", size: 0, baseContents: [], static: false)
+
+        let module = try MapAnalysis(
+            inputs: [
+                .value(value: 2, usedAs: "mapWidth"), .value(value: minX, usedAs: "minX"), .value(value: maxX, usedAs: "maxX"),
+                .value(value: 2, usedAs: "mapHeight"), .value(value: minY, usedAs: "minY"), .value(value: maxY, usedAs: "maxY"),
+                x, y, z
+            ],
+            outputs: [
+                .buffer(buffer: xOut, data: MutableDoubleArray(data: []), usedAs: "x", append: false),
+                .buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false),
+                .buffer(buffer: zOut, data: MutableDoubleArray(data: []), usedAs: "z", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (xOut.toArray(), yOut.toArray(), zOut.toArray())
+    }
+
+    func testValueTypeInputsAccepted() throws {
+        //a single point at (0,0) with z=5 on a 2x2 grid, all given as value-type inputs
+        let result = try runMap(x: .value(value: 0, usedAs: "x"), y: .value(value: 0, usedAs: "y"), z: .value(value: 5, usedAs: "z"))
+        XCTAssertEqual(result.x, [0, 1, 0, 1])
+        XCTAssertEqual(result.y, [0, 0, 1, 1])
+        XCTAssertEqual(result.z.count, 4)
+        XCTAssertEqual(result.z[0], 5, "the point must land in bin (0,0) with its average value")
+        XCTAssertTrue(result.z[1].isNaN, "empty bins average to NaN")
+    }
+
+    func testDegenerateRangeDoesNotTrap() throws {
+        //minX == maxX: the point at exactly that value gets bin 0 (NaN ratio), others fall out
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        let zBuffer = try DataBuffer(name: "z", size: 0, baseContents: [], static: false)
+        let result = try runMap(
+            x: .buffer(buffer: xBuffer, data: MutableDoubleArray(data: [0, 1]), usedAs: "x", keep: true),
+            y: .buffer(buffer: yBuffer, data: MutableDoubleArray(data: [0, 0]), usedAs: "y", keep: true),
+            z: .buffer(buffer: zBuffer, data: MutableDoubleArray(data: [5, 7]), usedAs: "z", keep: true),
+            minX: 0, maxX: 0)
+        XCTAssertEqual(result.z.count, 4, "a degenerate range must be clamped, not trap")
+        XCTAssertEqual(result.z[0], 5, "the point at the degenerate value lands in bin 0; the other point falls outside")
+    }
+}
+
+//The z input of map is required at load when zMode is sum or average (the default) - running
+//without it would silently produce a zero grid. Only zMode="count" works without z.
+final class MapMissingZTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(zMode: String, zInput: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>bx</container>
+                <container>by</container>
+                <container>bz</container>
+                <container>ox</container>
+                <container>oy</container>
+                <container>oz</container>
+            </data-containers>
+            <analysis>
+                <map\(zMode)>
+                    <input as="mapWidth" type="value">2</input>
+                    <input as="minX" type="value">0</input>
+                    <input as="maxX" type="value">1</input>
+                    <input as="mapHeight" type="value">2</input>
+                    <input as="minY" type="value">0</input>
+                    <input as="maxY" type="value">1</input>
+                    <input as="x">bx</input>
+                    <input as="y">by</input>
+                    \(zInput)
+                    <output as="x">ox</output>
+                    <output as="y">oy</output>
+                    <output as="z">oz</output>
+                </map>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>oz</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testMissingZRejectedForDefaultAndSum() throws {
+        XCTAssertThrowsError(try parse(xml(zMode: "", zInput: "")), "the default zMode is average, which requires z")
+        XCTAssertThrowsError(try parse(xml(zMode: " zMode=\"sum\"", zInput: "")))
+        XCTAssertThrowsError(try parse(xml(zMode: " zMode=\"average\"", zInput: "")))
+    }
+
+    func testCountModeLoadsWithoutZ() throws {
+        _ = try parse(xml(zMode: " zMode=\"count\"", zInput: ""))
+    }
+
+    func testZPresentLoads() throws {
+        _ = try parse(xml(zMode: "", zInput: "<input as=\"z\">bz</input>"))
+    }
+}
+
+//interpolate/loess: xi accepts a value-type input as a one-element buffer (matching Android);
+//a non-positive or non-finite loess d yields empty outputs instead of NaN fills; the out slots
+//no longer accept repeats (max 1).
+final class InterpolateLoessTests: XCTestCase {
+    private func makeBuffer(_ name: String, _ data: [Double]) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: name, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: data), usedAs: name, keep: true)
+    }
+
+    private func runInterpolate(x: [Double], y: [Double], xi: ExperimentAnalysisDataInput) throws -> [Double] {
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try InterpolateAnalysis(
+            inputs: [try makeBuffer("x", x), try makeBuffer("y", y), xi],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runLoess(x: [Double], y: [Double], d: ExperimentAnalysisDataInput, xi: ExperimentAnalysisDataInput) throws -> [Double] {
+        let out = try DataBuffer(name: "yi0", size: 0, baseContents: [], static: false)
+        let module = try LoessAnalysis(
+            inputs: [try makeBuffer("x", x), try makeBuffer("y", y), d, xi],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "yi0", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testInterpolateAcceptsValueTypeXi() throws {
+        let result = try runInterpolate(x: [0, 10], y: [0, 100], xi: .value(value: 5, usedAs: "xi"))
+        XCTAssertEqual(result, [50], "a value-type xi must act as a one-element buffer, not be rejected")
+    }
+
+    func testInterpolateBufferXiUnchanged() throws {
+        let result = try runInterpolate(x: [0, 10], y: [0, 100], xi: try makeBuffer("xi", [2.5, 7.5]))
+        XCTAssertEqual(result, [25, 75])
+    }
+
+    func testLoessAcceptsValueTypeXi() throws {
+        let result = try runLoess(x: [0, 1, 2, 3, 4], y: [0, 1, 2, 3, 4], d: .value(value: 2, usedAs: "d"), xi: .value(value: 2, usedAs: "xi"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0], 2, accuracy: 1e-9, "loess of linear data returns the linear value")
+    }
+
+    func testLoessInvalidDYieldsEmptyOutputs() throws {
+        for d in [0.0, -1.0, Double.nan, .infinity] {
+            let result = try runLoess(x: [0, 1, 2], y: [0, 1, 2], d: .value(value: d, usedAs: "d"), xi: try makeBuffer("xi", [1]))
+            XCTAssertEqual(result, [], "d=\(d) must yield empty outputs, not NaN fills")
+        }
+    }
+
+    func testRepeatedOutputsAreRejected() throws {
+        let out1 = try DataBuffer(name: "o1", size: 0, baseContents: [], static: false)
+        let out2 = try DataBuffer(name: "o2", size: 0, baseContents: [], static: false)
+        XCTAssertThrowsError(try InterpolateAnalysis(
+            inputs: [try makeBuffer("x", [0, 1]), try makeBuffer("y", [0, 1]), try makeBuffer("xi", [0.5])],
+            outputs: [
+                .buffer(buffer: out1, data: MutableDoubleArray(data: []), usedAs: "out", append: false),
+                .buffer(buffer: out2, data: MutableDoubleArray(data: []), usedAs: "out", append: false)
+            ],
+            additionalAttributes: .empty), "a second out output must be rejected")
+    }
+}
+
+//crosscorrelation: raw correlation sums without normalization (matching numpy/scipy/MATLAB
+//defaults), and an empty input yields an empty output instead of zeros. The reference test
+//compares the vDSP result against plain sums computed independently.
+final class CrosscorrelationTests: XCTestCase {
+    private func runCrosscorrelation(_ a: [Double], _ b: [Double]) throws -> [Double] {
+        let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
+        let bufferB = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try CrosscorrelationAnalysis(
+            inputs: [
+                .buffer(buffer: bufferA, data: MutableDoubleArray(data: a), usedAs: "in", keep: true),
+                .buffer(buffer: bufferB, data: MutableDoubleArray(data: b), usedAs: "in", keep: true)
+            ],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testRawSumsWithoutNormalization() throws {
+        //m=4, n=2 -> 2 raw sums; the old normalization would have divided them by 2
+        let result = try runCrosscorrelation([1, 2, 3, 4], [1, 1])
+        XCTAssertEqual(result, [3, 5])
+    }
+
+    func testEmptyInputYieldsEmptyOutput() throws {
+        XCTAssertEqual(try runCrosscorrelation([1, 2, 3], []), [], "an empty input must yield an empty output, not zeros")
+        XCTAssertEqual(try runCrosscorrelation([], [1, 2, 3]), [])
+        //equal lengths yield abs(m-n) = 0 values
+        XCTAssertEqual(try runCrosscorrelation([1, 2], [3, 4]), [])
+    }
+
+    func testAgainstPlainSumReference() throws {
+        //the offline plain-sum reference: the vDSP result must match sums computed naively
+        let a = (0..<200).map { sin(Double($0) * 0.37) + 0.5 * cos(Double($0) * 0.11) }
+        let b = (0..<50).map { sin(Double($0) * 0.29) - 0.3 * cos(Double($0) * 0.53) }
+
+        let result = try runCrosscorrelation(a, b)
+        XCTAssertEqual(result.count, 150)
+
+        for n in 0..<150 {
+            var reference = 0.0
+            for p in 0..<50 {
+                reference += a[n + p] * b[p]
+            }
+            XCTAssertEqual(result[n], reference, accuracy: 1e-9, "raw sum mismatch at offset \(n)")
+        }
+    }
+}
+
+//periodicity: an invalid dx (non-positive, non-finite, empty buffer) yields empty outputs
+//instead of running at dx=1; min is floored and max is ceiled (a fractional max includes the
+//boundary period); NaN bounds yield empty outputs; x shorter than y processes the common
+//length instead of trapping.
+final class PeriodicityEdgeCaseTests: XCTestCase {
+    private func runPeriodicity(x: [Double], y: [Double], dx: ExperimentAnalysisDataInput, extra: [ExperimentAnalysisDataInput] = []) throws -> (time: [Double], period: [Double]) {
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        let timeOut = try DataBuffer(name: "time", size: 0, baseContents: [], static: false)
+        let periodOut = try DataBuffer(name: "period", size: 0, baseContents: [], static: false)
+
+        let module = try PeriodicityAnalysis(
+            inputs: [
+                .buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true),
+                .buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true),
+                dx
+            ] + extra,
+            outputs: [
+                .buffer(buffer: timeOut, data: MutableDoubleArray(data: []), usedAs: "time", append: false),
+                .buffer(buffer: periodOut, data: MutableDoubleArray(data: []), usedAs: "period", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (timeOut.toArray(), periodOut.toArray())
+    }
+
+    private var cosineSignal: [Double] {
+        return (0..<64).map { cos(2.0 * Double.pi * Double($0) / 8.0) }
+    }
+
+    func testInvalidDxYieldsEmptyOutputs() throws {
+        let x = (0..<64).map(Double.init)
+        for dx in [ExperimentAnalysisDataInput.value(value: 0, usedAs: "dx"),
+                   .value(value: -2, usedAs: "dx"),
+                   .value(value: .nan, usedAs: "dx")] {
+            let result = try runPeriodicity(x: x, y: cosineSignal, dx: dx)
+            XCTAssertEqual(result.time, [], "an invalid dx must yield empty outputs, not run at dx = 1")
+            XCTAssertEqual(result.period, [])
+        }
+        let emptyDx = try DataBuffer(name: "dx", size: 0, baseContents: [], static: false)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .buffer(buffer: emptyDx, data: MutableDoubleArray(data: []), usedAs: "dx", keep: true))
+        XCTAssertEqual(result.time, [], "an empty dx buffer must yield empty outputs")
+    }
+
+    func testFractionalMaxIsCeiled() throws {
+        //Period-8 cosine, search range min=6, max=9.5: the peak at 8 needs its right neighbour
+        //at 9 evaluated for the parabolic fit, so a ceiled max (10) finds the period while a
+        //truncated max (9) would report NaN.
+        let x = (0..<64).map(Double.init)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 64, usedAs: "dx"), extra: [
+            .value(value: 6, usedAs: "min"),
+            .value(value: 9.5, usedAs: "max")
+        ])
+        XCTAssertEqual(result.period.count, 1)
+        XCTAssertEqual(result.period[0], 8, accuracy: 0.5, "a fractional max must be ceiled so the boundary period is found")
+    }
+
+    func testNaNBoundsYieldEmptyOutputs() throws {
+        let x = (0..<64).map(Double.init)
+        for bound in [ExperimentAnalysisDataInput.value(value: .nan, usedAs: "min"),
+                      .value(value: .nan, usedAs: "max")] {
+            let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 64, usedAs: "dx"), extra: [bound])
+            XCTAssertEqual(result.time, [])
+        }
+    }
+
+    func testXShorterThanYProcessesCommonLength() throws {
+        let x = (0..<16).map(Double.init)
+        let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 16, usedAs: "dx"))
+        XCTAssertEqual(result.time, [0], "x shorter than y truncates to the common length instead of trapping")
+        XCTAssertEqual(result.period.count, 1)
+    }
+}
+
+//sort: all buffers are truncated to the shortest input before sorting (matching Android, no
+//NaN substitution for shorter co-buffers), and NaN sorts deterministically as the largest
+//value like Java's Double.compareTo.
+final class SortUnequalLengthTests: XCTestCase {
+    private func runSort(_ inputData: [[Double]], descending: Bool = false) throws -> [[Double]] {
+        let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
+            let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+            return .buffer(buffer: buffer, data: MutableDoubleArray(data: $0), usedAs: "in", keep: true)
+        }
+        let outBuffers = try (0..<inputData.count).map { try DataBuffer(name: "out\($0)", size: 0, baseContents: [], static: false) }
+
+        let module = try SortAnalysis(
+            inputs: inputs,
+            outputs: outBuffers.map { .buffer(buffer: $0, data: MutableDoubleArray(data: []), usedAs: "out", append: false) },
+            additionalAttributes: .empty)
+        module.descending = descending
+        module.update()
+        return outBuffers.map { $0.toArray() }
+    }
+
+    func testCoBufferSorting() throws {
+        let result = try runSort([[3, 1, 2], [30, 10, 20]])
+        XCTAssertEqual(result[0], [1, 2, 3])
+        XCTAssertEqual(result[1], [10, 20, 30], "the co-buffer is reordered along with the sorted buffer")
+    }
+
+    func testShorterCoBufferTruncatesAll() throws {
+        let result = try runSort([[3, 1, 2], [30, 10]])
+        XCTAssertEqual(result[0], [1, 3], "all buffers truncate to the shortest input; no NaN substitution")
+        XCTAssertEqual(result[1], [10, 30])
+    }
+
+    func testNaNSortsAsLargest() throws {
+        let ascending = try runSort([[2, .nan, 1]])
+        XCTAssertEqual(ascending[0][0], 1)
+        XCTAssertEqual(ascending[0][1], 2)
+        XCTAssertTrue(ascending[0][2].isNaN, "NaN must sort as the largest value")
+
+        let descending = try runSort([[2, .nan, 1]], descending: true)
+        XCTAssertTrue(descending[0][0].isNaN)
+        XCTAssertEqual(descending[0][1], 2)
+        XCTAssertEqual(descending[0][2], 1)
+    }
+
+    func testMultipleNaNsAreDeterministic() throws {
+        let result = try runSort([[.nan, 1, .nan, 0]])
+        XCTAssertEqual(result[0][0], 0)
+        XCTAssertEqual(result[0][1], 1)
+        XCTAssertTrue(result[0][2].isNaN)
+        XCTAssertTrue(result[0][3].isNaN)
+    }
+}
+
+//reduce: processing truncates to the shortest present buffer (only an absent y keeps
+//processing all of x with 0 contributions); the incomplete final chunk is averaged over the
+//values actually summed, not the nominal factor; a non-finite factor yields empty outputs.
+final class ReduceEdgeCaseTests: XCTestCase {
+    private func runReduce(factor: Double, x: [Double], y: [Double]? = nil, averageX: Bool = false, averageY: Bool = false, sumY: Bool = false) throws -> (x: [Double], y: [Double]) {
+        var inputs: [ExperimentAnalysisDataInput] = [.value(value: factor, usedAs: "factor")]
+        let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        if let y = y {
+            let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        }
+        let xOut = try DataBuffer(name: "xOut", size: 0, baseContents: [], static: false)
+        let yOut = try DataBuffer(name: "yOut", size: 0, baseContents: [], static: false)
+
+        let module = try ReduceAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: xOut, data: MutableDoubleArray(data: []), usedAs: "x", append: false),
+                .buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.averageX = averageX
+        module.averageY = averageY
+        module.sumY = sumY
+        module.update()
+        return (xOut.toArray(), yOut.toArray())
+    }
+
+    func testBasicDownsampleAndUpsample() throws {
+        let down = try runReduce(factor: 2, x: [1, 2, 3, 4], y: [10, 20, 30, 40])
+        XCTAssertEqual(down.x, [1, 3], "without averaging, each chunk keeps its first value")
+        XCTAssertEqual(down.y, [10, 30])
+
+        let up = try runReduce(factor: 0.5, x: [1, 2], y: [10, 20])
+        XCTAssertEqual(up.x, [1, 1, 2, 2])
+        XCTAssertEqual(up.y, [10, 10, 20, 20])
+    }
+
+    func testYShorterThanXTruncates() throws {
+        let down = try runReduce(factor: 2, x: [1, 2, 3, 4], y: [10, 20, 30])
+        XCTAssertEqual(down.x, [1, 3], "processing truncates to the shortest present buffer instead of trapping")
+        XCTAssertEqual(down.y, [10, 30])
+
+        let up = try runReduce(factor: 0.5, x: [1, 2], y: [10])
+        XCTAssertEqual(up.x, [1, 1], "the upsample branch truncates too, instead of substituting 0")
+        XCTAssertEqual(up.y, [10, 10])
+    }
+
+    func testIncompleteFinalChunkAveragesOverActualCount() throws {
+        let result = try runReduce(factor: 2, x: [0, 2, 5], y: [10, 20, 40], averageX: true, averageY: true)
+        XCTAssertEqual(result.x, [1, 5], "the final single-value chunk must be divided by 1, not by the factor")
+        XCTAssertEqual(result.y, [15, 40])
+    }
+
+    func testNonFiniteFactorYieldsEmptyOutputs() throws {
+        for factor in [Double.nan, .infinity, 1e-300] {
+            let result = try runReduce(factor: factor, x: [1, 2], y: [10, 20])
+            XCTAssertEqual(result.x, [], "factor=\(factor) must yield empty outputs, not a trap")
+            XCTAssertEqual(result.y, [])
+        }
+    }
+}
+
+//const/ramp: an explicit length of 0, an empty length buffer and a non-finite or negative
+//length yield empty output; only an absent length input falls back to the output buffer's
+//size. Empty value/start/stop buffers and non-finite ramp start/stop yield empty output. A
+//present NaN const value is a permitted deliberate NaN fill. A single-point ramp outputs its
+//start value.
+final class ConstRampEdgeCaseTests: XCTestCase {
+    private func runConst(value: ExperimentAnalysisDataInput? = nil, length: ExperimentAnalysisDataInput? = nil, bufferSize: Int = 0) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let value = value { inputs.append(value) }
+        if let length = length { inputs.append(length) }
+        let out = try DataBuffer(name: "out", size: bufferSize, baseContents: [], static: false)
+
+        let module = try ConstGeneratorAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func runRamp(start: ExperimentAnalysisDataInput, stop: ExperimentAnalysisDataInput, length: ExperimentAnalysisDataInput? = nil, bufferSize: Int = 0) throws -> [Double] {
+        var inputs: [ExperimentAnalysisDataInput] = [start, stop]
+        if let length = length { inputs.append(length) }
+        let out = try DataBuffer(name: "out", size: bufferSize, baseContents: [], static: false)
+
+        let module = try RampGeneratorAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    private func emptyBuffer(_ usedAs: String) throws -> ExperimentAnalysisDataInput {
+        let buffer = try DataBuffer(name: usedAs, size: 0, baseContents: [], static: false)
+        return .buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: usedAs, keep: true)
+    }
+
+    func testConstBasicsAndDefaults() throws {
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: 3, usedAs: "length")), [5, 5, 5])
+        XCTAssertEqual(try runConst(value: .value(value: 7, usedAs: "value"), bufferSize: 4), [7, 7, 7, 7], "an absent length falls back to the output buffer's size")
+        XCTAssertEqual(try runConst(length: .value(value: 2, usedAs: "length")), [0, 0], "an absent value keeps the default 0")
+    }
+
+    func testConstLengthErrorStates() throws {
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: 0, usedAs: "length"), bufferSize: 4), [], "an explicit length of 0 yields empty output, not the buffer size")
+        XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: try emptyBuffer("length"), bufferSize: 4), [], "an empty length buffer yields empty output")
+        for l in [Double.nan, .infinity, -2] {
+            XCTAssertEqual(try runConst(value: .value(value: 5, usedAs: "value"), length: .value(value: l, usedAs: "length"), bufferSize: 4), [], "length=\(l) must yield empty output, not a trap")
+        }
+    }
+
+    func testConstNaNValueIsPermittedFill() throws {
+        let result = try runConst(value: .value(value: .nan, usedAs: "value"), length: .value(value: 2, usedAs: "length"))
+        XCTAssertEqual(result.count, 2)
+        XCTAssertTrue(result.allSatisfy { $0.isNaN }, "a present NaN value is a deliberate NaN initialization")
+    }
+
+    func testConstEmptyValueBufferYieldsEmptyOutput() throws {
+        XCTAssertEqual(try runConst(value: try emptyBuffer("value"), length: .value(value: 2, usedAs: "length")), [])
+    }
+
+    func testRampBasics() throws {
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 10, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [0, 5, 10])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 2, usedAs: "stop"), bufferSize: 3), [0, 1, 2], "an absent length falls back to the output buffer's size")
+    }
+
+    func testRampLengthOneOutputsStart() throws {
+        XCTAssertEqual(try runRamp(start: .value(value: 5, usedAs: "start"), stop: .value(value: 10, usedAs: "stop"), length: .value(value: 1, usedAs: "length")), [5], "a single-point ramp outputs its start, not NaN")
+    }
+
+    func testRampErrorStates() throws {
+        //length 0, empty length buffer, non-finite and negative lengths
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 0, usedAs: "length"), bufferSize: 4), [])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: try emptyBuffer("length"), bufferSize: 4), [])
+        for l in [Double.nan, -3] {
+            XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: l, usedAs: "length")), [])
+        }
+        //empty and non-finite start/stop
+        XCTAssertEqual(try runRamp(start: try emptyBuffer("start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+        XCTAssertEqual(try runRamp(start: .value(value: .nan, usedAs: "start"), stop: .value(value: 1, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+        XCTAssertEqual(try runRamp(start: .value(value: 0, usedAs: "start"), stop: .value(value: .infinity, usedAs: "stop"), length: .value(value: 3, usedAs: "length")), [])
+    }
+}
+
+//split: a present but non-finite index/overlap yields empty outputs; finite indices are
+//clamped into range (negative index: out1 empty, out2 receives everything; huge index: no
+//trap). Absent inputs keep the defaults (index = input length, overlap = 0).
+final class SplitEdgeCaseTests: XCTestCase {
+    private func runSplit(data: [Double], index: Double? = nil, overlap: Double? = nil) throws -> (out1: [Double], out2: [Double]) {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)]
+        if let index = index {
+            inputs.append(.value(value: index, usedAs: "index"))
+        }
+        if let overlap = overlap {
+            inputs.append(.value(value: overlap, usedAs: "overlap"))
+        }
+        let out1 = try DataBuffer(name: "out1", size: 0, baseContents: [], static: false)
+        let out2 = try DataBuffer(name: "out2", size: 0, baseContents: [], static: false)
+
+        let module = try SplitAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: out1, data: MutableDoubleArray(data: []), usedAs: "out1", append: false),
+                .buffer(buffer: out2, data: MutableDoubleArray(data: []), usedAs: "out2", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (out1.toArray(), out2.toArray())
+    }
+
+    func testBasicSplitAndDefaults() throws {
+        let split = try runSplit(data: [1, 2, 3], index: 2)
+        XCTAssertEqual(split.out1, [1, 2])
+        XCTAssertEqual(split.out2, [3])
+
+        let defaulted = try runSplit(data: [1, 2, 3])
+        XCTAssertEqual(defaulted.out1, [1, 2, 3], "the index defaults to the input length")
+        XCTAssertEqual(defaulted.out2, [])
+
+        let overlapping = try runSplit(data: [1, 2, 3], index: 2, overlap: 1)
+        XCTAssertEqual(overlapping.out1, [1, 2])
+        XCTAssertEqual(overlapping.out2, [2, 3])
+    }
+
+    func testOutOfRangeIndicesAreClamped() throws {
+        let negative = try runSplit(data: [1, 2, 3], index: -5)
+        XCTAssertEqual(negative.out1, [])
+        XCTAssertEqual(negative.out2, [1, 2, 3])
+
+        let huge = try runSplit(data: [1, 2, 3], index: 1e300)
+        XCTAssertEqual(huge.out1, [1, 2, 3], "an out-of-range index is clamped, not a trap")
+        XCTAssertEqual(huge.out2, [])
+    }
+
+    func testNonFiniteParametersYieldEmptyOutputs() throws {
+        for parameters in [(index: Double.nan, overlap: 0.0), (index: 2.0, overlap: .infinity), (index: -.infinity, overlap: 0.0)] {
+            let result = try runSplit(data: [1, 2, 3], index: parameters.index, overlap: parameters.overlap)
+            XCTAssertEqual(result.out1, [], "index=\(parameters.index) overlap=\(parameters.overlap) must yield empty outputs")
+            XCTAssertEqual(result.out2, [])
+        }
+    }
+}
+
+//eventstream: a NaN threshold participates in the comparisons (nothing triggers); index/skip/
+//last keep their documented start defaults (0/0/NaN) when absent or empty; a non-finite value
+//reaching the distance/index/skip conversions yields empty outputs instead of trapping, which
+//resets the state loop on the next run.
+final class EventStreamEdgeCaseTests: XCTestCase {
+    private func runEventStream(data: [Double], parameters: [ExperimentAnalysisDataInput] = []) throws -> (events: [Double], index: [Double], skip: [Double], last: [Double]) {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        let events = try DataBuffer(name: "events", size: 0, baseContents: [], static: false)
+        let indexOut = try DataBuffer(name: "indexOut", size: 0, baseContents: [], static: false)
+        let skipOut = try DataBuffer(name: "skipOut", size: 0, baseContents: [], static: false)
+        let lastOut = try DataBuffer(name: "lastOut", size: 0, baseContents: [], static: false)
+
+        let module = try EventStreamAnalysis(
+            inputs: [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)] + parameters,
+            outputs: [
+                .buffer(buffer: events, data: MutableDoubleArray(data: []), usedAs: "events", append: false),
+                .buffer(buffer: indexOut, data: MutableDoubleArray(data: []), usedAs: "index", append: false),
+                .buffer(buffer: skipOut, data: MutableDoubleArray(data: []), usedAs: "skip", append: false),
+                .buffer(buffer: lastOut, data: MutableDoubleArray(data: []), usedAs: "last", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (events.toArray(), indexOut.toArray(), skipOut.toArray(), lastOut.toArray())
+    }
+
+    func testBasicTriggering() throws {
+        let result = try runEventStream(data: [0, 5, 0, 6], parameters: [.value(value: 3, usedAs: "threshold")])
+        XCTAssertEqual(result.events, [1, 3])
+        XCTAssertEqual(result.index, [4])
+        XCTAssertEqual(result.skip, [0])
+        XCTAssertEqual(result.last, [6])
+    }
+
+    func testDistanceSkipsSamples() throws {
+        let result = try runEventStream(data: [0, 5, 5, 5], parameters: [
+            .value(value: 3, usedAs: "threshold"),
+            .value(value: 2, usedAs: "distance")
+        ])
+        XCTAssertEqual(result.events, [1], "the two samples after the trigger are skipped")
+        XCTAssertEqual(result.index, [4])
+        XCTAssertEqual(result.skip, [0])
+        XCTAssertEqual(result.last, [5])
+    }
+
+    func testNaNThresholdParticipates() throws {
+        let result = try runEventStream(data: [1, 2], parameters: [.value(value: .nan, usedAs: "threshold")])
+        XCTAssertEqual(result.events, [], "no comparison with a NaN threshold is true")
+        XCTAssertEqual(result.index, [2])
+        XCTAssertEqual(result.last, [2])
+    }
+
+    func testNonFiniteStateYieldsEmptyOutputs() throws {
+        for parameter in [ExperimentAnalysisDataInput.value(value: .nan, usedAs: "index"),
+                          .value(value: .infinity, usedAs: "skip"),
+                          .value(value: .nan, usedAs: "distance")] {
+            let result = try runEventStream(data: [0, 5], parameters: [.value(value: 3, usedAs: "threshold"), parameter])
+            XCTAssertEqual(result.events, [])
+            XCTAssertEqual(result.index, [], "a non-finite state value must yield empty outputs, not a trap")
+            XCTAssertEqual(result.skip, [])
+            XCTAssertEqual(result.last, [])
+        }
+    }
+
+    func testEmptyStateBuffersSelectStartDefaults() throws {
+        let indexBuffer = try DataBuffer(name: "index", size: 0, baseContents: [], static: false)
+        let result = try runEventStream(data: [0, 5], parameters: [
+            .value(value: 3, usedAs: "threshold"),
+            .buffer(buffer: indexBuffer, data: MutableDoubleArray(data: []), usedAs: "index", keep: true)
+        ])
+        XCTAssertEqual(result.events, [1], "an empty index buffer selects the start default 0")
+        XCTAssertEqual(result.index, [2])
+    }
+}
+
+//movingaverage: non-finite values inside the window are skipped (aligning with average and
+//binning; a window without any finite value yields NaN). A present but invalid width
+//(non-finite or negative) yields empty output; an absent width input or an empty width buffer
+//selects the documented default of 10.
+final class MovingAverageEdgeCaseTests: XCTestCase {
+    private func runMovingAverage(data: [Double], width: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
+        let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "data", keep: true)]
+        if let width = width {
+            inputs.append(width)
+        }
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try MovingAverageAnalysis(
+            inputs: inputs,
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "data", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testBasicMovingAverage() throws {
+        let result = try runMovingAverage(data: [1, 2, 3, 4], width: .value(value: 1, usedAs: "width"))
+        XCTAssertEqual(result, [1, 1.5, 2.5, 3.5])
+    }
+
+    func testNonFiniteValuesInWindowAreSkipped() throws {
+        let result = try runMovingAverage(data: [1, .nan, 3], width: .value(value: 2, usedAs: "width"))
+        XCTAssertEqual(result, [1, 1, 2], "NaN in the window must be skipped, not propagate into every average")
+    }
+
+    func testAllNonFiniteWindowYieldsNaN() throws {
+        let result = try runMovingAverage(data: [.nan], width: .value(value: 0, usedAs: "width"))
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].isNaN)
+    }
+
+    func testInvalidWidthYieldsEmptyOutput() throws {
+        for width in [Double.nan, .infinity, -.infinity, -1] {
+            let result = try runMovingAverage(data: [1, 2, 3], width: .value(value: width, usedAs: "width"))
+            XCTAssertEqual(result, [], "width=\(width) must yield an empty output, not a trap or substitute width")
+        }
+    }
+
+    func testEmptyWidthBufferSelectsDefault() throws {
+        let widthBuffer = try DataBuffer(name: "width", size: 0, baseContents: [], static: false)
+        let result = try runMovingAverage(data: [1, 2], width: .buffer(buffer: widthBuffer, data: MutableDoubleArray(data: []), usedAs: "width", keep: true))
+        XCTAssertEqual(result, [1, 1.5], "an empty width buffer selects the default of 10")
+    }
+}
+
+//binning: invalid dx (zero, negative, non-finite) and non-finite x0 yield empty outputs (no
+//silent dx=1 substitution); absent inputs or empty parameter buffers keep the defaults x0=0,
+//dx=1. Bins are lower-edge inclusive with floor semantics - truncation toward zero would give
+//bin 0 double width.
+final class BinningEdgeCaseTests: XCTestCase {
+    private func runBinning(data: [Double], x0: Double? = nil, dx: Double? = nil, dxBuffer: [Double]? = nil) throws -> (starts: [Double], counts: [Double]) {
+        let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        var inputs: [ExperimentAnalysisDataInput] = [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)]
+        if let x0 = x0 {
+            inputs.append(.value(value: x0, usedAs: "x0"))
+        }
+        if let dx = dx {
+            inputs.append(.value(value: dx, usedAs: "dx"))
+        }
+        if let dxBuffer = dxBuffer {
+            let buffer = try DataBuffer(name: "dx", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: buffer, data: MutableDoubleArray(data: dxBuffer), usedAs: "dx", keep: true))
+        }
+        let startsOut = try DataBuffer(name: "binStarts", size: 0, baseContents: [], static: false)
+        let countsOut = try DataBuffer(name: "binCounts", size: 0, baseContents: [], static: false)
+
+        let module = try BinningAnalysis(
+            inputs: inputs,
+            outputs: [
+                .buffer(buffer: startsOut, data: MutableDoubleArray(data: []), usedAs: "binStarts", append: false),
+                .buffer(buffer: countsOut, data: MutableDoubleArray(data: []), usedAs: "binCounts", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+        return (startsOut.toArray(), countsOut.toArray())
+    }
+
+    func testInvalidDxAndX0YieldEmptyOutputs() throws {
+        for (x0, dx) in [(0.0, 0.0), (0.0, -1.0), (0.0, Double.nan), (0.0, .infinity), (Double.nan, 1.0), (.infinity, 1.0)] {
+            let result = try runBinning(data: [1, 2, 3], x0: x0, dx: dx)
+            XCTAssertEqual(result.starts, [], "x0=\(x0) dx=\(dx) must yield empty outputs")
+            XCTAssertEqual(result.counts, [])
+        }
+    }
+
+    func testEmptyDxBufferKeepsDefault() throws {
+        let result = try runBinning(data: [0.5, 1.5], dxBuffer: [])
+        XCTAssertEqual(result.starts, [0, 1], "an empty dx buffer keeps the default dx = 1")
+        XCTAssertEqual(result.counts, [1, 1])
+    }
+
+    func testBinZeroIsNotDoubleWidth() throws {
+        //floor semantics: -0.5 belongs to bin -1, 0.5 to bin 0. Truncation put both in bin 0.
+        let result = try runBinning(data: [-0.5, 0.5], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [-1, 0])
+        XCTAssertEqual(result.counts, [1, 1])
+    }
+
+    func testLowerEdgeInclusive() throws {
+        let result = try runBinning(data: [1.0], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [1], "a value exactly on a bin edge belongs to the bin starting there")
+        XCTAssertEqual(result.counts, [1])
+    }
+
+    func testBasicBinningAndNonFiniteValuesSkipped() throws {
+        let result = try runBinning(data: [0.1, .nan, 0.2, 1.5, .infinity], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [0, 1])
+        XCTAssertEqual(result.counts, [2, 1])
+    }
+
+    func testHugeRatioDoesNotTrap() throws {
+        //finite parameters, but the bin index of 1e300 exceeds Int - that value is skipped, no trap
+        let result = try runBinning(data: [1e300, 0.5], x0: 0, dx: 1)
+        XCTAssertEqual(result.starts, [0])
+        XCTAssertEqual(result.counts, [1])
+    }
+}
+
+//max/min: one comparison loop like Android - NaN values never win a comparison, an x buffer
+//shorter than y truncates to the common length, the final open set in multiple mode is flushed,
+//and an empty/all-invalid input yields NaN per connected output (single mode) or empty outputs
+//(multiple mode).
+final class MaxMinAnalysisTests: XCTestCase {
+    private func run(_ isMax: Bool, x: [Double]? = nil, y: [Double], threshold: Double? = nil, multiple: Bool = false) throws -> (values: [Double], positions: [Double]) {
+        var inputs: [ExperimentAnalysisDataInput] = []
+        if let x = x {
+            let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
+            inputs.append(.buffer(buffer: xBuffer, data: MutableDoubleArray(data: x), usedAs: "x", keep: true))
+        }
+        let yBuffer = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+        inputs.append(.buffer(buffer: yBuffer, data: MutableDoubleArray(data: y), usedAs: "y", keep: true))
+        if let threshold = threshold {
+            inputs.append(.value(value: threshold, usedAs: "threshold"))
+        }
+
+        let valueOut = try DataBuffer(name: "value", size: 0, baseContents: [], static: false)
+        let positionOut = try DataBuffer(name: "position", size: 0, baseContents: [], static: false)
+        let outputs: [ExperimentAnalysisDataOutput] = [
+            .buffer(buffer: valueOut, data: MutableDoubleArray(data: []), usedAs: isMax ? "max" : "min", append: false),
+            .buffer(buffer: positionOut, data: MutableDoubleArray(data: []), usedAs: "position", append: false)
+        ]
+
+        if isMax {
+            let module = try MaxAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: .empty)
+            module.multiple = multiple
+            module.update()
+        } else {
+            let module = try MinAnalysis(inputs: inputs, outputs: outputs, additionalAttributes: .empty)
+            module.multiple = multiple
+            module.update()
+        }
+        return (valueOut.toArray(), positionOut.toArray())
+    }
+
+    func testSingleModeBasics() throws {
+        let maxResult = try run(true, x: [10, 20, 30], y: [1, 5, 3])
+        XCTAssertEqual(maxResult.values, [5])
+        XCTAssertEqual(maxResult.positions, [20])
+
+        let minResult = try run(false, y: [3, 1, 2])
+        XCTAssertEqual(minResult.values, [1])
+        XCTAssertEqual(minResult.positions, [1], "an omitted x input auto-generates indices")
+    }
+
+    func testNaNValuesAreSkipped() throws {
+        //the audio_scope fallback shape: min over [2400, NaN] must be 2400
+        let minResult = try run(false, y: [2400, .nan])
+        XCTAssertEqual(minResult.values, [2400], "NaN must not leak into the result like vDSP_minvD would")
+
+        let maxResult = try run(true, y: [.nan, 5, .nan])
+        XCTAssertEqual(maxResult.values, [5])
+        XCTAssertEqual(maxResult.positions, [1])
+    }
+
+    func testEmptyAndAllInvalidInputYieldNaNInSingleMode() throws {
+        for y in [[Double](), [Double.nan, Double.nan]] {
+            let result = try run(true, y: y)
+            XCTAssertEqual(result.values.count, 1)
+            XCTAssertTrue(result.values[0].isNaN, "empty/all-invalid input must yield NaN, not a vDSP artifact")
+            XCTAssertEqual(result.positions.count, 1)
+            XCTAssertTrue(result.positions[0].isNaN)
+        }
+    }
+
+    func testXShorterThanYTruncates() throws {
+        let result = try run(true, x: [10], y: [1, 5])
+        XCTAssertEqual(result.values, [1], "processing truncates to the common length instead of trapping")
+        XCTAssertEqual(result.positions, [10])
+    }
+
+    func testMultipleModeFlushesTrailingSet() throws {
+        let maxResult = try run(true, y: [1, 2, -1, 3, 4], threshold: 0, multiple: true)
+        XCTAssertEqual(maxResult.values, [2, 4], "the set still open at the end of the data must be emitted")
+        XCTAssertEqual(maxResult.positions, [1, 4])
+
+        let minResult = try run(false, y: [-1, -2, 1, -3], threshold: 0, multiple: true)
+        XCTAssertEqual(minResult.values, [-2, -3])
+        XCTAssertEqual(minResult.positions, [1, 3])
+    }
+
+    func testMultipleModeEmptyInputYieldsEmptyOutputs() throws {
+        let result = try run(true, y: [], threshold: 0, multiple: true)
+        XCTAssertEqual(result.values, [])
+        XCTAssertEqual(result.positions, [])
+    }
+
+    func testMultipleModeNaNThresholdFormsOneSet() throws {
+        let result = try run(true, y: [1, -2, 3], threshold: .nan, multiple: true)
+        XCTAssertEqual(result.values, [3], "no comparison with a NaN threshold is true, so the whole input is one set")
+        XCTAssertEqual(result.positions, [2])
+    }
+}
+
+//round in default mode: ties round half away from zero (C rounding, like the formula
+//language's round) and non-finite values pass through unchanged. vvnint was replaced because
+//it rounds ties to even.
+final class RoundTiesTests: XCTestCase {
+    func testTiesRoundHalfAwayFromZeroAndNonFinitePassesThrough() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [0.5, 1.5, 2.5, -0.5, -1.5, -2.5, 2.4, -2.4, .nan, .infinity, -.infinity])
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try RoundAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "value", keep: true)],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "round", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = out.toArray()
+        XCTAssertEqual(Array(result[0..<8]), [1, 2, 3, -1, -2, -3, 2, -2], "ties must round half away from zero, not to even")
+        XCTAssertTrue(result[8].isNaN, "NaN passes through unchanged")
+        XCTAssertEqual(result[9], .infinity)
+        XCTAssertEqual(result[10], -.infinity)
+    }
+}
+
+//An empty sigma attribute on gausssmooth is treated like an absent one and selects the default
+//of 3, consistent with the format-wide empty-equals-omitted convention (matching Android). A
+//present non-positive or unparseable sigma still rejects the file.
+final class GaussSmoothEmptySigmaTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    private func xml(sigma: String) -> String {
+        return """
+        <phyphox version="1.20">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+                <container>buffer2</container>
+            </data-containers>
+            <analysis>
+                <gausssmooth\(sigma)><input>buffer</input><output>buffer2</output></gausssmooth>
+            </analysis>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer2</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+    }
+
+    func testEmptySigmaLoadsWithDefault() throws {
+        _ = try parse(xml(sigma: " sigma=\"\""))
+    }
+
+    func testAbsentSigmaLoads() throws {
+        _ = try parse(xml(sigma: ""))
+    }
+
+    func testExplicitSigmaLoads() throws {
+        _ = try parse(xml(sigma: " sigma=\"2.5\""))
+    }
+
+    func testNonPositiveSigmaStillRejected() throws {
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"0\"")))
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"-1\"")))
+    }
+
+    func testUnparseableSigmaStillRejected() throws {
+        XCTAssertThrowsError(try parse(xml(sigma: " sigma=\"abc\"")))
+    }
+}
+
+//subrange error states: a present but non-finite from/to/length yields empty outputs (matching
+//Android); only an absent input or an empty parameter buffer keeps the defaults (from 0, to the
+//full input range).
+final class SubrangeNonfiniteParameterTests: XCTestCase {
+    private func runSubrange(data: [Double], parameters: [ExperimentAnalysisDataInput]) throws -> [Double] {
+        let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+
+        let module = try SubrangeAnalysis(
+            inputs: parameters + [.buffer(buffer: inBuffer, data: MutableDoubleArray(data: data), usedAs: "in", keep: true)],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "out", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return out.toArray()
+    }
+
+    func testNaNToYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .nan, usedAs: "to")])
+        XCTAssertEqual(result, [], "a NaN to must yield an empty output, not the full range")
+    }
+
+    func testInfiniteLengthYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .infinity, usedAs: "length")])
+        XCTAssertEqual(result, [])
+    }
+
+    func testNaNFromYieldsEmptyOutput() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [.value(value: .nan, usedAs: "from")])
+        XCTAssertEqual(result, [])
+    }
+
+    func testFiniteParametersUnchanged() throws {
+        let result = try runSubrange(data: [10, 20, 30, 40], parameters: [
+            .value(value: 1, usedAs: "from"),
+            .value(value: 3, usedAs: "to")
+        ])
+        XCTAssertEqual(result, [20, 30])
+    }
+
+    func testEmptyParameterBufferKeepsDefault() throws {
+        let toBuffer = try DataBuffer(name: "to", size: 0, baseContents: [], static: false)
+        let result = try runSubrange(data: [10, 20, 30], parameters: [
+            .buffer(buffer: toBuffer, data: MutableDoubleArray(data: []), usedAs: "to", keep: true)
+        ])
+        XCTAssertEqual(result, [10, 20, 30], "an empty to buffer keeps the full-range default, unlike a non-finite value")
+    }
+}
+
+final class GCDVectorTests: XCTestCase {
+    func testGCDVectorInputs() throws {
+        let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
+        let bufferB = try DataBuffer(name: "b", size: 0, baseContents: [], static: false)
+        let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
+        let module = try GCDAnalysis(
+            inputs: [
+                .buffer(buffer: bufferA, data: MutableDoubleArray(data: [12, 4.5, -4]), usedAs: "value", keep: true),
+                .buffer(buffer: bufferB, data: MutableDoubleArray(data: [18, 10, 6]), usedAs: "value", keep: true)
+            ],
+            outputs: [.buffer(buffer: out, data: MutableDoubleArray(data: []), usedAs: "gcd", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = out.toArray()
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0], 6)
+        XCTAssertEqual(result[1], 5)
+        XCTAssertTrue(result[2].isNaN)
     }
 }
 
@@ -1851,8 +4958,7 @@ final class DropdownViewTests: XCTestCase {
 }
 
 //An FFT with a real input only (no imaginary input) treats the imaginary part as zero and returns
-//the full complex spectrum, not the unique first half - matching Android
-//(fft-real-input-output-length in phyphox-docs).
+//the full complex spectrum, not the unique first half - matching Android.
 final class FFTRealInputTests: XCTestCase {
     func testRealOnlyFFTReturnsFullLength() throws {
         let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -1874,5 +4980,563 @@ final class FFTRealInputTests: XCTestCase {
         XCTAssertEqual(imOut.toArray().count, expected)
         //The DC bin equals the sum of the input (1..8 = 36); a sanity check that it is a real FFT
         XCTAssertEqual(reOut.toArray().first ?? 0, 36, accuracy: 1e-6)
+    }
+
+    func testTinyInputDoesNotCrash() throws {
+        //vDSP_DFT documents a minimum length of 8 but handles N = 1, 2 and 4; this pins that
+        //inputs below 8 samples produce a correct transform (and never a crash)
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2])
+        let reOut = try DataBuffer(name: "re", size: 0, baseContents: [], static: false)
+        let imOut = try DataBuffer(name: "im", size: 0, baseContents: [], static: false)
+
+        let module = try FFTAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "re", keep: true)],
+            outputs: [
+                .buffer(buffer: reOut, data: MutableDoubleArray(data: []), usedAs: "re", append: false),
+                .buffer(buffer: imOut, data: MutableDoubleArray(data: []), usedAs: "im", append: false)
+            ],
+            additionalAttributes: .empty)
+        module.update()
+
+        //DFT of [1, 2]: X0 = 3, X1 = -1, imaginary parts zero
+        let re = reOut.toArray()
+        let im = imOut.toArray()
+        XCTAssertEqual(re.count, 2)
+        XCTAssertEqual(re[0], 3, accuracy: 1e-9)
+        XCTAssertEqual(re[1], -1, accuracy: 1e-9)
+        XCTAssertEqual(im[0], 0, accuracy: 1e-9)
+        XCTAssertEqual(im[1], 0, accuracy: 1e-9)
+    }
+}
+
+//The x output of autocorrelation is optional and omitting it must simply skip it, like on
+//Android - it used to trap on a forced unwrap as soon as data arrived. min/max filtering has
+//to keep working without an x output, applied to the implicit 0,1,2,... displacement ramp.
+final class AutocorrelationOmittedXOutputTests: XCTestCase {
+    //Autocorrelation of [1,2,3,4]: displacement i yields sum(y[j]*y[j+i])/(count-i)
+    private let expectedY = [7.5, 20.0/3.0, 5.5, 4.0]
+
+    func testOmittedXOutput() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2, 3, 4])
+        let yOut = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+
+        let module = try AutocorrelationAnalysis(
+            inputs: [.buffer(buffer: inputBuffer, data: inputData, usedAs: "y", keep: true)],
+            outputs: [.buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = yOut.toArray()
+        XCTAssertEqual(result.count, expectedY.count)
+        for (value, expected) in zip(result, expectedY) {
+            XCTAssertEqual(value, expected, accuracy: 1e-12)
+        }
+    }
+
+    func testOmittedXOutputWithFiltering() throws {
+        let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
+        let inputData = MutableDoubleArray(data: [1, 2, 3, 4])
+        let yOut = try DataBuffer(name: "y", size: 0, baseContents: [], static: false)
+
+        let module = try AutocorrelationAnalysis(
+            inputs: [
+                .buffer(buffer: inputBuffer, data: inputData, usedAs: "y", keep: true),
+                .value(value: 1.0, usedAs: "minX"),
+                .value(value: 2.0, usedAs: "maxX")
+            ],
+            outputs: [.buffer(buffer: yOut, data: MutableDoubleArray(data: []), usedAs: "y", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+
+        let result = yOut.toArray()
+        XCTAssertEqual(result.count, 2, "only the displacements 1 and 2 pass the minX/maxX filter")
+        for (value, expected) in zip(result, [expectedY[1], expectedY[2]]) {
+            XCTAssertEqual(value, expected, accuracy: 1e-12)
+        }
+    }
+}
+
+//The duplicate-metadata-last-wins rule from phyphox-docs (ruled 2026-08-24, matching Android):
+//a repeated metadata child of the ROOT element - title, state-title, category, icon, color,
+//description - does not reject the file; the parser uses the last occurrence. Files with such
+//duplicates exist in the wild: old Android versions appended a fresh state-title on every
+//re-save of a saved state. The tolerance is for readers and for these six elements only -
+//elsewhere a duplicate element stays an error.
+final class DuplicateRootMetadataTests: XCTestCase {
+    private func parse(_ xml: String) throws -> Experiment {
+        let stream = InputStream(data: xml.data(using: .utf8)!)
+        return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
+    }
+
+    func testLastOccurrenceWins() throws {
+        let experiment = try parse("""
+        <phyphox version="1.6">
+            <title>first title</title>
+            <category>first category</category>
+            <icon format="string">A</icon>
+            <description>first description</description>
+            <state-title>Measurement 1/23/18 21:13</state-title>
+            <title>second title</title>
+            <category>second category</category>
+            <icon format="string">B</icon>
+            <color>red</color>
+            <description>second description</description>
+            <state-title>Taipei 101 down</state-title>
+            <color>blue</color>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """)
+        XCTAssertEqual(experiment.localizedTitle, "second title")
+        XCTAssertEqual(experiment.localizedCategory, "second category")
+        XCTAssertEqual(experiment.stateTitle, "Taipei 101 down")
+        XCTAssertEqual(experiment.localizedDescription, "second description")
+        XCTAssertEqual(experiment.icon, ExperimentIcon.string("B"))
+        XCTAssertEqual(experiment.color, namedColors["blue"])
+    }
+
+    func testDuplicatesElsewhereStillReject() {
+        //The tolerance is scoped to the root's metadata children: a duplicated structural
+        //child of the root...
+        XCTAssertThrowsError(try parse("""
+        <phyphox version="1.6">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <data-containers>
+                <container>buffer2</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """), "a second data-containers element must still be a duplicate-element error")
+
+        //...and a duplicated single-slot element below the root both stay errors
+        XCTAssertThrowsError(try parse("""
+        <phyphox version="1.6">
+            <title>t</title>
+            <category>c</category>
+            <description>d</description>
+            <data-containers>
+                <container>buffer</container>
+            </data-containers>
+            <views>
+                <view label="v">
+                    <value label="l"><input>buffer</input><input>buffer</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """), "a second input of a value element must still be a duplicate-element error")
+    }
+}
+
+//The conformance-corpus runner, implementing the contract in phyphox-docs corpus/README.md
+//("The app test suites") and the corpus-* rows of test-matrix.yml. The corpus is read from a
+//phyphox-docs checkout NEXT TO this repository - the same sibling convention the docs build
+//uses for the shipped collection, in reverse - never copied into the test bundle, where it
+//would drift. Without the sibling the corpus tests skip with a notice (a plain clone must
+//still build and test); CI checks the sibling out explicitly, so there they always run.
+//The phyphox-docs checkout NEXT TO this repository, shared by the runners fed from it (the
+//conformance corpus and the analysis golden vectors). Nothing is copied into the test bundle,
+//where it would drift; without the sibling those tests skip with a notice (a plain clone must
+//still build and test) and CI checks it out explicitly.
+enum DocsCorpus {
+    //#filePath is resolvable at test time because the suite builds and runs on the same
+    //machine, locally as well as on CI
+    static let repositoryRoot: URL = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()  // phyphoxTests
+        .deletingLastPathComponent()  // phyphox-iOS
+        .deletingLastPathComponent()
+
+    ///The phyphox-docs checkout, nil when there is none
+    static let docs: URL? = {
+        let docs = repositoryRoot.deletingLastPathComponent().appendingPathComponent("phyphox-docs", isDirectory: true)
+        return FileManager.default.fileExists(atPath: docs.path) ? docs : nil
+    }()
+
+    static let url: URL? = {
+        guard let corpus = docs?.appendingPathComponent("corpus", isDirectory: true) else { return nil }
+        return FileManager.default.fileExists(atPath: corpus.path) ? corpus : nil
+    }()
+
+    ///A directory of the docs checkout (like fixtures/views), skipping the test without one
+    static func docsDirectory(_ subpath: String, notTestedNotice: String) throws -> URL {
+        guard let docs = docs else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - \(notTestedNotice) not tested")
+        }
+        let directory = docs.appendingPathComponent(subpath, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no \(subpath) - \(notTestedNotice) not tested")
+        }
+        return directory
+    }
+
+    static func directory(_ subpath: String, notTestedNotice: String) throws -> URL {
+        guard let url = url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - \(notTestedNotice) not tested")
+        }
+        let directory = url.appendingPathComponent(subpath, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no corpus/\(subpath) - \(notTestedNotice) not tested")
+        }
+        return directory
+    }
+
+    //Reads the version attribute of the root element without parsing the whole file
+    private final class RootVersionReader: NSObject, XMLParserDelegate {
+        var version: String? = nil
+        func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String]) {
+            version = attributeDict["version"]
+            parser.abortParsing()
+        }
+    }
+
+    static func declaredVersion(of url: URL) -> SemanticVersion? {
+        guard let parser = XMLParser(contentsOf: url) else { return nil }
+        let reader = RootVersionReader()
+        parser.delegate = reader
+        parser.parse()
+        return reader.version.flatMap { SemanticVersion(string: $0) }
+    }
+
+    static func phyphoxFiles(in directory: URL) throws -> [URL] {
+        let enumerator = try FileManager.default.enumerator(at: directory, includingPropertiesForKeys: nil).unwrap()
+        return enumerator.compactMap({ $0 as? URL }).filter({ $0.pathExtension == "phyphox" }).sorted { $0.path < $1.path }
+    }
+}
+
+final class CorpusConformanceTests: XCTestCase {
+    private func corpus() throws -> URL {
+        guard let corpus = DocsCorpus.url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - conformance corpus not tested")
+        }
+        return corpus
+    }
+
+    private func declaredVersion(of url: URL) -> SemanticVersion? {
+        return DocsCorpus.declaredVersion(of: url)
+    }
+
+    private func phyphoxFiles(in directory: URL) throws -> [URL] {
+        return try DocsCorpus.phyphoxFiles(in: directory)
+    }
+
+    //The parser classification of the invalid corpus files, from expected.yml: file name to
+    //"rejects" or "accepts". Read with a minimal line-based reader instead of a YAML
+    //dependency; the file's shape is pinned by its header and by the Android runner.
+    private func invalidFileExpectations(corpus: URL) throws -> [String: String] {
+        let text = try String(contentsOf: corpus.appendingPathComponent("invalid/expected.yml"), encoding: .utf8)
+        var expectations: [String: String] = [:]
+        var currentFile: String? = nil
+        for line in text.components(separatedBy: .newlines) {
+            let withoutComment = line.components(separatedBy: "#")[0]
+            let trimmed = withoutComment.trimmingCharacters(in: .whitespaces)
+            if !line.hasPrefix(" ") && trimmed.hasSuffix(":") && trimmed.contains(".phyphox") {
+                currentFile = String(trimmed.dropLast())
+            }
+            else if line.hasPrefix(" ") && trimmed.hasPrefix("parser:"), let file = currentFile {
+                expectations[file] = trimmed.dropFirst("parser:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return expectations
+    }
+
+    //A valid/generated file exercising a construct with a recorded platform difference
+    //carries an entry in an expected.yml next to it, mapping each platform to accepts or
+    //rejects (nested shape, unlike the flat one of invalid/expected.yml). Returns what iOS
+    //must do with each annotated file; files without an entry must simply load.
+    private func platformExpectations(in directory: URL) throws -> [String: String] {
+        guard let text = try? String(contentsOf: directory.appendingPathComponent("expected.yml"), encoding: .utf8) else { return [:] }
+        var expectations: [String: String] = [:]
+        var currentFile: String? = nil
+        for line in text.components(separatedBy: .newlines) {
+            let withoutComment = line.components(separatedBy: "#")[0]
+            let trimmed = withoutComment.trimmingCharacters(in: .whitespaces)
+            if !line.hasPrefix(" ") && trimmed.hasSuffix(":") && trimmed.contains(".phyphox") {
+                currentFile = String(trimmed.dropLast())
+            }
+            else if line.hasPrefix(" ") && trimmed.hasPrefix("ios:"), let file = currentFile {
+                expectations[file] = trimmed.dropFirst("ios:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return expectations
+    }
+
+    //Every corpus file of a supported format version loads through the app's real
+    //experiment-loading path; files declaring a newer version exist for future format
+    //versions and are skipped, not failed. A file whose platform annotation maps ios to
+    //rejects must instead be REFUSED - the deliberate platform difference is itself contract.
+    // phyphox-test: corpus-valid-load
+    func testValidAndGeneratedCorpusFilesLoad() throws {
+        let corpus = try corpus()
+        var loaded = 0
+        for directory in ["valid", "generated"] {
+            let directoryURL = corpus.appendingPathComponent(directory, isDirectory: true)
+            let platformExpectations = try platformExpectations(in: directoryURL)
+            for url in try phyphoxFiles(in: directoryURL) {
+                let name = url.path.replacingOccurrences(of: corpus.path + "/", with: "")
+                if let expectation = platformExpectations[url.lastPathComponent] {
+                    XCTAssertTrue(expectation == "rejects" || expectation == "accepts", "unexpected platform expectation \"\(expectation)\" for \(name)")
+                    if expectation == "rejects" {
+                        XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url), "\(name) exercises a construct that is Android-only by design and must be refused on iOS")
+                        continue
+                    }
+                }
+                guard let version = declaredVersion(of: url) else {
+                    XCTFail("could not read the declared format version of \(name)")
+                    continue
+                }
+                guard version <= latestSupportedFileVersion else { continue }
+                do {
+                    _ = try ExperimentSerialization.readExperimentFromURL(url)
+                    loaded += 1
+                }
+                catch {
+                    XCTFail("\(name) (version \(version.major).\(version.minor)) failed to load: \(error)")
+                }
+            }
+        }
+        XCTAssertGreaterThan(loaded, 0, "no supported corpus file was found - corpus layout changed?")
+    }
+
+    //Structural defects, invalid enum values and the other parser: rejects files must fail on
+    //the real loading path. Any error counts; error messages are platform wording and are
+    //never asserted.
+    // phyphox-test: corpus-invalid-reject
+    func testInvalidCorpusFilesReject() throws {
+        let corpus = try corpus()
+        for (file, expectation) in try invalidFileExpectations(corpus: corpus).sorted(by: { $0.key < $1.key }) where expectation == "rejects" {
+            let url = corpus.appendingPathComponent("invalid", isDirectory: true).appendingPathComponent(file)
+            XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url), "invalid/\(file) must be rejected (classification measured on Android - a disagreement here is a finding to report, not to paper over)")
+        }
+    }
+
+    //The parser: accepts files carry only unknown or misapplied attributes, which the parsers
+    //ignore per the unknown-attribute-ignored rule (phyphox-docs spec/rules.yml). Their
+    //loading pins that compatibility guarantee.
+    // phyphox-test: corpus-tolerated-attributes-load
+    func testToleratedAttributeFilesLoad() throws {
+        let corpus = try corpus()
+        for (file, expectation) in try invalidFileExpectations(corpus: corpus).sorted(by: { $0.key < $1.key }) where expectation == "accepts" {
+            let url = corpus.appendingPathComponent("invalid", isDirectory: true).appendingPathComponent(file)
+            do {
+                _ = try ExperimentSerialization.readExperimentFromURL(url)
+            }
+            catch {
+                XCTFail("invalid/\(file) must load, its defects are tolerated attributes (classification measured on Android - a disagreement here is a finding to report, not to paper over), but it threw: \(error)")
+            }
+        }
+    }
+
+    //Guards the runner itself: the classification and the directory must not drift apart, and
+    //the minimal expected.yml reader must keep understanding the file.
+    func testExpectationsMatchInvalidDirectory() throws {
+        let corpus = try corpus()
+        let expectations = try invalidFileExpectations(corpus: corpus)
+        let files = try phyphoxFiles(in: corpus.appendingPathComponent("invalid", isDirectory: true)).map { $0.lastPathComponent }
+        XCTAssertEqual(Set(expectations.keys), Set(files), "corpus/invalid and expected.yml list different files")
+        for (file, expectation) in expectations {
+            XCTAssertTrue(expectation == "rejects" || expectation == "accepts", "unexpected parser classification \"\(expectation)\" for \(file)")
+        }
+    }
+
+    //The version gate all feature rollout relies on: a file declaring a newer format version
+    //than the app supports is refused, the exact supported version loads. Built from a
+    //supported file at test time, not a corpus fixture, so it stays correct as the supported
+    //version moves - and independent of the corpus checkout, so it never skips.
+    // phyphox-test: corpus-version-gate
+    func testVersionGate() throws {
+        func minimalExperiment(version: String) -> String {
+            return """
+            <phyphox version="\(version)">
+                <title>version gate</title>
+                <category>test</category>
+                <description>d</description>
+                <data-containers>
+                    <container>buffer</container>
+                </data-containers>
+                <views>
+                    <view label="v">
+                        <value label="l"><input>buffer</input></value>
+                    </view>
+                </views>
+            </phyphox>
+            """
+        }
+
+        func load(version: String) throws -> Experiment {
+            //Through a file and the real loading path, like everything a device receives
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("version-gate-\(UUID().uuidString).phyphox")
+            try minimalExperiment(version: version).write(to: url, atomically: true, encoding: .utf8)
+            defer { try? FileManager.default.removeItem(at: url) }
+            return try ExperimentSerialization.readExperimentFromURL(url)
+        }
+
+        let supported = "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)"
+        let newer = "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor + 1)"
+
+        XCTAssertThrowsError(try load(version: newer), "a file declaring version \(newer) must be refused by an app supporting \(supported)")
+        XCTAssertNoThrow(try load(version: supported), "a file declaring the exact supported version \(supported) must load")
+    }
+}
+
+//The analysis golden-vector runner, implementing the contract in phyphox-docs
+//corpus/analysis/README.md ("The runner contract") and the analysis-golden-vectors row of
+//test-matrix.yml. Every case is a miniature experiment carrying its input data in container init
+//values plus an expected.json stating what the buffers must hold after a given number of analysis
+//cycles. The files are loaded through the real parser and the analysis kernel is driven directly,
+//cycle by cycle; the experiment is NEVER started (the timer case pins the experiment time before
+//the first start, which is exactly 0).
+//
+//A mismatch is a finding to report to the docs session, not something to code around: the
+//expectations come from a plain-Python restatement of the semantics, so either it or both apps
+//are wrong, and which one is a documentation decision.
+final class AnalysisGoldenVectorTests: XCTestCase {
+    private struct Tolerance {
+        let abs: Double
+        let rel: Double
+
+        //A tolerance may be written as a number or, coming from the YAML source, as a string
+        static func read(from dictionary: [String: Any], or fallback: Tolerance) -> Tolerance {
+            func number(_ key: String, _ fallbackValue: Double) -> Double {
+                if let value = dictionary[key] as? NSNumber { return value.doubleValue }
+                if let text = dictionary[key] as? String, let value = Double(text) { return value }
+                return fallbackValue
+            }
+            return Tolerance(abs: number("abs", fallback.abs), rel: number("rel", fallback.rel))
+        }
+    }
+
+    //"nan", "inf" and "-inf" are how the JSON carries the non-finite expected values
+    private func expectedValue(_ value: Any) -> Double? {
+        if let number = value as? NSNumber { return number.doubleValue }
+        switch value as? String {
+        case "nan": return Double.nan
+        case "inf": return Double.infinity
+        case "-inf": return -Double.infinity
+        default: return nil
+        }
+    }
+
+    private func matches(actual: Double, expected: Double, tolerance: Tolerance) -> Bool {
+        if expected.isNaN { return actual.isNaN }
+        if expected.isInfinite { return actual == expected }
+        guard actual.isFinite else { return false }
+        return Swift.abs(actual - expected) <= tolerance.abs + tolerance.rel * Swift.abs(expected)
+    }
+
+    // phyphox-test: analysis-golden-vectors
+    func testAnalysisGoldenVectors() throws {
+        let vectors = try DocsCorpus.directory("analysis/vectors", notTestedNotice: "analysis golden vectors")
+        let files = try DocsCorpus.phyphoxFiles(in: vectors)
+        XCTAssertGreaterThan(files.count, 0, "no golden vector was found - corpus layout changed?")
+
+        //A cycle is the app's own analysis pass (ExperimentAnalysis.runCycle wraps update()):
+        //it runs the modules on the experiment's analysis queue and reports back on the main
+        //thread, so the cycles are driven from a third queue while the test waits for each -
+        //which also keeps every comparison here, on the main thread, between two cycles.
+        let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.analysis")
+        let driverQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.driver")
+        var ran = 0
+        var comparedBuffers = 0
+
+        for url in files {
+            let name = "\(url.deletingLastPathComponent().lastPathComponent)/\(url.deletingPathExtension().lastPathComponent)"
+
+            guard let version = DocsCorpus.declaredVersion(of: url) else {
+                XCTFail("could not read the declared format version of \(name)")
+                continue
+            }
+            guard version <= latestSupportedFileVersion else { continue }
+
+            let expectedURL = url.deletingPathExtension().appendingPathExtension("expected.json")
+            guard let expected = try JSONSerialization.jsonObject(with: Data(contentsOf: expectedURL)) as? [String: Any],
+                  let cycles = (expected["cycles"] as? NSNumber)?.intValue,
+                  let expect = expected["expect"] as? [[String: Any]] else {
+                XCTFail("\(name): could not read \(expectedURL.lastPathComponent)")
+                continue
+            }
+            let defaultTolerance = Tolerance.read(from: expected["default_tolerance"] as? [String: Any] ?? [:],
+                                                  or: Tolerance(abs: 0, rel: 0))
+
+            let experiment: Experiment
+            do {
+                experiment = try ExperimentSerialization.readExperimentFromURL(url)
+            }
+            catch {
+                XCTFail("\(name) failed to load: \(error)")
+                continue
+            }
+
+            experiment.analysis.queue = analysisQueue
+
+            //One analysis pass per cycle, cycle numbers 0..<cycles. The experiment is never
+            //started, so the pass sees the experiment time of a never-started experiment, and
+            //the scheduling around update() - which reschedules itself - is not involved: the
+            //runner decides when a cycle runs.
+            for cycle in 0..<cycles {
+                let cycleFinished = expectation(description: "\(name) cycle \(cycle)")
+                driverQueue.async {
+                    experiment.analysis.runCycle(cycle)
+                    cycleFinished.fulfill()
+                }
+                wait(for: [cycleFinished], timeout: 30)
+
+                let executedCycles = cycle + 1
+                for entry in expect where (entry["after_cycle"] as? NSNumber)?.intValue == executedCycles {
+                    guard let buffers = entry["buffers"] as? [String: [String: Any]] else {
+                        XCTFail("\(name): malformed expect entry for cycle \(executedCycles)")
+                        continue
+                    }
+                    for (bufferName, expectedBuffer) in buffers.sorted(by: { $0.key < $1.key }) {
+                        let label = "\(name) after cycle \(executedCycles), buffer \(bufferName)"
+                        guard let buffer = experiment.buffers[bufferName] else {
+                            XCTFail("\(label): the experiment has no such buffer")
+                            continue
+                        }
+                        guard let expectedValues = expectedBuffer["values"] as? [Any] else {
+                            XCTFail("\(label): malformed expectation")
+                            continue
+                        }
+                        comparedBuffers += 1
+                        let tolerance = Tolerance.read(from: expectedBuffer, or: defaultTolerance)
+                        let actual = buffer.toArray()
+
+                        guard actual.count == expectedValues.count else {
+                            XCTFail("\(label): expected \(expectedValues.count) values \(expectedValues), got \(actual.count): \(actual)")
+                            continue
+                        }
+                        for (index, value) in expectedValues.enumerated() {
+                            guard let expected = expectedValue(value) else {
+                                XCTFail("\(label): unreadable expected value \(value) at index \(index)")
+                                continue
+                            }
+                            if !matches(actual: actual[index], expected: expected, tolerance: tolerance) {
+                                XCTFail("\(label): value \(index) is \(actual[index]), expected \(expected) (abs \(tolerance.abs), rel \(tolerance.rel))")
+                            }
+                        }
+                    }
+                }
+            }
+            ran += 1
+        }
+
+        XCTAssertGreaterThan(ran, 0, "no golden vector of a supported format version was run")
+        //Guards the runner itself: an expectation that never matched a cycle would pass silently
+        XCTAssertGreaterThan(comparedBuffers, 0, "no buffer was compared - do the after_cycle counts still match the cycles run?")
     }
 }

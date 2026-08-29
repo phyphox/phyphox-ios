@@ -406,3 +406,7 @@
 "common_musical_note_gb7" = "F#7 / Gb7";
 "common_musical_note_g7" = "G7";
 "common_musical_note_ab7" = "G#7 / Ab7";
+
+/* Accessibility labels for the two ends of a range slider */
+"rangeSliderLowerValue" = "Lower value";
+"rangeSliderUpperValue" = "Upper value";

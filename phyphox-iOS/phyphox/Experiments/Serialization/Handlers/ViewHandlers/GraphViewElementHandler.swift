@@ -345,53 +345,98 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             throw ElementHandlerError.missingElement("input")
         }
         
+        //Dataset pairing follows the decided model ("How the input tags form datasets" on the
+        //graph page of phyphox-docs, docs/file-format/views/graph.md): every y input is one
+        //dataset. With exactly as many x inputs as y inputs (z inputs do not count), they are
+        //matched 1-on-1 in order of appearance regardless of interleaving. With fewer x than y
+        //inputs, each y is plotted against the most recent preceding x input, or against its
+        //element index if none preceded it. Any x input that no y input uses - trailing, or
+        //shadowed by a later x before any y consumed it - is a load error; that can only arise
+        //with unequal counts. Styling attributes on an x input apply to its matched dataset; a
+        //shared x styles only the first dataset that uses it.
+        let xInputs = inputBuffers.filter { $0.axis == .x }
+        let yInputs = inputBuffers.filter { $0.axis == .y }
+        guard !yInputs.isEmpty else {
+            throw ElementHandlerError.missingChildElement("input[axis=y]")
+        }
+
+        var xForDataset: [GraphInputDescriptor?]
+        var xStylesDataset: [Bool]
+        if xInputs.count == yInputs.count {
+            xForDataset = xInputs
+            xStylesDataset = [Bool](repeating: true, count: yInputs.count)
+        } else {
+            xForDataset = []
+            xStylesDataset = []
+            var precedingX: GraphInputDescriptor? = nil
+            var precedingXUsed = true
+            for inputBuffer in inputBuffers {
+                switch inputBuffer.axis {
+                case .x:
+                    guard precedingXUsed else {
+                        throw ElementHandlerError.missingChildElement("input[axis=y]")
+                    }
+                    precedingX = inputBuffer
+                    precedingXUsed = false
+                case .y:
+                    xForDataset.append(precedingX)
+                    xStylesDataset.append(!precedingXUsed)
+                    precedingXUsed = true
+                case .z:
+                    break
+                }
+            }
+            guard precedingXUsed else {
+                throw ElementHandlerError.missingChildElement("input[axis=y]")
+            }
+        }
+
         var xInputBufferNames: [String?] = []
         var yInputBufferNames: [String] = []
-        var zInputBufferNames: [String?] = []
+        var zInputBufferNames = [String?](repeating: nil, count: yInputs.count)
         var colors: [UIColor] = []
         var lineWidths: [CGFloat] = []
         var styles: [GraphViewDescriptor.GraphStyle] = []
-        var inputCount = -1
+        for (i, yInput) in yInputs.enumerated() {
+            let autoColor: UIColor?
+            switch i % 6 {
+                case 0: autoColor = namedColors["orange"]
+                case 1: autoColor = namedColors["green"]
+                case 2: autoColor = namedColors["blue"]
+                case 3: autoColor = namedColors["yellow"]
+                case 4: autoColor = namedColors["magenta"]
+                case 5: autoColor = namedColors["red"]
+                default: autoColor = namedColors["orange"]
+            }
+            let xStyling = xStylesDataset[i] ? xForDataset[i] : nil
+            xInputBufferNames.append(xForDataset[i]?.bufferName)
+            yInputBufferNames.append(yInput.bufferName)
+            colors.append(yInput.color ?? xStyling?.color ?? color ?? autoColor ?? kHighlightColor)
+            lineWidths.append(yInput.lineWidth ?? xStyling?.lineWidth ?? lineWidth)
+            styles.append(yInput.style ?? xStyling?.style ?? style)
+        }
+
+        //z inputs attach to the dataset of the most recent preceding y input, or to the first
+        //dataset if none preceded
+        var yCount = 0
         for inputBuffer in inputBuffers {
-            if inputCount < 0 || (inputBuffer.axis == .x && inputBuffers.count > 2 ) || (inputBuffer.axis == .y && yInputBufferNames[inputCount] != "") {
-                if (inputCount >= 0 && yInputBufferNames[inputCount] == "") {
-                    throw ElementHandlerError.missingChildElement("input[axis=y]")
-                }
-                inputCount += 1
-                let autoColor: UIColor?
-                switch inputCount % 6 {
-                    case 0: autoColor = namedColors["orange"]
-                    case 1: autoColor = namedColors["green"]
-                    case 2: autoColor = namedColors["blue"]
-                    case 3: autoColor = namedColors["yellow"]
-                    case 4: autoColor = namedColors["magenta"]
-                    case 5: autoColor = namedColors["red"]
-                    default: autoColor = namedColors["orange"]
-                }
-                colors.append(color ?? autoColor ?? kHighlightColor)
-                lineWidths.append(lineWidth)
-                styles.append(style)
-                if inputCount > 0 {
-                    xInputBufferNames.append(xInputBufferNames[inputCount-1])
-                } else {
-                    xInputBufferNames.append(nil)
-                }
-                yInputBufferNames.append("")
-                zInputBufferNames.append(nil)
-            }
             switch inputBuffer.axis {
-                case .x: xInputBufferNames[inputCount] = inputBuffer.bufferName
-                case .y: yInputBufferNames[inputCount] = inputBuffer.bufferName
-                case .z: zInputBufferNames[inputCount] = inputBuffer.bufferName
-            }
-            if let color = inputBuffer.color {
-                colors[inputCount] = color
-            }
-            if let lineWidth = inputBuffer.lineWidth {
-                lineWidths[inputCount] = lineWidth
-            }
-            if let style = inputBuffer.style {
-                styles[inputCount] = style
+            case .x:
+                break
+            case .y:
+                yCount += 1
+            case .z:
+                let datasetIndex = max(yCount - 1, 0)
+                zInputBufferNames[datasetIndex] = inputBuffer.bufferName
+                if let color = inputBuffer.color {
+                    colors[datasetIndex] = color
+                }
+                if let lineWidth = inputBuffer.lineWidth {
+                    lineWidths[datasetIndex] = lineWidth
+                }
+                if let style = inputBuffer.style {
+                    styles[datasetIndex] = style
+                }
             }
         }
         

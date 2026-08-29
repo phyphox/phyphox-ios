@@ -9,7 +9,7 @@
 import Foundation
 
 struct ExperimentTranslationCollection: Equatable {
-    private let translations: [String: ExperimentTranslation]
+    let translations: [String: ExperimentTranslation]
     let selectedTranslation: ExperimentTranslation?
 
     static func getLanguageRating(languageCode: String?) -> Int {
@@ -92,9 +92,5 @@ struct ExperimentTranslationCollection: Equatable {
             return localize("common_" + string[start ..< stop])
         }
         return string
-    }
-    
-    func localizeLink(_ string: String, fallback: URL) -> URL {
-        return selectedTranslation?.translatedLinks[string] ?? fallback
     }
 }

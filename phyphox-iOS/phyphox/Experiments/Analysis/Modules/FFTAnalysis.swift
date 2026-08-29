@@ -143,15 +143,23 @@ final class FFTAnalysis: AutoClearingExperimentAnalysisModule {
             //Jonas noted before, that to fast calling of the DFT leads to crashes when reusing the setup, but I (Sebastian) was not able to reproduce this
             //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
             //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
-            let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, .FORWARD)
-            vDSP_DFT_ExecuteD(dftSetup!, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
-            vDSP_DFT_DestroySetupD(dftSetup)
+            //The setup documents a minimum length of 8 but accepts N = 1, 2 and 4 as well
+            //(verified on the iOS 26.5 runtime). Should an OS version ever enforce the
+            //documented minimum, an unsupported size yields empty output instead of a crash.
+            if let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, .FORWARD) {
+                vDSP_DFT_ExecuteD(dftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
+                vDSP_DFT_DestroySetupD(dftSetup)
+            }
+            else {
+                realOutputArray = []
+                imagOutputArray = []
+            }
 
             //A real input is treated as a complex input with a zero imaginary part and the full
             //complex spectrum is returned, matching Android. The output is deliberately not halved
             //to the unique first half: for a real signal the second half is the mirrored complex
             //conjugate, but both platforms return it in full so a real and a complex FFT of the
-            //same length behave identically (fft-real-input-output-length in phyphox-docs).
+            //same length behave identically.
         }
 
         if let realOutput = realOutput {

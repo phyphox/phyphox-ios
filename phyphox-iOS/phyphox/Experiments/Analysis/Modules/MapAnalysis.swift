@@ -38,9 +38,9 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
     private var mapHeight: ExperimentAnalysisDataInput
     private var minY: ExperimentAnalysisDataInput
     private var maxY: ExperimentAnalysisDataInput
-    private var x: MutableDoubleArray
-    private var y: MutableDoubleArray
-    private var z: MutableDoubleArray? = nil
+    private var x: ExperimentAnalysisDataInput
+    private var y: ExperimentAnalysisDataInput
+    private var z: ExperimentAnalysisDataInput? = nil
     
     private var outX: ExperimentAnalysisDataOutput? = nil
     private var outY: ExperimentAnalysisDataOutput? = nil
@@ -71,18 +71,16 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         let minY = io.input(Self.minYInSlot)
         let maxY = io.input(Self.maxYInSlot)
 
-        if io.input(Self.xInSlot) != nil && io.data(Self.xInSlot) == nil {
-            throw SerializationError.genericError(message: "Error: Input x for map module has to be a buffer.")
+        //x, y and z allow value-type inputs, which act as one-element buffers like on Android
+        let x = io.input(Self.xInSlot)
+        let y = io.input(Self.yInSlot)
+        z = io.input(Self.zInSlot)
+
+        //A missing z input with zMode sum or average is a permanent configuration error and
+        //rejects the file at load - a zero grid would silently look like data
+        if zMode != .count && z == nil {
+            throw SerializationError.genericError(message: "Error: Input z required for map module unless zMode is count.")
         }
-        if io.input(Self.yInSlot) != nil && io.data(Self.yInSlot) == nil {
-            throw SerializationError.genericError(message: "Error: Input y for map module has to be a buffer.")
-        }
-        if io.input(Self.zInSlot) != nil && io.data(Self.zInSlot) == nil {
-            throw SerializationError.genericError(message: "Error: Input z for map module has to be a buffer.")
-        }
-        let x = io.data(Self.xInSlot)
-        let y = io.data(Self.yInSlot)
-        z = io.data(Self.zInSlot)
 
         guard mapWidth != nil else {
             throw SerializationError.genericError(message: "Error: Input mapWidth required for map module.")
@@ -150,18 +148,34 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         guard let maxY = self.maxY.getSingleValue() else {
             return
         }
-        let x = self.x.data
-        let y = self.y.data
-        let z = self.z?.data
-        
+        //A non-positive grid size is an error state yielding empty outputs (a negative size
+        //would trap in the array constructions and ranges below)
+        guard mapWidth > 0 && mapHeight > 0 else {
+            return
+        }
+
+        let x = self.x.getArray()
+        let y = self.y.getArray()
+        let z = self.z?.getArray()
+
         var n = min(x.count, y.count)
         if let nz = z?.count {
             n = min(n, nz)
         }
-        
+
+        //Degenerate ranges (such as minX equal to maxX) make the bin index non-finite; clamp
+        //like Android's (int) cast instead of trapping in Int(round(...)): NaN becomes bin 0
+        //and infinities fall outside the bounds check below
+        func binIndex(_ v: Double, count: Int) -> Int {
+            if v.isNaN {
+                return 0
+            }
+            return Int(round(min(max(v, -1.0), Double(count))))
+        }
+
         var zSumOut = [Double](repeating: 0, count: mapWidth*mapHeight)
         var nOut = [Int](repeating: 0, count: mapWidth*mapHeight)
-        
+
         for i in 0..<n {
             let thisX = x[i]
             let thisY = y[i]
@@ -169,10 +183,8 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             if !(thisX.isFinite && thisY.isFinite && thisZ.isFinite) {
                 continue
             }
-            let xd = Double(mapWidth-1)*(thisX-minX)/(maxX-minX)
-            let xi = Int(round(xd))
-            let yd = Double(mapHeight-1)*(thisY-minY)/(maxY-minY)
-            let yi = Int(round(yd))
+            let xi = binIndex(Double(mapWidth-1)*(thisX-minX)/(maxX-minX), count: mapWidth)
+            let yi = binIndex(Double(mapHeight-1)*(thisY-minY)/(maxY-minY), count: mapHeight)
             if (xi < 0 || xi >= mapWidth || yi < 0 || yi >= mapHeight) {
                 continue
             }

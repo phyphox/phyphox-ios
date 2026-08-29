@@ -48,14 +48,12 @@ private extension ExperimentCameraInput {
         let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
         let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
         let valueBuffer = descriptor.buffer(for: "value", from: buffers)
-        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
         let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
         let pixelPosition = descriptor.buffer(for: "pixelPosition", from: buffers)
-        let wavelength = descriptor.buffer(for: "wavelength", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, wavelength: wavelength, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 
@@ -184,26 +182,49 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("File version \(versionString) is not supported")
         }
 
-        let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
+        let translationBlocks = try translationsHandler.expectOptionalResult()
+        let translations = translationBlocks.map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
-        guard let title = try titleHandler.expectOptionalResult() ?? translations.selectedTranslation?.titleString else {
+        //The metadata children tolerate repetition, last occurrence wins (lastResult above) -
+        //unlike every other child of the root element, where a duplicate stays an error
+        guard let title = titleHandler.lastResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
-        
-        let stateTitle = try stateTitleHandler.expectOptionalResult()
 
-        guard let category = try categoryHandler.expectOptionalResult() ?? translations.selectedTranslation?.categoryString else {
+        let stateTitle = stateTitleHandler.lastResult()
+
+        guard let category = categoryHandler.lastResult() ?? translations.selectedTranslation?.categoryString else {
             throw ElementHandlerError.missingElement("category")
         }
 
-        let description = try descriptionHandler.expectOptionalResult() ?? translations.selectedTranslation?.descriptionString ?? ""
-        
+        let description = descriptionHandler.lastResult() ?? translations.selectedTranslation?.descriptionString ?? ""
+
         let maxIndex = title.index(title.startIndex, offsetBy: min(2, title.count))
-        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<maxIndex]).uppercased())
-        
-        let color = try colorHandler.expectOptionalResult()
+        let icon = iconHandler.lastResult() ?? .string(String(title[..<maxIndex]).uppercased())
+
+        let color = colorHandler.lastResult()
         
         let links = linkHandler.results
+
+        //The label identifies a link, so it must be unique among the root links, and a link in a
+        //translation block that matches no base label is an addition, which needs a URL of its
+        //own. Both are checked for every translation block, not just the applied one, so an
+        //invalid file fails to load regardless of the user's locale
+        //(translation-link-matching in phyphox-docs).
+        var seenLinkLabels = Set<String>()
+        for link in links {
+            guard seenLinkLabels.insert(link.label).inserted else {
+                throw ElementHandlerError.message("Duplicate link label \"\(link.label)\"")
+            }
+        }
+
+        if let translationBlocks = translationBlocks {
+            for (blockLocale, translation) in translationBlocks {
+                for translatedLink in translation.translatedLinks where translatedLink.url == nil && !seenLinkLabels.contains(translatedLink.label) {
+                    throw ElementHandlerError.message("Link \"\(translatedLink.label)\" in translation block \"\(blockLocale)\" matches no link and has no URL")
+                }
+            }
+        }
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, requireFillName: nil, requireFillThreshold: 1, requireFillDynamicName: nil, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])

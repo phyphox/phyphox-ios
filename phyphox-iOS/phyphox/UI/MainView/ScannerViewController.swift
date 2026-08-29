@@ -207,7 +207,8 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             }
 
             
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: nil)})
+            //The QR route is one of the two that may carry the partial (headerless) zip form
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(tmp, chosenPeripheral: nil, acceptPartialZip: true)})
         }
         
 
@@ -246,7 +247,7 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 showMessage(title: localize("newExperimentQRErrorTitle"), msg: localize("newExperimentQRNoExperiment"), endScanner: true)
                 return
             }
-            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url, chosenPeripheral: nil)})
+            dismiss(animated: true, completion: {() in _ = self.experimentLauncher?.launchExperimentByURL(url, chosenPeripheral: nil, acceptPartialZip: false)})
         } else {
             //The experiment is directly encoded in the QR code as a zip file
             
