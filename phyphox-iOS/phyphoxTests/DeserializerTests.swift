@@ -1645,6 +1645,41 @@ final class InputDefaultsTests: XCTestCase {
                        "the next cycle sees the setting again, on whichever page it lives")
     }
 
+    ///After a clear an input element must come back to its DEFAULT, not to whatever its control
+    ///was showing (maintainer, 2026-08-29). Clearing is how a user deliberately returns an
+    ///experiment to its starting state, and clearGroup is how an author exempts a setting from
+    ///that - a control that remembered its position across a clear would leave clearGroup with
+    ///nothing to do. iOS satisfies this incidentally: the switch takes its state FROM the buffer
+    ///and never writes it back on its own. Nothing enforced it, and "remember where the user left
+    ///it" is a plausible-sounding change that would break the rule silently, which is what this
+    ///test is for. The rule lives on the `default` attribute of edit, toggle and dropdown in
+    ///phyphox-docs spec/views.yml.
+    func testAControlDoesNotCarryItsPositionThroughAClear() throws {
+        let experiment = try twoViewExperiment()
+        let descriptor = try XCTUnwrap(experiment.viewDescriptors?
+            .flatMap({ $0.views })
+            .compactMap({ $0 as? SwitchViewDescriptor })
+            .first)
+        let view = try XCTUnwrap(ExperimentSwitchView(descriptor: descriptor, resourceFolder: nil))
+
+        //The user turns it off, against a default of 1, and the control renders that
+        descriptor.buffer.replaceValues([0])
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+        XCTAssertEqual(descriptor.buffer.last, 0,
+                       "rendering the control takes the state FROM the buffer and puts nothing "
+                       + "back - a control that asserted its own position would fail here first")
+
+        experiment.clear(byUser: true)
+        //Whatever the control does on its next pass must not undo the clear
+        view.setNeedsUpdate()
+        view.display(DisplayLink(refreshRate: 5))
+
+        XCTAssertEqual(descriptor.buffer.last, 1,
+                       "the clear returns the setting to its default and the control follows the "
+                       + "buffer, rather than writing the position it was showing back into it")
+    }
+
     ///The slider is deliberately left out of the seeding: the parser gives it its default when
     ///the file is read, and Android never seeds a slider at all, so re-seeding it here would be a
     ///new divergence in the other direction rather than the end of one
