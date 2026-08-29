@@ -121,6 +121,14 @@ final class DeserializerTests: XCTestCase {
     }
 
     /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files. Also tests that reusing the same parser and using a fresh parser produces the same result.
+    ///
+    /// What is left here is what the shared corpus cannot take yet. Seventeen of these fixtures
+    /// moved to phyphox-docs corpus/invalid on 2026-08-29, where both platforms run them; these
+    /// seventeen produce no finding from tools/validate_experiments.py, and the docs build fails
+    /// a corpus/invalid file that validates cleanly ("the spec now accepts its documented
+    /// defect"). They can follow one at a time, as the spec learns each rule. Note the reuse
+    /// half of this test has no counterpart in the corpus runner, so keep it wherever the last
+    /// fixture ends up.
     func testIncorrectFilesAndReuse() throws {
         let experimentsURL = try testBundle.url(forResource: "incorrect-files", withExtension: nil).unwrap()
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsURL.path)
@@ -148,7 +156,8 @@ final class DeserializerTests: XCTestCase {
 //is appended, a label-only link removes the base link, the translation attribute holds the
 //displayed text and highlight is inherited where not explicitly set. The invalid forms (missing
 //label, duplicate labels, unmatched label without URL, translation attribute or empty URL at the
-//root) are covered by the incorrect-files fixtures.
+//root) are covered by fixtures: the missing label and the root translation attribute in
+//phyphox-docs corpus/invalid, the rest still in incorrect-files.
 final class TranslatedLinkTests: XCTestCase {
     //The conformance fixture from phyphox-docs (corpus/generated/translated-links.phyphox)
     //exercises every form of a translated link in one document
